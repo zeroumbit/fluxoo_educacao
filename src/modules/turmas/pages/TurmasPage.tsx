@@ -19,9 +19,9 @@ import type { Turma } from '@/lib/database.types'
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
   turno: z.string().min(1, 'Turno é obrigatório'),
-  sala: z.string().optional(),
+  sala: z.string().optional().or(z.literal('')),
   capacidade_maxima: z.coerce.number().min(1, 'Capacidade mínima de 1'),
-  filial_id: z.string().optional(),
+  filial_id: z.string().optional().or(z.literal('')),
 })
 
 type TurmaFormValues = z.infer<typeof turmaSchema>
@@ -44,7 +44,7 @@ export function TurmasPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome: '', turno: '', sala: '', capacidade_maxima: 30 })
+    reset({ nome: '', turno: '', sala: '', capacidade_maxima: 30, filial_id: '' })
     setDialogOpen(true)
   }
 
@@ -62,7 +62,7 @@ export function TurmasPage() {
         turno: data.turno,
         sala: data.sala || null,
         capacidade_maxima: data.capacidade_maxima ? Number(data.capacidade_maxima) : null,
-        filial_id: data.filial_id || null,
+        filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
       }
 
       if (editando) {
