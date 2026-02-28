@@ -42,10 +42,12 @@ import { UpgradesPage } from '@/modules/super-admin/pages/UpgradesPage'
 import { ConfigRecebimentoPage } from '@/modules/super-admin/pages/ConfigRecebimentoPage'
 
 // Pages - Portal
-import { PortalAlunoPage } from '@/modules/auth/pages/PortalAlunoPage'
-import { PortalFrequenciaPage } from '@/modules/auth/pages/PortalFrequenciaPage'
-import { PortalAvisosPage } from '@/modules/auth/pages/PortalAvisosPage'
-import { PortalCobrancasPage } from '@/modules/auth/pages/PortalCobrancasPage'
+import { PortalDashboardPage } from '@/modules/portal/pages/PortalDashboardPage'
+import { PortalFrequenciaPage } from '@/modules/portal/pages/PortalFrequenciaPage'
+import { PortalAvisosPage } from '@/modules/portal/pages/PortalAvisosPage'
+import { PortalCobrancasPage } from '@/modules/portal/pages/PortalCobrancasPage'
+import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualPage'
+import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,9 @@ function App() {
 
             {/* Login */}
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Login do Portal */}
+            <Route path="/portal/login" element={<PortalLoginPage />} />
 
             {/* Cadastro de Escola - Público */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
@@ -144,10 +149,11 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/portal" element={<PortalAlunoPage />} />
+              <Route path="/portal" element={<PortalDashboardPage />} />
               <Route path="/portal/frequencia" element={<PortalFrequenciaPage />} />
               <Route path="/portal/avisos" element={<PortalAvisosPage />} />
               <Route path="/portal/cobrancas" element={<PortalCobrancasPage />} />
+              <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
             </Route>
 
             {/* Fallback */}

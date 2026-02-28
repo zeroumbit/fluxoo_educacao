@@ -20,7 +20,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (!authUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    const isPortal = location.pathname.startsWith('/portal')
+    return <Navigate to={isPortal ? '/portal/login' : '/login'} state={{ from: location }} replace />
   }
 
   if (allowedRoles && !allowedRoles.includes(authUser.role)) {

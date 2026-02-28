@@ -18,7 +18,9 @@ export function ConfigFinanceiraPage() {
     dia_vencimento_padrao: 10, dias_carencia: 5,
     multa_atraso_percentual: 2, multa_atraso_valor_fixo: 0,
     juros_mora_mensal: 1, desconto_irmaos: 0, desconto_pontualidade: 0,
-    pix_habilitado: false, chave_pix: '', qr_code_auto: false,
+    pix_habilitado: false, chave_pix: '', 
+    nome_favorecido: '', instrucoes_responsavel: '',
+    qr_code_auto: false,
     dinheiro_cartao_presencial: true,
   })
 
@@ -34,6 +36,8 @@ export function ConfigFinanceiraPage() {
         desconto_pontualidade: config.desconto_pontualidade || 0,
         pix_habilitado: config.pix_habilitado || false,
         chave_pix: config.chave_pix || '',
+        nome_favorecido: config.nome_favorecido || '',
+        instrucoes_responsavel: config.instrucoes_responsavel || '',
         qr_code_auto: config.qr_code_auto || false,
         dinheiro_cartao_presencial: config.dinheiro_cartao_presencial ?? true,
       })
@@ -77,9 +81,38 @@ export function ConfigFinanceiraPage() {
             <Switch checked={form.pix_habilitado} onCheckedChange={(v) => setForm({ ...form, pix_habilitado: v })} />
           </div>
           {form.pix_habilitado && (
-            <div className="grid grid-cols-2 gap-4 pl-4">
-              <div className="space-y-2"><Label>Chave PIX</Label><Input value={form.chave_pix} onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} placeholder="CPF, e-mail ou chave aleatória" /></div>
-              <div className="flex items-center gap-2 pt-6"><Switch checked={form.qr_code_auto} onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })} /><Label>QR Code Automático</Label></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="space-y-2">
+                <Label>Chave PIX</Label>
+                <Input 
+                  value={form.chave_pix} 
+                  onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} 
+                  placeholder="CPF, e-mail ou chave aleatória" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome do Favorecido</Label>
+                <Input 
+                  value={form.nome_favorecido || ''} 
+                  onChange={(e) => setForm({ ...form, nome_favorecido: e.target.value })} 
+                  placeholder="Nome da escola ou dono da conta" 
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Instruções para o Responsável</Label>
+                <Input 
+                  value={form.instrucoes_responsavel || ''} 
+                  onChange={(e) => setForm({ ...form, instrucoes_responsavel: e.target.value })} 
+                  placeholder="Ex: enviar comprovante para o whatsapp (85) 9 xxxx-xxxx" 
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <Switch 
+                  checked={form.qr_code_auto} 
+                  onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })} 
+                />
+                <Label>QR Code Automático</Label>
+              </div>
             </div>
           )}
           <div className="flex items-center justify-between rounded-lg border p-4">
