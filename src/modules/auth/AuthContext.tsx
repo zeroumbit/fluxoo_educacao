@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole, Funcionario, Responsavel } from '@/lib/database.types'
+import { isSuperAdminEmail } from '@/lib/config'
 
 interface AuthUser {
   user: User
@@ -25,7 +26,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
-    // Tenta encontrar como funcionário primeiro
+    // Verifica se é o super admin pelo e-mail
+    if (isSuperAdminEmail(user.email || '')) {
+      setAuthUser({
+        user,
+        session,
+        tenantId: 'super_admin',
+        role: 'super_admin',
+        nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Super Admin',
+      })
+      return
+    }
+
+    // Tenta encontrar como funcionário
     const { data: funcionario } = await supabase
       .from('funcionarios')
       .select('*')

@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GraduationCap, Loader2, Eye, EyeOff } from 'lucide-react'
+import { validarEmail } from '@/lib/validacoes'
 
 const loginSchema = z.object({
-  email: z.string().email('E-mail inválido'),
+  email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
 })
 

@@ -33,22 +33,32 @@ import {
   EyeOff,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail } from '@/lib/validacoes'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),
   nome_social: z.string().optional(),
   data_nascimento: z.string().min(1, 'Data de nascimento é obrigatória'),
-  cpf: z.string().optional(),
+  cpf: z.string().optional().or(z.literal('')),
   patologias: z.string().optional(),
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
   filial_id: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
-  responsavel_cpf: z.string().min(11, 'CPF do responsável é obrigatório'),
-  responsavel_telefone: z.string().optional(),
+  responsavel_cpf: z.string().min(14, 'CPF inválido'),
+  responsavel_telefone: z.string().optional().or(z.literal('')),
   responsavel_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   responsavel_parentesco: z.string().optional(),
   responsavel_senha: z.string().min(6, 'Senha mínima de 6 caracteres'),
+}).refine((data) => !data.cpf || validarCPF(data.cpf), {
+  message: 'CPF inválido',
+  path: ['cpf'],
+}).refine((data) => validarCPF(data.responsavel_cpf), {
+  message: 'CPF do responsável inválido',
+  path: ['responsavel_cpf'],
+}).refine((data) => !data.responsavel_email || validarEmail(data.responsavel_email), {
+  message: 'E-mail inválido',
+  path: ['responsavel_email'],
 })
 
 type AlunoFormValues = z.infer<typeof alunoSchema>
@@ -82,6 +92,16 @@ export function AlunoCadastroPage() {
     resolver: zodResolver(alunoSchema),
     defaultValues: { nome_completo: '', data_nascimento: '' },
   })
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>, campo: 'cpf' | 'responsavel_cpf') => {
+    const valor = e.target.value
+    setValue(campo, mascaraCPF(valor), { shouldValidate: true })
+  }
+
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('responsavel_telefone', mascaraTelefone(valor), { shouldValidate: true })
+  }
 
   const validateStep = async () => {
     const fieldsPerStep: (keyof AlunoFormValues)[][] = [
@@ -220,12 +240,20 @@ export function AlunoCadastroPage() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome completo *</Label>
-                  <Input id="nome_completo" {...register('nome_completo')} />
+                  <Input 
+                    id="nome_completo" 
+                    placeholder="Digite o nome completo do aluno" 
+                    {...register('nome_completo')} 
+                  />
                   {errors.nome_completo && <p className="text-sm text-destructive">{errors.nome_completo.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="nome_social">Nome social</Label>
-                  <Input id="nome_social" placeholder="Opcional" {...register('nome_social')} />
+                  <Input 
+                    id="nome_social" 
+                    placeholder="Nome social pelo qual o aluno é conhecido (opcional)" 
+                    {...register('nome_social')} 
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -235,7 +263,14 @@ export function AlunoCadastroPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
-                    <Input id="cpf" placeholder="000.000.000-00" {...register('cpf')} />
+                    <Input 
+                      id="cpf" 
+                      placeholder="000.000.000-00" 
+                      {...register('cpf')}
+                      onChange={(e) => handleCpfChange(e, 'cpf')}
+                      maxLength={14}
+                    />
+                    {errors.cpf && <p className="text-sm text-destructive">{errors.cpf.message}</p>}
                   </div>
                 </div>
               </>
@@ -266,19 +301,29 @@ export function AlunoCadastroPage() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="responsavel_nome">Nome do responsável *</Label>
-                  <Input id="responsavel_nome" {...register('responsavel_nome')} />
+                  <Input 
+                    id="responsavel_nome" 
+                    placeholder="Digite o nome completo do responsável" 
+                    {...register('responsavel_nome')} 
+                  />
                   {errors.responsavel_nome && <p className="text-sm text-destructive">{errors.responsavel_nome.message}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_cpf">CPF do responsável *</Label>
-                    <Input id="responsavel_cpf" {...register('responsavel_cpf')} />
+                    <Input 
+                      id="responsavel_cpf" 
+                      placeholder="000.000.000-00" 
+                      {...register('responsavel_cpf')}
+                      onChange={(e) => handleCpfChange(e, 'responsavel_cpf')}
+                      maxLength={14}
+                    />
                     {errors.responsavel_cpf && <p className="text-sm text-destructive">{errors.responsavel_cpf.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_parentesco">Parentesco</Label>
                     <Select onValueChange={(v) => setValue('responsavel_parentesco', v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione o parentesco" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pai">Pai</SelectItem>
                         <SelectItem value="mae">Mãe</SelectItem>
@@ -292,11 +337,23 @@ export function AlunoCadastroPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_telefone">Telefone</Label>
-                    <Input id="responsavel_telefone" {...register('responsavel_telefone')} />
+                    <Input 
+                      id="responsavel_telefone" 
+                      placeholder="(00) 00000-0000" 
+                      {...register('responsavel_telefone')}
+                      onChange={handleTelefoneChange}
+                      maxLength={15}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_email">E-mail</Label>
-                    <Input id="responsavel_email" type="email" {...register('responsavel_email')} />
+                    <Input 
+                      id="responsavel_email" 
+                      type="email" 
+                      placeholder="exemplo@email.com" 
+                      {...register('responsavel_email')} 
+                    />
+                    {errors.responsavel_email && <p className="text-sm text-destructive">{errors.responsavel_email.message}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -305,6 +362,7 @@ export function AlunoCadastroPage() {
                     <Input
                       id="responsavel_senha"
                       type={showPassword ? 'text' : 'password'}
+                      placeholder="Mínimo 6 caracteres"
                       {...register('responsavel_senha')}
                       className="pr-10"
                     />

@@ -134,7 +134,7 @@ export function DashboardPage() {
                       {aviso.conteudo}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(aviso.criado_em), "dd 'de' MMMM 'às' HH:mm", {
+                      {format(new Date(aviso.created_at), "dd 'de' MMMM 'às' HH:mm", {
                         locale: ptBR,
                       })}
                     </p>

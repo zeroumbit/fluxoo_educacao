@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Plus, Loader2, CreditCard, Check } from 'lucide-react'
-import { format, isPast } from 'date-fns'
+import { isPast } from 'date-fns'
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione um aluno'),
@@ -112,20 +112,20 @@ export function FinanceiroPage() {
                 <div className="space-y-2">
                   <Label>Aluno *</Label>
                   <Select onValueChange={(v) => setValue('aluno_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
                     <SelectContent>{alunos?.map((a) => <SelectItem key={a.id} value={a.id}>{a.nome_completo}</SelectItem>)}</SelectContent>
                   </Select>
                   {errors.aluno_id && <p className="text-sm text-destructive">{errors.aluno_id.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Descrição *</Label>
-                  <Input {...register('descricao')} />
+                  <Input placeholder="Ex: Mensalidade janeiro/2024" {...register('descricao')} />
                   {errors.descricao && <p className="text-sm text-destructive">{errors.descricao.message}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Valor (R$) *</Label>
-                    <Input type="number" step="0.01" {...register('valor')} />
+                    <Input type="number" step="0.01" placeholder="0,00" {...register('valor')} />
                     {errors.valor && <p className="text-sm text-destructive">{errors.valor.message}</p>}
                   </div>
                   <div className="space-y-2">

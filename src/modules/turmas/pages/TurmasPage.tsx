@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Loader2, BookOpen, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Loader2, BookOpen, Pencil, Trash2, AlertTriangle } from 'lucide-react'
 import type { Turma } from '@/lib/database.types'
 
 const turmaSchema = z.object({
@@ -35,6 +35,8 @@ export function TurmasPage() {
   const excluirTurma = useExcluirTurma()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editando, setEditando] = useState<Turma | null>(null)
+  const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
+  const [turmaParaExcluir, setTurmaParaExcluir] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
@@ -69,10 +71,17 @@ export function TurmasPage() {
   }
 
   const handleExcluir = async (id: string) => {
-    if (!confirm('Deseja excluir esta turma?')) return
+    setTurmaParaExcluir(id)
+    setExcluirDialogOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!turmaParaExcluir) return
     try {
-      await excluirTurma.mutateAsync(id)
+      await excluirTurma.mutateAsync(turmaParaExcluir)
       toast.success('Turma excluída!')
+      setExcluirDialogOpen(false)
+      setTurmaParaExcluir(null)
     } catch {
       toast.error('Erro ao excluir.')
     }
@@ -107,7 +116,7 @@ export function TurmasPage() {
                 <div className="space-y-2">
                   <Label htmlFor="turno">Turno *</Label>
                   <Select defaultValue={editando?.turno || ''} onValueChange={(v) => setValue('turno', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Selecione o turno" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="matutino">Matutino</SelectItem>
                       <SelectItem value="vespertino">Vespertino</SelectItem>
@@ -125,13 +134,13 @@ export function TurmasPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="capacidade_maxima">Capacidade</Label>
-                  <Input id="capacidade_maxima" type="number" {...register('capacidade_maxima')} />
+                  <Input id="capacidade_maxima" type="number" placeholder="30" {...register('capacidade_maxima')} />
                 </div>
                 {filiais && filiais.length > 0 && (
                   <div className="space-y-2">
                     <Label>Filial</Label>
                     <Select defaultValue={editando?.filial_id || ''} onValueChange={(v) => setValue('filial_id', v)}>
-                      <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
                       <SelectContent>
                         {filiais.map((f) => (
                           <SelectItem key={f.id} value={f.id}>{f.nome_unidade}</SelectItem>
@@ -149,6 +158,25 @@ export function TurmasPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={excluirDialogOpen} onOpenChange={setExcluirDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. A turma será permanentemente removida do sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluirDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExclusao}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {turmas?.map((turma) => (

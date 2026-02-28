@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useIsSuperAdmin } from '@/lib/hooks'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -23,6 +24,7 @@ import {
   GraduationCap,
   ChevronRight,
   Building2,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +40,7 @@ const navigation = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { authUser, signOut } = useAuth()
+  const isSuperAdmin = useIsSuperAdmin()
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -110,8 +113,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 </AvatarFallback>
               </Avatar>
               <div className="text-left flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{authUser?.nome}</p>
-                <p className="text-xs text-muted-foreground capitalize">{authUser?.role?.replace('_', ' ')}</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-sm font-medium truncate">{authUser?.nome}</p>
+                  {isSuperAdmin && <Shield className="h-3.5 w-3.5 text-indigo-600" />}
+                </div>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {isSuperAdmin ? 'Super Admin' : authUser?.role?.replace('_', ' ')}
+                </p>
               </div>
             </Button>
           </DropdownMenuTrigger>

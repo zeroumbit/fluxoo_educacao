@@ -11,17 +11,17 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Loader2, Megaphone, Trash2 } from 'lucide-react'
+import { Plus, Loader2, Megaphone, Trash2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const avisoSchema = z.object({
   titulo: z.string().min(3, 'Título é obrigatório'),
   conteudo: z.string().min(5, 'Conteúdo é obrigatório'),
-  publico_alvo: z.string().default('todos'),
+  publico_alvo: z.string().optional().default('todos'),
   turma_id: z.string().optional(),
 })
 
@@ -34,6 +34,8 @@ export function MuralPage() {
   const criarAviso = useCriarAviso()
   const excluirAviso = useExcluirAviso()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
+  const [avisoParaExcluir, setAvisoParaExcluir] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AvisoFormValues>({
     resolver: zodResolver(avisoSchema),
@@ -60,10 +62,17 @@ export function MuralPage() {
   }
 
   const handleExcluir = async (id: string) => {
-    if (!confirm('Deseja excluir este aviso?')) return
+    setAvisoParaExcluir(id)
+    setExcluirDialogOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!avisoParaExcluir) return
     try {
-      await excluirAviso.mutateAsync(id)
+      await excluirAviso.mutateAsync(avisoParaExcluir)
       toast.success('Aviso excluído!')
+      setExcluirDialogOpen(false)
+      setAvisoParaExcluir(null)
     } catch {
       toast.error('Erro ao excluir')
     }
@@ -89,12 +98,12 @@ export function MuralPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label>Título *</Label>
-                <Input {...register('titulo')} />
+                <Input placeholder="Digite o título do aviso" {...register('titulo')} />
                 {errors.titulo && <p className="text-sm text-destructive">{errors.titulo.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Conteúdo *</Label>
-                <Textarea rows={4} {...register('conteudo')} />
+                <Textarea rows={4} placeholder="Digite o conteúdo do aviso..." {...register('conteudo')} />
                 {errors.conteudo && <p className="text-sm text-destructive">{errors.conteudo.message}</p>}
               </div>
               <div className="space-y-2">
@@ -110,7 +119,7 @@ export function MuralPage() {
               <div className="space-y-2">
                 <Label>Turma (opcional)</Label>
                 <Select onValueChange={(v) => setValue('turma_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione uma turma (opcional)" /></SelectTrigger>
                   <SelectContent>
                     {turmas?.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
                   </SelectContent>
@@ -124,6 +133,25 @@ export function MuralPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={excluirDialogOpen} onOpenChange={setExcluirDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. O aviso será permanentemente removido do sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluirDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExclusao}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-4">
         {avisos?.map((aviso) => (

@@ -8,24 +8,34 @@ import { useCriarEscola, usePlanos } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GraduationCap, Loader2, Check, Building2, User, CreditCard } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { mascaraCNPJ, mascaraCPF, mascaraTelefone, mascaraCEP, validarCNPJ, validarCPF, validarEmail } from '@/lib/validacoes'
 
 const cadastroSchema = z.object({
   razao_social: z.string().min(3, 'Razão social é obrigatória'),
-  cnpj: z.string().min(14, 'CNPJ inválido'),
-  cep: z.string().min(8, 'CEP inválido'),
+  cnpj: z.string().min(18, 'CNPJ inválido'),
+  cep: z.string().min(9, 'CEP inválido'),
   logradouro: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   estado: z.string().max(2).optional(),
   email_gestor: z.string().email('E-mail inválido'),
-  cpf_gestor: z.string().min(11, 'CPF inválido'),
-  telefone: z.string().optional(),
+  cpf_gestor: z.string().min(14, 'CPF inválido'),
+  telefone: z.string().optional().or(z.literal('')),
   plano_id: z.string().min(1, 'Selecione um plano'),
   limite_alunos_contratado: z.coerce.number().min(1, 'Mínimo 1 aluno'),
+}).refine((data) => validarCNPJ(data.cnpj), {
+  message: 'CNPJ inválido',
+  path: ['cnpj'],
+}).refine((data) => validarCPF(data.cpf_gestor), {
+  message: 'CPF inválido',
+  path: ['cpf_gestor'],
+}).refine((data) => validarEmail(data.email_gestor), {
+  message: 'E-mail inválido',
+  path: ['email_gestor'],
 })
 
 type CadastroFormValues = z.infer<typeof cadastroSchema>
@@ -48,6 +58,26 @@ export function EscolaCadastroPage() {
     resolver: zodResolver(cadastroSchema),
     defaultValues: { limite_alunos_contratado: 50 },
   })
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('cnpj', mascaraCNPJ(valor), { shouldValidate: true })
+  }
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('cpf_gestor', mascaraCPF(valor), { shouldValidate: true })
+  }
+
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('telefone', mascaraTelefone(valor), { shouldValidate: true })
+  }
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('cep', mascaraCEP(valor), { shouldValidate: true })
+  }
 
   const buscarCep = async (cep: string) => {
     const cepLimpo = cep.replace(/\D/g, '')
@@ -134,7 +164,7 @@ export function EscolaCadastroPage() {
 
         {/* Stepper */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          {steps.map((step, i) => (
+          {steps.map((_, i) => (
             <div key={i} className="flex items-center">
               <div className={cn(
                 'h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
@@ -162,17 +192,30 @@ export function EscolaCadastroPage() {
                 <>
                   <div className="space-y-2">
                     <Label>Razão Social *</Label>
-                    <Input placeholder="Nome da escola" {...register('razao_social')} />
+                    <Input 
+                      placeholder="Digite a razão social da escola" 
+                      {...register('razao_social')} 
+                    />
                     {errors.razao_social && <p className="text-sm text-destructive">{errors.razao_social.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label>CNPJ *</Label>
-                    <Input placeholder="00.000.000/0000-00" {...register('cnpj')} />
+                    <Input 
+                      placeholder="00.000.000/0000-00" 
+                      {...register('cnpj')} 
+                      onChange={handleCnpjChange}
+                      maxLength={18}
+                    />
                     {errors.cnpj && <p className="text-sm text-destructive">{errors.cnpj.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label>Telefone</Label>
-                    <Input placeholder="(00) 00000-0000" {...register('telefone')} />
+                    <Input 
+                      placeholder="(00) 00000-0000" 
+                      {...register('telefone')} 
+                      onChange={handleTelefoneChange}
+                      maxLength={15}
+                    />
                   </div>
                 </>
               )}
@@ -183,7 +226,12 @@ export function EscolaCadastroPage() {
                   <div className="space-y-2">
                     <Label>CEP *</Label>
                     <div className="flex gap-2">
-                      <Input placeholder="00000-000" {...register('cep')} />
+                      <Input 
+                        placeholder="00000-000" 
+                        {...register('cep')} 
+                        onChange={handleCepChange}
+                        maxLength={9}
+                      />
                       <Button type="button" variant="outline" size="sm" disabled={buscandoCep} onClick={() => buscarCep(watch('cep'))}>
                         {buscandoCep ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buscar'}
                       </Button>
@@ -192,21 +240,26 @@ export function EscolaCadastroPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Logradouro</Label>
-                    <Input {...register('logradouro')} />
+                    <Input placeholder="Rua, avenida, etc." {...register('logradouro')} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Bairro</Label>
-                      <Input {...register('bairro')} />
+                      <Input placeholder="Bairro" {...register('bairro')} />
                     </div>
                     <div className="space-y-2">
                       <Label>Cidade</Label>
-                      <Input {...register('cidade')} />
+                      <Input placeholder="Cidade" {...register('cidade')} />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Estado</Label>
-                    <Input maxLength={2} placeholder="UF" {...register('estado')} />
+                    <Input 
+                      maxLength={2} 
+                      placeholder="UF" 
+                      {...register('estado')}
+                      style={{ textTransform: 'uppercase' }}
+                    />
                   </div>
                 </>
               )}
@@ -216,12 +269,21 @@ export function EscolaCadastroPage() {
                 <>
                   <div className="space-y-2">
                     <Label>E-mail Corporativo *</Label>
-                    <Input type="email" placeholder="gestor@escola.com.br" {...register('email_gestor')} />
+                    <Input 
+                      type="email" 
+                      placeholder="gestor@escola.com.br" 
+                      {...register('email_gestor')} 
+                    />
                     {errors.email_gestor && <p className="text-sm text-destructive">{errors.email_gestor.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label>CPF do Gestor *</Label>
-                    <Input placeholder="000.000.000-00" {...register('cpf_gestor')} />
+                    <Input 
+                      placeholder="000.000.000-00" 
+                      {...register('cpf_gestor')} 
+                      onChange={handleCpfChange}
+                      maxLength={14}
+                    />
                     {errors.cpf_gestor && <p className="text-sm text-destructive">{errors.cpf_gestor.message}</p>}
                   </div>
                 </>

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { portalService } from '@/modules/auth/portal.service'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, CalendarCheck, Check, X, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'

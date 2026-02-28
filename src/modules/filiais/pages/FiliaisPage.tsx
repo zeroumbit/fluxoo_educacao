@@ -11,15 +11,19 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Loader2, Building2, Pencil, Trash2, MapPin } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { Plus, Loader2, Building2, Pencil, Trash2, MapPin, AlertTriangle } from 'lucide-react'
+import { mascaraCNPJ, validarCNPJ } from '@/lib/validacoes'
 import type { Filial } from '@/lib/database.types'
 
 const filialSchema = z.object({
   nome_unidade: z.string().min(2, 'Nome é obrigatório'),
-  cnpj_proprio: z.string().optional(),
+  cnpj_proprio: z.string().optional().or(z.literal('')),
   endereco_completo: z.string().optional(),
   is_matriz: z.boolean(),
+}).refine((data) => !data.cnpj_proprio || validarCNPJ(data.cnpj_proprio), {
+  message: 'CNPJ inválido',
+  path: ['cnpj_proprio'],
 })
 
 type FilialFormValues = z.infer<typeof filialSchema>
@@ -32,6 +36,8 @@ export function FiliaisPage() {
   const excluirFilial = useExcluirFilial()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editando, setEditando] = useState<Filial | null>(null)
+  const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
+  const [filialParaExcluir, setFilialParaExcluir] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FilialFormValues>({
     resolver: zodResolver(filialSchema),
@@ -39,6 +45,11 @@ export function FiliaisPage() {
   })
 
   const isMatriz = watch('is_matriz')
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setValue('cnpj_proprio', mascaraCNPJ(valor), { shouldValidate: true })
+  }
 
   const abrirNovo = () => {
     setEditando(null)
@@ -82,10 +93,17 @@ export function FiliaisPage() {
   }
 
   const handleExcluir = async (id: string) => {
-    if (!confirm('Deseja excluir esta unidade?')) return
+    setFilialParaExcluir(id)
+    setExcluirDialogOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!filialParaExcluir) return
     try {
-      await excluirFilial.mutateAsync(id)
+      await excluirFilial.mutateAsync(filialParaExcluir)
       toast.success('Unidade excluída!')
+      setExcluirDialogOpen(false)
+      setFilialParaExcluir(null)
     } catch {
       toast.error('Erro ao excluir')
     }
@@ -116,7 +134,13 @@ export function FiliaisPage() {
               </div>
               <div className="space-y-2">
                 <Label>CNPJ Próprio</Label>
-                <Input placeholder="Opcional" {...register('cnpj_proprio')} />
+                <Input 
+                  placeholder="00.000.000/0000-00 (opcional)" 
+                  {...register('cnpj_proprio')} 
+                  onChange={handleCnpjChange}
+                  maxLength={18}
+                />
+                {errors.cnpj_proprio && <p className="text-sm text-destructive">{errors.cnpj_proprio.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Endereço Completo</Label>
@@ -134,6 +158,25 @@ export function FiliaisPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={excluirDialogOpen} onOpenChange={setExcluirDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. A unidade será permanentemente removida do sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcluirDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExclusao}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filiais?.map((filial) => (

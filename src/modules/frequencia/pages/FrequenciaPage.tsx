@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, CheckCircle, XCircle, AlertCircle, Save } from 'lucide-react'
-import { format } from 'date-fns'
 import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 
@@ -26,8 +25,7 @@ export function FrequenciaPage() {
   const { data: alunos } = useAlunos()
   const salvarFrequencias = useSalvarFrequencias()
   const [turmaId, setTurmaId] = useState('')
-  const [dataAula, setDataAula] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const { data: frequencias } = useFrequenciasPorTurmaData(turmaId, dataAula)
+  const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
 
   const [statusMap, setStatusMap] = useState<Record<string, FrequenciaStatus>>({})
 
