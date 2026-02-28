@@ -104,7 +104,7 @@ export function TurmasPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Turma
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader><DialogTitle>{editando ? 'Editar Turma' : 'Nova Turma'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
@@ -116,7 +116,7 @@ export function TurmasPage() {
                 <div className="space-y-2">
                   <Label htmlFor="turno">Turno *</Label>
                   <Select defaultValue={editando?.turno || ''} onValueChange={(v) => setValue('turno', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o turno" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Selecione o turno" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="matutino">Matutino</SelectItem>
                       <SelectItem value="vespertino">Vespertino</SelectItem>
@@ -133,14 +133,15 @@ export function TurmasPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="capacidade_maxima">Capacidade</Label>
+                  <Label htmlFor="capacidade_maxima">Capacidade Máxima</Label>
                   <Input id="capacidade_maxima" type="number" placeholder="30" {...register('capacidade_maxima')} />
+                  {errors.capacidade_maxima && <p className="text-sm text-destructive">{errors.capacidade_maxima.message}</p>}
                 </div>
                 {filiais && filiais.length > 0 && (
                   <div className="space-y-2">
                     <Label>Filial</Label>
                     <Select defaultValue={editando?.filial_id || ''} onValueChange={(v) => setValue('filial_id', v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
                       <SelectContent>
                         {filiais.map((f) => (
                           <SelectItem key={f.id} value={f.id}>{f.nome_unidade}</SelectItem>
@@ -150,10 +151,10 @@ export function TurmasPage() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2">
+              <DialogFooter className="sm:justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}</Button>
-              </div>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
