@@ -327,6 +327,19 @@ export function EscolaCadastroPage() {
               </Button>
             )}
           </div>
+
+          <div className="text-center mt-6">
+            <p className="text-sm text-muted-foreground">
+              Já tem cadastro?{' '}
+              <button
+                type="button"
+                className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2"
+                onClick={() => navigate('/login')}
+              >
+                Fazer login
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
