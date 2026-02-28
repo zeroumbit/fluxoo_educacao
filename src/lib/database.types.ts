@@ -3,31 +3,7 @@
  * NÃO ALTERE MANUALMENTE — espelha exatamente o banco de dados.
  */
 
-export type Database = {
-  public: {
-    Tables: {
-      escolas: { Row: Escola; Insert: EscolaInsert; Update: EscolaUpdate }
-      filiais: { Row: Filial; Insert: FilialInsert; Update: FilialUpdate }
-      alunos: { Row: Aluno; Insert: AlunoInsert; Update: AlunoUpdate }
-      turmas: { Row: Turma; Insert: TurmaInsert; Update: TurmaUpdate }
-      funcionarios: { Row: Funcionario; Insert: FuncionarioInsert; Update: FuncionarioUpdate }
-      responsaveis: { Row: Responsavel; Insert: ResponsavelInsert; Update: ResponsavelUpdate }
-      aluno_responsavel: { Row: AlunoResponsavel; Insert: AlunoResponsavelInsert; Update: AlunoResponsavelUpdate }
-      frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate }
-      mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate }
-      cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate }
-      planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate }
-      modulos: { Row: Modulo; Insert: ModuloInsert; Update: ModuloUpdate }
-      plano_modulo: { Row: PlanoModulo; Insert: PlanoModuloInsert; Update: PlanoModuloUpdate }
-      assinaturas: { Row: Assinatura; Insert: AssinaturaInsert; Update: AssinaturaUpdate }
-      historico_assinatura: { Row: HistoricoAssinatura; Insert: HistoricoAssinaturaInsert; Update: HistoricoAssinaturaUpdate }
-      faturas: { Row: Fatura; Insert: FaturaInsert; Update: FaturaUpdate }
-      solicitacoes_upgrade: { Row: SolicitacaoUpgrade; Insert: SolicitacaoUpgradeInsert; Update: SolicitacaoUpgradeUpdate }
-      configuracao_recebimento: { Row: ConfiguracaoRecebimento; Insert: ConfiguracaoRecebimentoInsert; Update: ConfiguracaoRecebimentoUpdate }
-      audit_logs: { Row: AuditLog; Insert: AuditLogInsert; Update: AuditLogUpdate }
-    }
-  }
-}
+
 
 // ========== ESCOLAS ==========
 export type Escola = {
@@ -69,7 +45,12 @@ export type Filial = {
   tenant_id: string | null
   nome_unidade: string
   cnpj_proprio: string | null
-  endereco_completo: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  bairro: string | null
+  estado: string | null
+  cidade: string | null
   is_matriz: boolean
   created_at: string
   updated_at: string
@@ -92,6 +73,13 @@ export type Aluno = {
   medicamentos: string[] | null
   observacoes_saude: string | null
   status: string
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   created_at: string
   updated_at: string
 }
@@ -144,6 +132,13 @@ export type Responsavel = {
   email: string | null
   telefone: string | null
   senha_hash: string
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   created_at: string
   updated_at: string
 }
@@ -370,3 +365,33 @@ export type UpgradeStatus = 'pendente' | 'aprovado' | 'recusado'
 
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'
+
+export type Database = {
+  public: {
+    Tables: {
+      escolas: { Row: Escola; Insert: EscolaInsert; Update: EscolaUpdate }
+      filiais: { Row: Filial; Insert: FilialInsert; Update: FilialUpdate }
+      alunos: { Row: Aluno; Insert: AlunoInsert; Update: AlunoUpdate }
+      turmas: { Row: Turma; Insert: TurmaInsert; Update: TurmaUpdate }
+      funcionarios: { Row: Funcionario; Insert: FuncionarioInsert; Update: FuncionarioUpdate }
+      responsaveis: { Row: Responsavel; Insert: ResponsavelInsert; Update: ResponsavelUpdate }
+      aluno_responsavel: { Row: AlunoResponsavel; Insert: AlunoResponsavelInsert; Update: AlunoResponsavelUpdate }
+      frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate }
+      mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate }
+      cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate }
+      planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate }
+      modulos: { Row: Modulo; Insert: ModuloInsert; Update: ModuloUpdate }
+      plano_modulo: { Row: PlanoModulo; Insert: PlanoModuloInsert; Update: PlanoModuloUpdate }
+      assinaturas: { Row: Assinatura; Insert: AssinaturaInsert; Update: AssinaturaUpdate }
+      historico_assinatura: { Row: HistoricoAssinatura; Insert: HistoricoAssinaturaInsert; Update: HistoricoAssinaturaUpdate }
+      faturas: { Row: Fatura; Insert: FaturaInsert; Update: FaturaUpdate }
+      solicitacoes_upgrade: { Row: SolicitacaoUpgrade; Insert: SolicitacaoUpgradeInsert; Update: SolicitacaoUpgradeUpdate }
+      configuracao_recebimento: { Row: ConfiguracaoRecebimento; Insert: ConfiguracaoRecebimentoInsert; Update: ConfiguracaoRecebimentoUpdate }
+      audit_logs: { Row: AuditLog; Insert: AuditLogInsert; Update: AuditLogUpdate }
+    }
+    Views: { [_ in never]: never }
+    Functions: { [_ in never]: never }
+    Enums: { [_ in never]: never }
+    CompositeTypes: { [_ in never]: never }
+  }
+}

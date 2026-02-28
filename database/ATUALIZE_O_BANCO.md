@@ -2,9 +2,13 @@
 
 ## ⚠️ AÇÃO NECESSÁRIA
 
-O campo **`numero`** foi adicionado ao formulário de cadastro de escola, mas **ainda não existe no banco de dados**.
+### 📋 Campos pendentes no banco de dados
 
-### 📋 O que fazer:
+#### 1. Tabela `filiais` - Campos de endereço
+
+Os campos **`numero`**, **`estado`** e **`cidade`** foram adicionados ao formulário de cadastro de unidades/filiais, mas **ainda não existem no banco de dados**.
+
+**Para aplicar:**
 
 1. **Acesse o Supabase Dashboard**
    - URL: https://supabase.com/dashboard
@@ -14,30 +18,36 @@ O campo **`numero`** foi adicionado ao formulário de cadastro de escola, mas **
    - Menu lateral → **SQL Editor**
 
 3. **Execute o script SQL**
-   - Copie o conteúdo do arquivo `001_add_numero_escolas.sql`
+   - Copie o conteúdo do arquivo `updates/009_add_campos_endereco_filiais.sql`
    - Cole no editor
    - Clique em **Run**
 
-### 📄 Script SQL (copie e execute):
+**Script SQL (copie e execute):**
 
 ```sql
--- Adiciona campo 'numero' na tabela escolas
-ALTER TABLE escolas
-ADD COLUMN IF NOT EXISTS numero VARCHAR(20) DEFAULT NULL;
+-- Adiciona campos de endereço detalhado na tabela filiais
+-- Permite que escolas tenham unidades em estados e cidades diferentes
 
-COMMENT ON COLUMN escolas.numero IS 'Número do endereço da escola';
+ALTER TABLE public.filiais
+ADD COLUMN IF NOT EXISTS numero VARCHAR(20) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS estado VARCHAR(2) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS cidade VARCHAR(100) DEFAULT NULL;
+
+COMMENT ON COLUMN public.filiais.numero IS 'Número do endereço da unidade';
+COMMENT ON COLUMN public.filiais.estado IS 'UF do estado onde fica a unidade';
+COMMENT ON COLUMN public.filiais.cidade IS 'Cidade onde fica a unidade';
 ```
 
 4. **Verifique se funcionou**
-   - Vá em **Table Editor** → `escolas`
+   - Vá em **Table Editor** → `filiais`
    - Clique em ⚙️ (configurações da tabela)
-   - Verifique se a coluna `numero` aparece na lista
+   - Verifique se as colunas `numero`, `estado` e `cidade` aparecem na lista
 
 ---
 
 ## ✅ Após aplicar
 
-O campo **número** do endereço será salvo automaticamente ao cadastrar uma nova escola.
+Os campos **número**, **estado** e **cidade** serão salvos automaticamente ao cadastrar novas unidades.
 
 ---
 
@@ -54,4 +64,5 @@ O campo **número** do endereço será salvo automaticamente ao cadastrar uma no
 
 | Data | Campo | Tabela | Status |
 |------|-------|--------|--------|
-| 2026-02-28 | `numero` | `escolas` | ⏳ Aguardando aplicação |
+| 2026-02-28 | `numero`, `estado`, `cidade` | `filiais` | ⏳ Aguardando aplicação |
+| 2026-02-28 | `numero` | `escolas` | ✅ Aplicado |

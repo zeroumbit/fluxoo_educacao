@@ -14,6 +14,9 @@ import { GraduationCap, Loader2, Check, Building2, User, CreditCard, Lock, MapPi
 import { cn } from '@/lib/utils'
 import { mascaraCNPJ, mascaraCPF, mascaraTelefone, mascaraCEP, validarCNPJ, validarCPF } from '@/lib/validacoes'
 import { supabase } from '@/lib/supabase'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useEffect } from 'react'
 
 // ========== SCHEMA ==========
 const cadastroSchema = z.object({
@@ -50,7 +53,6 @@ const steps = [
 
 export function EscolaCadastroPage() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [buscandoCep, setBuscandoCep] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [comprovante, setComprovante] = useState<File | null>(null)
   const navigate = useNavigate()
@@ -68,8 +70,12 @@ export function EscolaCadastroPage() {
       limite_alunos_contratado: 50 as any,
       metodo_pagamento: 'mercado_pago',
       estado: '',
+      cidade: '',
     },
   })
+
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
+  const selectedEstado = watch('estado')
 
   const selectedPlan = (planos as any[])?.find((p: any) => p.id === watch('plano_id'))
   const qtdAlunos = Number(watch('limite_alunos_contratado')) || 0
@@ -88,21 +94,26 @@ export function EscolaCadastroPage() {
     if (valor.length === 9) buscarCep(valor)
   }
 
+  useEffect(() => {
+    if (selectedEstado) {
+      fetchCitiesByUF(selectedEstado)
+    }
+  }, [selectedEstado])
+
   const buscarCep = async (cep: string) => {
-    const limpo = cep.replace(/\D/g, '')
-    if (limpo.length !== 8) return
-    setBuscandoCep(true)
-    try {
-      const resp = await fetch(`https://viacep.com.br/ws/${limpo}/json/`)
-      const data = await resp.json()
-      if (!data.erro) {
-        setValue('logradouro', data.logradouro || '', { shouldValidate: true })
-        setValue('bairro', data.bairro || '', { shouldValidate: true })
-        setValue('cidade', data.localidade || '', { shouldValidate: true })
-        setValue('estado', data.uf || '', { shouldValidate: true })
-      }
-    } catch { toast.error('Erro ao buscar CEP') }
-    setBuscandoCep(false)
+    const data = await fetchAddressByCEP(cep)
+    if (data && !('error' in data)) {
+      setValue('logradouro', data.logradouro || '', { shouldValidate: true })
+      setValue('bairro', data.bairro || '', { shouldValidate: true })
+      setValue('estado', data.estado || '', { shouldValidate: true })
+      // Pequeno delay para garantir que as cidades do estado foram carregadas antes de setar a cidade
+      setTimeout(() => {
+        setValue('cidade', data.cidade || '', { shouldValidate: true })
+      }, 500)
+      toast.success('Endereço preenchido!')
+    } else if (data && 'error' in data) {
+      toast.error(data.error)
+    }
   }
 
   // ===== Steps Validation =====
@@ -165,7 +176,12 @@ export function EscolaCadastroPage() {
         nome_unidade: 'Matriz',
         is_matriz: true,
         cnpj_proprio: data.cnpj,
-        endereco_completo: `${data.logradouro}, ${data.numero}${data.bairro ? ' - ' + data.bairro : ''} - ${data.cidade}/${data.estado}`,
+        cep: data.cep,
+        logradouro: data.logradouro,
+        bairro: data.bairro,
+        numero: data.numero,
+        cidade: data.cidade,
+        estado: data.estado,
       })
 
       // 3. Assinatura contratual
@@ -314,10 +330,39 @@ export function EscolaCadastroPage() {
                     <div className="space-y-2"><Label>Nº *</Label><Input placeholder="123" {...register('numero')} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Bairro *</Label><Input placeholder="Bairro" {...register('bairro')} /></div>
-                    <div className="space-y-2"><Label>Cidade *</Label><Input placeholder="Cidade" {...register('cidade')} /></div>
+                    <div className="space-y-2">
+                      <Label>Bairro *</Label>
+                      <Input placeholder="Bairro" {...register('bairro')} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Estado (UF) *</Label>
+                      <Select value={watch('estado')} onValueChange={(val) => setValue('estado', val, { shouldValidate: true })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="UF" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {estados.map((est) => (
+                            <SelectItem key={est.value} value={est.value}>{est.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.estado && <p className="text-xs text-destructive">{errors.estado.message}</p>}
+                    </div>
                   </div>
-                  <div className="space-y-2"><Label>Estado (UF) *</Label><Input maxLength={2} placeholder="UF" {...register('estado')} className="uppercase w-20" />{errors.estado && <p className="text-xs text-destructive">{errors.estado.message}</p>}</div>
+                  <div className="space-y-2">
+                    <Label>Cidade *</Label>
+                    <Select value={watch('cidade')} onValueChange={(val) => setValue('cidade', val, { shouldValidate: true })} disabled={!selectedEstado || loadingCities}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={loadingCities ? "Carregando cidades..." : "Selecione a cidade"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.cidade && <p className="text-xs text-destructive">{errors.cidade.message}</p>}
+                  </div>
                 </div>
               )}
 

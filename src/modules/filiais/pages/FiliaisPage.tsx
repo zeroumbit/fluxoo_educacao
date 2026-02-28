@@ -13,14 +13,22 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Loader2, Building2, Pencil, Trash2, MapPin, AlertTriangle } from 'lucide-react'
-import { mascaraCNPJ, validarCNPJ } from '@/lib/validacoes'
+import { mascaraCNPJ, validarCNPJ, mascaraCEP } from '@/lib/validacoes'
 import { cn } from '@/lib/utils'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useEffect } from 'react'
 import type { Filial } from '@/lib/database.types'
 
 const filialSchema = z.object({
   nome_unidade: z.string().min(2, 'Nome é obrigatório'),
   cnpj_proprio: z.string().optional().or(z.literal('')),
-  endereco_completo: z.string().optional(),
+  cep: z.string().optional().or(z.literal('')),
+  logradouro: z.string().optional().or(z.literal('')),
+  numero: z.string().optional().or(z.literal('')),
+  bairro: z.string().optional().or(z.literal('')),
+  estado: z.string().optional().or(z.literal('')),
+  cidade: z.string().optional().or(z.literal('')),
   is_matriz: z.boolean(),
 }).refine((data) => !data.cnpj_proprio || validarCNPJ(data.cnpj_proprio), {
   message: 'CNPJ inválido',
@@ -54,8 +62,43 @@ export function FiliaisPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome_unidade: '', cnpj_proprio: '', endereco_completo: '', is_matriz: false })
+    reset({ 
+      nome_unidade: '', 
+      cnpj_proprio: '', 
+      cep: '', 
+      logradouro: '', 
+      numero: '', 
+      bairro: '', 
+      estado: '', 
+      cidade: '', 
+      is_matriz: false 
+    })
     setDialogOpen(true)
+  }
+
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
+  const selectedEstado = watch('estado')
+
+  useEffect(() => {
+    if (selectedEstado) {
+      fetchCitiesByUF(selectedEstado)
+    }
+  }, [selectedEstado])
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = mascaraCEP(e.target.value)
+    setValue('cep', valor)
+    if (valor.replace(/\D/g, '').length === 8) {
+      const data = await fetchAddressByCEP(valor)
+      if (data && !('error' in data)) {
+        setValue('logradouro', data.logradouro || '', { shouldValidate: true })
+        setValue('bairro', data.bairro || '', { shouldValidate: true })
+        setValue('estado', data.estado || '', { shouldValidate: true })
+        setTimeout(() => {
+          setValue('cidade', data.cidade || '', { shouldValidate: true })
+        }, 500)
+      }
+    }
   }
 
   const abrirEdicao = (filial: Filial) => {
@@ -63,7 +106,12 @@ export function FiliaisPage() {
     reset({
       nome_unidade: filial.nome_unidade,
       cnpj_proprio: filial.cnpj_proprio || '',
-      endereco_completo: filial.endereco_completo || '',
+      cep: filial.cep || '',
+      logradouro: filial.logradouro || '',
+      numero: filial.numero || '',
+      bairro: filial.bairro || '',
+      estado: filial.estado || '',
+      cidade: filial.cidade || '',
       is_matriz: filial.is_matriz,
     })
     setDialogOpen(true)
@@ -72,18 +120,34 @@ export function FiliaisPage() {
   const onSubmit = async (data: FilialFormValues) => {
     if (!authUser) return
     try {
+      // Valida: só pode existir uma matriz por escola
+      const matrizExistente = filiais?.find(f => f.is_matriz)
+      if (data.is_matriz && matrizExistente && (!editando || editando.id !== matrizExistente.id)) {
+        toast.error('Já existe uma unidade matriz cadastrada. Só é permitido uma matriz por escola.')
+        return
+      }
+
+      const payload = {
+        ...data,
+        cnpj_proprio: data.cnpj_proprio || null,
+        cep: data.cep || null,
+        logradouro: data.logradouro || null,
+        bairro: data.bairro || null,
+        numero: data.numero || null,
+        estado: data.estado || null,
+        cidade: data.cidade || null,
+      }
+
       if (editando) {
         await atualizarFilial.mutateAsync({
           id: editando.id,
-          filial: { ...data, cnpj_proprio: data.cnpj_proprio || null, endereco_completo: data.endereco_completo || null },
+          filial: payload,
         })
         toast.success('Unidade atualizada!')
       } else {
         await criarFilial.mutateAsync({
-          ...data,
+          ...payload,
           tenant_id: authUser.tenantId,
-          cnpj_proprio: data.cnpj_proprio || null,
-          endereco_completo: data.endereco_completo || null,
         })
         toast.success('Unidade criada!')
       }
@@ -157,21 +221,79 @@ export function FiliaisPage() {
                   <p className="text-sm text-destructive">{errors.cnpj_proprio.message}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="endereco_completo">Endereço Completo</Label>
-                <Input 
-                  id="endereco_completo" 
-                  placeholder="Rua, número, bairro, cidade - UF" 
-                  {...register('endereco_completo')} 
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="cep" 
+                      placeholder="00000-000" 
+                      {...register('cep')} 
+                      onChange={handleCepChange}
+                      maxLength={9} 
+                      className="flex-1"
+                    />
+                    {buscandoCep && <Loader2 className="h-4 w-4 animate-spin mt-3" />}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="sm:col-span-3 space-y-2">
+                    <Label htmlFor="logradouro">Rua / Logradouro</Label>
+                    <Input id="logradouro" placeholder="Ex: Rua das Flores" {...register('logradouro')} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="numero">Número</Label>
+                    <Input id="numero" placeholder="Nº" {...register('numero')} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input id="bairro" placeholder="Bairro" {...register('bairro')} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="estado">Estado</Label>
+                    <Select value={watch('estado')} onValueChange={(val) => setValue('estado', val)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="UF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {estados.map(est => <SelectItem key={est.value} value={est.value}>{est.value}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade</Label>
+                    <Select value={watch('cidade')} onValueChange={(val) => setValue('cidade', val)} disabled={!selectedEstado || loadingCities}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={loadingCities ? "..." : "Selecione"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map(city => <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Switch 
-                  id="is_matriz"
-                  checked={isMatriz} 
-                  onCheckedChange={(v) => setValue('is_matriz', v)} 
-                />
-                <Label htmlFor="is_matriz">Esta é a unidade matriz</Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    id="is_matriz"
+                    checked={isMatriz}
+                    onCheckedChange={(v) => setValue('is_matriz', v)}
+                    disabled={!!(filiais?.some(f => f.is_matriz) && !editando?.is_matriz)}
+                  />
+                  <Label htmlFor="is_matriz">Esta é a unidade matriz</Label>
+                </div>
+                {filiais?.some(f => f.is_matriz) && !editando?.is_matriz && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Já existe uma matriz cadastrada. Só é permitido uma matriz por escola.
+                  </p>
+                )}
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -254,7 +376,11 @@ export function FiliaisPage() {
               <div className="mt-6 flex items-start gap-2 text-sm text-muted-foreground border-t pt-4">
                 <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
                 <span className="leading-relaxed">
-                  {filial.endereco_completo || 'Endereço não informado'}
+                  {filial.logradouro
+                    ? `${filial.logradouro}${filial.numero ? `, ${filial.numero}` : ''}${filial.bairro ? ` - ${filial.bairro}` : ''} - ${filial.cidade}/${filial.estado}`
+                    : filial.numero || filial.cidade || filial.estado
+                      ? `${filial.numero || ''}${filial.cidade ? `, ${filial.cidade}` : ''}${filial.estado ? `/${filial.estado}` : ''}`.trim()
+                      : 'Endereço não informado'}
                 </span>
               </div>
             </CardContent>
