@@ -1,7 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, CreditCard, Users, ShieldCheck } from 'lucide-react'
+import { Building2, CreditCard, Users, ShieldCheck, Loader2 } from 'lucide-react'
+import { useSuperAdminDashboard } from '../hooks'
+import { Badge } from '@/components/ui/badge'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export function SuperAdminDashboardPage() {
+  const { data: dashboard, isLoading } = useSuperAdminDashboard()
+
+  if (isLoading || !dashboard) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground font-semibold" />
+      </div>
+    )
+  }
+
+  const { totalEscolas, assinaturasAtivas, totalAlunos, escolasRecentes } = dashboard
+
   return (
     <div className="space-y-6">
       <div>
@@ -20,7 +36,7 @@ export function SuperAdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
+            <div className="text-3xl font-bold">{totalEscolas}</div>
             <p className="text-xs text-muted-foreground mt-1">Instituições cadastradas</p>
           </CardContent>
         </Card>
@@ -35,7 +51,7 @@ export function SuperAdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
+            <div className="text-3xl font-bold">{assinaturasAtivas}</div>
             <p className="text-xs text-muted-foreground mt-1">Planos em vigor</p>
           </CardContent>
         </Card>
@@ -43,15 +59,15 @@ export function SuperAdminDashboardPage() {
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Usuários
+              Total de Alunos
             </CardTitle>
             <div className="h-9 w-9 rounded-lg bg-violet-50 flex items-center justify-center">
               <Users className="h-5 w-5 text-violet-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">-</div>
-            <p className="text-xs text-muted-foreground mt-1">Em todas as unidades</p>
+            <div className="text-3xl font-bold">{totalAlunos}</div>
+            <p className="text-xs text-muted-foreground mt-1">Em toda a plataforma</p>
           </CardContent>
         </Card>
 
@@ -77,9 +93,35 @@ export function SuperAdminDashboardPage() {
             <CardTitle>Escolas Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Controle de escolas e unidades para o Super Admin.
-            </p>
+            <div className="space-y-4">
+              {escolasRecentes.length > 0 ? (
+                escolasRecentes.map((escola: any) => (
+                  <div
+                    key={escola.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-zinc-50/80 hover:bg-zinc-100/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-white rounded-lg border flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-zinc-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">{escola.razao_social}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(escola.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={escola.status_assinatura === 'ativa' ? 'default' : 'secondary'} className="capitalize">
+                      {escola.status_assinatura}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhuma escola cadastrada ainda.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
         <Card className="col-span-3 border-0 shadow-md">

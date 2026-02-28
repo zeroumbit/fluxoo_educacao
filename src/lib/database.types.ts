@@ -85,6 +85,7 @@ export type Escola = {
   telefone: string | null
   cep: string | null
   logradouro: string | null
+  numero: string | null
   bairro: string | null
   cidade: string | null
   estado: string | null
