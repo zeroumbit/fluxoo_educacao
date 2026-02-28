@@ -1,0 +1,64 @@
+import { supabase } from '@/lib/supabase'
+import type { MuralAvisoInsert } from '@/lib/database.types'
+
+export const muralService = {
+  async listar(tenantId: string) {
+    const { data, error } = await supabase
+      .from('mural_avisos')
+      .select('*, turmas(nome)')
+      .eq('tenant_id', tenantId)
+      .order('criado_em', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async listarPorTurma(turmaId: string | null, tenantId: string) {
+    // Retorna avisos gerais (turma_id null) + avisos da turma específica
+    let query = supabase
+      .from('mural_avisos')
+      .select('*, turmas(nome)')
+      .eq('tenant_id', tenantId)
+      .order('criado_em', { ascending: false })
+
+    if (turmaId) {
+      query = query.or(`turma_id.is.null,turma_id.eq.${turmaId}`)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  async criar(aviso: MuralAvisoInsert) {
+    const { data, error } = await supabase
+      .from('mural_avisos')
+      .insert(aviso)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async excluir(id: string) {
+    const { error } = await supabase
+      .from('mural_avisos')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  async listarRecentes(tenantId: string, limite: number = 5) {
+    const { data, error } = await supabase
+      .from('mural_avisos')
+      .select('*, turmas(nome)')
+      .eq('tenant_id', tenantId)
+      .order('criado_em', { ascending: false })
+      .limit(limite)
+
+    if (error) throw error
+    return data
+  },
+}
