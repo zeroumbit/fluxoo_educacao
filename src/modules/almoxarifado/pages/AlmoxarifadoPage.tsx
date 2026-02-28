@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Plus, Loader2, Package, ArrowDownUp, AlertTriangle } from 'lucide-react'
+import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 
 const itemSchema = z.object({ nome: z.string().min(1), categoria: z.string().optional(), quantidade: z.coerce.number().min(0), alerta_estoque_minimo: z.coerce.number().optional(), custo_unitario: z.coerce.number().optional() })
 const movSchema = z.object({ item_id: z.string().min(1), tipo: z.enum(['entrada', 'saida']), quantidade: z.coerce.number().min(1), justificativa: z.string().optional() })

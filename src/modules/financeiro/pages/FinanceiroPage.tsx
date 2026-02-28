@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Plus, Loader2, CreditCard, Check } from 'lucide-react'
 import { isPast } from 'date-fns'
+import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione um aluno'),
@@ -107,37 +108,74 @@ export function FinanceiroPage() {
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Nova Cobrança</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>Nova Cobrança</DialogTitle>
+                <DialogDescription>
+                  Preencha as informações para criar uma nova cobrança.
+                </DialogDescription>
+              </DialogHeader>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Aluno *</Label>
+                  <Label htmlFor="aluno_id">Aluno *</Label>
                   <Select onValueChange={(v) => setValue('aluno_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o aluno" /></SelectTrigger>
-                    <SelectContent>{alunos?.map((a) => <SelectItem key={a.id} value={a.id}>{a.nome_completo}</SelectItem>)}</SelectContent>
+                    <SelectTrigger id="aluno_id" className="w-full">
+                      <SelectValue placeholder="Selecione o aluno" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {alunos?.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{a.nome_completo}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
-                  {errors.aluno_id && <p className="text-sm text-destructive">{errors.aluno_id.message}</p>}
+                  {errors.aluno_id && (
+                    <p className="text-sm text-destructive">{errors.aluno_id.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Descrição *</Label>
-                  <Input placeholder="Ex: Mensalidade janeiro/2024" {...register('descricao')} />
-                  {errors.descricao && <p className="text-sm text-destructive">{errors.descricao.message}</p>}
+                  <Label htmlFor="descricao">Descrição *</Label>
+                  <Input 
+                    id="descricao" 
+                    placeholder="Ex: Mensalidade janeiro/2024" 
+                    {...register('descricao')} 
+                  />
+                  {errors.descricao && (
+                    <p className="text-sm text-destructive">{errors.descricao.message}</p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Valor (R$) *</Label>
-                    <Input type="number" step="0.01" placeholder="0,00" {...register('valor')} />
-                    {errors.valor && <p className="text-sm text-destructive">{errors.valor.message}</p>}
+                    <Label htmlFor="valor">Valor (R$) *</Label>
+                    <Input 
+                      id="valor" 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="0,00" 
+                      {...register('valor')} 
+                    />
+                    {errors.valor && (
+                      <p className="text-sm text-destructive">{errors.valor.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Vencimento *</Label>
-                    <Input type="date" {...register('data_vencimento')} />
-                    {errors.data_vencimento && <p className="text-sm text-destructive">{errors.data_vencimento.message}</p>}
+                    <Label htmlFor="data_vencimento">Vencimento *</Label>
+                    <Input 
+                      id="data_vencimento" 
+                      type="date" 
+                      {...register('data_vencimento')} 
+                    />
+                    {errors.data_vencimento && (
+                      <p className="text-sm text-destructive">{errors.data_vencimento.message}</p>
+                    )}
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar'}</Button>
-                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar'}
+                  </Button>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>

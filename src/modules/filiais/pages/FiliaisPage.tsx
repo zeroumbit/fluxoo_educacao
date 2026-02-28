@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Plus, Loader2, Building2, Pencil, Trash2, MapPin, AlertTriangle } from 'lucide-react'
 import { mascaraCNPJ, validarCNPJ } from '@/lib/validacoes'
+import { cn } from '@/lib/utils'
 import type { Filial } from '@/lib/database.types'
 
 const filialSchema = z.object({
@@ -125,35 +126,61 @@ export function FiliaisPage() {
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>{editando ? 'Editar Unidade' : 'Nova Unidade'}</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editando ? 'Editar Unidade' : 'Nova Unidade'}</DialogTitle>
+              <DialogDescription>
+                Preencha as informações para cadastrar a unidade.
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label>Nome da Unidade *</Label>
-                <Input placeholder="Ex: Unidade Centro" {...register('nome_unidade')} />
-                {errors.nome_unidade && <p className="text-sm text-destructive">{errors.nome_unidade.message}</p>}
+                <Label htmlFor="nome_unidade">Nome da Unidade *</Label>
+                <Input 
+                  id="nome_unidade" 
+                  placeholder="Ex: Unidade Centro" 
+                  {...register('nome_unidade')} 
+                />
+                {errors.nome_unidade && (
+                  <p className="text-sm text-destructive">{errors.nome_unidade.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>CNPJ Próprio</Label>
-                <Input 
-                  placeholder="00.000.000/0000-00 (opcional)" 
-                  {...register('cnpj_proprio')} 
+                <Label htmlFor="cnpj_proprio">CNPJ Próprio</Label>
+                <Input
+                  id="cnpj_proprio"
+                  placeholder="00.000.000/0000-00 (opcional)"
+                  {...register('cnpj_proprio')}
                   onChange={handleCnpjChange}
                   maxLength={18}
                 />
-                {errors.cnpj_proprio && <p className="text-sm text-destructive">{errors.cnpj_proprio.message}</p>}
+                {errors.cnpj_proprio && (
+                  <p className="text-sm text-destructive">{errors.cnpj_proprio.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Endereço Completo</Label>
-                <Input placeholder="Rua, número, bairro, cidade - UF" {...register('endereco_completo')} />
+                <Label htmlFor="endereco_completo">Endereço Completo</Label>
+                <Input 
+                  id="endereco_completo" 
+                  placeholder="Rua, número, bairro, cidade - UF" 
+                  {...register('endereco_completo')} 
+                />
               </div>
               <div className="flex items-center gap-3">
-                <Switch checked={isMatriz} onCheckedChange={(v) => setValue('is_matriz', v)} />
-                <Label>Esta é a unidade matriz</Label>
+                <Switch 
+                  id="is_matriz"
+                  checked={isMatriz} 
+                  onCheckedChange={(v) => setValue('is_matriz', v)} 
+                />
+                <Label htmlFor="is_matriz">Esta é a unidade matriz</Label>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}</Button>
-              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
@@ -179,35 +206,57 @@ export function FiliaisPage() {
       </Dialog>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filiais?.map((filial) => (
-          <Card key={filial.id} className="border-0 shadow-md hover:shadow-lg transition-shadow group">
-            <CardContent className="pt-6">
+        {filiais?.map((filial: Filial) => (
+          <Card 
+            key={filial.id} 
+            className={cn(
+              "border-0 shadow-md hover:shadow-lg transition-all group relative overflow-hidden",
+              filial.is_matriz && "ring-2 ring-indigo-500/20 bg-gradient-to-br from-white to-indigo-50/10"
+            )}
+          >
+            {filial.is_matriz && (
+              <div className="absolute top-0 right-0 p-3">
+                <Badge className="bg-indigo-600 text-white shadow-sm border-0">UNIDADE MATRIZ</Badge>
+              </div>
+            )}
+            <CardContent className="pt-8">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-violet-600" />
+                  <div className={cn(
+                    "h-12 w-12 rounded-xl flex items-center justify-center transition-colors",
+                    filial.is_matriz ? "bg-indigo-100 text-indigo-600" : "bg-violet-50 text-violet-600"
+                  )}>
+                    <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{filial.nome_unidade}</h3>
-                    <div className="flex gap-1 mt-1">
-                      {filial.is_matriz && <Badge className="bg-indigo-100 text-indigo-800 text-xs">Matriz</Badge>}
-                      {filial.cnpj_proprio && <Badge variant="outline" className="text-xs">{filial.cnpj_proprio}</Badge>}
+                    <h3 className="font-bold text-zinc-900 leading-tight">{filial.nome_unidade}</h3>
+                    <div className="flex gap-1 mt-1.5">
+                      {filial.cnpj_proprio && (
+                        <Badge variant="outline" className="text-[10px] font-mono tracking-wider opacity-70">
+                          {filial.cnpj_proprio}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(filial)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(filial)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                   {!filial.is_matriz && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(filial.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(filial.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
               </div>
-              {filial.endereco_completo && (
-                <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {filial.endereco_completo}
-                </div>
-              )}
+              
+              <div className="mt-6 flex items-start gap-2 text-sm text-muted-foreground border-t pt-4">
+                <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  {filial.endereco_completo || 'Endereço não informado'}
+                </span>
+              </div>
             </CardContent>
           </Card>
         ))}

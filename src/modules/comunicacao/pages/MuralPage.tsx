@@ -94,22 +94,42 @@ export function MuralPage() {
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Novo Aviso</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Novo Aviso</DialogTitle>
+              <DialogDescription>
+                Publique um aviso para turmas específicas ou toda a escola.
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label>Título *</Label>
-                <Input placeholder="Digite o título do aviso" {...register('titulo')} />
-                {errors.titulo && <p className="text-sm text-destructive">{errors.titulo.message}</p>}
+                <Label htmlFor="titulo">Título *</Label>
+                <Input 
+                  id="titulo" 
+                  placeholder="Digite o título do aviso" 
+                  {...register('titulo')} 
+                />
+                {errors.titulo && (
+                  <p className="text-sm text-destructive">{errors.titulo.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Conteúdo *</Label>
-                <Textarea rows={4} placeholder="Digite o conteúdo do aviso..." {...register('conteudo')} />
-                {errors.conteudo && <p className="text-sm text-destructive">{errors.conteudo.message}</p>}
+                <Label htmlFor="conteudo">Conteúdo *</Label>
+                <Textarea 
+                  id="conteudo" 
+                  rows={4} 
+                  placeholder="Digite o conteúdo do aviso..." 
+                  {...register('conteudo')} 
+                />
+                {errors.conteudo && (
+                  <p className="text-sm text-destructive">{errors.conteudo.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Público alvo</Label>
+                <Label htmlFor="publico_alvo">Público alvo</Label>
                 <Select defaultValue="todos" onValueChange={(v) => setValue('publico_alvo', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="publico_alvo" className="w-full">
+                    <SelectValue placeholder="Selecione o público" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="turma">Turma específica</SelectItem>
@@ -117,18 +137,26 @@ export function MuralPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Turma (opcional)</Label>
+                <Label htmlFor="turma_id">Turma (opcional)</Label>
                 <Select onValueChange={(v) => setValue('turma_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione uma turma (opcional)" /></SelectTrigger>
+                  <SelectTrigger id="turma_id" className="w-full">
+                    <SelectValue placeholder="Selecione uma turma (opcional)" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {turmas?.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                    {turmas?.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Publicar'}</Button>
-              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Publicar'}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>

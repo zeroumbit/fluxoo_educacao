@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 export interface DashboardData {
   totalAlunosAtivos: number
   limiteAlunos: number
+  statusAssinatura: string
+  metodoPagamento: string
   totalCobrancasAbertas: number
   avisosRecentes: Array<{
     id: string
@@ -24,7 +26,7 @@ export const dashboardService = {
   async buscarDados(tenantId: string): Promise<DashboardData> {
     const [alunosRes, escolaRes, cobrancasRes, avisosRes, escolaInfoRes, filiaisRes, turmasRes] = await Promise.all([
       supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
-      supabase.from('escolas').select('limite_alunos_contratado').eq('id', tenantId).maybeSingle(),
+      supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
       supabase.from('cobrancas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
       supabase.from('mural_avisos').select('*, turmas(nome)').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(5),
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
@@ -40,6 +42,8 @@ export const dashboardService = {
     return {
       totalAlunosAtivos: alunosRes.count || 0,
       limiteAlunos: (escolaRes.data as any)?.limite_alunos_contratado || 0,
+      statusAssinatura: (escolaRes.data as any)?.status_assinatura || 'pendente',
+      metodoPagamento: (escolaRes.data as any)?.metodo_pagamento || 'pix',
       totalCobrancasAbertas: cobrancasRes.count || 0,
       avisosRecentes: (avisosRes.data || []) as DashboardData['avisosRecentes'],
       onboarding: {

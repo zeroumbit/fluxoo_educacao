@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Plus, Loader2, GraduationCap } from 'lucide-react'
+import { Plus, Loader2, GraduationCap, User, Clock } from 'lucide-react'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),
@@ -28,6 +28,7 @@ const matriculaSchema = z.object({
 })
 
 const turnoLabels: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', integral: 'Integral', noturno: 'Noturno' }
+const turnoIcons: Record<string, typeof Clock> = { manha: Clock, tarde: Clock, integral: Clock, noturno: Clock }
 
 export function MatriculaPage() {
   const { authUser } = useAuth()
@@ -36,7 +37,14 @@ export function MatriculaPage() {
   const criar = useCriarMatricula()
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const form = useForm({ resolver: zodResolver(matriculaSchema), defaultValues: { tipo: 'nova' as const, data_matricula: new Date().toISOString().split('T')[0] } })
+  const form = useForm({ 
+    resolver: zodResolver(matriculaSchema), 
+    defaultValues: { 
+      tipo: 'nova' as const, 
+      data_matricula: new Date().toISOString().split('T')[0],
+      ano_letivo: new Date().getFullYear(),
+    } 
+  })
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -48,7 +56,7 @@ export function MatriculaPage() {
     } catch { toast.error('Erro ao criar matrícula') }
   }
 
-  if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
+  if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
 
   return (
     <div className="space-y-6">
@@ -59,65 +67,147 @@ export function MatriculaPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md"><Plus className="mr-2 h-4 w-4" /> Nova Matrícula</Button>
+            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
+              <Plus className="mr-2 h-4 w-4" /> Nova Matrícula
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Nova Matrícula / Rematrícula</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Nova Matrícula / Rematrícula</DialogTitle>
+              <DialogDescription>
+                Preencha as informações para realizar a matrícula do aluno.
+              </DialogDescription>
+            </DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label>Tipo de Operação</Label>
                 <RadioGroup defaultValue="nova" onValueChange={(v) => form.setValue('tipo', v as any)} className="flex gap-4">
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="nova" id="nova" /><Label htmlFor="nova">Nova Matrícula</Label></div>
-                  <div className="flex items-center space-x-2"><RadioGroupItem value="rematricula" id="rematricula" /><Label htmlFor="rematricula">Rematrícula</Label></div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="nova" id="nova" />
+                    <Label htmlFor="nova" className="cursor-pointer">Nova Matrícula</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rematricula" id="rematricula" />
+                    <Label htmlFor="rematricula" className="cursor-pointer">Rematrícula</Label>
+                  </div>
                 </RadioGroup>
               </div>
+
               <div className="space-y-2">
-                <Label>Aluno *</Label>
+                <Label htmlFor="aluno_id">Aluno *</Label>
                 <Select onValueChange={(v) => form.setValue('aluno_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Buscar aluno..." /></SelectTrigger>
-                  <SelectContent>{alunos?.map((a: any) => <SelectItem key={a.id} value={a.id}>{a.nome_completo}</SelectItem>)}</SelectContent>
+                  <SelectTrigger id="aluno_id" className="w-full">
+                    <SelectValue placeholder="Selecione o aluno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {alunos?.map((a: any) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {a.nome_completo}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-                {form.formState.errors.aluno_id && <p className="text-sm text-destructive">{form.formState.errors.aluno_id.message}</p>}
+                {form.formState.errors.aluno_id && (
+                  <p className="text-sm text-destructive">{form.formState.errors.aluno_id.message}</p>
+                )}
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Ano Letivo *</Label>
-                  <Input type="number" defaultValue={new Date().getFullYear()} {...form.register('ano_letivo')} />
+                  <Label htmlFor="ano_letivo">Ano Letivo *</Label>
+                  <Input 
+                    id="ano_letivo" 
+                    type="number" 
+                    {...form.register('ano_letivo')} 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Série/Ano *</Label>
-                  <Input placeholder="Ex: 1º Ano EM" {...form.register('serie_ano')} />
-                  {form.formState.errors.serie_ano && <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>}
+                  <Label htmlFor="serie_ano">Série/Ano *</Label>
+                  <Input 
+                    id="serie_ano" 
+                    placeholder="Ex: 1º Ano EM" 
+                    {...form.register('serie_ano')} 
+                  />
+                  {form.formState.errors.serie_ano && (
+                    <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>
+                  )}
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Turno *</Label>
+                  <Label htmlFor="turno">Turno *</Label>
                   <Select onValueChange={(v) => form.setValue('turno', v as any)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger id="turno" className="w-full">
+                      <SelectValue placeholder="Selecione o turno" />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manha">Manhã</SelectItem>
-                      <SelectItem value="tarde">Tarde</SelectItem>
-                      <SelectItem value="integral">Integral</SelectItem>
-                      <SelectItem value="noturno">Noturno</SelectItem>
+                      <SelectItem value="manha">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-amber-600" />
+                          Manhã
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="tarde">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-blue-600" />
+                          Tarde
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="integral">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-emerald-600" />
+                          Integral
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="noturno">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-indigo-600" />
+                          Noturno
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                  {form.formState.errors.turno && (
+                    <p className="text-sm text-destructive">{form.formState.errors.turno.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Data da Matrícula</Label>
-                  <Input type="date" {...form.register('data_matricula')} />
+                  <Label htmlFor="data_matricula">Data da Matrícula</Label>
+                  <Input 
+                    id="data_matricula" 
+                    type="date" 
+                    {...form.register('data_matricula')} 
+                  />
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label>Valor da Matrícula (R$)</Label>
-                <Input type="number" step="0.01" placeholder="0,00" {...form.register('valor_matricula')} />
+                <Label htmlFor="valor_matricula">Valor da Matrícula (R$)</Label>
+                <Input 
+                  id="valor_matricula" 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0,00" 
+                  {...form.register('valor_matricula')} 
+                />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Matricular'}
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancelar
                 </Button>
-              </div>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Matricular'
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
@@ -126,20 +216,42 @@ export function MatriculaPage() {
       <Card className="border-0 shadow-md">
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow><TableHead>Aluno</TableHead><TableHead>Tipo</TableHead><TableHead>Ano</TableHead><TableHead>Série</TableHead><TableHead>Turno</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Aluno</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Ano</TableHead>
+                <TableHead>Série</TableHead>
+                <TableHead>Turno</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {matriculas?.map((m: any) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-bold">{m.aluno?.nome_completo || '—'}</TableCell>
-                  <TableCell><Badge variant={m.tipo === 'nova' ? 'default' : 'outline'}>{m.tipo === 'nova' ? 'Nova' : 'Rematrícula'}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant={m.tipo === 'nova' ? 'default' : 'outline'}>
+                      {m.tipo === 'nova' ? 'Nova' : 'Rematrícula'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{m.ano_letivo}</TableCell>
                   <TableCell>{m.serie_ano}</TableCell>
                   <TableCell>{turnoLabels[m.turno] || m.turno}</TableCell>
-                  <TableCell><Badge className={m.status === 'ativa' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600'}>{m.status}</Badge></TableCell>
+                  <TableCell>
+                    <Badge className={m.status === 'ativa' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600'}>
+                      {m.status}
+                    </Badge>
+                  </TableCell>
                 </TableRow>
               ))}
               {(!matriculas || matriculas.length === 0) && (
-                <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground"><GraduationCap className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />Nenhuma matrícula registrada.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <GraduationCap className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
+                    Nenhuma matrícula registrada.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>

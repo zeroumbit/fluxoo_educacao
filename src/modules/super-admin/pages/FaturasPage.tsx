@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { format } from 'date-fns'
+import { format, isBefore, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function FaturasPage() {
@@ -19,16 +20,33 @@ export function FaturasPage() {
   const confirmar = useConfirmarFatura()
   const { authUser } = useAuth()
   const [search, setSearch] = useState('')
+  const [isEarlyConfirmOpen, setIsEarlyConfirmOpen] = useState(false)
+  const [faturaEarlyConfirm, setFaturaEarlyConfirm] = useState<any | null>(null)
 
   const filtered = faturas?.filter((f: any) =>
     f.escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const handleConfirmarClick = (fatura: any) => {
+    const hoje = new Date()
+    const vencimento = fatura.data_vencimento ? parseISO(fatura.data_vencimento) : null
+    
+    // Verifica se está tentando aprovar antes do vencimento
+    if (vencimento && isBefore(hoje, vencimento)) {
+      setFaturaEarlyConfirm(fatura)
+      setIsEarlyConfirmOpen(true)
+    } else {
+      handleConfirmar(fatura.id)
+    }
+  }
 
   const handleConfirmar = async (id: string) => {
     if (!authUser) return
     try {
       await confirmar.mutateAsync({ id, adminId: authUser.user.id })
       toast.success('Fatura confirmada como paga!')
+      setFaturaEarlyConfirm(null)
+      setIsEarlyConfirmOpen(false)
     } catch {
       toast.error('Erro ao confirmar fatura.')
     }
@@ -152,7 +170,7 @@ export function FaturasPage() {
                             <DropdownMenuContent align="end">
                               {f.status === 'pendente_confirmacao' && (
                                 <DropdownMenuItem
-                                  onClick={() => handleConfirmar(f.id)}
+                                  onClick={() => handleConfirmarClick(f)}
                                   className="text-emerald-600 font-bold"
                                 >
                                   <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar Pagamento
@@ -171,6 +189,43 @@ export function FaturasPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Modal de Confirmação Antecipada */}
+      <Dialog open={isEarlyConfirmOpen} onOpenChange={setIsEarlyConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              Confirmação Antecipada
+            </DialogTitle>
+            <DialogDescription>
+              O pagamento desta fatura ainda não venceu. Tem certeza que deseja confirmar?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 my-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <div className="text-sm text-amber-800">
+                <p className="font-semibold mb-1">Detalhes da fatura:</p>
+                <p><strong>Escola:</strong> {faturaEarlyConfirm?.escola?.razao_social}</p>
+                <p><strong>Valor:</strong> R$ {Number(faturaEarlyConfirm?.valor).toFixed(2)}</p>
+                <p><strong>Vencimento:</strong> {faturaEarlyConfirm?.data_vencimento ? format(new Date(faturaEarlyConfirm.data_vencimento), 'dd/MM/yyyy') : '—'}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEarlyConfirmOpen(false)}>Cancelar</Button>
+            <Button 
+              variant="default" 
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={() => faturaEarlyConfirm && handleConfirmar(faturaEarlyConfirm.id)}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Confirmar Mesmo Assim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

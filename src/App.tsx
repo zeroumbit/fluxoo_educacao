@@ -31,6 +31,7 @@ import { ContasPagarPage } from '@/modules/financeiro/pages/ContasPagarPage'
 import { DocumentosPage } from '@/modules/documentos/pages/DocumentosPage'
 import { AlmoxarifadoPage } from '@/modules/almoxarifado/pages/AlmoxarifadoPage'
 import { PerfilEscolaPage } from '@/modules/escola-perfil/pages/PerfilEscolaPage'
+import { PlanoPage } from '@/modules/assinatura/pages/PlanoPage'
 
 // Pages - Super Admin
 import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
@@ -132,6 +133,7 @@ function App() {
               <Route path="/documentos" element={<DocumentosPage />} />
               <Route path="/almoxarifado" element={<AlmoxarifadoPage />} />
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
+              <Route path="/plano" element={<PlanoPage />} />
             </Route>
 
             {/* Portal do Responsável */}

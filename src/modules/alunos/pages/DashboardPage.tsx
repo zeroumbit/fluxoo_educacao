@@ -7,8 +7,9 @@ import { ptBR } from 'date-fns/locale'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 
 export function DashboardPage() {
-  const { data: dashboard, isLoading } = useDashboard()
+  const { data: dashboard, isLoading, isError } = useDashboard()
 
+  // 1. Estado de Carregamento Inicial (SÓ mostra se realmente não houver nada no cache)
   if (isLoading && !dashboard) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -17,24 +18,59 @@ export function DashboardPage() {
     )
   }
 
-  if (!dashboard && !isLoading) {
+  // 2. Erro Crítico de Carregamento
+  if (isError && !dashboard) {
     return (
-      <div className="p-8 text-center bg-zinc-50 rounded-2xl border-2 border-dashed">
-        <h3 className="text-lg font-bold text-zinc-900">Configuração Pendente</h3>
+      <div className="p-12 text-center bg-zinc-50 rounded-2xl border-2 border-dashed border-zinc-200">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-zinc-900">Erro ao carregar dados</h3>
         <p className="text-sm text-muted-foreground mt-2">
-          Não conseguimos carregar os dados da sua escola. <br/> 
-          Se você acabou de se cadastrar, verifique se confirmou o e-mail ou se o pagamento foi processado.
+          Verifique sua conexão com a internet ou tente recarregar a página.
         </p>
       </div>
     )
   }
 
-  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding } = dashboard
+  // 3. Garantia de Dados (Se chegamos aqui sem dashboard e sem estar carregando, algo está errado)
+  if (!dashboard) return null
+
+  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding, statusAssinatura, metodoPagamento } = dashboard
   const percentualLimite = limiteAlunos ? (totalAlunosAtivos / limiteAlunos) * 100 : 0
   const proximoDoLimite = percentualLimite >= 80
 
+  // 4. Lógica de Bloqueio por Aprovação Pendente
+  // Só bloqueia se: Status não é ativo E o método é manual (PIX/Boleto)
+  const isPendente = statusAssinatura !== 'ativa'
+  const isManual = metodoPagamento === 'pix' || metodoPagamento === 'boleto' || metodoPagamento === 'manual'
+  const mostrarAvisoAprovacao = isPendente && isManual
+
+  if (mostrarAvisoAprovacao && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-2xl mx-auto space-y-6 bg-white p-8 rounded-3xl border shadow-sm my-8">
+        <div className="h-24 w-24 rounded-3xl bg-amber-50 flex items-center justify-center animate-bounce">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+        </div>
+        <div className="space-y-3">
+          <h1 className="text-3xl font-black text-zinc-900 leading-tight">Aprovação em Andamento</h1>
+          <p className="text-muted-foreground text-lg leading-relaxed">
+            Seja bem-vindo ao <strong>Fluxoo Educação</strong>! <br/>
+            Identificamos que seu cadastro ainda está em fase de aprovação pelo nosso time financeiro.
+          </p>
+        </div>
+        <div className="p-6 bg-amber-50/50 border border-amber-100 rounded-2xl w-full">
+          <p className="text-sm text-amber-800 font-medium leading-relaxed">
+            Se você realizou o pagamento via <strong>PIX</strong>, o prazo de liberação é de até 24h úteis. 
+            Assim que aprovado, todas as funcionalidades serão liberadas automaticamente.
+          </p>
+        </div>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold opacity-50">Powered by Fluxoo &bull; 2026</p>
+      </div>
+    )
+  }
+
+  // 5. Renderização da Dashboard Real
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
@@ -46,9 +82,9 @@ export function DashboardPage() {
 
       {/* Cards de métricas */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Alunos Ativos
             </CardTitle>
             <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -74,9 +110,9 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Cobranças Abertas
             </CardTitle>
             <div className="h-9 w-9 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -90,9 +126,9 @@ export function DashboardPage() {
         </Card>
 
         {proximoDoLimite && (
-          <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-amber-50 to-orange-50">
+          <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-amber-50 to-orange-50 ring-1 ring-amber-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-amber-800">
+              <CardTitle className="text-sm font-medium text-amber-800 uppercase tracking-wider">
                 Alerta de Limite
               </CardTitle>
               <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -108,9 +144,9 @@ export function DashboardPage() {
           </Card>
         )}
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Avisos Publicados
             </CardTitle>
             <div className="h-9 w-9 rounded-lg bg-violet-50 flex items-center justify-center">
@@ -119,50 +155,51 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{avisosRecentes.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">nos últimos avisos</p>
+            <p className="text-xs text-muted-foreground mt-1">nos últimos 30 dias</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Avisos recentes */}
       <Card className="border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-lg">Avisos Recentes</CardTitle>
+        <CardHeader className="border-b bg-zinc-50/30">
+          <CardTitle className="text-lg">Atividades e Mural de Avisos</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {avisosRecentes.length > 0 ? (
-            <div className="space-y-4">
-              {avisosRecentes.map((aviso) => (
+            <div className="divide-y divide-zinc-100">
+              {avisosRecentes.map((aviso: any) => (
                 <div
                   key={aviso.id}
-                  className="flex items-start gap-4 p-4 rounded-lg bg-zinc-50/80 hover:bg-zinc-100/80 transition-colors"
+                  className="flex items-start gap-4 p-5 hover:bg-zinc-50/80 transition-colors"
                 >
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center shrink-0">
+                  <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
                     <Megaphone className="h-5 w-5 text-indigo-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-sm truncate">{aviso.titulo}</h4>
-                      <Badge variant="secondary" className="text-xs shrink-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h4 className="font-bold text-sm text-zinc-900 truncate">{aviso.titulo}</h4>
+                      <Badge variant="secondary" className="text-xs font-normal">
                         {aviso.turmas ? aviso.turmas.nome : 'Todos'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                       {aviso.conteudo}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(aviso.created_at), "dd 'de' MMMM 'às' HH:mm", {
-                        locale: ptBR,
-                      })}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                       <p className="text-xs text-zinc-400">
+                        Publicado em {format(new Date(aviso.created_at), "dd 'de' MMMM", { locale: ptBR })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum aviso publicado ainda.
-            </p>
+            <div className="text-center py-12 text-muted-foreground">
+              <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">Nenhum aviso ou material publicado ainda.</p>
+            </div>
           )}
         </CardContent>
       </Card>
