@@ -42,17 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: funcionario } = await supabase
       .from('funcionarios')
       .select('*')
-      .eq('user_id', user.id)
-      .eq('ativo', true)
+      .eq('id', user.id)
       .single()
 
     if (funcionario) {
+      const f = funcionario as Funcionario
       setAuthUser({
         user,
         session,
-        tenantId: (funcionario as Funcionario).tenant_id,
-        role: (funcionario as Funcionario).role as UserRole,
-        nome: (funcionario as Funcionario).nome,
+        tenantId: f.tenant_id || '',
+        role: 'funcionario',
+        nome: f.nome_completo,
       })
       return
     }
@@ -61,16 +61,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: responsavel } = await supabase
       .from('responsaveis')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (responsavel) {
+      const r = responsavel as Responsavel
       setAuthUser({
         user,
         session,
-        tenantId: (responsavel as Responsavel).tenant_id,
+        tenantId: '',
         role: 'responsavel',
-        nome: (responsavel as Responsavel).nome,
+        nome: r.nome,
       })
       return
     }

@@ -328,3 +328,5 @@ export type AuditLogUpdate = Partial<AuditLogInsert>
 export type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
 export type CobrancaStatus = 'a_vencer' | 'pago' | 'atrasado' | 'cancelado'
 export type StatusAssinatura = 'pendente' | 'ativa' | 'cancelada' | 'expirada'
+// ========== AUTH TYPES ==========
+export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'

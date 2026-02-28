@@ -23,13 +23,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Super admin tem acesso total a todas as rotas
-  if (authUser.role === 'super_admin') {
-    return <>{children}</>
-  }
-
   if (allowedRoles && !allowedRoles.includes(authUser.role)) {
-    // Redireciona responsável para portal
+    // Redireciona de acordo com o papel
+    if (authUser.role === 'super_admin') {
+      return <Navigate to="/admin/dashboard" replace />
+    }
     if (authUser.role === 'responsavel') {
       return <Navigate to="/portal" replace />
     }

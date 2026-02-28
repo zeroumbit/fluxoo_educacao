@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '@/modules/auth/AuthContext'
 import { ProtectedRoute } from '@/modules/auth/ProtectedRoute'
 import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
+import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
 
 // Pages - Admin
@@ -18,6 +19,9 @@ import { MuralPage } from '@/modules/comunicacao/pages/MuralPage'
 import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
 import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
 import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
+
+// Pages - Super Admin
+import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
 
 // Pages - Portal
 import { PortalAlunoPage } from '@/modules/auth/pages/PortalAlunoPage'
@@ -46,6 +50,7 @@ function RootRedirect() {
   }
 
   if (!authUser) return <Navigate to="/login" replace />
+  if (authUser.role === 'super_admin') return <Navigate to="/admin/dashboard" replace />
   if (authUser.role === 'responsavel') return <Navigate to="/portal" replace />
   return <Navigate to="/dashboard" replace />
 }
@@ -65,10 +70,25 @@ function App() {
             {/* Cadastro de Escola - Público */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
 
-            {/* Admin Routes */}
+            {/* Super Admin Routes */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'funcionario']}>
+                <ProtectedRoute allowedRoles={['super_admin']}>
+                  <SuperAdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/admin/dashboard" element={<SuperAdminDashboardPage />} />
+              <Route path="/admin/escolas" element={<div className="p-8"><h1 className="text-2xl font-bold">Gestão de Escolas</h1><p>Em breve: Lista de tenants e configurações globais.</p></div>} />
+              <Route path="/admin/planos" element={<div className="p-8"><h1 className="text-2xl font-bold">Planos e Preços</h1><p>Em breve: Gestão de planos da plataforma.</p></div>} />
+              <Route path="/admin/assinaturas" element={<div className="p-8"><h1 className="text-2xl font-bold">Assinaturas</h1><p>Em breve: Histórico global de pagamentos.</p></div>} />
+              <Route path="/admin/logs" element={<div className="p-8"><h1 className="text-2xl font-bold">Logs do Sistema</h1><p>Em breve: Auditoria global.</p></div>} />
+            </Route>
+
+            {/* Admin Routes (School) */}
+            <Route
+              element={
+                <ProtectedRoute allowedRoles={['gestor', 'admin', 'funcionario']}>
                   <AdminLayout />
                 </ProtectedRoute>
               }

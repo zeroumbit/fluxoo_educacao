@@ -19,6 +19,7 @@ const cadastroSchema = z.object({
   cnpj: z.string().min(18, 'CNPJ inválido'),
   cep: z.string().min(9, 'CEP inválido'),
   logradouro: z.string().optional(),
+  numero: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   estado: z.string().max(2).optional(),
@@ -130,6 +131,7 @@ export function EscolaCadastroPage() {
         telefone: data.telefone || null,
         cep: data.cep || null,
         logradouro: data.logradouro || null,
+        numero: data.numero || null,
         bairro: data.bairro || null,
         cidade: data.cidade || null,
         estado: data.estado || null,
@@ -240,7 +242,10 @@ export function EscolaCadastroPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Logradouro</Label>
-                    <Input placeholder="Rua, avenida, etc." {...register('logradouro')} />
+                    <div className="flex gap-2">
+                      <Input placeholder="Rua, avenida, etc." className="flex-1" {...register('logradouro')} />
+                      <Input placeholder="Número" className="w-32" {...register('numero')} />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

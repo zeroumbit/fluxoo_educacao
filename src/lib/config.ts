@@ -2,7 +2,7 @@
  * Configurações do Sistema
  */
 
-export const SUPER_ADMIN_EMAIL = 'zeroumti@gmail.com'
+export const SUPER_ADMIN_EMAIL = 'zeroumbit@gmail.com'
 
 /**
  * Verifica se um e-mail pertence ao super admin
