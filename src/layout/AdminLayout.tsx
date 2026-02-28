@@ -22,6 +22,7 @@ import {
   LogOut,
   GraduationCap,
   ChevronRight,
+  Building2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
   { name: 'Mural', href: '/mural', icon: Megaphone },
   { name: 'Financeiro', href: '/financeiro', icon: CreditCard },
+  { name: 'Unidades', href: '/filiais', icon: Building2 },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

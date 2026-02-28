@@ -4,7 +4,7 @@ export const assinaturaService = {
   async buscarEscola(tenantId: string) {
     const { data, error } = await supabase
       .from('escolas')
-      .select('*, planos(*)')
+      .select('*, planos(nome, valor_por_aluno)')
       .eq('id', tenantId)
       .single()
 
@@ -15,11 +15,11 @@ export const assinaturaService = {
   async buscarLimiteAlunos(tenantId: string) {
     const { data, error } = await supabase
       .from('escolas')
-      .select('limite_alunos')
+      .select('limite_alunos_contratado')
       .eq('id', tenantId)
       .single()
 
     if (error) throw error
-    return data?.limite_alunos || 0
+    return data?.limite_alunos_contratado || 0
   },
 }

@@ -1,34 +1,23 @@
 import { supabase } from '@/lib/supabase'
-import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
+import type { FilialInsert, FilialUpdate } from '@/lib/database.types'
 
-export const turmaService = {
+export const filialService = {
   async listar(tenantId: string) {
     const { data, error } = await supabase
-      .from('turmas')
-      .select('*, filiais(nome_unidade)')
-      .eq('tenant_id', tenantId)
-      .order('nome')
-
-    if (error) throw error
-    return data
-  },
-
-  async buscarPorId(id: string, tenantId: string) {
-    const { data, error } = await supabase
-      .from('turmas')
+      .from('filiais')
       .select('*')
-      .eq('id', id)
       .eq('tenant_id', tenantId)
-      .single()
+      .order('is_matriz', { ascending: false })
+      .order('nome_unidade')
 
     if (error) throw error
     return data
   },
 
-  async criar(turma: TurmaInsert) {
+  async criar(filial: FilialInsert) {
     const { data, error } = await supabase
-      .from('turmas')
-      .insert(turma)
+      .from('filiais')
+      .insert(filial)
       .select()
       .single()
 
@@ -36,10 +25,10 @@ export const turmaService = {
     return data
   },
 
-  async atualizar(id: string, turma: TurmaUpdate) {
+  async atualizar(id: string, filial: FilialUpdate) {
     const { data, error } = await supabase
-      .from('turmas')
-      .update(turma)
+      .from('filiais')
+      .update(filial)
       .eq('id', id)
       .select()
       .single()
@@ -50,7 +39,7 @@ export const turmaService = {
 
   async excluir(id: string) {
     const { error } = await supabase
-      .from('turmas')
+      .from('filiais')
       .delete()
       .eq('id', id)
 

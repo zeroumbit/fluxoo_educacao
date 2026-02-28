@@ -1,1 +1,3 @@
-export type { Turma, TurmaInsert, TurmaUpdate } from '@/lib/database.types'
+import { Turma } from '@/lib/database.types'
+
+export type { Turma }

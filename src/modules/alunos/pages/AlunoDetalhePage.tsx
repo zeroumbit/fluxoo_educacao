@@ -3,7 +3,6 @@ import { useAluno, useAtualizarAluno } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Loader2, UserCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -41,8 +40,13 @@ export function AlunoDetalhePage() {
     )
   }
 
-  const turma = (aluno as Record<string, unknown>).turmas as { nome: string; turno: string } | null
-  const responsavel = (aluno as Record<string, unknown>).responsaveis as { nome: string; telefone: string | null; email: string | null; cpf: string | null; parentesco: string | null } | null
+  // Extrair responsáveis da relação N:N
+  const vinculos = (aluno as Record<string, unknown>).aluno_responsavel as Array<{
+    grau_parentesco: string | null
+    responsaveis: { nome: string; cpf: string; email: string | null; telefone: string | null }
+  }> | null
+
+  const filial = (aluno as Record<string, unknown>).filiais as { nome_unidade: string } | null
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -60,7 +64,7 @@ export function AlunoDetalhePage() {
         </Button>
       </div>
 
-      {/* Header do Aluno */}
+      {/* Header */}
       <Card className="border-0 shadow-md">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
@@ -68,21 +72,16 @@ export function AlunoDetalhePage() {
               <UserCircle className="h-10 w-10 text-indigo-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{aluno.nome}</h1>
+              <h1 className="text-2xl font-bold">{aluno.nome_completo}</h1>
+              {aluno.nome_social && (
+                <p className="text-sm text-muted-foreground">Nome social: {aluno.nome_social}</p>
+              )}
               <div className="flex items-center gap-2 mt-1">
-                <Badge
-                  className={
-                    aluno.status === 'ativo'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-zinc-100 text-zinc-600'
-                  }
-                >
+                <Badge className={aluno.status === 'ativo' ? 'bg-emerald-100 text-emerald-800' : 'bg-zinc-100 text-zinc-600'}>
                   {aluno.status}
                 </Badge>
-                {turma && (
-                  <Badge variant="secondary">
-                    {turma.nome} - {turma.turno}
-                  </Badge>
+                {filial && (
+                  <Badge variant="secondary">{filial.nome_unidade}</Badge>
                 )}
               </div>
             </div>
@@ -92,34 +91,16 @@ export function AlunoDetalhePage() {
 
       {/* Dados Pessoais */}
       <Card className="border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-base">Dados Pessoais</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base">Dados Pessoais</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Data de Nascimento</p>
-              <p className="font-medium">{aluno.data_nascimento || '—'}</p>
+              <p className="font-medium">{aluno.data_nascimento}</p>
             </div>
             <div>
               <p className="text-muted-foreground">CPF</p>
               <p className="font-medium">{aluno.cpf || '—'}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Sexo</p>
-              <p className="font-medium capitalize">{aluno.sexo || '—'}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">E-mail</p>
-              <p className="font-medium">{aluno.email || '—'}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Telefone</p>
-              <p className="font-medium">{aluno.telefone || '—'}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Endereço</p>
-              <p className="font-medium">{aluno.endereco || '—'}</p>
             </div>
           </div>
         </CardContent>
@@ -127,22 +108,24 @@ export function AlunoDetalhePage() {
 
       {/* Saúde */}
       <Card className="border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-base">Dados de Saúde</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base">Dados de Saúde</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Tipo Sanguíneo</p>
-              <p className="font-medium">{aluno.tipo_sanguineo || '—'}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Alergias</p>
-              <p className="font-medium">{aluno.alergias || '—'}</p>
+              <p className="text-muted-foreground">Patologias</p>
+              <p className="font-medium">
+                {aluno.patologias && aluno.patologias.length > 0
+                  ? aluno.patologias.join(', ')
+                  : '—'}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Medicamentos</p>
-              <p className="font-medium">{aluno.medicamentos || '—'}</p>
+              <p className="font-medium">
+                {aluno.medicamentos && aluno.medicamentos.length > 0
+                  ? aluno.medicamentos.join(', ')
+                  : '—'}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground">Observações</p>
@@ -152,31 +135,31 @@ export function AlunoDetalhePage() {
         </CardContent>
       </Card>
 
-      {/* Responsável */}
-      {responsavel && (
+      {/* Responsáveis */}
+      {vinculos && vinculos.length > 0 && (
         <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-base">Responsável</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Nome</p>
-                <p className="font-medium">{responsavel.nome}</p>
+          <CardHeader><CardTitle className="text-base">Responsável(is)</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {vinculos.map((v, i) => (
+              <div key={i} className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Nome</p>
+                  <p className="font-medium">{v.responsaveis.nome}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Parentesco</p>
+                  <p className="font-medium capitalize">{v.grau_parentesco || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Telefone</p>
+                  <p className="font-medium">{v.responsaveis.telefone || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">E-mail</p>
+                  <p className="font-medium">{v.responsaveis.email || '—'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-muted-foreground">Parentesco</p>
-                <p className="font-medium capitalize">{responsavel.parentesco || '—'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Telefone</p>
-                <p className="font-medium">{responsavel.telefone || '—'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">E-mail</p>
-                <p className="font-medium">{responsavel.email || '—'}</p>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
       )}

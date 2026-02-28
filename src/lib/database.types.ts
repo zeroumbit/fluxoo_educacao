@@ -1,409 +1,330 @@
-// Tipos do banco de dados Supabase (baseados no schema existente)
-// NÃO MODIFIQUE O SCHEMA — estas são apenas as interfaces TypeScript
+/**
+ * Tipos TypeScript gerados a partir do schema REAL do Supabase.
+ * NÃO ALTERE MANUALMENTE — espelha exatamente o banco de dados.
+ */
 
 export type Database = {
   public: {
     Tables: {
       escolas: {
-        Row: {
-          id: string
-          nome: string
-          cnpj: string | null
-          telefone: string | null
-          endereco: string | null
-          email: string | null
-          logo_url: string | null
-          plano_id: string | null
-          limite_alunos: number
-          ativo: boolean
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          nome: string
-          cnpj?: string | null
-          telefone?: string | null
-          endereco?: string | null
-          email?: string | null
-          logo_url?: string | null
-          plano_id?: string | null
-          limite_alunos?: number
-          ativo?: boolean
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          nome?: string
-          cnpj?: string | null
-          telefone?: string | null
-          endereco?: string | null
-          email?: string | null
-          logo_url?: string | null
-          plano_id?: string | null
-          limite_alunos?: number
-          ativo?: boolean
-          atualizado_em?: string
-        }
+        Row: Escola
+        Insert: EscolaInsert
+        Update: EscolaUpdate
+      }
+      filiais: {
+        Row: Filial
+        Insert: FilialInsert
+        Update: FilialUpdate
       }
       alunos: {
-        Row: {
-          id: string
-          tenant_id: string
-          nome: string
-          data_nascimento: string | null
-          cpf: string | null
-          sexo: string | null
-          endereco: string | null
-          telefone: string | null
-          email: string | null
-          foto_url: string | null
-          alergias: string | null
-          medicamentos: string | null
-          tipo_sanguineo: string | null
-          observacoes_saude: string | null
-          turma_id: string | null
-          responsavel_id: string | null
-          status: string
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          nome: string
-          data_nascimento?: string | null
-          cpf?: string | null
-          sexo?: string | null
-          endereco?: string | null
-          telefone?: string | null
-          email?: string | null
-          foto_url?: string | null
-          alergias?: string | null
-          medicamentos?: string | null
-          tipo_sanguineo?: string | null
-          observacoes_saude?: string | null
-          turma_id?: string | null
-          responsavel_id?: string | null
-          status?: string
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          nome?: string
-          data_nascimento?: string | null
-          cpf?: string | null
-          sexo?: string | null
-          endereco?: string | null
-          telefone?: string | null
-          email?: string | null
-          foto_url?: string | null
-          alergias?: string | null
-          medicamentos?: string | null
-          tipo_sanguineo?: string | null
-          observacoes_saude?: string | null
-          turma_id?: string | null
-          responsavel_id?: string | null
-          status?: string
-          atualizado_em?: string
-        }
+        Row: Aluno
+        Insert: AlunoInsert
+        Update: AlunoUpdate
       }
       turmas: {
-        Row: {
-          id: string
-          tenant_id: string
-          nome: string
-          turno: string
-          capacidade: number
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          nome: string
-          turno: string
-          capacidade?: number
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          nome?: string
-          turno?: string
-          capacidade?: number
-          atualizado_em?: string
-        }
+        Row: Turma
+        Insert: TurmaInsert
+        Update: TurmaUpdate
       }
       funcionarios: {
-        Row: {
-          id: string
-          tenant_id: string
-          user_id: string
-          nome: string
-          cargo: string
-          email: string | null
-          telefone: string | null
-          role: string
-          ativo: boolean
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          user_id: string
-          nome: string
-          cargo: string
-          email?: string | null
-          telefone?: string | null
-          role?: string
-          ativo?: boolean
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          user_id?: string
-          nome?: string
-          cargo?: string
-          email?: string | null
-          telefone?: string | null
-          role?: string
-          ativo?: boolean
-          atualizado_em?: string
-        }
+        Row: Funcionario
+        Insert: FuncionarioInsert
+        Update: FuncionarioUpdate
       }
       responsaveis: {
-        Row: {
-          id: string
-          tenant_id: string
-          user_id: string | null
-          nome: string
-          cpf: string | null
-          telefone: string | null
-          email: string | null
-          parentesco: string | null
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          user_id?: string | null
-          nome: string
-          cpf?: string | null
-          telefone?: string | null
-          email?: string | null
-          parentesco?: string | null
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          user_id?: string | null
-          nome?: string
-          cpf?: string | null
-          telefone?: string | null
-          email?: string | null
-          parentesco?: string | null
-          atualizado_em?: string
-        }
+        Row: Responsavel
+        Insert: ResponsavelInsert
+        Update: ResponsavelUpdate
+      }
+      aluno_responsavel: {
+        Row: AlunoResponsavel
+        Insert: AlunoResponsavelInsert
+        Update: AlunoResponsavelUpdate
       }
       frequencias: {
-        Row: {
-          id: string
-          tenant_id: string
-          aluno_id: string
-          turma_id: string
-          data: string
-          status: string
-          observacao: string | null
-          criado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          aluno_id: string
-          turma_id: string
-          data: string
-          status: string
-          observacao?: string | null
-          criado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          aluno_id?: string
-          turma_id?: string
-          data?: string
-          status?: string
-          observacao?: string | null
-        }
+        Row: Frequencia
+        Insert: FrequenciaInsert
+        Update: FrequenciaUpdate
       }
       mural_avisos: {
-        Row: {
-          id: string
-          tenant_id: string
-          titulo: string
-          conteudo: string
-          turma_id: string | null
-          autor_id: string | null
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          titulo: string
-          conteudo: string
-          turma_id?: string | null
-          autor_id?: string | null
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          titulo?: string
-          conteudo?: string
-          turma_id?: string | null
-          autor_id?: string | null
-          atualizado_em?: string
-        }
+        Row: MuralAviso
+        Insert: MuralAvisoInsert
+        Update: MuralAvisoUpdate
       }
       cobrancas: {
-        Row: {
-          id: string
-          tenant_id: string
-          aluno_id: string
-          descricao: string
-          valor: number
-          vencimento: string
-          status: string
-          data_pagamento: string | null
-          criado_em: string
-          atualizado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          aluno_id: string
-          descricao: string
-          valor: number
-          vencimento: string
-          status?: string
-          data_pagamento?: string | null
-          criado_em?: string
-          atualizado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          aluno_id?: string
-          descricao?: string
-          valor?: number
-          vencimento?: string
-          status?: string
-          data_pagamento?: string | null
-          atualizado_em?: string
-        }
+        Row: Cobranca
+        Insert: CobrancaInsert
+        Update: CobrancaUpdate
       }
       planos: {
-        Row: {
-          id: string
-          nome: string
-          descricao: string | null
-          preco: number
-          limite_alunos: number
-          ativo: boolean
-          criado_em: string
-        }
-        Insert: {
-          id?: string
-          nome: string
-          descricao?: string | null
-          preco: number
-          limite_alunos: number
-          ativo?: boolean
-          criado_em?: string
-        }
-        Update: {
-          id?: string
-          nome?: string
-          descricao?: string | null
-          preco?: number
-          limite_alunos?: number
-          ativo?: boolean
-        }
+        Row: Plano
+        Insert: PlanoInsert
+        Update: PlanoUpdate
       }
       historico_assinatura: {
-        Row: {
-          id: string
-          tenant_id: string
-          plano_id: string
-          data_inicio: string
-          data_fim: string | null
-          status: string
-          criado_em: string
-        }
-        Insert: {
-          id?: string
-          tenant_id: string
-          plano_id: string
-          data_inicio: string
-          data_fim?: string | null
-          status?: string
-          criado_em?: string
-        }
-        Update: {
-          id?: string
-          tenant_id?: string
-          plano_id?: string
-          data_inicio?: string
-          data_fim?: string | null
-          status?: string
-        }
+        Row: HistoricoAssinatura
+        Insert: HistoricoAssinaturaInsert
+        Update: HistoricoAssinaturaUpdate
+      }
+      audit_logs: {
+        Row: AuditLog
+        Insert: AuditLogInsert
+        Update: AuditLogUpdate
       }
     }
   }
 }
 
-// Tipos auxiliares derivados do banco
-export type Escola = Database['public']['Tables']['escolas']['Row']
-export type Aluno = Database['public']['Tables']['alunos']['Row']
-export type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
-export type AlunoUpdate = Database['public']['Tables']['alunos']['Update']
-export type Turma = Database['public']['Tables']['turmas']['Row']
-export type TurmaInsert = Database['public']['Tables']['turmas']['Insert']
-export type TurmaUpdate = Database['public']['Tables']['turmas']['Update']
-export type Funcionario = Database['public']['Tables']['funcionarios']['Row']
-export type Responsavel = Database['public']['Tables']['responsaveis']['Row']
-export type ResponsavelInsert = Database['public']['Tables']['responsaveis']['Insert']
-export type Frequencia = Database['public']['Tables']['frequencias']['Row']
-export type FrequenciaInsert = Database['public']['Tables']['frequencias']['Insert']
-export type MuralAviso = Database['public']['Tables']['mural_avisos']['Row']
-export type MuralAvisoInsert = Database['public']['Tables']['mural_avisos']['Insert']
-export type Cobranca = Database['public']['Tables']['cobrancas']['Row']
-export type CobrancaInsert = Database['public']['Tables']['cobrancas']['Insert']
-export type CobrancaUpdate = Database['public']['Tables']['cobrancas']['Update']
-export type Plano = Database['public']['Tables']['planos']['Row']
-export type HistoricoAssinatura = Database['public']['Tables']['historico_assinatura']['Row']
+// ========== ESCOLAS ==========
+export type Escola = {
+  id: string
+  slug: string
+  razao_social: string
+  cnpj: string
+  email_gestor: string
+  telefone: string | null
+  cep: string | null
+  logradouro: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
+  plano_id: string | null
+  limite_alunos_contratado: number
+  status_assinatura: string
+  data_inicio: string | null
+  data_fim: string | null
+  created_at: string
+  updated_at: string
+}
+export type EscolaInsert = Omit<Escola, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type EscolaUpdate = Partial<EscolaInsert>
 
-// Tipos de roles
-export type UserRole = 'super_admin' | 'admin' | 'funcionario' | 'responsavel'
+// ========== FILIAIS ==========
+export type Filial = {
+  id: string
+  tenant_id: string | null
+  nome_unidade: string
+  cnpj_proprio: string | null
+  endereco_completo: string | null
+  is_matriz: boolean
+  created_at: string
+  updated_at: string
+}
+export type FilialInsert = Omit<Filial, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type FilialUpdate = Partial<FilialInsert>
 
-// Status de frequência
+// ========== ALUNOS ==========
+export type Aluno = {
+  id: string
+  tenant_id: string | null
+  filial_id: string | null
+  nome_completo: string
+  nome_social: string | null
+  data_nascimento: string
+  cpf: string | null
+  patologias: string[] | null
+  medicamentos: string[] | null
+  observacoes_saude: string | null
+  status: string
+  created_at: string
+  updated_at: string
+}
+export type AlunoInsert = Omit<Aluno, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type AlunoUpdate = Partial<AlunoInsert>
+
+// ========== TURMAS ==========
+export type Turma = {
+  id: string
+  tenant_id: string | null
+  filial_id: string | null
+  nome: string
+  sala: string | null
+  capacidade_maxima: number | null
+  turno: string | null
+  created_at: string
+  updated_at: string
+}
+export type TurmaInsert = Omit<Turma, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type TurmaUpdate = Partial<TurmaInsert>
+
+// ========== FUNCIONARIOS ==========
+export type Funcionario = {
+  id: string
+  tenant_id: string | null
+  filial_id: string | null
+  nome_completo: string
+  funcao: string | null
+  salario_bruto: number | null
+  dia_pagamento: number | null
+  data_admissao: string | null
+  is_usuario_sistema: boolean
+  created_at: string
+  updated_at: string
+}
+export type FuncionarioInsert = Omit<Funcionario, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type FuncionarioUpdate = Partial<FuncionarioInsert>
+
+// ========== RESPONSAVEIS ==========
+export type Responsavel = {
+  id: string
+  cpf: string
+  nome: string
+  email: string | null
+  telefone: string | null
+  senha_hash: string
+  created_at: string
+  updated_at: string
+}
+export type ResponsavelInsert = Omit<Responsavel, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type ResponsavelUpdate = Partial<ResponsavelInsert>
+
+// ========== ALUNO_RESPONSAVEL (N:N) ==========
+export type AlunoResponsavel = {
+  id: string
+  aluno_id: string | null
+  responsavel_id: string | null
+  grau_parentesco: string | null
+  created_at: string
+}
+export type AlunoResponsavelInsert = Omit<AlunoResponsavel, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
+export type AlunoResponsavelUpdate = Partial<AlunoResponsavelInsert>
+
+// ========== FREQUENCIAS ==========
+export type Frequencia = {
+  id: string
+  tenant_id: string | null
+  turma_id: string | null
+  aluno_id: string | null
+  data_aula: string
+  status: string
+  justificativa: string | null
+  created_at: string
+  updated_at: string
+}
+export type FrequenciaInsert = Omit<Frequencia, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type FrequenciaUpdate = Partial<FrequenciaInsert>
+
+// ========== MURAL_AVISOS ==========
+export type MuralAviso = {
+  id: string
+  tenant_id: string | null
+  titulo: string
+  conteudo: string
+  publico_alvo: string
+  turma_id: string | null
+  data_agendamento: string | null
+  created_at: string
+  updated_at: string
+}
+export type MuralAvisoInsert = Omit<MuralAviso, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type MuralAvisoUpdate = Partial<MuralAvisoInsert>
+
+// ========== COBRANCAS ==========
+export type Cobranca = {
+  id: string
+  tenant_id: string | null
+  aluno_id: string | null
+  descricao: string
+  valor: number
+  data_vencimento: string
+  status: string
+  created_at: string
+  updated_at: string
+}
+export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type CobrancaUpdate = Partial<CobrancaInsert>
+
+// ========== PLANOS ==========
+export type Plano = {
+  id: string
+  nome: string
+  valor_por_aluno: number
+  status: boolean
+  created_at: string
+  updated_at: string
+}
+export type PlanoInsert = Omit<Plano, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+export type PlanoUpdate = Partial<PlanoInsert>
+
+// ========== HISTORICO_ASSINATURA ==========
+export type HistoricoAssinatura = {
+  id: string
+  tenant_id: string | null
+  plano_id: string | null
+  limite_alunos: number | null
+  valor_total: number | null
+  data_inicio: string | null
+  data_fim: string | null
+  created_at: string
+}
+export type HistoricoAssinaturaInsert = Omit<HistoricoAssinatura, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
+export type HistoricoAssinaturaUpdate = Partial<HistoricoAssinaturaInsert>
+
+// ========== AUDIT_LOGS ==========
+export type AuditLog = {
+  id: string
+  tenant_id: string | null
+  usuario_id: string | null
+  tabela: string | null
+  operacao: string | null
+  registro_id: string | null
+  dados_antigos: Record<string, unknown> | null
+  dados_novos: Record<string, unknown> | null
+  created_at: string
+}
+export type AuditLogInsert = Omit<AuditLog, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
+export type AuditLogUpdate = Partial<AuditLogInsert>
+
+// ========== STATUS TYPES ==========
 export type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
-
-// Status de cobrança
-export type CobrancaStatus = 'pendente' | 'pago' | 'atrasado' | 'cancelado'
-
-// Status do aluno
-export type AlunoStatus = 'ativo' | 'inativo'
+export type CobrancaStatus = 'a_vencer' | 'pago' | 'atrasado' | 'cancelado'
+export type StatusAssinatura = 'pendente' | 'ativa' | 'cancelada' | 'expirada'

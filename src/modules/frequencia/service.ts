@@ -2,47 +2,47 @@ import { supabase } from '@/lib/supabase'
 import type { FrequenciaInsert } from '@/lib/database.types'
 
 export const frequenciaService = {
-  async listarPorTurmaData(turmaId: string, data: string, tenantId: string) {
-    const { data: frequencias, error } = await supabase
-      .from('frequencias')
-      .select('*, alunos(nome)')
-      .eq('turma_id', turmaId)
-      .eq('data', data)
-      .eq('tenant_id', tenantId)
-
-    if (error) throw error
-    return frequencias
-  },
-
-  async salvarFrequencias(frequencias: FrequenciaInsert[]) {
-    // Primeiro, remove as frequências existentes para a mesma turma/data
-    if (frequencias.length > 0) {
-      const { error: deleteError } = await supabase
-        .from('frequencias')
-        .delete()
-        .eq('turma_id', frequencias[0].turma_id)
-        .eq('data', frequencias[0].data)
-        .eq('tenant_id', frequencias[0].tenant_id)
-
-      if (deleteError) throw deleteError
-    }
-
+  async listarPorTurmaData(turmaId: string, dataAula: string, tenantId: string) {
     const { data, error } = await supabase
       .from('frequencias')
-      .insert(frequencias)
-      .select()
+      .select('*, alunos(nome_completo)')
+      .eq('turma_id', turmaId)
+      .eq('data_aula', dataAula)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
     return data
   },
 
+  async salvarFrequencias(frequencias: FrequenciaInsert[]) {
+    if (frequencias.length === 0) return
+
+    // Delete existing para a turma/data e reinsere
+    const { tenant_id, turma_id, data_aula } = frequencias[0]
+    if (tenant_id && turma_id && data_aula) {
+      await supabase
+        .from('frequencias')
+        .delete()
+        .eq('tenant_id', tenant_id)
+        .eq('turma_id', turma_id)
+        .eq('data_aula', data_aula)
+    }
+
+    const { error } = await supabase
+      .from('frequencias')
+      .insert(frequencias)
+
+    if (error) throw error
+  },
+
   async listarPorAluno(alunoId: string, tenantId: string) {
     const { data, error } = await supabase
       .from('frequencias')
-      .select('*')
+      .select('*, turmas(nome)')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
-      .order('data', { ascending: false })
+      .order('data_aula', { ascending: false })
+      .limit(30)
 
     if (error) throw error
     return data
@@ -51,16 +51,29 @@ export const frequenciaService = {
   async listarHistoricoPorTurma(turmaId: string, tenantId: string, mes?: string) {
     let query = supabase
       .from('frequencias')
-      .select('*, alunos(nome)')
+      .select('*, alunos(nome_completo)')
       .eq('turma_id', turmaId)
       .eq('tenant_id', tenantId)
-      .order('data', { ascending: false })
+      .order('data_aula', { ascending: false })
 
     if (mes) {
-      query = query.gte('data', `${mes}-01`).lte('data', `${mes}-31`)
+      query = query.gte('data_aula', `${mes}-01`).lt('data_aula', `${mes}-32`)
     }
 
     const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  /** Busca alunos que tiveram frequência em uma turma (para deduzir matrícula) */
+  async listarAlunosDaTurma(turmaId: string, tenantId: string) {
+    const { data, error } = await supabase
+      .from('alunos')
+      .select('id, nome_completo')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativo')
+      .order('nome_completo')
+
     if (error) throw error
     return data
   },

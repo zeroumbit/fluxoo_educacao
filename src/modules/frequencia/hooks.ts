@@ -37,6 +37,7 @@ export function useSalvarFrequencias() {
       frequenciaService.salvarFrequencias(frequencias),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['frequencias'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

@@ -1,30 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useAlunosAtivos } from '@/modules/alunos/hooks'
-import { useCobrancasAbertas } from '@/modules/financeiro/hooks'
-import { useAvisosRecentes } from '@/modules/comunicacao/hooks'
-import { useLimiteAlunos } from '@/modules/assinatura/hooks'
+import { useDashboard } from '../dashboard.hooks'
 import { Users, CreditCard, AlertTriangle, Megaphone, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function DashboardPage() {
-  const { data: totalAlunos, isLoading: loadingAlunos } = useAlunosAtivos()
-  const { data: totalCobrancas, isLoading: loadingCobrancas } = useCobrancasAbertas()
-  const { data: avisos, isLoading: loadingAvisos } = useAvisosRecentes(5)
-  const { data: limiteAlunos, isLoading: loadingLimite } = useLimiteAlunos()
+  const { data: dashboard, isLoading } = useDashboard()
 
-  const isLoading = loadingAlunos || loadingCobrancas || loadingAvisos || loadingLimite
-  const percentualLimite = limiteAlunos ? ((totalAlunos || 0) / limiteAlunos) * 100 : 0
-  const proximoDoLimite = percentualLimite >= 80
-
-  if (isLoading) {
+  if (isLoading || !dashboard) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
+
+  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes } = dashboard
+  const percentualLimite = limiteAlunos ? (totalAlunosAtivos / limiteAlunos) * 100 : 0
+  const proximoDoLimite = percentualLimite >= 80
 
   return (
     <div className="space-y-6">
@@ -45,9 +39,9 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalAlunos || 0}</div>
+            <div className="text-3xl font-bold">{totalAlunosAtivos}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              de {limiteAlunos || 0} permitidos
+              de {limiteAlunos} permitidos
             </p>
             {/* Barra de progresso */}
             <div className="mt-3 h-2 rounded-full bg-zinc-100 overflow-hidden">
@@ -73,7 +67,7 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalCobrancas || 0}</div>
+            <div className="text-3xl font-bold">{totalCobrancasAbertas}</div>
             <p className="text-xs text-muted-foreground mt-1">pendentes ou atrasadas</p>
           </CardContent>
         </Card>
@@ -107,7 +101,7 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{avisos?.length || 0}</div>
+            <div className="text-3xl font-bold">{avisosRecentes.length}</div>
             <p className="text-xs text-muted-foreground mt-1">nos últimos avisos</p>
           </CardContent>
         </Card>
@@ -119,9 +113,9 @@ export function DashboardPage() {
           <CardTitle className="text-lg">Avisos Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {avisos && avisos.length > 0 ? (
+          {avisosRecentes.length > 0 ? (
             <div className="space-y-4">
-              {avisos.map((aviso) => (
+              {avisosRecentes.map((aviso) => (
                 <div
                   key={aviso.id}
                   className="flex items-start gap-4 p-4 rounded-lg bg-zinc-50/80 hover:bg-zinc-100/80 transition-colors"
@@ -133,9 +127,7 @@ export function DashboardPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-medium text-sm truncate">{aviso.titulo}</h4>
                       <Badge variant="secondary" className="text-xs shrink-0">
-                        {(aviso as Record<string, unknown>).turmas
-                          ? ((aviso as Record<string, unknown>).turmas as { nome: string }).nome
-                          : 'Todos'}
+                        {aviso.turmas ? aviso.turmas.nome : 'Todos'}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">

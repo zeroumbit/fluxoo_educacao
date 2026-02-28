@@ -7,25 +7,36 @@ export const muralService = {
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     return data
   },
 
   async listarPorTurma(turmaId: string | null, tenantId: string) {
-    // Retorna avisos gerais (turma_id null) + avisos da turma específica
     let query = supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (turmaId) {
       query = query.or(`turma_id.is.null,turma_id.eq.${turmaId}`)
     }
 
     const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  async listarRecentes(tenantId: string, limite = 5) {
+    const { data, error } = await supabase
+      .from('mural_avisos')
+      .select('*, turmas(nome)')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(limite)
+
     if (error) throw error
     return data
   },
@@ -48,17 +59,5 @@ export const muralService = {
       .eq('id', id)
 
     if (error) throw error
-  },
-
-  async listarRecentes(tenantId: string, limite: number = 5) {
-    const { data, error } = await supabase
-      .from('mural_avisos')
-      .select('*, turmas(nome)')
-      .eq('tenant_id', tenantId)
-      .order('criado_em', { ascending: false })
-      .limit(limite)
-
-    if (error) throw error
-    return data
   },
 }

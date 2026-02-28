@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAlunos } from '../hooks'
+import { useAlunos, useAtualizarAluno } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -13,15 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye } from 'lucide-react'
 
 export function AlunosListPage() {
   const { data: alunos, isLoading } = useAlunos()
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
 
-  const alunosFiltrados = alunos?.filter((aluno) =>
-    aluno.nome.toLowerCase().includes(busca.toLowerCase())
+  const alunosFiltrados = alunos?.filter((a) =>
+    a.nome_completo.toLowerCase().includes(busca.toLowerCase())
   )
 
   if (isLoading) {
@@ -37,7 +37,9 @@ export function AlunosListPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Alunos</h1>
-          <p className="text-muted-foreground">Gerencie os alunos da escola</p>
+          <p className="text-muted-foreground">
+            {alunos?.length || 0} aluno(s) cadastrado(s)
+          </p>
         </div>
         <Button
           onClick={() => navigate('/alunos/novo')}
@@ -48,31 +50,28 @@ export function AlunosListPage() {
         </Button>
       </div>
 
+      {/* Busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar aluno..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Tabela */}
       <Card className="border-0 shadow-md">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar aluno..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <CardTitle className="text-sm text-muted-foreground ml-auto">
-              {alunosFiltrados?.length || 0} aluno(s)
-            </CardTitle>
-          </div>
-        </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className="hidden md:table-cell">Turma</TableHead>
-                <TableHead className="hidden md:table-cell">Responsável</TableHead>
+                <TableHead>Aluno</TableHead>
+                <TableHead>Data Nasc.</TableHead>
+                <TableHead>CPF</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -88,41 +87,30 @@ export function AlunosListPage() {
                         <UserCircle className="h-5 w-5 text-indigo-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{aluno.nome}</p>
-                        <p className="text-xs text-muted-foreground md:hidden">
-                          {(aluno as Record<string, unknown>).turmas
-                            ? ((aluno as Record<string, unknown>).turmas as { nome: string }).nome
-                            : 'Sem turma'}
-                        </p>
+                        <p className="font-medium">{aluno.nome_completo}</p>
+                        {aluno.nome_social && (
+                          <p className="text-xs text-muted-foreground">{aluno.nome_social}</p>
+                        )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {(aluno as Record<string, unknown>).turmas ? (
-                      <Badge variant="secondary">
-                        {((aluno as Record<string, unknown>).turmas as { nome: string; turno: string }).nome} -{' '}
-                        {((aluno as Record<string, unknown>).turmas as { nome: string; turno: string }).turno}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">Sem turma</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {(aluno as Record<string, unknown>).responsaveis
-                      ? ((aluno as Record<string, unknown>).responsaveis as { nome: string }).nome
-                      : '—'}
-                  </TableCell>
+                  <TableCell>{aluno.data_nascimento || '—'}</TableCell>
+                  <TableCell>{aluno.cpf || '—'}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={aluno.status === 'ativo' ? 'default' : 'secondary'}
                       className={
                         aluno.status === 'ativo'
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100'
-                          : ''
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-zinc-100 text-zinc-600'
                       }
                     >
                       {aluno.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

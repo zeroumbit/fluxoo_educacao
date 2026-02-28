@@ -27,6 +27,7 @@ export function useCriarTurma() {
     mutationFn: (turma: TurmaInsert) => turmaService.criar(turma),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -38,6 +39,7 @@ export function useAtualizarTurma() {
       turmaService.atualizar(id, turma),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -48,6 +50,7 @@ export function useExcluirTurma() {
     mutationFn: (id: string) => turmaService.excluir(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

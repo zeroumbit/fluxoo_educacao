@@ -5,9 +5,9 @@ export const financeirService = {
   async listar(tenantId: string, filtroStatus?: string) {
     let query = supabase
       .from('cobrancas')
-      .select('*, alunos(nome)')
+      .select('*, alunos(nome_completo)')
       .eq('tenant_id', tenantId)
-      .order('vencimento', { ascending: false })
+      .order('data_vencimento', { ascending: false })
 
     if (filtroStatus && filtroStatus !== 'todos') {
       query = query.eq('status', filtroStatus)
@@ -30,18 +30,12 @@ export const financeirService = {
   },
 
   async marcarComoPago(id: string) {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('cobrancas')
-      .update({
-        status: 'pago',
-        data_pagamento: new Date().toISOString().split('T')[0],
-      })
+      .update({ status: 'pago' })
       .eq('id', id)
-      .select()
-      .single()
 
     if (error) throw error
-    return data
   },
 
   async contarAbertas(tenantId: string) {
@@ -49,7 +43,7 @@ export const financeirService = {
       .from('cobrancas')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
-      .in('status', ['pendente', 'atrasado'])
+      .in('status', ['a_vencer', 'atrasado'])
 
     if (error) throw error
     return count || 0
@@ -61,7 +55,7 @@ export const financeirService = {
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
-      .order('vencimento', { ascending: false })
+      .order('data_vencimento', { ascending: false })
 
     if (error) throw error
     return data

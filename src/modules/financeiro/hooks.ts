@@ -36,6 +36,7 @@ export function useCriarCobranca() {
     mutationFn: (cobranca: CobrancaInsert) => financeirService.criar(cobranca),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -46,6 +47,7 @@ export function useMarcarComoPago() {
     mutationFn: (id: string) => financeirService.marcarComoPago(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

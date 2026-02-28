@@ -6,7 +6,7 @@ import type { MuralAvisoInsert } from '@/lib/database.types'
 export function useAvisos() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['avisos', authUser?.tenantId],
+    queryKey: ['mural', authUser?.tenantId],
     queryFn: () => muralService.listar(authUser!.tenantId),
     enabled: !!authUser?.tenantId,
   })
@@ -15,7 +15,7 @@ export function useAvisos() {
 export function useAvisosPorTurma(turmaId: string | null) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['avisos', 'turma', turmaId, authUser?.tenantId],
+    queryKey: ['mural', 'turma', turmaId, authUser?.tenantId],
     queryFn: () => muralService.listarPorTurma(turmaId, authUser!.tenantId),
     enabled: !!authUser?.tenantId,
   })
@@ -24,7 +24,7 @@ export function useAvisosPorTurma(turmaId: string | null) {
 export function useAvisosRecentes(limite?: number) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['avisos', 'recentes', authUser?.tenantId],
+    queryKey: ['mural', 'recentes', authUser?.tenantId],
     queryFn: () => muralService.listarRecentes(authUser!.tenantId, limite),
     enabled: !!authUser?.tenantId,
   })
@@ -35,7 +35,8 @@ export function useCriarAviso() {
   return useMutation({
     mutationFn: (aviso: MuralAvisoInsert) => muralService.criar(aviso),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['avisos'] })
+      queryClient.invalidateQueries({ queryKey: ['mural'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -45,7 +46,8 @@ export function useExcluirAviso() {
   return useMutation({
     mutationFn: (id: string) => muralService.excluir(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['avisos'] })
+      queryClient.invalidateQueries({ queryKey: ['mural'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

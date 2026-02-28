@@ -5,32 +5,23 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas, useCriarTurma, useAtualizarTurma, useExcluirTurma } from '../hooks'
+import { useFiliais } from '@/modules/filiais/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Loader2, BookOpen, Pencil, Trash2 } from 'lucide-react'
-import type { Turma } from '../types'
+import type { Turma } from '@/lib/database.types'
 
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
   turno: z.string().min(1, 'Turno é obrigatório'),
-  capacidade: z.coerce.number().min(1, 'Capacidade mínima de 1'),
+  sala: z.string().optional(),
+  capacidade_maxima: z.coerce.number().min(1, 'Capacidade mínima de 1'),
+  filial_id: z.string().optional(),
 })
 
 type TurmaFormValues = z.infer<typeof turmaSchema>
@@ -38,35 +29,26 @@ type TurmaFormValues = z.infer<typeof turmaSchema>
 export function TurmasPage() {
   const { authUser } = useAuth()
   const { data: turmas, isLoading } = useTurmas()
+  const { data: filiais } = useFiliais()
   const criarTurma = useCriarTurma()
   const atualizarTurma = useAtualizarTurma()
   const excluirTurma = useExcluirTurma()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editando, setEditando] = useState<Turma | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<TurmaFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
   })
 
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome: '', turno: '', capacidade: 30 })
+    reset({ nome: '', turno: '', sala: '', capacidade_maxima: 30 })
     setDialogOpen(true)
   }
 
   const abrirEdicao = (turma: Turma) => {
     setEditando(turma)
-    reset({
-      nome: turma.nome,
-      turno: turma.turno,
-      capacidade: turma.capacidade,
-    })
+    reset({ nome: turma.nome, turno: turma.turno || '', sala: turma.sala || '', capacidade_maxima: turma.capacidade_maxima || 30, filial_id: turma.filial_id || '' })
     setDialogOpen(true)
   }
 
@@ -74,16 +56,10 @@ export function TurmasPage() {
     if (!authUser) return
     try {
       if (editando) {
-        await atualizarTurma.mutateAsync({
-          id: editando.id,
-          turma: data,
-        })
+        await atualizarTurma.mutateAsync({ id: editando.id, turma: { ...data, filial_id: data.filial_id || null } })
         toast.success('Turma atualizada!')
       } else {
-        await criarTurma.mutateAsync({
-          ...data,
-          tenant_id: authUser.tenantId,
-        })
+        await criarTurma.mutateAsync({ ...data, tenant_id: authUser.tenantId, filial_id: data.filial_id || null })
         toast.success('Turma criada!')
       }
       setDialogOpen(false)
@@ -98,16 +74,12 @@ export function TurmasPage() {
       await excluirTurma.mutateAsync(id)
       toast.success('Turma excluída!')
     } catch {
-      toast.error('Erro ao excluir. Verifique se não há alunos vinculados.')
+      toast.error('Erro ao excluir.')
     }
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
   }
 
   return (
@@ -119,56 +91,59 @@ export function TurmasPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button
-              onClick={abrirNovo}
-              className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Turma
+            <Button onClick={abrirNovo} className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
+              <Plus className="mr-2 h-4 w-4" /> Nova Turma
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editando ? 'Editar Turma' : 'Nova Turma'}</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>{editando ? 'Editar Turma' : 'Nova Turma'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome *</Label>
                 <Input id="nome" placeholder="Ex: 1º Ano A" {...register('nome')} />
                 {errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="turno">Turno *</Label>
-                <Select
-                  defaultValue={editando?.turno}
-                  onValueChange={(v) => setValue('turno', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o turno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="matutino">Matutino</SelectItem>
-                    <SelectItem value="vespertino">Vespertino</SelectItem>
-                    <SelectItem value="noturno">Noturno</SelectItem>
-                    <SelectItem value="integral">Integral</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.turno && <p className="text-sm text-destructive">{errors.turno.message}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="turno">Turno *</Label>
+                  <Select defaultValue={editando?.turno || ''} onValueChange={(v) => setValue('turno', v)}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="matutino">Matutino</SelectItem>
+                      <SelectItem value="vespertino">Vespertino</SelectItem>
+                      <SelectItem value="noturno">Noturno</SelectItem>
+                      <SelectItem value="integral">Integral</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.turno && <p className="text-sm text-destructive">{errors.turno.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sala">Sala</Label>
+                  <Input id="sala" placeholder="Ex: Sala 3" {...register('sala')} />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacidade">Capacidade</Label>
-                <Input id="capacidade" type="number" {...register('capacidade')} />
-                {errors.capacidade && (
-                  <p className="text-sm text-destructive">{errors.capacidade.message}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="capacidade_maxima">Capacidade</Label>
+                  <Input id="capacidade_maxima" type="number" {...register('capacidade_maxima')} />
+                </div>
+                {filiais && filiais.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Filial</Label>
+                    <Select defaultValue={editando?.filial_id || ''} onValueChange={(v) => setValue('filial_id', v)}>
+                      <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectContent>
+                        {filiais.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>{f.nome_unidade}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
-                </Button>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}</Button>
               </div>
             </form>
           </DialogContent>
@@ -186,22 +161,19 @@ export function TurmasPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{turma.nome}</h3>
-                    <Badge variant="secondary" className="text-xs capitalize mt-0.5">
-                      {turma.turno}
-                    </Badge>
+                    <div className="flex gap-1 mt-0.5">
+                      {turma.turno && <Badge variant="secondary" className="text-xs capitalize">{turma.turno}</Badge>}
+                      {turma.sala && <Badge variant="outline" className="text-xs">{turma.sala}</Badge>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(turma)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(turma.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(turma)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(turma.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <div className="mt-4 text-sm text-muted-foreground">
-                Capacidade: <span className="font-medium text-foreground">{turma.capacidade} alunos</span>
+                Capacidade: <span className="font-medium text-foreground">{turma.capacidade_maxima || '—'} alunos</span>
               </div>
             </CardContent>
           </Card>

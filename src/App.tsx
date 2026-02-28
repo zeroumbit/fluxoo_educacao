@@ -16,6 +16,8 @@ import { TurmasPage } from '@/modules/turmas/pages/TurmasPage'
 import { FrequenciaPage } from '@/modules/frequencia/pages/FrequenciaPage'
 import { MuralPage } from '@/modules/comunicacao/pages/MuralPage'
 import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
+import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
+import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
 
 // Pages - Portal
 import { PortalAlunoPage } from '@/modules/auth/pages/PortalAlunoPage'
@@ -60,6 +62,9 @@ function App() {
             {/* Login */}
             <Route path="/login" element={<LoginPage />} />
 
+            {/* Cadastro de Escola - Público */}
+            <Route path="/cadastro" element={<EscolaCadastroPage />} />
+
             {/* Admin Routes */}
             <Route
               element={
@@ -76,6 +81,7 @@ function App() {
               <Route path="/frequencia" element={<FrequenciaPage />} />
               <Route path="/mural" element={<MuralPage />} />
               <Route path="/financeiro" element={<FinanceiroPage />} />
+              <Route path="/filiais" element={<FiliaisPage />} />
             </Route>
 
             {/* Portal do Responsável */}
