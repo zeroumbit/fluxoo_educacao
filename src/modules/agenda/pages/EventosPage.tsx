@@ -122,7 +122,9 @@ export function EventosPage() {
               <div className="space-y-2">
                 <Label htmlFor="publico_alvo">Público-Alvo</Label>
                 <Select defaultValue={form.watch('publico_alvo')} onValueChange={(v) => form.setValue('publico_alvo', v)}>
-                  <SelectTrigger id="publico_alvo"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectTrigger id="publico_alvo" className="w-full">
+                    <SelectValue placeholder="Selecione o público-alvo" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="toda_escola">Toda a Escola</SelectItem>
                     <SelectItem value="professores">Professores</SelectItem>

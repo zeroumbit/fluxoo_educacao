@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('escolas')
             .select('id, razao_social')
             .eq('gestor_user_id', user.id)
-            .maybeSingle(),
+            .maybeSingle() as any,
           5000
         ) as any
 
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 3. Funcionário
       const funcRes = await withTimeout(
-        supabase.from('funcionarios').select('tenant_id, nome_completo').eq('id', user.id).maybeSingle(),
+        supabase.from('funcionarios').select('tenant_id, nome_completo').eq('user_id', user.id).maybeSingle() as any,
         5000
       ) as any
 
@@ -97,14 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 4. Responsável
       const respRes = await withTimeout(
-        supabase.from('responsaveis').select('nome').eq('id', user.id).maybeSingle(),
+        supabase.from('responsaveis').select('nome').eq('user_id', user.id).maybeSingle() as any,
         5000
       ) as any
 
       if (respRes?.data) {
         setAuthUser({
           user, session,
-          tenantId: '',
+          tenantId: '', // Responsável não tem tenant_id fixo (vários filhos podem ser de escolas diferentes?)
           role: 'responsavel',
           nome: respRes.data.nome,
         })

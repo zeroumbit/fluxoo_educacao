@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useAuth } from './AuthContext'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,7 +19,6 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginPage() {
-  const { signIn } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -30,12 +29,24 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setError(null)
-    const { error } = await signIn(data.email, data.password)
+    const { data: { session }, error } = await supabase.auth.signInWithPassword({ 
+      email: data.email, 
+      password: data.password 
+    })
+
     if (error) {
-      setError(error)
+      setError(error.message)
       return
     }
-    navigate('/dashboard')
+
+    const role = session?.user?.user_metadata?.role
+    if (role === 'super_admin' || data.email.includes('fluxoo.edu')) {
+      navigate('/admin/dashboard')
+    } else if (role === 'responsavel') {
+      navigate('/portal')
+    } else {
+      navigate('/dashboard')
+    }
   }
 
   return (
