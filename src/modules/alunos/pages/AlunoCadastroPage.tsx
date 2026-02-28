@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useViaCEP } from '@/hooks/use-viacep'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -28,7 +29,7 @@ import {
   EyeOff,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail } from '@/lib/validacoes'
+import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),
@@ -95,7 +96,17 @@ export function AlunoCadastroPage() {
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
     resolver: zodResolver(alunoSchema),
-    defaultValues: { nome_completo: '', data_nascimento: '' },
+    defaultValues: { 
+      nome_completo: '', 
+      data_nascimento: '',
+      estado: '',
+      cidade: '',
+      genero: '',
+      responsavel_parentesco: '',
+      cpf: '',
+      responsavel_cpf: '',
+      cep: '',
+    },
   })
 
   // Selecionar automaticamente a matriz se houver filiais
@@ -110,6 +121,36 @@ export function AlunoCadastroPage() {
     }
   }, [filiais, setValue])
 
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
+  const selectedEstado = watch('estado')
+
+  useEffect(() => {
+    if (selectedEstado) {
+      fetchCitiesByUF(selectedEstado)
+    }
+  }, [selectedEstado])
+
+  const buscarCep = async (cep: string) => {
+    const data = await fetchAddressByCEP(cep)
+    if (data && !('error' in data)) {
+      setValue('logradouro', data.logradouro || '', { shouldValidate: true })
+      setValue('bairro', data.bairro || '', { shouldValidate: true })
+      setValue('estado', data.estado || '', { shouldValidate: true })
+      setTimeout(() => {
+        setValue('cidade', data.cidade || '', { shouldValidate: true })
+      }, 500)
+      toast.success('Endereço preenchido!')
+    } else if (data && 'error' in data) {
+      toast.error(data.error)
+    }
+  }
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = mascaraCEP(e.target.value)
+    setValue('cep', valor, { shouldValidate: true })
+    if (valor.length === 9) buscarCep(valor)
+  }
+
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>, campo: 'cpf' | 'responsavel_cpf') => {
     const valor = e.target.value
     setValue(campo, mascaraCPF(valor), { shouldValidate: true })
@@ -123,7 +164,7 @@ export function AlunoCadastroPage() {
   const validateStep = async () => {
     const fieldsPerStep: (keyof AlunoFormValues)[][] = [
       ['nome_completo', 'data_nascimento'],
-      [],
+      ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'],
       [],
       ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha'],
     ]
@@ -159,30 +200,49 @@ export function AlunoCadastroPage() {
         responsavel: {
           cpf: data.responsavel_cpf,
           nome: data.responsavel_nome,
-          telefone: data.responsavel_telefone || null,
-          email: data.responsavel_email || null,
-          senha_hash: data.responsavel_senha, // Em produção, hash no servidor
+          telefone: data.responsavel_telefone && data.responsavel_telefone !== '' ? data.responsavel_telefone : null,
+          email: data.responsavel_email && data.responsavel_email !== '' ? data.responsavel_email : null,
+          senha_hash: data.responsavel_senha,
+          cep: null,
+          logradouro: null,
+          numero: null,
+          complemento: null,
+          bairro: null,
+          cidade: null,
+          estado: null,
         },
         aluno: {
           tenant_id: authUser.tenantId,
-          filial_id: data.filial_id || null,
+          filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
           nome_completo: data.nome_completo,
           nome_social: data.nome_social || null,
           data_nascimento: data.data_nascimento,
-          cpf: data.cpf || null,
+          cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
           patologias,
           medicamentos,
           observacoes_saude: data.observacoes_saude || null,
           status: 'ativo',
+          cep: data.cep && data.cep !== '' ? data.cep : null,
+          logradouro: data.logradouro && data.logradouro !== '' ? data.logradouro : null,
+          numero: data.numero && data.numero !== '' ? data.numero : null,
+          complemento: data.complemento && data.complemento !== '' ? data.complemento : null,
+          bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
+          cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
+          estado: data.estado && data.estado !== '' ? data.estado : null,
         },
         grauParentesco: data.responsavel_parentesco || null,
       })
 
       toast.success('Aluno cadastrado com sucesso!')
       navigate('/alunos')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao cadastrar aluno'
-      toast.error(message)
+    } catch (err: any) {
+      console.error('Erro detalhado ao cadastrar aluno:', err)
+      
+      let errorMessage = 'Erro ao cadastrar aluno. '
+      if (err?.message) errorMessage += err.message
+      if (err?.details) errorMessage += ` (${err.details})`
+      
+      toast.error(errorMessage, { duration: 8000 })
     }
   }
 
@@ -338,39 +398,20 @@ export function AlunoCadastroPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="cep">CEP *</Label>
-                    <div className="flex gap-2">
+                    <div className="relative">
                       <Input 
                         id="cep" 
                         placeholder="00000-000" 
                         {...register('cep')} 
+                        onChange={handleCepChange}
                         maxLength={9}
-                        className="flex-1"
+                        className="w-full"
                       />
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={async () => {
-                          const cepVal = (document.getElementById('cep') as HTMLInputElement)?.value?.replace(/\D/g, '')
-                          if (cepVal?.length === 8) {
-                            try {
-                              const res = await fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
-                              const d = await res.json()
-                              if (!d.erro) { 
-                                setValue('logradouro', d.logradouro || '', { shouldValidate: true })
-                                setValue('bairro', d.bairro || '', { shouldValidate: true })
-                                setValue('cidade', d.localidade || '', { shouldValidate: true })
-                                setValue('estado', d.uf || '', { shouldValidate: true })
-                              }
-                            } catch {}
-                          }
-                        }}
-                      >
-                        {watch('cep')?.replace(/\D/g, '').length === 8 ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        )}
-                      </Button>
+                      {buscandoCep && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -402,23 +443,30 @@ export function AlunoCadastroPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade *</Label>
-                    <Input 
-                      id="cidade" 
-                      placeholder="Cidade" 
-                      {...register('cidade')} 
-                      className="w-full"
-                    />
+                    <Label htmlFor="estado">Estado (UF) *</Label>
+                    <Select value={watch('estado')} onValueChange={(val) => setValue('estado', val, { shouldValidate: true })}>
+                      <SelectTrigger id="estado" className="w-full">
+                        <SelectValue placeholder="UF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {estados.map((est) => (
+                          <SelectItem key={est.value} value={est.value}>{est.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="estado">Estado (UF) *</Label>
-                    <Input 
-                      id="estado" 
-                      placeholder="UF" 
-                      maxLength={2} 
-                      {...register('estado')} 
-                      className="w-full uppercase"
-                    />
+                    <Label htmlFor="cidade">Cidade *</Label>
+                    <Select value={watch('cidade')} onValueChange={(val) => setValue('cidade', val, { shouldValidate: true })} disabled={!selectedEstado || loadingCities}>
+                      <SelectTrigger id="cidade" className="w-full">
+                        <SelectValue placeholder={loadingCities ? "..." : "Selecione"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="space-y-2">
