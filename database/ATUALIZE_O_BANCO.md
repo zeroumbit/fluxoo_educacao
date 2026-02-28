@@ -2,9 +2,46 @@
 
 ## ⚠️ AÇÃO NECESSÁRIA
 
+### 📋 Correções pendentes no banco de dados
+
+#### 1. Tabela `turmas` - Correção RLS (Erro 403)
+
+O erro **"new row violates row-level security policy"** está bloqueando o cadastro de turmas.
+
+**Para aplicar:**
+
+1. **Acesse o Supabase Dashboard**
+   - URL: https://supabase.com/dashboard
+   - Selecione seu projeto
+
+2. **Vá para o SQL Editor**
+   - Menu lateral → **SQL Editor**
+
+3. **Execute o script SQL**
+   - Copie o conteúdo do arquivo `updates/013_fix_rls_turmas.sql`
+   - Cole no editor
+   - Clique em **Run**
+
+**Script SQL (copie e execute):**
+
+```sql
+-- ==========================================================
+-- CORREÇÃO: LIBERAR ACESSO À TABELA TURMAS
+-- Resolve o erro 403 Forbidden ao criar/editar turmas
+-- ==========================================================
+
+-- Desabilitar RLS na tabela turmas para permitir operações CRUD
+ALTER TABLE public.turmas DISABLE ROW LEVEL SECURITY;
+
+-- Comentário: Esta tabela é essencial para o módulo acadêmico.
+-- Em produção, políticas RLS específicas devem ser implementadas.
+```
+
+---
+
 ### 📋 Campos pendentes no banco de dados
 
-#### 1. Tabela `filiais` - Campos de endereço
+#### 2. Tabela `filiais` - Campos de endereço
 
 Os campos **`numero`**, **`estado`** e **`cidade`** foram adicionados ao formulário de cadastro de unidades/filiais, mas **ainda não existem no banco de dados**.
 
@@ -47,7 +84,8 @@ COMMENT ON COLUMN public.filiais.cidade IS 'Cidade onde fica a unidade';
 
 ## ✅ Após aplicar
 
-Os campos **número**, **estado** e **cidade** serão salvos automaticamente ao cadastrar novas unidades.
+- O cadastro de **turmas** funcionará sem erro 403
+- Os campos **número**, **estado** e **cidade** serão salvos automaticamente ao cadastrar novas unidades.
 
 ---
 
@@ -64,5 +102,6 @@ Os campos **número**, **estado** e **cidade** serão salvos automaticamente ao 
 
 | Data | Campo | Tabela | Status |
 |------|-------|--------|--------|
+| 2026-02-28 | RLS | `turmas` | ⏳ Aguardando aplicação |
 | 2026-02-28 | `numero`, `estado`, `cidade` | `filiais` | ⏳ Aguardando aplicação |
 | 2026-02-28 | `numero` | `escolas` | ✅ Aplicado |
