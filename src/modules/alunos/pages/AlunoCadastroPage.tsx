@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,6 +40,15 @@ const alunoSchema = z.object({
   nome_social: z.string().optional(),
   data_nascimento: z.string().min(1, 'Data de nascimento é obrigatória'),
   cpf: z.string().optional().or(z.literal('')),
+  rg: z.string().optional(),
+  genero: z.string().optional(),
+  cep: z.string().optional(),
+  logradouro: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  estado: z.string().optional(),
   patologias: z.string().optional(),
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
@@ -65,9 +74,9 @@ type AlunoFormValues = z.infer<typeof alunoSchema>
 
 const steps = [
   { title: 'Dados Pessoais', icon: User, description: 'Informações do aluno' },
+  { title: 'Endereço', icon: Building2, description: 'Endereço do aluno' },
   { title: 'Saúde', icon: Heart, description: 'Informações de saúde' },
   { title: 'Responsável', icon: Users, description: 'Dados do responsável' },
-  { title: 'Unidade', icon: Building2, description: 'Vinculação à filial' },
 ]
 
 export function AlunoCadastroPage() {
@@ -86,12 +95,25 @@ export function AlunoCadastroPage() {
     register,
     handleSubmit,
     setValue,
+    watch,
     trigger,
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
     resolver: zodResolver(alunoSchema),
     defaultValues: { nome_completo: '', data_nascimento: '' },
   })
+
+  // Selecionar automaticamente a matriz se houver filiais
+  useEffect(() => {
+    if (filiais && filiais.length > 0) {
+      const matriz = (filiais as any[]).find(f => f.is_matriz)
+      if (matriz) {
+        setValue('filial_id', matriz.id)
+      } else if (filiais.length === 1) {
+        setValue('filial_id', (filiais[0] as any).id)
+      }
+    }
+  }, [filiais, setValue])
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>, campo: 'cpf' | 'responsavel_cpf') => {
     const valor = e.target.value
@@ -107,8 +129,8 @@ export function AlunoCadastroPage() {
     const fieldsPerStep: (keyof AlunoFormValues)[][] = [
       ['nome_completo', 'data_nascimento'],
       [],
-      ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha'],
       [],
+      ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha'],
     ]
     return await trigger(fieldsPerStep[currentStep])
   }
@@ -240,20 +262,12 @@ export function AlunoCadastroPage() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome completo *</Label>
-                  <Input 
-                    id="nome_completo" 
-                    placeholder="Digite o nome completo do aluno" 
-                    {...register('nome_completo')} 
-                  />
+                  <Input id="nome_completo" placeholder="Digite o nome completo do aluno" {...register('nome_completo')} />
                   {errors.nome_completo && <p className="text-sm text-destructive">{errors.nome_completo.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nome_social">Nome social</Label>
-                  <Input 
-                    id="nome_social" 
-                    placeholder="Nome social pelo qual o aluno é conhecido (opcional)" 
-                    {...register('nome_social')} 
-                  />
+                  <Label htmlFor="nome_social">Como quer ser chamado (Nome Social) *</Label>
+                  <Input id="nome_social" placeholder="Nome social pelo qual o aluno é conhecido" {...register('nome_social')} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -262,42 +276,78 @@ export function AlunoCadastroPage() {
                     {errors.data_nascimento && <p className="text-sm text-destructive">{errors.data_nascimento.message}</p>}
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="genero">Gênero</Label>
+                    <Select onValueChange={(v) => setValue('genero', v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="masculino">Masculino</SelectItem><SelectItem value="feminino">Feminino</SelectItem><SelectItem value="nao_binario">Não-binário</SelectItem><SelectItem value="nao_informado">Prefiro não informar</SelectItem></SelectContent></Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
-                    <Input 
-                      id="cpf" 
-                      placeholder="000.000.000-00" 
-                      {...register('cpf')}
-                      onChange={(e) => handleCpfChange(e, 'cpf')}
-                      maxLength={14}
-                    />
+                    <Input id="cpf" placeholder="000.000.000-00" {...register('cpf')} onChange={(e) => handleCpfChange(e, 'cpf')} maxLength={14} />
                     {errors.cpf && <p className="text-sm text-destructive">{errors.cpf.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rg">RG</Label>
+                    <Input id="rg" placeholder="Número do RG" {...register('rg')} />
                   </div>
                 </div>
               </>
             )}
 
-            {/* Step 2 - Saúde */}
+            {/* Step 2 - Endereço */}
             {currentStep === 1 && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="patologias">Patologias</Label>
-                  <Textarea id="patologias" placeholder="Separe por vírgula: asma, rinite..." {...register('patologias')} />
-                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+                <div className="flex gap-2">
+                  <div className="space-y-2 flex-1">
+                    <Label htmlFor="cep">CEP *</Label>
+                    <Input id="cep" placeholder="00000-000" {...register('cep')} maxLength={9} />
+                  </div>
+                  <Button type="button" variant="outline" className="mt-7" onClick={async () => {
+                    const cepVal = (document.getElementById('cep') as HTMLInputElement)?.value?.replace(/\D/g, '')
+                    if (cepVal?.length === 8) {
+                      try {
+                        const res = await fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
+                        const d = await res.json()
+                        if (!d.erro) { setValue('logradouro', d.logradouro || ''); setValue('bairro', d.bairro || ''); setValue('cidade', d.localidade || ''); setValue('estado', d.uf || '') }
+                      } catch {}
+                    }
+                  }}>Buscar</Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="medicamentos">Medicamentos em uso</Label>
-                  <Textarea id="medicamentos" placeholder="Separe por vírgula..." {...register('medicamentos')} />
-                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2 col-span-2"><Label>Rua *</Label><Input placeholder="Logradouro" {...register('logradouro')} /></div>
+                  <div className="space-y-2"><Label>Número</Label><Input placeholder="Nº" {...register('numero')} /></div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes_saude">Observações de saúde</Label>
-                  <Textarea id="observacoes_saude" {...register('observacoes_saude')} />
+                <div className="space-y-2"><Label>Complemento</Label><Input placeholder="Apto, Bloco..." {...register('complemento')} /></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label>Bairro *</Label><Input {...register('bairro')} /></div>
+                  <div className="space-y-2"><Label>Cidade *</Label><Input {...register('cidade')} /></div>
+                  <div className="space-y-2"><Label>Estado *</Label><Input maxLength={2} {...register('estado')} /></div>
                 </div>
               </>
             )}
 
-            {/* Step 3 - Responsável */}
+            {/* Step 3 - Saúde */}
             {currentStep === 2 && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="patologias">Possui alguma patologia?</Label>
+                  <Textarea id="patologias" placeholder="Separe por vírgula: asma, rinite, diabetes..." {...register('patologias')} />
+                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="medicamentos">Toma medicamento?</Label>
+                  <Textarea id="medicamentos" placeholder="Separe por vírgula..." {...register('medicamentos')} />
+                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="observacoes_saude">Observações de Saúde / Alergias</Label>
+                  <Textarea id="observacoes_saude" placeholder="Informações adicionais sobre alergias, restrições alimentares..." {...register('observacoes_saude')} />
+                </div>
+              </>
+            )}
+
+            {/* Step 4 - Responsável */}
+            {currentStep === 3 && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="responsavel_nome">Nome do responsável *</Label>
@@ -384,26 +434,21 @@ export function AlunoCadastroPage() {
               </>
             )}
 
-            {/* Step 4 - Unidade */}
-            {currentStep === 3 && (
-              <>
-                <div className="space-y-2">
-                  <Label>Unidade / Filial</Label>
-                  <Select onValueChange={(v) => setValue('filial_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione a unidade (opcional)" /></SelectTrigger>
-                    <SelectContent>
-                      {filiais?.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {(!filiais || filiais.length === 0) && (
-                  <p className="text-sm text-amber-600">Nenhuma unidade cadastrada. É opcional.</p>
-                )}
-              </>
+            {/* Unidade - dentro do step 4 (Responsável) */}
+            {currentStep === 3 && filiais && filiais.length > 0 && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Unidade / Filial (Opcional)</Label>
+                <Select value={watch('filial_id')} onValueChange={(v) => setValue('filial_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
+                  <SelectContent>
+                    {(filiais as any[])?.map((f: any) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </CardContent>
         </Card>

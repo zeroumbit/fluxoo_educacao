@@ -5,22 +5,17 @@ export const superAdminService = {
   // DASHBOARD
   // ==========================================
   async getDashboardStats() {
-    const { count: totalEscolas } = await supabase
-      .from('escolas' as any).select('*', { count: 'exact', head: true })
+    const { count: totalEscolas } = await (supabase.from('escolas' as any) as any).select('*', { count: 'exact', head: true })
 
-    const { count: assinaturasAtivas } = await supabase
-      .from('assinaturas' as any).select('*', { count: 'exact', head: true })
+    const { count: assinaturasAtivas } = await (supabase.from('assinaturas' as any) as any).select('*', { count: 'exact', head: true })
       .eq('status', 'ativa')
 
-    const { count: totalAlunos } = await supabase
-      .from('alunos' as any).select('*', { count: 'exact', head: true })
+    const { count: totalAlunos } = await (supabase.from('alunos' as any) as any).select('*', { count: 'exact', head: true })
 
-    const { count: faturasPendentes } = await supabase
-      .from('faturas' as any).select('*', { count: 'exact', head: true })
+    const { count: faturasPendentes } = await (supabase.from('faturas' as any) as any).select('*', { count: 'exact', head: true })
       .eq('status', 'pendente_confirmacao')
 
-    const { data: escolasRecentes } = await supabase
-      .from('escolas' as any)
+    const { data: escolasRecentes } = await (supabase.from('escolas' as any) as any)
       .select('id, razao_social, created_at, status_assinatura')
       .order('created_at', { ascending: false })
       .limit(5)
@@ -38,15 +33,13 @@ export const superAdminService = {
   // PLANOS
   // ==========================================
   async getPlanos() {
-    const { data, error } = await supabase
-      .from('planos' as any).select('*').order('created_at', { ascending: false })
+    const { data, error } = await (supabase.from('planos' as any) as any).select('*').order('created_at', { ascending: false })
     if (error) throw error
     return data as any[]
   },
 
   async upsertPlano(plano: any) {
-    const { data, error } = await supabase
-      .from('planos' as any)
+    const { data, error } = await (supabase.from('planos' as any) as any)
       .upsert({ ...plano, updated_at: new Date().toISOString() })
       .select().single()
     if (error) throw error
@@ -54,8 +47,7 @@ export const superAdminService = {
   },
 
   async deletePlano(id: string) {
-    const { error } = await supabase
-      .from('planos' as any)
+    const { error } = await (supabase.from('planos' as any) as any)
       .update({ status: false, updated_at: new Date().toISOString() } as any)
       .eq('id', id)
     if (error) throw error
@@ -65,22 +57,19 @@ export const superAdminService = {
   // MÓDULOS
   // ==========================================
   async getModulos() {
-    const { data, error } = await supabase
-      .from('modulos' as any).select('*').order('nome')
+    const { data, error } = await (supabase.from('modulos' as any) as any).select('*').order('nome')
     if (error) throw error
     return data as any[]
   },
 
   async upsertModulo(modulo: any) {
-    const { data, error } = await supabase
-      .from('modulos' as any).upsert(modulo).select().single()
+    const { data, error } = await (supabase.from('modulos' as any) as any).upsert(modulo).select().single()
     if (error) throw error
     return data
   },
 
   async deleteModulo(id: string) {
-    const { error } = await supabase
-      .from('modulos' as any).delete().eq('id', id)
+    const { error } = await (supabase.from('modulos' as any) as any).delete().eq('id', id)
     if (error) throw error
   },
 
@@ -88,19 +77,18 @@ export const superAdminService = {
   // PLANO_MODULO (vínculo)
   // ==========================================
   async getPlanoModulos(planoId: string) {
-    const { data, error } = await supabase
-      .from('plano_modulo' as any).select('*, modulo:modulos(*)').eq('plano_id', planoId)
+    const { data, error } = await (supabase.from('plano_modulo' as any) as any).select('*, modulo:modulos(*)').eq('plano_id', planoId)
     if (error) throw error
     return data as any[]
   },
 
   async setPlanoModulos(planoId: string, moduloIds: string[]) {
     // Remove vínculos atuais
-    await supabase.from('plano_modulo' as any).delete().eq('plano_id', planoId)
+    await (supabase.from('plano_modulo' as any) as any).delete().eq('plano_id', planoId)
     // Insere novos
     if (moduloIds.length > 0) {
       const rows = moduloIds.map(mid => ({ plano_id: planoId, modulo_id: mid }))
-      const { error } = await supabase.from('plano_modulo' as any).insert(rows as any)
+      const { error } = await (supabase.from('plano_modulo' as any) as any).insert(rows as any)
       if (error) throw error
     }
   },
@@ -109,8 +97,7 @@ export const superAdminService = {
   // ESCOLAS (TENANTS)
   // ==========================================
   async getEscolas() {
-    const { data, error } = await supabase
-      .from('escolas' as any)
+    const { data, error } = await (supabase.from('escolas' as any) as any)
       .select('*, plano:planos(nome, valor_por_aluno)')
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -118,8 +105,7 @@ export const superAdminService = {
   },
 
   async updateEscolaStatus(id: string, status: string) {
-    const { data, error } = await supabase
-      .from('escolas' as any)
+    const { data, error } = await (supabase.from('escolas' as any) as any)
       .update({
         status_assinatura: status,
         updated_at: new Date().toISOString(),
@@ -134,8 +120,7 @@ export const superAdminService = {
   // ASSINATURAS
   // ==========================================
   async getAssinaturas() {
-    const { data, error } = await supabase
-      .from('assinaturas' as any)
+    const { data, error } = await (supabase.from('assinaturas' as any) as any)
       .select('*, escola:escolas(razao_social, cnpj), plano:planos(nome)')
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -143,15 +128,13 @@ export const superAdminService = {
   },
 
   async createAssinatura(assinatura: any) {
-    const { data, error } = await supabase
-      .from('assinaturas' as any).insert(assinatura as any).select().single()
+    const { data, error } = await (supabase.from('assinaturas' as any) as any).insert(assinatura as any).select().single()
     if (error) throw error
     return data
   },
 
   async updateAssinatura(id: string, updates: any) {
-    const { data, error } = await supabase
-      .from('assinaturas' as any)
+    const { data, error } = await (supabase.from('assinaturas' as any) as any)
       .update({ ...updates, updated_at: new Date().toISOString() } as any)
       .eq('id', id).select().single()
     if (error) throw error
@@ -162,8 +145,7 @@ export const superAdminService = {
   // FATURAS
   // ==========================================
   async getFaturas(filters?: { status?: string }) {
-    let query = supabase
-      .from('faturas' as any)
+    let query = (supabase.from('faturas' as any) as any)
       .select('*, escola:escolas(razao_social), assinatura:assinaturas(plano_id)')
       .order('created_at', { ascending: false })
     if (filters?.status) query = query.eq('status', filters.status)
@@ -173,25 +155,38 @@ export const superAdminService = {
   },
 
   async confirmarFatura(id: string, adminId: string) {
-    const { data, error } = await supabase
-      .from('faturas' as any)
+    // 1. Atualiza a fatura para paga
+    const { data: fatura, error: faturaError } = await (supabase.from('faturas' as any) as any)
       .update({
         status: 'pago',
         confirmado_por: adminId,
         data_confirmacao: new Date().toISOString(),
         data_pagamento: new Date().toISOString().split('T')[0],
       } as any)
-      .eq('id', id).select().single()
-    if (error) throw error
-    return data
+      .eq('id', id).select('*, escola:escolas(*)').single()
+
+    if (faturaError) throw faturaError
+
+    // 2. Se a escola estiver pendente, ativa ela automaticamente (fluxo de onboarding)
+    const escola = (fatura as any).escola
+    if (escola && (escola.status_assinatura === 'pendente' || escola.status_assinatura === 'aguardando_pagamento')) {
+      await (supabase.from('escolas' as any) as any)
+        .update({
+          status_assinatura: 'ativa',
+          data_inicio: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', escola.id)
+    }
+
+    return fatura
   },
 
   // ==========================================
   // SOLICITAÇÕES DE UPGRADE
   // ==========================================
   async getSolicitacoesUpgrade() {
-    const { data, error } = await supabase
-      .from('solicitacoes_upgrade' as any)
+    const { data, error } = await (supabase.from('solicitacoes_upgrade' as any) as any)
       .select('*, escola:escolas(razao_social)')
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -200,17 +195,16 @@ export const superAdminService = {
 
   async aprovarUpgrade(id: string, tenantId: string, novoLimite: number, novoValor: number) {
     // 1. Aprovar solicitação
-    await supabase.from('solicitacoes_upgrade' as any)
+    await (supabase.from('solicitacoes_upgrade' as any) as any)
       .update({ status: 'aprovado' } as any).eq('id', id)
 
     // 2. Atualizar assinatura ativa
-    const { data: assinatura } = await supabase
-      .from('assinaturas' as any)
+    const { data: assinatura } = await (supabase.from('assinaturas' as any) as any)
       .select('*').eq('tenant_id', tenantId).eq('status', 'ativa').single()
 
     if (assinatura) {
       // 3. Salvar snapshot no histórico (imutável)
-      await supabase.from('historico_assinatura' as any).insert({
+      await (supabase.from('historico_assinatura' as any) as any).insert({
         tenant_id: tenantId,
         plano_id: (assinatura as any).plano_id,
         valor_por_aluno_contratado: (assinatura as any).valor_por_aluno_contratado,
@@ -221,18 +215,26 @@ export const superAdminService = {
       } as any)
 
       // 4. Atualizar assinatura com novos valores
-      await supabase.from('assinaturas' as any)
+      await (supabase.from('assinaturas' as any) as any)
         .update({
           limite_alunos_contratado: novoLimite,
           valor_total_contratado: novoValor,
           updated_at: new Date().toISOString()
         } as any)
         .eq('id', (assinatura as any).id)
+
+      // 5. Sincronizar limite na tabela principal da escola (usado no dashboard)
+      await (supabase.from('escolas' as any) as any)
+        .update({
+          limite_alunos_contratado: novoLimite,
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', tenantId)
     }
   },
 
   async recusarUpgrade(id: string) {
-    const { error } = await supabase.from('solicitacoes_upgrade' as any)
+    const { error } = await (supabase.from('solicitacoes_upgrade' as any) as any)
       .update({ status: 'recusado' } as any).eq('id', id)
     if (error) throw error
   },
@@ -241,18 +243,16 @@ export const superAdminService = {
   // CONFIGURAÇÃO DE RECEBIMENTO (PIX MANUAL)
   // ==========================================
   async getConfiguracaoRecebimento() {
-    const { data, error } = await supabase
-      .from('configuracao_recebimento' as any).select('*').limit(1).single()
-    if (error && error.code !== 'PGRST116') throw error
+    const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any).select('*').limit(1).maybeSingle()
+    if (error) throw error
     return data as any
   },
 
   async updateConfiguracaoRecebimento(config: any) {
     // Upsert no registro único
-    const { data, error } = await supabase
-      .from('configuracao_recebimento' as any)
+    const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any)
       .upsert({ ...config, updated_at: new Date().toISOString() })
-      .select().single()
+      .select().maybeSingle()
     if (error) throw error
     return data
   },

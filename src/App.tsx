@@ -8,7 +8,7 @@ import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
 
-// Pages - Admin
+// Pages - Admin (Escola)
 import { DashboardPage } from '@/modules/alunos/pages/DashboardPage'
 import { AlunosListPage } from '@/modules/alunos/pages/AlunosListPage'
 import { AlunoCadastroPage } from '@/modules/alunos/pages/AlunoCadastroPage'
@@ -19,6 +19,18 @@ import { MuralPage } from '@/modules/comunicacao/pages/MuralPage'
 import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
 import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
 import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
+
+// Novos módulos - Escola
+import { FuncionariosPage } from '@/modules/funcionarios/pages/FuncionariosPage'
+import { MatriculaPage } from '@/modules/academico/pages/MatriculaPage'
+import { PlanoAulaPage } from '@/modules/academico/pages/PlanoAulaPage'
+import { AtividadesPage } from '@/modules/academico/pages/AtividadesPage'
+import { EventosPage } from '@/modules/agenda/pages/EventosPage'
+import { ConfigFinanceiraPage } from '@/modules/financeiro/pages/ConfigFinanceiraPage'
+import { ContasPagarPage } from '@/modules/financeiro/pages/ContasPagarPage'
+import { DocumentosPage } from '@/modules/documentos/pages/DocumentosPage'
+import { AlmoxarifadoPage } from '@/modules/almoxarifado/pages/AlmoxarifadoPage'
+import { PerfilEscolaPage } from '@/modules/escola-perfil/pages/PerfilEscolaPage'
 
 // Pages - Super Admin
 import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
@@ -109,6 +121,17 @@ function App() {
               <Route path="/mural" element={<MuralPage />} />
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
+              {/* Novos Módulos */}
+              <Route path="/funcionarios" element={<FuncionariosPage />} />
+              <Route path="/matriculas" element={<MatriculaPage />} />
+              <Route path="/planos-aula" element={<PlanoAulaPage />} />
+              <Route path="/atividades" element={<AtividadesPage />} />
+              <Route path="/agenda" element={<EventosPage />} />
+              <Route path="/config-financeira" element={<ConfigFinanceiraPage />} />
+              <Route path="/contas-pagar" element={<ContasPagarPage />} />
+              <Route path="/documentos" element={<DocumentosPage />} />
+              <Route path="/almoxarifado" element={<AlmoxarifadoPage />} />
+              <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
             </Route>
 
             {/* Portal do Responsável */}

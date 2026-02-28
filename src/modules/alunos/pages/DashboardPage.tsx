@@ -4,28 +4,45 @@ import { useDashboard } from '../dashboard.hooks'
 import { Users, CreditCard, AlertTriangle, Megaphone, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { OnboardingGuide } from '../components/OnboardingGuide'
 
 export function DashboardPage() {
   const { data: dashboard, isLoading } = useDashboard()
 
-  if (isLoading || !dashboard) {
+  if (isLoading && !dashboard) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     )
   }
 
-  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes } = dashboard
+  if (!dashboard && !isLoading) {
+    return (
+      <div className="p-8 text-center bg-zinc-50 rounded-2xl border-2 border-dashed">
+        <h3 className="text-lg font-bold text-zinc-900">Configuração Pendente</h3>
+        <p className="text-sm text-muted-foreground mt-2">
+          Não conseguimos carregar os dados da sua escola. <br/> 
+          Se você acabou de se cadastrar, verifique se confirmou o e-mail ou se o pagamento foi processado.
+        </p>
+      </div>
+    )
+  }
+
+  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding } = dashboard
   const percentualLimite = limiteAlunos ? (totalAlunosAtivos / limiteAlunos) * 100 : 0
   const proximoDoLimite = percentualLimite >= 80
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral da sua escola</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral da sua escola</p>
+        </div>
       </div>
+
+      {onboarding && <OnboardingGuide status={onboarding} />}
 
       {/* Cards de métricas */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

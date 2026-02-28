@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useCriarEscola, usePlanos, useConfigRecebimento, useCriarAssinatura, useCriarFaturaInicial } from '../hooks'
+import { useCriarFilial } from '@/modules/filiais/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -56,6 +57,7 @@ export function EscolaCadastroPage() {
   const criarEscola = useCriarEscola()
   const criarAssinatura = useCriarAssinatura()
   const criarFatura = useCriarFaturaInicial()
+  const criarFilial = useCriarFilial()
   const { data: planos } = usePlanos()
   const { data: configPix } = useConfigRecebimento()
 
@@ -156,6 +158,14 @@ export function EscolaCadastroPage() {
         gestor_user_id: authData.user.id,
         data_inicio: null, data_fim: null,
         data_vencimento_assinatura: null,
+      })
+      // 2.2. Criar Filial Matriz Automaticamente
+      await criarFilial.mutateAsync({
+        tenant_id: escola.id,
+        nome_unidade: 'Matriz',
+        is_matriz: true,
+        cnpj_proprio: data.cnpj,
+        endereco_completo: `${data.logradouro}, ${data.numero}${data.bairro ? ' - ' + data.bairro : ''} - ${data.cidade}/${data.estado}`,
       })
 
       // 3. Assinatura contratual

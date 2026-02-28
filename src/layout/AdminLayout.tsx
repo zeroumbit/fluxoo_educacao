@@ -25,17 +25,60 @@ import {
   ChevronRight,
   Building2,
   Shield,
+  Briefcase,
+  ClipboardList,
+  FileText,
+  Calendar,
+  Settings,
+  Wallet,
+  Package,
+  UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Alunos', href: '/alunos', icon: Users },
-  { name: 'Turmas', href: '/turmas', icon: BookOpen },
-  { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
-  { name: 'Mural', href: '/mural', icon: Megaphone },
-  { name: 'Financeiro', href: '/financeiro', icon: CreditCard },
-  { name: 'Unidades', href: '/filiais', icon: Building2 },
+const navigationGroups = [
+  {
+    label: 'Principal',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Acadêmico',
+    items: [
+      { name: 'Alunos', href: '/alunos', icon: Users },
+      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
+      { name: 'Turmas', href: '/turmas', icon: BookOpen },
+      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
+      { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
+      { name: 'Atividades', href: '/atividades', icon: FileText },
+      { name: 'Documentos', href: '/documentos', icon: FileText },
+    ],
+  },
+  {
+    label: 'Comunicação',
+    items: [
+      { name: 'Mural', href: '/mural', icon: Megaphone },
+      { name: 'Agenda', href: '/agenda', icon: Calendar },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { name: 'Cobranças', href: '/financeiro', icon: CreditCard },
+      { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet },
+      { name: 'Configurações', href: '/config-financeira', icon: Settings },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { name: 'Funcionários', href: '/funcionarios', icon: Briefcase },
+      { name: 'Unidades', href: '/filiais', icon: Building2 },
+      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package },
+      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog },
+    ],
+  },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -47,14 +90,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     await signOut()
     navigate('/login')
   }
-
-  const filteredNav = navigation.filter(() => {
-    // Funcionários não acessam financeiro
-    if (authUser?.role === 'funcionario') {
-      return true // Todos os menus são visíveis, RLS controla o acesso
-    }
-    return true
-  })
 
   return (
     <div className="flex flex-col h-full">
@@ -74,29 +109,36 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {filteredNav.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon className={cn('h-5 w-5 transition-colors', isActive ? 'text-indigo-600' : '')} />
-                <span className="flex-1">{item.name}</span>
-                {isActive && <ChevronRight className="h-4 w-4 text-indigo-400" />}
-              </>
-            )}
-          </NavLink>
+      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        {navigationGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{group.label}</p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group',
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 shadow-sm'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon className={cn('h-4 w-4 transition-colors flex-shrink-0', isActive ? 'text-indigo-600' : '')} />
+                      <span className="flex-1 truncate">{item.name}</span>
+                      {isActive && <ChevronRight className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
