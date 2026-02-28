@@ -131,8 +131,20 @@ export function LoginPage() {
                 )}
               </Button>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-4 space-y-3">
                 <p className="text-sm text-muted-foreground">
+                  É pai ou aluno?{' '}
+                  <a
+                    href="/portal/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-500 font-bold transition-colors underline underline-offset-4"
+                  >
+                    Acessar Portal do Aluno
+                  </a>
+                </p>
+
+                <p className="text-sm text-muted-foreground border-t pt-3">
                   Sua escola ainda não é cadastrada?{' '}
                   <Link
                     to="/cadastro"

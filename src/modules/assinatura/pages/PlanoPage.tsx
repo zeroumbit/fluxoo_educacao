@@ -33,12 +33,12 @@ export function PlanoPage() {
   // Sincronização de dados reais do Super Admin / Banco de Dados
   // Prioriza a assinatura ativa, depois os dados da escola
   const activePlan = (assinatura as any)?.plano || (escola as any)?.plano
-  const currentLimit = (assinatura as any)?.limite_alunos_contratado || (escola as any)?.limite_alunos_contratado || 0
-  const valorUnitario = (assinatura as any)?.valor_por_aluno_contratado || (activePlan ? Number(activePlan.valor_por_aluno) : 0)
-  const totalMensal = (assinatura as any)?.valor_total_contratado || (currentLimit * valorUnitario)
+  const currentLimit = Number((assinatura as any)?.limite_alunos_contratado || (escola as any)?.limite_alunos_contratado || 0)
+  const valorUnitario = Number((assinatura as any)?.valor_por_aluno_contratado || (activePlan ? activePlan.valor_por_aluno : 0))
+  const totalMensal = Number((assinatura as any)?.valor_total_contratado || (currentLimit * valorUnitario))
 
   // Data de referência do contrato
-  const dataReferencia = (assinatura as any)?.data_inicio || (escola as any)?.data_inicio
+  const dataReferencia = (assinatura as any)?.data_inicio || (escola as any)?.data_inicio || (escola as any)?.created_at
 
   const handleRequestUpgrade = async () => {
     if (novoLimite <= currentLimit) {
@@ -72,10 +72,24 @@ export function PlanoPage() {
     }
   }
 
-  if (loadingEscola || loadingAssinatura) {
+  // Estabilização: Só renderiza se tivermos pelo menos os dados da escola carregados
+  // Se estiver carregando ou se o dado for nulo (mas ainda não terminou de processar), mantém o loader
+  if (loadingEscola || loadingAssinatura || (!escola && !assinatura)) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <p className="text-xs text-muted-foreground animate-pulse font-medium">Sincronizando dados com o Super Admin...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback de segurança caso os dados realmente não existam após o carregamento
+  if (!escola && !assinatura) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Erro ao carregar dados do plano. Por favor, tente recarregar a página.
       </div>
     )
   }
