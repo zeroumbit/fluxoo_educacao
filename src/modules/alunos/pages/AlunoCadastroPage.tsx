@@ -29,6 +29,8 @@ import {
   Heart,
   Users,
   Building2,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -66,6 +68,7 @@ export function AlunoCadastroPage() {
   const { data: totalAtivos } = useAlunosAtivos()
   const { data: limite } = useLimiteAlunos()
   const { data: filiais } = useFiliais()
+  const [showPassword, setShowPassword] = useState(false)
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -298,7 +301,25 @@ export function AlunoCadastroPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="responsavel_senha">Senha de acesso *</Label>
-                  <Input id="responsavel_senha" type="password" {...register('responsavel_senha')} />
+                  <div className="relative">
+                    <Input
+                      id="responsavel_senha"
+                      type={showPassword ? 'text' : 'password'}
+                      {...register('responsavel_senha')}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.responsavel_senha && <p className="text-sm text-destructive">{errors.responsavel_senha.message}</p>}
                   <p className="text-xs text-muted-foreground">Senha para o responsável acessar o portal</p>
                 </div>
