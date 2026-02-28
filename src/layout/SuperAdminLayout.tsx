@@ -14,21 +14,25 @@ import {
 import {
   LayoutDashboard,
   Building2,
-  CreditCard,
   ClipboardList,
   History,
   Menu,
   LogOut,
   ShieldCheck,
   ChevronRight,
+  FileText,
+  QrCode,
+  ArrowUpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const superAdminNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Escolas', href: '/admin/escolas', icon: Building2 },
-  { name: 'Planos', href: '/admin/planos', icon: ClipboardList },
-  { name: 'Assinaturas', href: '/admin/assinaturas', icon: CreditCard },
+  { name: 'Planos & Módulos', href: '/admin/planos', icon: ClipboardList },
+  { name: 'Faturas', href: '/admin/faturas', icon: FileText },
+  { name: 'Upgrades', href: '/admin/upgrades', icon: ArrowUpCircle },
+  { name: 'Config. Recebimento', href: '/admin/config-recebimento', icon: QrCode },
   { name: 'Logs', href: '/admin/logs', icon: History },
 ]
 

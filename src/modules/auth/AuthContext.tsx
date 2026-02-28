@@ -76,6 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Se é um novo gestor que acabou de se cadastrar (metadados do Auth)
+    if (user.user_metadata?.role === 'gestor') {
+      setAuthUser({
+        user,
+        session,
+        tenantId: '', // Será preenchido quando a escola for selecionada ou carregada
+        role: 'gestor',
+        nome: user.user_metadata?.full_name || 'Gestor',
+      })
+      return
+    }
+
     // Sem perfil encontrado - logout
     await supabase.auth.signOut()
     setAuthUser(null)

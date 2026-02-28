@@ -24,6 +24,13 @@ export function usePlanos() {
   })
 }
 
+export function useConfigRecebimento() {
+  return useQuery({
+    queryKey: ['config-recebimento'],
+    queryFn: () => escolaService.getConfiguracaoRecebimento(),
+  })
+}
+
 export function useCriarEscola() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -31,6 +38,20 @@ export function useCriarEscola() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['escolas'] })
     },
+  })
+}
+
+export function useCriarAssinatura() {
+  return useMutation({
+    mutationFn: (assinatura: Parameters<typeof escolaService.criarAssinatura>[0]) =>
+      escolaService.criarAssinatura(assinatura),
+  })
+}
+
+export function useCriarFaturaInicial() {
+  return useMutation({
+    mutationFn: (fatura: Parameters<typeof escolaService.criarFaturaInicial>[0]) =>
+      escolaService.criarFaturaInicial(fatura),
   })
 }
 

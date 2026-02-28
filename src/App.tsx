@@ -22,6 +22,11 @@ import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
 
 // Pages - Super Admin
 import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
+import { PlanosPage } from '@/modules/super-admin/pages/PlanosPage'
+import { EscolasPage } from '@/modules/super-admin/pages/EscolasPage'
+import { FaturasPage } from '@/modules/super-admin/pages/FaturasPage'
+import { UpgradesPage } from '@/modules/super-admin/pages/UpgradesPage'
+import { ConfigRecebimentoPage } from '@/modules/super-admin/pages/ConfigRecebimentoPage'
 
 // Pages - Portal
 import { PortalAlunoPage } from '@/modules/auth/pages/PortalAlunoPage'
@@ -79,9 +84,11 @@ function App() {
               }
             >
               <Route path="/admin/dashboard" element={<SuperAdminDashboardPage />} />
-              <Route path="/admin/escolas" element={<div className="p-8"><h1 className="text-2xl font-bold">Gestão de Escolas</h1><p>Em breve: Lista de tenants e configurações globais.</p></div>} />
-              <Route path="/admin/planos" element={<div className="p-8"><h1 className="text-2xl font-bold">Planos e Preços</h1><p>Em breve: Gestão de planos da plataforma.</p></div>} />
-              <Route path="/admin/assinaturas" element={<div className="p-8"><h1 className="text-2xl font-bold">Assinaturas</h1><p>Em breve: Histórico global de pagamentos.</p></div>} />
+              <Route path="/admin/escolas" element={<EscolasPage />} />
+              <Route path="/admin/planos" element={<PlanosPage />} />
+              <Route path="/admin/faturas" element={<FaturasPage />} />
+              <Route path="/admin/upgrades" element={<UpgradesPage />} />
+              <Route path="/admin/config-recebimento" element={<ConfigRecebimentoPage />} />
               <Route path="/admin/logs" element={<div className="p-8"><h1 className="text-2xl font-bold">Logs do Sistema</h1><p>Em breve: Auditoria global.</p></div>} />
             </Route>
 
