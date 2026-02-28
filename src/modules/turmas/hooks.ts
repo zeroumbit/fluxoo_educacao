@@ -9,6 +9,7 @@ export function useTurmas() {
     queryKey: ['turmas', authUser?.tenantId],
     queryFn: () => turmaService.listar(authUser!.tenantId),
     enabled: !!authUser?.tenantId,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   })
 }
 
@@ -28,6 +29,7 @@ export function useCriarTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.refetchQueries({ queryKey: ['turmas'] })
     },
   })
 }
@@ -40,6 +42,7 @@ export function useAtualizarTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.refetchQueries({ queryKey: ['turmas'] })
     },
   })
 }
@@ -51,6 +54,7 @@ export function useExcluirTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.refetchQueries({ queryKey: ['turmas'] })
     },
   })
 }
