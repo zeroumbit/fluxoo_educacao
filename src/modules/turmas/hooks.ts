@@ -5,12 +5,22 @@ import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 
 export function useTurmas() {
   const { authUser } = useAuth()
-  return useQuery({
+  const query = useQuery({
     queryKey: ['turmas', authUser?.tenantId],
-    queryFn: () => turmaService.listar(authUser!.tenantId),
+    queryFn: () => {
+      console.log('🔍 [useTurmas] queryFn executou, tenantId:', authUser?.tenantId)
+      return turmaService.listar(authUser!.tenantId)
+    },
     enabled: !!authUser?.tenantId,
     staleTime: 1000 * 60 * 5, // 5 minutos
   })
+  console.log('🔍 [useTurmas] query result:', { 
+    data: query.data, 
+    isLoading: query.isLoading, 
+    error: query.error,
+    dataUpdatedAt: new Date(query.dataUpdatedAt).toISOString()
+  })
+  return query
 }
 
 export function useTurma(id: string) {
@@ -25,11 +35,18 @@ export function useTurma(id: string) {
 export function useCriarTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (turma: TurmaInsert) => turmaService.criar(turma),
-    onSuccess: () => {
+    mutationFn: (turma: TurmaInsert) => {
+      console.log('🔍 [useCriarTurma] mutationFn:', turma)
+      return turmaService.criar(turma)
+    },
+    onSuccess: (data) => {
+      console.log('🔍 [useCriarTurma] onSuccess, turma criada:', data)
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.refetchQueries({ queryKey: ['turmas'] })
+    },
+    onError: (error) => {
+      console.error('🔍 [useCriarTurma] onError:', error)
     },
   })
 }
@@ -37,12 +54,18 @@ export function useCriarTurma() {
 export function useAtualizarTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) =>
-      turmaService.atualizar(id, turma),
-    onSuccess: () => {
+    mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) => {
+      console.log('🔍 [useAtualizarTurma] mutationFn:', { id, turma })
+      return turmaService.atualizar(id, turma)
+    },
+    onSuccess: (data) => {
+      console.log('🔍 [useAtualizarTurma] onSuccess, turma atualizada:', data)
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.refetchQueries({ queryKey: ['turmas'] })
+    },
+    onError: (error) => {
+      console.error('🔍 [useAtualizarTurma] onError:', error)
     },
   })
 }
@@ -50,11 +73,18 @@ export function useAtualizarTurma() {
 export function useExcluirTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => turmaService.excluir(id),
-    onSuccess: () => {
+    mutationFn: (id: string) => {
+      console.log('🔍 [useExcluirTurma] mutationFn, id:', id)
+      return turmaService.excluir(id)
+    },
+    onSuccess: (data) => {
+      console.log('🔍 [useExcluirTurma] onSuccess, id excluído:', id)
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.refetchQueries({ queryKey: ['turmas'] })
+    },
+    onError: (error) => {
+      console.error('🔍 [useExcluirTurma] onError:', error)
     },
   })
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,7 +28,7 @@ type TurmaFormValues = z.infer<typeof turmaSchema>
 
 export function TurmasPage() {
   const { authUser } = useAuth()
-  const { data: turmas, isLoading } = useTurmas()
+  const { data: turmas, isLoading, error, refetch } = useTurmas()
   const { data: filiais } = useFiliais()
   const criarTurma = useCriarTurma()
   const atualizarTurma = useAtualizarTurma()
@@ -37,6 +37,24 @@ export function TurmasPage() {
   const [editando, setEditando] = useState<Turma | null>(null)
   const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
   const [turmaParaExcluir, setTurmaParaExcluir] = useState<string | null>(null)
+
+  // Logs de debug
+  console.log('🔍 [TurmasPage] Renderizou')
+  console.log('🔍 [TurmasPage] authUser:', authUser)
+  console.log('🔍 [TurmasPage] turmas:', turmas)
+  console.log('🔍 [TurmasPage] isLoading:', isLoading)
+  console.log('🔍 [TurmasPage] error:', error)
+  console.log('🔍 [TurmasPage] tenantId:', authUser?.tenantId)
+
+  useEffect(() => {
+    console.log('🔍 [TurmasPage] useEffect - turmas mudou:', turmas)
+    console.log('🔍 [TurmasPage] useEffect - length:', turmas?.length)
+  }, [turmas])
+
+  useEffect(() => {
+    console.log('🔍 [TurmasPage] useEffect - authUser mudou:', authUser)
+    console.log('🔍 [TurmasPage] useEffect - tenantId:', authUser?.tenantId)
+  }, [authUser])
 
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
@@ -217,6 +235,11 @@ export function TurmasPage() {
           </Card>
         ))}
       </div>
+
+      {(() => {
+        console.log('🔍 [TurmasPage] Verificando lista vazia:', { turmas, isEmpty: !turmas || turmas.length === 0 })
+        return null
+      })()}
 
       {(!turmas || turmas.length === 0) && (
         <Card className="border-0 shadow-md">
