@@ -57,16 +57,25 @@ export function TurmasPage() {
   const onSubmit = async (data: TurmaFormValues) => {
     if (!authUser) return
     try {
+      const payload = {
+        nome: data.nome,
+        turno: data.turno,
+        sala: data.sala || null,
+        capacidade_maxima: data.capacidade_maxima ? Number(data.capacidade_maxima) : null,
+        filial_id: data.filial_id || null,
+      }
+
       if (editando) {
-        await atualizarTurma.mutateAsync({ id: editando.id, turma: { ...data, filial_id: data.filial_id || null } })
+        await atualizarTurma.mutateAsync({ id: editando.id, turma: payload })
         toast.success('Turma atualizada!')
       } else {
-        await criarTurma.mutateAsync({ ...data, tenant_id: authUser.tenantId, filial_id: data.filial_id || null })
+        await criarTurma.mutateAsync({ ...payload, tenant_id: authUser.tenantId })
         toast.success('Turma criada!')
       }
       setDialogOpen(false)
-    } catch {
-      toast.error('Erro ao salvar turma')
+    } catch (error: any) {
+      console.error('Erro ao salvar turma:', error)
+      toast.error(error.message || 'Erro ao salvar turma')
     }
   }
 
