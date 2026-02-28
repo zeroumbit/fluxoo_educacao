@@ -34,16 +34,19 @@ export const dashboardService = {
       supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     ])
 
-    // Se a consulta principal da escola falhar, podemos ter um problema real
-    if (escolaRes.error && escolaRes.error.code !== 'PGRST116') {
-      console.error('Erro ao buscar dados da escola:', escolaRes.error)
+    // Verificação de segurança: Se a escola não existe ou a consulta falhou, não podemos assumir status 'pendente'
+    if (!escolaRes.data) {
+      if (escolaRes.error) throw escolaRes.error
+      throw new Error('Perfil da escola não encontrado. Verifique se o cadastro foi concluído.')
     }
+
+    const escola = escolaRes.data as any
 
     return {
       totalAlunosAtivos: alunosRes.count || 0,
-      limiteAlunos: (escolaRes.data as any)?.limite_alunos_contratado || 0,
-      statusAssinatura: (escolaRes.data as any)?.status_assinatura || 'pendente',
-      metodoPagamento: (escolaRes.data as any)?.metodo_pagamento || 'pix',
+      limiteAlunos: escola.limite_alunos_contratado || 0,
+      statusAssinatura: escola.status_assinatura || 'pendente',
+      metodoPagamento: escola.metodo_pagamento || 'pix',
       totalCobrancasAbertas: cobrancasRes.count || 0,
       avisosRecentes: (avisosRes.data || []) as DashboardData['avisosRecentes'],
       onboarding: {

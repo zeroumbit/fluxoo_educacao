@@ -13,13 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DialogFooter } from '@/components/ui/dialog'
 import {
   ArrowLeft,
   ArrowRight,
@@ -262,33 +257,76 @@ export function AlunoCadastroPage() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome completo *</Label>
-                  <Input id="nome_completo" placeholder="Digite o nome completo do aluno" {...register('nome_completo')} />
-                  {errors.nome_completo && <p className="text-sm text-destructive">{errors.nome_completo.message}</p>}
+                  <Input
+                    id="nome_completo"
+                    placeholder="Digite o nome completo do aluno"
+                    {...register('nome_completo')}
+                    className="w-full"
+                  />
+                  {errors.nome_completo && (
+                    <p className="text-sm text-destructive">{errors.nome_completo.message}</p>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nome_social">Como quer ser chamado (Nome Social) *</Label>
-                  <Input id="nome_social" placeholder="Nome social pelo qual o aluno é conhecido" {...register('nome_social')} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome_social">Nome social</Label>
+                    <Input
+                      id="nome_social"
+                      placeholder="Nome pelo qual é conhecido"
+                      {...register('nome_social')}
+                      className="w-full"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
-                    <Input id="data_nascimento" type="date" {...register('data_nascimento')} />
-                    {errors.data_nascimento && <p className="text-sm text-destructive">{errors.data_nascimento.message}</p>}
+                    <Input
+                      id="data_nascimento"
+                      type="date"
+                      {...register('data_nascimento')}
+                      className="w-full"
+                    />
+                    {errors.data_nascimento && (
+                      <p className="text-sm text-destructive">{errors.data_nascimento.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="genero">Gênero</Label>
-                    <Select onValueChange={(v) => setValue('genero', v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="masculino">Masculino</SelectItem><SelectItem value="feminino">Feminino</SelectItem><SelectItem value="nao_binario">Não-binário</SelectItem><SelectItem value="nao_informado">Prefiro não informar</SelectItem></SelectContent></Select>
+                    <Select onValueChange={(v) => setValue('genero', v)}>
+                      <SelectTrigger id="genero" className="w-full">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="nao_binario">Não-binário</SelectItem>
+                        <SelectItem value="nao_informado">Prefiro não informar</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>
-                    <Input id="cpf" placeholder="000.000.000-00" {...register('cpf')} onChange={(e) => handleCpfChange(e, 'cpf')} maxLength={14} />
-                    {errors.cpf && <p className="text-sm text-destructive">{errors.cpf.message}</p>}
+                    <Input
+                      id="cpf"
+                      placeholder="000.000.000-00"
+                      {...register('cpf')}
+                      onChange={(e) => handleCpfChange(e, 'cpf')}
+                      maxLength={14}
+                      className="w-full"
+                    />
+                    {errors.cpf && (
+                      <p className="text-sm text-destructive">{errors.cpf.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="rg">RG</Label>
-                    <Input id="rg" placeholder="Número do RG" {...register('rg')} />
+                    <Input
+                      id="rg"
+                      placeholder="Número do RG"
+                      {...register('rg')}
+                      className="w-full"
+                    />
                   </div>
                 </div>
               </>
@@ -297,31 +335,100 @@ export function AlunoCadastroPage() {
             {/* Step 2 - Endereço */}
             {currentStep === 1 && (
               <>
-                <div className="flex gap-2">
-                  <div className="space-y-2 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="cep">CEP *</Label>
-                    <Input id="cep" placeholder="00000-000" {...register('cep')} maxLength={9} />
+                    <div className="flex gap-2">
+                      <Input 
+                        id="cep" 
+                        placeholder="00000-000" 
+                        {...register('cep')} 
+                        maxLength={9}
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={async () => {
+                          const cepVal = (document.getElementById('cep') as HTMLInputElement)?.value?.replace(/\D/g, '')
+                          if (cepVal?.length === 8) {
+                            try {
+                              const res = await fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
+                              const d = await res.json()
+                              if (!d.erro) { 
+                                setValue('logradouro', d.logradouro || '', { shouldValidate: true })
+                                setValue('bairro', d.bairro || '', { shouldValidate: true })
+                                setValue('cidade', d.localidade || '', { shouldValidate: true })
+                                setValue('estado', d.uf || '', { shouldValidate: true })
+                              }
+                            } catch {}
+                          }
+                        }}
+                      >
+                        {watch('cep')?.replace(/\D/g, '').length === 8 ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <Button type="button" variant="outline" className="mt-7" onClick={async () => {
-                    const cepVal = (document.getElementById('cep') as HTMLInputElement)?.value?.replace(/\D/g, '')
-                    if (cepVal?.length === 8) {
-                      try {
-                        const res = await fetch(`https://viacep.com.br/ws/${cepVal}/json/`)
-                        const d = await res.json()
-                        if (!d.erro) { setValue('logradouro', d.logradouro || ''); setValue('bairro', d.bairro || ''); setValue('cidade', d.localidade || ''); setValue('estado', d.uf || '') }
-                      } catch {}
-                    }
-                  }}>Buscar</Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="numero">Número *</Label>
+                    <Input 
+                      id="numero" 
+                      placeholder="Nº" 
+                      {...register('numero')} 
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2 col-span-2"><Label>Rua *</Label><Input placeholder="Logradouro" {...register('logradouro')} /></div>
-                  <div className="space-y-2"><Label>Número</Label><Input placeholder="Nº" {...register('numero')} /></div>
+                <div className="space-y-2">
+                  <Label htmlFor="logradouro">Logradouro *</Label>
+                  <Input 
+                    id="logradouro" 
+                    placeholder="Rua, Avenida, Alameda..." 
+                    {...register('logradouro')} 
+                    className="w-full"
+                  />
                 </div>
-                <div className="space-y-2"><Label>Complemento</Label><Input placeholder="Apto, Bloco..." {...register('complemento')} /></div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2"><Label>Bairro *</Label><Input {...register('bairro')} /></div>
-                  <div className="space-y-2"><Label>Cidade *</Label><Input {...register('cidade')} /></div>
-                  <div className="space-y-2"><Label>Estado *</Label><Input maxLength={2} {...register('estado')} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bairro">Bairro *</Label>
+                    <Input 
+                      id="bairro" 
+                      placeholder="Bairro" 
+                      {...register('bairro')} 
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade *</Label>
+                    <Input 
+                      id="cidade" 
+                      placeholder="Cidade" 
+                      {...register('cidade')} 
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="estado">Estado (UF) *</Label>
+                    <Input 
+                      id="estado" 
+                      placeholder="UF" 
+                      maxLength={2} 
+                      {...register('estado')} 
+                      className="w-full uppercase"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <Input
+                    id="complemento"
+                    placeholder="Apto, Bloco, Ponto de referência (opcional)"
+                    {...register('complemento')}
+                    className="w-full"
+                  />
                 </div>
               </>
             )}
@@ -358,22 +465,27 @@ export function AlunoCadastroPage() {
                   />
                   {errors.responsavel_nome && <p className="text-sm text-destructive">{errors.responsavel_nome.message}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="responsavel_cpf">CPF do responsável *</Label>
-                    <Input 
-                      id="responsavel_cpf" 
-                      placeholder="000.000.000-00" 
+                    <Input
+                      id="responsavel_cpf"
+                      placeholder="000.000.000-00"
                       {...register('responsavel_cpf')}
                       onChange={(e) => handleCpfChange(e, 'responsavel_cpf')}
                       maxLength={14}
+                      className="w-full"
                     />
-                    {errors.responsavel_cpf && <p className="text-sm text-destructive">{errors.responsavel_cpf.message}</p>}
+                    {errors.responsavel_cpf && (
+                      <p className="text-sm text-destructive">{errors.responsavel_cpf.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="responsavel_parentesco">Parentesco</Label>
+                    <Label htmlFor="responsavel_parentesco">Parentesco *</Label>
                     <Select onValueChange={(v) => setValue('responsavel_parentesco', v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o parentesco" /></SelectTrigger>
+                      <SelectTrigger id="responsavel_parentesco" className="w-full">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pai">Pai</SelectItem>
                         <SelectItem value="mae">Mãe</SelectItem>
@@ -437,9 +549,11 @@ export function AlunoCadastroPage() {
             {/* Unidade - dentro do step 4 (Responsável) */}
             {currentStep === 3 && filiais && filiais.length > 0 && (
               <div className="space-y-2 pt-4 border-t">
-                <Label>Unidade / Filial (Opcional)</Label>
+                <Label htmlFor="filial_id">Unidade / Filial</Label>
                 <Select value={watch('filial_id')} onValueChange={(v) => setValue('filial_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
+                  <SelectTrigger id="filial_id" className="w-full">
+                    <SelectValue placeholder="Selecione a unidade" />
+                  </SelectTrigger>
                   <SelectContent>
                     {(filiais as any[])?.map((f: any) => (
                       <SelectItem key={f.id} value={f.id}>
@@ -448,6 +562,7 @@ export function AlunoCadastroPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
               </div>
             )}
           </CardContent>

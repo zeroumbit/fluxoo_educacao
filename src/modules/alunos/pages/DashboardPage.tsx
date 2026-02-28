@@ -9,15 +9,15 @@ import { OnboardingGuide } from '../components/OnboardingGuide'
 export function DashboardPage() {
   const { data: dashboard, isLoading, isError } = useDashboard()
 
-  // 1. Estado de Carregamento Inicial (SÓ mostra se realmente não houver nada no cache)
-  if (isLoading && !dashboard) {
+  // 1. Estado de Carregamento (Sempre mostra spinner se não temos dados ainda)
+  if (isLoading || (!dashboard && !isError)) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     )
   }
-
+ 
   // 2. Erro Crítico de Carregamento
   if (isError && !dashboard) {
     return (
@@ -31,7 +31,7 @@ export function DashboardPage() {
     )
   }
 
-  // 3. Garantia de Dados (Se chegamos aqui sem dashboard e sem estar carregando, algo está errado)
+  // 3. Garantia de Dados (Chegando aqui, dashboard DEVE existir)
   if (!dashboard) return null
 
   const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding, statusAssinatura, metodoPagamento } = dashboard
@@ -44,7 +44,7 @@ export function DashboardPage() {
   const isManual = metodoPagamento === 'pix' || metodoPagamento === 'boleto' || metodoPagamento === 'manual'
   const mostrarAvisoAprovacao = isPendente && isManual
 
-  if (mostrarAvisoAprovacao && !isLoading) {
+  if (mostrarAvisoAprovacao) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-2xl mx-auto space-y-6 bg-white p-8 rounded-3xl border shadow-sm my-8">
         <div className="h-24 w-24 rounded-3xl bg-amber-50 flex items-center justify-center animate-bounce">
