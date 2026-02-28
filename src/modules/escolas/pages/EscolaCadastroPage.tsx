@@ -124,6 +124,7 @@ export function EscolaCadastroPage() {
 
   // ===== Submit =====
   const onSubmit = async (data: FormValues) => {
+    console.log('Iniciando submissão:', data)
     try {
       // 1. Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -206,8 +207,14 @@ export function EscolaCadastroPage() {
         navigate('/login')
       }
     } catch (err) {
+      console.error('Erro no checkout:', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar')
     }
+  }
+
+  const onInvalid = (errors: any) => {
+    console.warn('Erros de validação:', errors)
+    toast.error('Por favor, revise os campos do formulário. Alguma informação está inválida ou incompleta.')
   }
 
   // ===== RENDER =====
@@ -251,7 +258,7 @@ export function EscolaCadastroPage() {
             <p className="text-sm text-muted-foreground">Preencha as informações necessárias</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit as any, onInvalid as any)} className="space-y-6">
             <div className="min-h-[350px] flex flex-col justify-center animate-in fade-in slide-in-from-right-4 duration-500">
               
               {/* STEP 1 - ACESSO */}
@@ -372,7 +379,11 @@ export function EscolaCadastroPage() {
                   {/* Meio de Pagamento */}
                   <div className="space-y-3">
                     <Label className="text-xs uppercase tracking-widest font-black text-muted-foreground">Forma de Pagamento</Label>
-                    <RadioGroup defaultValue="mercado_pago" onValueChange={(val: string) => setValue('metodo_pagamento', val as any, { shouldValidate: true })} className="grid gap-2">
+                    <RadioGroup 
+                      value={watch('metodo_pagamento')} 
+                      onValueChange={(val: string) => setValue('metodo_pagamento', val as any, { shouldValidate: true })} 
+                      className="grid gap-2"
+                    >
                       <label className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer", metodoPgto === 'mercado_pago' ? "border-indigo-600 bg-indigo-50/30" : "border-zinc-100")}>
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center"><CreditCard className="h-4 w-4 text-indigo-600" /></div>
