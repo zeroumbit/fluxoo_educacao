@@ -98,8 +98,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const isBlocked = !isLoading && !!dashboard && status !== 'ativa' && isManual
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
+    try {
+      await signOut()
+      // Uso de window.location.href garante que o estado da aplicação seja limpo
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Erro ao sair:', error)
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -164,33 +170,31 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Separator />
 
       {/* User */}
-      <div className="p-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-2.5 px-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-xs">
-                  {authUser?.nome?.substring(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <p className="text-sm font-medium truncate">{authUser?.nome}</p>
-                  {isSuperAdmin && <Shield className="h-3.5 w-3.5 text-indigo-600" />}
-                </div>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {isSuperAdmin ? 'Super Admin' : authUser?.role?.replace('_', ' ')}
-                </p>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="p-4 space-y-2">
+        <div className="flex items-center gap-3 py-2.5 px-3">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-xs">
+              {authUser?.nome?.substring(0, 2).toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-left flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <p className="text-sm font-medium truncate">{authUser?.nome}</p>
+              {isSuperAdmin && <Shield className="h-3.5 w-3.5 text-indigo-600" />}
+            </div>
+            <p className="text-xs text-muted-foreground capitalize truncate">
+              {isSuperAdmin ? 'Super Admin' : authUser?.role?.replace('_', ' ')}
+            </p>
+          </div>
+        </div>
+        <Button 
+          variant="ghost" 
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="font-medium">Sair do Sistema</span>
+        </Button>
       </div>
     </div>
   )

@@ -46,30 +46,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // 2. GESTOR — busca escola com timeout de 5s para não travar
+      // 2. GESTOR — busca escola com tratamento de erro para Lock broken
       if (user.user_metadata?.role === 'gestor') {
-        const resultado = await withTimeout(
-          supabase
-            .from('escolas')
-            .select('id, razao_social')
-            .eq('gestor_user_id', user.id)
-            .maybeSingle() as any,
-          5000
-        ) as any
+        let escola = null
+        let erro = null
+        
+        // Pequena espera para o Supabase Auth estabilizar os locks
+        await new Promise(r => setTimeout(r, 600))
 
-        const escola = resultado?.data
+        try {
+          console.log('🔍 Buscando escola para gestor:', user.id)
+          const resp = await supabase
+              .from('escolas')
+              .select('id, razao_social')
+              .eq('gestor_user_id', user.id)
+              .maybeSingle()
+          
+          escola = resp?.data
+          erro = resp?.error
+        } catch (e: any) {
+          console.warn('⚠️ Erro imediato na busca:', e.message)
+          // Retenta uma vez se for Lock
+          if (e?.name === 'AbortError' || e?.message?.includes('Lock')) {
+            await new Promise(r => setTimeout(r, 1500))
+            const resp = await supabase.from('escolas').select('id, razao_social').eq('gestor_user_id', user.id).maybeSingle()
+            escola = resp.data
+            erro = resp.error
+          } else {
+            throw e
+          }
+        }
+
+        if (erro) {
+          console.error('❌ Erro detalhado na busca da escola:', erro.message || erro)
+        }
+
+        console.log('📊 Resultado da busca da escola:', { escola, erro })
         
         if (escola) {
+          console.log('✅ Tenant vinculado:', (escola as any).id)
           setAuthUser({
             user, session,
-            tenantId: escola.id,
+            tenantId: (escola as any).id,
             role: 'gestor',
             nome: user.user_metadata?.full_name || 'Gestor',
           })
           return
         }
 
-        // Mesmo sem escola, libera como gestor (senão trava na tela branca)
+        console.warn('⚠️ Gestor logado mas sem escola no banco!')
         setAuthUser({
           user, session,
           tenantId: '',
@@ -133,29 +158,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user && mounted) {
-          await loadUserProfile(session.user, session)
-        }
-      } catch (e) {
-        console.error('Erro na inicialização:', e)
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
-    initAuth()
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (!mounted) return
+        
+        console.log('🔄 Evento de Autenticação:', event, '| Usuário:', session?.user?.id || 'nenhum')
+        
+        // INITIAL_SESSION ou SIGNED_IN são os momentos de carregar perfil
+        if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          console.log('🆔 MEU ID DE USUÁRIO:', session.user.id)
           await loadUserProfile(session.user, session)
-          if (mounted) setLoading(false)
+          setLoading(false)
         } else if (event === 'SIGNED_OUT') {
+          console.log('🚪 Usuário saiu.')
           setAuthUser(null)
-          if (mounted) setLoading(false)
+          setLoading(false)
+        } else {
+          // Casos onde não há sessão no início
+          setLoading(false)
         }
       }
     )

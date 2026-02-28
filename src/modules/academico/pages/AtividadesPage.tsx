@@ -101,30 +101,43 @@ export function AtividadesPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Atividade
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editando ? 'Editar Atividade' : 'Nova Atividade / Material'}</DialogTitle>
+              <DialogTitle className="text-xl">{editando ? 'Editar Atividade' : 'Nova Atividade / Material'}</DialogTitle>
+              <DialogDescription>
+                {editando ? 'Atualize as informações da atividade.' : 'Preencha os dados para criar uma nova atividade ou material.'}
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="titulo">Título *</Label>
-                <Input id="titulo" placeholder="Título da atividade" {...form.register('titulo')} />
+                <Label htmlFor="titulo" className="text-sm font-medium">Título *</Label>
+                <Input 
+                  id="titulo" 
+                  placeholder="Ex: Lista de exercícios - Capítulo 1" 
+                  className="w-full"
+                  {...form.register('titulo')} 
+                />
                 {form.formState.errors.titulo && <p className="text-sm text-destructive">{form.formState.errors.titulo.message}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Turma / Disciplina</Label>
+                  <Label htmlFor="turma" className="text-sm font-medium">Turma</Label>
                   <Select defaultValue={form.watch('turma_id')} onValueChange={(v) => form.setValue('turma_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger id="turma" className="w-full">
+                      <SelectValue placeholder="Selecione a turma" />
+                    </SelectTrigger>
                     <SelectContent>
                       {turmas?.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Tipo de Material</Label>
+                  <Label htmlFor="tipo_material" className="text-sm font-medium">Tipo de Material</Label>
                   <Select defaultValue={form.watch('tipo_material')} onValueChange={(v) => form.setValue('tipo_material', v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger id="tipo_material" className="w-full">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pdf">PDF</SelectItem>
                       <SelectItem value="link_video">Link de Vídeo</SelectItem>
@@ -134,20 +147,44 @@ export function AtividadesPage() {
                   </Select>
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="anexo_url">Anexo ou Link</Label>
-                <Input id="anexo_url" placeholder="URL do material ou link do vídeo" {...form.register('anexo_url')} />
+                <Label htmlFor="disciplina" className="text-sm font-medium">Disciplina</Label>
+                <Input 
+                  id="disciplina" 
+                  placeholder="Ex: Matemática" 
+                  className="w-full"
+                  {...form.register('disciplina')} 
+                />
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea id="descricao" placeholder="Descrição da atividade..." {...form.register('descricao')} />
+                <Label htmlFor="anexo_url" className="text-sm font-medium">Anexo ou Link</Label>
+                <Input 
+                  id="anexo_url" 
+                  type="url"
+                  placeholder="https://exemplo.com/material.pdf" 
+                  className="w-full"
+                  {...form.register('anexo_url')} 
+                />
               </div>
-              <div className="flex justify-end gap-2">
+              
+              <div className="space-y-2">
+                <Label htmlFor="descricao" className="text-sm font-medium">Descrição</Label>
+                <Textarea 
+                  id="descricao" 
+                  placeholder="Descreva a atividade ou material..." 
+                  className="w-full min-h-[100px] resize-y"
+                  {...form.register('descricao')} 
+                />
+              </div>
+              
+              <DialogFooter className="gap-2 sm:gap-0 pt-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+                <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[100px]">
                   {form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
@@ -177,37 +214,60 @@ export function AtividadesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
+                <TableHead className="w-[40%]">Título</TableHead>
+                <TableHead className="w-[20%]">Turma</TableHead>
+                <TableHead className="w-[15%]">Tipo</TableHead>
+                <TableHead className="w-[15%]">Descrição</TableHead>
+                <TableHead className="w-[10%] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {atividades?.map((a: any) => (
                 <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.titulo}</TableCell>
-                  <TableCell>{a.turma?.nome || a.disciplina || '—'}</TableCell>
-                  <TableCell>
-                    {a.tipo_material && <Badge variant="secondary">{tipoLabels[a.tipo_material] || a.tipo_material}</Badge>}
+                  <TableCell className="font-medium max-w-[300px] truncate" title={a.titulo}>
+                    {a.titulo}
                   </TableCell>
-                  <TableCell className="max-w-[250px] truncate text-muted-foreground">
+                  <TableCell className="text-muted-foreground">
+                    {a.turma?.nome || a.disciplina || '—'}
+                  </TableCell>
+                  <TableCell>
+                    {a.tipo_material && (
+                      <Badge variant="secondary" className="font-normal">
+                        {tipoLabels[a.tipo_material] || a.tipo_material}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-[200px] truncate" title={a.descricao}>
                     {a.descricao || '—'}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex items-center justify-end gap-1">
                       {a.anexo_url && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600" 
+                          asChild
+                        >
                           <a href={a.anexo_url} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(a)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 hover:bg-amber-50 hover:text-amber-600" 
+                        onClick={() => abrirEdicao(a)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(a.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 hover:bg-red-50 hover:text-red-600" 
+                        onClick={() => handleExcluir(a.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -218,7 +278,7 @@ export function AtividadesPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-                    Nenhuma atividade cadastrada.
+                    <p className="text-sm">Nenhuma atividade cadastrada.</p>
                   </TableCell>
                 </TableRow>
               )}

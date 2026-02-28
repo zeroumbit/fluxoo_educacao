@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Save, MapPin, Building2 } from 'lucide-react'
 import { mascaraCPF, mascaraCNPJ } from '@/lib/validacoes'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export function PerfilEscolaPage() {
   const { authUser } = useAuth()
@@ -37,17 +39,31 @@ export function PerfilEscolaPage() {
     load()
   }, [authUser?.tenantId])
 
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCepHook, estados } = useViaCEP()
+
+  useEffect(() => {
+    if (form.estado) {
+      fetchCitiesByUF(form.estado)
+    }
+  }, [form.estado])
+
   const buscarCep = async () => {
     if (form.cep.length < 8) return
-    try {
-      const cep = form.cep.replace(/\D/g, '')
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      const data = await res.json()
-      if (!data.erro) {
-        setForm(prev => ({ ...prev, logradouro: data.logradouro || '', bairro: data.bairro || '', cidade: data.localidade || '', estado: data.uf || '' }))
-        toast.success('Endereço encontrado!')
-      }
-    } catch { toast.error('Erro ao buscar CEP') }
+    const data = await fetchAddressByCEP(form.cep)
+    if (data && !('error' in data)) {
+      setForm(prev => ({ 
+        ...prev, 
+        logradouro: data.logradouro || '', 
+        bairro: data.bairro || '', 
+        estado: data.estado || '' 
+      }))
+      setTimeout(() => {
+        setForm(prev => ({ ...prev, cidade: data.cidade || '' }))
+      }, 500)
+      toast.success('Endereço encontrado!')
+    } else if (data && 'error' in data) {
+      toast.error(data.error)
+    }
   }
 
   const handleSave = async () => {
@@ -97,7 +113,9 @@ export function PerfilEscolaPage() {
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <div className="space-y-2 flex-1"><Label>CEP</Label><Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} maxLength={9} /></div>
-            <Button type="button" variant="outline" onClick={buscarCep} className="mt-7">Buscar CEP</Button>
+            <Button type="button" variant="outline" onClick={buscarCep} className="mt-7" disabled={buscandoCepHook}>
+              {buscandoCepHook ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buscar CEP'}
+            </Button>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2 col-span-2"><Label>Logradouro</Label><Input value={form.logradouro} onChange={(e) => setForm({ ...form, logradouro: e.target.value })} /></div>
@@ -105,8 +123,32 @@ export function PerfilEscolaPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2"><Label>Bairro</Label><Input value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Cidade</Label><Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Estado/UF</Label><Input value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })} maxLength={2} /></div>
+            <div className="space-y-2">
+              <Label>Estado/UF</Label>
+              <Select value={form.estado} onValueChange={(val) => setForm({ ...form, estado: val })}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="UF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {estados.map((est) => (
+                    <SelectItem key={est.value} value={est.value}>{est.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Cidade</Label>
+              <Select value={form.cidade} onValueChange={(val) => setForm({ ...form, cidade: val })} disabled={!form.estado || loadingCities}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loadingCities ? "..." : "Selecione"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city) => (
+                    <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -41,8 +41,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
+    try {
+      await signOut()
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Erro ao sair:', error)
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -92,32 +97,28 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Separator />
 
       {/* User */}
-      <div className="p-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-2.5 px-3 hover:bg-zinc-100 transition-colors">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-xs">
-                  SA
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <p className="text-sm font-medium truncate">{authUser?.nome}</p>
-                </div>
-                <p className="text-xs text-muted-foreground font-semibold">
-                  SUPER ADMIN
-                </p>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:bg-destructive/5">
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair do Sistema
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="p-4 space-y-2">
+        <div className="flex items-center gap-3 py-2.5 px-3">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-xs">
+              SA
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{authUser?.nome}</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+              SUPER ADMIN
+            </p>
+          </div>
+        </div>
+        <Button 
+          variant="ghost" 
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="font-medium text-sm">Sair do Sistema</span>
+        </Button>
       </div>
     </div>
   )

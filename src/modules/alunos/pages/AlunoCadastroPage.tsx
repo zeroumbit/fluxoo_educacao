@@ -188,6 +188,11 @@ export function AlunoCadastroPage() {
     }
 
     try {
+      if (!authUser.tenantId || authUser.tenantId === '') {
+        toast.error('Seu perfil de gestor não está vinculado a nenhuma escola. Saia e entre novamente.')
+        return
+      }
+
       // Converter patologias e medicamentos em arrays
       const patologias = data.patologias
         ? data.patologias.split(',').map((p) => p.trim()).filter(Boolean)

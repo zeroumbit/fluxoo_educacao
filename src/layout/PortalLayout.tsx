@@ -26,8 +26,13 @@ export function PortalLayout() {
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
+    try {
+      await signOut()
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Erro ao sair:', error)
+      window.location.href = '/login'
+    }
   }
 
   return (
