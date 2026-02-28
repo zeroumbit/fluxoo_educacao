@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase'
-import type { AlunoInsert, AlunoUpdate, AlunoResponsavelInsert, ResponsavelInsert } from '@/lib/database.types'
+import type { Database } from '@/lib/database.types'
+
+type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
+type AlunoUpdate = Database['public']['Tables']['alunos']['Update']
+type ResponsavelInsert = Database['public']['Tables']['responsaveis']['Insert']
+type AlunoResponsavelInsert = Database['public']['Tables']['aluno_responsavel']['Insert']
 
 export const alunoService = {
   async listar(tenantId: string) {
@@ -52,16 +57,33 @@ export const alunoService = {
     alunoDados: AlunoInsert,
     grauParentesco: string | null
   ) {
-    // 1. Criar ou buscar responsável
-    const { data: respData, error: respError } = await supabase
+    // 1. Verificar se responsável já existe pelo CPF
+    const { data: respExistente, error: respCheckError } = await supabase
       .from('responsaveis')
-      .insert(responsavel)
-      .select()
-      .single()
+      .select('id, cpf')
+      .eq('cpf', responsavel.cpf)
+      .maybeSingle()
 
-    if (respError) throw respError
+    let respData: { id: string; cpf: string } | null = null
 
-    // 2. Criar aluno
+    if (respCheckError) throw respCheckError
+
+    if (respExistente) {
+      // Responsável já existe, usa o ID existente
+      respData = { id: respExistente.id, cpf: respExistente.cpf }
+    } else {
+      // 2. Criar novo responsável
+      const { data: novaResp, error: respError } = await supabase
+        .from('responsaveis')
+        .insert(responsavel)
+        .select('id, cpf')
+        .single()
+
+      if (respError) throw respError
+      respData = novaResp
+    }
+
+    // 3. Criar aluno
     const { data: alunoData, error: alunoError } = await supabase
       .from('alunos')
       .insert(alunoDados)
@@ -70,7 +92,7 @@ export const alunoService = {
 
     if (alunoError) throw alunoError
 
-    // 3. Vincular via aluno_responsavel (N:N)
+    // 4. Vincular via aluno_responsavel (N:N)
     const vinculo: AlunoResponsavelInsert = {
       aluno_id: alunoData.id,
       responsavel_id: respData.id,

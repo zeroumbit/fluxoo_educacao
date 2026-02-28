@@ -196,40 +196,47 @@ export function AlunoCadastroPage() {
         ? data.medicamentos.split(',').map((m) => m.trim()).filter(Boolean)
         : null
 
+      const payloadResponsavel = {
+        cpf: data.responsavel_cpf,
+        nome: data.responsavel_nome,
+        telefone: data.responsavel_telefone && data.responsavel_telefone !== '' ? data.responsavel_telefone : null,
+        email: data.responsavel_email && data.responsavel_email !== '' ? data.responsavel_email : null,
+        senha_hash: data.responsavel_senha,
+        cep: null,
+        logradouro: null,
+        numero: null,
+        complemento: null,
+        bairro: null,
+        cidade: null,
+        estado: null,
+      }
+
+      const payloadAluno = {
+        tenant_id: authUser.tenantId,
+        filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
+        nome_completo: data.nome_completo,
+        nome_social: data.nome_social || null,
+        data_nascimento: data.data_nascimento,
+        cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
+        patologias,
+        medicamentos,
+        observacoes_saude: data.observacoes_saude || null,
+        status: 'ativo' as const,
+        cep: data.cep && data.cep !== '' ? data.cep : null,
+        logradouro: data.logradouro && data.logradouro !== '' ? data.logradouro : null,
+        numero: data.numero && data.numero !== '' ? data.numero : null,
+        complemento: data.complemento && data.complemento !== '' ? data.complemento : null,
+        bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
+        cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
+        estado: data.estado && data.estado !== '' ? data.estado : null,
+      }
+
+      console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
+      console.log('📝 Payload Aluno:', JSON.stringify(payloadAluno, null, 2))
+
       await criarAlunoComResponsavel.mutateAsync({
-        responsavel: {
-          cpf: data.responsavel_cpf,
-          nome: data.responsavel_nome,
-          telefone: data.responsavel_telefone && data.responsavel_telefone !== '' ? data.responsavel_telefone : null,
-          email: data.responsavel_email && data.responsavel_email !== '' ? data.responsavel_email : null,
-          senha_hash: data.responsavel_senha,
-          cep: null,
-          logradouro: null,
-          numero: null,
-          complemento: null,
-          bairro: null,
-          cidade: null,
-          estado: null,
-        },
-        aluno: {
-          tenant_id: authUser.tenantId,
-          filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
-          nome_completo: data.nome_completo,
-          nome_social: data.nome_social || null,
-          data_nascimento: data.data_nascimento,
-          cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
-          patologias,
-          medicamentos,
-          observacoes_saude: data.observacoes_saude || null,
-          status: 'ativo',
-          cep: data.cep && data.cep !== '' ? data.cep : null,
-          logradouro: data.logradouro && data.logradouro !== '' ? data.logradouro : null,
-          numero: data.numero && data.numero !== '' ? data.numero : null,
-          complemento: data.complemento && data.complemento !== '' ? data.complemento : null,
-          bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
-          cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
-          estado: data.estado && data.estado !== '' ? data.estado : null,
-        },
+        responsavel: payloadResponsavel,
+        aluno: payloadAluno,
         grauParentesco: data.responsavel_parentesco || null,
       })
 
@@ -237,11 +244,11 @@ export function AlunoCadastroPage() {
       navigate('/alunos')
     } catch (err: any) {
       console.error('Erro detalhado ao cadastrar aluno:', err)
-      
+
       let errorMessage = 'Erro ao cadastrar aluno. '
       if (err?.message) errorMessage += err.message
       if (err?.details) errorMessage += ` (${err.details})`
-      
+
       toast.error(errorMessage, { duration: 8000 })
     }
   }
