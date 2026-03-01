@@ -36,6 +36,14 @@ export function useCriarAtividade() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.criarAtividade(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
 }
+export function useAtualizarAtividade() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarAtividade(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
+}
+export function useExcluirAtividade() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (id: string) => academicoService.excluirAtividade(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
+}
 
 export function useSelos() {
   const { authUser } = useAuth()

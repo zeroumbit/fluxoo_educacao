@@ -94,15 +94,75 @@ export const academicoService = {
   // ATIVIDADES
   async listarAtividades(tenantId: string) {
     const { data, error } = await (supabase.from('atividades' as any) as any)
-      .select('*, turma:turmas(nome)')
+      .select('*, atividades_turmas(*, turma:turmas(nome))')
       .eq('tenant_id', tenantId).order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
-  async criarAtividade(atividade: any) {
-    const { data, error } = await (supabase.from('atividades' as any) as any).insert(atividade).select().single()
+  async criarAtividade(atividadeComTurmas: any) {
+    const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
+    
+    // 1. Criar a atividade
+    const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
+      .insert(atividadeData)
+      .select()
+      .single()
+    if (atividadeError) throw atividadeError
+
+    // 2. Criar os vínculos com turmas se houver
+    if (turmasToBatch && turmasToBatch.length > 0) {
+      const records = turmasToBatch.map((t: any) => ({
+        atividade_id: atividade.id,
+        turma_id: t.turma_id,
+        turno: t.turno || null,
+        horario: t.horario || null
+      }))
+      const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
+        .insert(records)
+      
+      if (batchError) {
+        console.error('❌ [academicoService] Erro ao vincular turmas na atividade:', batchError)
+      }
+    }
+
+    return atividade
+  },
+  async atualizarAtividade(id: string, atividadeComTurmas: any) {
+    const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
+
+    // 1. Atualizar a atividade
+    const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
+      .update(atividadeData)
+      .eq('id', id)
+      .select()
+      .single()
+    if (atividadeError) throw atividadeError
+
+    // 2. Atualizar os vínculos com turmas (limpar antigos e inserir novos)
+    const { error: deleteError } = await (supabase.from('atividades_turmas' as any) as any)
+      .delete()
+      .eq('atividade_id', id)
+    if (deleteError) throw deleteError
+
+    if (turmasToBatch && turmasToBatch.length > 0) {
+      const records = turmasToBatch.map((t: any) => ({
+        atividade_id: id,
+        turma_id: t.turma_id,
+        turno: t.turno || null,
+        horario: t.horario || null
+      }))
+      const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
+        .insert(records)
+      if (batchError) throw batchError
+    }
+
+    return atividade
+  },
+  async excluirAtividade(id: string) {
+    const { error } = await (supabase.from('atividades' as any) as any)
+      .delete()
+      .eq('id', id)
     if (error) throw error
-    return data
   },
 
   // SELOS

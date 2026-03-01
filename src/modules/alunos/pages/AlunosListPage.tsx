@@ -20,7 +20,7 @@ export function AlunosListPage() {
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
 
-  const alunosFiltrados = alunos?.filter((a) =>
+  const alunosFiltrados = (alunos as any[])?.filter((a) =>
     a.nome_completo.toLowerCase().includes(busca.toLowerCase())
   )
 
@@ -87,7 +87,14 @@ export function AlunosListPage() {
                         <UserCircle className="h-5 w-5 text-indigo-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{aluno.nome_completo}</p>
+                        <p className="font-medium flex items-center gap-2">
+                          {aluno.nome_completo}
+                          {aluno.filiais?.nome_unidade && (
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-slate-50">
+                              {aluno.filiais.nome_unidade}
+                            </Badge>
+                          )}
+                        </p>
                         {aluno.nome_social && (
                           <p className="text-xs text-muted-foreground">{aluno.nome_social}</p>
                         )}

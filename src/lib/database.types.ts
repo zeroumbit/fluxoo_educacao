@@ -242,8 +242,39 @@ export type PlanoAulaTurmaInsert = Omit<PlanoAulaTurma, 'id' | 'created_at'> & {
   id?: string; created_at?: string
 }
 export type PlanoAulaTurmaUpdate = Partial<PlanoAulaTurmaInsert>
-
-// ========== PLANOS ==========
+ 
+ // ========== ATIVIDADES ==========
+ export type Atividade = {
+   id: string
+   tenant_id: string
+   filial_id: string | null
+   titulo: string
+   disciplina: string | null
+   tipo_material: 'pdf' | 'link_video' | 'imagem' | 'outro' | null
+   anexo_url: string | null
+   descricao: string | null
+   created_at: string
+   updated_at: string
+ }
+ export type AtividadeInsert = Omit<Atividade, 'id' | 'created_at' | 'updated_at'> & {
+   id?: string; created_at?: string; updated_at?: string
+ }
+ export type AtividadeUpdate = Partial<AtividadeInsert>
+ 
+ export type AtividadeTurma = {
+   id: string
+   atividade_id: string
+   turma_id: string
+   turno: 'manha' | 'tarde' | 'integral' | 'noturno' | null
+   horario: string | null
+   created_at: string
+ }
+ export type AtividadeTurmaInsert = Omit<AtividadeTurma, 'id' | 'created_at'> & {
+   id?: string; created_at?: string
+ }
+ export type AtividadeTurmaUpdate = Partial<AtividadeTurmaInsert>
+ 
+ // ========== PLANOS ==========
 export type Plano = {
   id: string
   nome: string
@@ -411,6 +442,8 @@ export type Database = {
       frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate }
       mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate }
       cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate }
+      atividades: { Row: Atividade; Insert: AtividadeInsert; Update: AtividadeUpdate }
+      atividades_turmas: { Row: AtividadeTurma; Insert: AtividadeTurmaInsert; Update: AtividadeTurmaUpdate }
       planos_aula: { Row: PlanoAula; Insert: PlanoAulaInsert; Update: PlanoAulaUpdate }
       planos_aula_turmas: { Row: PlanoAulaTurma; Insert: PlanoAulaTurmaInsert; Update: PlanoAulaTurmaUpdate }
       planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate }
