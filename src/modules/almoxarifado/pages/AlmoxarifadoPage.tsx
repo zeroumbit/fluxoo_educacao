@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useItensAlmoxarifado, useCriarItemAlmoxarifado, useMovimentacoes, useCriarMovimentacao } from '../hooks'
+import { useItensAlmoxarifado, useCriarItemAlmoxarifado, useMovimentacoes, useCriarMovimentacao, useAtualizarItemAlmoxarifado, useDeletarItemAlmoxarifado } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, Package, ArrowDownUp, AlertTriangle } from 'lucide-react'
+import { Plus, Loader2, Package, ArrowDownUp, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
 import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 
 const itemSchema = z.object({ nome: z.string().min(1), categoria: z.string().optional(), quantidade: z.coerce.number().min(0), alerta_estoque_minimo: z.coerce.number().optional(), custo_unitario: z.coerce.number().optional() })
@@ -26,16 +26,60 @@ export function AlmoxarifadoPage() {
   const { data: itens, isLoading } = useItensAlmoxarifado()
   const { data: movs } = useMovimentacoes()
   const criarItem = useCriarItemAlmoxarifado()
+  const atualizarItem = useAtualizarItemAlmoxarifado()
+  const deletarItem = useDeletarItemAlmoxarifado()
   const criarMov = useCriarMovimentacao()
   const [openItem, setOpenItem] = useState(false)
   const [openMov, setOpenMov] = useState(false)
+  const [itemParaEditar, setItemParaEditar] = useState<any | null>(null)
+  const [itemParaDeletar, setItemParaDeletar] = useState<any | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const itemForm = useForm({ resolver: zodResolver(itemSchema) })
   const movForm = useForm({ resolver: zodResolver(movSchema), defaultValues: { tipo: 'entrada' as const } })
 
   const onSubmitItem = async (data: any) => {
     if (!authUser) return
-    try { await criarItem.mutateAsync({ ...data, tenant_id: authUser.tenantId }); toast.success('Item cadastrado!'); itemForm.reset(); setOpenItem(false) }
-    catch { toast.error('Erro') }
+    try {
+      if (itemParaEditar) {
+        await atualizarItem.mutateAsync({ id: itemParaEditar.id, data })
+        toast.success('Item atualizado!')
+      } else {
+        await criarItem.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+        toast.success('Item cadastrado!')
+      }
+      itemForm.reset()
+      setOpenItem(false)
+      setItemParaEditar(null)
+    } catch {
+      toast.error('Erro ao salvar')
+    }
+  }
+
+  const handleEditar = (item: any) => {
+    setItemParaEditar(item)
+    itemForm.setValue('nome', item.nome)
+    itemForm.setValue('categoria', item.categoria || '')
+    itemForm.setValue('quantidade', item.quantidade)
+    itemForm.setValue('alerta_estoque_minimo', item.alerta_estoque_minimo || 0)
+    itemForm.setValue('custo_unitario', item.custo_unitario || 0)
+    setOpenItem(true)
+  }
+
+  const handleDeletar = (item: any) => {
+    setItemParaDeletar(item)
+    setDeleteOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!itemParaDeletar) return
+    try {
+      await deletarItem.mutateAsync(itemParaDeletar.id)
+      toast.success('Item excluído!')
+      setDeleteOpen(false)
+      setItemParaDeletar(null)
+    } catch {
+      toast.error('Erro ao excluir')
+    }
   }
 
   const onSubmitMov = async (data: any) => {
@@ -101,11 +145,17 @@ export function AlmoxarifadoPage() {
             </DialogContent>
           </Dialog>
           <Dialog open={openItem} onOpenChange={setOpenItem}>
-            <DialogTrigger asChild><Button className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Item</Button></DialogTrigger>
+            <DialogTrigger asChild>
+              <Button onClick={() => { setItemParaEditar(null); itemForm.reset({ nome: '', categoria: '', quantidade: 0, alerta_estoque_minimo: 0, custo_unitario: 0 }); }} className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md">
+                <Plus className="mr-2 h-4 w-4" />Novo Item
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-[800px]">
               <DialogHeader>
-                <DialogTitle>Novo Item</DialogTitle>
-                <DialogDescription>Cadastre um novo item no almoxarifado da escola.</DialogDescription>
+                <DialogTitle>{itemParaEditar ? 'Editar Item' : 'Novo Item'}</DialogTitle>
+                <DialogDescription>
+                  {itemParaEditar ? 'Atualize as informações do item no almoxarifado.' : 'Cadastre um novo item no almoxarifado da escola.'}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={itemForm.handleSubmit(onSubmitItem)} className="space-y-4">
                 <div className="space-y-2">
@@ -116,8 +166,8 @@ export function AlmoxarifadoPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Categoria</Label>
-                    <Select onValueChange={(v) => itemForm.setValue('categoria', v)}>
-                      <SelectTrigger>
+                    <Select onValueChange={(v) => itemForm.setValue('categoria', v)} defaultValue={itemForm.getValues('categoria')}>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                       <SelectContent>
@@ -133,19 +183,24 @@ export function AlmoxarifadoPage() {
                     <Input type="number" min="0" placeholder="0" {...itemForm.register('quantidade')} />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Alerta Estoque Mínimo</Label>
-                    <Input type="number" placeholder="Ex: 10" {...itemForm.register('alerta_estoque_minimo')} />
-                  </div>
                   <div className="space-y-2">
                     <Label>Custo Unitário (R$)</Label>
                     <Input type="number" step="0.01" placeholder="0,00" {...itemForm.register('custo_unitario')} />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Alerta Estoque Mínimo</Label>
+                    <Input type="number" placeholder="Ex: 10" {...itemForm.register('alerta_estoque_minimo')} />
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpenItem(false)}>Cancelar</Button>
-                  <Button type="submit">Cadastrar</Button>
+                  <Button type="button" variant="outline" onClick={() => { setOpenItem(false); setItemParaEditar(null); itemForm.reset(); }}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {itemParaEditar ? 'Salvar alterações' : 'Cadastrar'}
+                  </Button>
                 </div>
               </form>
             </DialogContent>
@@ -157,14 +212,31 @@ export function AlmoxarifadoPage() {
         <TabsList><TabsTrigger value="estoque"><Package className="h-4 w-4 mr-1" />Estoque</TabsTrigger><TabsTrigger value="historico"><ArrowDownUp className="h-4 w-4 mr-1" />Histórico</TabsTrigger></TabsList>
         <TabsContent value="estoque">
           <Card className="border-0 shadow-md"><CardContent className="p-0">
-            <Table><TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Categoria</TableHead><TableHead>Quantidade</TableHead><TableHead>Custo Unit.</TableHead><TableHead>Alerta</TableHead></TableRow></TableHeader>
+            <Table><TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Categoria</TableHead><TableHead>Quantidade</TableHead><TableHead>Custo Unit.</TableHead><TableHead>Alerta</TableHead><TableHead className="w-[100px]">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {itens?.map((i: any) => (
-                  <TableRow key={i.id}><TableCell className="font-bold">{i.nome}</TableCell><TableCell><Badge variant="outline">{i.categoria || '—'}</Badge></TableCell>
-                    <TableCell><span className={i.quantidade <= (i.alerta_estoque_minimo || 0) ? 'text-red-600 font-bold' : ''}>{i.quantidade}</span>{i.quantidade <= (i.alerta_estoque_minimo || 0) && <AlertTriangle className="inline ml-1 h-4 w-4 text-red-500" />}</TableCell>
-                    <TableCell>R$ {Number(i.custo_unitario || 0).toFixed(2)}</TableCell><TableCell>{i.alerta_estoque_minimo || '—'}</TableCell>
-                  </TableRow>))}
-                {(!itens || itens.length === 0) && <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground"><Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />Nenhum item cadastrado.</TableCell></TableRow>}
+                  <TableRow key={i.id}>
+                    <TableCell className="font-bold">{i.nome}</TableCell>
+                    <TableCell><Badge variant="outline">{i.categoria || '—'}</Badge></TableCell>
+                    <TableCell>
+                      <span className={i.quantidade <= (i.alerta_estoque_minimo || 0) ? 'text-red-600 font-bold' : ''}>{i.quantidade}</span>
+                      {i.quantidade <= (i.alerta_estoque_minimo || 0) && <AlertTriangle className="inline ml-1 h-4 w-4 text-red-500" />}
+                    </TableCell>
+                    <TableCell>R$ {Number(i.custo_unitario || 0).toFixed(2)}</TableCell>
+                    <TableCell>{i.alerta_estoque_minimo || '—'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(i)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeletar(i)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(!itens || itens.length === 0) && <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground"><Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />Nenhum item cadastrado.</TableCell></TableRow>}
               </TableBody></Table>
           </CardContent></Card>
         </TabsContent>
@@ -182,6 +254,33 @@ export function AlmoxarifadoPage() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. O item será permanentemente removido do almoxarifado.
+            </DialogDescription>
+          </DialogHeader>
+          {itemParaDeletar && (
+            <div className="p-4 bg-zinc-50 rounded-lg">
+              <p className="text-sm font-medium">Item: {itemParaDeletar.nome}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Quantidade atual: {itemParaDeletar.quantidade}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmarExclusao}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
