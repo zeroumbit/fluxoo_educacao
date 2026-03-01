@@ -50,6 +50,7 @@ import { PortalAvisosPage } from '@/modules/portal/pages/PortalAvisosPage'
 import { PortalCobrancasPage } from '@/modules/portal/pages/PortalCobrancasPage'
 import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualPage'
 import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
+import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -158,6 +159,7 @@ function App() {
               <Route path="/portal/avisos" element={<PortalAvisosPage />} />
               <Route path="/portal/cobrancas" element={<PortalCobrancasPage />} />
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
+              <Route path="/portal/boletim" element={<PortalBoletimPage />} />
             </Route>
 
             {/* Fallback */}

@@ -10,7 +10,12 @@ export const financeiroAvancadoService = {
   },
   async upsertConfig(config: any) {
     const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .upsert({ ...config, updated_at: new Date().toISOString() }).select().single()
+      .upsert(
+        { ...config, updated_at: new Date().toISOString() },
+        { onConflict: 'tenant_id' }
+      )
+      .select()
+      .single()
     if (error) throw error
     return data
   },

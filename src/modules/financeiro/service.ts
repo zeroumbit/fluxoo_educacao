@@ -60,4 +60,22 @@ export const financeirService = {
     if (error) throw error
     return data
   },
+
+  async excluir(id: string) {
+    const { error } = await supabase
+      .from('cobrancas')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  async desfazerPagamento(id: string) {
+    const { error } = await supabase
+      .from('cobrancas')
+      .update({ status: 'a_vencer' })
+      .eq('id', id)
+
+    if (error) throw error
+  },
 }

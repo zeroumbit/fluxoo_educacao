@@ -13,18 +13,18 @@ export function PortalFrequenciaPage() {
 
   const statusIcon = (status: string) => {
     switch (status) {
-      case 'presente': return <Check className="h-4 w-4 text-emerald-600" />
-      case 'falta': return <X className="h-4 w-4 text-red-600" />
-      case 'justificada': return <AlertCircle className="h-4 w-4 text-amber-600" />
+      case 'presente': return <Check className="h-4 w-4 text-[#10B981]" />
+      case 'falta': return <X className="h-4 w-4 text-red-500" />
+      case 'justificada': return <AlertCircle className="h-4 w-4 text-[#F59E0B]" />
       default: return null
     }
   }
 
   const statusStyle = (status: string) => {
     switch (status) {
-      case 'presente': return 'bg-emerald-100 text-emerald-800'
-      case 'falta': return 'bg-red-100 text-red-800'
-      case 'justificada': return 'bg-amber-100 text-amber-800'
+      case 'presente': return 'bg-[#CCFBF1] text-[#134E4A] border-teal-200'
+      case 'falta': return 'bg-red-50 text-red-700 border-red-100'
+      case 'justificada': return 'bg-amber-50 text-amber-700 border-amber-100'
       default: return ''
     }
   }
@@ -32,7 +32,7 @@ export function PortalFrequenciaPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
       </div>
     )
   }
@@ -40,42 +40,42 @@ export function PortalFrequenciaPage() {
   if (!alunoSelecionado) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <CalendarCheck className="h-16 w-16 text-muted-foreground/30 mb-4" />
-        <h2 className="text-xl font-bold">Selecione um aluno</h2>
+        <CalendarCheck className="h-16 w-16 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-[#1E293B]">Selecione um aluno</h2>
       </div>
     )
   }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Frequência Escolar</h2>
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+        <h2 className="text-2xl font-bold tracking-tight text-[#1E293B]">Frequência Escolar</h2>
       </div>
 
       {isMultiAluno && <SeletorAluno />}
 
       {frequencias && frequencias.length > 0 ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-0 divide-y divide-zinc-100">
+        <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden bg-white">
+          <CardContent className="p-0 divide-y divide-slate-100">
             {frequencias.map((freq) => (
-              <div key={freq.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 hover:bg-zinc-50/50 transition-colors">
+              <div key={freq.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4 hover:bg-slate-50 transition-all">
                 <div className="flex items-start gap-4">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${statusStyle(freq.status)} opacity-80`}>
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border ${statusStyle(freq.status)} shadow-sm`}>
                     {statusIcon(freq.status)}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-zinc-900">
+                    <h3 className="font-bold text-[#1E293B] first-letter:uppercase">
                       {format(new Date(freq.data_aula + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
                     </h3>
                     {freq.justificativa && (
-                      <p className="text-sm text-muted-foreground mt-1 bg-amber-50 p-2 rounded-md border text-amber-800">
-                        {freq.justificativa}
+                      <p className="text-xs text-amber-800 mt-2 bg-amber-50/50 p-2 rounded-lg border border-amber-100 font-medium">
+                        <span className="font-bold mr-1 uppercase text-[9px]">Justificativa:</span>{freq.justificativa}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="sm:text-right flex items-center sm:block gap-3">
-                  <Badge className={`${statusStyle(freq.status)} uppercase tracking-wider text-xs font-bold border-0 shadow-sm px-3 py-1`}>
+                  <Badge variant="outline" className={`${statusStyle(freq.status)} uppercase tracking-widest text-[10px] font-black border shadow-none px-3 py-1`}>
                     {freq.status}
                   </Badge>
                 </div>
@@ -84,13 +84,13 @@ export function PortalFrequenciaPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-0 shadow-md border-dashed border-zinc-200">
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <div className="h-16 w-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CalendarCheck className="h-8 w-8 text-zinc-400" />
+        <Card className="border border-[#E2E8F0] border-dashed bg-slate-50/50">
+          <CardContent className="py-20 text-center text-slate-500">
+            <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100">
+              <CalendarCheck className="h-10 w-10 text-slate-300" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900">Sem registros</h3>
-            <p className="mt-1">Não encontramos dados recentes de frequência para este aluno.</p>
+            <h3 className="text-xl font-bold text-[#1E293B]">Sem registros</h3>
+            <p className="mt-2 text-sm max-w-xs mx-auto">Não encontramos dados recentes de frequência para este aluno.</p>
           </CardContent>
         </Card>
       )}

@@ -56,4 +56,16 @@ export const turmaService = {
 
     if (error) throw error
   },
+
+  async buscarPorAluno(alunoId: string, tenantId: string) {
+    const { data, error } = await supabase
+      .from('turmas')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .contains('alunos_ids', [alunoId])
+      .maybeSingle()
+
+    if (error) throw error
+    return data
+  },
 }

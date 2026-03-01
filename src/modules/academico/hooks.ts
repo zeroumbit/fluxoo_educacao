@@ -10,6 +10,20 @@ export function useCriarMatricula() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.criarMatricula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) })
 }
+export function useAtualizarMatricula() {
+  const qc = useQueryClient()
+  return useMutation({ 
+    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, data), 
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) 
+  })
+}
+export function useExcluirMatricula() {
+  const qc = useQueryClient()
+  return useMutation({ 
+    mutationFn: (id: string) => academicoService.excluirMatricula(id), 
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) 
+  })
+}
 export function useMatriculasAtivas() {
   const { authUser } = useAuth()
   return useQuery({ 
@@ -69,4 +83,12 @@ export function useSelos() {
 export function useAtribuirSelo() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.atribuirSelo(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['selos'] }) })
+}
+export function useMatriculaAtivaDoAluno(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['matricula_ativa_detalhe', alunoId, authUser?.tenantId],
+    queryFn: () => academicoService.buscarMatriculaAtiva(alunoId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!alunoId,
+  })
 }

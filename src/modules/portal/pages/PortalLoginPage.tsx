@@ -46,46 +46,57 @@ export function PortalLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12">
-      <div className="w-full max-w-[800px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-zinc-100 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden">
+      {/* Elementos decorativos de fundo */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-50 rounded-full blur-3xl opacity-50 animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-3xl opacity-50 animate-pulse" />
 
-        {/* Sidebar */}
-        <div className="hidden md:flex md:w-1/3 bg-gradient-to-b from-teal-500 to-teal-600 p-8 flex-col justify-between text-white">
-          <div>
-            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6">
-              <GraduationCap className="h-7 w-7 text-white" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Portal do Responsável</h2>
-            <p className="text-teal-100 text-sm leading-relaxed">Acompanhamento acadêmico e financeiro.</p>
+      <div className="w-full max-w-[850px] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-[#E2E8F0] flex flex-col md:flex-row relative z-10">
+        {/* Sidebar - Teal Deep */}
+        <div className="hidden md:flex md:w-[35%] bg-gradient-to-b from-[#134E4A] to-[#0F3937] p-10 flex-col justify-between text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5">
+             <GraduationCap className="h-40 w-40 text-white" />
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 opacity-100">
-              <div className="h-8 w-8 rounded-full bg-white text-teal-600 border border-white flex items-center justify-center text-xs font-bold">
-                <User className="h-4 w-4" />
+          <div className="relative z-10">
+            <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-8 shadow-xl">
+              <GraduationCap className="h-8 w-8 text-teal-400" />
+            </div>
+            <h2 className="text-2xl font-black mb-4 tracking-tight leading-tight">Portal do Responsável</h2>
+            <p className="text-teal-100/70 text-sm leading-relaxed font-medium">Sua conexão direta com a jornada acadêmica e financeira de quem você ama.</p>
+          </div>
+          <div className="space-y-6 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-[#14B8A6] text-white flex items-center justify-center shadow-lg shadow-teal-900/50">
+                <Check className="h-5 w-5" />
               </div>
-              <span className="text-xs font-medium uppercase tracking-wider">Login</span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#14B8A6]">Segurança Ativa</p>
+                <p className="text-[10px] text-teal-100/50">Criptografia de ponta a ponta</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Form */}
-        <div className="flex-1 p-8 md:p-10">
-          <div className="md:hidden flex justify-between items-center mb-8">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-teal-500 flex items-center justify-center"><GraduationCap className="h-5 w-5 text-white" /></div>
-              <h1 className="font-bold text-lg">Fluxoo Educação</h1>
+        {/* Form Section */}
+        <div className="flex-1 p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-white">
+          <div className="md:hidden flex justify-between items-center mb-10">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#14B8A6] flex items-center justify-center shadow-lg shadow-teal-100">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="font-black text-xl text-[#134E4A]">Fluxoo</h1>
             </div>
           </div>
 
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-zinc-900 mb-1">Área da Família</h3>
-            <p className="text-sm text-muted-foreground">Acesse com seu CPF e senha</p>
+          <div className="mb-10 text-center md:text-left">
+            <h3 className="text-3xl font-black text-[#1E293B] mb-2 tracking-tight">Área da Família</h3>
+            <p className="text-sm text-[#64748B] font-medium italic">Acesse com suas credenciais oficiais</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="cpf">Seu CPF</Label>
+                <Label htmlFor="cpf" className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.2em] ml-1">Seu CPF</Label>
                 <div className="relative">
                   <Input
                     id="cpf"
@@ -95,40 +106,41 @@ export function PortalLoginPage() {
                       handleCpfChange(e)
                       register('cpf').onChange(e)
                     }}
-                    className="h-11 pl-10"
+                    className="h-14 pl-12 bg-slate-50 border-[#E2E8F0] rounded-2xl focus-visible:ring-[#14B8A6] focus-visible:bg-white transition-all font-medium"
                   />
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 </div>
                 {errors.cpf && (
-                  <p className="text-xs text-destructive font-medium">{errors.cpf.message}</p>
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider ml-1 mt-1">{errors.cpf.message}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Sua Senha</Label>
+                <Label htmlFor="password" className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.2em] ml-1">Sua Senha</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••"
+                    placeholder="••••••••"
                     {...register('password')}
-                    className="h-11 pr-10"
+                    className="h-14 pr-12 bg-slate-50 border-[#E2E8F0] rounded-2xl focus-visible:ring-[#14B8A6] focus-visible:bg-white transition-all font-bold tracking-widest pl-5"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#14B8A6] transition-colors p-1"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-destructive font-medium">{errors.password.message}</p>
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider ml-1 mt-1">{errors.password.message}</p>
                 )}
               </div>
 
               {error && (
-                <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg p-3">
+                <div className="bg-red-50 border border-red-100 text-red-600 text-[10px] font-bold uppercase tracking-wider rounded-xl p-4 flex items-center gap-3 animate-shake">
+                  <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
                   {error}
                 </div>
               )}
@@ -136,31 +148,30 @@ export function PortalLoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-200 transition-all duration-300 rounded-xl"
+                className="w-full h-14 bg-[#14B8A6] hover:bg-[#134E4A] text-white shadow-xl shadow-teal-500/20 transition-all duration-300 rounded-2xl font-black text-sm tracking-widest uppercase mt-4"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Autenticando...
                   </>
                 ) : (
                   <>
-                    <Check className="mr-2 h-4 w-4" />
                     ACESSAR PORTAL
                   </>
                 )}
               </Button>
             </div>
 
-            <div className="pt-6 border-t border-zinc-100">
-              <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                Primeiro acesso? A senha inicial é fornecida pela secretaria da escola no ato da matrícula.
+            <div className="pt-8 border-t border-[#F1F5F9]">
+              <p className="text-[10px] text-slate-400 text-center leading-relaxed font-semibold italic">
+                Primeiro acesso? Utilize a senha PIN fornecida pela instituição no ato da matrícula.
               </p>
             </div>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">Powered by Fluxoo Educação &copy; 2026</p>
+          <div className="mt-12 text-center opacity-40 hover:opacity-100 transition-opacity">
+            <p className="text-[9px] font-black text-slate-400 tracking-[0.3em] uppercase">Powered by Fluxoo &copy; 2026</p>
           </div>
         </div>
       </div>

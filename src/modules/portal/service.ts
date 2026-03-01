@@ -341,4 +341,19 @@ export const portalService = {
       console.warn('Falha ao registrar auditoria:', log.tipo)
     }
   },
+
+  // ==========================================
+  // BOLETIM
+  // ==========================================
+  async buscarBoletins(alunoId: string, tenantId: string) {
+    const { data, error } = await (supabase.from('boletins' as any) as any)
+      .select('*')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .order('ano_letivo', { ascending: false })
+      .order('bimestre', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
 }

@@ -14,14 +14,41 @@ export const academicoService = {
     if (error) throw error
     return data
   },
+  async atualizarMatricula(id: string, matricula: any) {
+    const { data, error } = await (supabase.from('matriculas' as any) as any)
+      .update(matricula)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  async excluirMatricula(id: string) {
+    const { error } = await (supabase.from('matriculas' as any) as any)
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
   async verificarMatriculaAtiva(alunoId: string, tenantId: string) {
     const { data } = await (supabase.from('matriculas' as any) as any)
-      .select('id, status, ano_letivo, serie_ano, turno')
+      .select('id')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
       .maybeSingle()
     return data !== null
+  },
+  async buscarMatriculaAtiva(alunoId: string, tenantId: string) {
+    const { data, error } = await (supabase.from('matriculas' as any) as any)
+      .select('*')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw error
+    return data
   },
   async listarMatriculasAtivasPorAluno(tenantId: string) {
     const { data, error } = await (supabase.from('matriculas' as any) as any)

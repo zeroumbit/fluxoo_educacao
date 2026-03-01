@@ -88,3 +88,11 @@ export function useExcluirTurma() {
     },
   })
 }
+export function useTurmaDoAluno(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['turmas_aluno', alunoId, authUser?.tenantId],
+    queryFn: () => turmaService.buscarPorAluno(alunoId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}

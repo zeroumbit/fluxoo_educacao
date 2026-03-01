@@ -51,3 +51,23 @@ export function useMarcarComoPago() {
     },
   })
 }
+export function useExcluirCobranca() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => financeirService.excluir(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+export function useDesfazerPagamento() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => financeirService.desfazerPagamento(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}

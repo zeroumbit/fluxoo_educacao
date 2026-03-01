@@ -433,6 +433,38 @@ export type StatusAssinatura = 'ativa' | 'inadimplente' | 'cancelada'
 export type FaturaStatus = 'pendente' | 'pendente_confirmacao' | 'pago' | 'atrasado' | 'cancelado'
 export type UpgradeStatus = 'pendente' | 'aprovado' | 'recusado'
 
+// ========== BOLETIM ==========
+export type DisciplinaBoletim = {
+  disciplina: string
+  nota: number
+  faltas: number
+  observacoes?: string
+}
+
+export type Boletim = {
+  id: string
+  tenant_id: string | null
+  filial_id: string | null
+  aluno_id: string | null
+  turma_id: string | null
+  ano_letivo: number
+  bimestre: number
+  disciplinas: DisciplinaBoletim[]
+  status: string | null
+  observacoes_gerais: string | null
+  data_emissao: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type BoletimInsert = Omit<Boletim, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type BoletimUpdate = Partial<BoletimInsert>
+
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'
 

@@ -141,3 +141,16 @@ export function useTrocarSenha() {
     mutationFn: (novaSenha: string) => portalService.trocarSenha(novaSenha),
   })
 }
+
+// ==========================================
+// BOLETIM
+// ==========================================
+export function useBoletins() {
+  const { alunoSelecionado, tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'boletins', alunoSelecionado?.id, tenantId],
+    queryFn: () => portalService.buscarBoletins(alunoSelecionado!.id, tenantId!),
+    enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
