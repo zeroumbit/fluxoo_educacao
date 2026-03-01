@@ -42,38 +42,38 @@ export function PortalDashboardPage() {
       {/* Seletor de aluno (se multi-aluno) */}
       {isMultiAluno && <SeletorAluno />}
 
-      {/* Card do Aluno - Teal Deep */}
-      <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-[#134E4A] via-[#0F3937] to-[#134E4A] relative">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-           <GraduationCap className="h-32 w-32 text-white" />
+      {/* Card do Aluno */}
+      <Card className="border-0 shadow-2xl overflow-hidden bg-gradient-to-br from-[#14B8A6] via-[#108A7D] to-[#134E4A] text-white relative rounded-3xl">
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 opacity-10">
+          <GraduationCap className="h-64 w-64 text-white" />
         </div>
-        <div className="p-6 md:p-8 relative z-10">
+        <div className="p-8 md:p-10 relative z-10">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <div className="relative">
-              <div className="h-20 w-20 rounded-2xl bg-[#14B8A6] flex items-center justify-center shadow-lg shadow-teal-900/40 border border-teal-400/30">
-                <UserCircle className="h-11 w-11 text-white" />
+              <div className="h-24 w-24 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-teal-900/30 border border-white/30">
+                <UserCircle className="h-14 w-14 text-white" />
               </div>
-              <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-[#134E4A] ${alunoSelecionado.status === 'ativo' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
+              <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-teal-600 ${alunoSelecionado.status === 'ativo' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
             </div>
             
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
                   {alunoSelecionado.nome_social || alunoSelecionado.nome_completo}
                 </h2>
-                <Badge className={`w-fit text-[10px] font-bold uppercase tracking-widest border-0 ${alunoSelecionado.status === 'ativo' ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#F59E0B]/20 text-[#F59E0B]'}`}>
+                <Badge className={`w-fit text-[9px] font-black uppercase tracking-widest border-0 px-3 py-1.5 ${alunoSelecionado.status === 'ativo' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-amber-500/20 text-amber-100 backdrop-blur-sm'}`}>
                   {alunoSelecionado.status === 'ativo' ? 'Ativo' : 'Inativo'}
                 </Badge>
               </div>
               
               {turma && (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 font-medium">
-                    <BookOpen className="h-3.5 w-3.5 text-[#14B8A6]" />
+                <div className="flex flex-wrap items-center gap-2 text-sm mt-3">
+                  <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/15 backdrop-blur-sm text-white font-bold border border-white/20 shadow-sm">
+                    <BookOpen className="h-4 w-4" />
                     <span>{turma.nome}</span>
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 font-medium">
-                    <CalendarCheck className="h-3.5 w-3.5 text-[#14B8A6]" />
+                  <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/15 backdrop-blur-sm text-white font-bold border border-white/20 shadow-sm">
+                    <CalendarCheck className="h-4 w-4" />
                     <span>{turma.turno}</span>
                   </div>
                 </div>

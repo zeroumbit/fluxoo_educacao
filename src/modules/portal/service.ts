@@ -123,7 +123,18 @@ export const portalService = {
     const { data, error } = await supabase.from('aluno_responsavel')
       .select(`
         id, responsavel_id, aluno_id, is_financeiro, is_academico, status,
-        aluno:alunos(id, nome_completo, tenant_id)
+        aluno:alunos(
+          id, 
+          nome_completo, 
+          nome_social, 
+          data_nascimento, 
+          status, 
+          tenant_id, 
+          filial_id, 
+          turma_id,
+          turma:turmas(id, nome, turno),
+          filial:filiais(nome_unidade)
+        )
       `)
       .eq('responsavel_id', responsavelId)
 
