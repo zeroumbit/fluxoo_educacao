@@ -1,3 +1,3 @@
-import { Turma } from '@/lib/database.types'
+import type { Turma } from '@/lib/database.types'
 
 export type { Turma }

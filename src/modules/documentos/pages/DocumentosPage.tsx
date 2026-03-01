@@ -27,9 +27,9 @@ const tipoLabels: Record<string, string> = { declaracao_matricula: 'Declaração
 
 export function DocumentosPage() {
   const { authUser } = useAuth()
-  const { data: templates, isLoading } = useTemplates()
-  const { data: emitidos } = useDocumentosEmitidos()
-  const { data: alunos } = useAlunos()
+  const { data: templates, isLoading: loadingTemplates } = useTemplates()
+  const { data: emitidos, isLoading: loadingEmitidos } = useDocumentosEmitidos()
+  const { data: alunos, isLoading: loadingAlunos } = useAlunos()
   const criarTemplate = useCriarTemplate()
   const emitir = useEmitirDocumento()
   const [openTemplate, setOpenTemplate] = useState(false)
@@ -38,6 +38,8 @@ export function DocumentosPage() {
   const [selectedAluno, setSelectedAluno] = useState('')
   const [editando, setEditando] = useState<any | null>(null)
   const form = useForm({ resolver: zodResolver(templateSchema) })
+
+  const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos
 
   const abrirNovoTemplate = () => {
     setEditando(null)
@@ -127,9 +129,9 @@ export function DocumentosPage() {
                 <div className="bg-muted/50 rounded-md p-3">
                   <p className="text-xs text-muted-foreground font-medium mb-1">Variáveis disponíveis:</p>
                   <div className="flex flex-wrap gap-1">
-                    <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;nome_aluno&#125;&#125;</code>
-                    <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;cpf_aluno&#125;&#125;</code>
-                    <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;data_atual&#125;&#125;</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded">{"{{nome_aluno}}"}</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded">{"{{cpf_aluno}}"}</code>
+                    <code className="text-xs bg-background px-2 py-1 rounded">{"{{data_atual}}"}</code>
                   </div>
                 </div>
                 <DialogFooter className="gap-2 sm:gap-0 pt-2">
@@ -187,16 +189,16 @@ export function DocumentosPage() {
                   <Textarea
                     id="corpo_html"
                     rows={12}
-                    placeholder="Ex: Declaramos que &#123;&#123;nome_aluno&#125;&#125; está matriculado..."
+                    placeholder="Ex: Declaramos que {{nome_aluno}} está matriculado..."
                     className="w-full min-h-[200px] resize-y font-mono text-sm"
                     {...form.register('corpo_html')}
                   />
                   <div className="bg-muted/50 rounded-md p-3">
                     <p className="text-xs text-muted-foreground font-medium mb-1">Variáveis disponíveis:</p>
                     <div className="flex flex-wrap gap-1">
-                      <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;nome_aluno&#125;&#125;</code>
-                      <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;cpf_aluno&#125;&#125;</code>
-                      <code className="text-xs bg-background px-2 py-1 rounded">&#123;&#123;data_atual&#125;&#125;</code>
+                      <code className="text-xs bg-background px-2 py-1 rounded">{"{{nome_aluno}}"}</code>
+                      <code className="text-xs bg-background px-2 py-1 rounded">{"{{cpf_aluno}}"}</code>
+                      <code className="text-xs bg-background px-2 py-1 rounded">{"{{data_atual}}"}</code>
                     </div>
                   </div>
                   {form.formState.errors.corpo_html && <p className="text-sm text-destructive">{form.formState.errors.corpo_html.message}</p>}

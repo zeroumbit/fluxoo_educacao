@@ -5,10 +5,16 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL e ANON KEY são obrigatórios. Verifique o .env')
+  console.error('❌ ERRO: Variáveis de ambiente do Supabase não configuradas!')
+  console.error('Crie um arquivo .env na raiz do projeto com:')
+  console.error('  VITE_SUPABASE_URL=sua_url')
+  console.error('  VITE_SUPABASE_ANON_KEY=sua_chave')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-key',
+  {
   auth: {
     autoRefreshToken: true,
     persistSession: true,

@@ -1,4 +1,4 @@
-export type { Aluno, AlunoInsert, AlunoUpdate, AlunoStatus } from '@/lib/database.types'
+export type { Aluno, AlunoInsert, AlunoUpdate } from '@/lib/database.types'
 
 export interface AlunoWithRelations {
   id: string

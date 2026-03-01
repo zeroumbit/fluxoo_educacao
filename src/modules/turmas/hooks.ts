@@ -77,7 +77,7 @@ export function useExcluirTurma() {
       console.log('🔍 [useExcluirTurma] mutationFn, id:', id)
       return turmaService.excluir(id)
     },
-    onSuccess: (data) => {
+    onSuccess: (data, id) => {
       console.log('🔍 [useExcluirTurma] onSuccess, id excluído:', id)
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })

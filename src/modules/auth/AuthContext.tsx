@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
     try {
-      // 1. SUPER ADMIN (sem consulta ao banco, mais rápido)
+      // 1. SUPER ADMIN
       if (isSuperAdminEmail(user.email || '')) {
         setAuthUser({
           user, session,
@@ -46,41 +46,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // 2. GESTOR — busca escola com tratamento de erro para Lock broken
+      // 2. GESTOR
       if (user.user_metadata?.role === 'gestor') {
-        let escola = null
-        let erro = null
+        console.log('🔍 Buscando escola para gestor:', user.id)
         
-        // Pequena espera para o Supabase Auth estabilizar os locks
-        await new Promise(r => setTimeout(r, 600))
+        const resp = await withTimeout(
+          supabase
+            .from('escolas')
+            .select('id, razao_social')
+            .eq('gestor_user_id', user.id)
+            .maybeSingle() as any,
+          15000
+        ) as any
 
-        try {
-          console.log('🔍 Buscando escola para gestor:', user.id)
-          const resp = await supabase
-              .from('escolas')
-              .select('id, razao_social')
-              .eq('gestor_user_id', user.id)
-              .maybeSingle()
-          
-          escola = resp?.data
-          erro = resp?.error
-        } catch (e: any) {
-          console.warn('⚠️ Erro imediato na busca:', e.message)
-          // Retenta uma vez se for Lock
-          if (e?.name === 'AbortError' || e?.message?.includes('Lock')) {
-            await new Promise(r => setTimeout(r, 1500))
-            const resp = await supabase.from('escolas').select('id, razao_social').eq('gestor_user_id', user.id).maybeSingle()
-            escola = resp.data
-            erro = resp.error
-          } else {
-            throw e
-          }
+        if (!resp) {
+          console.warn('🕒 Timeout ou erro na busca da escola (15s)')
+          setAuthUser({
+            user, session,
+            tenantId: '',
+            role: 'gestor',
+            nome: user.user_metadata?.full_name || 'Gestor',
+          })
+          return
         }
 
-        if (erro) {
-          console.error('❌ Erro detalhado na busca da escola:', erro.message || erro)
-        }
-
+        const { data: escola, error: erro } = resp as { data: any, error: any }
+        if (erro) console.error('❌ Erro na busca da escola:', erro.message)
         console.log('📊 Resultado da busca da escola:', { escola, erro })
         
         if (escola) {
@@ -129,19 +120,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (respRes?.data) {
         setAuthUser({
           user, session,
-          tenantId: '', // Responsável não tem tenant_id fixo (vários filhos podem ser de escolas diferentes?)
+          tenantId: '',
           role: 'responsavel',
           nome: respRes.data.nome,
         })
         return
       }
 
-      // Sem perfil — desconecta
-      await supabase.auth.signOut()
+      // Sem perfil
       setAuthUser(null)
     } catch (err) {
       console.error('Erro no carregamento de perfil:', err)
-      // Fallback de emergência: mantém logado para não travar
       if (user.user_metadata?.role === 'gestor') {
         setAuthUser({
           user, session,
@@ -157,28 +146,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true
+    let loadingLock = false
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return
-        
-        console.log('🔄 Evento de Autenticação:', event, '| Usuário:', session?.user?.id || 'nenhum')
-        
-        // INITIAL_SESSION ou SIGNED_IN são os momentos de carregar perfil
-        if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
-          console.log('🆔 MEU ID DE USUÁRIO:', session.user.id)
-          await loadUserProfile(session.user, session)
-          setLoading(false)
-        } else if (event === 'SIGNED_OUT') {
-          console.log('🚪 Usuário saiu.')
-          setAuthUser(null)
-          setLoading(false)
+    const handleAuthChange = async (event: string, session: Session | null) => {
+      if (!mounted) return
+      
+      console.log('🔄 Evento de Autenticação:', event, '| Usuário:', session?.user?.id || 'nenhum')
+
+      if (session?.user) {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          if (loadingLock) return
+          loadingLock = true
+          try {
+            console.log('🆔 MEU ID DE USUÁRIO:', session.user.id)
+            await loadUserProfile(session.user, session)
+          } finally {
+            loadingLock = false
+            if (mounted) setLoading(false)
+          }
         } else {
-          // Casos onde não há sessão no início
-          setLoading(false)
+          if (mounted) setLoading(false)
         }
+      } else {
+        setAuthUser(null)
+        if (mounted) setLoading(false)
       }
-    )
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        handleAuthChange(event, session)
+    })
 
     return () => {
       mounted = false
@@ -199,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setAuthUser(null)
+    window.location.href = '/login'
   }
 
   return (

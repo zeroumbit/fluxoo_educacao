@@ -87,13 +87,17 @@ const navigationGroups = [
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { authUser, signOut } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
-  const { data: dashboard, isLoading } = useDashboard()
   const navigate = useNavigate()
+
+  // Super admin não tem dashboard com assinatura
+  const { data: dashboard, isLoading } = isSuperAdmin
+    ? { data: null, isLoading: false }
+    : useDashboard()
 
   const status = dashboard?.statusAssinatura
   const metodo = dashboard?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'boleto' || metodo === 'manual'
-  
+
   // Só bloqueia se os dados foram carregados e o status atual for manual + não ativo
   const isBlocked = !isLoading && !!dashboard && status !== 'ativa' && isManual
 
