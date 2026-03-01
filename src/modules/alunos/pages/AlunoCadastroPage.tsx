@@ -27,6 +27,8 @@ import {
   Building2,
   Eye,
   EyeOff,
+  CreditCard,
+  MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
@@ -55,6 +57,7 @@ const alunoSchema = z.object({
   responsavel_email: z.string().email('E-mail obrigatório para acesso ao portal'),
   responsavel_parentesco: z.string().optional(),
   responsavel_senha: z.string().min(6, 'Senha mínima de 6 caracteres'),
+  responsavel_financeiro: z.string().min(1, 'Defina se é o responsável financeiro'),
 }).refine((data) => !data.cpf || validarCPF(data.cpf), {
   message: 'CPF inválido',
   path: ['cpf'],
@@ -106,6 +109,7 @@ export function AlunoCadastroPage() {
       cpf: '',
       responsavel_cpf: '',
       cep: '',
+      responsavel_financeiro: 'sim',
     },
   })
 
@@ -166,7 +170,7 @@ export function AlunoCadastroPage() {
       ['nome_completo', 'data_nascimento'],
       ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'],
       [],
-      ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha'],
+      ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha', 'responsavel_financeiro'],
     ]
     return await trigger(fieldsPerStep[currentStep])
   }
@@ -241,8 +245,9 @@ export function AlunoCadastroPage() {
 
       await criarAlunoComResponsavel.mutateAsync({
         responsavel: payloadResponsavel,
-        aluno: payloadAluno,
+        aluno: payloadAluno as any, // Cast temporário se necessário para AlunoInsert
         grauParentesco: data.responsavel_parentesco || null,
+        isFinanceiro: data.responsavel_financeiro === 'sim'
       })
 
       toast.success('Aluno cadastrado com sucesso!')
@@ -577,6 +582,24 @@ export function AlunoCadastroPage() {
                     />
                     {errors.responsavel_email && <p className="text-sm text-destructive">{errors.responsavel_email.message}</p>}
                   </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <Label className="text-sm font-bold flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-emerald-600" />
+                    Responsável pelo pagamento da mensalidade? *
+                  </Label>
+                  <Select onValueChange={(v) => setValue('responsavel_financeiro', v)}>
+                    <SelectTrigger className={`h-12 rounded-2xl ${errors.responsavel_financeiro ? 'border-destructive' : 'border-zinc-100 bg-zinc-50/50'}`}>
+                      <SelectValue placeholder="Selecione Sim ou Não" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sim" className="font-bold text-emerald-600 italic">✅ Sim (Terá acesso ao financeiro no portal)</SelectItem>
+                      <SelectItem value="nao">❌ Não (Sem acesso financeiro)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.responsavel_financeiro && <p className="text-sm text-destructive font-bold">{errors.responsavel_financeiro.message}</p>}
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest px-1">Obs: Isso define quem vê boletos e faz pagamentos via portal.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="responsavel_senha">Senha de acesso *</Label>

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAlunos, useExcluirAluno } from '../hooks'
+import { useMatriculasAtivas } from '@/modules/academico/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils'
 
 export function AlunosListPage() {
   const { data: alunos, isLoading } = useAlunos()
+  const { data: matriculasAtivas } = useMatriculasAtivas()
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
   const excluirAluno = useExcluirAluno()
@@ -34,9 +36,21 @@ export function AlunosListPage() {
   const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const alunosFiltrados = (alunos as any[])?.filter((a) =>
-    a.nome_completo.toLowerCase().includes(busca.toLowerCase())
-  )
+  // Cria um Set com IDs de alunos com matrícula ativa para consulta rápida
+  const alunosComMatriculaIds = useMemo(() => {
+    return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
+  }, [matriculasAtivas])
+
+  const alunosFiltrados = useMemo(() => {
+    return (alunos as any[])?.filter((a) =>
+      a.nome_completo.toLowerCase().includes(busca.toLowerCase())
+    ).map((aluno) => ({
+      ...aluno,
+      temMatricula: alunosComMatriculaIds.has(aluno.id),
+    }))
+  }, [alunos, busca, alunosComMatriculaIds])
+
+  const alunosSemMatriculaCount = alunosFiltrados?.filter(a => !a.temMatricula).length || 0
 
   const handleExcluir = (aluno: any, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -79,6 +93,11 @@ export function AlunosListPage() {
           <h1 className="text-2xl font-bold tracking-tight">Alunos</h1>
           <p className="text-muted-foreground">
             {alunos?.length || 0} aluno(s) cadastrado(s)
+            {alunosSemMatriculaCount > 0 && (
+              <span className="text-amber-600 font-medium ml-2">
+                · {alunosSemMatriculaCount} sem matrícula
+              </span>
+            )}
           </p>
         </div>
         <Button
@@ -89,6 +108,23 @@ export function AlunosListPage() {
           Novo Aluno
         </Button>
       </div>
+
+      {/* Alerta de alunos sem matrícula */}
+      {alunosSemMatriculaCount > 0 && (
+        <Card className="border-0 shadow-md bg-amber-50 ring-1 ring-amber-200">
+          <CardContent className="py-4 flex items-start gap-4">
+            <FileX className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-800">
+                {alunosSemMatriculaCount} aluno(s) sem matrícula ativa
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Estes alunos estão cadastrados mas não podem receber frequência. Regularize as matrículas na tela de Matrícula.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Busca */}
       <div className="relative">
@@ -127,11 +163,17 @@ export function AlunosListPage() {
                         <UserCircle className="h-5 w-5 text-indigo-600" />
                       </div>
                       <div>
-                        <p className="font-semibold text-zinc-900 flex items-center gap-2">
+                        <p className="font-semibold text-zinc-900 flex items-center gap-2 flex-wrap">
                           {aluno.nome_completo}
                           {aluno.filiais?.nome_unidade && (
                             <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-zinc-50 border-zinc-200 text-zinc-600 font-medium">
                               {aluno.filiais.nome_unidade}
+                            </Badge>
+                          )}
+                          {!aluno.temMatricula && (
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-amber-50 border-amber-200 text-amber-700 font-medium">
+                              <FileX className="h-3 w-3 mr-1" />
+                              Sem Matrícula
                             </Badge>
                           )}
                         </p>

@@ -10,6 +10,23 @@ export function useCriarMatricula() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.criarMatricula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) })
 }
+export function useMatriculasAtivas() {
+  const { authUser } = useAuth()
+  return useQuery({ 
+    queryKey: ['matriculas_ativas', authUser?.tenantId], 
+    queryFn: () => academicoService.listarMatriculasAtivasPorAluno(authUser!.tenantId), 
+    enabled: !!authUser?.tenantId 
+  })
+}
+export function useVerificarMatricula(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({ 
+    queryKey: ['matricula_ativa', alunoId, authUser?.tenantId], 
+    queryFn: () => academicoService.verificarMatriculaAtiva(alunoId, authUser!.tenantId), 
+    enabled: !!authUser?.tenantId && !!alunoId,
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  })
+}
 
 export function usePlanosAula() {
   const { authUser } = useAuth()

@@ -14,6 +14,23 @@ export const academicoService = {
     if (error) throw error
     return data
   },
+  async verificarMatriculaAtiva(alunoId: string, tenantId: string) {
+    const { data } = await (supabase.from('matriculas' as any) as any)
+      .select('id, status, ano_letivo, serie_ano, turno')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .maybeSingle()
+    return data !== null
+  },
+  async listarMatriculasAtivasPorAluno(tenantId: string) {
+    const { data, error } = await (supabase.from('matriculas' as any) as any)
+      .select('aluno_id, id, status, ano_letivo, serie_ano, turno')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+    if (error) throw error
+    return (data as any[]) || []
+  },
 
   // PLANOS DE AULA
   async listarPlanosAula(tenantId: string) {

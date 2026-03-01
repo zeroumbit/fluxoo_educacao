@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import { Loader2, Settings, Save } from 'lucide-react'
+import { Loader2, Settings, Save, QrCode, Upload, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export function ConfigFinanceiraPage() {
   const { authUser } = useAuth()
@@ -22,6 +23,7 @@ export function ConfigFinanceiraPage() {
     nome_favorecido: '', instrucoes_responsavel: '',
     qr_code_auto: false,
     dinheiro_cartao_presencial: true,
+    pix_qr_code_url: '',
   })
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export function ConfigFinanceiraPage() {
         instrucoes_responsavel: config.instrucoes_responsavel || '',
         qr_code_auto: config.qr_code_auto || false,
         dinheiro_cartao_presencial: config.dinheiro_cartao_presencial ?? true,
+        pix_qr_code_url: config.pix_qr_code_url || '',
       })
     }
   }, [config])
@@ -50,6 +53,33 @@ export function ConfigFinanceiraPage() {
       await upsert.mutateAsync({ ...form, tenant_id: authUser.tenantId })
       toast.success('Configurações salvas!')
     } catch { toast.error('Erro ao salvar') }
+  }
+
+  const handleUploadQRCode = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !authUser) return
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${authUser.tenantId}-qrcode-${Date.now()}.${fileExt}`
+      const filePath = `qrcodes/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('comprovantes')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('comprovantes')
+        .getPublicUrl(filePath)
+
+      setForm({ ...form, pix_qr_code_url: publicUrl })
+      toast.success('QR Code enviado!')
+    } catch (error) {
+      toast.error('Erro ao enviar QR Code')
+      console.error(error)
+    }
   }
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
@@ -109,12 +139,73 @@ export function ConfigFinanceiraPage() {
                   placeholder="Ex: enviar comprovante para o whatsapp (85) 9 xxxx-xxxx"
                 />
               </div>
-              <div className="flex items-center gap-2 pt-2">
-                <Switch
-                  checked={form.qr_code_auto}
-                  onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })}
-                />
-                <Label>QR Code Automático</Label>
+              {/* Imagem do QR Code - SEMPRE VISÍVEL */}
+              <div className="md:col-span-2 space-y-2 pt-2">
+                <Label className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4" />
+                  Imagem do QR Code PIX
+                </Label>
+                <div className="flex items-start gap-4">
+                  {form.pix_qr_code_url ? (
+                    <div className="relative group">
+                      <img
+                        src={form.pix_qr_code_url}
+                        alt="QR Code"
+                        className="h-32 w-32 object-contain border-2 border-indigo-200 rounded-lg bg-white p-2 shadow-sm"
+                      />
+                      <button
+                        onClick={() => setForm({...form, pix_qr_code_url: ''})}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        type="button"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-10 border-dashed border-indigo-300"
+                        onClick={() => document.getElementById('qrcode-upload')?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" /> Upload QR Code
+                      </Button>
+                      <Input
+                        id="qrcode-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleUploadQRCode}
+                      />
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground leading-tight max-w-[250px] pt-1">
+                    Imagem do QR Code da chave PIX para facilitar o pagamento pelos responsáveis.
+                  </p>
+                </div>
+              </div>
+
+              {/* Separador */}
+              <div className="md:col-span-2">
+                <div className="border-t border-gray-200 my-4" />
+              </div>
+
+              {/* PIX Automático - OPÇÃO SEPARADA */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <Switch
+                    checked={form.qr_code_auto}
+                    onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })}
+                  />
+                  <div>
+                    <Label className="font-semibold text-indigo-900">QR Code Automático</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Gerar QR Code automaticamente a partir da chave PIX cadastrada
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

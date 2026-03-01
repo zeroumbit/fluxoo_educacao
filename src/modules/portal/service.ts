@@ -122,7 +122,7 @@ export const portalService = {
     console.log('DEBUG: Buscando vínculos para responsável:', responsavelId)
     const { data, error } = await supabase.from('aluno_responsavel')
       .select(`
-        id, responsavel_id, aluno_id,
+        id, responsavel_id, aluno_id, is_financeiro, is_academico, status,
         aluno:alunos(id, nome_completo, tenant_id)
       `)
       .eq('responsavel_id', responsavelId)
@@ -256,7 +256,7 @@ export const portalService = {
   async buscarConfigPixEscola(tenantId: string) {
     // Busca a config de PIX específica da escola (tenant)
     const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .select('pix_habilitado, chave_pix, nome_favorecido, instrucoes_responsavel')
+      .select('pix_habilitado, chave_pix, nome_favorecido, instrucoes_responsavel, pix_qr_code_url')
       .eq('tenant_id', tenantId)
       .maybeSingle()
 
@@ -267,7 +267,8 @@ export const portalService = {
       pix_manual_ativo: data.pix_habilitado,
       chave_pix: data.chave_pix,
       favorecido: data.nome_favorecido,
-      instrucoes_extras: data.instrucoes_responsavel
+      instrucoes_extras: data.instrucoes_responsavel,
+      qr_code_url: data.pix_qr_code_url
     } : null
   },
 

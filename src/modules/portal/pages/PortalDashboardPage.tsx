@@ -3,9 +3,9 @@ import { useDashboardAluno } from '../hooks'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Loader2, UserCircle, BookOpen, CalendarCheck, CreditCard, 
-  AlertTriangle, TrendingUp, Bell, ChevronRight, Users 
+import {
+  Loader2, UserCircle, BookOpen, CalendarCheck, CreditCard,
+  AlertTriangle, TrendingUp, Bell, ChevronRight, Users
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { SeletorAluno } from '../components/SeletorAluno'
@@ -43,25 +43,38 @@ export function PortalDashboardPage() {
       {isMultiAluno && <SeletorAluno />}
 
       {/* Card do Aluno */}
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <UserCircle className="h-9 w-9 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">{alunoSelecionado.nome_social || alunoSelecionado.nome_completo}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge className="bg-white/20 text-white border-0">
-                  {alunoSelecionado.status === 'ativo' ? '● Ativo' : '○ Inativo'}
-                </Badge>
-                {turma && (
-                  <Badge className="bg-white/20 text-white border-0">
-                    <BookOpen className="h-3 w-3 mr-1" />
-                    {turma.nome} — {turma.turno}
-                  </Badge>
-                )}
+      <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="relative">
+              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
+                <UserCircle className="h-11 w-11 text-white" />
               </div>
+              <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-4 border-slate-800 ${alunoSelecionado.status === 'ativo' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  {alunoSelecionado.nome_social || alunoSelecionado.nome_completo}
+                </h2>
+                <Badge className={`w-fit text-xs font-semibold border-0 ${alunoSelecionado.status === 'ativo' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                  {alunoSelecionado.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </div>
+              
+              {turma && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/90">
+                    <BookOpen className="h-3.5 w-3.5 text-teal-400" />
+                    <span className="font-medium">{turma.nome}</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/90">
+                    <CalendarCheck className="h-3.5 w-3.5 text-teal-400" />
+                    <span className="font-medium">{turma.turno}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -14,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAluno, useAtualizarAluno, useAtivarAcessoPortal } from '../hooks'
+import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro } from '../hooks'
 import { cn } from '@/lib/utils'
 
 export function AlunoDetalhePage() {
@@ -28,6 +28,7 @@ export function AlunoDetalhePage() {
   const { data: aluno, isLoading } = useAluno(id || '')
   const atualizarAluno = useAtualizarAluno()
   const ativarAcesso = useAtivarAcessoPortal()
+  const alternarFinanceiro = useAlternarFinanceiro()
   
   const [isEditing, setIsEditing] = useState(isEditingInitial)
   const [formData, setFormData] = useState<any>(null)
@@ -123,6 +124,8 @@ export function AlunoDetalhePage() {
   }
 
   const vinculos = (aluno as any).aluno_responsavel as Array<{
+    id: string
+    is_financeiro: boolean
     grau_parentesco: string | null
     responsaveis: any
   }> | null
@@ -358,7 +361,14 @@ export function AlunoDetalhePage() {
                       <p className="text-base font-black text-zinc-900 leading-tight">{v.responsaveis.nome}</p>
                       <p className="text-xs text-indigo-600 font-bold uppercase tracking-widest mt-0.5">{v.grau_parentesco || 'Responsável'}</p>
                     </div>
-                    <Badge variant="secondary" className="rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-0 font-bold text-[10px]">REPRESENTANTE</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      {v.is_financeiro && (
+                        <Badge className="rounded-full bg-emerald-100 text-emerald-800 border-emerald-200 font-black text-[9px] uppercase tracking-widest px-2 py-0.5">
+                          <CreditCard className="h-2.5 w-2.5 mr-1" /> PAGADOR
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-0 font-bold text-[10px]">REPRESENTANTE</Badge>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-3 pt-2">
@@ -390,21 +400,41 @@ export function AlunoDetalhePage() {
                        )}
                     </div>
                     
-                    {!v.responsaveis.user_id && v.responsaveis.email && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 text-[10px] font-bold uppercase tracking-tight rounded-xl hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200"
-                        onClick={() => {
-                          setActivatingResp({ id: v.responsaveis.id, nome: v.responsaveis.nome })
-                          setNewPassword('')
-                        }}
-                        disabled={ativarAcesso.isPending}
-                      >
-                        {ativarAcesso.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Lock className="h-3 w-3 mr-1" />}
-                        Ativar Portal
-                      </Button>
-                    )}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-8 px-2 text-[10px] font-bold uppercase tracking-tight rounded-xl border border-dashed hover:bg-zinc-100",
+                            v.is_financeiro ? "text-amber-600 border-amber-200" : "text-zinc-400 border-zinc-200"
+                          )}
+                          onClick={() => alternarFinanceiro.mutate({ 
+                             vinculoId: v.id, 
+                             isFinanceiro: !v.is_financeiro 
+                          })}
+                          disabled={alternarFinanceiro.isPending}
+                          title={v.is_financeiro ? "Remover responsabilidade financeira" : "Tornar responsável financeiro"}
+                        >
+                          <CreditCard className="h-3 w-3 mr-1" />
+                          {v.is_financeiro ? 'Remover Pagador' : 'Tornar Pagador'}
+                        </Button>
+
+                        {!v.responsaveis.user_id && v.responsaveis.email && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-[10px] font-bold uppercase tracking-tight rounded-xl hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200"
+                            onClick={() => {
+                              setActivatingResp({ id: v.responsaveis.id, nome: v.responsaveis.nome })
+                              setNewPassword('')
+                            }}
+                            disabled={ativarAcesso.isPending}
+                          >
+                            {ativarAcesso.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Lock className="h-3 w-3 mr-1" />}
+                            Ativar Portal
+                          </Button>
+                        )}
+                      </div>
                   </div>
 
                   {/* Endereço do Responsável - Quase sempre igual ao do aluno, mas bom listar se houver */}

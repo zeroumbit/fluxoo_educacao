@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { alunoService } from './service'
 import type { AlunoInsert, AlunoUpdate, ResponsavelInsert } from '@/lib/database.types'
+import { toast } from 'sonner'
 
 export function useAlunos() {
   const { authUser } = useAuth()
@@ -48,11 +49,13 @@ export function useCriarAlunoComResponsavel() {
       responsavel,
       aluno,
       grauParentesco,
+      isFinanceiro,
     }: {
       responsavel: ResponsavelInsert
       aluno: AlunoInsert
       grauParentesco: string | null
-    }) => alunoService.criarComResponsavel(responsavel, aluno, grauParentesco),
+      isFinanceiro?: boolean
+    }) => alunoService.criarComResponsavel(responsavel, aluno, grauParentesco, isFinanceiro),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -89,6 +92,18 @@ export function useAtivarAcessoPortal() {
       alunoService.ativarAcessoPortal(responsavelId, senha),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
+    },
+  })
+}
+
+export function useAlternarFinanceiro() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ vinculoId, isFinanceiro }: { vinculoId: string; isFinanceiro: boolean }) =>
+      alunoService.alternarResponsavelFinanceiro(vinculoId, isFinanceiro),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      toast.success('Responsabilidade atualizada!')
     },
   })
 }

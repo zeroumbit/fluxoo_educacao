@@ -55,7 +55,8 @@ export const alunoService = {
   async criarComResponsavel(
     responsavel: ResponsavelInsert,
     alunoDados: AlunoInsert,
-    grauParentesco: string | null
+    grauParentesco: string | null,
+    isFinanceiro: boolean = true
   ) {
     // 0. Preparar dados (limpar CPF)
     const cpfLimpo = responsavel.cpf.replace(/\D/g, '')
@@ -148,6 +149,9 @@ export const alunoService = {
       aluno_id: alunoData.id,
       responsavel_id: respData!.id,
       grau_parentesco: grauParentesco,
+      is_financeiro: isFinanceiro,
+      is_academico: true,
+      status: 'ativo'
     }
     const { error: vincError } = await supabase
       .from('aluno_responsavel')
@@ -239,6 +243,15 @@ export const alunoService = {
     if (updateError) throw updateError
 
     return authData.user
+  },
+
+  async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean) {
+    const { error } = await supabase
+      .from('aluno_responsavel')
+      .update({ is_financeiro: isFinanceiro })
+      .eq('id', vinculoId)
+
+    if (error) throw error
   }
 }
 

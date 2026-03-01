@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useSalvarFrequencias } from '../hooks'
+import { useMatriculasAtivas } from '@/modules/academico/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Loader2, CheckCircle, XCircle, AlertCircle, Save, Users } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, AlertCircle, Save, Users, FileX } from 'lucide-react'
 import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 
@@ -24,10 +25,16 @@ export function FrequenciaPage() {
   const { authUser } = useAuth()
   const { data: turmas } = useTurmas()
   const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
+  const { data: matriculasAtivas } = useMatriculasAtivas()
   const salvarFrequencias = useSalvarFrequencias()
   const [turmaId, setTurmaId] = useState('')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
   const [statusMap, setStatusMap] = useState<Record<string, FrequenciaStatus>>({})
+
+  // Cria um Set com IDs de alunos com matrícula ativa para consulta rápida
+  const alunosComMatriculaIds = useMemo(() => {
+    return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
+  }, [matriculasAtivas])
 
   const toggleStatus = (alunoId: string) => {
     const current = statusMap[alunoId] || 'presente'
@@ -38,11 +45,17 @@ export function FrequenciaPage() {
 
   const handleSalvar = async () => {
     if (!authUser || !turmaId) return
-    const alunosParaSalvar = alunos?.filter(a => a.status === 'ativo') || []
+    
+    // Filtra apenas alunos com matrícula ativa
+    const alunosParaSalvar = alunos?.filter(a => 
+      a.status === 'ativo' && alunosComMatriculaIds.has(a.id)
+    ) || []
+    
     if (alunosParaSalvar.length === 0) {
-      toast.error('Nenhum aluno ativo encontrado')
+      toast.error('Nenhum aluno com matrícula ativa encontrado')
       return
     }
+    
     const dados = alunosParaSalvar.map((a) => ({
       tenant_id: authUser.tenantId,
       turma_id: turmaId,
@@ -55,12 +68,22 @@ export function FrequenciaPage() {
     try {
       await salvarFrequencias.mutateAsync(dados)
       toast.success('Frequência salva!')
-    } catch {
-      toast.error('Erro ao salvar')
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar frequência')
     }
   }
 
-  const alunosAtivos = alunos?.filter(a => a.status === 'ativo') || []
+  // Alunos ativos com informação de matrícula
+  const alunosAtivos = useMemo(() => {
+    return (alunos?.filter(a => a.status === 'ativo') || []).map(aluno => ({
+      ...aluno,
+      temMatricula: alunosComMatriculaIds.has(aluno.id),
+    }))
+  }, [alunos, alunosComMatriculaIds])
+
+  const alunosComMatricula = alunosAtivos.filter(a => a.temMatricula)
+  const alunosSemMatricula = alunosAtivos.filter(a => !a.temMatricula)
+
   const contagens = {
     presente: Object.values(statusMap).filter(s => s === 'presente').length,
     falta: Object.values(statusMap).filter(s => s === 'falta').length,
@@ -112,14 +135,38 @@ export function FrequenciaPage() {
         </div>
         <div className="space-y-2">
           <Label>Total de Alunos</Label>
-          <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{alunosAtivos.length} alunos</span>
+          <div className="flex flex-col gap-1 h-10 px-3 rounded-md border bg-muted/50">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{alunosComMatricula.length} com matrícula</span>
+              </span>
+              {alunosSemMatricula.length > 0 && (
+                <span className="text-xs text-amber-600 font-medium">{alunosSemMatricula.length} sem matrícula</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {turmaId && alunosAtivos.length > 0 && (
+      {/* Alerta de alunos sem matrícula */}
+      {turmaId && alunosSemMatricula.length > 0 && (
+        <Card className="border-0 shadow-md bg-amber-50 ring-1 ring-amber-200">
+          <CardContent className="py-4 flex items-start gap-4">
+            <FileX className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-800">
+                {alunosSemMatricula.length} aluno(s) sem matrícula ativa
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Estes alunos não podem receber frequência. Regularize as matrículas na tela de Matrícula.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {turmaId && alunosComMatricula.length > 0 && (
         <>
           {/* Contadores de Status */}
           <div className="flex flex-wrap gap-2">
@@ -143,7 +190,7 @@ export function FrequenciaPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {alunosAtivos.map((aluno, index) => {
+                  {alunosComMatricula.map((aluno, index) => {
                     const status = statusMap[aluno.id] || 'presente'
                     const cfg = statusConfig[status]
                     const Icon = cfg.icon
@@ -190,7 +237,7 @@ export function FrequenciaPage() {
         </Card>
       )}
 
-      {turmaId && alunosAtivos.length === 0 && (
+      {turmaId && alunosComMatricula.length === 0 && alunosSemMatricula.length === 0 && (
         <Card className="border-0 shadow-md">
           <CardContent className="py-12 text-center text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />

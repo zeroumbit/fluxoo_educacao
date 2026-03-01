@@ -17,6 +17,31 @@ export const frequenciaService = {
   async salvarFrequencias(frequencias: FrequenciaInsert[]) {
     if (frequencias.length === 0) return
 
+    // VALIDAÇÃO: Verificar matrícula ativa para cada aluno
+    const alunosSemMatricula: string[] = []
+
+    for (const freq of frequencias) {
+      if (!freq.tenant_id || !freq.aluno_id) continue
+
+      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+        .select('id')
+        .eq('aluno_id', freq.aluno_id!)
+        .eq('tenant_id', freq.tenant_id!)
+        .eq('status' as any, 'ativa')
+        .maybeSingle()
+
+      if (!matricula) {
+        alunosSemMatricula.push(freq.aluno_id)
+      }
+    }
+
+    if (alunosSemMatricula.length > 0) {
+      throw new Error(
+        `Não é possível lançar frequência para ${alunosSemMatricula.length} aluno(s) sem matrícula ativa. ` +
+        `Regularize as matrículas antes de continuar.`
+      )
+    }
+
     // Delete existing para a turma/data e reinsere
     const { tenant_id, turma_id, data_aula } = frequencias[0]
     if (tenant_id && turma_id && data_aula) {

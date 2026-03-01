@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale'
 import { SeletorAluno } from '../components/SeletorAluno'
 
 export function PortalCobrancasPage() {
-  const { alunoSelecionado, isMultiAluno } = usePortalContext()
+  const { alunoSelecionado, isMultiAluno, vinculos } = usePortalContext()
   const { data: cobrancas, isLoading } = useCobrancasAluno()
   const { data: configPix } = useConfigPix()
 
@@ -68,7 +68,7 @@ export function PortalCobrancasPage() {
   }
 
   // Filtrar apenas se é financeiramente responsável
-  const vinculoFinanceiro = usePortalContext().vinculos?.find(v => v.aluno_id === alunoSelecionado.id)?.is_financeiro
+  const vinculoFinanceiro = vinculos?.find(v => v.aluno_id === alunoSelecionado.id)?.is_financeiro
   
   if (!vinculoFinanceiro) {
     return (
@@ -178,6 +178,20 @@ export function PortalCobrancasPage() {
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaAtiva?.valor || 0)}
                 </p>
               </div>
+
+              {configPix.qr_code_url && (
+                <div className="flex flex-col items-center justify-center p-4 bg-white border-2 border-dashed border-indigo-100 rounded-3xl animate-in zoom-in-95 duration-500">
+                  <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3">Escaneie para Pagar</p>
+                  <div className="relative p-3 bg-white rounded-2xl shadow-xl shadow-indigo-100/50 border border-zinc-100">
+                    <img 
+                      src={configPix.qr_code_url} 
+                      alt="QR Code PIX" 
+                      className="w-48 h-48 object-contain"
+                    />
+                  </div>
+                  <p className="text-[9px] text-zinc-400 mt-3 font-medium">QR Code Estático da Instituição</p>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div>
