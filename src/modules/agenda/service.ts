@@ -12,6 +12,12 @@ export const agendaService = {
     if (error) throw error
     return data
   },
+  async excluirEvento(id: string) {
+    const { error } = await (supabase.from('eventos' as any) as any)
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
   async getConfigRecados(tenantId: string) {
     const { data, error } = await (supabase.from('config_recados' as any) as any)
       .select('*').eq('tenant_id', tenantId).maybeSingle()

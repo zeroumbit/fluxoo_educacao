@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useEventos, useCriarEvento, useConfigRecados, useUpsertConfigRecados } from '../hooks'
+import { useEventos, useCriarEvento, useConfigRecados, useUpsertConfigRecados, useExcluirEvento } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,10 +28,12 @@ export function EventosPage() {
   const { authUser } = useAuth()
   const { data: eventos, isLoading } = useEventos()
   const criar = useCriarEvento()
+  const excluir = useExcluirEvento()
   const { data: configRecados } = useConfigRecados()
   const upsertConfig = useUpsertConfigRecados()
   const [open, setOpen] = useState(false)
   const [editando, setEditando] = useState<any | null>(null)
+  const [eventoDeletar, setEventoDeletar] = useState<any | null>(null)
   const [horarioInicio, setHorarioInicio] = useState(configRecados?.horario_inicio || '08:00')
   const [horarioTermino, setHorarioTermino] = useState(configRecados?.horario_termino || '17:00')
   const [msgFora, setMsgFora] = useState(configRecados?.mensagem_fora_expediente || '')
@@ -53,6 +55,21 @@ export function EventosPage() {
       descricao: evento.descricao || '',
     })
     setOpen(true)
+  }
+
+  const confirmarExclusao = (evento: any) => {
+    setEventoDeletar(evento)
+  }
+
+  const handleExcluir = async () => {
+    if (!eventoDeletar) return
+    try {
+      await excluir.mutateAsync(eventoDeletar.id)
+      toast.success('Evento excluído!')
+      setEventoDeletar(null)
+    } catch {
+      toast.error('Erro ao excluir evento')
+    }
   }
 
   const onSubmit = async (data: any) => {
@@ -185,7 +202,7 @@ export function EventosPage() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(e)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => confirmarExclusao(e)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -227,16 +244,16 @@ export function EventosPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="msg_fora">Mensagem Fora do Expediente</Label>
-                <Textarea 
-                  id="msg_fora" 
-                  value={msgFora} 
-                  onChange={(e) => setMsgFora(e.target.value)} 
+                <Textarea
+                  id="msg_fora"
+                  value={msgFora}
+                  onChange={(e) => setMsgFora(e.target.value)}
                   placeholder="Mensagem enviada automaticamente fora do horário..."
                   rows={4}
                 />
               </div>
-              <Button 
-                onClick={salvarConfigRecados} 
+              <Button
+                onClick={salvarConfigRecados}
                 disabled={upsertConfig.isPending}
                 className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700"
               >
@@ -247,6 +264,34 @@ export function EventosPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Diálogo de Confirmação de Exclusão */}
+      <Dialog open={!!eventoDeletar} onOpenChange={() => setEventoDeletar(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Excluir Evento
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o evento "{eventoDeletar?.nome}"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEventoDeletar(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleExcluir}
+              disabled={excluir.isPending}
+            >
+              {excluir.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

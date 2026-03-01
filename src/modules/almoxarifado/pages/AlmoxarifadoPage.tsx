@@ -54,40 +54,99 @@ export function AlmoxarifadoPage() {
           <Dialog open={openMov} onOpenChange={setOpenMov}>
             <DialogTrigger asChild><Button variant="outline"><ArrowDownUp className="mr-2 h-4 w-4" />Movimentação</Button></DialogTrigger>
             <DialogContent className="max-w-[800px]">
-              <DialogHeader><DialogTitle>Movimentação de Estoque</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>Movimentação de Estoque</DialogTitle>
+                <DialogDescription>Registre uma entrada ou saída de itens do almoxarifado.</DialogDescription>
+              </DialogHeader>
               <form onSubmit={movForm.handleSubmit(onSubmitMov)} className="space-y-4">
-                <div className="space-y-2"><Label>Item *</Label>
-                  <Select onValueChange={(v) => movForm.setValue('item_id', v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{itens?.map((i: any) => <SelectItem key={i.id} value={i.id}>{i.nome} (Estoque: {i.quantidade})</SelectItem>)}</SelectContent></Select>
+                <div className="space-y-2">
+                  <Label>Item *</Label>
+                  <Select onValueChange={(v) => movForm.setValue('item_id', v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {itens?.map((i: any) => (
+                        <SelectItem key={i.id} value={i.id}>{i.nome} (Estoque: {i.quantidade})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2"><Label>Tipo</Label>
+                <div className="space-y-2">
+                  <Label>Tipo de Movimentação</Label>
                   <RadioGroup defaultValue="entrada" onValueChange={(v) => movForm.setValue('tipo', v as any)} className="flex gap-4">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="entrada" id="ent" /><Label htmlFor="ent" className="text-emerald-700">Entrada</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="saida" id="sai" /><Label htmlFor="sai" className="text-red-700">Saída</Label></div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="entrada" id="ent" />
+                      <Label htmlFor="ent" className="text-emerald-700 font-medium">Entrada</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="saida" id="sai" />
+                      <Label htmlFor="sai" className="text-red-700 font-medium">Saída</Label>
+                    </div>
                   </RadioGroup>
                 </div>
-                <div className="space-y-2"><Label>Quantidade *</Label><Input type="number" min="1" {...movForm.register('quantidade')} /></div>
-                <div className="space-y-2"><Label>Justificativa</Label><Input placeholder="Ex: Compra do mês" {...movForm.register('justificativa')} /></div>
-                <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button><Button type="submit">Registrar</Button></div>
+                <div className="space-y-2">
+                  <Label>Quantidade *</Label>
+                  <Input type="number" min="1" placeholder="0" {...movForm.register('quantidade')} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Justificativa</Label>
+                  <Input placeholder="Ex: Compra mensal, Uso em sala de aula..." {...movForm.register('justificativa')} />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button>
+                  <Button type="submit">Registrar</Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
           <Dialog open={openItem} onOpenChange={setOpenItem}>
             <DialogTrigger asChild><Button className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Item</Button></DialogTrigger>
             <DialogContent className="max-w-[800px]">
-              <DialogHeader><DialogTitle>Novo Item</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>Novo Item</DialogTitle>
+                <DialogDescription>Cadastre um novo item no almoxarifado da escola.</DialogDescription>
+              </DialogHeader>
               <form onSubmit={itemForm.handleSubmit(onSubmitItem)} className="space-y-4">
-                <div className="space-y-2"><Label>Nome *</Label><Input placeholder="Ex: Resma A4" {...itemForm.register('nome')} /></div>
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input placeholder="Ex: Resma de papel A4, Caixa de lápis..." {...itemForm.register('nome')} />
+                  {itemForm.formState.errors.nome && <p className="text-sm text-destructive">{itemForm.formState.errors.nome.message as string}</p>}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Categoria</Label>
-                    <Select onValueChange={(v) => itemForm.setValue('categoria', v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="material_didatico">Material Didático</SelectItem><SelectItem value="limpeza">Limpeza</SelectItem><SelectItem value="papelaria">Papelaria</SelectItem><SelectItem value="outro">Outro</SelectItem></SelectContent></Select>
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <Select onValueChange={(v) => itemForm.setValue('categoria', v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="material_didatico">Material Didático</SelectItem>
+                        <SelectItem value="limpeza">Limpeza</SelectItem>
+                        <SelectItem value="papelaria">Papelaria</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2"><Label>Qtd. Inicial</Label><Input type="number" min="0" {...itemForm.register('quantidade')} /></div>
+                  <div className="space-y-2">
+                    <Label>Quantidade Inicial *</Label>
+                    <Input type="number" min="0" placeholder="0" {...itemForm.register('quantidade')} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Alerta Estoque Mínimo</Label><Input type="number" {...itemForm.register('alerta_estoque_minimo')} /></div>
-                  <div className="space-y-2"><Label>Custo Unitário (R$)</Label><Input type="number" step="0.01" {...itemForm.register('custo_unitario')} /></div>
+                  <div className="space-y-2">
+                    <Label>Alerta Estoque Mínimo</Label>
+                    <Input type="number" placeholder="Ex: 10" {...itemForm.register('alerta_estoque_minimo')} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Custo Unitário (R$)</Label>
+                    <Input type="number" step="0.01" placeholder="0,00" {...itemForm.register('custo_unitario')} />
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpenItem(false)}>Cancelar</Button><Button type="submit">Cadastrar</Button></div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setOpenItem(false)}>Cancelar</Button>
+                  <Button type="submit">Cadastrar</Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>

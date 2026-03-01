@@ -10,6 +10,8 @@ interface AuthUser {
   tenantId: string
   role: UserRole
   nome: string
+  areasAcesso?: string[]
+  funcionarioId?: string
 }
 
 interface AuthContextType {
@@ -97,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 3. Funcionário
       const funcRes = await withTimeout(
-        supabase.from('funcionarios').select('tenant_id, nome_completo').eq('user_id', user.id).maybeSingle() as any,
+        supabase.from('funcionarios').select('tenant_id, nome_completo, areas_acesso, id').eq('user_id', user.id).maybeSingle() as any,
         5000
       ) as any
 
@@ -107,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tenantId: funcRes.data.tenant_id || '',
           role: 'funcionario',
           nome: funcRes.data.nome_completo,
+          areasAcesso: funcRes.data.areas_acesso || [],
+          funcionarioId: funcRes.data.id,
         })
         return
       }

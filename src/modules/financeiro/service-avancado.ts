@@ -33,6 +33,11 @@ export const financeiroAvancadoService = {
     if (error) throw error
     return data
   },
+  async deletarContaPagar(id: string) {
+    const { error } = await (supabase.from('contas_pagar' as any) as any)
+      .delete().eq('id', id)
+    if (error) throw error
+  },
 
   // BAIXA MANUAL (registrar pagamento em cobrança existente)
   async registrarPagamento(cobrancaId: string, pagamento: any) {

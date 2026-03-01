@@ -60,4 +60,16 @@ export const muralService = {
 
     if (error) throw error
   },
+
+  async editar(id: string, aviso: Partial<MuralAvisoInsert>) {
+    const { data, error } = await supabase
+      .from('mural_avisos')
+      .update(aviso)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
 }

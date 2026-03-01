@@ -18,6 +18,14 @@ export function useCriarContaPagar() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => financeiroAvancadoService.criarContaPagar(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
 }
+export function useAtualizarContaPagar() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, updates }: { id: string; updates: any }) => financeiroAvancadoService.atualizarContaPagar(id, updates), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
+}
+export function useDeletarContaPagar() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (id: string) => financeiroAvancadoService.deletarContaPagar(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
+}
 export function useRegistrarPagamento() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: ({ id, pagamento }: { id: string; pagamento: any }) => financeiroAvancadoService.registrarPagamento(id, pagamento), onSuccess: () => qc.invalidateQueries({ queryKey: ['cobrancas'] }) })

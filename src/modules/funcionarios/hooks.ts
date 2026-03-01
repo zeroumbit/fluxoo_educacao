@@ -43,3 +43,32 @@ export function useCriarUsuarioEscola() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['funcionarios'] }),
   })
 }
+
+/**
+ * Hook para buscar funcionário logado atualmente
+ * Usa o user_id do contexto de auth
+ */
+export function useFuncionarioLogado() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['funcionario-logado', authUser?.userId],
+    queryFn: () => funcionariosService.buscarPorUserId(authUser!.userId!),
+    enabled: !!authUser?.userId,
+  })
+}
+
+/**
+ * Hook para verificar se funcionário tem acesso a uma área específica
+ * @param area - Área a verificar (ex: 'Financeiro', 'Pedagógico')
+ */
+export function useVerificarAcessoFuncionario(area: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['funcionario-acesso', area, authUser?.userId],
+    queryFn: async () => {
+      if (!authUser?.userId) return false
+      return funcionariosService.verificarAcesso(authUser.userId, area)
+    },
+    enabled: !!authUser?.userId,
+  })
+}

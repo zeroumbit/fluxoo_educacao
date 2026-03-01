@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useAvisos, useCriarAviso, useExcluirAviso } from '../hooks'
+import { useAvisos, useCriarAviso, useExcluirAviso, useEditarAviso } from '../hooks'
+import type { MuralAviso } from '@/lib/database.types'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,15 +15,15 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Loader2, Megaphone, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Loader2, Megaphone, Trash2, AlertTriangle, Edit2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const avisoSchema = z.object({
   titulo: z.string().min(3, 'Título é obrigatório'),
   conteudo: z.string().min(5, 'Conteúdo é obrigatório'),
-  publico_alvo: z.string().optional().default('todos'),
-  turma_id: z.string().optional(),
+  publico_alvo: z.string(),
+  turma_id: z.string().optional().nullable(),
 })
 
 type AvisoFormValues = z.infer<typeof avisoSchema>
@@ -33,32 +34,61 @@ export function MuralPage() {
   const { data: turmas } = useTurmas()
   const criarAviso = useCriarAviso()
   const excluirAviso = useExcluirAviso()
+  const editarAviso = useEditarAviso()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
   const [avisoParaExcluir, setAvisoParaExcluir] = useState<string | null>(null)
+  const [avisoParaEditar, setAvisoParaEditar] = useState<MuralAviso | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AvisoFormValues>({
     resolver: zodResolver(avisoSchema),
-    defaultValues: { publico_alvo: 'todos' },
+    defaultValues: { publico_alvo: 'todos', turma_id: undefined },
   })
 
   const onSubmit = async (data: AvisoFormValues) => {
     if (!authUser) return
     try {
-      await criarAviso.mutateAsync({
-        tenant_id: authUser.tenantId,
-        titulo: data.titulo,
-        conteudo: data.conteudo,
-        publico_alvo: data.publico_alvo,
-        turma_id: data.turma_id || null,
-        data_agendamento: null,
-      })
-      toast.success('Aviso publicado!')
+      if (avisoParaEditar) {
+        await editarAviso.mutateAsync({
+          id: avisoParaEditar.id,
+          data: {
+            titulo: data.titulo,
+            conteudo: data.conteudo,
+            publico_alvo: data.publico_alvo,
+            turma_id: data.turma_id,
+          },
+        })
+        toast.success('Aviso atualizado!')
+      } else {
+        await criarAviso.mutateAsync({
+          tenant_id: authUser.tenantId,
+          titulo: data.titulo,
+          conteudo: data.conteudo,
+          publico_alvo: data.publico_alvo,
+          turma_id: data.turma_id || null,
+          data_agendamento: null,
+        })
+        toast.success('Aviso publicado!')
+      }
       reset()
       setDialogOpen(false)
+      setEditDialogOpen(false)
+      setAvisoParaEditar(null)
     } catch {
-      toast.error('Erro ao publicar')
+      toast.error('Erro ao salvar')
     }
+  }
+
+  const handleEditar = (aviso: MuralAviso) => {
+    setAvisoParaEditar(aviso)
+    setValue('titulo', aviso.titulo)
+    setValue('conteudo', aviso.conteudo)
+    setValue('publico_alvo', aviso.publico_alvo || 'todos')
+    if (aviso.turma_id) {
+      setValue('turma_id', aviso.turma_id)
+    }
+    setEditDialogOpen(true)
   }
 
   const handleExcluir = async (id: string) => {
@@ -181,6 +211,76 @@ export function MuralPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Editar Aviso</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do aviso.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-titulo">Título *</Label>
+              <Input
+                id="edit-titulo"
+                placeholder="Digite o título do aviso"
+                {...register('titulo')}
+              />
+              {errors.titulo && (
+                <p className="text-sm text-destructive">{errors.titulo.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-conteudo">Conteúdo *</Label>
+              <Textarea
+                id="edit-conteudo"
+                rows={4}
+                placeholder="Digite o conteúdo do aviso..."
+                {...register('conteudo')}
+              />
+              {errors.conteudo && (
+                <p className="text-sm text-destructive">{errors.conteudo.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-publico_alvo">Público alvo</Label>
+              <Select defaultValue="todos" onValueChange={(v) => setValue('publico_alvo', v)}>
+                <SelectTrigger id="edit-publico_alvo" className="w-full">
+                  <SelectValue placeholder="Selecione o público" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="turma">Turma específica</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-turma_id">Turma (opcional)</Label>
+              <Select onValueChange={(v) => setValue('turma_id', v)}>
+                <SelectTrigger id="edit-turma_id" className="w-full">
+                  <SelectValue placeholder="Selecione uma turma (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {turmas?.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar alterações'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-4">
         {avisos?.map((aviso) => (
           <Card key={aviso.id} className="border-0 shadow-md">
@@ -205,9 +305,14 @@ export function MuralPage() {
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(aviso.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(aviso)}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(aviso.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

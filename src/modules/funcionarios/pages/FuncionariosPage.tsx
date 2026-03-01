@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Loader2, UserPlus, Users, Briefcase, KeyRound, Eye, EyeOff } from 'lucide-react'
 import { mascaraCPF, validarCPF } from '@/lib/validacoes'
+import { MultiSelect } from '@/components/ui/multi-select'
 
 const funcSchema = z.object({
   nome_completo: z.string().min(3, 'Nome obrigatório'),
@@ -29,8 +30,56 @@ const funcSchema = z.object({
 const userSchema = z.object({
   email: z.string().email('E-mail inválido'),
   senha: z.string().min(6, 'Mínimo 6 caracteres'),
-  areas_acesso: z.string().optional(),
+  areas_acesso: z.array(z.string()).default([]),
 })
+
+const PLATFORM_FUNCTIONS = [
+  { value: 'dashboard', label: 'Dashboard' },
+  { value: 'alunos', label: 'Alunos' },
+  { value: 'turmas', label: 'Turmas' },
+  { value: 'frequencia', label: 'Frequência/Chamada' },
+  { value: 'mural', label: 'Mural de Avisos' },
+  { value: 'financeiro', label: 'Financeiro (Geral)' },
+  { value: 'contas_pagar', label: 'Contas a Pagar' },
+  { value: 'config_financeira', label: 'Configuração Financeira' },
+  { value: 'funcionarios', label: 'Funcionários' },
+  { value: 'matriculas', label: 'Matrículas' },
+  { value: 'planos_aula', label: 'Planos de Aula' },
+  { value: 'atividades', label: 'Atividades' },
+  { value: 'agenda', label: 'Agenda/Eventos' },
+  { value: 'documentos', label: 'Documentos' },
+  { value: 'almoxarifado', label: 'Almoxarifado' },
+  { value: 'perfil_escola', label: 'Perfil da Escola' },
+]
+
+/**
+ * Formata valor numérico para moeda brasileira (R$)
+ */
+function formatarMoeda(valor: number): string {
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+/**
+ * Converte string formatada (com pontos e vírgulas) para número
+ * Ex: "1.234,56" → 1234.56
+ */
+function parsearMoeda(valor: string): number {
+  if (!valor) return 0
+  // Remove tudo que não for dígito, vírgula ou ponto
+  const limpo = valor.replace(/[^\d,.-]/g, '')
+  if (!limpo) return 0
+  // Se tiver vírgula, substitui por ponto (formato decimal JS)
+  // Remove pontos de milhar, mantendo apenas o ponto decimal
+  const partes = limpo.split(',')
+  if (partes.length > 1) {
+    // Tem parte decimal (vírgula)
+    const parteInteira = partes[0].replace(/\./g, '') // Remove pontos de milhar
+    const parteDecimal = partes.slice(1).join('') // Junta tudo após a primeira vírgula
+    return parseFloat(`${parteInteira}.${parteDecimal}`)
+  }
+  // Sem vírgula, apenas remove pontos de milhar
+  return parseFloat(limpo.replace(/\./g, ''))
+}
 
 export function FuncionariosPage() {
   const { authUser } = useAuth()
@@ -42,25 +91,50 @@ export function FuncionariosPage() {
   const [userDialogOpen, setUserDialogOpen] = useState(false)
   const [selectedFunc, setSelectedFunc] = useState<any>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [salarioInput, setSalarioInput] = useState('')
 
   const funcForm = useForm({ resolver: zodResolver(funcSchema) })
   const userForm = useForm({ resolver: zodResolver(userSchema) })
 
+  const handleSalarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value
+    setSalarioInput(valor)
+    const valorNumerico = parsearMoeda(valor)
+    funcForm.setValue('salario_bruto', valorNumerico)
+  }
+
+  const abrirNovoFuncionario = () => {
+    setSalarioInput('')
+    funcForm.reset({ nome_completo: '', como_chamado: '', funcao: '', salario_bruto: undefined, dia_pagamento: undefined, data_admissao: '' })
+    setDialogOpen(true)
+  }
+
   const onSubmitFunc = async (data: any) => {
     if (!authUser) return
     try {
-      await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+      await criar.mutateAsync({ 
+        ...data, 
+        tenant_id: authUser.tenantId,
+        status: 'ativo',
+      })
       toast.success('Funcionário cadastrado!')
       funcForm.reset()
       setDialogOpen(false)
-    } catch { toast.error('Erro ao cadastrar') }
+    } catch (err: any) { 
+      console.error('Erro ao cadastrar funcionário:', err)
+      toast.error(err.message || 'Erro ao cadastrar') 
+    }
   }
 
   const onSubmitUser = async (data: any) => {
     if (!selectedFunc) return
     try {
-      const areas = data.areas_acesso ? data.areas_acesso.split(',').map((a: string) => a.trim()) : []
-      await criarUsuario.mutateAsync({ funcionarioId: selectedFunc.id, email: data.email, senha: data.senha, areasAcesso: areas })
+      await criarUsuario.mutateAsync({ 
+        funcionarioId: selectedFunc.id, 
+        email: data.email, 
+        senha: data.senha, 
+        areasAcesso: data.areas_acesso || [] 
+      })
       toast.success('Usuário criado com sucesso!')
       userForm.reset()
       setUserDialogOpen(false)
@@ -88,7 +162,7 @@ export function FuncionariosPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md">
+            <Button onClick={abrirNovoFuncionario} className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md">
               <Plus className="mr-2 h-4 w-4" /> Novo Funcionário
             </Button>
           </DialogTrigger>
@@ -114,7 +188,13 @@ export function FuncionariosPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Salário Bruto (R$)</Label>
-                  <Input type="number" step="0.01" placeholder="0,00" {...funcForm.register('salario_bruto')} />
+                  <Input
+                    type="text"
+                    placeholder="0,00"
+                    value={salarioInput}
+                    onChange={handleSalarioChange}
+                  />
+                  {funcForm.formState.errors.salario_bruto && <p className="text-sm text-destructive">{funcForm.formState.errors.salario_bruto.message as string}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -161,8 +241,19 @@ export function FuncionariosPage() {
             </div>
             <div className="space-y-2">
               <Label>Áreas de Acesso</Label>
-              <Input placeholder="Financeiro, Pedagógico, Secretaria (separados por vírgula)" {...userForm.register('areas_acesso')} />
-              <p className="text-xs text-muted-foreground">Separar cada área por vírgula</p>
+              <Controller
+                control={userForm.control}
+                name="areas_acesso"
+                render={({ field }) => (
+                  <MultiSelect
+                    options={PLATFORM_FUNCTIONS}
+                    selected={field.value || []}
+                    onChange={field.onChange}
+                    placeholder="Selecione as funcionalidades..."
+                  />
+                )}
+              />
+              <p className="text-xs text-muted-foreground">Selecione as funcionalidades que o funcionário poderá acessar</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setUserDialogOpen(false)}>Cancelar</Button>

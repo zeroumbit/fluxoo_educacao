@@ -51,3 +51,15 @@ export function useExcluirAviso() {
     },
   })
 }
+
+export function useEditarAviso() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<MuralAvisoInsert> }) =>
+      muralService.editar(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mural'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
