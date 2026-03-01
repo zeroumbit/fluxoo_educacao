@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useCobrancasAluno, useConfigPix } from '../hooks'
 import { usePortalContext } from '../context'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Loader2, CreditCard, Copy, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Loader2, CreditCard, Copy, CheckCircle2, AlertCircle, Info, Calendar, Percent, DollarSign, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -92,6 +93,132 @@ export function PortalCobrancasPage() {
 
       {isMultiAluno && <SeletorAluno />}
 
+      {/* Card Informativo - Regras e Informações */}
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-[#134E4A] to-[#0F3937] text-white overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <FileText className="h-32 w-32 text-white" />
+        </div>
+        <CardHeader className="relative z-10 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <Info className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold">Informações Importantes sobre Pagamentos</CardTitle>
+              <CardDescription className="text-white/70 text-xs">
+                Conheça as regras e evite transtornos
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10 pt-2">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="vencimento" className="border-white/20">
+              <AccordionTrigger className="text-sm font-bold hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-[#14B8A6]" />
+                  <span>Vencimento e Carência</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs text-white/80 leading-relaxed pt-2 pb-3">
+                <p className="mb-2">
+                  <strong className="text-white">📅 Dia de Vencimento:</strong> A mensalidade vence todo dia <strong>10</strong>. 
+                  Caso caia em fim de semana ou feriado, transfira para o próximo dia útil.
+                </p>
+                <p>
+                  <strong className="text-white">⏳ Período de Carência:</strong> Você tem <strong>5 dias de carência</strong> após o vencimento 
+                  para realizar o pagamento sem bloqueio do acesso. Após esse período, o acesso ao portal pode ser restringido.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="multa" className="border-white/20">
+              <AccordionTrigger className="text-sm font-bold hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <Percent className="h-4 w-4 text-[#14B8A6]" />
+                  <span>Multa e Juros por Atraso</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs text-white/80 leading-relaxed pt-2 pb-3">
+                <p className="mb-2">
+                  <strong className="text-white">💰 Multa Fixa:</strong> <strong>2%</strong> sobre o valor da mensalidade 
+                  (conforme Código de Defesa do Consumidor).
+                </p>
+                <p className="mb-2">
+                  <strong className="text-white">📈 Juros de Mora:</strong> <strong>1% ao mês</strong> de atraso (proporcional aos dias).
+                </p>
+                <p>
+                  <strong className="text-white">⚠️ Importante:</strong> O cálculo é automático. Quanto mais dias de atraso, 
+                  maior o valor final. Regularize o quanto antes para evitar acúmulo.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="pagamento" className="border-white/20">
+              <AccordionTrigger className="text-sm font-bold hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-[#14B8A6]" />
+                  <span>Formas de Pagamento</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs text-white/80 leading-relaxed pt-2 pb-3">
+                <ul className="space-y-2 list-none pl-0">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#14B8A6] font-bold">✓</span>
+                    <span><strong>PIX:</strong> Aprovação imediata. Use a chave PIX ou QR Code da escola. <strong>Envie o comprovante</strong> para confirmação.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#14B8A6] font-bold">✓</span>
+                    <span><strong>Dinheiro/Cartão:</strong> Pagamento presencial no caixa da escola (horário de funcionamento).</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400 font-bold">✗</span>
+                    <span><strong>Não aceitamos:</strong> Cheques ou transferências de terceiros (sempre identifique o responsável).</span>
+                  </li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="consequencias" className="border-white/20">
+              <AccordionTrigger className="text-sm font-bold hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-400" />
+                  <span>Consequências do Atraso</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs text-white/80 leading-relaxed pt-2 pb-3">
+                <p className="mb-2">
+                  <strong className="text-amber-400">⚠️ Atenção:</strong> O não pagamento pode resultar em:
+                </p>
+                <ul className="space-y-1 list-none pl-0">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400">•</span>
+                    <span>Bloqueio de acesso ao portal do aluno</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400">•</span>
+                    <span>Impedimento de renovação de matrícula</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400">•</span>
+                    <span>Inclusão em órgãos de proteção ao crédito (SPC/Serasa)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-400">•</span>
+                    <span>Ação judicial para cobrança da dívida</span>
+                  </li>
+                </ul>
+                <p className="mt-3 pt-3 border-t border-white/20 text-[11px] italic">
+                  <strong className="text-[#14B8A6]">💡 Dica:</strong> Em caso de dificuldade financeira, procure a secretaria da escola 
+                  para negociar antes do vencimento. Estamos aqui para ajudar!
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Cobranças */}
       {cobrancas && cobrancas.length > 0 ? (
         <div className="grid gap-4">
           {cobrancas.map((cobranca) => {

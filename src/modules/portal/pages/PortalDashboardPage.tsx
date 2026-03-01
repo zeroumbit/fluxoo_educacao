@@ -53,7 +53,7 @@ export function PortalDashboardPage() {
               <div className="h-24 w-24 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-teal-900/30 border border-white/30">
                 <UserCircle className="h-14 w-14 text-white" />
               </div>
-              <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-teal-600 ${alunoSelecionado.status === 'ativo' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
+              <div className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-teal-600 ${alunoSelecionado.status?.toLowerCase() === 'ativo' ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
             </div>
             
             <div className="flex-1">
@@ -61,8 +61,8 @@ export function PortalDashboardPage() {
                 <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
                   {alunoSelecionado.nome_social || alunoSelecionado.nome_completo}
                 </h2>
-                <Badge className={`w-fit text-[9px] font-black uppercase tracking-widest border-0 px-3 py-1.5 ${alunoSelecionado.status === 'ativo' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-amber-500/20 text-amber-100 backdrop-blur-sm'}`}>
-                  {alunoSelecionado.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                <Badge className={`w-fit text-[9px] font-black uppercase tracking-widest border-0 px-3 py-1.5 ${alunoSelecionado.status?.toLowerCase() === 'ativo' ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-amber-500/20 text-amber-100 backdrop-blur-sm'}`}>
+                  {alunoSelecionado.status || 'Inativo'}
                 </Badge>
               </div>
               

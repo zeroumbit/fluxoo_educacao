@@ -45,19 +45,29 @@ export const frequenciaService = {
     // Delete existing para a turma/data e reinsere
     const { tenant_id, turma_id, data_aula } = frequencias[0]
     if (tenant_id && turma_id && data_aula) {
-      await supabase
+      console.log('🔄 [frequenciaService] Limpando registros antigos:', { tenant_id, turma_id, data_aula })
+      const { error: delError } = await supabase
         .from('frequencias')
         .delete()
         .eq('tenant_id', tenant_id)
         .eq('turma_id', turma_id)
         .eq('data_aula', data_aula)
+      
+      if (delError) {
+        console.error('❌ [frequenciaService] Erro ao deletar antigos:', delError)
+        throw new Error(`Erro ao limpar registros antigos: ${delError.message}`)
+      }
     }
 
+    console.log('📤 [frequenciaService] Inserindo novas frequências:', frequencias.length, 'registros')
     const { error } = await supabase
       .from('frequencias')
       .insert(frequencias)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ [frequenciaService] Erro no INSERT:', error)
+      throw error
+    }
   },
 
   async listarPorAluno(alunoId: string, tenantId: string) {

@@ -129,14 +129,11 @@ export const portalService = {
           nome_social, 
           data_nascimento, 
           status, 
-          tenant_id, 
-          filial_id, 
-          turma_id,
-          turma:turmas(id, nome, turno),
-          filial:filiais(nome_unidade)
+          tenant_id
         )
       `)
       .eq('responsavel_id', responsavelId)
+      .eq('status', 'ativo')
 
     if (error) {
       console.error('DEBUG: Erro ao buscar vínculos ativos:', error)
@@ -189,8 +186,10 @@ export const portalService = {
     const totalPresencas = frequencias.filter((f: any) => f.status === 'presente').length
     const totalFaltas = frequencias.filter((f: any) => f.status === 'falta').length
     const totalJustificadas = frequencias.filter((f: any) => f.status === 'justificada').length
+    
+    // Percentual: Presenças + Justificadas contam para o índice de frequência legal
     const percentualFrequencia = frequencias.length > 0
-      ? Math.round((totalPresencas / frequencias.length) * 100) : 100
+      ? Math.round(((totalPresencas + totalJustificadas) / frequencias.length) * 100) : 100
 
     const cobrancas = (cobrancasRes.data as any[]) || []
     const totalPendente = cobrancas.reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)

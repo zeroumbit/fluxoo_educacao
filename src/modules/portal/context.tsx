@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useResponsavel, useVinculosAtivos } from './hooks'
+import { supabase } from '@/lib/supabase'
 
 interface AlunoVinculado {
   id: string
@@ -32,20 +33,57 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const [alunoSelecionado, setAlunoSelecionado] = useState<AlunoVinculado | null>(null)
   const [tenantId, setTenantId] = useState<string | null>(null)
 
-  // Auto-selecionar se só tem 1 aluno
+  // Auto-selecionar se só tem 1 aluno e carregar dados da turma
   useEffect(() => {
+    async function carregarDadosCompletos(vinculo: any) {
+      if (!vinculo?.aluno) return
+
+      // Tentar pegar matrícula ativa
+      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+         .select('turno, serie_ano, ano_letivo')
+         .eq('aluno_id', vinculo.aluno.id)
+         .eq('status', 'ativa')
+         .maybeSingle()
+      
+      // Buscar turma que contém o aluno
+      const { data: turma } = await supabase
+        .from('turmas')
+        .select('id, nome, turno')
+        .eq('tenant_id', vinculo.aluno.tenant_id)
+        .contains('alunos_ids', [vinculo.aluno.id])
+        .maybeSingle()
+
+      setAlunoSelecionado({
+        ...vinculo.aluno,
+        turma: turma || (matricula ? { id: '', nome: matricula.serie_ano, turno: matricula.turno } : null)
+      })
+      setTenantId(vinculo.aluno.tenant_id)
+    }
+
     if (vinculos && vinculos.length > 0 && !alunoSelecionado) {
-      const primeiro = vinculos[0]
-      if (primeiro.aluno) {
-        setAlunoSelecionado(primeiro.aluno)
-        setTenantId(primeiro.aluno.tenant_id)
-      }
+      carregarDadosCompletos(vinculos[0])
     }
   }, [vinculos, alunoSelecionado])
 
-  const selecionarAluno = (vinculo: any) => {
+  const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
-      setAlunoSelecionado(vinculo.aluno)
+      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+         .select('turno, serie_ano, ano_letivo')
+         .eq('aluno_id', vinculo.aluno.id)
+         .eq('status', 'ativa')
+         .maybeSingle()
+      
+      const { data: turma } = await supabase
+        .from('turmas')
+        .select('id, nome, turno')
+        .eq('tenant_id', vinculo.aluno.tenant_id)
+        .contains('alunos_ids', [vinculo.aluno.id])
+        .maybeSingle()
+
+      setAlunoSelecionado({
+        ...vinculo.aluno,
+        turma: turma || (matricula ? { id: '', nome: matricula.serie_ano, turno: matricula.turno } : null)
+      })
       setTenantId(vinculo.aluno.tenant_id)
     }
   }
