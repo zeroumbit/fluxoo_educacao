@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAlunos } from '../hooks'
+import { useAlunos, useExcluirAluno } from '../hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -13,16 +13,56 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle, Eye } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 export function AlunosListPage() {
   const { data: alunos, isLoading } = useAlunos()
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
+  const excluirAluno = useExcluirAluno()
+
+  const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const alunosFiltrados = (alunos as any[])?.filter((a) =>
     a.nome_completo.toLowerCase().includes(busca.toLowerCase())
   )
+
+  const handleExcluir = (aluno: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (aluno.status === 'ativo') {
+      toast.error('Não é possível excluir um aluno ativo. Desative-o primeiro ou verifique a normalização.', {
+        description: 'Alunos ativos não podem ser removidos por segurança.',
+        icon: <AlertCircle className="h-5 w-5 text-destructive" />,
+      })
+      return
+    }
+    setAlunoParaExcluir(aluno)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!alunoParaExcluir) return
+    try {
+      await excluirAluno.mutateAsync(alunoParaExcluir.id)
+      toast.success('Aluno removido com sucesso!')
+    } catch (err: any) {
+      toast.error('Erro ao remover aluno: ' + err.message)
+    } finally {
+      setShowDeleteDialog(false)
+      setAlunoParaExcluir(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -43,7 +83,7 @@ export function AlunosListPage() {
         </div>
         <Button
           onClick={() => navigate('/alunos/novo')}
-          className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md rounded-xl"
         >
           <Plus className="mr-2 h-4 w-4" />
           Novo Aluno
@@ -54,70 +94,94 @@ export function AlunosListPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar aluno..."
+          placeholder="Buscar aluno por nome..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-11 rounded-xl"
         />
       </div>
 
       {/* Tabela */}
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-zinc-50/50">
               <TableRow>
                 <TableHead>Aluno</TableHead>
                 <TableHead>Data Nasc.</TableHead>
                 <TableHead>CPF</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-20">Ações</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {alunosFiltrados?.map((aluno) => (
                 <TableRow
                   key={aluno.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/30 transition-colors"
                   onClick={() => navigate(`/alunos/${aluno.id}`)}
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center">
+                      <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center border border-indigo-100/50">
                         <UserCircle className="h-5 w-5 text-indigo-600" />
                       </div>
                       <div>
-                        <p className="font-medium flex items-center gap-2">
+                        <p className="font-semibold text-zinc-900 flex items-center gap-2">
                           {aluno.nome_completo}
                           {aluno.filiais?.nome_unidade && (
-                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-slate-50">
+                            <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-zinc-50 border-zinc-200 text-zinc-600 font-medium">
                               {aluno.filiais.nome_unidade}
                             </Badge>
                           )}
                         </p>
                         {aluno.nome_social && (
-                          <p className="text-xs text-muted-foreground">{aluno.nome_social}</p>
+                          <p className="text-xs text-muted-foreground font-medium">{aluno.nome_social}</p>
                         )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{aluno.data_nascimento || '—'}</TableCell>
-                  <TableCell>{aluno.cpf || '—'}</TableCell>
+                  <TableCell className="text-zinc-600 font-medium">{aluno.data_nascimento || '—'}</TableCell>
+                  <TableCell className="text-zinc-600 font-medium">{aluno.cpf || '—'}</TableCell>
                   <TableCell>
                     <Badge
-                      className={
+                      className={cn(
+                        "rounded-lg px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider shadow-sm",
                         aluno.status === 'ativo'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-zinc-100 text-zinc-600'
-                      }
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                          : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                      )}
                     >
                       {aluno.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/alunos/${aluno.id}`); }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/alunos/${aluno.id}?edit=true`); }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-zinc-400 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        onClick={(e) => handleExcluir(aluno, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -125,13 +189,38 @@ export function AlunosListPage() {
           </Table>
 
           {(!alunosFiltrados || alunosFiltrados.length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
-              <UserCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-              <p>Nenhum aluno encontrado.</p>
+            <div className="text-center py-20 text-muted-foreground flex flex-col items-center">
+              <div className="h-20 w-20 rounded-full bg-zinc-50 flex items-center justify-center mb-4">
+                <Search className="h-10 w-10 text-zinc-200" />
+              </div>
+              <p className="font-medium text-zinc-500 text-lg">Nenhum aluno encontrado.</p>
+              <p className="text-sm">Tente ajustar sua busca ou cadastrar um novo aluno.</p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Exclusão */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="rounded-2xl border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Você tem certeza?</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Esta ação removerá permanentemente o aluno <strong>{alunoParaExcluir?.nome_completo}</strong> e todos os seus vínculos do sistema. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2">
+            <Button variant="ghost" onClick={() => setShowDeleteDialog(false)} className="rounded-xl border-zinc-200">Cancelar</Button>
+            <Button 
+              onClick={confirmarExclusao}
+              variant="destructive"
+              className="bg-destructive hover:bg-destructive/90 text-white rounded-xl shadow-lg shadow-destructive/20"
+            >
+              Excluir Permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

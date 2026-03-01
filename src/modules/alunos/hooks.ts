@@ -71,3 +71,24 @@ export function useAtualizarAluno() {
     },
   })
 }
+
+export function useExcluirAluno() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => alunoService.excluir(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+export function useAtivarAcessoPortal() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ responsavelId, senha }: { responsavelId: string; senha: string }) =>
+      alunoService.ativarAcessoPortal(responsavelId, senha),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+    },
+  })
+}

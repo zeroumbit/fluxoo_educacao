@@ -7,9 +7,9 @@ export const portalService = {
   async loginPorCpf(cpf: string, senha: string) {
     // Busca responsável pelo CPF (nunca revelar se CPF existe ou não)
     const cpfLimpo = cpf.replace(/\D/g, '')
-    const { data: responsavel, error } = await (supabase.from('responsaveis' as any) as any)
+    const { data: responsavel, error } = await supabase.from('responsaveis')
       .select('id, cpf, nome, email, telefone, user_id, primeiro_acesso, termos_aceitos, status')
-      .eq('cpf', cpfLimpo)
+      .or(`cpf.eq.${cpfLimpo},cpf.eq.${cpf}`)
       .maybeSingle()
 
     if (error || !responsavel) {
@@ -31,13 +31,34 @@ export const portalService = {
     })
 
     if (authError) {
-      // Log de tentativa falha
+      console.error('DEBUG: Erro detalhado do Supabase Auth:', {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name
+      })
+      
+      // Log de tentativa falha na auditoria
       await portalService.registrarAuditoria({
         tipo: 'login_falha',
         responsavel_id: responsavel.id,
-        detalhes: { cpf: cpfLimpo },
+        detalhes: { 
+          cpf: cpfLimpo, 
+          error_message: authError.message,
+          error_code: authError.status 
+        },
       })
-      throw new Error('CPF ou senha inválidos.')
+
+      // Tratamento de erros específicos
+      if (authError.message.includes('Email not confirmed')) {
+         throw new Error('Sua conta ainda não foi confirmada. Verifique o e-mail de ativação enviado para ' + responsavel.email)
+      }
+
+      if (authError.message.includes('Invalid login credentials')) {
+        throw new Error('CPF ou senha inválidos.')
+      }
+
+      // Se for qualquer outro erro técnico, mostramos o erro real para depuração
+      throw new Error(`Erro na autenticação: ${authError.message}`)
     }
 
     // Log de login bem-sucedido
@@ -58,13 +79,13 @@ export const portalService = {
   // ACEITE LGPD / PRIMEIRO ACESSO
   // ==========================================
   async aceitarTermos(responsavelId: string) {
-    const { error } = await (supabase.from('responsaveis' as any) as any)
+    const { error } = await supabase.from('responsaveis')
       .update({
         termos_aceitos: true,
         data_aceite_termos: new Date().toISOString(),
         primeiro_acesso: false,
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .eq('id', responsavelId)
 
     if (error) throw error
@@ -85,8 +106,8 @@ export const portalService = {
   // RESPONSÁVEL
   // ==========================================
   async buscarResponsavelPorUserId(userId: string) {
-    const { data, error } = await (supabase.from('responsaveis' as any) as any)
-      .select('id, cpf, nome, email, telefone, primeiro_acesso, termos_aceitos, status')
+    const { data, error } = await supabase.from('responsaveis')
+      .select('id, cpf, nome, email, telefone')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -98,35 +119,27 @@ export const portalService = {
   // VÍNCULO ALUNOS (Multi-aluno, Multi-escola)
   // ==========================================
   async buscarVinculosAtivos(responsavelId: string) {
-    const { data, error } = await (supabase.from('aluno_responsavel' as any) as any)
-      .select(`
-        id, grau_parentesco, is_financeiro, is_academico, status,
-        aluno:alunos(id, nome_completo, nome_social, data_nascimento, status, tenant_id, filial_id, turma_id,
-          turma:turmas(id, nome, turno),
-          filial:filiais(nome_unidade)
-        )
-      `)
+    console.log('DEBUG: Buscando vínculos para responsável:', responsavelId)
+    const { data, error } = await supabase.from('aluno_responsavel')
+      .select('id, responsavel_id, aluno_id')
       .eq('responsavel_id', responsavelId)
-      .eq('status', 'ativo')
 
-    if (error) throw error
+    if (error) {
+      console.error('DEBUG: Erro ao buscar vínculos ativos:', error)
+      throw error
+    }
 
-    // Filtra apenas alunos ativos
-    const vinculosValidos = (data as any[] || []).filter(
-      (v: any) => v.aluno && v.aluno.status === 'ativo'
-    )
-
-    return vinculosValidos
+    return (data as any[]) || []
   },
 
   async buscarEscolasVinculadas(tenantIds: string[]) {
     if (tenantIds.length === 0) return []
-    const { data, error } = await (supabase.from('escolas' as any) as any)
+    const { data, error } = await supabase.from('escolas')
       .select('id, razao_social, status_assinatura')
       .in('id', tenantIds)
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   // ==========================================

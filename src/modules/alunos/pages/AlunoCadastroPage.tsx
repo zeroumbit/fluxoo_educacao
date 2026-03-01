@@ -52,7 +52,7 @@ const alunoSchema = z.object({
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
   responsavel_telefone: z.string().optional().or(z.literal('')),
-  responsavel_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
+  responsavel_email: z.string().email('E-mail obrigatório para acesso ao portal'),
   responsavel_parentesco: z.string().optional(),
   responsavel_senha: z.string().min(6, 'Senha mínima de 6 caracteres'),
 }).refine((data) => !data.cpf || validarCPF(data.cpf), {

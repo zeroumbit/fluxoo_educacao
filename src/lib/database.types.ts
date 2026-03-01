@@ -139,11 +139,15 @@ export type Responsavel = {
   bairro: string | null
   cidade: string | null
   estado: string | null
+  user_id: string | null
+  primeiro_acesso: boolean
+  termos_aceitos: boolean
+  status: 'ativo' | 'inativo'
   created_at: string
   updated_at: string
 }
-export type ResponsavelInsert = Omit<Responsavel, 'id' | 'created_at' | 'updated_at'> & {
-  id?: string; created_at?: string; updated_at?: string
+export type ResponsavelInsert = Omit<Responsavel, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'primeiro_acesso' | 'termos_aceitos' | 'status'> & {
+  id?: string; user_id?: string | null; primeiro_acesso?: boolean; termos_aceitos?: boolean; status?: 'ativo' | 'inativo'; created_at?: string; updated_at?: string
 }
 export type ResponsavelUpdate = Partial<ResponsavelInsert>
 
@@ -153,10 +157,13 @@ export type AlunoResponsavel = {
   aluno_id: string | null
   responsavel_id: string | null
   grau_parentesco: string | null
+  is_financeiro: boolean
+  is_academico: boolean
+  status: 'ativo' | 'inativo'
   created_at: string
 }
-export type AlunoResponsavelInsert = Omit<AlunoResponsavel, 'id' | 'created_at'> & {
-  id?: string; created_at?: string
+export type AlunoResponsavelInsert = Omit<AlunoResponsavel, 'id' | 'created_at' | 'is_financeiro' | 'is_academico' | 'status'> & {
+  id?: string; is_financeiro?: boolean; is_academico?: boolean; status?: 'ativo' | 'inativo'; created_at?: string
 }
 export type AlunoResponsavelUpdate = Partial<AlunoResponsavelInsert>
 

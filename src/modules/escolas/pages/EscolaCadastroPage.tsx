@@ -507,6 +507,17 @@ export function EscolaCadastroPage() {
                 </Button>
               )}
             </div>
+
+            {/* Links */}
+            <div className="pt-4 flex items-center justify-center gap-6 text-xs">
+              <a href="/login" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-zinc-900 transition-colors">
+                Já tenho conta
+              </a>
+              <span className="text-zinc-200">•</span>
+              <a href="/portal/login" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-zinc-900 transition-colors">
+                Portal do aluno
+              </a>
+            </div>
           </form>
 
           <div className="mt-8 text-center">
