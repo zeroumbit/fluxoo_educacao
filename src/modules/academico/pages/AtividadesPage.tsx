@@ -347,7 +347,7 @@ export function AtividadesPage() {
                     {a.disciplina || '—'}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end gap-1">
                       {a.anexo_url && (
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" asChild>
                           <a href={a.anexo_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /></a>

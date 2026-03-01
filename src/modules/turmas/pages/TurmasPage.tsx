@@ -20,7 +20,7 @@ const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
   turno: z.string().min(1, 'Turno é obrigatório'),
   sala: z.string().optional().or(z.literal('')),
-  capacidade_maxima: z.coerce.number().min(1, 'Capacidade mínima de 1'),
+  capacidade_maxima: z.any().transform((val) => Number(val)).pipe(z.number().min(1, 'Capacidade mínima de 1')),
   filial_id: z.string().optional().or(z.literal('')),
 })
 
@@ -184,6 +184,7 @@ export function TurmasPage() {
               </DialogFooter>
             </form>
           </DialogContent>
+
         </Dialog>
       </div>
 
@@ -223,7 +224,7 @@ export function TurmasPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(turma)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(turma.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>

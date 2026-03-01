@@ -15,6 +15,7 @@ import { AlunoCadastroPage } from '@/modules/alunos/pages/AlunoCadastroPage'
 import { AlunoDetalhePage } from '@/modules/alunos/pages/AlunoDetalhePage'
 import { TurmasPage } from '@/modules/turmas/pages/TurmasPage'
 import { FrequenciaPage } from '@/modules/frequencia/pages/FrequenciaPage'
+import { FilaVirtualAdminPage } from '@/modules/frequencia/pages/FilaVirtualAdminPage'
 import { MuralPage } from '@/modules/comunicacao/pages/MuralPage'
 import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
 import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
@@ -28,6 +29,7 @@ import { AtividadesPage } from '@/modules/academico/pages/AtividadesPage'
 import { EventosPage } from '@/modules/agenda/pages/EventosPage'
 import { ConfigFinanceiraPage } from '@/modules/financeiro/pages/ConfigFinanceiraPage'
 import { ContasPagarPage } from '@/modules/financeiro/pages/ContasPagarPage'
+import { FinanceiroRelatoriosPage } from '@/modules/financeiro/pages/FinanceiroRelatoriosPage'
 import { DocumentosPage } from '@/modules/documentos/pages/DocumentosPage'
 import { AlmoxarifadoPage } from '@/modules/almoxarifado/pages/AlmoxarifadoPage'
 import { PerfilEscolaPage } from '@/modules/escola-perfil/pages/PerfilEscolaPage'
@@ -135,8 +137,10 @@ function App() {
               <Route path="/agenda" element={<EventosPage />} />
               <Route path="/config-financeira" element={<ConfigFinanceiraPage />} />
               <Route path="/contas-pagar" element={<ContasPagarPage />} />
+              <Route path="/financeiro-relatorios" element={<FinanceiroRelatoriosPage />} />
               <Route path="/documentos" element={<DocumentosPage />} />
               <Route path="/almoxarifado" element={<AlmoxarifadoPage />} />
+              <Route path="/portaria-expresso" element={<FilaVirtualAdminPage />} />
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
               <Route path="/plano" element={<PlanoPage />} />
             </Route>

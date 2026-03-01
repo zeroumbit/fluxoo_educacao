@@ -106,7 +106,7 @@ export function AlmoxarifadoPage() {
                 <div className="space-y-2">
                   <Label>Item *</Label>
                   <Select onValueChange={(v) => movForm.setValue('item_id', v)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um item" />
                     </SelectTrigger>
                     <SelectContent>

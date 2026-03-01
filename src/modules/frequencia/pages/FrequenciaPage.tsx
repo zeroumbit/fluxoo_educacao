@@ -49,6 +49,7 @@ export function FrequenciaPage() {
       aluno_id: a.id,
       data_aula: dataAula,
       status: statusMap[a.id] || 'presente',
+      justificativa: null,
     }))
 
     try {

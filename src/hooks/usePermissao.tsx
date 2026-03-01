@@ -1,4 +1,5 @@
 import { useAuth } from '@/modules/auth/AuthContext'
+import React from 'react'
 
 /**
  * Hook para verificar se usuário tem acesso a uma área específica
@@ -94,13 +95,8 @@ export function useAreasAcesso() {
 
 /**
  * HOC para proteger componentes com verificação de permissão
- * 
- * Uso:
- * ```tsx
- * const FinanceiroPageComPermissao = withPermissao('Financeiro')(FinanceiroPage)
- * ```
  */
-export function withPermissao<P extends object>(area: string) {
+export function withPermissao<P extends Record<string, unknown>>(area: string) {
   return function (Component: React.ComponentType<P>) {
     return function ComponentComPermissao(props: P) {
       const { temAcesso, isLoading } = usePermissao(area)

@@ -34,7 +34,7 @@ export function DashboardPage() {
   // 3. Garantia de Dados (Chegando aqui, dashboard DEVE existir)
   if (!dashboard) return null
 
-  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding, statusAssinatura, metodoPagamento } = dashboard
+  const { totalAlunosAtivos, limiteAlunos, totalCobrancasAbertas, avisosRecentes, onboarding, statusAssinatura, metodoPagamento, radarEvasao } = dashboard
   const percentualLimite = limiteAlunos ? (totalAlunosAtivos / limiteAlunos) * 100 : 0
   const proximoDoLimite = percentualLimite >= 80
 
@@ -159,6 +159,47 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Radar de Evasão (Inteligência Zero Cost) */}
+      {radarEvasao && radarEvasao.length > 0 && (
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-white border-l-4 border-l-red-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg text-red-900">Radar de Evasão</CardTitle>
+                <p className="text-xs text-red-700 font-medium">Insights proativos baseados em faltas e inadimplência</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {radarEvasao.map((aluno: any) => (
+                <div key={aluno.aluno_id} className="p-4 rounded-xl bg-white border border-red-100 shadow-sm space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-bold text-sm text-zinc-900">{aluno.nome_completo}</h4>
+                    <Badge variant="destructive" className="text-[10px] px-1.5 h-4">ALTA PRIORIDADE</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    {aluno.faltas_consecutivas > 0 && (
+                      <p className="text-xs text-red-600 flex items-center gap-1.5">
+                        <Users className="h-3 w-3" /> {aluno.faltas_consecutivas} faltas consecutivas
+                      </p>
+                    )}
+                    {aluno.cobrancas_atrasadas > 0 && (
+                      <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                        <CreditCard className="h-3 w-3" /> {aluno.cobrancas_atrasadas} mensalidades em atraso
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Avisos recentes */}
       <Card className="border-0 shadow-md">

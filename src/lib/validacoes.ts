@@ -118,7 +118,7 @@ export function validarCNPJ(cnpj: string): boolean {
     soma += parseInt(cnpjLimpo.charAt(i)) * pesos1[i]
   }
   let resto = soma % 11
-  let digito1 = resto < 2 ? 0 : 11 - resto
+  const digito1 = resto < 2 ? 0 : 11 - resto
   if (digito1 !== parseInt(cnpjLimpo.charAt(12))) return false
   
   // Validação do segundo dígito verificador

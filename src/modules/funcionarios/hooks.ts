@@ -51,9 +51,9 @@ export function useCriarUsuarioEscola() {
 export function useFuncionarioLogado() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['funcionario-logado', authUser?.userId],
-    queryFn: () => funcionariosService.buscarPorUserId(authUser!.userId!),
-    enabled: !!authUser?.userId,
+    queryKey: ['funcionario-logado', authUser?.user.id],
+    queryFn: () => funcionariosService.buscarPorUserId(authUser!.user.id!),
+    enabled: !!authUser?.user.id,
   })
 }
 
@@ -64,11 +64,11 @@ export function useFuncionarioLogado() {
 export function useVerificarAcessoFuncionario(area: string) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['funcionario-acesso', area, authUser?.userId],
+    queryKey: ['funcionario-acesso', area, authUser?.user.id],
     queryFn: async () => {
-      if (!authUser?.userId) return false
-      return funcionariosService.verificarAcesso(authUser.userId, area)
+      if (!authUser?.user.id) return false
+      return funcionariosService.verificarAcesso(authUser.user.id, area)
     },
-    enabled: !!authUser?.userId,
+    enabled: !!authUser?.user.id,
   })
 }

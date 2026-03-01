@@ -1,12 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, CreditCard, Users, ShieldCheck, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useSuperAdminDashboard } from '../hooks'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useTenantHealthScores } from '../hooks'
+import { Progress } from '@/components/ui/progress'
+import { AlertCircle, TrendingDown, TrendingUp, CheckCircle2 } from 'lucide-react'
 
 export function SuperAdminDashboardPage() {
   const { data: dashboard, isLoading } = useSuperAdminDashboard()
+  const { data: healthScores, isLoading: loadingHealth } = useTenantHealthScores()
 
   if (isLoading || !dashboard) {
     return (
@@ -124,14 +129,55 @@ export function SuperAdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 border-0 shadow-md">
-          <CardHeader>
-            <CardTitle>Logs Recentes</CardTitle>
+        <Card className="col-span-3 border-0 shadow-md flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <div>
+              <CardTitle>Health Score</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Instituições em risco ou estáveis</p>
+            </div>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-             <p className="text-sm text-muted-foreground text-center py-8">
-              Atividades recentes de gestão.
-            </p>
+          <CardContent className="flex-1 overflow-auto max-h-[400px]">
+            <div className="space-y-6">
+              {loadingHealth ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : healthScores && healthScores.length > 0 ? (
+                healthScores.map((score: any) => (
+                  <div key={score.tenant_id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {score.health_score < 50 ? (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        ) : score.health_score < 75 ? (
+                          <TrendingDown className="h-4 w-4 text-amber-500" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        )}
+                        <span className="text-sm font-medium leading-none">{score.razao_social}</span>
+                      </div>
+                      <span className={cn(
+                        "text-xs font-bold",
+                        score.health_score < 50 ? "text-red-600" : score.health_score < 75 ? "text-amber-600" : "text-emerald-600"
+                      )}>
+                        {score.health_score}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={score.health_score} 
+                      className="h-1.5"
+                      // Nota: A cor do progresso no shadcn-ui tradicional é primária, mas podemos personalizar via CSS se necessário.
+                      // Aqui usaremos a cor padrão por enquanto.
+                    />
+                    <p className="text-[10px] text-muted-foreground flex justify-between">
+                      <span>Uso de Alunos: {Math.round(score.percentual_uso)}%</span>
+                      <span>{score.possui_atraso ? '⚠️ Faturas em Atraso' : '✅ Financeiro em Dia'}</span>
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum dado disponível.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

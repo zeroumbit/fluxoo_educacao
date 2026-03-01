@@ -256,4 +256,23 @@ export const superAdminService = {
     if (error) throw error
     return data
   },
+
+  // ==========================================
+  // INTELIGÊNCIA E INSIGHTS (ZERO COST)
+  // ==========================================
+  async getTenantHealthScores() {
+    const { data, error } = await (supabase.from('vw_tenant_health_score' as any) as any)
+      .select('*')
+      .order('health_score', { ascending: true }) // Mostra os piores primeiro para ação rápida
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
+  async getRadarEvasaoGeral() {
+    // Visão consolidada para o Super Admin ver alertas em todas as escolas
+    const { data, error } = await (supabase.from('vw_radar_evasao' as any) as any)
+      .select('*, escolas:tenant_id(razao_social)')
+    if (error) throw error
+    return (data as any[]) || []
+  },
 }

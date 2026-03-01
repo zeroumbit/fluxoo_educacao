@@ -25,7 +25,7 @@ export const turmaService = {
     return data
   },
 
-  async criar(turma: TurmaInsert) {
+  async criar(turma: any) {
     const { data, error } = await supabase
       .from('turmas')
       .insert(turma)
@@ -36,7 +36,7 @@ export const turmaService = {
     return data
   },
 
-  async atualizar(id: string, turma: TurmaUpdate) {
+  async atualizar(id: string, turma: any) {
     const { data, error } = await supabase
       .from('turmas')
       .update(turma)

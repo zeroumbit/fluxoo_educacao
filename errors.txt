@@ -1,0 +1,164 @@
+src/layout/PortalLayout.tsx(26,9): error TS6133: 'navigate' is declared but its value is never read.
+src/layout/SuperAdminLayout.tsx(8,1): error TS6192: All imports in import declaration are unused.
+src/layout/SuperAdminLayout.tsx(41,9): error TS6133: 'navigate' is declared but its value is never read.
+src/modules/academico/pages/AtividadesPage.tsx(18,80): error TS6133: 'Clock' is declared but its value is never read.
+src/modules/academico/pages/MatriculaPage.tsx(31,7): error TS6133: 'turnoIcons' is declared but its value is never read.
+src/modules/almoxarifado/pages/AlmoxarifadoPage.tsx(11,29): error TS6133: 'CardHeader' is declared but its value is never read.
+src/modules/almoxarifado/pages/AlmoxarifadoPage.tsx(11,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/almoxarifado/service.ts(37,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/modules/almoxarifado/service.ts(96,16): error TS2339: Property 'quantidade' does not exist on type 'never'.
+src/modules/almoxarifado/service.ts(97,16): error TS2339: Property 'quantidade' does not exist on type 'never'.
+src/modules/almoxarifado/service.ts(101,17): error TS2345: Argument of type '{ quantidade: number; updated_at: string; }' is not assignable to parameter of type 'never'.
+src/modules/alunos/pages/AlunoCadastroPage.tsx(18,1): error TS6133: 'DialogFooter' is declared but its value is never read.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(17,30): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(58,26): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(63,18): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(75,57): error TS2339: Property 'nome_completo' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(76,22): error TS2339: Property 'nome_social' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(77,82): error TS2339: Property 'nome_social' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(80,41): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(81,26): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(99,49): error TS2339: Property 'data_nascimento' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(103,49): error TS2339: Property 'cpf' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(117,24): error TS2339: Property 'patologias' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(117,44): error TS2339: Property 'patologias' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(118,27): error TS2339: Property 'patologias' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(125,24): error TS2339: Property 'medicamentos' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(125,46): error TS2339: Property 'medicamentos' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(126,27): error TS2339: Property 'medicamentos' does not exist on type 'never'.
+src/modules/alunos/pages/AlunoDetalhePage.tsx(132,49): error TS2339: Property 'observacoes_saude' does not exist on type 'never'.
+src/modules/alunos/service.ts(47,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "alunos", never, "POST">', gave the following error.
+    Argument of type 'AlunoInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "alunos", never, "POST">', gave the following error.
+    Argument of type 'AlunoInsert' is not assignable to parameter of type 'never[]'.
+      Type 'AlunoInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/alunos/service.ts(73,38): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/alunos/service.ts(73,61): error TS2339: Property 'cpf' does not exist on type 'never'.
+src/modules/alunos/service.ts(78,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "responsaveis", never, "POST">', gave the following error.
+    Argument of type 'ResponsavelInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "responsaveis", never, "POST">', gave the following error.
+    Argument of type 'ResponsavelInsert' is not assignable to parameter of type 'never[]'.
+      Type 'ResponsavelInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/alunos/service.ts(89,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "alunos", never, "POST">', gave the following error.
+    Argument of type 'AlunoInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "alunos", never, "POST">', gave the following error.
+    Argument of type 'AlunoInsert' is not assignable to parameter of type 'never[]'.
+      Type 'AlunoInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/alunos/service.ts(97,27): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/alunos/service.ts(103,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "aluno_responsavel", never, "POST">', gave the following error.
+    Argument of type 'AlunoResponsavelInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "aluno_responsavel", never, "POST">', gave the following error.
+    Argument of type 'AlunoResponsavelInsert' is not assignable to parameter of type 'never[]'.
+      Type 'AlunoResponsavelInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/alunos/service.ts(113,15): error TS2345: Argument of type 'Partial<AlunoInsert>' is not assignable to parameter of type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(177,42): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(177,55): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(177,62): error TS2339: Property 'nome' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(267,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(267,53): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(267,60): error TS2339: Property 'nome' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(286,28): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(295,60): error TS2339: Property 'titulo' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(302,73): error TS2339: Property 'conteudo' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(304,46): error TS2339: Property 'created_at' does not exist on type 'never'.
+src/modules/comunicacao/pages/MuralPage.tsx(312,127): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/comunicacao/service.ts(47,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "mural_avisos", never, "POST">', gave the following error.
+    Argument of type 'MuralAvisoInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "mural_avisos", never, "POST">', gave the following error.
+    Argument of type 'MuralAvisoInsert' is not assignable to parameter of type 'never[]'.
+      Type 'MuralAvisoInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/comunicacao/service.ts(67,15): error TS2345: Argument of type 'Partial<MuralAvisoInsert>' is not assignable to parameter of type 'never'.
+src/modules/documentos/pages/DocumentosPage.tsx(82,45): error TS2339: Property 'nome_completo' does not exist on type 'never'.
+src/modules/documentos/pages/DocumentosPage.tsx(83,44): error TS2339: Property 'cpf' does not exist on type 'never'.
+src/modules/escolas/service.ts(37,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/modules/filiais/pages/FiliaisPage.tsx(124,52): error TS2339: Property 'is_matriz' does not exist on type 'never'.
+src/modules/filiais/pages/FiliaisPage.tsx(125,94): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/filiais/pages/FiliaisPage.tsx(287,55): error TS2339: Property 'is_matriz' does not exist on type 'never'.
+src/modules/filiais/pages/FiliaisPage.tsx(291,39): error TS2339: Property 'is_matriz' does not exist on type 'never'.
+src/modules/filiais/service.ts(20,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "filiais", never, "POST">', gave the following error.
+    Argument of type 'FilialInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "filiais", never, "POST">', gave the following error.
+    Argument of type 'FilialInsert' is not assignable to parameter of type 'never[]'.
+      Type 'FilialInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/filiais/service.ts(31,15): error TS2345: Argument of type 'Partial<FilialInsert>' is not assignable to parameter of type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(54,5): error TS2322: Type 'Resolver<{ aluno_id: string; descricao: string; valor: unknown; data_vencimento: string; }, any, { aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>' is not assignable to type 'Resolver<{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }, any, { aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>' is not assignable to type 'ResolverOptions<{ aluno_id: string; descricao: string; valor: unknown; data_vencimento: string; }>'.
+      Type 'unknown' is not assignable to type 'number'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(117,44): error TS2345: Argument of type '(data: CobrancaFormValues) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }'.
+      Type 'FieldValues' is missing the following properties from type '{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }': aluno_id, descricao, valor, data_vencimento
+src/modules/financeiro/pages/FinanceiroPage.tsx(126,44): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(126,57): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(126,64): error TS2339: Property 'nome_completo' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(200,36): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(200,79): error TS2339: Property 'data_vencimento' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(201,63): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(203,36): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(205,35): error TS2339: Property 'descricao' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(206,45): error TS2339: Property 'valor' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(207,35): error TS2339: Property 'data_vencimento' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(214,26): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(215,132): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/financeiro/service.ts(24,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cobrancas", never, "POST">', gave the following error.
+    Argument of type 'CobrancaInsert' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "cobrancas", never, "POST">', gave the following error.
+    Argument of type 'CobrancaInsert' is not assignable to parameter of type 'never[]'.
+      Type 'CobrancaInsert' is missing the following properties from type 'never[]': length, pop, push, concat, and 29 more.
+src/modules/financeiro/service.ts(35,15): error TS2345: Argument of type '{ status: string; }' is not assignable to parameter of type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(41,52): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(49,19): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(51,27): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(55,43): error TS2345: Argument of type '{ tenant_id: string; turma_id: string; aluno_id: any; data_aula: string; status: FrequenciaStatus; }[]' is not assignable to parameter of type 'FrequenciaInsert[]'.
+  Type '{ tenant_id: string; turma_id: string; aluno_id: any; data_aula: string; status: FrequenciaStatus; }' is not assignable to type 'FrequenciaInsert'.
+    Property 'justificativa' is missing in type '{ tenant_id: string; turma_id: string; aluno_id: any; data_aula: string; status: FrequenciaStatus; }' but required in type 'Omit<Frequencia, "id" | "created_at" | "updated_at">'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(62,46): error TS2339: Property 'status' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(103,36): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(103,49): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(103,56): error TS2339: Property 'nome' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(103,66): error TS2339: Property 'turno' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(146,52): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(151,44): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(151,127): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(153,67): error TS2339: Property 'nome_completo' does not exist on type 'never'.
+src/modules/frequencia/pages/FrequenciaPage.tsx(167,50): error TS2339: Property 'id' does not exist on type 'never'.
+src/modules/frequencia/service.ts(33,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "frequencias", never, "POST">', gave the following error.
+    Argument of type 'FrequenciaInsert[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "frequencias", never, "POST">', gave the following error.
+    Argument of type 'FrequenciaInsert[]' is not assignable to parameter of type 'never[]'.
+      Type 'FrequenciaInsert' is not assignable to type 'never'.
+src/modules/frequencia/service.ts(69,29): error TS6133: 'turmaId' is declared but its value is never read.
+src/modules/funcionarios/hooks.ts(54,48): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(55,66): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(56,26): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(67,54): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(69,22): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(70,59): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(72,26): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,29): error TS6133: 'CardHeader' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(14,1): error TS6192: All imports in import declaration are unused.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(17,35): error TS6133: 'Users' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(17,42): error TS6133: 'Briefcase' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(18,1): error TS6192: All imports in import declaration are unused.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(58,10): error TS6133: 'formatarMoeda' is declared but its value is never read.
+src/modules/funcionarios/service.ts(55,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/modules/funcionarios/service.ts(70,15): error TS2345: Argument of type '{ status: string; updated_at: string; }' is not assignable to parameter of type 'never'.
+src/modules/funcionarios/service.ts(108,17): error TS2345: Argument of type '{ user_id: string; email: string; areas_acesso: string[]; updated_at: string; }' is not assignable to parameter of type 'never'.
+src/modules/funcionarios/service.ts(144,79): error TS2345: Argument of type '{ p_funcionario_id: string; p_area: string; }' is not assignable to parameter of type 'undefined'.
+src/modules/super-admin/pages/PlanosPage.tsx(3,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/super-admin/pages/PlanosPage.tsx(3,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/modules/turmas/hooks.ts(80,17): error TS6133: 'data' is declared but its value is never read.
+src/modules/turmas/pages/TurmasPage.tsx(31,43): error TS6133: 'refetch' is declared but its value is never read.
+src/modules/turmas/service.ts(2,1): error TS6192: All imports in import declaration are unused.
+src/modules/turmas/service.ts(42,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.

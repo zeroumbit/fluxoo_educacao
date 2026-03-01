@@ -56,4 +56,20 @@ export const financeiroAvancadoService = {
     if (error) throw error
     return data
   },
+
+  // ==========================================
+  // FECHAMENTO DE CAIXA MENSAL (ZERO COST BI)
+  // ==========================================
+  async getFechamentoMensal(tenantId: string) {
+    const { data, error } = await (supabase.from('mv_fechamento_mensal' as any) as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('mes', { ascending: false })
+      
+    if (error) {
+      console.warn("Materialized View possivelmente não atualizada ou não foi possível consultar:", error);
+      return [];
+    }
+    return (data as any[]) || []
+  }
 }

@@ -8,12 +8,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   LayoutDashboard,
   Users,
   BookOpen,
@@ -35,6 +29,8 @@ import {
   Package,
   UserCog,
   Lock,
+  TrendingUp,
+  CarFront
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +51,7 @@ const navigationGroups = [
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
       { name: 'Atividades', href: '/atividades', icon: FileText },
       { name: 'Documentos', href: '/documentos', icon: FileText },
+      { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront },
     ],
   },
   {
@@ -69,6 +66,7 @@ const navigationGroups = [
     items: [
       { name: 'Cobranças', href: '/financeiro', icon: CreditCard },
       { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet },
+      { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp },
       { name: 'Configurações', href: '/config-financeira', icon: Settings },
     ],
   },
@@ -87,7 +85,6 @@ const navigationGroups = [
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { authUser, signOut } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
-  const navigate = useNavigate()
 
   // Super admin não tem dashboard com assinatura
   const { data: dashboard, isLoading } = isSuperAdmin

@@ -280,7 +280,7 @@ export function AlunoCadastroPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6" style={{ maxWidth: '800px', margin: '0 auto' }}>
       <Button variant="ghost" onClick={() => navigate('/alunos')}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
@@ -407,50 +407,50 @@ export function AlunoCadastroPage() {
             {/* Step 2 - Endereço */}
             {currentStep === 1 && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="cep">CEP *</Label>
-                    <div className="relative">
-                      <Input 
-                        id="cep" 
-                        placeholder="00000-000" 
-                        {...register('cep')} 
-                        onChange={handleCepChange}
-                        maxLength={9}
-                        className="w-full"
-                      />
-                      {buscandoCep && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP *</Label>
+                  <div className="relative">
+                    <Input
+                      id="cep"
+                      placeholder="00000-000"
+                      {...register('cep')}
+                      onChange={handleCepChange}
+                      maxLength={9}
+                      className="w-full"
+                    />
+                    {buscandoCep && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label htmlFor="logradouro">Logradouro *</Label>
+                    <Input
+                      id="logradouro"
+                      placeholder="Rua, Avenida, Alameda..."
+                      {...register('logradouro')}
+                      className="w-full"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="numero">Número *</Label>
-                    <Input 
-                      id="numero" 
-                      placeholder="Nº" 
-                      {...register('numero')} 
+                    <Input
+                      id="numero"
+                      placeholder="Nº"
+                      {...register('numero')}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="logradouro">Logradouro *</Label>
-                  <Input 
-                    id="logradouro" 
-                    placeholder="Rua, Avenida, Alameda..." 
-                    {...register('logradouro')} 
-                    className="w-full"
-                  />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="bairro">Bairro *</Label>
-                    <Input 
-                      id="bairro" 
-                      placeholder="Bairro" 
-                      {...register('bairro')} 
+                    <Input
+                      id="bairro"
+                      placeholder="Bairro"
+                      {...register('bairro')}
                       className="w-full"
                     />
                   </div>

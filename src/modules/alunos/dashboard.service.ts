@@ -20,11 +20,17 @@ export interface DashboardData {
     possuiTurma: boolean
     possuiAluno: boolean
   }
+  radarEvasao: Array<{
+    aluno_id: string
+    nome_completo: string
+    faltas_consecutivas: number
+    cobrancas_atrasadas: number
+  }>
 }
 
 export const dashboardService = {
   async buscarDados(tenantId: string): Promise<DashboardData> {
-    const [alunosRes, escolaRes, cobrancasRes, avisosRes, escolaInfoRes, filiaisRes, turmasRes] = await Promise.all([
+    const [alunosRes, escolaRes, cobrancasRes, avisosRes, escolaInfoRes, filiaisRes, turmasRes, radarRes] = await Promise.all([
       supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
       supabase.from('cobrancas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
@@ -32,6 +38,7 @@ export const dashboardService = {
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId),
     ])
 
     // Verificação de segurança: Se a escola não existe ou a consulta falhou, não podemos assumir status 'pendente'
@@ -48,13 +55,14 @@ export const dashboardService = {
       statusAssinatura: escola.status_assinatura || 'pendente',
       metodoPagamento: escola.metodo_pagamento || 'pix',
       totalCobrancasAbertas: cobrancasRes.count || 0,
-      avisosRecentes: (avisosRes.data || []) as DashboardData['avisosRecentes'],
+      avisosRecentes: (avisosRes.data || []) as unknown as DashboardData['avisosRecentes'],
       onboarding: {
         perfilCompleto: !!(escolaInfoRes.data as any)?.logradouro,
         possuiFilial: (filiaisRes.count || 0) > 0,
         possuiTurma: (turmasRes.count || 0) > 0,
         possuiAluno: (alunosRes.count || 0) > 0,
-      }
+      },
+      radarEvasao: (radarRes as any)?.data || []
     }
   },
 }

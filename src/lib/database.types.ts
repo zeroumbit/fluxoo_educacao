@@ -432,33 +432,41 @@ export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funci
 export type Database = {
   public: {
     Tables: {
-      escolas: { Row: Escola; Insert: EscolaInsert; Update: EscolaUpdate }
-      filiais: { Row: Filial; Insert: FilialInsert; Update: FilialUpdate }
-      alunos: { Row: Aluno; Insert: AlunoInsert; Update: AlunoUpdate }
-      turmas: { Row: Turma; Insert: TurmaInsert; Update: TurmaUpdate }
-      funcionarios: { Row: Funcionario; Insert: FuncionarioInsert; Update: FuncionarioUpdate }
-      responsaveis: { Row: Responsavel; Insert: ResponsavelInsert; Update: ResponsavelUpdate }
-      aluno_responsavel: { Row: AlunoResponsavel; Insert: AlunoResponsavelInsert; Update: AlunoResponsavelUpdate }
-      frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate }
-      mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate }
-      cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate }
-      atividades: { Row: Atividade; Insert: AtividadeInsert; Update: AtividadeUpdate }
-      atividades_turmas: { Row: AtividadeTurma; Insert: AtividadeTurmaInsert; Update: AtividadeTurmaUpdate }
-      planos_aula: { Row: PlanoAula; Insert: PlanoAulaInsert; Update: PlanoAulaUpdate }
-      planos_aula_turmas: { Row: PlanoAulaTurma; Insert: PlanoAulaTurmaInsert; Update: PlanoAulaTurmaUpdate }
-      planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate }
-      modulos: { Row: Modulo; Insert: ModuloInsert; Update: ModuloUpdate }
-      plano_modulo: { Row: PlanoModulo; Insert: PlanoModuloInsert; Update: PlanoModuloUpdate }
-      assinaturas: { Row: Assinatura; Insert: AssinaturaInsert; Update: AssinaturaUpdate }
-      historico_assinatura: { Row: HistoricoAssinatura; Insert: HistoricoAssinaturaInsert; Update: HistoricoAssinaturaUpdate }
-      faturas: { Row: Fatura; Insert: FaturaInsert; Update: FaturaUpdate }
-      solicitacoes_upgrade: { Row: SolicitacaoUpgrade; Insert: SolicitacaoUpgradeInsert; Update: SolicitacaoUpgradeUpdate }
-      configuracao_recebimento: { Row: ConfiguracaoRecebimento; Insert: ConfiguracaoRecebimentoInsert; Update: ConfiguracaoRecebimentoUpdate }
-      audit_logs: { Row: AuditLog; Insert: AuditLogInsert; Update: AuditLogUpdate }
+      escolas: { Row: Escola; Insert: EscolaInsert; Update: EscolaUpdate; Relationships: any[] }
+      filiais: { Row: Filial; Insert: FilialInsert; Update: FilialUpdate; Relationships: any[] }
+      alunos: { Row: Aluno; Insert: AlunoInsert; Update: AlunoUpdate; Relationships: any[] }
+      turmas: { Row: Turma; Insert: TurmaInsert; Update: TurmaUpdate; Relationships: any[] }
+      funcionarios: { Row: Funcionario; Insert: FuncionarioInsert; Update: FuncionarioUpdate; Relationships: any[] }
+      responsaveis: { Row: Responsavel; Insert: ResponsavelInsert; Update: ResponsavelUpdate; Relationships: any[] }
+      aluno_responsavel: { Row: AlunoResponsavel; Insert: AlunoResponsavelInsert; Update: AlunoResponsavelUpdate; Relationships: any[] }
+      frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate; Relationships: any[] }
+      mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate; Relationships: any[] }
+      cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate; Relationships: any[] }
+      atividades: { Row: Atividade; Insert: AtividadeInsert; Update: AtividadeUpdate; Relationships: any[] }
+      atividades_turmas: { Row: AtividadeTurma; Insert: AtividadeTurmaInsert; Update: AtividadeTurmaUpdate; Relationships: any[] }
+      planos_aula: { Row: PlanoAula; Insert: PlanoAulaInsert; Update: PlanoAulaUpdate; Relationships: any[] }
+      planos_aula_turmas: { Row: PlanoAulaTurma; Insert: PlanoAulaTurmaInsert; Update: PlanoAulaTurmaUpdate; Relationships: any[] }
+      planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate; Relationships: any[] }
+      modulos: { Row: Modulo; Insert: ModuloInsert; Update: ModuloUpdate; Relationships: any[] }
+      plano_modulo: { Row: PlanoModulo; Insert: PlanoModuloInsert; Update: PlanoModuloUpdate; Relationships: any[] }
+      assinaturas: { Row: Assinatura; Insert: AssinaturaInsert; Update: AssinaturaUpdate; Relationships: any[] }
+      historico_assinatura: { Row: HistoricoAssinatura; Insert: HistoricoAssinaturaInsert; Update: HistoricoAssinaturaUpdate; Relationships: any[] }
+      faturas: { Row: Fatura; Insert: FaturaInsert; Update: FaturaUpdate; Relationships: any[] }
+      solicitacoes_upgrade: { Row: SolicitacaoUpgrade; Insert: SolicitacaoUpgradeInsert; Update: SolicitacaoUpgradeUpdate; Relationships: any[] }
+      configuracao_recebimento: { Row: ConfiguracaoRecebimento; Insert: ConfiguracaoRecebimentoInsert; Update: ConfiguracaoRecebimentoUpdate; Relationships: any[] }
+      audit_logs: { Row: AuditLog; Insert: AuditLogInsert; Update: AuditLogUpdate; Relationships: any[] }
+      fila_virtual: { Row: any; Insert: any; Update: any; Relationships: any[] }
+      almoxarifado_itens: { Row: any; Insert: any; Update: any; Relationships: any[] }
+      almoxarifado_movimentacoes: { Row: any; Insert: any; Update: any; Relationships: any[] }
     }
-    Views: { [_ in never]: never }
-    Functions: { [_ in never]: never }
+    Views: { 
+      vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
+    }
+    Functions: { 
+      funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean }
+    }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
   }
 }
+

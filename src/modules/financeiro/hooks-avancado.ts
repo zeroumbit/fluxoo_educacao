@@ -30,3 +30,11 @@ export function useRegistrarPagamento() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: ({ id, pagamento }: { id: string; pagamento: any }) => financeiroAvancadoService.registrarPagamento(id, pagamento), onSuccess: () => qc.invalidateQueries({ queryKey: ['cobrancas'] }) })
 }
+export function useFechamentoMensal() {
+  const { authUser } = useAuth()
+  return useQuery({ 
+    queryKey: ['fechamento_mensal', authUser?.tenantId], 
+    queryFn: () => financeiroAvancadoService.getFechamentoMensal(authUser!.tenantId), 
+    enabled: !!authUser?.tenantId 
+  })
+}

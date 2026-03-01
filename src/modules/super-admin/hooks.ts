@@ -177,3 +177,18 @@ export function useUpdateConfiguracaoRecebimento() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'config-recebimento'] }),
   })
 }
+
+// ========== INTELIGÊNCIA ZERO COST ==========
+export function useTenantHealthScores() {
+  return useQuery({
+    queryKey: ['admin', 'health-scores'],
+    queryFn: () => superAdminService.getTenantHealthScores(),
+  })
+}
+
+export function useRadarEvasaoGeral() {
+  return useQuery({
+    queryKey: ['admin', 'radar-evasao'],
+    queryFn: () => superAdminService.getRadarEvasaoGeral(),
+  })
+}

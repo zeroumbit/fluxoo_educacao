@@ -21,7 +21,7 @@ import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione um aluno'),
   descricao: z.string().min(3, 'Descrição é obrigatória'),
-  valor: z.coerce.number().min(0.01, 'Valor deve ser maior que 0'),
+  valor: z.any().transform((v) => Number(v)).pipe(z.number().min(0.01, 'Valor deve ser maior que 0')),
   data_vencimento: z.string().min(1, 'Data é obrigatória'),
 })
 
@@ -50,11 +50,11 @@ export function FinanceiroPage() {
   const marcarComoPago = useMarcarComoPago()
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(cobrancaSchema),
   })
 
-  const onSubmit = async (data: CobrancaFormValues) => {
+  const onSubmit = async (data: any) => {
     if (!authUser) return
     try {
       await criarCobranca.mutateAsync({
@@ -128,7 +128,7 @@ export function FinanceiroPage() {
                     </SelectContent>
                   </Select>
                   {errors.aluno_id && (
-                    <p className="text-sm text-destructive">{errors.aluno_id.message}</p>
+                    <p className="text-sm text-destructive">{errors.aluno_id.message as string}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -139,7 +139,7 @@ export function FinanceiroPage() {
                     {...register('descricao')} 
                   />
                   {errors.descricao && (
-                    <p className="text-sm text-destructive">{errors.descricao.message}</p>
+                    <p className="text-sm text-destructive">{errors.descricao.message as string}</p>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -153,7 +153,7 @@ export function FinanceiroPage() {
                       {...register('valor')} 
                     />
                     {errors.valor && (
-                      <p className="text-sm text-destructive">{errors.valor.message}</p>
+                      <p className="text-sm text-destructive">{errors.valor.message as string}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -164,7 +164,7 @@ export function FinanceiroPage() {
                       {...register('data_vencimento')} 
                     />
                     {errors.data_vencimento && (
-                      <p className="text-sm text-destructive">{errors.data_vencimento.message}</p>
+                      <p className="text-sm text-destructive">{errors.data_vencimento.message as string}</p>
                     )}
                   </div>
                 </div>
