@@ -81,8 +81,11 @@ export function PerfilEscolaPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div><h1 className="text-2xl font-bold tracking-tight">Perfil da Escola</h1><p className="text-muted-foreground">Gerencie os dados cadastrais da sua instituição</p></div>
+    <div className="space-y-6 max-w-4xl mx-auto px-4">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Perfil da Escola</h1>
+        <p className="text-muted-foreground">Gerencie os dados cadastrais da sua instituição</p>
+      </div>
 
       <Card className="border-0 shadow-md">
         <CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5 text-indigo-600" />Dados da Empresa</CardTitle></CardHeader>
@@ -153,8 +156,8 @@ export function PerfilEscolaPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md">
+      <div className="flex justify-center">
+        <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md min-w-[200px]">
           {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}Salvar Perfil
         </Button>
       </div>
