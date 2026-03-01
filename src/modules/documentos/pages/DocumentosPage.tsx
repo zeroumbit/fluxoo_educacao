@@ -54,13 +54,22 @@ export function DocumentosPage() {
   }
 
   const onSubmitTemplate = async (data: any) => {
-    if (!authUser) return
+    if (!authUser) {
+      toast.error('Usuário não autenticado')
+      return
+    }
+    
+    console.log('📝 [Documentos] Salvando template:', { ...data, tenant_id: authUser.tenantId })
+    
     try {
       await criarTemplate.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+      console.log('✅ [Documentos] Template salvo com sucesso')
       toast.success(editando ? 'Template atualizado!' : 'Template criado!')
       setOpenTemplate(false)
-    } catch { 
-      toast.error('Erro ao salvar template') 
+      form.reset()
+    } catch (error: any) {
+      console.error('❌ [Documentos] Erro ao salvar template:', error)
+      toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`)
     }
   }
 
@@ -159,7 +168,7 @@ export function DocumentosPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="flex-1 overflow-y-auto px-6 pb-4" style={{ maxHeight: 'calc(90vh - 180px)' }}>
-                <form onSubmit={form.handleSubmit(onSubmitTemplate)} className="space-y-5">
+                <form id="template-form" onSubmit={form.handleSubmit(onSubmitTemplate)} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="tipo" className="text-sm font-medium">Tipo *</Label>
@@ -210,7 +219,7 @@ export function DocumentosPage() {
               </div>
               <DialogFooter className="gap-2 sm:gap-0 px-6 py-4 border-t flex-shrink-0">
                 <Button type="button" variant="outline" onClick={() => setOpenTemplate(false)}>Cancelar</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[100px]">
+                <Button type="submit" form="template-form" disabled={form.formState.isSubmitting} className="min-w-[100px]">
                   {form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
                 </Button>
               </DialogFooter>
