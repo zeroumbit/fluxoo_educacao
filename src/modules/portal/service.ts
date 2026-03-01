@@ -121,7 +121,10 @@ export const portalService = {
   async buscarVinculosAtivos(responsavelId: string) {
     console.log('DEBUG: Buscando vínculos para responsável:', responsavelId)
     const { data, error } = await supabase.from('aluno_responsavel')
-      .select('id, responsavel_id, aluno_id')
+      .select(`
+        id, responsavel_id, aluno_id,
+        aluno:alunos(id, nome_completo, tenant_id)
+      `)
       .eq('responsavel_id', responsavelId)
 
     if (error) {
@@ -129,6 +132,7 @@ export const portalService = {
       throw error
     }
 
+    console.log('DEBUG: Vínculos encontrados:', data)
     return (data as any[]) || []
   },
 
