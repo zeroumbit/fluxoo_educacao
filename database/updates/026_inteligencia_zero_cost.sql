@@ -57,11 +57,12 @@ LEFT JOIN vw_tenant_financeiro f ON f.tenant_id = u.tenant_id;
 CREATE OR REPLACE VIEW vw_aluno_faltas_consecutivas WITH (security_invoker = on) AS
 SELECT
     aluno_id,
+    tenant_id,
     COUNT(*) AS faltas_consecutivas
 FROM frequencias
 WHERE status = 'falta'
   AND data_aula >= current_date - interval '15 days'
-GROUP BY aluno_id;
+GROUP BY aluno_id, tenant_id;
 
 
 -- ==============================================================================
@@ -70,10 +71,11 @@ GROUP BY aluno_id;
 CREATE OR REPLACE VIEW vw_aluno_financeiro_atrasado WITH (security_invoker = on) AS
 SELECT
     aluno_id,
+    tenant_id,
     COUNT(*) AS cobrancas_atrasadas
 FROM cobrancas
 WHERE status = 'atrasado'
-GROUP BY aluno_id;
+GROUP BY aluno_id, tenant_id;
 
 
 -- ==============================================================================
@@ -82,6 +84,7 @@ GROUP BY aluno_id;
 CREATE OR REPLACE VIEW vw_radar_evasao WITH (security_invoker = on) AS
 SELECT
     a.id AS aluno_id,
+    a.tenant_id,
     a.nome_completo,
     COALESCE(f.faltas_consecutivas, 0) AS faltas_consecutivas,
     COALESCE(c.cobrancas_atrasadas, 0) AS cobrancas_atrasadas

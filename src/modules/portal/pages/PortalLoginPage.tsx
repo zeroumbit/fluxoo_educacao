@@ -7,9 +7,9 @@ import { portalService } from '../service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { GraduationCap, Loader2, Eye, EyeOff, User } from 'lucide-react'
+import { GraduationCap, Loader2, Eye, EyeOff, User, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { mascaraCPF } from '@/lib/validacoes'
 
 const portalLoginSchema = z.object({
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
@@ -40,40 +40,50 @@ export function PortalLoginPage() {
 
   // Função para formatar CPF enquanto digita
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '')
-    if (value.length > 11) value = value.slice(0, 11)
-    
-    if (value.length > 9) {
-      value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-    } else if (value.length > 6) {
-      value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3')
-    } else if (value.length > 3) {
-      value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2')
-    }
-    
+    const value = mascaraCPF(e.target.value)
     e.target.value = value
+    register('cpf').onChange(e)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-50 via-indigo-50/50 to-blue-50 p-4">
-      <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-200 mb-4">
-            <GraduationCap className="h-9 w-9 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12">
+      <div className="w-full max-w-[800px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-zinc-100 flex flex-col md:flex-row">
+
+        {/* Sidebar */}
+        <div className="hidden md:flex md:w-1/3 bg-gradient-to-b from-teal-500 to-teal-600 p-8 flex-col justify-between text-white">
+          <div>
+            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6">
+              <GraduationCap className="h-7 w-7 text-white" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Portal do Responsável</h2>
+            <p className="text-teal-100 text-sm leading-relaxed">Acompanhamento acadêmico e financeiro.</p>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent">
-            Portal do Responsável
-          </h1>
-          <p className="text-muted-foreground mt-1 text-center">Acompanhamento acadêmico e financeiro</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 opacity-100">
+              <div className="h-8 w-8 rounded-full bg-white text-teal-600 border border-white flex items-center justify-center text-xs font-bold">
+                <User className="h-4 w-4" />
+              </div>
+              <span className="text-xs font-medium uppercase tracking-wider">Login</span>
+            </div>
+          </div>
         </div>
 
-        <Card className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200 border-0 shadow-2xl shadow-indigo-200/40">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-xl">Área da Família</CardTitle>
-            <CardDescription>Acesse com seu CPF e senha</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Form */}
+        <div className="flex-1 p-8 md:p-10">
+          <div className="md:hidden flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-teal-500 flex items-center justify-center"><GraduationCap className="h-5 w-5 text-white" /></div>
+              <h1 className="font-bold text-lg">Fluxoo Educação</h1>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-zinc-900 mb-1">Área da Família</h3>
+            <p className="text-sm text-muted-foreground">Acesse com seu CPF e senha</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="cpf">Seu CPF</Label>
                 <div className="relative">
@@ -85,9 +95,9 @@ export function PortalLoginPage() {
                       handleCpfChange(e)
                       register('cpf').onChange(e)
                     }}
-                    className="h-12 pl-10"
+                    className="h-11 pl-10"
                   />
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 </div>
                 {errors.cpf && (
                   <p className="text-xs text-destructive font-medium">{errors.cpf.message}</p>
@@ -102,14 +112,14 @@ export function PortalLoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••"
                     {...register('password')}
-                    className="h-12 pr-10"
+                    className="h-11 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {errors.password && (
@@ -118,8 +128,7 @@ export function PortalLoginPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl p-4 flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg p-3">
                   {error}
                 </div>
               )}
@@ -127,26 +136,33 @@ export function PortalLoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]"
+                className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-200 transition-all duration-300 rounded-xl"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
                   </>
                 ) : (
-                  'ACESSAR PORTAL'
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    ACESSAR PORTAL
+                  </>
                 )}
               </Button>
+            </div>
 
-              <div className="text-center pt-4 border-t">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Primeiro acesso? A senha inicial é fornecida pela secretaria da escola no ato da matrícula.
-                </p>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            <div className="pt-6 border-t border-zinc-100">
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                Primeiro acesso? A senha inicial é fornecida pela secretaria da escola no ato da matrícula.
+              </p>
+            </div>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">Powered by Fluxoo Educação &copy; 2026</p>
+          </div>
+        </div>
       </div>
     </div>
   )

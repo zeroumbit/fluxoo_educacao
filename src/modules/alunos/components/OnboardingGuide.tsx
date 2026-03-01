@@ -61,57 +61,75 @@ export function OnboardingGuide({ status }: OnboardingGuideProps) {
   if (allDone || dismissed) return null
 
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-600 to-blue-700 text-white overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-      <CardHeader className="pb-2 border-b border-white/10 flex flex-row items-center justify-between">
+    <Card className="border border-zinc-100 shadow-sm bg-white overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500 rounded-[2rem]">
+      <CardHeader className="pb-4 border-b border-zinc-50 flex flex-row items-center justify-between px-8 pt-8">
         <div className="space-y-1">
-          <CardTitle className="text-lg font-bold">Guia de Configuração Inicial</CardTitle>
-          <p className="text-xs text-indigo-100">Siga estes passos para começar a usar o Fluxoo Educação</p>
+          <CardTitle className="text-xl font-black text-zinc-900 tracking-tight">Guia de Configuração Inicial</CardTitle>
+          <p className="text-sm text-zinc-500 font-medium">Siga estes passos para começar a usar o Fluxoo Educação</p>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setDismissed(true)}
-          className="text-white/70 hover:text-white hover:bg-white/10"
+          className="text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-full h-10 w-10 transition-all"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </Button>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-            <span>Seu Progresso</span>
-            <span>{Math.round(progressPercent)}%</span>
+      <CardContent className="p-8 space-y-8">
+        <div className="space-y-3">
+          <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+            <span>Seu Progresso de Configuração</span>
+            <span className="text-indigo-600">{Math.round(progressPercent)}%</span>
           </div>
-          <Progress value={progressPercent} className="h-2 bg-white/20" />
+          <Progress value={progressPercent} className="h-1.5 bg-zinc-100" indicatorClassName="bg-indigo-600 transition-all duration-1000" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step) => (
             <Link 
               key={step.id} 
               to={step.href}
               className={cn(
-                "flex items-start gap-3 p-3 rounded-xl transition-all border",
+                "group relative flex flex-col p-6 transition-all duration-300 border-2",
                 step.done 
-                  ? "bg-white/10 border-white/20 opacity-70" 
-                  : "bg-white border-transparent text-zinc-900 shadow-sm hover:scale-[1.02]"
+                  ? "bg-zinc-50/50 border-zinc-100 opacity-60" 
+                  : "bg-white border-zinc-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1",
+                "rounded-[1.5rem]"
               )}
             >
               <div className={cn(
-                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                step.done ? "bg-emerald-500/20 text-emerald-400" : "bg-indigo-50 text-indigo-600"
+                "h-12 w-12 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 shadow-sm",
+                step.done 
+                  ? "bg-emerald-50 text-emerald-600" 
+                  : "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
               )}>
-                {step.done ? <CheckCircle2 className="h-5 w-5" /> : <step.icon className="h-5 w-5" />}
+                {step.done ? <CheckCircle2 className="h-6 w-6" /> : <step.icon className="h-6 w-6" />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn("text-sm font-bold leading-tight", step.done ? "text-white" : "text-zinc-900")}>
+              
+              <div className="space-y-1">
+                <h4 className={cn(
+                  "text-sm font-bold leading-tight tracking-tight",
+                  step.done ? "text-zinc-500" : "text-zinc-900"
+                )}>
                   {step.title}
+                </h4>
+                <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2">
+                  {step.description}
                 </p>
-                {!step.done && (
-                  <p className="text-[10px] text-zinc-500 mt-1 line-clamp-1">{step.description}</p>
-                )}
               </div>
-              {!step.done && <ArrowRight className="h-4 w-4 text-zinc-400 shrink-0 self-center" />}
+
+              {!step.done && (
+                <div className="mt-4 flex items-center text-[10px] font-bold text-indigo-600 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                  Começar agora <ArrowRight className="h-3 w-3 ml-1" />
+                </div>
+              )}
+              
+              {step.done && (
+                <div className="absolute top-4 right-4 text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              )}
             </Link>
           ))}
         </div>
