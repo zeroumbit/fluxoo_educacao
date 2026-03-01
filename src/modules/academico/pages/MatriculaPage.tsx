@@ -71,7 +71,7 @@ export function MatriculaPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Matrícula
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-[800px]">
             <DialogHeader>
               <DialogTitle>Nova Matrícula / Rematrícula</DialogTitle>
               <DialogDescription>

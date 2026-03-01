@@ -53,7 +53,7 @@ export function AlmoxarifadoPage() {
         <div className="flex gap-2">
           <Dialog open={openMov} onOpenChange={setOpenMov}>
             <DialogTrigger asChild><Button variant="outline"><ArrowDownUp className="mr-2 h-4 w-4" />Movimentação</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-[800px]">
               <DialogHeader><DialogTitle>Movimentação de Estoque</DialogTitle></DialogHeader>
               <form onSubmit={movForm.handleSubmit(onSubmitMov)} className="space-y-4">
                 <div className="space-y-2"><Label>Item *</Label>
@@ -73,7 +73,7 @@ export function AlmoxarifadoPage() {
           </Dialog>
           <Dialog open={openItem} onOpenChange={setOpenItem}>
             <DialogTrigger asChild><Button className="bg-gradient-to-r from-indigo-600 to-blue-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Novo Item</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-[800px]">
               <DialogHeader><DialogTitle>Novo Item</DialogTitle></DialogHeader>
               <form onSubmit={itemForm.handleSubmit(onSubmitItem)} className="space-y-4">
                 <div className="space-y-2"><Label>Nome *</Label><Input placeholder="Ex: Resma A4" {...itemForm.register('nome')} /></div>

@@ -99,7 +99,7 @@ export function EventosPage() {
               <Plus className="mr-2 h-4 w-4" /> Novo Evento
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[800px]">
             <DialogHeader>
               <DialogTitle>{editando ? 'Editar Evento' : 'Novo Evento'}</DialogTitle>
             </DialogHeader>

@@ -189,7 +189,7 @@ export function FiliaisPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Unidade
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[800px]">
             <DialogHeader>
               <DialogTitle>{editando ? 'Editar Unidade' : 'Nova Unidade'}</DialogTitle>
               <DialogDescription>

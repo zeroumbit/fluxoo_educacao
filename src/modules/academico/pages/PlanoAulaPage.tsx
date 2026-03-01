@@ -148,7 +148,7 @@ export function PlanoAulaPage() {
               <Plus className="mr-2 h-4 w-4" /> Novo Plano
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="max-w-[800px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
             <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
               <DialogTitle>{editingId ? 'Editar Plano de Aula' : 'Registrar Plano de Aula'}</DialogTitle>
             </DialogHeader>

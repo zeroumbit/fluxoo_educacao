@@ -164,7 +164,7 @@ export function AtividadesPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Atividade
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="max-w-[800px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
             <DialogHeader className="px-6 pt-6 pb-4">
               <DialogTitle className="text-xl">{editandoId ? 'Editar Atividade' : 'Nova Atividade / Material'}</DialogTitle>
               <DialogDescription>

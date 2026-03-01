@@ -105,7 +105,7 @@ export function DocumentosPage() {
                 <FileOutput className="mr-2 h-4 w-4" /> Emitir Documento
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0">
+            <DialogContent className="max-w-[800px] max-h-[90vh] flex flex-col p-0">
               <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
                 <DialogTitle className="text-xl">Emitir Documento</DialogTitle>
                 <DialogDescription>
@@ -160,7 +160,7 @@ export function DocumentosPage() {
                 <Plus className="mr-2 h-4 w-4" /> Novo Template
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+            <DialogContent className="max-w-[800px] max-h-[90vh] flex flex-col p-0">
               <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
                 <DialogTitle className="text-xl">{editando ? 'Editar Template' : 'Criar Template de Documento'}</DialogTitle>
                 <DialogDescription>

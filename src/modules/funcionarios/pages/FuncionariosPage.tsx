@@ -92,7 +92,7 @@ export function FuncionariosPage() {
               <Plus className="mr-2 h-4 w-4" /> Novo Funcionário
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-[800px]">
             <DialogHeader><DialogTitle>Cadastro de Funcionário</DialogTitle></DialogHeader>
             <form onSubmit={funcForm.handleSubmit(onSubmitFunc)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -140,7 +140,7 @@ export function FuncionariosPage() {
 
       {/* Dialog criar usuário */}
       <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[800px]">
           <DialogHeader><DialogTitle><KeyRound className="inline mr-2 h-5 w-5" />Criar Usuário de Acesso</DialogTitle></DialogHeader>
           {selectedFunc && <p className="text-sm text-muted-foreground">Para: <strong>{selectedFunc.nome_completo}</strong></p>}
           <form onSubmit={userForm.handleSubmit(onSubmitUser)} className="space-y-4">

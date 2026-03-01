@@ -93,7 +93,7 @@ export function MuralPage() {
               <Plus className="mr-2 h-4 w-4" /> Novo Aviso
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[800px]">
             <DialogHeader>
               <DialogTitle>Novo Aviso</DialogTitle>
               <DialogDescription>

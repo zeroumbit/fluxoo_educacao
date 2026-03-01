@@ -55,8 +55,11 @@ export function ConfigFinanceiraPage() {
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div><h1 className="text-2xl font-bold tracking-tight">Configurações Financeiras</h1><p className="text-muted-foreground">Defina regras de vencimento, multas, juros e descontos</p></div>
+    <div className="space-y-6 max-w-4xl mx-auto px-4">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Configurações Financeiras</h1>
+        <p className="text-muted-foreground">Defina regras de vencimento, multas, juros e descontos</p>
+      </div>
 
       <Card className="border-0 shadow-md">
         <CardHeader><CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5 text-indigo-600" />Regras de Cobrança</CardTitle></CardHeader>
@@ -84,32 +87,32 @@ export function ConfigFinanceiraPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4 animate-in slide-in-from-top-2 duration-300">
               <div className="space-y-2">
                 <Label>Chave PIX</Label>
-                <Input 
-                  value={form.chave_pix} 
-                  onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} 
-                  placeholder="CPF, e-mail ou chave aleatória" 
+                <Input
+                  value={form.chave_pix}
+                  onChange={(e) => setForm({ ...form, chave_pix: e.target.value })}
+                  placeholder="CPF, e-mail ou chave aleatória"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Nome do Favorecido</Label>
-                <Input 
-                  value={form.nome_favorecido || ''} 
-                  onChange={(e) => setForm({ ...form, nome_favorecido: e.target.value })} 
-                  placeholder="Nome da escola ou dono da conta" 
+                <Input
+                  value={form.nome_favorecido || ''}
+                  onChange={(e) => setForm({ ...form, nome_favorecido: e.target.value })}
+                  placeholder="Nome da escola ou dono da conta"
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Instruções para o Responsável</Label>
-                <Input 
-                  value={form.instrucoes_responsavel || ''} 
-                  onChange={(e) => setForm({ ...form, instrucoes_responsavel: e.target.value })} 
-                  placeholder="Ex: enviar comprovante para o whatsapp (85) 9 xxxx-xxxx" 
+                <Input
+                  value={form.instrucoes_responsavel || ''}
+                  onChange={(e) => setForm({ ...form, instrucoes_responsavel: e.target.value })}
+                  placeholder="Ex: enviar comprovante para o whatsapp (85) 9 xxxx-xxxx"
                 />
               </div>
               <div className="flex items-center gap-2 pt-2">
-                <Switch 
-                  checked={form.qr_code_auto} 
-                  onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })} 
+                <Switch
+                  checked={form.qr_code_auto}
+                  onCheckedChange={(v) => setForm({ ...form, qr_code_auto: v })}
                 />
                 <Label>QR Code Automático</Label>
               </div>
@@ -122,8 +125,8 @@ export function ConfigFinanceiraPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={upsert.isPending} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md">
+      <div className="flex justify-center">
+        <Button onClick={handleSave} disabled={upsert.isPending} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md min-w-[200px]">
           {upsert.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}Salvar Configurações
         </Button>
       </div>

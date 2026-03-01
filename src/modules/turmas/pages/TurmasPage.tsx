@@ -131,7 +131,7 @@ export function TurmasPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Turma
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-w-[800px]">
             <DialogHeader><DialogTitle>{editando ? 'Editar Turma' : 'Nova Turma'}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
@@ -170,7 +170,7 @@ export function TurmasPage() {
                     <Select defaultValue={editando?.filial_id || ''} onValueChange={(v) => setValue('filial_id', v)}>
                       <SelectTrigger className="w-full"><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
                       <SelectContent>
-                        {filiais.map((f) => (
+                        {(filiais as any[]).map((f) => (
                           <SelectItem key={f.id} value={f.id}>{f.nome_unidade}</SelectItem>
                         ))}
                       </SelectContent>
@@ -207,7 +207,7 @@ export function TurmasPage() {
       </Dialog>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {turmas?.map((turma) => (
+        {(turmas as any[])?.map((turma) => (
           <Card key={turma.id} className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300 group">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">

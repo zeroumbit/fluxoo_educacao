@@ -107,7 +107,7 @@ export function FinanceiroPage() {
                 <Plus className="mr-2 h-4 w-4" /> Nova Cobrança
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-[800px]">
               <DialogHeader>
                 <DialogTitle>Nova Cobrança</DialogTitle>
                 <DialogDescription>

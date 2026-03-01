@@ -48,7 +48,7 @@ export function ContasPagarPage() {
         <div><h1 className="text-2xl font-bold tracking-tight">Contas a Pagar</h1><p className="text-muted-foreground">Controle despesas e fornecedores</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="bg-gradient-to-r from-red-600 to-rose-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-[800px]">
             <DialogHeader><DialogTitle>Nova Conta a Pagar</DialogTitle></DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message}</p>}</div>
