@@ -19,6 +19,14 @@ export function useCriarPlanoAula() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.criarPlanoAula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
 }
+export function useAtualizarPlanoAula() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
+}
+export function useExcluirPlanoAula() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (id: string) => academicoService.excluirPlanoAula(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
+}
 
 export function useAtividades() {
   const { authUser } = useAuth()

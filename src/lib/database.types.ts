@@ -211,6 +211,38 @@ export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at'> 
 }
 export type CobrancaUpdate = Partial<CobrancaInsert>
 
+// ========== PLANOS DE AULA ==========
+export type PlanoAula = {
+  id: string
+  tenant_id: string
+  filial_id: string | null
+  disciplina: string
+  data_aula: string
+  conteudo_previsto: string | null
+  conteudo_realizado: string | null
+  observacoes: string | null
+  professor_id: string | null
+  created_at: string
+  updated_at: string
+}
+export type PlanoAulaInsert = Omit<PlanoAula, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type PlanoAulaUpdate = Partial<PlanoAulaInsert>
+
+export type PlanoAulaTurma = {
+  id: string
+  plano_aula_id: string
+  turma_id: string
+  turno: 'manha' | 'tarde' | 'integral' | 'noturno'
+  horario: string | null
+  created_at: string
+}
+export type PlanoAulaTurmaInsert = Omit<PlanoAulaTurma, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type PlanoAulaTurmaUpdate = Partial<PlanoAulaTurmaInsert>
+
 // ========== PLANOS ==========
 export type Plano = {
   id: string
@@ -379,6 +411,8 @@ export type Database = {
       frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate }
       mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate }
       cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate }
+      planos_aula: { Row: PlanoAula; Insert: PlanoAulaInsert; Update: PlanoAulaUpdate }
+      planos_aula_turmas: { Row: PlanoAulaTurma; Insert: PlanoAulaTurmaInsert; Update: PlanoAulaTurmaUpdate }
       planos: { Row: Plano; Insert: PlanoInsert; Update: PlanoUpdate }
       modulos: { Row: Modulo; Insert: ModuloInsert; Update: ModuloUpdate }
       plano_modulo: { Row: PlanoModulo; Insert: PlanoModuloInsert; Update: PlanoModuloUpdate }
