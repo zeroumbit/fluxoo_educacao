@@ -1,0 +1,45 @@
+﻿src/layout/PortalLayout.tsx(26,9): error TS6133: 'navigate' is declared but its value is never read.
+src/layout/SuperAdminLayout.tsx(8,1): error TS6192: All imports in import declaration are unused.
+src/layout/SuperAdminLayout.tsx(41,9): error TS6133: 'navigate' is declared but its value is never read.
+src/modules/academico/pages/AtividadesPage.tsx(18,80): error TS6133: 'Clock' is declared but its value is never read.
+src/modules/academico/pages/MatriculaPage.tsx(31,7): error TS6133: 'turnoIcons' is declared but its value is never read.
+src/modules/almoxarifado/pages/AlmoxarifadoPage.tsx(11,29): error TS6133: 'CardHeader' is declared but its value is never read.
+src/modules/almoxarifado/pages/AlmoxarifadoPage.tsx(11,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/alunos/dashboard.service.ts(58,23): error TS2352: Conversion of type '{ id: string; tenant_id: string | null; titulo: string; conteudo: string; publico_alvo: string; turma_id: string | null; data_agendamento: string | null; created_at: string; updated_at: string; turmas: SelectQueryError<...>; }[]' to type '{ id: string; titulo: string; conteudo: string; turma_id: string | null; created_at: string; turmas: { nome: string; } | null; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; tenant_id: string | null; titulo: string; conteudo: string; publico_alvo: string; turma_id: string | null; data_agendamento: string | null; created_at: string; updated_at: string; turmas: SelectQueryError<...>; }' is not comparable to type '{ id: string; titulo: string; conteudo: string; turma_id: string | null; created_at: string; turmas: { nome: string; } | null; }'.
+    Types of property 'turmas' are incompatible.
+      Type 'SelectQueryError<"could not find the relation between mural_avisos and turmas">' is not comparable to type '{ nome: string; } | null'.
+src/modules/alunos/pages/AlunoCadastroPage.tsx(18,1): error TS6133: 'DialogFooter' is declared but its value is never read.
+src/modules/financeiro/pages/FinanceiroPage.tsx(54,5): error TS2322: Type 'Resolver<{ aluno_id: string; descricao: string; valor: unknown; data_vencimento: string; }, any, { aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>' is not assignable to type 'Resolver<{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }, any, { aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }>' is not assignable to type 'ResolverOptions<{ aluno_id: string; descricao: string; valor: unknown; data_vencimento: string; }>'.
+      Type 'unknown' is not assignable to type 'number'.
+src/modules/financeiro/pages/FinanceiroPage.tsx(117,44): error TS2345: Argument of type '(data: CobrancaFormValues) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }'.
+      Type 'FieldValues' is missing the following properties from type '{ aluno_id: string; descricao: string; valor: number; data_vencimento: string; }': aluno_id, descricao, valor, data_vencimento
+src/modules/frequencia/pages/FrequenciaPage.tsx(55,43): error TS2345: Argument of type '{ tenant_id: string; turma_id: string; aluno_id: string; data_aula: string; status: FrequenciaStatus; }[]' is not assignable to parameter of type 'FrequenciaInsert[]'.
+  Type '{ tenant_id: string; turma_id: string; aluno_id: string; data_aula: string; status: FrequenciaStatus; }' is not assignable to type 'FrequenciaInsert'.
+    Property 'justificativa' is missing in type '{ tenant_id: string; turma_id: string; aluno_id: string; data_aula: string; status: FrequenciaStatus; }' but required in type 'Omit<Frequencia, "id" | "created_at" | "updated_at">'.
+src/modules/frequencia/service.ts(69,29): error TS6133: 'turmaId' is declared but its value is never read.
+src/modules/funcionarios/hooks.ts(54,48): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(55,66): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(56,26): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(67,54): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(69,22): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(70,59): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/hooks.ts(72,26): error TS2551: Property 'userId' does not exist on type 'AuthUser'. Did you mean 'user'?
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,29): error TS6133: 'CardHeader' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(12,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(14,1): error TS6192: All imports in import declaration are unused.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(17,35): error TS6133: 'Users' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(17,42): error TS6133: 'Briefcase' is declared but its value is never read.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(18,1): error TS6192: All imports in import declaration are unused.
+src/modules/funcionarios/pages/FuncionariosPage.tsx(58,10): error TS6133: 'formatarMoeda' is declared but its value is never read.
+src/modules/super-admin/pages/PlanosPage.tsx(3,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/modules/super-admin/pages/PlanosPage.tsx(3,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/modules/turmas/hooks.ts(80,17): error TS6133: 'data' is declared but its value is never read.
+src/modules/turmas/pages/TurmasPage.tsx(31,43): error TS6133: 'refetch' is declared but its value is never read.
+src/modules/turmas/service.ts(2,1): error TS6192: All imports in import declaration are unused.
+

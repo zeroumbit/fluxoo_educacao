@@ -1,0 +1,68 @@
+import { supabase } from '@/lib/supabase'
+
+export interface DashboardData {
+  totalAlunosAtivos: number
+  limiteAlunos: number
+  statusAssinatura: string
+  metodoPagamento: string
+  totalCobrancasAbertas: number
+  avisosRecentes: Array<{
+    id: string
+    titulo: string
+    conteudo: string
+    turma_id: string | null
+    created_at: string
+    turmas: { nome: string } | null
+  }>
+  onboarding: {
+    perfilCompleto: boolean
+    possuiFilial: boolean
+    possuiTurma: boolean
+    possuiAluno: boolean
+  }
+  radarEvasao: Array<{
+    aluno_id: string
+    nome_completo: string
+    faltas_consecutivas: number
+    cobrancas_atrasadas: number
+  }>
+}
+
+export const dashboardService = {
+  async buscarDados(tenantId: string): Promise<DashboardData> {
+    const [alunosRes, escolaRes, cobrancasRes, avisosRes, escolaInfoRes, filiaisRes, turmasRes, radarRes] = await Promise.all([
+      supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
+      supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
+      supabase.from('cobrancas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
+      supabase.from('mural_avisos').select('*, turmas(nome)').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(5),
+      supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
+      supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId),
+    ])
+
+    // Verificação de segurança: Se a escola não existe ou a consulta falhou, não podemos assumir status 'pendente'
+    if (!escolaRes.data) {
+      if (escolaRes.error) throw escolaRes.error
+      throw new Error('Perfil da escola não encontrado. Verifique se o cadastro foi concluído.')
+    }
+
+    const escola = escolaRes.data as any
+
+    return {
+      totalAlunosAtivos: alunosRes.count || 0,
+      limiteAlunos: escola.limite_alunos_contratado || 0,
+      statusAssinatura: escola.status_assinatura || 'pendente',
+      metodoPagamento: escola.metodo_pagamento || 'pix',
+      totalCobrancasAbertas: cobrancasRes.count || 0,
+      avisosRecentes: (avisosRes.data || []) as unknown as DashboardData['avisosRecentes'],
+      onboarding: {
+        perfilCompleto: !!(escolaInfoRes.data as any)?.logradouro,
+        possuiFilial: (filiaisRes.count || 0) > 0,
+        possuiTurma: (turmasRes.count || 0) > 0,
+        possuiAluno: (alunosRes.count || 0) > 0,
+      },
+      radarEvasao: (radarRes as any)?.data || []
+    }
+  },
+}
