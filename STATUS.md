@@ -12,6 +12,7 @@
 - [x] Servidor de desenvolvimento rodando
 - [x] Scripts de verificação criados
 - [x] Documentação atualizada
+- [x] **Repositório vinculado ao GitHub**
 
 ### 🌐 Servidor
 
@@ -20,7 +21,7 @@
 
 ### 🔗 Projeto
 
-- **Repositório:** https://github.com/zeroumbit/fluxoo_educacao
+- **GitHub:** https://github.com/zeroumbit/fluxoo_educacao
 - **Supabase:** https://phuyqtdpedfigbfsevte.supabase.co
 
 ### 📝 Próximos Passos
@@ -36,6 +37,7 @@
 | `README.md` | README principal do projeto |
 | `README_LOCAL.md` | Guia de configuração local |
 | `DEVELOPMENT.md` | Guia de desenvolvimento |
+| `QUICKSTART.md` | Guia rápido de início |
 | `.env.example` | Modelo de variáveis de ambiente |
 | `scripts/check-env.js` | Script de verificação |
 | `STATUS.md` | Este arquivo |
@@ -49,6 +51,12 @@ npm run check-env
 # Iniciar dev server
 npm run dev
 
+# Git
+git status
+git add .
+git commit -m "mensagem"
+git push
+
 # Build
 npm run build
 
@@ -59,3 +67,9 @@ npm run lint
 ---
 
 **Ambiente pronto para desenvolvimento! 🚀**
+
+### 📊 Git Status
+
+- **Branch:** main
+- **Remote:** origin (GitHub vinculado)
+- **Último commit:** Merge com histórico integrado
