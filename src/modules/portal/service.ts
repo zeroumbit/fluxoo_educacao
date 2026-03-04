@@ -157,7 +157,7 @@ export const portalService = {
   // ==========================================
   // DASHBOARD
   // ==========================================
-  async buscarDashboardAluno(alunoId: string, tenantId: string) {
+  async buscarDashboardAluno(alunoId: string, tenantId: string, turmaId?: string | null) {
     const [frequenciaRes, cobrancasRes, avisosRes] = await Promise.all([
       // Frequência recente (últimos 30 dias)
       (supabase.from('frequencias' as any) as any)
@@ -174,12 +174,19 @@ export const portalService = {
         .in('status', ['a_vencer', 'atrasado'])
       ,
       // Avisos recentes (3 últimos)
-      (supabase.from('mural_avisos' as any) as any)
-        .select('id, titulo, created_at')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(3)
-      ,
+      (() => {
+        let q = (supabase.from('mural_avisos' as any) as any)
+          .select('id, titulo, created_at')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(3)
+        if (turmaId) {
+          q = q.or(`publico_alvo.eq.todos,turma_id.eq.${turmaId}`)
+        } else {
+          q = q.eq('publico_alvo', 'todos')
+        }
+        return q
+      })(),
     ])
 
     const frequencias = (frequenciaRes.data as any[]) || []
@@ -241,7 +248,9 @@ export const portalService = {
       .order('created_at', { ascending: false })
 
     if (turmaId) {
-      query = query.or(`turma_id.is.null,turma_id.eq.${turmaId}`)
+      query = query.or(`publico_alvo.eq.todos,turma_id.eq.${turmaId}`)
+    } else {
+      query = query.eq('publico_alvo', 'todos')
     }
 
     const { data, error } = await query.limit(50)

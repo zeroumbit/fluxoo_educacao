@@ -1,18 +1,19 @@
 import React, { useState } from 'react'
 import { usePortalContext } from '../context'
 import { useDashboardAluno, useConfigPix } from '../hooks'
-import { 
-  Loader2, 
-  Activity, 
-  AlertTriangle, 
-  TrendingUp, 
-  Clock, 
-  Users, 
-  DollarSign, 
+import {
+  Loader2,
+  Activity,
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  Users,
+  DollarSign,
   ShoppingCart,
   ArrowRight,
   Info,
   BookOpen,
+  Library,
   GraduationCap,
   Calendar,
   ChevronRight,
@@ -63,35 +64,6 @@ const StudentActionIcon = ({ icon: Icon, label, colorName, onClick, badge }: { i
         {badge}
       </span>
     )}
-  </div>
-);
-
-const OpportunityCard = ({ type, title, desc, price, color, icon: Icon, comingSoon }: { type: string, title: string, desc: string, price: string, color: string, icon: any, comingSoon?: boolean }) => (
-  <div className={cn(
-    "p-8 rounded-[40px] border border-black/5 flex items-center justify-between group cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 relative overflow-hidden",
-    color
-  )}>
-    {comingSoon && (
-      <div className="absolute top-4 left-8 bg-slate-200/80 backdrop-blur-sm text-slate-500 text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border border-slate-300 shadow-sm z-10">
-        Em breve
-      </div>
-    )}
-    <div className="flex gap-6 items-center">
-      <div className="w-16 h-16 bg-white rounded-[24px] flex items-center justify-center shadow-sm">
-        <Icon size={32} className="text-slate-700" />
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{type}</p>
-        <p className="text-lg font-black text-slate-800 tracking-tight">{title}</p>
-        <p className="text-xs text-slate-500 font-medium">{desc}</p>
-      </div>
-    </div>
-    <div className="text-right flex flex-col items-end gap-2">
-       <p className="text-xl font-black text-slate-800 tracking-tighter">{price}</p>
-       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:text-white transition-all shadow-sm">
-          <ArrowRight size={20} />
-       </div>
-    </div>
   </div>
 );
 
@@ -231,10 +203,11 @@ export function PortalDashboardPage() {
           <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="space-y-1">
               <h2 className="text-5xl md:text-7xl font-black text-slate-800 tracking-tighter leading-tight italic">{nomeAluno}</h2>
-              <p className="text-slate-400 font-bold text-xl">{turma?.nome || 'Série'} • <span className="text-teal-500">{turma?.turno || 'Turno'}</span></p>
+              <p className="text-slate-400 font-bold text-xl">{turma?.nome || 'Turma não informada'} • <span className="text-teal-500">{turma?.turno || 'Turno não informado'}</span></p>
             </div>
             
             <div className="flex flex-wrap justify-center lg:justify-start gap-8 border-t border-slate-50 pt-8">
+              <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
               <StudentActionIcon icon={Calendar} label="Agenda" colorName="teal" badge="em breve" />
               <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
               <StudentActionIcon icon={Activity} label="Frequência" colorName="emerald" onClick={() => navigate('/portal/frequencia')} />
@@ -268,30 +241,32 @@ export function PortalDashboardPage() {
         </div>
       </div>
 
-      {/* 2. Estatísticas Rápidas (StatCards) conforme cores do snippet original */}
-      <div className="flex flex-col md:flex-row gap-8">
-        <StatCard 
-          label="Frequência Mensal" 
-          value="98.5%" 
-          trend="+2.1%" 
-          icon={Activity} 
-          color="bg-teal-500" 
-        />
-        <StatCard 
-          label="Média Geral" 
-          value="8.4" 
-          trend="+0.5" 
-          icon={TrendingUp} 
-          color="bg-violet-500" 
-        />
-        <StatCard 
-          label="Materiais" 
-          value="12" 
-          trend="Novo" 
-          icon={Package} 
-          color="bg-blue-500" 
-        />
-      </div>
+      {/* 2. Estatísticas Rápidas (StatCards) - Dados reais do dashboard */}
+      {dashboard && (
+        <div className="flex flex-col md:flex-row gap-8">
+          <StatCard
+            label="Frequência Mensal"
+            value={`${dashboard.frequencia.percentual}%`}
+            trend={dashboard.frequencia.totalRegistros > 0 ? `${dashboard.frequencia.totalPresencas} presenças` : 'Sem registros'}
+            icon={Activity}
+            color="bg-teal-500"
+          />
+          <StatCard
+            label="Total Pendente"
+            value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fin?.totalPendente || 0)}
+            trend={fin?.totalAtrasadas ? `${fin.totalAtrasadas} em atraso` : 'Tudo em dia'}
+            icon={DollarSign}
+            color="bg-amber-500"
+          />
+          <StatCard
+            label="Avisos Recentes"
+            value={String(dashboard.avisosRecentes.length)}
+            trend="Últimos 30 dias"
+            icon={Megaphone}
+            color="bg-blue-500"
+          />
+        </div>
+      )}
 
       {/* Alertas Críticos */}
       {(fin?.totalAtrasadas || 0) > 0 && (
@@ -309,71 +284,48 @@ export function PortalDashboardPage() {
         </div>
       )}
 
-      {/* 3. Oportunidades e Marketplace */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-         <div className="bg-white p-10 md:p-14 rounded-[56px] border border-slate-100 shadow-sm space-y-12">
-            <div className="flex justify-between items-center">
-              <h3 className="text-3xl font-black text-slate-800 tracking-tighter flex items-center gap-4 italic">
-                 <ShoppingCart className="text-teal-500" size={36} /> Oportunidades
-              </h3>
-              <span className="text-[10px] font-black text-teal-600 bg-teal-50 px-4 py-1.5 rounded-full uppercase tracking-tighter">Sugerido para você</span>
-            </div>
-            <div className="space-y-8">
-              <OpportunityCard 
-                type="REFORÇO ACADÊMICO" 
-                title="Apoio em Matemática" 
-                desc="Foco em frações e geometria para as provas bimestrais."
-                price="R$ 120"
-                color="bg-violet-50"
-                icon={GraduationCap}
-                comingSoon={true}
-              />
-              <OpportunityCard 
-                type="MATERIAL DIDÁTICO" 
-                title="Livros Paradidáticos" 
-                desc="Adquira a lista oficial do 2º bimestre com 10% OFF."
-                price="R$ 89"
-                color="bg-orange-50"
-                icon={BookOpen}
-                comingSoon={true}
-              />
-            </div>
-         </div>
-
-          <div className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
-            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-4 uppercase tracking-tighter italic">
-               <Megaphone className="text-amber-500" size={32} /> Mural da Unidade
-            </h3>
-            <div className="space-y-8">
-               {dashboard?.avisosRecentes && dashboard.avisosRecentes.length > 0 ? (
-                 dashboard.avisosRecentes.map((aviso: any, idx: number) => (
-                   <div key={aviso.id || idx}>
-                     <div className="flex gap-6 group cursor-pointer" onClick={() => navigate('/portal/avisos')}>
-                        <div className={cn(
-                          "w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300",
-                          idx % 2 === 0 ? "bg-blue-50 text-blue-500 group-hover:bg-blue-500" : "bg-emerald-50 text-emerald-500 group-hover:bg-emerald-500",
-                          "group-hover:text-white shadow-sm"
-                        )}>
-                          {idx % 2 === 0 ? <Info size={24} /> : <Activity size={24} />}
-                        </div>
-                        <div className="space-y-1">
-                           <p className="text-lg font-black text-slate-800 tracking-tight">{aviso.titulo}</p>
-                           <p className="text-sm text-slate-400 font-bold leading-relaxed line-clamp-2">{aviso.conteudo}</p>
-                        </div>
-                     </div>
-                     {idx < dashboard.avisosRecentes.length - 1 && <div className="h-px bg-slate-50 w-full mt-8"></div>}
-                   </div>
-                 ))
-               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-                   <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
-                      <Info className="h-10 w-10 text-slate-200" />
-                   </div>
-                   <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Nenhum aviso recente.</p>
+      {/* 3. Mural da Unidade - Avisos Completos */}
+      <div className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
+        <div className="flex justify-between items-center">
+          <h3 className="text-3xl font-black text-slate-800 tracking-tighter flex items-center gap-4 italic">
+            <Megaphone className="text-teal-500" size={36} /> Mural da Unidade
+          </h3>
+          <button
+            onClick={() => navigate('/portal/avisos')}
+            className="text-[10px] font-black text-teal-600 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-full uppercase tracking-tighter transition-all flex items-center gap-2"
+          >
+            Ver todos <ChevronRight size={16} />
+          </button>
+        </div>
+        <div className="space-y-8">
+          {dashboard?.avisosRecentes && dashboard.avisosRecentes.length > 0 ? (
+            dashboard.avisosRecentes.map((aviso: any, idx: number) => (
+              <div key={aviso.id || idx}>
+                <div className="flex gap-6 group cursor-pointer" onClick={() => navigate('/portal/avisos')}>
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300",
+                    idx % 2 === 0 ? "bg-blue-50 text-blue-500 group-hover:bg-blue-500" : "bg-emerald-50 text-emerald-500 group-hover:bg-emerald-500",
+                    "group-hover:text-white shadow-sm"
+                  )}>
+                    {idx % 2 === 0 ? <Info size={24} /> : <Activity size={24} />}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-lg font-black text-slate-800 tracking-tight">{aviso.titulo}</p>
+                    <p className="text-sm text-slate-400 font-bold leading-relaxed line-clamp-2">{aviso.conteudo}</p>
+                  </div>
                 </div>
-               )}
+                {idx < dashboard.avisosRecentes.length - 1 && <div className="h-px bg-slate-50 w-full mt-8"></div>}
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center">
+                <Info className="h-10 w-10 text-slate-200" />
+              </div>
+              <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Nenhum aviso recente.</p>
             </div>
-          </div>
+          )}
+        </div>
       </div>
 
       {showPixModal && <PixModal onClose={() => setShowPixModal(false)} valor={fin?.totalPendente || 0} configPix={configPix} />}

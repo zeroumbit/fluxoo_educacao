@@ -34,9 +34,10 @@ export function useVinculosAtivos() {
 // ==========================================
 export function useDashboardAluno() {
   const { alunoSelecionado, tenantId } = usePortalContext()
+  const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
   return useQuery({
-    queryKey: ['portal', 'dashboard', alunoSelecionado?.id, tenantId],
-    queryFn: () => portalService.buscarDashboardAluno(alunoSelecionado!.id, tenantId!),
+    queryKey: ['portal', 'dashboard', alunoSelecionado?.id, tenantId, turmaId],
+    queryFn: () => portalService.buscarDashboardAluno(alunoSelecionado!.id, tenantId!, turmaId),
     enabled: !!alunoSelecionado?.id && !!tenantId,
     staleTime: 30 * 1000,
   })
@@ -59,7 +60,7 @@ export function useFrequenciaAluno(mes?: string) {
 // ==========================================
 export function useAvisosPortal() {
   const { alunoSelecionado, tenantId } = usePortalContext()
-  const turmaId = alunoSelecionado?.turma_id || null
+  const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
   return useQuery({
     queryKey: ['portal', 'avisos', tenantId, turmaId],
     queryFn: () => portalService.buscarAvisosPorTurma(tenantId!, turmaId),

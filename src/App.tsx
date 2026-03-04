@@ -21,7 +21,7 @@ import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
 import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
 import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
 
-// Novos módulos - Escola
+import { LivrosPage } from '@/modules/livros/pages/LivrosPage'
 import { FuncionariosPage } from '@/modules/funcionarios/pages/FuncionariosPage'
 import { MatriculaPage } from '@/modules/academico/pages/MatriculaPage'
 import { PlanoAulaPage } from '@/modules/academico/pages/PlanoAulaPage'
@@ -51,6 +51,7 @@ import { PortalCobrancasPage } from '@/modules/portal/pages/PortalCobrancasPage'
 import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualPage'
 import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
 import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'
+import { PortalLivrosPage } from '@/modules/portal/pages/PortalLivrosPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,7 @@ function App() {
               <Route path="/mural" element={<MuralPage />} />
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
+              <Route path="/livros" element={<LivrosPage />} />
               {/* Novos Módulos */}
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
@@ -160,6 +162,7 @@ function App() {
               <Route path="/portal/cobrancas" element={<PortalCobrancasPage />} />
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
+              <Route path="/portal/livros" element={<PortalLivrosPage />} />
             </Route>
 
             {/* Fallback */}
