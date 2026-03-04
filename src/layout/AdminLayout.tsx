@@ -45,10 +45,11 @@ const navigationGroups = [
     label: 'Acadêmico',
     items: [
       { name: 'Alunos', href: '/alunos', icon: Users },
-      { name: 'Livros', href: '/livros', icon: BookOpen },
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
       { name: 'Turmas', href: '/turmas', icon: BookOpen },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
+      { name: 'Notas', href: '/notas', icon: GraduationCap },
+      { name: 'Livros', href: '/livros', icon: BookOpen },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
       { name: 'Atividades', href: '/atividades', icon: FileText },
       { name: 'Documentos', href: '/documentos', icon: FileText },

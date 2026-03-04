@@ -108,7 +108,16 @@ SELECT DISTINCT ON (l.id, a.id)
 FROM public.livros l
 JOIN public.livros_turmas lt ON lt.livro_id = l.id
 JOIN public.turmas t ON t.id = lt.turma_id
-JOIN public.alunos a ON a.id = ANY(t.alunos_ids)
+JOIN public.alunos a ON (
+    a.id = ANY(t.alunos_ids) 
+    OR 
+    EXISTS (
+        SELECT 1 FROM public.matriculas m 
+        WHERE m.aluno_id = a.id
+          AND m.status = 'ativa' 
+          AND REGEXP_REPLACE(LOWER(m.serie_ano), '[^a-z0-9]', '', 'g') = REGEXP_REPLACE(LOWER(t.nome), '[^a-z0-9]', '', 'g')
+    )
+)
 JOIN public.disciplinas d ON d.id = l.disciplina_id
 ORDER BY l.id, a.id;
 

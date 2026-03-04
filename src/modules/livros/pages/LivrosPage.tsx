@@ -14,8 +14,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, GraduationCap, CheckCircle } from 'lucide-react'
+import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, GraduationCap, CheckCircle, Upload, X, Image as ImageIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { livrosService } from '../service'
 
 const livroSchema = z.object({
   titulo: z.string().min(2, 'Título é obrigatório'),
@@ -47,6 +48,9 @@ export function LivrosPage() {
   const [dialogDiscOpen, setDialogDiscOpen] = useState(false)
   const [livroParaEditar, setLivroParaEditar] = useState<Livro | null>(null)
   const [novaDisciplina, setNovaDisciplina] = useState('')
+  const [capaFile, setCapaFile] = useState<File | null>(null)
+  const [capaPreview, setCapaPreview] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<LivroFormValues>({
     resolver: zodResolver(livroSchema) as any,
@@ -81,6 +85,8 @@ export function LivrosPage() {
     setValue('link_referencia', livro.link_referencia || '')
     setValue('turmasIds', livro.turmas?.map(t => t.id) || [])
     
+    setCapaPreview(livro.capa_url || null)
+    setCapaFile(null)
     setDialogOpen(true)
   }
 
@@ -91,13 +97,38 @@ export function LivrosPage() {
       turmasIds: [],
       estado: 'Novo'
     })
+    setCapaPreview(null)
+    setCapaFile(null)
     setDialogOpen(true)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 5MB.')
+        return
+      }
+      setCapaFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setCapaPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
     const formData = data as LivroFormValues
     try {
+      setIsUploading(true)
+      let finalCapaUrl = livroParaEditar?.capa_url || null
+
+      if (capaFile) {
+        finalCapaUrl = await livrosService.uploadCapa(capaFile)
+      }
+
       if (livroParaEditar) {
         await editarLivro.mutateAsync({
           id: livroParaEditar.id,
@@ -112,6 +143,7 @@ export function LivrosPage() {
             estado: formData.estado || null,
             descricao: formData.descricao || null,
             link_referencia: formData.link_referencia || null,
+            capa_url: finalCapaUrl
           },
           turmasIds: formData.turmasIds
         })
@@ -129,14 +161,18 @@ export function LivrosPage() {
             estado: formData.estado || null,
             descricao: formData.descricao || null,
             link_referencia: formData.link_referencia || null,
+            capa_url: finalCapaUrl
           },
           turmasIds: formData.turmasIds
         })
         toast.success('Livro cadastrado com sucesso!')
       }
       setDialogOpen(false)
-    } catch {
+    } catch (error) {
+      console.error(error)
       toast.error('Ocorreu um erro ao salvar o livro.')
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -171,34 +207,6 @@ export function LivrosPage() {
         </div>
         
         <div className="flex items-center gap-2">
-           <Dialog open={dialogDiscOpen} onOpenChange={setDialogDiscOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700">
-                <Plus className="h-4 w-4 mr-1" /> Disciplina
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Nova Disciplina</DialogTitle>
-                <DialogDescription>Adicione as disciplinas para classificar os livros.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="flex flex-col gap-2">
-                  <Label>Nome da Disciplina</Label>
-                  <Input 
-                    value={novaDisciplina} 
-                    onChange={e => setNovaDisciplina(e.target.value)} 
-                    placeholder="Ex: Matemática, Literatura..." 
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogDiscOpen(false)}>Cancelar</Button>
-                <Button onClick={handleCreateDisciplina}>Salvar Adição</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={handleOpenNew} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 shadow-md">
@@ -241,9 +249,18 @@ export function LivrosPage() {
                   </div>
 
                   <div className="space-y-2">
-                     <Label>Disciplina *</Label>
+                     <div className="flex items-center justify-between">
+                        <Label>Disciplina *</Label>
+                        <button 
+                          type="button"
+                          onClick={() => setDialogDiscOpen(true)}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded transition-colors"
+                        >
+                          + DISCIPLINA
+                        </button>
+                     </div>
                      <Select onValueChange={(v) => setValue('disciplina_id', v)} defaultValue={watch('disciplina_id')}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                            <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -258,7 +275,7 @@ export function LivrosPage() {
                   <div className="space-y-2">
                      <Label>Estado de Uso Sugerido</Label>
                      <Select onValueChange={(v: any) => setValue('estado', v)} defaultValue={watch('estado')}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                            <SelectValue placeholder="Qual estado usar?" />
                         </SelectTrigger>
                         <SelectContent>
@@ -274,9 +291,48 @@ export function LivrosPage() {
                     <Input placeholder="Código ISBN..." {...register('isbn')} />
                   </div>
                   
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <Label>Link de Compra (Opcional)</Label>
                     <Input placeholder="https://..." {...register('link_referencia')} />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Capa do Livro (PNG, JPG, WEBP ou PDF)</Label>
+                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors relative group">
+                    {capaPreview ? (
+                      <div className="relative w-full aspect-[4/3] max-h-[200px] flex items-center justify-center overflow-hidden rounded-xl">
+                        {capaPreview.includes('application/pdf') || capaPreview.endsWith('.pdf') ? (
+                          <div className="flex flex-col items-center text-slate-400">
+                             <BookOpen className="w-12 h-12 mb-2" />
+                             <span className="text-xs font-bold uppercase tracking-widest">Documento PDF</span>
+                          </div>
+                        ) : (
+                          <img src={capaPreview} alt="Preview" className="w-full h-full object-contain" />
+                        )}
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-2 right-2 rounded-full h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            setCapaFile(null)
+                            setCapaPreview(null)
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center cursor-pointer w-full h-32">
+                        <div className="h-12 w-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 border border-slate-100">
+                          <Upload className="h-5 w-5 text-indigo-500" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600">Clique para enviar a capa</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Máximo 5MB</span>
+                        <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileChange} />
+                      </label>
+                    )}
                   </div>
                 </div>
 
@@ -306,11 +362,11 @@ export function LivrosPage() {
                   </div>
                 </div>
                 
-                <DialogFooter className="pt-6">
+                 <DialogFooter className="pt-6">
                   <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Salvar Livro
+                  <Button type="submit" disabled={isSubmitting || isUploading}>
+                    {(isSubmitting || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {isUploading ? 'Enviando Arquivo...' : 'Salvar Livro'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -335,15 +391,28 @@ export function LivrosPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {(livros as any[]).map((livro: any) => (
-             <Card key={livro.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
-                <CardHeader className="p-5 pb-3 bg-gradient-to-b from-slate-50 to-white">
+              <Card key={livro.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+                <div className="relative aspect-[16/10] bg-slate-100 flex items-center justify-center overflow-hidden border-b border-slate-100">
+                  {livro.capa_url ? (
+                    <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                  ) : (
+                    <div className="flex flex-col items-center text-slate-300">
+                       <ImageIcon className="w-12 h-12 mb-1" />
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sem Capa</span>
+                    </div>
+                  )}
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="bg-white/90 backdrop-blur shadow-sm text-indigo-700 font-bold text-[9px] uppercase tracking-wider py-0.5 px-2 border-none">
+                        {livro.disciplina?.nome || 'Geral'}
+                    </Badge>
+                  </div>
+                </div>
+
+                <CardHeader className="p-5 pb-3">
                   <div className="flex justify-between items-start gap-3">
-                     <div>
-                        <Badge variant="secondary" className="mb-2 bg-indigo-50 text-indigo-700 font-semibold tracking-wide border-indigo-100">
-                           {livro.disciplina?.nome || 'Geral'}
-                        </Badge>
-                        <CardTitle className="leading-tight text-lg line-clamp-2" title={livro.titulo}>{livro.titulo}</CardTitle>
-                        <CardDescription className="font-medium mt-1">Autor: {livro.autor}</CardDescription>
+                     <div className="flex-1 min-w-0">
+                        <CardTitle className="leading-tight text-lg line-clamp-1" title={livro.titulo}>{livro.titulo}</CardTitle>
+                        <CardDescription className="font-medium mt-0.5 line-clamp-1">Autor: {livro.autor}</CardDescription>
                      </div>
                      <div className="flex gap-1 shrink-0 bg-white shadow-sm p-1 rounded-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => handleEditar(livro)}>
@@ -387,6 +456,30 @@ export function LivrosPage() {
           ))}
         </div>
       )}
+
+      {/* Modal Independente para Nova Disciplina */}
+      <Dialog open={dialogDiscOpen} onOpenChange={setDialogDiscOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Nova Disciplina</DialogTitle>
+            <DialogDescription>Adicione as disciplinas para classificar os livros.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <Label>Nome da Disciplina</Label>
+              <Input 
+                value={novaDisciplina} 
+                onChange={e => setNovaDisciplina(e.target.value)} 
+                placeholder="Ex: Matemática, Literatura..." 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogDiscOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateDisciplina}>Salvar Adição</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

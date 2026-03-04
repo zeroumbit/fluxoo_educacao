@@ -5,10 +5,13 @@ import { Loader2, BookOpen, ExternalLink, Info, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useState } from 'react'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Maximize2 } from 'lucide-react'
 
 export function PortalLivrosPage() {
   const { alunoSelecionado, tenantId } = usePortalContext()
   const [busca, setBusca] = useState('')
+  const [capaAberta, setCapaAberta] = useState<string | null>(null)
 
   const { data: livros, isLoading } = useQuery({
     queryKey: ['portal', 'livros', tenantId, alunoSelecionado?.id],
@@ -77,59 +80,96 @@ export function PortalLivrosPage() {
          </div>
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {livrosFiltrados.map((livro: any, idx) => (
-               <div key={idx} className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group">
-                  <div className="flex justify-between items-start mb-4">
-                     <Badge variant="outline" className="bg-indigo-50/50 text-indigo-600 border-indigo-100 font-bold uppercase tracking-widest text-[9px] py-1 px-3">
-                        {livro.disciplina}
-                     </Badge>
-                     {livro.estado && (
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
-                           {livro.estado}
-                        </span>
-                     )}
-                  </div>
-                  
-                  <h3 className="text-xl font-black text-slate-800 tracking-tighter leading-tight mb-1">{livro.titulo}</h3>
-                  <p className="text-sm font-bold text-slate-500 mb-6 flex items-center gap-1.5">
-                     <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
-                     Por {livro.autor}
-                  </p>
-                  
-                  <div className="space-y-3 bg-slate-50/50 p-5 rounded-[24px]">
-                     <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Editora</span>
-                        <span className="text-sm font-bold text-slate-700">{livro.editora}</span>
-                     </div>
-                     <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">ISBN</span>
-                        <span className="text-sm font-bold text-slate-700">{livro.isbn || 'N/I'}</span>
-                     </div>
+            {livrosFiltrados.map((livro: any, idx: number) => (
+               <div key={idx} className="bg-white rounded-[32px] p-0 border border-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group overflow-hidden flex flex-col">
+                  {/* Capa do Livro no Portal */}
+                  <div 
+                    className={`relative aspect-[16/10] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100 ${livro.capa_url ? 'cursor-zoom-in' : ''} group/image`}
+                    onClick={() => livro.capa_url && setCapaAberta(livro.capa_url)}
+                  >
+                    {livro.capa_url ? (
+                      <>
+                        <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" />
+                        <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 transition-colors flex items-center justify-center">
+                          <Maximize2 className="text-white opacity-0 group-hover/image:opacity-100 transition-opacity w-8 h-8" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center text-slate-300">
+                         <BookOpen size={48} className="mb-2 opacity-20" />
+                         <span className="text-[9px] font-black uppercase tracking-[0.2em]">Sem Imagem</span>
+                      </div>
+                    )}
                   </div>
 
-                  {livro.descricao && (
-                     <div className="mt-4 flex items-start gap-2 text-slate-500">
-                        <Info size={16} className="text-teal-500 shrink-0 mt-0.5" />
-                        <p className="text-xs leading-relaxed">{livro.descricao}</p>
-                     </div>
-                  )}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <Badge variant="outline" className="bg-indigo-50/50 text-indigo-600 border-indigo-100 font-bold uppercase tracking-widest text-[9px] py-1 px-3">
+                          {livro.disciplina}
+                      </Badge>
+                      {livro.estado && (
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">
+                            {livro.estado}
+                          </span>
+                      )}
+                    </div>
+                    
+                    <h3 className="text-xl font-black text-slate-800 tracking-tighter leading-tight mb-1">{livro.titulo}</h3>
+                    <p className="text-sm font-bold text-slate-500 mb-6 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                      Por {livro.autor}
+                    </p>
+                    
+                    <div className="space-y-3 bg-slate-50/50 p-5 rounded-[24px]">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">Editora</span>
+                          <span className="text-sm font-bold text-slate-700">{livro.editora}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">ISBN</span>
+                          <span className="text-sm font-bold text-slate-700">{livro.isbn || 'N/I'}</span>
+                        </div>
+                    </div>
 
-                  {livro.link_referencia && (
-                     <div className="mt-6 flex flex-col items-center">
-                        <a 
-                          href={livro.link_referencia} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-full flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-500/25 transition-all active:scale-95"
-                        >
-                           Onde Encontrar <ExternalLink size={14} />
-                        </a>
-                     </div>
-                  )}
+                    {livro.descricao && (
+                        <div className="mt-4 flex items-start gap-2 text-slate-500">
+                          <Info size={16} className="text-teal-500 shrink-0 mt-0.5" />
+                          <p className="text-xs leading-relaxed">{livro.descricao}</p>
+                        </div>
+                    )}
+
+                    {livro.link_referencia && (
+                        <div className="mt-6 flex flex-col items-center">
+                          <a 
+                            href={livro.link_referencia} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-500/25 transition-all active:scale-95"
+                          >
+                             Onde Encontrar <ExternalLink size={14} />
+                          </a>
+                        </div>
+                    )}
+                  </div>
                </div>
             ))}
          </div>
       )}
+
+      {/* Modal para ver a capa em tamanho real */}
+      <Dialog open={!!capaAberta} onOpenChange={(open) => !open && setCapaAberta(null)}>
+        <DialogContent className="max-w-3xl border-none bg-transparent shadow-none p-0">
+          {capaAberta && (
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img 
+                src={capaAberta} 
+                alt="Capa do Livro" 
+                className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain animate-in zoom-in-95 duration-300" 
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

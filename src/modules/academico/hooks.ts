@@ -89,6 +89,26 @@ export function useMatriculaAtivaDoAluno(alunoId: string) {
   return useQuery({
     queryKey: ['matricula_ativa_detalhe', alunoId, authUser?.tenantId],
     queryFn: () => academicoService.buscarMatriculaAtiva(alunoId, authUser!.tenantId),
-    enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}
+
+export function useBoletinsPorTurma(turmaId: string, anoLetivo: number, bimestre: number) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['boletins_turma', authUser?.tenantId, turmaId, anoLetivo, bimestre],
+    queryFn: () => academicoService.listarBoletinsPorTurma(authUser!.tenantId, turmaId, anoLetivo, bimestre),
+    enabled: !!authUser?.tenantId && !!turmaId,
+  })
+}
+
+export function useUpsertNota() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ boletimBase, disciplina, nota, faltas, observacoes }: any) => 
+      academicoService.upsertNota(boletimBase, disciplina, nota, faltas, observacoes),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['boletins_turma'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+    }
   })
 }

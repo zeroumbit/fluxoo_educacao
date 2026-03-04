@@ -375,4 +375,18 @@ export const portalService = {
     if (error) throw error
     return (data as any[]) || []
   },
+
+  // ==========================================
+  // EVENTOS / AGENDA
+  // ==========================================
+  async buscarEventos(tenantId: string) {
+    const { data, error } = await (supabase.from('eventos' as any) as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .gte('data_inicio', new Date().toISOString())
+      .order('data_inicio', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
 }

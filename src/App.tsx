@@ -26,6 +26,7 @@ import { FuncionariosPage } from '@/modules/funcionarios/pages/FuncionariosPage'
 import { MatriculaPage } from '@/modules/academico/pages/MatriculaPage'
 import { PlanoAulaPage } from '@/modules/academico/pages/PlanoAulaPage'
 import { AtividadesPage } from '@/modules/academico/pages/AtividadesPage'
+import { NotasPage } from '@/modules/academico/pages/NotasPage'
 import { EventosPage } from '@/modules/agenda/pages/EventosPage'
 import { ConfigFinanceiraPage } from '@/modules/financeiro/pages/ConfigFinanceiraPage'
 import { ContasPagarPage } from '@/modules/financeiro/pages/ContasPagarPage'
@@ -52,6 +53,7 @@ import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualP
 import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
 import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'
 import { PortalLivrosPage } from '@/modules/portal/pages/PortalLivrosPage'
+import { PortalAgendaPage } from '@/modules/portal/pages/PortalAgendaPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +139,7 @@ function App() {
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/planos-aula" element={<PlanoAulaPage />} />
               <Route path="/atividades" element={<AtividadesPage />} />
+              <Route path="/notas" element={<NotasPage />} />
               <Route path="/agenda" element={<EventosPage />} />
               <Route path="/config-financeira" element={<ConfigFinanceiraPage />} />
               <Route path="/contas-pagar" element={<ContasPagarPage />} />
@@ -163,6 +166,7 @@ function App() {
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
+              <Route path="/portal/agenda" element={<PortalAgendaPage />} />
             </Route>
 
             {/* Fallback */}

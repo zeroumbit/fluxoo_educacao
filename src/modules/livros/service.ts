@@ -23,7 +23,25 @@ export const livrosService = {
       .single()
 
     if (error) throw error
-    return data
+    return true
+  },
+
+  async uploadCapa(file: File) {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+    const filePath = `capas/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('livros')
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('livros')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
   },
 
   // LER LIVROS
@@ -92,6 +110,7 @@ export const livrosService = {
         isbn: livro.isbn,
         estado: livro.estado,
         link_referencia: livro.link_referencia,
+        capa_url: livro.capa_url,
       })
       .eq('id', livroId)
 
