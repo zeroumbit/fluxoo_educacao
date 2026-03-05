@@ -207,17 +207,16 @@ export function PortalDashboardPage() {
             </div>
             
             <div className="flex flex-wrap justify-center lg:justify-start gap-8 border-t border-slate-50 pt-8">
-              <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
-              <StudentActionIcon 
-                icon={Calendar} 
-                label="Agenda" 
-                colorName="teal" 
+              <StudentActionIcon
+                icon={Calendar}
+                label="Agenda"
+                colorName="teal"
                 onClick={() => navigate('/portal/agenda')}
               />
-              <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
               <StudentActionIcon icon={Activity} label="Frequência" colorName="emerald" onClick={() => navigate('/portal/frequencia')} />
               <StudentActionIcon icon={FileText} label="Boletim" colorName="violet" onClick={() => navigate('/portal/boletim')} />
-              <StudentActionIcon icon={DollarSign} label="Mensalidade" colorName="amber" onClick={() => navigate('/portal/cobrancas')} />
+              <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
+              <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
             </div>
           </div>
 

@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTemplates, useCriarTemplate, useDocumentosEmitidos, useEmitirDocumento } from '../hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
+import { useAlunos, useAluno } from '@/modules/alunos/hooks'
+import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,12 +17,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search, 
-  FileCheck, GraduationCap, Scale, HeartPulse, LogOut, 
-  Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search,
+  FileCheck, GraduationCap, Scale, HeartPulse, LogOut,
+  Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity,
+  Printer, Download, Eye, X
 } from 'lucide-react'
 import * as Docs from '../DocumentEngineComponents'
+import { usePdf } from '@/hooks/usePdf'
+import { FichaMatriculaPDF } from '@/lib/pdf-templates'
 
 const templateSchema = z.object({
   tipo: z.string().min(1),
@@ -50,6 +55,7 @@ const DOCUMENT_TYPES = [
 ]
 
 const tipoLabels: Record<string, string> = DOCUMENT_TYPES.reduce((acc, doc) => ({ ...acc, [doc.id]: doc.label }), {})
+const turnoLabels: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', integral: 'Integral', noturno: 'Noturno' }
 
 export function DocumentosPage() {
   const { authUser } = useAuth()
@@ -58,12 +64,16 @@ export function DocumentosPage() {
   const { data: alunos, isLoading: loadingAlunos } = useAlunos()
   const criarTemplate = useCriarTemplate()
   const emitir = useEmitirDocumento()
-  
+  const [selectedDocType, setSelectedDocType] = useState<string | null>(null)
+  const [selectedAluno, setSelectedAluno] = useState('')
+  const { data: matriculaAtiva } = useMatriculaAtivaDoAluno(selectedAluno)
+  const { data: alunoCompleto } = useAluno(selectedAluno) // Carrega dados completos para o preview e emissão
+
   const [activeTab, setActiveTab] = useState('central')
   const [openTemplate, setOpenTemplate] = useState(false)
   const [openEmitir, setOpenEmitir] = useState(false)
-  const [selectedDocType, setSelectedDocType] = useState<string | null>(null)
-  const [selectedAluno, setSelectedAluno] = useState('')
+  const [openVisualizar, setOpenVisualizar] = useState(false)
+  const [docParaVisualizar, setDocParaVisualizar] = useState<any>(null)
   const [editando, setEditando] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -77,31 +87,258 @@ export function DocumentosPage() {
     setOpenTemplate(true)
   }
 
-  const handleEmitir = async () => {
-    if (!authUser || !selectedDocType || !selectedAluno) { 
-      toast.error('Selecione aluno e documento'); 
-      return 
+  const getPreviewData = (alunoId: string) => {
+    // Escolhe o aluno correto: se for o selecionado no momento, usa o carregado com detalhes
+    const aluno = (alunoId === selectedAluno ? alunoCompleto : alunos?.find((a: any) => a.id === alunoId)) as any
+    if (!aluno) return null
+
+    // Helper para formatar endereço
+    const formatEndereco = (a: any) => {
+      if (a.logradouro) return `${a.logradouro}, ${a.numero}${a.bairro ? ` - ${a.bairro}` : ''}${a.cidade ? ` - ${a.cidade}` : ''}`;
+      return 'Endereço não informado';
     }
-    
+
+    // Extrai nomes dos pais das relações se disponíveis
+    const maeRel = aluno.aluno_responsavel?.find((r: any) => r.grau_parentesco?.toLowerCase().includes('mãe'))?.responsaveis;
+    const paiRel = aluno.aluno_responsavel?.find((r: any) => r.grau_parentesco?.toLowerCase().includes('pai'))?.responsaveis;
+    const financeiroRel = aluno.aluno_responsavel?.find((r: any) => r.is_financeiro)?.responsaveis;
+
+    return {
+      nome: aluno.nome_completo,
+      rg: aluno.rg || '—',
+      cpf: aluno.cpf || '—',
+      dataNascimento: aluno.data_nascimento ? new Date(aluno.data_nascimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      endereco: formatEndereco(aluno),
+      nomeMae: maeRel?.nome || aluno.nome_mae || 'Não informado',
+      nomePai: paiRel?.nome || aluno.nome_pai || 'Não informado',
+      cpfResponsavel: financeiroRel?.cpf || aluno.cpf_responsavel || '—',
+      telefoneEmergencia: aluno.telefone_contato || '—',
+      naturalidade: aluno.naturalidade || '—',
+      turma: matriculaAtiva?.serie_ano || 'Não enturmado',
+      turno: matriculaAtiva?.turno ? (turnoLabels[matriculaAtiva.turno] || matriculaAtiva.turno) : '—',
+      anoLetivo: matriculaAtiva?.ano_letivo || '—',
+      serieAno: matriculaAtiva?.serie_ano || '—',
+      dataMatricula: matriculaAtiva?.data_matricula ? new Date(matriculaAtiva.data_matricula + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+      valorMatricula: matriculaAtiva?.valor_matricula || 0,
+      hashValidacao: 'VIVID-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      parentesco: 'Responsável',
+      responsavelFinanceiro: financeiroRel?.nome || 'Principal'
+    }
+  }
+
+  const handleEmitir = async () => {
+    if (!authUser || !selectedDocType || !selectedAluno) {
+      toast.error('Selecione aluno e documento');
+      return
+    }
+
     const docType = DOCUMENT_TYPES.find(d => d.id === selectedDocType)
-    const aluno = alunos?.find((a: any) => a.id === selectedAluno)
-    if (!aluno) return
+    const dataSnapshot = getPreviewData(selectedAluno)
+    if (!dataSnapshot) return
 
     try {
-      await emitir.mutateAsync({ 
-        tenant_id: authUser.tenantId, 
-        template_id: null, 
-        aluno_id: selectedAluno, 
-        titulo: docType?.label, 
-        conteudo_final: JSON.stringify({ aluno_id: aluno.id, tipo: selectedDocType }), 
-        status: 'emitido'
+      await emitir.mutateAsync({
+        tenant_id: authUser.tenantId,
+        template_id: null,
+        aluno_id: selectedAluno,
+        titulo: docType?.label,
+        conteudo_final: JSON.stringify({ ...dataSnapshot, tipo_doc: selectedDocType }),
+        status: 'gerado'
       })
-      toast.success('Documento emitido com sucesso!')
+      toast.success('Documento emitido e salvo no histórico!')
       setOpenEmitir(false)
       setActiveTab('emitidos')
-    } catch (error) { 
-      toast.error('Erro ao emitir documento') 
+    } catch (error) {
+      console.error('Erro Supabase:', error);
+      toast.error('Erro ao salvar no banco de dados')
     }
+  }
+
+  const openPrintWindow = () => {
+    const element = document.getElementById('printable-area-frame');
+    if (!element) {
+      toast.error('Documento não encontrado. Selecione um aluno primeiro.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      toast.error('Popup bloqueado! Permita popups para esta página e tente novamente.');
+      return;
+    }
+
+    // Gera o HTML da janela de impressão — isolado do Tailwind/oklch
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Documento - Fluxoo Educação</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; color: #000; }
+          body { background: #f5f5f5; display: flex; justify-content: center; padding: 32px; }
+          .sheet { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+          h1 { font-size: 20px; font-weight: 900; }
+          h2 { font-size: 14px; font-weight: 800; color: #334155; }
+          h3 { font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 12px; }
+          p { font-size: 12px; color: #475569; line-height: 1.6; }
+          .label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+          .value { font-size: 13px; font-weight: 700; color: #1e293b; margin-top: 2px; margin-bottom: 16px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9; }
+          .logo { display: flex; align-items: center; gap: 12px; }
+          .logo-box { width: 40px; height: 40px; background: #14b8a6; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+          .logo-box span { color: white; font-size: 20px; font-weight: 900; }
+          .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+          .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+          .col-span-2 { grid-column: span 2; }
+          .text-teal { color: #0d9488; }
+          .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center; }
+          .hash { font-family: monospace; font-size: 10px; color: #94a3b8; }
+          .signature { width: 160px; height: 1px; background: #cbd5e1; margin: 0 auto 8px; }
+          .print-btn { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; }
+          .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
+          .btn-primary { background: #14b8a6; color: white; }
+          .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+          @media print {
+            body { background: white; padding: 0; }
+            .sheet { box-shadow: none; padding: 15mm; }
+            .print-btn { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-btn">
+          <button class="btn btn-secondary" onclick="window.close()">Fechar</button>
+          <button class="btn btn-primary" onclick="window.print()">&#128438; Imprimir / Salvar PDF</button>
+        </div>
+        <div class="sheet">
+          ${element.innerHTML}
+        </div>
+        <script>
+          // Substitui classes do Tailwind por estilos inline equivalentes
+          document.querySelectorAll('[class]').forEach(el => {
+            const cls = el.className || '';
+            if (cls.includes('font-black') || cls.includes('font-bold')) el.style.fontWeight = '700';
+            if (cls.includes('text-slate-400') || cls.includes('text-muted')) el.style.color = '#94a3b8';
+            if (cls.includes('text-slate-700') || cls.includes('text-slate-800')) el.style.color = '#1e293b';
+            if (cls.includes('text-teal') || cls.includes('text-emerald')) el.style.color = '#0d9488';
+            if (cls.includes('hidden')) el.style.display = 'none';
+          });
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const { isGenerating, generateAndDownload, generateAndView } = usePdf()
+
+  const handlePrint = () => {
+    openPrintWindow()
+  }
+
+  const handleDownloadPDF = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    
+    if (!selectedAluno || !selectedDocType) {
+      toast.error('Selecione um aluno e tipo de documento')
+      return
+    }
+
+    const dataSnapshot = getPreviewData(selectedAluno)
+    if (!dataSnapshot) return
+
+    try {
+      // Usar o novo sistema de PDF com @react-pdf/renderer
+      if (selectedDocType === 'ficha_matricula') {
+        const pdfDoc = <FichaMatriculaPDF data={dataSnapshot} />
+        await generateAndDownload(pdfDoc, `ficha_matricula_${dataSnapshot.nome.split(' ')[0]}.pdf`)
+      } else {
+        // Para outros documentos, usa o método antigo (window.print)
+        toast.info('Documento gerado via impressão — escolha "Salvar como PDF" no destino.')
+        openPrintWindow()
+      }
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error)
+      toast.error('Erro ao gerar PDF')
+    }
+  }
+
+  const handleVisualizarPDF = async () => {
+    if (!selectedAluno || !selectedDocType) {
+      toast.error('Selecione um aluno e tipo de documento')
+      return
+    }
+
+    const dataSnapshot = getPreviewData(selectedAluno)
+    if (!dataSnapshot) return
+
+    if (selectedDocType === 'ficha_matricula') {
+      const pdfDoc = <FichaMatriculaPDF data={dataSnapshot} />
+      await generateAndView(pdfDoc)
+    } else {
+      openPrintWindow()
+    }
+  }
+
+  const handleVerEmitido = (doc: any) => {
+    try {
+      let data = JSON.parse(doc.conteudo_final);
+
+      // Se for formato antigo (sem campos de dados), tentamos preencher do sistema
+      if (!data.nome) {
+        const alunoId = data.aluno_id || doc.aluno_id;
+        const currentData = getPreviewData(alunoId);
+        if (currentData) {
+          data = { ...currentData, ...data };
+        }
+      }
+
+      const tipoReal = data.tipo_doc || data.tipo || 'ficha_matricula';
+      setDocParaVisualizar({
+        ...data,
+        tipo_doc: tipoReal,
+        titulo: doc.titulo,
+        data_emissao: doc.created_at || new Date().toISOString()
+      });
+      setOpenVisualizar(true);
+    } catch (e) {
+      console.error('Erro ao ver documento:', e);
+      toast.error('Erro ao abrir documento. Os dados podem estar corrompidos.');
+    }
+  }
+
+  const renderDocFrame = (data: any, type: string, date?: string) => {
+    const DocComponent = DOCUMENT_TYPES.find(d => d.id === type)?.component
+    if (!DocComponent) return null
+
+    return (
+      <div className="bg-white p-8 md:p-12 shadow-2xl rounded-[32px] border border-slate-100 w-full max-w-[800px] print:shadow-none print:border-none print:p-0 print:m-0 printable-frame" id="printable-area-frame">
+        <div className="flex justify-between items-start mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center print:bg-teal-500">
+              <span className="text-white font-black text-xl">F</span>
+            </div>
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Fluxoo Educação</h2>
+              <h1 className="text-lg font-black tracking-tighter text-slate-800">{DOCUMENT_TYPES.find(d => d.id === type)?.label}</h1>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Emissão</p>
+            <p className="text-xs font-bold text-slate-700">{date ? new Date(date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
+          </div>
+        </div>
+        <DocComponent data={data} />
+
+        <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4 opacity-40 print:opacity-100">
+          <div className="w-32 h-[1px] bg-slate-300" />
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assinatura Digital Fluxoo</p>
+          <p className="text-[8px] font-mono text-slate-300">{data?.hashValidacao || 'VALID-ID-8822'}</p>
+        </div>
+      </div>
+    )
   }
 
   const renderPreview = () => {
@@ -115,56 +352,9 @@ export function DocumentosPage() {
       </div>
     )
 
-    const aluno = alunos?.find((a: any) => a.id === selectedAluno) as any
-    const DocComponent = DOCUMENT_TYPES.find(d => d.id === selectedDocType)?.component
-
-    if (!DocComponent || !aluno) return null
-
-    const previewData = {
-      nome: aluno.nome_completo,
-      rg: aluno.rg || '00.000.000-0',
-      cpf: aluno.cpf || '000.000.000-00',
-      dataNascimento: aluno.data_nascimento ? new Date(aluno.data_nascimento).toLocaleDateString('pt-BR') : '01/01/2010',
-      endereco: aluno.endereco || 'Rua das Flores, 123 - Centro',
-      nomeMae: aluno.nome_mae || 'Maria Silva Moraes',
-      nomePai: aluno.nome_pai || 'Ricardo Alves Moraes',
-      cpfResponsavel: aluno.cpf_responsavel || '111.222.333-44',
-      telefoneEmergencia: aluno.telefone_contato || '(11) 98877-6655',
-      naturalidade: aluno.naturalidade || 'Cidade Exemplo - EX',
-      turma: aluno.turma?.nome || '4º Ano A - Fundamental',
-      turno: aluno.turma?.turno || 'Matutino',
-      hashValidacao: 'VIVID-8829-X12-CONFIRMED',
-      parentesco: 'Mãe',
-      responsavelFinanceiro: 'Maria Silva Moraes'
-    }
-
-    return (
-      <div className="min-h-full flex justify-center py-4">
-        <div className="bg-white p-8 md:p-12 shadow-2xl rounded-[32px] border border-slate-100 w-full max-w-[800px] transform origin-top transition-all duration-300">
-          <div className="flex justify-between items-start mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center">
-                <span className="text-white font-black text-xl">F</span>
-              </div>
-              <div>
-                <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Fluxoo Educação</h2>
-                <h1 className="text-lg font-black tracking-tighter text-slate-800">{DOCUMENT_TYPES.find(d => d.id === selectedDocType)?.label}</h1>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Emissão</p>
-              <p className="text-xs font-bold text-slate-700">{new Date().toLocaleDateString('pt-BR')}</p>
-            </div>
-          </div>
-          <DocComponent data={previewData} />
-          
-          <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4 opacity-40">
-            <div className="w-32 h-[1px] bg-slate-300" />
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assinatura Digital Fluxoo</p>
-          </div>
-        </div>
-      </div>
-    )
+    const data = getPreviewData(selectedAluno)
+    if (!data) return null
+    return renderDocFrame(data, selectedDocType)
   }
 
   if (isLoading) return (
@@ -186,7 +376,7 @@ export function DocumentosPage() {
           <h1 className="text-4xl font-black tracking-tighter text-slate-800">Cental de Documentos</h1>
           <p className="text-slate-500 text-sm font-medium">Emissão inteligente e automação de documentos oficiais.</p>
         </div>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-slate-100/50 p-1 rounded-2xl w-fit">
           <TabsList className="bg-transparent h-12 gap-1 border-0">
             <TabsTrigger value="central" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
@@ -253,8 +443,8 @@ export function DocumentosPage() {
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input 
-                    placeholder="Buscar templates..." 
+                  <Input
+                    placeholder="Buscar templates..."
                     className="pl-10 h-10 bg-slate-50 border-none rounded-xl text-sm"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -309,7 +499,8 @@ export function DocumentosPage() {
                   <TableRow className="hover:bg-transparent border-slate-100">
                     <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-8">Documento</TableHead>
                     <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aluno</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Data</TableHead>
+                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</TableHead>
+                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -317,8 +508,21 @@ export function DocumentosPage() {
                     <TableRow key={d.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                       <TableCell className="font-bold text-slate-700 pl-8">{d.titulo}</TableCell>
                       <TableCell className="text-slate-500 font-medium">{d.aluno?.nome_completo || '—'}</TableCell>
-                      <TableCell className="text-right pr-8 text-slate-400 text-xs font-bold">
+                      <TableCell className="text-slate-400 text-xs font-bold">
                         {new Date(d.created_at).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleVerEmitido(d)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleVerEmitido(d)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50">
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleVerEmitido(d)} className="w-8 h-8 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50">
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -330,8 +534,8 @@ export function DocumentosPage() {
       </Tabs>
 
       <Dialog open={openEmitir} onOpenChange={setOpenEmitir}>
-        <DialogContent className="max-w-[1200px] w-[95vw] h-[90vh] p-0 overflow-hidden border-none rounded-[32px]">
-          <div className="flex h-full">
+        <DialogContent className="max-w-[1200px] w-[95vw] h-[90vh] p-0 overflow-hidden border-none rounded-[32px] flex flex-col printing-dialog">
+          <div className="flex flex-1 overflow-hidden">
             <div className="w-[400px] bg-slate-50 border-r border-slate-100 p-8 flex flex-col gap-8">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-black tracking-tighter text-slate-800">Emitir Documento</DialogTitle>
@@ -357,15 +561,32 @@ export function DocumentosPage() {
               </div>
 
               <div className="mt-auto space-y-3 pt-6 border-t border-slate-200">
-                <Button onClick={handleEmitir} disabled={emitir.isPending || !selectedAluno} className="w-full h-12 bg-teal-500 hover:bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-500/20">
-                  {emitir.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Confirmar e Emitir'}
+                <Button
+                  onClick={handleEmitir}
+                  disabled={emitir.isPending || !selectedAluno}
+                  className="w-full h-12 bg-teal-500 hover:bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-teal-500/20"
+                >
+                  {emitir.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Confirmar e Salvar'}
                 </Button>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <Button variant="outline" onClick={handleVisualizarPDF} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
+                    <Eye className="w-4 h-4 mr-2" /> Visualizar
+                  </Button>
+                  <Button variant="outline" onClick={handlePrint} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
+                    <Printer className="w-4 h-4 mr-2" /> Imprimir
+                  </Button>
+                  <Button variant="outline" onClick={() => handleDownloadPDF()} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
+                    <Download className="w-4 h-4 mr-2" /> Baixar PDF
+                  </Button>
+                </div>
+
                 <Button variant="ghost" onClick={() => setOpenEmitir(false)} className="w-full font-bold text-slate-400">Cancelar</Button>
               </div>
             </div>
 
             {/* Area de Preview com Rolagem */}
-            <div className="flex-1 bg-slate-200/50 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 bg-slate-200/50 flex flex-col overflow-hidden">
               <div className="p-6 md:px-12 md:pt-12 md:pb-6 flex items-center justify-between border-b border-slate-100/50 bg-slate-50/50">
                 <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Live Preview</h3>
                 <div className="flex gap-2">
@@ -373,9 +594,17 @@ export function DocumentosPage() {
                   <Badge variant="outline" className="bg-white/50 border-slate-200 text-teal-600 font-bold">Pronto para PDF</Badge>
                 </div>
               </div>
-              
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-12 scroll-smooth">
-                {renderPreview()}
+
+              <div className="flex-1 overflow-y-auto bg-slate-200/50 custom-scrollbar scroll-smooth">
+                <style>{`
+                  .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                  .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; border: 3px solid transparent; background-clip: content-box; }
+                  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; border: 3px solid transparent; background-clip: content-box; }
+                `}</style>
+                <div className="p-6 md:p-12 flex justify-center pb-24">
+                  {renderPreview()}
+                </div>
               </div>
             </div>
           </div>
@@ -383,47 +612,77 @@ export function DocumentosPage() {
       </Dialog>
 
       <Dialog open={openTemplate} onOpenChange={setOpenTemplate}>
-        <DialogContent className="max-w-[800px] rounded-[32px] p-8">
-          <DialogHeader className="mb-6">
+        <DialogContent className="max-w-[800px] w-[95vw] p-0 overflow-hidden border-none rounded-[32px] flex flex-col max-h-[90vh]">
+          <DialogHeader className="p-8 pb-0">
             <DialogTitle className="text-2xl font-black tracking-tighter text-slate-800">
               {editando ? 'Editar Template' : 'Criar Novo Template'}
             </DialogTitle>
           </DialogHeader>
-          <form className="space-y-6" onSubmit={form.handleSubmit((data) => {
-             if (!authUser) return;
-             criarTemplate.mutate({ ...data, tenant_id: authUser.tenantId });
-             setOpenTemplate(false);
-          })}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo Base</Label>
-                <Select value={form.watch('tipo')} onValueChange={(v) => form.setValue('tipo', v)}>
-                  <SelectTrigger className="h-12 border-slate-100 bg-slate-50 rounded-xl font-bold">
-                    <SelectValue placeholder="Selecione o tipo..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_TYPES.map(doc => (
-                      <SelectItem key={doc.id} value={doc.id} className="font-bold">{doc.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+          <ScrollArea className="flex-1 p-8">
+            <form id="template-form" className="space-y-6" onSubmit={form.handleSubmit((data) => {
+              if (!authUser) return;
+              criarTemplate.mutate({ ...data, tenant_id: authUser.tenantId });
+              setOpenTemplate(false);
+            })}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo Base</Label>
+                  <Select value={form.watch('tipo')} onValueChange={(v) => form.setValue('tipo', v)}>
+                    <SelectTrigger className="h-12 border-slate-100 bg-slate-50 rounded-xl font-bold">
+                      <SelectValue placeholder="Selecione o tipo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DOCUMENT_TYPES.map(doc => (
+                        <SelectItem key={doc.id} value={doc.id} className="font-bold">{doc.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título Customizado</Label>
+                  <Input {...form.register('titulo')} className="h-12 border-slate-100 bg-slate-50 rounded-xl font-bold" />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Título Customizado</Label>
-                <Input {...form.register('titulo')} className="h-12 border-slate-100 bg-slate-50 rounded-xl font-bold" />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Conteúdo do Documento</Label>
+                <Textarea {...form.register('corpo_html')} className="min-vh-[40vh] min-h-[400px] border-slate-100 bg-slate-50 rounded-3xl p-6 font-medium text-slate-700 leading-relaxed" />
               </div>
+            </form>
+          </ScrollArea>
+
+          <DialogFooter className="p-8 pt-4 border-t bg-slate-50/50 flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => setOpenTemplate(false)} className="font-bold text-slate-400">Cancelar</Button>
+            <Button form="template-form" type="submit" className="bg-teal-500 hover:bg-teal-600 font-bold px-8 rounded-xl h-12 shadow-lg shadow-teal-500/20">
+              Salvar Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={openVisualizar} onOpenChange={setOpenVisualizar}>
+        <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 overflow-hidden border-none rounded-[32px] flex flex-col printing-dialog">
+          <DialogHeader className="p-8 pb-4 flex flex-row items-center justify-between border-b bg-white">
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tighter text-slate-800">
+                {docParaVisualizar?.titulo}
+              </DialogTitle>
+              <DialogDescription className="font-bold text-teal-600">
+                Emitido em {docParaVisualizar?.data_emissao && new Date(docParaVisualizar.data_emissao).toLocaleDateString('pt-BR')}
+              </DialogDescription>
             </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Conteúdo do Documento</Label>
-              <Textarea {...form.register('corpo_html')} className="min-h-[300px] border-slate-100 bg-slate-50 rounded-3xl p-6 font-medium text-slate-700 leading-relaxed" />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setOpenTemplate(false)} className="font-bold">Cancelar</Button>
-              <Button type="submit" className="bg-teal-500 hover:bg-teal-600 font-bold px-8 rounded-xl h-12 shadow-lg shadow-teal-500/20">
-                Salvar Template
+            <div className="flex gap-3 pr-8">
+              <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 font-bold gap-2">
+                <Printer className="w-4 h-4" /> Imprimir
               </Button>
-            </DialogFooter>
-          </form>
+              <Button onClick={() => handleDownloadPDF()} variant="outline" className="border-slate-200 font-bold gap-2">
+                <Download className="w-4 h-4" /> Baixar PDF
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto bg-slate-100/50 p-6 md:p-12 flex justify-center overflow-hidden custom-scrollbar">
+            {docParaVisualizar && renderDocFrame(docParaVisualizar, docParaVisualizar.tipo_doc, docParaVisualizar.data_emissao)}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

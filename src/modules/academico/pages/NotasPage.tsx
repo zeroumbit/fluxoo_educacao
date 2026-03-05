@@ -130,11 +130,11 @@ export function NotasPage() {
 
       <Card className="border-none shadow-sm bg-white overflow-hidden rounded-[32px]">
         <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-4 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma</label>
               <Select value={turmaId} onValueChange={setTurmaId}>
-                <SelectTrigger className="bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
                   <SelectValue placeholder="Selecione a Turma" />
                 </SelectTrigger>
                 <SelectContent>
@@ -145,10 +145,10 @@ export function NotasPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="md:col-span-4 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
               <Select value={disciplinaNome} onValueChange={setDisciplinaNome}>
-                <SelectTrigger className="bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
                   <SelectValue placeholder="Selecione a Disciplina" />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,10 +159,10 @@ export function NotasPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Bimestre</label>
               <Select value={bimestre} onValueChange={setBimestre}>
-                <SelectTrigger className="bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,9 +174,9 @@ export function NotasPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ano Letivo</label>
-              <div className="h-12 flex items-center px-4 bg-slate-100 rounded-xl text-slate-500 font-bold border border-transparent">
+              <div className="flex items-center justify-center h-12 px-4 bg-slate-100 rounded-xl text-slate-500 font-bold border border-slate-200">
                 {anoLetivo}
               </div>
             </div>

@@ -83,12 +83,10 @@ export function PortalLayout() {
 
             <div className="flex flex-wrap justify-center gap-2">
               <NavLinkStyled icon={Home} label="Home" to="/portal" end />
-              <NavLinkStyled icon={Activity} label="Frequência" to="/portal/frequencia" />
               <NavLinkStyled icon={Calendar} label="Agenda" to="/portal/agenda" />
-              <NavLinkStyled icon={Megaphone} label="Avisos" to="/portal/avisos" />
-              <NavLinkStyled icon={DollarSign} label="Cobranças" to="/portal/cobrancas" />
-              <NavLinkStyled icon={Clock} label="Fila" to="/portal/fila" />
               <NavLinkStyled icon={FileText} label="Boletim" to="/portal/boletim" />
+              <NavLinkStyled icon={DollarSign} label="Cobranças" to="/portal/cobrancas" />
+              <NavLinkStyled icon={Megaphone} label="Avisos" to="/portal/avisos" />
             </div>
 
             <div className="flex items-center gap-4 border-l border-slate-100 pl-6 hidden lg:flex">
