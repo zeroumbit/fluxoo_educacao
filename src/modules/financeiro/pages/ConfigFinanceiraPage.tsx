@@ -122,7 +122,7 @@ export function ConfigFinanceiraPage() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto px-4 animate-in fade-in duration-500">
-      <div className="text-center py-4">
+      <div className="text-left py-4">
         <h1 className="text-3xl font-black tracking-tight text-[#1E293B]">Configurações Financeiras</h1>
         <p className="text-[#64748B] font-medium italic text-sm">Regras de recebimento, multas, juros e métodos de pagamento</p>
       </div>

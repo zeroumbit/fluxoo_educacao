@@ -12,21 +12,21 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Save, 
-  Users, 
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Save,
+  Users,
   FileX,
   MessageSquare,
   CheckCheck
@@ -35,24 +35,24 @@ import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 
 const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
-  presente: { 
-    label: 'Presente', 
-    icon: CheckCircle, 
-    color: 'text-emerald-600', 
+  presente: {
+    label: 'Presente',
+    icon: CheckCircle,
+    color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
     borderColor: 'border-emerald-200'
   },
-  falta: { 
-    label: 'Falta', 
-    icon: XCircle, 
-    color: 'text-red-600', 
+  falta: {
+    label: 'Falta',
+    icon: XCircle,
+    color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200'
   },
-  justificada: { 
-    label: 'Justificada', 
-    icon: AlertCircle, 
-    color: 'text-amber-600', 
+  justificada: {
+    label: 'Justificada',
+    icon: AlertCircle,
+    color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-200'
   },
@@ -64,17 +64,17 @@ export function FrequenciaPage() {
   const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
   const salvarFrequencias = useSalvarFrequencias()
-  
+
   const [turmaId, setTurmaId] = useState('')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
-  
+
   // Queries
   const { data: frequenciasExistentes, isLoading: isLoadingFreq } = useFrequenciasPorTurmaData(turmaId, dataAula)
 
   // States para edição
   const [statusMap, setStatusMap] = useState<Record<string, FrequenciaStatus>>({})
   const [justificativaMap, setJustificativaMap] = useState<Record<string, string>>({})
-  
+
   // Modal de Justificativa
   const [modalOpen, setModalOpen] = useState(false)
   const [alunoJustificando, setAlunoJustificando] = useState<{ id: string, nome: string } | null>(null)
@@ -85,12 +85,12 @@ export function FrequenciaPage() {
     if (frequenciasExistentes) {
       const newStatusMap: Record<string, FrequenciaStatus> = {}
       const newJustificativaMap: Record<string, string> = {}
-      
+
       frequenciasExistentes.forEach((f: any) => {
         newStatusMap[f.aluno_id] = f.status as FrequenciaStatus
         if (f.justificativa) newJustificativaMap[f.aluno_id] = f.justificativa
       })
-      
+
       setStatusMap(newStatusMap)
       setJustificativaMap(newJustificativaMap)
     } else {
@@ -106,7 +106,7 @@ export function FrequenciaPage() {
 
   const setStatus = (alunoId: string, status: FrequenciaStatus) => {
     setStatusMap((prev) => ({ ...prev, [alunoId]: status }))
-    
+
     if (status === 'justificada') {
       const aluno = alunos?.find(a => a.id === alunoId)
       if (aluno) {
@@ -144,7 +144,7 @@ export function FrequenciaPage() {
 
   const handleSalvar = async () => {
     if (!authUser || !turmaId) return
-    
+
     if (!authUser.tenantId) {
       toast.error('O seu usuário não possui uma escola (tenant) vinculada. Entre em contato com o suporte.')
       console.error('❌ [FrequenciaPage] Tentativa de salvar sem tenant_id:', authUser)
@@ -152,15 +152,15 @@ export function FrequenciaPage() {
     }
 
     // Filtra apenas alunos com matrícula ativa
-    const alunosParaSalvar = alunos?.filter(a => 
+    const alunosParaSalvar = alunos?.filter(a =>
       a.status === 'ativo' && alunosComMatriculaIds.has(a.id)
     ) || []
-    
+
     if (alunosParaSalvar.length === 0) {
       toast.error('Nenhum aluno com matrícula ativa encontrado')
       return
     }
-    
+
     const dados = alunosParaSalvar.map((a) => ({
       tenant_id: authUser.tenantId,
       turma_id: turmaId,
@@ -213,7 +213,7 @@ export function FrequenciaPage() {
             <Button
               variant="outline"
               onClick={marcarTodosPresentes}
-              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              className="h-12 border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl px-6"
             >
               <CheckCheck className="h-4 w-4 mr-2" />
               Todos Presente
@@ -223,7 +223,7 @@ export function FrequenciaPage() {
             <Button
               onClick={handleSalvar}
               disabled={salvarFrequencias.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 shadow-lg px-6"
+              className="h-12 bg-emerald-600 hover:bg-emerald-700 shadow-lg px-8 rounded-xl"
             >
               {salvarFrequencias.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -236,49 +236,49 @@ export function FrequenciaPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+        <div className="md:col-span-6 space-y-2">
           <Label htmlFor="turma" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Turma</Label>
           <Select onValueChange={setTurmaId} value={turmaId}>
-            <SelectTrigger id="turma" className="h-12 text-base font-medium transition-all focus:ring-2 focus:ring-emerald-500/20">
-              <SelectValue placeholder="Selecione a turma para carregar os alunos" />
+            <SelectTrigger id="turma" className="w-full h-12 text-base font-medium transition-all focus:ring-2 focus:ring-emerald-500/20 rounded-xl">
+              <SelectValue placeholder="Selecione a turma..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-2xl border-slate-200">
               {turmas?.map((t) => (
                 <SelectItem key={t.id} value={t.id} className="py-3 text-base">
-                   <div className="font-bold">{t.nome}</div>
-                   <div className="text-xs text-muted-foreground uppercase">{t.turno}</div>
+                  <div className="font-bold">{t.nome}</div>
+                  <div className="text-xs text-muted-foreground uppercase">{t.turno}</div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
+        <div className="md:col-span-2 space-y-2">
           <Label htmlFor="data" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Data da Aula</Label>
-          <Input 
-            id="data" 
-            type="date" 
-            className="h-12 text-base font-medium transition-all focus:ring-2 focus:ring-emerald-500/20"
-            value={dataAula} 
-            onChange={(e) => setDataAula(e.target.value)} 
+          <Input
+            id="data"
+            type="date"
+            className="w-full h-12 text-base font-medium transition-all focus:ring-2 focus:ring-emerald-500/20 rounded-xl"
+            value={dataAula}
+            onChange={(e) => setDataAula(e.target.value)}
           />
         </div>
-        <div className="space-y-2">
-           <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Resumo do Dia</Label>
-           <div className="grid grid-cols-3 gap-2">
-             <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col items-center">
-               <span className="text-xs font-bold text-emerald-600 uppercase">Pres.</span>
-               <span className="text-lg font-black text-emerald-700">{contagens.presente}</span>
-             </div>
-             <div className="p-2 rounded-xl bg-red-50 border border-red-100 flex flex-col items-center">
-               <span className="text-xs font-bold text-red-600 uppercase">Faltas</span>
-               <span className="text-lg font-black text-red-700">{contagens.falta}</span>
-             </div>
-             <div className="p-2 rounded-xl bg-amber-50 border border-amber-100 flex flex-col items-center">
-               <span className="text-xs font-bold text-amber-600 uppercase">Just.</span>
-               <span className="text-lg font-black text-amber-700">{contagens.justificada}</span>
-             </div>
-           </div>
+        <div className="md:col-span-4 space-y-2">
+          <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Resumo do Dia</Label>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-start px-4 gap-2">
+              <span className="text-[9px] font-black text-emerald-600 uppercase tracking-tight flex-1">Presente</span>
+              <span className="text-xl font-black text-emerald-700 leading-none">{contagens.presente}</span>
+            </div>
+            <div className="h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-start px-4 gap-2">
+              <span className="text-[9px] font-black text-red-600 uppercase tracking-tight flex-1">Faltas</span>
+              <span className="text-xl font-black text-red-700 leading-none">{contagens.falta}</span>
+            </div>
+            <div className="h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-start px-4 gap-2">
+              <span className="text-[9px] font-black text-amber-600 uppercase tracking-tight flex-1">Justificado</span>
+              <span className="text-xl font-black text-amber-700 leading-none">{contagens.justificada}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -286,13 +286,13 @@ export function FrequenciaPage() {
         <Card className="border-0 shadow-lg bg-red-50 ring-1 ring-red-200">
           <CardContent className="py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-red-800">
-               <FileX className="h-6 w-6 shrink-0" />
-               <div>
-                 <p className="text-sm font-black uppercase tracking-tight">Alunos sem matrícula ativa ({alunosSemMatricula.length})</p>
-                 <p className="text-xs font-medium font-serif italic">Estes alunos não estão disponíveis para registro de frequência.</p>
-               </div>
+              <FileX className="h-6 w-6 shrink-0" />
+              <div>
+                <p className="text-sm font-black uppercase tracking-tight">Alunos sem matrícula ativa ({alunosSemMatricula.length})</p>
+                <p className="text-xs font-medium font-serif italic">Estes alunos não estão disponíveis para registro de frequência.</p>
+              </div>
             </div>
-            <Button variant="ghost" className="text-red-700 hover:bg-red-100 font-bold text-xs uppercase underline" onClick={() => (window.location.href='/matriculas')}>Regularizar Todos</Button>
+            <Button variant="ghost" className="text-red-700 hover:bg-red-100 font-bold text-xs uppercase underline" onClick={() => (window.location.href = '/matriculas')}>Regularizar Todos</Button>
           </CardContent>
         </Card>
       )}
@@ -318,11 +318,11 @@ export function FrequenciaPage() {
                   {alunosComMatricula.map((aluno, index) => {
                     const status = statusMap[aluno.id] || 'presente'
                     const hasJustificativa = !!justificativaMap[aluno.id]
-                    
+
                     return (
                       <TableRow key={aluno.id} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-0 h-20">
                         <TableCell className="text-center">
-                           <span className="text-slate-400 font-black text-sm">{String(index + 1).padStart(2, '0')}</span>
+                          <span className="text-slate-400 font-black text-sm">{String(index + 1).padStart(2, '0')}</span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
@@ -365,7 +365,7 @@ export function FrequenciaPage() {
                                 J
                               </Button>
                             </div>
-                            
+
                             {status === 'justificada' && (
                               <Button
                                 variant="outline"
@@ -385,9 +385,9 @@ export function FrequenciaPage() {
               </Table>
             ) : (
               <div className="py-24 text-center">
-                 <Users className="h-20 w-20 mx-auto mb-6 text-slate-200" />
-                 <h3 className="text-xl font-bold text-slate-600">Nenhum aluno ativo nesta turma</h3>
-                 <p className="text-slate-400 mt-2">Certifique-se de que os alunos possuem matrículas ativas para o ano letivo.</p>
+                <Users className="h-20 w-20 mx-auto mb-6 text-slate-200" />
+                <h3 className="text-xl font-bold text-slate-600">Nenhum aluno ativo nesta turma</h3>
+                <p className="text-slate-400 mt-2">Certifique-se de que os alunos possuem matrículas ativas para o ano letivo.</p>
               </div>
             )}
           </CardContent>
@@ -396,9 +396,9 @@ export function FrequenciaPage() {
 
       {!turmaId && (
         <div className="flex flex-col items-center justify-center py-32 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
-           <Users className="h-24 w-24 text-slate-200 mb-6" />
-           <p className="text-slate-500 font-black uppercase tracking-widest text-[11px]">Aguardando seleção de turma</p>
-           <p className="text-slate-400 text-sm mt-2">Escolha uma turma acima para carregar a lista de presença.</p>
+          <Users className="h-24 w-24 text-slate-200 mb-6" />
+          <p className="text-slate-500 font-black uppercase tracking-widest text-[11px]">Aguardando seleção de turma</p>
+          <p className="text-slate-400 text-sm mt-2">Escolha uma turma acima para carregar a lista de presença.</p>
         </div>
       )}
 
@@ -417,7 +417,7 @@ export function FrequenciaPage() {
           <div className="p-8 space-y-4 bg-white">
             <div className="space-y-2">
               <Label className="uppercase tracking-widest text-[10px] font-black text-slate-400">Motivo da Falta / Observações</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Ex: Atestado médico apresentado pelo responsável..."
                 className="min-h-[150px] rounded-2xl border-slate-200 focus:ring-amber-500/20 text-base py-4"
                 value={justificativaTemp}
@@ -428,7 +428,7 @@ export function FrequenciaPage() {
           </div>
           <DialogFooter className="p-8 bg-slate-50 flex sm:justify-between items-center gap-4">
             <Button variant="ghost" onClick={() => setModalOpen(false)} className="rounded-xl font-bold text-slate-500">Cancelar</Button>
-            <Button 
+            <Button
               onClick={handleSalvarJustificativa}
               className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-8 font-black shadow-lg shadow-amber-200"
             >

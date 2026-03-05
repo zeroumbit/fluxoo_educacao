@@ -59,6 +59,33 @@ export const FichaMatriculaContent = ({ data }: { data: any }) => {
           </div>
         </div>
       </div>
+      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+        <h3 className="text-lg font-black tracking-tighter text-slate-800 mb-4">Dados da Matrícula</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ano Letivo</p>
+            <p className="text-sm font-bold text-slate-700">{data?.anoLetivo || '—'}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Série/Ano</p>
+            <p className="text-sm font-bold text-slate-700">{data?.serieAno || '—'}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Turno</p>
+            <p className="text-sm font-bold text-slate-700">{data?.turno || '—'}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data da Matrícula</p>
+            <p className="text-sm font-bold text-slate-700">{data?.dataMatricula || '—'}</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor da Matrícula</p>
+            <p className="text-sm font-bold text-teal-600">
+              {data?.valorMatricula ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.valorMatricula) : '—'}
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-8 pt-4 border-t border-slate-200">
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
@@ -202,10 +229,10 @@ export const TransferenciaContent = ({ data }: { data: any }) => {
           provisória estrita para fins de matrícula em nossa instituição destino.
         </p>
       </div>
-      
+
       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Interno de Documentação</p>
-         <p className="text-sm font-bold text-slate-700">Aguardando emissão do dossiê final</p>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Interno de Documentação</p>
+        <p className="text-sm font-bold text-slate-700">Aguardando emissão do dossiê final</p>
       </div>
     </div>
   );
@@ -254,7 +281,7 @@ export const SaidaAntecipadaContent = ({ data }: { data: any }) => {
     <div className="space-y-6">
       <div className="px-4">
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          Na qualidade de responsável legal, autorizo a saída antecipada do(a) aluno(a) <span className="font-bold text-slate-800">{data?.nome || '[NOME]'}</span>, 
+          Na qualidade de responsável legal, autorizo a saída antecipada do(a) aluno(a) <span className="font-bold text-slate-800">{data?.nome || '[NOME]'}</span>,
           antes do término regulamentar do turno <span className="font-bold text-slate-800">{data?.turno || '[TURNO]'}</span>, exclusivamente quando acompanhado pelas pessoas formalmente listadas abaixo.
         </p>
       </div>
@@ -291,12 +318,12 @@ export const TermoImagemContent = ({ data }: { data: any }) => {
     <div className="space-y-6">
       <div className="px-4">
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          Pelo presente instrumento, eu, responsável legal pelo aluno(a) <span className="font-bold text-violet-700">{data?.nome || '[NOME]'}</span>, 
-          AUTORIZO o uso de sua imagem, voz e nome em peças promocionais, redes sociais, site institucional, murais e materiais impressos 
+          Pelo presente instrumento, eu, responsável legal pelo aluno(a) <span className="font-bold text-violet-700">{data?.nome || '[NOME]'}</span>,
+          AUTORIZO o uso de sua imagem, voz e nome em peças promocionais, redes sociais, site institucional, murais e materiais impressos
           destinados à divulgação de atividades pedagógicas, culturais e recreativas da escola.
         </p>
         <p className="text-sm text-slate-600 leading-relaxed text-justify mt-4">
-          Esta autorização é concedida a título gratuito, em caráter definitivo e irrevogável, não requerendo em nenhuma 
+          Esta autorização é concedida a título gratuito, em caráter definitivo e irrevogável, não requerendo em nenhuma
           hipótese qualquer compensação financeira ou notificação prévia por parte da instituição de ensino.
         </p>
       </div>
@@ -346,7 +373,7 @@ export const FichaSaudeContent = ({ data }: { data: any }) => {
 
       <div className="px-4 border-l-4 border-slate-200">
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          Em caso de emergência ou mal súbito, a escola fica expressamente autorizada a encaminhar o aluno ao 
+          Em caso de emergência ou mal súbito, a escola fica expressamente autorizada a encaminhar o aluno ao
           pronto-socorro/unidade de saúde mais próxima ou acionar serviço de urgência, comprometendo-se a informar imediatamente a família.
         </p>
       </div>
@@ -362,16 +389,16 @@ export const TermoMaterialContent = ({ data }: { data: any }) => {
     <div className="space-y-6">
       <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
         <h3 className="text-lg font-black tracking-tighter text-slate-800 mb-4">Termo Patrimonial e Guarda de Materiais</h3>
-        
+
         <p className="text-sm text-slate-600 leading-relaxed text-justify mb-4">
           Declaro ter recebido a lista oficial de materiais da série correspondente para o aluno(a) <span className="font-bold text-slate-800">{data?.nome || '[NOME]'}</span>.
           Reconheço que é de minha responsabilidade providenciar e repor ao longo do ano os itens de uso individual.
         </p>
 
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          <span className="font-bold text-slate-700">Cláusula de Isenção:</span> Fico ciente e de acordo que a instituição de ensino 
-          NÃO assume qualquer responsabilidade corporativa por perdas, furtos ou danos a itens de valor, joias, celulares, 
-          tablets ou outros equipamentos eletrônicos de qualquer espécie que o aluno traga consigo para as dependências da escola 
+          <span className="font-bold text-slate-700">Cláusula de Isenção:</span> Fico ciente e de acordo que a instituição de ensino
+          NÃO assume qualquer responsabilidade corporativa por perdas, furtos ou danos a itens de valor, joias, celulares,
+          tablets ou outros equipamentos eletrônicos de qualquer espécie que o aluno traga consigo para as dependências da escola
           sem requisição formal prévia do corpo docente.
         </p>
       </div>

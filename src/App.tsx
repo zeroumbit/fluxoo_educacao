@@ -23,7 +23,7 @@ import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
 
 import { LivrosPage } from '@/modules/livros/pages/LivrosPage'
 import { FuncionariosPage } from '@/modules/funcionarios/pages/FuncionariosPage'
-import { MatriculaPage } from '@/modules/academico/pages/MatriculaPage'
+import MatriculaPage from '@/modules/academico/pages/MatriculaPage'
 import { PlanoAulaPage } from '@/modules/academico/pages/PlanoAulaPage'
 import { AtividadesPage } from '@/modules/academico/pages/AtividadesPage'
 import { NotasPage } from '@/modules/academico/pages/NotasPage'

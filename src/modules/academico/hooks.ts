@@ -12,31 +12,31 @@ export function useCriarMatricula() {
 }
 export function useAtualizarMatricula() {
   const qc = useQueryClient()
-  return useMutation({ 
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, data), 
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) 
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] })
   })
 }
 export function useExcluirMatricula() {
   const qc = useQueryClient()
-  return useMutation({ 
-    mutationFn: (id: string) => academicoService.excluirMatricula(id), 
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) 
+  return useMutation({
+    mutationFn: (id: string) => academicoService.excluirMatricula(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] })
   })
 }
 export function useMatriculasAtivas() {
   const { authUser } = useAuth()
-  return useQuery({ 
-    queryKey: ['matriculas_ativas', authUser?.tenantId], 
-    queryFn: () => academicoService.listarMatriculasAtivasPorAluno(authUser!.tenantId), 
-    enabled: !!authUser?.tenantId 
+  return useQuery({
+    queryKey: ['matriculas_ativas', authUser?.tenantId],
+    queryFn: () => academicoService.listarMatriculasAtivasPorAluno(authUser!.tenantId),
+    enabled: !!authUser?.tenantId
   })
 }
 export function useVerificarMatricula(alunoId: string) {
   const { authUser } = useAuth()
-  return useQuery({ 
-    queryKey: ['matricula_ativa', alunoId, authUser?.tenantId], 
-    queryFn: () => academicoService.verificarMatriculaAtiva(alunoId, authUser!.tenantId), 
+  return useQuery({
+    queryKey: ['matricula_ativa', alunoId, authUser?.tenantId],
+    queryFn: () => academicoService.verificarMatriculaAtiva(alunoId, authUser!.tenantId),
     enabled: !!authUser?.tenantId && !!alunoId,
     staleTime: 1000 * 60 * 5, // 5 minutos
   })
@@ -89,6 +89,7 @@ export function useMatriculaAtivaDoAluno(alunoId: string) {
   return useQuery({
     queryKey: ['matricula_ativa_detalhe', alunoId, authUser?.tenantId],
     queryFn: () => academicoService.buscarMatriculaAtiva(alunoId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!alunoId,
   })
 }
 
@@ -104,7 +105,7 @@ export function useBoletinsPorTurma(turmaId: string, anoLetivo: number, bimestre
 export function useUpsertNota() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ boletimBase, disciplina, nota, faltas, observacoes }: any) => 
+    mutationFn: ({ boletimBase, disciplina, nota, faltas, observacoes }: any) =>
       academicoService.upsertNota(boletimBase, disciplina, nota, faltas, observacoes),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['boletins_turma'] })

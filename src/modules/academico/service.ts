@@ -30,25 +30,34 @@ export const academicoService = {
     if (error) throw error
   },
   async verificarMatriculaAtiva(alunoId: string, tenantId: string) {
-    const { data } = await (supabase.from('matriculas' as any) as any)
-      .select('id')
-      .eq('aluno_id', alunoId)
-      .eq('tenant_id', tenantId)
-      .eq('status', 'ativa')
-      .maybeSingle()
-    return data !== null
+    if (!tenantId || !alunoId) return false
+    try {
+      const { data } = await (supabase.from('matriculas' as any) as any)
+        .select('id')
+        .eq('aluno_id', alunoId)
+        .eq('tenant_id', tenantId)
+        .eq('status', 'ativa')
+        .maybeSingle()
+      return data !== null
+    } catch {
+      return false
+    }
   },
   async buscarMatriculaAtiva(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('matriculas' as any) as any)
-      .select('*')
-      .eq('aluno_id', alunoId)
-      .eq('tenant_id', tenantId)
-      .eq('status', 'ativa')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (error) throw error
-    return data
+    if (!tenantId || !alunoId) return null
+    try {
+      const { data, error } = await (supabase.from('matriculas' as any) as any)
+        .select('id, ano_letivo, serie_ano, turno, valor_matricula, status, data_matricula')
+        .eq('aluno_id', alunoId)
+        .eq('tenant_id', tenantId)
+        .eq('status', 'ativa')
+        .maybeSingle()
+      if (error) throw error
+      return data
+    } catch (e) {
+      console.error('❌ Erro em buscarMatriculaAtiva:', e)
+      return null
+    }
   },
   async listarMatriculasAtivasPorAluno(tenantId: string) {
     const { data, error } = await (supabase.from('matriculas' as any) as any)
@@ -69,7 +78,7 @@ export const academicoService = {
   },
   async criarPlanoAula(planoComTurmas: any) {
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
-    
+
     // 1. Criar o plano de aula
     const { data: plano, error: planoError } = await (supabase.from('planos_aula' as any) as any)
       .insert(planoData)
@@ -87,7 +96,7 @@ export const academicoService = {
       }))
       const { error: batchError } = await (supabase.from('planos_aula_turmas' as any) as any)
         .insert(records)
-      
+
       if (batchError) {
         console.error('❌ [academicoService] Erro ao vincular turmas:', batchError)
         // Opcionalmente: deletar o plano de aula se falhar no vínculo? 
@@ -145,7 +154,7 @@ export const academicoService = {
   },
   async criarAtividade(atividadeComTurmas: any) {
     const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
-    
+
     // 1. Criar a atividade
     const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
       .insert(atividadeData)
@@ -163,7 +172,7 @@ export const academicoService = {
       }))
       const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
         .insert(records)
-      
+
       if (batchError) {
         console.error('❌ [academicoService] Erro ao vincular turmas na atividade:', batchError)
       }
@@ -217,14 +226,14 @@ export const academicoService = {
       .eq('turma_id', turmaId)
       .eq('ano_letivo', anoLetivo)
       .eq('bimestre', bimestre)
-    
+
     if (error) throw error
     return (data as any[]) || []
   },
 
   async salvarBoletim(boletim: any) {
     const { id, ...data } = boletim
-    
+
     if (id) {
       const { error } = await (supabase.from('boletins' as any) as any)
         .update(data)
