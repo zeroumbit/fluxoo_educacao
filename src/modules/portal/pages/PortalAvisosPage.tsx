@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useAvisosPortal } from '../hooks'
 import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Megaphone, BellRing } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Loader2, Megaphone, BellRing, ChevronDown, ChevronUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { SeletorAluno } from '../components/SeletorAluno'
@@ -10,6 +12,7 @@ import { SeletorAluno } from '../components/SeletorAluno'
 export function PortalAvisosPage() {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (isLoading) {
     return (
@@ -40,6 +43,7 @@ export function PortalAvisosPage() {
         <div className="space-y-4">
           {avisos.map((aviso) => {
             const isGeral = !(aviso as any).turma_id
+            const isExpanded = expandedId === aviso.id
             return (
               <Card key={aviso.id} className="border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all bg-white overflow-hidden">
                 <CardContent className="p-0">
@@ -58,13 +62,31 @@ export function PortalAvisosPage() {
                             {isGeral ? 'Comunicado Geral' : `Turma: ${(aviso as any).turma?.nome}`}
                           </Badge>
                         </div>
-                        <p className="text-[#64748B] text-sm whitespace-pre-wrap leading-relaxed">
+                        <p className={`text-[#64748B] text-sm whitespace-pre-wrap leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}>
                           {aviso.conteudo}
                         </p>
                         <div className="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                           <span className="flex items-center gap-1.5">
                              Publicado em {format(new Date(aviso.created_at), "dd 'de' MMMM", { locale: ptBR })} às {format(new Date(aviso.created_at), "HH:mm")}
                           </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedId(isExpanded ? null : aviso.id)}
+                            className="text-[#14B8A6] font-bold text-xs hover:bg-[#F0FDFA] rounded-full gap-1 h-7 px-3"
+                          >
+                            {isExpanded ? (
+                              <>
+                                Ver menos
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              </>
+                            ) : (
+                              <>
+                                Ver mais
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </div>

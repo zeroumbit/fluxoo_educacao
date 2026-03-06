@@ -48,6 +48,32 @@
   }
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #plano-aula-print, #plano-aula-print * {
+    visibility: visible;
+  }
+  #plano-aula-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+    box-shadow: none;
+    max-height: none;
+    overflow: visible;
+  }
+  #plano-aula-print button,
+  #plano-aula-print a,
+  #plano-aula-print [role="button"] {
+    display: none !important;
+  }
+}
+
 .dark {
   --color-background: hsl(240 10% 3.9%);
   --color-foreground: hsl(0 0% 98%);

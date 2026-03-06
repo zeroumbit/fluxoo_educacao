@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, BookOpen, Trash2, Calendar, Clock, Pencil } from 'lucide-react'
+import { Plus, Loader2, BookOpen, Trash2, Calendar, Clock, Pencil, Eye, Printer } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const schema = z.object({
@@ -42,6 +42,8 @@ export function PlanoAulaPage() {
 
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [viewingPlano, setViewingPlano] = useState<any | null>(null)
+  const [viewOpen, setViewOpen] = useState(false)
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -103,6 +105,15 @@ export function PlanoAulaPage() {
       }))
     })
     setOpen(true)
+  }
+
+  const handleView = (plano: any) => {
+    setViewingPlano(plano)
+    setViewOpen(true)
+  }
+
+  const handlePrint = () => {
+    window.print()
   }
 
   const handleDelete = async (id: string) => {
@@ -307,6 +318,9 @@ export function PlanoAulaPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleView(p)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50" onClick={() => handleEdit(p)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -334,6 +348,97 @@ export function PlanoAulaPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog de Visualização de Detalhes */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent id="plano-aula-print" className="max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-indigo-600" />
+                Detalhes do Plano de Aula
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                className="flex items-center gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+              >
+                <Printer className="h-4 w-4" />
+                Imprimir
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {viewingPlano && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Disciplina</p>
+                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100">
+                    {viewingPlano.disciplina}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Data da Aula</p>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Calendar className="h-4 w-4 text-indigo-500" />
+                    {new Date(viewingPlano.data_aula).toLocaleDateString('pt-BR')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Turma(s) Vinculada(s)</p>
+                <div className="flex flex-wrap gap-2">
+                  {(viewingPlano.planos_aula_turmas || []).map((v: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-semibold text-indigo-700 shadow-sm">
+                      <span className="truncate max-w-[120px]">{v.turma?.nome || 'Turma'}</span>
+                      <span className="h-1 w-1 bg-indigo-300 rounded-full" />
+                      <span className="text-indigo-500 font-medium">{formatTurno(v.turno)}</span>
+                      {v.horario && (
+                        <span className="text-[10px] text-indigo-400 bg-white px-1 rounded flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" />
+                          {v.horario}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {viewingPlano.conteudo_previsto && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Conteúdo Previsto</p>
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{viewingPlano.conteudo_previsto}</p>
+                  </div>
+                </div>
+              )}
+
+              {viewingPlano.conteudo_realizado && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <span className="h-2 w-2 bg-emerald-500 rounded-full" />
+                    Conteúdo Realizado
+                  </p>
+                  <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <p className="text-sm text-emerald-800 whitespace-pre-wrap">{viewingPlano.conteudo_realizado}</p>
+                  </div>
+                </div>
+              )}
+
+              {viewingPlano.observacoes && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Observações</p>
+                  <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                    <p className="text-sm text-amber-800 whitespace-pre-wrap">{viewingPlano.observacoes}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

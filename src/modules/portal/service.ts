@@ -173,20 +173,20 @@ export const portalService = {
         .eq('tenant_id', tenantId)
         .in('status', ['a_vencer', 'atrasado'])
       ,
-      // Avisos recentes (3 últimos)
-      (() => {
-        let q = (supabase.from('mural_avisos' as any) as any)
-          .select('id, titulo, created_at')
-          .eq('tenant_id', tenantId)
-          .order('created_at', { ascending: false })
-          .limit(3)
-        if (turmaId) {
-          q = q.or(`publico_alvo.eq.todos,turma_id.eq.${turmaId}`)
-        } else {
-          q = q.eq('publico_alvo', 'todos')
-        }
-        return q
-      })(),
+      // Avisos recentes
+      (supabase.from('mural_avisos' as any) as any)
+        .select(`
+          id, 
+          titulo, 
+          conteudo, 
+          created_at, 
+          turma_id,
+          publico_alvo,
+          turma:turmas(nome)
+        `)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ])
 
     const frequencias = (frequenciaRes.data as any[]) || []
@@ -202,6 +202,13 @@ export const portalService = {
     const totalPendente = cobrancas.reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
     const totalAtrasadas = cobrancas.filter((c: any) => c.status === 'atrasado').length
 
+    let todosAvisos = (avisosRes.data as any[]) || []
+    todosAvisos = todosAvisos.filter((a: any) => {
+      if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') return true
+      if (turmaId && a.turma_id === turmaId) return true
+      return false
+    })
+
     return {
       frequencia: {
         totalPresencas,
@@ -215,7 +222,7 @@ export const portalService = {
         totalAtrasadas,
         totalCobrancas: cobrancas.length,
       },
-      avisosRecentes: (avisosRes.data as any[]) || [],
+      avisosRecentes: todosAvisos.slice(0, 3)
     }
   },
 
@@ -242,20 +249,20 @@ export const portalService = {
   // AVISOS
   // ==========================================
   async buscarAvisosPorTurma(tenantId: string, turmaId?: string | null) {
-    let query = (supabase.from('mural_avisos' as any) as any)
+    const { data, error } = await (supabase.from('mural_avisos' as any) as any)
       .select('*, turma:turmas(nome)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
+      .limit(100)
 
-    if (turmaId) {
-      query = query.or(`publico_alvo.eq.todos,turma_id.eq.${turmaId}`)
-    } else {
-      query = query.eq('publico_alvo', 'todos')
-    }
-
-    const { data, error } = await query.limit(50)
     if (error) throw error
-    return (data as any[]) || []
+
+    const avisos = (data as any[]) || []
+    return avisos.filter(a => {
+      if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') return true
+      if (turmaId && a.turma_id === turmaId) return true
+      return false
+    })
   },
 
   // ==========================================

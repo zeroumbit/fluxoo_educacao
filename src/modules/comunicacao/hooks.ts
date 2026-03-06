@@ -37,6 +37,7 @@ export function useCriarAviso() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })
 }
@@ -48,6 +49,7 @@ export function useExcluirAviso() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })
 }
@@ -60,6 +62,7 @@ export function useEditarAviso() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })
 }

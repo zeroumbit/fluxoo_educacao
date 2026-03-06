@@ -14,9 +14,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, GraduationCap, CheckCircle, Upload, X, Image as ImageIcon } from 'lucide-react'
+import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, GraduationCap, CheckCircle, Upload, X, Image as ImageIcon, FolderOpen } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { livrosService } from '../service'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const livroSchema = z.object({
   titulo: z.string().min(2, 'Título é obrigatório'),
@@ -188,6 +189,32 @@ export function LivrosPage() {
     }
   }
 
+  // Agrupar livros por turmas
+  const livrosPorTurma = (() => {
+    if (!livros || !turmas) return new Map<string, any[]>()
+    
+    const mapa = new Map<string, any[]>()
+    
+    // Inicializa todas as turmas (mesmo sem livros)
+    turmas.forEach(turma => {
+      mapa.set(turma.id, [])
+    })
+    
+    // Distribui livros pelas turmas
+    ;(livros as any[]).forEach(livro => {
+      const turmasDoLivro = livro.livros_turmas || []
+      turmasDoLivro.forEach((lt: any) => {
+        const turmaId = lt.turma_id
+        if (!mapa.has(turmaId)) {
+          mapa.set(turmaId, [])
+        }
+        mapa.get(turmaId)!.push(livro)
+      })
+    })
+    
+    return mapa
+  })()
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -264,7 +291,8 @@ export function LivrosPage() {
                            <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent>
-                           {disciplinas?.map(d => (
+                           <SelectItem value="paradidatico">Paradidático</SelectItem>
+                           {disciplinas && Array.isArray(disciplinas) && disciplinas.map((d: any) => (
                               <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                            ))}
                         </SelectContent>
@@ -388,73 +416,127 @@ export function LivrosPage() {
               <Button onClick={handleOpenNew} className="rounded-full">Adicionar Primeiro Livro</Button>
            </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(livros as any[]).map((livro: any) => (
-              <Card key={livro.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
-                <div className="relative aspect-[16/10] bg-slate-100 flex items-center justify-center overflow-hidden border-b border-slate-100">
-                  {livro.capa_url ? (
-                    <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                  ) : (
-                    <div className="flex flex-col items-center text-slate-300">
-                       <ImageIcon className="w-12 h-12 mb-1" />
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sem Capa</span>
+      ) : turmas && Array.isArray(turmas) && turmas.length > 0 ? (
+        <Tabs defaultValue={(turmas[0] as any)?.id} className="space-y-4">
+          <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-slate-100/50 gap-1">
+            {turmas && Array.isArray(turmas) && turmas.map((turma: any) => {
+              const livrosCount = livrosPorTurma.get(turma.id)?.length || 0
+              return (
+                <TabsTrigger
+                  key={turma.id}
+                  value={turma.id}
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  <GraduationCap className="h-4 w-4" />
+                  {turma.nome}
+                  <Badge variant={livrosCount > 0 ? "default" : "secondary"} className="h-5 text-[10px]">
+                    {livrosCount}
+                  </Badge>
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+
+          {turmas && Array.isArray(turmas) && turmas.map((turma: any) => (
+            <TabsContent key={turma.id} value={turma.id} className="space-y-4">
+              {!livrosPorTurma.get(turma.id)?.length ? (
+                <Card className="border-dashed bg-slate-50/50 shadow-none border-slate-200">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 border border-slate-200">
+                      <FolderOpen className="h-8 w-8 text-slate-300" />
                     </div>
-                  )}
-                  <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-                    <Badge variant="secondary" className="bg-white/90 backdrop-blur shadow-sm text-indigo-700 font-bold text-[9px] uppercase tracking-wider py-0.5 px-2 border-none">
-                        {livro.disciplina?.nome || 'Geral'}
-                    </Badge>
-                  </div>
-                </div>
-
-                <CardHeader className="p-5 pb-3">
-                  <div className="flex justify-between items-start gap-3">
-                     <div className="flex-1 min-w-0">
-                        <CardTitle className="leading-tight text-lg line-clamp-1" title={livro.titulo}>{livro.titulo}</CardTitle>
-                        <CardDescription className="font-medium mt-0.5 line-clamp-1">Autor: {livro.autor}</CardDescription>
-                     </div>
-                     <div className="flex gap-1 shrink-0 bg-white shadow-sm p-1 rounded-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => handleEditar(livro)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => {
-                           if(window.confirm('Tem certeza?')) excluirLivro.mutate(livro.id)
-                        }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-5 pt-0">
-                   <div className="space-y-4">
-                      <div className="text-sm text-slate-600 mb-2">
-                        <p><span className="font-semibold text-slate-800">Editora:</span> {livro.editora}</p>
-                        {livro.isbn && <p><span className="font-semibold text-slate-800">ISBN:</span> {livro.isbn}</p>}
-                        <p><span className="font-semibold text-slate-800">Status exigido:</span> {livro.estado || 'Novo'}</p>
+                    <h3 className="text-lg font-bold text-slate-700">Nenhum livro para esta turma</h3>
+                    <p className="text-slate-500 mt-2 mb-4 max-w-md">
+                      Adicione livros vinculados a esta turma para que apareçam aqui.
+                    </p>
+                    <Button onClick={handleOpenNew} size="sm" className="rounded-full">Adicionar Livro</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {livrosPorTurma.get(turma.id)?.map((livro: any) => (
+                    <Card key={livro.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+                      <div className="relative aspect-[3/4] bg-slate-100 flex items-center justify-center overflow-hidden border-b border-slate-100">
+                        {livro.capa_url ? (
+                          <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        ) : (
+                          <div className="flex flex-col items-center text-slate-300">
+                            <ImageIcon className="w-12 h-12 mb-1" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sem Capa</span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="bg-white/90 backdrop-blur shadow-sm text-indigo-700 font-bold text-[9px] uppercase tracking-wider py-0.5 px-2 border-none">
+                            {livro.disciplina?.nome || 'Geral'}
+                          </Badge>
+                        </div>
                       </div>
 
-                      <div>
-                         <p className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2 flex items-center gap-1">
-                           <GraduationCap className="h-3 w-3" /> Turmas Vinculadas ({livro.turmas?.length || 0})
-                         </p>
-                         <div className="flex flex-wrap gap-1.5">
-                            {livro.turmas?.map((t: any) => {
-                               // Precisamos do nome da turma, como livros_turmas retorna ID, faremos lookup
-                               const turmaReal = turmas?.find(tr => tr.id === t.id)
-                               return (
+                      <CardHeader className="p-5 pb-3">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="leading-tight text-lg line-clamp-1" title={livro.titulo}>{livro.titulo}</CardTitle>
+                            <CardDescription className="font-medium mt-0.5 line-clamp-1">Autor: {livro.autor}</CardDescription>
+                          </div>
+                          <div className="flex gap-1 shrink-0 bg-white shadow-sm p-1 rounded-lg border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => handleEditar(livro)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => {
+                              if(window.confirm('Tem certeza?')) excluirLivro.mutate(livro.id)
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-5 pt-0">
+                        <div className="space-y-4">
+                          <div className="text-sm text-slate-600 mb-2">
+                            <p><span className="font-semibold text-slate-800">Editora:</span> {livro.editora}</p>
+                            {livro.isbn && <p><span className="font-semibold text-slate-800">ISBN:</span> {livro.isbn}</p>}
+                            <p><span className="font-semibold text-slate-800">Status exigido:</span> {livro.estado || 'Novo'}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2 flex items-center gap-1">
+                              <GraduationCap className="h-3 w-3" /> Outras Turmas ({livro.turmas?.length || 0})
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {livro.turmas?.filter((t: any) => t.id !== turma.id).map((t: any) => {
+                                const turmaReal = turmas.find(tr => tr.id === t.id)
+                                return (
                                   <Badge key={t.id} variant="outline" className="text-[10px] bg-slate-50">
-                                    {turmaReal?.nome || 'Turma Oculta'}
+                                    {turmaReal?.nome || 'Turma'}
                                   </Badge>
-                               )
-                            })}
-                         </div>
-                      </div>
-                   </div>
-                </CardContent>
-             </Card>
+                                )
+                              })}
+                              {(!livro.turmas || livro.turmas.length <= 1) && (
+                                <span className="text-[10px] text-slate-400 italic">Apenas esta turma</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
+      ) : (
+        <Card className="border-dashed bg-slate-50/50 shadow-none border-slate-200">
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 border border-slate-200">
+              <GraduationCap className="h-10 w-10 text-slate-300" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 tracking-tight">Nenhuma turma cadastrada</h3>
+            <p className="text-slate-500 mt-2 mb-6 max-w-sm">
+              Cadastre turmas primeiro para poder vincular os livros.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Modal Independente para Nova Disciplina */}

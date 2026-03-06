@@ -65,6 +65,7 @@ export function useAvisosPortal() {
     queryKey: ['portal', 'avisos', tenantId, turmaId],
     queryFn: () => portalService.buscarAvisosPorTurma(tenantId!, turmaId),
     enabled: !!tenantId,
+    refetchInterval: 10 * 60 * 1000 // Atualizar a cada 10 min se a página ficar aberta
   })
 }
 

@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,14 +22,17 @@ export function FilaVirtualAdminPage() {
         .from('fila_virtual')
         .select(`
           *,
-          alunos (nome_completo),
-          responsaveis (nome_completo)
+          alunos(nome_completo),
+          responsaveis(nome)
         `)
         .eq('tenant_id', authUser!.tenantId)
         .gte('created_at', `${hoje}T00:00:00.000Z`)
         .order('created_at', { ascending: true }) // Quem chegou antes, aparece primeiro
       
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao buscar fila virtual:', error)
+        throw error
+      }
       return data || []
     },
     enabled: !!authUser?.tenantId,
@@ -41,7 +45,7 @@ export function FilaVirtualAdminPage() {
       const { error } = await (supabase.from('fila_virtual' as any) as any)
         .update({ 
           status: 'atendido', 
-          data_atendimento: new Date().toISOString() 
+          updated_at: new Date().toISOString() 
         } as any)
         .eq('id', id)
       if (error) throw error
@@ -53,32 +57,26 @@ export function FilaVirtualAdminPage() {
     }
   })
 
-  // Consulta Inteligência de Tempo Médio (Zero Cost)
-  const { data: tempoMedioData } = useQuery({
-    queryKey: ['fila_tempo_medio', authUser?.tenantId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vw_fila_tempo_medio')
-        .select('*')
-        .eq('tenant_id', authUser!.tenantId)
-        .maybeSingle()
-      
-      if (error) {
-        console.warn('View vw_fila_tempo_medio não encontrada ou com erro', error)
-        return null
-      }
-      return data
-    },
-    enabled: !!authUser?.tenantId
-  })
+  // Cálculo de Tempo Médio Cliente-Side (Zero Cost)
+  // Substitui a dependência da view vw_fila_tempo_medio que pode não existir no banco
+  const aguardando = (filaData as any[])?.filter((f: any) => f.status === 'aguardando') || []
+  const concluidos = (filaData as any[])?.filter((f: any) => f.status === 'atendido') || []
+  
+  const minMedio = React.useMemo(() => {
+    if (!concluidos || concluidos.length === 0) return null
+    const tempos = concluidos.map((f: any) => {
+      const chegada = new Date(f.created_at).getTime()
+      const saida = new Date(f.updated_at || f.created_at).getTime()
+      return (saida - chegada) / 60000
+    }).filter(t => t > 0)
+    
+    if (tempos.length === 0) return null
+    return Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length)
+  }, [concluidos])
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
   }
-
-  const aguardando = (filaData as any[])?.filter((f: any) => f.status === 'aguardando') || []
-  const concluidos = (filaData as any[])?.filter((f: any) => f.status === 'atendido') || []
-  const minMedio = (tempoMedioData as any)?.tempo_medio_minutos ? Math.round(Number((tempoMedioData as any).tempo_medio_minutos)) : null
 
   return (
     <div className="space-y-6">
@@ -122,7 +120,7 @@ export function FilaVirtualAdminPage() {
                         </div>
                         <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
                           <span className="flex items-center gap-1.5 bg-zinc-100 px-2.5 py-1 rounded-md">
-                            <UserCheck className="h-4 w-4" /> Resp: {(registro.responsaveis as any)?.nome_completo || 'N/A'}
+                            <UserCheck className="h-4 w-4" /> Resp: {(registro.responsaveis as any)?.nome || 'N/A'}
                           </span>
                           <span className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">
                             <Clock className="h-4 w-4" /> Chegou às {format(new Date(registro.created_at), "HH:mm")}
@@ -167,7 +165,7 @@ export function FilaVirtualAdminPage() {
                 <div className="divide-y divide-zinc-100">
                   {concluidos.map((registro: any) => {
                     const chegada = new Date(registro.created_at).getTime()
-                    const saida = new Date(registro.data_atendimento).getTime()
+                    const saida = new Date(registro.updated_at || registro.created_at).getTime()
                     const minsEspera = Math.round((saida - chegada) / 60000)
 
                     return (
@@ -177,7 +175,7 @@ export function FilaVirtualAdminPage() {
                             {(registro.alunos as any)?.nome_completo || 'Aluno'}
                           </p>
                           <p className="text-xs text-muted-foreground flex gap-2 mt-0.5">
-                            <span>Saiu {format(new Date(registro.data_atendimento), 'HH:mm')}</span>
+                            <span>Saiu {format(new Date(registro.updated_at || registro.created_at), 'HH:mm')}</span>
                           </p>
                         </div>
                         <Badge 
