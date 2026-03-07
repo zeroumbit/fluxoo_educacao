@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, Wallet, Edit2, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Loader2, Wallet, Edit2, Trash2, AlertTriangle, Check } from 'lucide-react'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -32,8 +32,10 @@ export function ContasPagarPage() {
   const [open, setOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [payOpen, setPayOpen] = useState(false)
   const [contaParaEditar, setContaParaEditar] = useState<any | null>(null)
   const [contaParaDeletar, setContaParaDeletar] = useState<any | null>(null)
+  const [contaParaPagar, setContaParaPagar] = useState<any | null>(null)
   const [recorrente, setRecorrente] = useState(false)
   const form = useForm({ resolver: zodResolver(schema) })
 
@@ -74,6 +76,19 @@ export function ContasPagarPage() {
       setDeleteOpen(false)
       setContaParaDeletar(null)
     } catch { toast.error('Erro ao excluir') }
+  }
+
+  const confirmarPagamento = async () => {
+    if (!contaParaPagar) return
+    try {
+      await atualizar.mutateAsync({ 
+        id: contaParaPagar.id, 
+        updates: { status: 'pago' } 
+      })
+      toast.success('Pagamento registrado com sucesso!')
+      setPayOpen(false)
+      setContaParaPagar(null)
+    } catch { toast.error('Erro ao registrar pagamento') }
   }
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
@@ -117,6 +132,26 @@ export function ContasPagarPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Confirmação de Pagamento */}
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <Check className="h-5 w-5" />
+              Confirmar Pagamento
+            </DialogTitle>
+            <DialogDescription>
+              Você confirma que o pagamento da conta <strong>{contaParaPagar?.nome}</strong> foi realizado?
+              Esta ação atualizará o status para pago e impactará o saldo da dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayOpen(false)}>Cancelar</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={confirmarPagamento}>Confirmar Pagamento</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog de Confirmação de Exclusão */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
@@ -149,6 +184,17 @@ export function ContasPagarPage() {
                 <TableCell><Badge className={c.status === 'pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}>{c.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex gap-1">
+                    {c.status !== 'pago' && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-emerald-600 hover:bg-emerald-50" 
+                        onClick={() => { setContaParaPagar(c); setPayOpen(true) }}
+                        title="Marcar como Pago"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(c)}>
                       <Edit2 className="h-4 w-4" />
                     </Button>

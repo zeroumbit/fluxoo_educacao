@@ -7,6 +7,7 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import {
   useFuncionarios,
   useCriarFuncionario,
+  useAtualizarFuncionario,
   useExcluirFuncionario,
   useCriarUsuarioEscola,
   useFuncoes,
@@ -188,6 +189,7 @@ export function FuncionariosPage() {
   const { data: funcionarios, isLoading } = useFuncionarios()
   const { data: funcoesCatalogo = [] } = useFuncoes()
   const criar = useCriarFuncionario()
+  const atualizar = useAtualizarFuncionario()
   const excluir = useExcluirFuncionario()
   const criarUsuario = useCriarUsuarioEscola()
   const gerarFolha = useGerarFolhaPagamento()
@@ -196,6 +198,7 @@ export function FuncionariosPage() {
   const [userDialogOpen, setUserDialogOpen] = useState(false)
   const [folhaDialogOpen, setFolhaDialogOpen] = useState(false)
   const [selectedFunc, setSelectedFunc] = useState<any>(null)
+  const [editFunc, setEditFunc] = useState<any>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [salarioInput, setSalarioInput] = useState('')
 
@@ -224,27 +227,60 @@ export function FuncionariosPage() {
   }
 
   const abrirNovoFuncionario = () => {
+    setEditFunc(null)
     setSalarioInput('')
     funcForm.reset({ nome_completo: '', como_chamado: '', funcoes: [], salario_bruto: undefined, dia_pagamento: undefined, data_admissao: '' })
+    setDialogOpen(true)
+  }
+
+  const handleEditar = (f: any) => {
+    setEditFunc(f)
+    setSalarioInput(f.salario_bruto ? f.salario_bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '')
+    
+    // Suporte a legado: se funcoes não existir, usa funcao (string única)
+    const funcoesVal = Array.isArray(f.funcoes) && f.funcoes.length > 0
+      ? f.funcoes
+      : f.funcao ? [f.funcao] : []
+
+    funcForm.reset({
+      nome_completo: f.nome_completo,
+      como_chamado: f.como_chamado || '',
+      funcoes: funcoesVal,
+      salario_bruto: f.salario_bruto,
+      dia_pagamento: f.dia_pagamento,
+      data_admissao: f.data_admissao || '',
+    })
     setDialogOpen(true)
   }
 
   const onSubmitFunc = async (data: any) => {
     if (!authUser) return
     try {
-      // funcao (legado) recebe a primeira função selecionada para compatibilidade
-      await criar.mutateAsync({
-        ...data,
-        funcao: data.funcoes[0] ?? '',
-        funcoes: data.funcoes,
-        tenant_id: authUser.tenantId,
-        status: 'ativo',
-      })
-      toast.success('Funcionário cadastrado!')
+      if (editFunc?.id) {
+        await atualizar.mutateAsync({
+          id: editFunc.id,
+          data: {
+            ...data,
+            funcao: data.funcoes[0] ?? '',
+            funcoes: data.funcoes,
+          }
+        })
+        toast.success('Funcionário atualizado!')
+      } else {
+        await criar.mutateAsync({
+          ...data,
+          funcao: data.funcoes[0] ?? '',
+          funcoes: data.funcoes,
+          tenant_id: authUser.tenantId,
+          status: 'ativo',
+        })
+        toast.success('Funcionário cadastrado!')
+      }
       funcForm.reset()
       setDialogOpen(false)
+      setEditFunc(null)
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao cadastrar')
+      toast.error(err.message || 'Erro ao processar')
     }
   }
 
@@ -370,8 +406,10 @@ export function FuncionariosPage() {
           </DialogTrigger>
           <DialogContent className="max-w-[800px]">
             <DialogHeader>
-              <DialogTitle>Cadastro de Funcionário</DialogTitle>
-              <DialogDescription>Preencha os dados do novo colaborador.</DialogDescription>
+              <DialogTitle>{editFunc ? 'Editar Funcionário' : 'Cadastro de Funcionário'}</DialogTitle>
+              <DialogDescription>
+                {editFunc ? 'Atualize os dados do colaborador.' : 'Preencha os dados do novo colaborador.'}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={funcForm.handleSubmit(onSubmitFunc)} className="space-y-4">
               {/* Nome + Apelido */}
@@ -447,7 +485,7 @@ export function FuncionariosPage() {
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button type="submit" disabled={funcForm.formState.isSubmitting}>
-                  {funcForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cadastrar'}
+                  {funcForm.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (editFunc ? 'Salvar Alterações' : 'Cadastrar')}
                 </Button>
               </div>
             </form>
@@ -576,15 +614,23 @@ export function FuncionariosPage() {
                             }
                           </TableCell>
                           <TableCell className="text-right space-x-1">
-                            {!f.user_id && f.status === 'ativo' && (
-                              <Button
+                            <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => { setSelectedFunc(f); setUserDialogOpen(true) }}
+                                className="border-indigo-200 hover:bg-indigo-50 text-indigo-700"
+                                onClick={() => handleEditar(f)}
                               >
-                                <UserPlus className="h-3.5 w-3.5 mr-1" /> Criar Acesso
+                                <Eye className="h-3.5 w-3.5 mr-1" /> Detalhes/Editar
                               </Button>
-                            )}
+                              {!f.user_id && f.status === 'ativo' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => { setSelectedFunc(f); setUserDialogOpen(true) }}
+                                >
+                                  <UserPlus className="h-3.5 w-3.5 mr-1" /> Criar Acesso
+                                </Button>
+                              )}
                             {f.status === 'ativo' && (
                               <Button
                                 size="sm"

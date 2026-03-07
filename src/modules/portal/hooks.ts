@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { portalService } from './service'
 import { usePortalContext } from './context'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { transferenciasService } from '@/modules/academico/transferencias.service'
 
 // ==========================================
 // RESPONSÁVEL
@@ -201,6 +202,33 @@ export function useTemplatesDocumento() {
     queryKey: ['portal', 'templates-documento', tenantId],
     queryFn: () => portalService.buscarTemplatesDocumento(tenantId!),
     enabled: !!tenantId,
+  })
+}
+
+// ==========================================
+// MOTOR DE TRANSFERÊNCIAS
+// ==========================================
+export function useTransferenciasPortal() {
+  const { data: vinculosRaw } = useVinculosAtivos()
+  const alunoIds = vinculosRaw?.map((v: any) => v.aluno_id) || []
+  
+  return useQuery({
+    queryKey: ['portal', 'transferencias', alunoIds],
+    queryFn: () => transferenciasService.listarPorResponsavel(alunoIds),
+    enabled: alunoIds.length > 0,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useResponderTransferencia() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, aprovado, motivoRecusa }: { id: string; aprovado: boolean; motivoRecusa?: string }) => 
+      transferenciasService.responderResponsavel(id, aprovado, motivoRecusa),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'transferencias'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    },
   })
 }
 

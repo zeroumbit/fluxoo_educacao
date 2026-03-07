@@ -24,6 +24,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   Loader2,
@@ -50,6 +51,7 @@ const matriculaSchema = z.object({
 const turnoLabels: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', integral: 'Integral', noturno: 'Noturno' }
 
 export default function MatriculaPage() {
+  const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data: matriculas, isLoading } = useMatriculas()
   const { data: alunos } = useAlunos()
@@ -93,7 +95,7 @@ export default function MatriculaPage() {
   }, [matriculaExistente, tipoSelecionado, form, isEditing])
 
   useEffect(() => {
-    if (tipoSelecionado === 'nova' && serieSelecionada && !isEditing) {
+    if (tipoSelecionado === 'nova' && serieSelecionada && turmas && !isEditing) {
       const turma = (turmas as any[])?.find(t => t.nome === serieSelecionada)
       if (turma) {
         // Mapeamento de turnos: matutino -> manha, vespertino -> tarde
@@ -363,6 +365,15 @@ export default function MatriculaPage() {
                   </TableCell>
                   <TableCell className="text-right pr-4">
                     <div className="flex items-center justify-end gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" 
+                        onClick={() => navigate(`/alunos/${m.aluno_id}`)}
+                        title="Ver Perfil do Aluno"
+                      >
+                        <User className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => handleEdit(m)}>
                         <Pencil className="h-4 w-4" />
                       </Button>

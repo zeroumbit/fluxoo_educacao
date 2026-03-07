@@ -22,8 +22,8 @@ export interface DashboardData {
   limiteAlunos: number
   statusAssinatura: string
   metodoPagamento: string
-  totalCobrancasAbertas: number
-  totalContasPagarAbertas: number
+  totalReceber: number
+  totalPagar: number
   avisosRecentes: AvisoRecente[]
   onboarding: {
     perfilCompleto: boolean
@@ -46,71 +46,47 @@ export const dashboardService = {
       turmasRes,
       radarRes,
       contasPagarRes,
+      salariosRes,
     ] = await Promise.all([
-      // Alunos ativos
-      supabase
-        .from('alunos')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('status', 'ativo'),
-
-      // Dados do plano/assinatura
-      supabase
-        .from('escolas')
-        .select('limite_alunos_contratado, status_assinatura, metodo_pagamento')
-        .eq('id', tenantId)
-        .maybeSingle(),
-
-      // Cobranças abertas (a_vencer + atrasado)
-      supabase
-        .from('cobrancas')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .in('status', ['a_vencer', 'atrasado']),
-
-      // Somente avisos dentro da vigência (data_fim nula ou >= hoje)
+      supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
+      supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
+      supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
       muralService.listarAtivos(tenantId, 6),
-
-      // Onboarding: perfil e filiais
-      supabase
-        .from('escolas')
-        .select('logradouro, cnpj')
-        .eq('id', tenantId)
-        .maybeSingle(),
-
-      supabase
-        .from('filiais')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId),
-
-      supabase
-        .from('turmas')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId),
-
-      // Radar de evasão (view com security_invoker)
-      (supabase.from('vw_radar_evasao' as any) as any)
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .limit(10)
-        .order('cobrancas_atrasadas', { ascending: false }),
-
-      // Contas a pagar em aberto
-      supabase
-        .from('contas_pagar' as any)
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .neq('status', 'pago'),
+      supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
+      supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false }),
+      (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago'),
+      supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0),
     ])
 
     if (!escolaRes.data) {
       if (escolaRes.error) throw escolaRes.error
-      throw new Error('Perfil da escola não encontrado. Verifique se o cadastro foi concluído.')
+      throw new Error('Perfil da escola não encontrado.')
     }
 
-    const escola = escolaRes.data as any
+    const escola = (escolaRes as any).data
+    const totalReceber = (cobrancasRes.data as any[])?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+    
+    // Lógica Financeira: Contas a Pagar + Folha Projetada
+    const contasPagarList = (contasPagarRes.data as any[]) || []
+    const totalContasPagar = contasPagarList.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+    
+    // Verifica se já existe folha para o mês atual nos registros de Contas a Pagar
+    const hoje = new Date()
+    const prefixoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+    const temFolhaGerada = contasPagarList.some(c => 
+      c.categoria === 'Folha de Pagamento' && 
+      (c.data_vencimento as string)?.startsWith(prefixoMes)
+    )
 
-    // Ordena radar: mais críticos primeiro (faltas + cobranças)
+    let totalPagar = totalContasPagar
+    if (!temFolhaGerada) {
+      // Se não há folha física, somamos o custo dos salários ativos para a dashboard refletir a realidade
+      const somaSalarios = (salariosRes.data as any[])?.reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0) || 0
+      totalPagar += somaSalarios
+    }
+
     const radarData: RadarAluno[] = ((radarRes as any)?.data || []).sort(
       (a: RadarAluno, b: RadarAluno) =>
         (b.cobrancas_atrasadas + b.faltas_consecutivas) -
@@ -122,8 +98,8 @@ export const dashboardService = {
       limiteAlunos: escola.limite_alunos_contratado || 0,
       statusAssinatura: escola.status_assinatura || 'pendente',
       metodoPagamento: escola.metodo_pagamento || 'pix',
-      totalCobrancasAbertas: cobrancasRes.count || 0,
-      totalContasPagarAbertas: contasPagarRes.count || 0,
+      totalReceber,
+      totalPagar,
       avisosRecentes: (avisosRes || []) as unknown as AvisoRecente[],
       onboarding: {
         perfilCompleto: !!(escolaInfoRes.data as any)?.logradouro,

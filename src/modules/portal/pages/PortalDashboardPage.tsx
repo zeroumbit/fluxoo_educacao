@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { usePortalContext } from '../context'
-import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento } from '../hooks'
+import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento, useTransferenciasPortal, useResponderTransferencia } from '../hooks'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
@@ -25,10 +25,16 @@ import {
   X,
   CheckCircle2,
   Package,
-  Star
+  Star,
+  ShieldAlert,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -142,8 +148,13 @@ export function PortalDashboardPage() {
   const { data: dashboard, isLoading } = useDashboardAluno()
   const { data: configPix } = useConfigPix()
   const { data: solicitacoes } = useSolicitacoesDocumento()
+  const { data: transferencias } = useTransferenciasPortal()
+  const responderTransferencia = useResponderTransferencia()
   const navigate = useNavigate()
   const [showPixModal, setShowPixModal] = useState(false)
+  const [modalTransferencia, setModalTransferencia] = useState<any>(null)
+  const [recusando, setRecusando] = useState(false)
+  const [motivoRecusa, setMotivoRecusa] = useState('')
 
   if (loadingCtx || isLoading) {
     return (
@@ -170,7 +181,43 @@ export function PortalDashboardPage() {
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
       
-      {/* 1. Header do Aluno - Ultra Premium */}
+      {/* ALERTA DE TRANSFERÊNCIA PENDENTE (ALTA PRIORIDADE) */}
+      {transferencias?.filter(t => t.status === 'pendente_pais').map(transf => (
+        <div key={transf.id} className="bg-gradient-to-r from-indigo-600 to-blue-700 p-8 md:p-10 rounded-[56px] text-white shadow-2xl shadow-indigo-500/30 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-10 -mr-12 -mt-12 pointer-events-none group-hover:scale-125 transition-transform duration-700">
+            <ShieldAlert size={200} />
+          </div>
+          
+          <div className="h-20 w-20 rounded-[28px] bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
+            <ShieldAlert className="h-10 w-10 text-white" />
+          </div>
+
+          <div className="flex-1 text-center md:text-left space-y-2 relative z-10">
+            <Badge className="bg-white/20 text-white border-0 hover:bg-white/30 font-black px-3 py-1 mb-2">
+              Ação Necessária • Transferência
+            </Badge>
+            <h3 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+              Solicitação de Transferência para {transf.aluno?.nome_completo}
+            </h3>
+            <p className="text-indigo-100 font-medium text-sm md:text-base max-w-2xl">
+              A escola <strong>{transf.escola_destino?.razao_social}</strong> solicitou a transferência do seu filho(a). 
+              Você precisa autorizar ou recusar esta solicitação para que o processo avance conforme a LGPD.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 relative z-10 w-full md:w-auto">
+            <button 
+              onClick={() => {
+                setModalTransferencia(transf)
+                setRecusando(false)
+              }}
+              className="bg-white text-indigo-700 px-8 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              Analisar e Responder
+            </button>
+          </div>
+        </div>
+      ))}
       <div className="bg-white p-8 md:p-14 rounded-[56px] border border-slate-100 shadow-sm flex flex-col gap-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-12 opacity-[0.02] -mr-24 -mt-24 pointer-events-none">
           <GraduationCap size={500} />
@@ -349,6 +396,138 @@ export function PortalDashboardPage() {
       </div>
 
       {showPixModal && <PixModal onClose={() => setShowPixModal(false)} valor={fin?.totalPendente || 0} configPix={configPix} />}
+
+      {/* MODAL DE CONSENTIMENTO DE TRANSFERÊNCIA */}
+      <Dialog open={!!modalTransferencia} onOpenChange={(open) => {
+        if (!open) {
+          setModalTransferencia(null)
+          setRecusando(false)
+          setMotivoRecusa('')
+        }
+      }}>
+        <DialogContent className="max-w-2xl rounded-[40px] border-0 p-0 overflow-hidden bg-white shadow-2xl">
+          <div className="bg-indigo-600 p-10 text-white relative">
+            <div className="absolute top-0 right-0 p-6 opacity-10">
+              <ShieldAlert size={120} />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black tracking-tight">Consentimento de Transferência</DialogTitle>
+              <DialogDescription className="text-indigo-100 text-sm font-medium mt-2">
+                Conforme a Lei Geral de Proteção de Dados (LGPD), sua autorização explícita é necessária para compartilhar os dados do aluno.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="p-10 space-y-8">
+            <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[32px] border border-slate-100">
+              <div className="h-16 w-16 rounded-[22px] bg-white shadow-sm border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-2xl">
+                {modalTransferencia?.aluno?.nome_completo?.charAt(0)}
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aluno(a)</p>
+                <p className="text-xl font-black text-slate-800 tracking-tight">{modalTransferencia?.aluno?.nome_completo}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Escola de Origem</p>
+                <div className="p-4 bg-slate-50 rounded-2xl text-center font-bold text-slate-700 text-sm">
+                  {modalTransferencia?.escola_origem?.razao_social}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Escola de Destino</p>
+                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-center font-bold text-indigo-700 text-sm">
+                  {modalTransferencia?.escola_destino?.razao_social}
+                </div>
+              </div>
+            </div>
+
+            {recusando ? (
+              <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                <p className="text-sm font-bold text-slate-600">Por que você está recusando esta transferência?</p>
+                <textarea 
+                  value={motivoRecusa}
+                  onChange={(e) => setMotivoRecusa(e.target.value)}
+                  placeholder="Opcional: Informe o motivo da recusa..."
+                  className="w-full h-24 p-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm resize-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4 text-sm text-slate-600 leading-relaxed bg-amber-50 p-6 rounded-[24px] border border-amber-100">
+                <p className="font-bold text-amber-900 flex items-center gap-2">
+                  <Info size={16} /> Importante
+                </p>
+                <p className="text-amber-800">
+                  Ao clicar em <strong>"Autorizar Transferência"</strong>, você permite que o Fluxoo compartilhe o histórico escolar, frequência e documentos de <strong>{modalTransferencia?.aluno?.nome_completo}</strong> com a nova instituição de ensino.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="p-10 pt-0 flex-col sm:flex-row gap-4">
+            {recusando ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setRecusando(false)}
+                  className="rounded-[20px] font-black text-xs uppercase tracking-widest"
+                >
+                  Voltar
+                </Button>
+                <Button 
+                  disabled={responderTransferencia.isPending}
+                  onClick={async () => {
+                    try {
+                      await responderTransferencia.mutateAsync({
+                        id: modalTransferencia.id,
+                        aprovado: false,
+                        motivoRecusa
+                      })
+                      toast.success("Transferência recusada com sucesso.")
+                      setModalTransferencia(null)
+                    } catch {
+                      toast.error("Erro ao processar sua resposta.")
+                    }
+                  }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-[20px] font-black text-xs uppercase tracking-widest h-14"
+                >
+                  {responderTransferencia.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar Recusa'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost"
+                  onClick={() => setRecusando(true)}
+                  className="rounded-[20px] font-black text-xs uppercase tracking-widest text-slate-400 hover:text-red-600"
+                >
+                  Recusar Solicitação
+                </Button>
+                <Button 
+                  disabled={responderTransferencia.isPending}
+                  onClick={async () => {
+                    try {
+                      await responderTransferencia.mutateAsync({
+                        id: modalTransferencia.id,
+                        aprovado: true
+                      })
+                      toast.success("Transferência autorizada com sucesso! A escola de origem será notificada.")
+                      setModalTransferencia(null)
+                    } catch {
+                      toast.error("Erro ao processar sua resposta.")
+                    }
+                  }}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[20px] font-black text-xs uppercase tracking-widest h-14 shadow-xl shadow-indigo-600/20"
+                >
+                  {responderTransferencia.isPending ? <Loader2 className="animate-spin" /> : 'Autorizar Transferência'}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

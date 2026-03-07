@@ -235,8 +235,8 @@ export const funcionariosService = {
           favorecido: func.nome_completo,
           valor: func.salario_bruto,
           data_vencimento: dataVencimento,
-          status: 'pendente',
-          recorrente: false,
+          status: 'ativo',
+          recorrente: true,
           categoria: 'Folha de Pagamento',
           created_at: new Date().toISOString()
         })

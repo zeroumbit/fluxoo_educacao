@@ -185,8 +185,8 @@ export function DashboardPage() {
   const {
     totalAlunosAtivos,
     limiteAlunos,
-    totalCobrancasAbertas,
-    totalContasPagarAbertas,
+    totalReceber,
+    totalPagar,
     avisosRecentes,
     onboarding,
     statusAssinatura,
@@ -275,17 +275,17 @@ export function DashboardPage() {
           </div>
         </MetricCard>
 
-        {/* Card: Cobranças Abertas */}
+        {/* Card: Contas a Receber */}
         <MetricCard
-          label="Cobranças Abertas"
-          value={totalCobrancasAbertas}
-          sub="recebíveis pendentes"
+          label="Contas a Receber"
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReceber)}
+          sub="recebíveis de alunos pendentes"
           icon={CreditCard}
-          iconBg={totalCobrancasAbertas > 0 ? 'bg-rose-50' : 'bg-emerald-50'}
-          iconColor={totalCobrancasAbertas > 0 ? 'text-rose-600' : 'text-emerald-600'}
+          iconBg={totalReceber > 0 ? 'bg-rose-50' : 'bg-emerald-50'}
+          iconColor={totalReceber > 0 ? 'text-rose-600' : 'text-emerald-600'}
           onClick={() => navigate('/financeiro')}
         >
-          {totalCobrancasAbertas > 0 && (
+          {totalReceber > 0 && (
             <div className="mt-3 flex items-center gap-1.5">
               <ArrowUpRight className="h-3.5 w-3.5 text-rose-500" />
               <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">
@@ -298,14 +298,14 @@ export function DashboardPage() {
         {/* Card: Contas a Pagar */}
         <MetricCard
           label="Contas a Pagar"
-          value={totalContasPagarAbertas}
-          sub="obrigações pendentes"
+          value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPagar)}
+          sub="obrigações da escola em aberto"
           icon={TrendingUp}
-          iconBg={totalContasPagarAbertas > 0 ? 'bg-amber-50' : 'bg-emerald-50'}
-          iconColor={totalContasPagarAbertas > 0 ? 'text-amber-600' : 'text-emerald-600'}
-          onClick={() => navigate('/financeiro')}
+          iconBg={totalPagar > 0 ? 'bg-amber-50' : 'bg-emerald-50'}
+          iconColor={totalPagar > 0 ? 'text-amber-600' : 'text-emerald-600'}
+          onClick={() => navigate('/contas-pagar')}
         >
-          {totalContasPagarAbertas > 0 && (
+          {totalPagar > 0 && (
             <div className="mt-3 flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
               <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
