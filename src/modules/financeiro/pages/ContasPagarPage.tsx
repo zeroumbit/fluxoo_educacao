@@ -37,7 +37,7 @@ export function ContasPagarPage() {
   const [contaParaDeletar, setContaParaDeletar] = useState<any | null>(null)
   const [contaParaPagar, setContaParaPagar] = useState<any | null>(null)
   const [recorrente, setRecorrente] = useState(false)
-  const form = useForm({ resolver: zodResolver(schema) })
+  const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) as any })
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -102,7 +102,7 @@ export function ContasPagarPage() {
           <DialogContent className="max-w-[800px]">
             <DialogHeader><DialogTitle>Nova Conta a Pagar</DialogTitle></DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message}</p>}</div>
+              <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message as React.ReactNode}</p>}</div>
               <div className="space-y-2"><Label>Favorecido / Fornecedor</Label><Input placeholder="Nome do fornecedor" {...form.register('favorecido')} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Data de Vencimento *</Label><Input type="date" {...form.register('data_vencimento')} /></div>
@@ -120,7 +120,7 @@ export function ContasPagarPage() {
         <DialogContent className="max-w-[800px]">
           <DialogHeader><DialogTitle>Editar Conta a Pagar</DialogTitle></DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message}</p>}</div>
+            <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{String(form.formState.errors.nome.message)}</p>}</div>
             <div className="space-y-2"><Label>Favorecido / Fornecedor</Label><Input placeholder="Nome do fornecedor" {...form.register('favorecido')} /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Data de Vencimento *</Label><Input type="date" {...form.register('data_vencimento')} /></div>

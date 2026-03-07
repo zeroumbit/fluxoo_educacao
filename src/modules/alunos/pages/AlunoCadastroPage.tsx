@@ -103,7 +103,7 @@ export function AlunoCadastroPage() {
     trigger,
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
-    resolver: zodResolver(alunoSchema),
+    resolver: zodResolver(alunoSchema) as any,
     defaultValues: {
       responsavel_nome: '',
       responsavel_cpf: '',

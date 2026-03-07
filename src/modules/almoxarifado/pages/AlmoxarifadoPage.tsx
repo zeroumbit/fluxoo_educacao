@@ -21,6 +21,9 @@ import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 const itemSchema = z.object({ nome: z.string().min(1), categoria: z.string().optional(), quantidade: z.coerce.number().min(0), alerta_estoque_minimo: z.coerce.number().optional(), custo_unitario: z.coerce.number().optional() })
 const movSchema = z.object({ item_id: z.string().min(1), tipo: z.enum(['entrada', 'saida']), quantidade: z.coerce.number().min(1), justificativa: z.string().optional() })
 
+type ItemFormData = z.infer<typeof itemSchema>
+type MovFormData = z.infer<typeof movSchema>
+
 export function AlmoxarifadoPage() {
   const { authUser } = useAuth()
   const { data: itens, isLoading } = useItensAlmoxarifado()
@@ -34,8 +37,16 @@ export function AlmoxarifadoPage() {
   const [itemParaEditar, setItemParaEditar] = useState<any | null>(null)
   const [itemParaDeletar, setItemParaDeletar] = useState<any | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const itemForm = useForm({ resolver: zodResolver(itemSchema) })
-  const movForm = useForm({ resolver: zodResolver(movSchema), defaultValues: { tipo: 'entrada' as const } })
+  const itemForm = useForm<ItemFormData>({ resolver: zodResolver(itemSchema) as any })
+  const movForm = useForm<MovFormData>({ 
+    resolver: zodResolver(movSchema) as any, 
+    defaultValues: { 
+      tipo: 'entrada',
+      item_id: '',
+      quantidade: 0,
+      justificativa: ''
+    } 
+  })
 
   const onSubmitItem = async (data: any) => {
     if (!authUser) return

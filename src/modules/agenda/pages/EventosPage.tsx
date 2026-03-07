@@ -37,7 +37,7 @@ export function EventosPage() {
   const [horarioInicio, setHorarioInicio] = useState(configRecados?.horario_inicio || '08:00')
   const [horarioTermino, setHorarioTermino] = useState(configRecados?.horario_termino || '17:00')
   const [msgFora, setMsgFora] = useState(configRecados?.mensagem_fora_expediente || '')
-  const form = useForm({ resolver: zodResolver(eventoSchema) })
+  const form = useForm<z.infer<typeof eventoSchema>>({ resolver: zodResolver(eventoSchema) as any })
 
   const abrirNovo = () => {
     setEditando(null)
@@ -124,7 +124,7 @@ export function EventosPage() {
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome do Evento *</Label>
                 <Input id="nome" placeholder="Ex: Festa Junina" {...form.register('nome')} />
-                {form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message}</p>}
+                {form.formState.errors.nome && <p className="text-sm text-destructive">{String(form.formState.errors.nome.message)}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

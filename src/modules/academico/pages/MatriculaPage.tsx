@@ -50,6 +50,8 @@ const matriculaSchema = z.object({
 
 const turnoLabels: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', integral: 'Integral', noturno: 'Noturno' }
 
+type MatriculaFormData = z.infer<typeof matriculaSchema>
+
 export default function MatriculaPage() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
@@ -65,15 +67,15 @@ export default function MatriculaPage() {
   const [selectedMatricula, setSelectedMatricula] = useState<any>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const form = useForm({
-    resolver: zodResolver(matriculaSchema),
+  const form = useForm<MatriculaFormData>({
+    resolver: zodResolver(matriculaSchema) as any,
     defaultValues: {
-      tipo: 'nova' as const,
+      tipo: 'nova',
       data_matricula: new Date().toISOString().split('T')[0],
       ano_letivo: new Date().getFullYear(),
       aluno_id: '',
       serie_ano: '',
-      turno: 'integral' as any,
+      turno: 'integral',
       valor_matricula: 450,
       status: 'ativa'
     }
@@ -86,7 +88,7 @@ export default function MatriculaPage() {
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
 
   useEffect(() => {
-    if (matriculaExistente && tipoSelecionado === 'rematricula' && !isEditing) {
+    if (matriculaExistente && (tipoSelecionado as string) === 'rematricula' && !isEditing) {
       form.setValue('serie_ano', matriculaExistente.serie_ano)
       form.setValue('turno', matriculaExistente.turno)
       form.setValue('valor_matricula', matriculaExistente.valor_matricula)

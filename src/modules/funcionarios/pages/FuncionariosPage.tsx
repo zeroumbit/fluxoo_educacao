@@ -44,6 +44,9 @@ const userSchema = z.object({
   areas_acesso: z.array(z.string()).default([]),
 })
 
+type FuncFormData = z.infer<typeof funcSchema>
+type UserFormData = z.infer<typeof userSchema>
+
 const novaFuncaoSchema = z.object({
   nome: z.string().min(2, 'Nome obrigatório'),
   categoria: z.string().min(2, 'Categoria obrigatória'),
@@ -205,9 +208,19 @@ export function FuncionariosPage() {
   // Estados para geração de folha
   const [mesFolha, setMesFolha] = useState(new Date().getMonth() + 1)
   const [anoFolha, setAnoFolha] = useState(new Date().getFullYear())
-
-  const funcForm = useForm({ resolver: zodResolver(funcSchema), defaultValues: { funcoes: [] as string[] } })
-  const userForm = useForm({ resolver: zodResolver(userSchema) })
+  
+  const funcForm = useForm<FuncFormData>({ 
+    resolver: zodResolver(funcSchema) as any, 
+    defaultValues: { 
+      nome_completo: '',
+      como_chamado: '',
+      funcoes: [],
+      data_admissao: '',
+      salario_bruto: 0,
+      dia_pagamento: 5
+    } 
+  })
+  const userForm = useForm<UserFormData>({ resolver: zodResolver(userSchema) as any })
 
   // Transforma o catálogo em options para o MultiSelect
   const funcaoOptions = useMemo(() =>
