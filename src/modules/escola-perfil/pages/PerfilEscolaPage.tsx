@@ -117,7 +117,7 @@ export function PerfilEscolaPage() {
       </div>
 
       <Card className="border-0 shadow-md">
-        <CardHeader>
+        <CardHeader className="pt-8">
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-indigo-600" />
             Dados da Empresa
@@ -221,7 +221,7 @@ export function PerfilEscolaPage() {
       </Card>
 
       <Card className="border-0 shadow-md">
-        <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-indigo-600" />Endereço</CardTitle></CardHeader>
+        <CardHeader className="pt-8"><CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-indigo-600" />Endereço</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <div className="space-y-2 flex-1"><Label>CEP</Label><Input value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} maxLength={9} /></div>
@@ -266,7 +266,7 @@ export function PerfilEscolaPage() {
       </Card>
 
       <Card className="border-0 shadow-md">
-        <CardHeader><CardTitle>Gestor Responsável</CardTitle></CardHeader>
+        <CardHeader className="pt-8"><CardTitle>Gestor Responsável</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Nome do Diretor/Gestor</Label><Input value={form.nome_gestor} onChange={(e) => setForm({ ...form, nome_gestor: e.target.value })} /></div>

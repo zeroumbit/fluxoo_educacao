@@ -104,7 +104,7 @@ export function PlanoPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Card do Plano Atual - UI Restaurada e Sincronizada */}
         <Card className="lg:col-span-2 border-0 shadow-lg overflow-hidden bg-white">
-          <CardHeader className="bg-gradient-to-br from-indigo-700 to-blue-600 text-white pb-8">
+          <CardHeader className="bg-gradient-to-br from-indigo-700 to-blue-600 text-white pb-8 pt-10">
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
@@ -164,7 +164,7 @@ export function PlanoPage() {
 
         {/* Card de Upgrade Rápido */}
         <Card className="border-0 shadow-lg bg-zinc-900 text-white">
-          <CardHeader>
+          <CardHeader className="pt-8">
             <CardTitle className="text-lg font-bold flex items-center gap-2 text-indigo-400">
               <Plus className="h-5 w-5" />
               Upgrade de Limite
@@ -179,9 +179,9 @@ export function PlanoPage() {
                 <p className="text-sm text-zinc-300 leading-relaxed">
                   Solicite um aumento no limite de alunos para continuar crescendo e recebendo novas matrículas.
                 </p>
-                <Button 
+                <Button
                   onClick={() => setIsRequesting(true)}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 border-0 h-11 font-bold shadow-lg shadow-indigo-900/20"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 border-0 h-11 font-bold shadow-lg shadow-indigo-900/20 mt-[50px]"
                 >
                   <ArrowUpCircle className="h-4 w-4 mr-2" />
                   Solicitar Upgrade
@@ -227,7 +227,7 @@ export function PlanoPage() {
 
       {/* Histórico de Solicitações */}
       <Card className="border-0 shadow-lg">
-        <CardHeader>
+        <CardHeader className="pt-8">
           <CardTitle className="text-lg">Histórico de Alterações</CardTitle>
           <CardDescription>Acompanhe aqui o status dos seus pedidos de mudança de plano.</CardDescription>
         </CardHeader>

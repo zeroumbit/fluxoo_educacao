@@ -128,7 +128,7 @@ export function ConfigFinanceiraPage() {
       </div>
 
       <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pt-8">
           <CardTitle className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#134E4A]">
             <Settings className="h-4 w-4 text-[#14B8A6]" />
             Regras de Cobrança
@@ -174,7 +174,7 @@ export function ConfigFinanceiraPage() {
       </Card>
 
       <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pt-8">
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-[#134E4A]">Métodos de Recebimento</CardTitle>
           <CardDescription className="text-[10px] font-bold text-slate-400">Ative e configure as formas de pagamento disponíveis para os pais</CardDescription>
         </CardHeader>
@@ -266,7 +266,7 @@ export function ConfigFinanceiraPage() {
 
       <div className="grid grid-cols-1 gap-6">
         <Card className="border-0 shadow-md">
-          <CardHeader>
+          <CardHeader className="pt-8">
             <CardTitle className="text-sm">Mensalidades por Turma</CardTitle>
             <CardDescription>Defina o valor padrão da mensalidade para cada turma. Este valor será sugerido automaticamente ao criar novas cobranças no financeiro.</CardDescription>
           </CardHeader>

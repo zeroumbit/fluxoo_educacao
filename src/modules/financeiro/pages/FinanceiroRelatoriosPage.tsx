@@ -29,7 +29,7 @@ export function FinanceiroRelatoriosPage() {
       </div>
 
       <Card className="border-0 shadow-md">
-        <CardHeader>
+        <CardHeader className="pt-8">
           <CardTitle className="text-lg flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-indigo-600" />
             Fechamento Mensal
