@@ -173,7 +173,7 @@ export const portalService = {
         .eq('tenant_id', tenantId)
         .in('status', ['a_vencer', 'atrasado'])
       ,
-      // Avisos recentes
+      // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
       (supabase.from('mural_avisos' as any) as any)
         .select(`
           id, 
@@ -182,9 +182,11 @@ export const portalService = {
           created_at, 
           turma_id,
           publico_alvo,
+          data_fim,
           turma:turmas(nome)
         `)
         .eq('tenant_id', tenantId)
+        .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .order('created_at', { ascending: false })
         .limit(20),
     ])
@@ -249,6 +251,7 @@ export const portalService = {
   // AVISOS
   // ==========================================
   async buscarAvisosPorTurma(tenantId: string, turmaId?: string | null) {
+    // Retorna TODOS (ativos + expirados) — a página de listagem separa visualmente
     const { data, error } = await (supabase.from('mural_avisos' as any) as any)
       .select('*, turma:turmas(nome)')
       .eq('tenant_id', tenantId)

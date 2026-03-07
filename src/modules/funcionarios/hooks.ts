@@ -72,3 +72,34 @@ export function useVerificarAcessoFuncionario(area: string) {
     enabled: !!authUser?.user.id,
   })
 }
+
+export function useFuncoes() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['funcoes-escola', authUser?.tenantId],
+    queryFn: () => funcionariosService.listarFuncoes(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useCriarFuncaoCustom() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: any) => funcionariosService.criarFuncaoCustom(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['funcoes-escola'] }),
+  })
+}
+
+export function useGerarFolhaPagamento() {
+  const { authUser } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ mes, ano }: { mes: number; ano: number }) =>
+      funcionariosService.gerarFolhaPagamento(authUser!.tenantId, mes, ano),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contas_pagar'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}

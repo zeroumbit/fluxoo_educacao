@@ -1,7 +1,20 @@
 import { supabase } from '@/lib/supabase'
 import type { MuralAvisoInsert } from '@/lib/database.types'
 
+/** Retorna true se o aviso ainda está dentro do período de vigência */
+export function isAvisoAtivo(aviso: { data_fim?: string | null }): boolean {
+  if (!aviso.data_fim) return true  // sem prazo = sempre ativo
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const fim = new Date(aviso.data_fim + 'T00:00:00')
+  return fim >= hoje
+}
+
 export const muralService = {
+  /**
+   * Lista TODOS os avisos do tenant — ativos + expirados.
+   * Usado na página /mural (escola). Ordena: ativos primeiro, depois expirados.
+   */
   async listar(tenantId: string) {
     const { data, error } = await supabase
       .from('mural_avisos')
@@ -10,9 +23,13 @@ export const muralService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data
+    return data ?? []
   },
 
+  /**
+   * Lista avisos por turma — ativos + expirados.
+   * Usado na página /portal/avisos. Ordena: ativos primeiro.
+   */
   async listarPorTurma(turmaId: string | null, tenantId: string) {
     let query = supabase
       .from('mural_avisos')
@@ -26,19 +43,50 @@ export const muralService = {
 
     const { data, error } = await query
     if (error) throw error
-    return data
+    return data ?? []
   },
 
-  async listarRecentes(tenantId: string, limite = 5) {
+  /**
+   * Lista apenas avisos ATIVOS (dentro da vigência).
+   * Usado nas dashboards para não mostrar avisos expirados.
+   */
+  async listarAtivos(tenantId: string, limite = 6) {
+    const hoje = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+
     const { data, error } = await supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
+      // Ativo = sem data_fim OU data_fim >= hoje
+      .or(`data_fim.is.null,data_fim.gte.${hoje}`)
       .order('created_at', { ascending: false })
       .limit(limite)
 
     if (error) throw error
-    return data
+    return data ?? []
+  },
+
+  /**
+   * Lista avisos ativos por turma — para a dashboard do portal.
+   */
+  async listarAtivosPorTurma(turmaId: string | null, tenantId: string) {
+    const hoje = new Date().toISOString().split('T')[0]
+
+    let query = supabase
+      .from('mural_avisos')
+      .select('*, turmas(nome)')
+      .eq('tenant_id', tenantId)
+      .or(`data_fim.is.null,data_fim.gte.${hoje}`)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (turmaId) {
+      query = query.or(`turma_id.is.null,turma_id.eq.${turmaId}`)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data ?? []
   },
 
   async criar(aviso: MuralAvisoInsert) {

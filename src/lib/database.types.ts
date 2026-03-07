@@ -39,6 +39,21 @@ export type EscolaInsert = Omit<Escola, 'id' | 'created_at' | 'updated_at'> & {
 }
 export type EscolaUpdate = Partial<EscolaInsert>
 
+// ========== FUNCOES_ESCOLA ==========
+export type FuncaoEscola = {
+  id: string
+  tenant_id: string | null
+  nome: string
+  categoria: string
+  is_padrao: boolean
+  ativo: boolean
+  created_at: string
+}
+export type FuncaoEscolaInsert = Omit<FuncaoEscola, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type FuncaoEscolaUpdate = Partial<FuncaoEscolaInsert>
+
 // ========== FILIAIS ==========
 export type Filial = {
   id: string
@@ -116,6 +131,7 @@ export type Funcionario = {
   dia_pagamento: number | null
   data_admissao: string | null
   is_usuario_sistema: boolean
+  funcoes: string[]
   created_at: string
   updated_at: string
 }
@@ -193,6 +209,8 @@ export type MuralAviso = {
   publico_alvo: string
   turma_id: string | null
   data_agendamento: string | null
+  data_inicio: string | null
+  data_fim: string | null
   created_at: string
   updated_at: string
 }
