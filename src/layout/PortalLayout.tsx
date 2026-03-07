@@ -18,7 +18,8 @@ import {
   Menu,
   User,
   X,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -132,6 +133,7 @@ export function PortalLayout() {
     { label: 'Boletim', icon: FileText, to: '/portal/boletim' },
     { label: 'Documentos', icon: FileText, to: '/portal/documentos' },
     { label: 'Frequência', icon: Activity, to: '/portal/frequencia' },
+    { label: 'Autorizações', icon: ShieldCheck, to: '/portal/autorizacoes' },
     { label: 'Avisos', icon: Megaphone, to: '/portal/avisos' },
     { label: 'Financeiro', icon: DollarSign, to: '/portal/cobrancas' },
     { label: 'Loja', icon: ShoppingCart, to: '/portal/loja' },
@@ -172,6 +174,9 @@ export function PortalLayout() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/portal/documentos')} className="flex items-center gap-2 p-3 font-medium rounded-xl focus:bg-teal-50 focus:text-teal-600 cursor-pointer">
                     <FileText size={16} /> Documentos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/portal/autorizacoes')} className="flex items-center gap-2 p-3 font-medium rounded-xl focus:bg-teal-50 focus:text-teal-600 cursor-pointer">
+                    <ShieldCheck size={16} /> Autorizações
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

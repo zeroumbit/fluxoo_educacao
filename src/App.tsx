@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/modules/auth/AuthContext'
@@ -57,6 +57,7 @@ import { PortalAgendaPage } from '@/modules/portal/pages/PortalAgendaPage'
 import { PortalLojaPage } from '@/modules/portal/pages/PortalLojaPage'
 import { PortalDocumentosPage } from '@/modules/portal/pages/PortalDocumentosPage'
 import { PortalPerfilPage } from '@/modules/portal/pages/PortalPerfilPage'
+import { PortalAutorizacoesPage } from '@/modules/portal/pages/PortalAutorizacoesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,7 +100,7 @@ function App() {
             {/* Login do Portal */}
             <Route path="/portal/login" element={<PortalLoginPage />} />
 
-            {/* Cadastro de Escola - Público */}
+            {/* Cadastro de Escola - PÃºblico */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
 
             {/* Super Admin Routes */}
@@ -137,7 +138,7 @@ function App() {
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
               <Route path="/livros" element={<LivrosPage />} />
-              {/* Novos Módulos */}
+              {/* Novos MÃ³dulos */}
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/planos-aula" element={<PlanoAulaPage />} />
@@ -154,7 +155,7 @@ function App() {
               <Route path="/plano" element={<PlanoPage />} />
             </Route>
 
-            {/* Portal do Responsável */}
+            {/* Portal do ResponsÃ¡vel */}
             <Route
               element={
                 <ProtectedRoute allowedRoles={['responsavel']}>
@@ -172,7 +173,7 @@ function App() {
               <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
-              <Route path="/portal/perfil" element={<PortalPerfilPage />} />
+              <Route path="/portal/perfil" element={<PortalPerfilPage />} />`n               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 
             {/* Fallback */}
@@ -186,3 +187,4 @@ function App() {
 }
 
 export default App
+

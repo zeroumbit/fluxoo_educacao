@@ -23,11 +23,12 @@ import {
   Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search,
   FileCheck, GraduationCap, Scale, HeartPulse, LogOut,
   Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity,
-  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package
+  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package, ShieldCheck
 } from 'lucide-react'
 import * as Docs from '../DocumentEngineComponents'
 import { usePdf } from '@/hooks/usePdf'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
+import { AutorizacoesAdminTab } from '@/modules/autorizacoes/components/AutorizacoesAdminTab'
 
 const templateSchema = z.object({
   tipo: z.string().min(1),
@@ -410,6 +411,9 @@ export function DocumentosPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-slate-100/50 p-1 rounded-2xl w-fit">
           <TabsList className="bg-transparent h-12 gap-1 border-0">
+            <TabsTrigger value="autorizacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" /> Autorizações
+            </TabsTrigger>
             <TabsTrigger value="central" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
               Emissão
             </TabsTrigger>
@@ -432,6 +436,10 @@ export function DocumentosPage() {
       </div>
 
       <Tabs value={activeTab} className="mt-8">
+        <TabsContent value="autorizacoes" className="mt-0">
+          <AutorizacoesAdminTab />
+        </TabsContent>
+
         <TabsContent value="central" className="mt-0 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

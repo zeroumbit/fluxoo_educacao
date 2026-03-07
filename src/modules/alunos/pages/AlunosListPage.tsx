@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX, Shield } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
 
 export function AlunosListPage() {
   const { data: alunos, isLoading } = useAlunos()
@@ -35,6 +36,7 @@ export function AlunosListPage() {
 
   const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<any | null>(null)
 
   // Cria um Set com IDs de alunos com matrícula ativa para consulta rápida
   const alunosComMatriculaIds = useMemo(() => {
@@ -203,6 +205,15 @@ export function AlunosListPage() {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Ver autorizações dos responsáveis"
+                        onClick={(e) => { e.stopPropagation(); setAlunoAutorizacoes(aluno); }}
+                      >
+                        <Shield className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         onClick={(e) => { e.stopPropagation(); navigate(`/alunos/${aluno.id}`); }}
                       >
                         <Eye className="h-4 w-4" />
@@ -241,6 +252,14 @@ export function AlunosListPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal Autorizações */}
+      <ModalAutorizacoesAluno
+        alunoId={alunoAutorizacoes?.id || null}
+        alunoNome={alunoAutorizacoes?.nome_completo}
+        open={!!alunoAutorizacoes}
+        onClose={() => setAlunoAutorizacoes(null)}
+      />
 
       {/* Modal de Exclusão */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
