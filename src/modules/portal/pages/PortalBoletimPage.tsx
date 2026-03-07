@@ -67,7 +67,7 @@ export function PortalBoletimPage() {
     let totalDisciplinas = 0
     
     boletinsFiltrados.forEach((boletim) => {
-      boletim.disciplinas.forEach((disc) => {
+      boletim.disciplinas.forEach((disc: DisciplinaBoletim) => {
         totalNotas += disc.nota
         totalDisciplinas++
       })
@@ -80,7 +80,7 @@ export function PortalBoletimPage() {
   const calcularTotalFaltas = () => {
     let totalFaltas = 0
     boletinsFiltrados.forEach((boletim) => {
-      boletim.disciplinas.forEach((disc) => {
+      boletim.disciplinas.forEach((disc: DisciplinaBoletim) => {
         totalFaltas += disc.faltas
       })
     })

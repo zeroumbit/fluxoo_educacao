@@ -25,7 +25,7 @@ export function useAvisosRecentes(limite?: number) {
   const { authUser } = useAuth()
   return useQuery({
     queryKey: ['mural', 'recentes', authUser?.tenantId],
-    queryFn: () => muralService.listarRecentes(authUser!.tenantId, limite),
+    queryFn: () => muralService.listarAtivos(authUser!.tenantId, limite),
     enabled: !!authUser?.tenantId,
   })
 }
