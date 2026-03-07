@@ -175,34 +175,44 @@ export function DocumentosPage() {
         <meta charset="UTF-8" />
         <title>Documento - Fluxoo Educação</title>
         <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; color: #000; }
-          body { background: #f5f5f5; display: flex; justify-content: center; padding: 32px; }
-          .sheet { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-          h1 { font-size: 20px; font-weight: 900; }
-          h2 { font-size: 14px; font-weight: 800; color: #334155; }
-          h3 { font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 12px; }
-          p { font-size: 12px; color: #475569; line-height: 1.6; }
-          .label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-          .value { font-size: 13px; font-weight: 700; color: #1e293b; margin-top: 2px; margin-bottom: 16px; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9; }
-          .logo { display: flex; align-items: center; gap: 12px; }
-          .logo-box { width: 40px; height: 40px; background: #14b8a6; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-          .logo-box span { color: white; font-size: 20px; font-weight: 900; }
-          .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-          .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-          .col-span-2 { grid-column: span 2; }
-          .text-teal { color: #0d9488; }
-          .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center; }
-          .hash { font-family: monospace; font-size: 10px; color: #94a3b8; }
-          .signature { width: 160px; height: 1px; background: #cbd5e1; margin: 0 auto 8px; }
-          .print-btn { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; }
-          .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; }
-          .btn-primary { background: #14b8a6; color: white; }
-          .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+          * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+          body { background: #f8fafc; display: flex; justify-content: center; padding: 32px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .sheet { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 10px 50px rgba(0,0,0,0.1); border-radius: 20px; position: relative; }
+          h1 { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+          h2 { font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+          h3 { font-size: 16px; font-weight: 900; color: #1e293b; margin-bottom: 16px; letter-spacing: -0.5px; }
+          p { font-size: 13px; color: #475569; line-height: 1.6; }
+          .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+          .value { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 3px solid #14b8a6; }
+          .logo { display: flex; align-items: center; gap: 14px; }
+          .logo-box { width: 44px; height: 44px; background: #14b8a6; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 22px; }
+          .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+          .flex { display: flex !important; }
+          .flex-col { flex-direction: column !important; }
+          .justify-between { justify-content: space-between !important; }
+          .justify-center { justify-content: center !important; }
+          .items-center { align-items: center !important; }
+          .flex-1 { flex: 1 !important; }
+          .text-center { text-align: center !important; }
+          .w-full { width: 100% !important; }
+          .gap-12 { gap: 48px !important; }
+          .mt-20 { margin-top: 80px !important; }
+          .mt-12 { margin-top: 48px !important; }
+          .pt-8 { padding-top: 32px !important; }
+          .border-t { border-top: 1px solid #e2e8f0 !important; }
+
+          .signature-area { display: flex !important; justify-content: space-between !important; gap: 40px !important; margin-top: 80px !important; }
+          .signature-box { flex: 1 !important; text-align: center !important; display: flex !important; flex-direction: column !important; align-items: center !important; }
+          .signature-line { width: 100% !important; border-top: 1px solid #94a3b8 !important; margin-bottom: 8px !important; }
+          .signature-name { font-size: 11px; font-weight: 800; color: #1e293b; text-transform: uppercase; }
+          .signature-role { font-size: 9px; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+          
+          .print-footer { display: flex !important; flex-direction: column !important; align-items: center !important; margin-top: 60px; padding-top: 32px; border-top: 1px solid #f1f5f9; text-align: center; }
+          
           @media print {
             body { background: white; padding: 0; }
-            .sheet { box-shadow: none; padding: 15mm; }
+            .sheet { box-shadow: none; padding: 15mm; border-radius: 0; width: 100%; border: none; }
             .print-btn { display: none; }
           }
         </style>
@@ -219,10 +229,12 @@ export function DocumentosPage() {
           // Substitui classes do Tailwind por estilos inline equivalentes
           document.querySelectorAll('[class]').forEach(el => {
             const cls = el.className || '';
-            if (cls.includes('font-black') || cls.includes('font-bold')) el.style.fontWeight = '700';
-            if (cls.includes('text-slate-400') || cls.includes('text-muted')) el.style.color = '#94a3b8';
-            if (cls.includes('text-slate-700') || cls.includes('text-slate-800')) el.style.color = '#1e293b';
-            if (cls.includes('text-teal') || cls.includes('text-emerald')) el.style.color = '#0d9488';
+            if (cls.includes('justify-between')) el.style.justifyContent = 'space-between';
+            if (cls.includes('justify-center')) el.style.justifyContent = 'center';
+            if (cls.includes('items-center')) el.style.alignItems = 'center';
+            if (cls.includes('flex-col')) el.style.flexDirection = 'column';
+            if (cls.includes('flex-1')) el.style.flex = '1';
+            if (cls.includes('text-center')) el.style.textAlign = 'center';
             if (cls.includes('hidden')) el.style.display = 'none';
           });
         <\/script>
@@ -332,7 +344,22 @@ export function DocumentosPage() {
         </div>
         <DocComponent data={data} />
 
-        <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4 opacity-40 print:opacity-100">
+        {/* Blocos de Assinatura Manual */}
+        <div className="signature-area mt-20 flex justify-between gap-12 print:mt-16 sm:px-4">
+          <div className="signature-box flex-1 flex flex-col items-center">
+            <div className="signature-line w-full h-[1px] bg-slate-200 mb-2" />
+            <p className="signature-name text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none">Responsável / Aluno</p>
+            <p className="signature-role text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Assinatura do Requerente</p>
+          </div>
+          <div className="signature-box flex-1 flex flex-col items-center">
+            <div className="signature-line w-full h-[1px] bg-slate-200 mb-2" />
+            <p className="signature-name text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none">Direção / Secretaria</p>
+            <p className="signature-role text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">Carimbo e Assinatura</p>
+          </div>
+        </div>
+
+        {/* Rodapé Digital Fluxoo */}
+        <div className="print-footer mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4 opacity-40 print:opacity-100">
           <div className="w-32 h-[1px] bg-slate-300" />
           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assinatura Digital Fluxoo</p>
           <p className="text-[8px] font-mono text-slate-300">{data?.hashValidacao || 'VALID-ID-8822'}</p>
@@ -569,15 +596,15 @@ export function DocumentosPage() {
                   {emitir.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Confirmar e Salvar'}
                 </Button>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <Button variant="outline" onClick={handleVisualizarPDF} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                    <Eye className="w-4 h-4 mr-2" /> Visualizar
+                <div className="grid grid-cols-3 gap-2">
+                  <Button variant="outline" onClick={handleVisualizarPDF} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50 px-2 h-10 text-xs">
+                    <Eye className="w-4 h-4 mr-1" /> Ver
                   </Button>
-                  <Button variant="outline" onClick={handlePrint} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                    <Printer className="w-4 h-4 mr-2" /> Imprimir
+                  <Button variant="outline" onClick={handlePrint} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50 px-2 h-10 text-xs text-nowrap">
+                    <Printer className="w-4 h-4 mr-1" /> Imprimir
                   </Button>
-                  <Button variant="outline" onClick={() => handleDownloadPDF()} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
-                    <Download className="w-4 h-4 mr-2" /> Baixar PDF
+                  <Button variant="outline" onClick={() => handleDownloadPDF()} disabled={!selectedAluno} className="border-slate-200 font-bold text-slate-600 hover:bg-slate-50 px-2 h-10 text-xs text-nowrap">
+                    <Download className="w-4 h-4 mr-1" /> Baixar PDF
                   </Button>
                 </div>
 

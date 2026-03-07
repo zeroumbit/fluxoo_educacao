@@ -39,7 +39,7 @@ export const baseStyles = StyleSheet.create({
   },
   logoText: {
     fontSize: 18,
-    fontWeight: 'black',
+    fontWeight: 'bold',
     color: '#1e293b',
     letterSpacing: -1,
   },
@@ -51,7 +51,7 @@ export const baseStyles = StyleSheet.create({
   },
   metaLabel: {
     fontSize: 7,
-    fontWeight: 'black',
+    fontWeight: 'bold',
     color: '#94a3b8',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -64,7 +64,7 @@ export const baseStyles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: 'black',
+    fontWeight: 'bold',
     color: '#1e293b',
     letterSpacing: -0.5,
     marginBottom: 8,
@@ -79,7 +79,7 @@ export const baseStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 9,
-    fontWeight: 'black',
+    fontWeight: 'bold',
     color: '#94a3b8',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -155,6 +155,15 @@ export const baseStyles = StyleSheet.create({
     fontSize: 9,
     fontWeight: 'bold',
     color: '#1e293b',
+  },
+  declaration: {
+    marginTop: 20,
+    paddingTop: 10,
+    borderTop: 1,
+    borderTopColor: '#e2e8f0',
+    fontSize: 9,
+    color: '#475569',
+    textAlign: 'justify',
   },
 })
 

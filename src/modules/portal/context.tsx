@@ -11,7 +11,7 @@ interface AlunoVinculado {
   tenant_id: string
   filial_id: string | null
   turma_id: string | null
-  turma: { id: string; nome: string; turno: string } | null
+  turma: { id: string; nome: string; turno: string; horario?: string | null } | null
   filial: { nome_unidade: string } | null
 }
 
@@ -48,7 +48,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       // Buscar turma que contém o aluno
       const { data: turma } = await supabase
         .from('turmas')
-        .select('id, nome, turno')
+        .select('id, nome, turno, horario')
         .eq('tenant_id', vinculo.aluno.tenant_id)
         .contains('alunos_ids', [vinculo.aluno.id])
         .maybeSingle()
@@ -75,7 +75,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       
       const { data: turma } = await supabase
         .from('turmas')
-        .select('id, nome, turno')
+        .select('id, nome, turno, horario')
         .eq('tenant_id', vinculo.aluno.tenant_id)
         .contains('alunos_ids', [vinculo.aluno.id])
         .maybeSingle()

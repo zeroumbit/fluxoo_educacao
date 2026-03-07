@@ -19,6 +19,8 @@ import type { Turma } from '@/lib/database.types'
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
   turno: z.string().min(1, 'Turno é obrigatório'),
+  horario_inicio: z.string().optional().or(z.literal('')),
+  horario_fim: z.string().optional().or(z.literal('')),
   sala: z.string().optional().or(z.literal('')),
   capacidade_maxima: z.any().transform((val) => Number(val)).pipe(z.number().min(1, 'Capacidade mínima de 1')),
   filial_id: z.string().optional().or(z.literal('')),
@@ -62,13 +64,22 @@ export function TurmasPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome: '', turno: '', sala: '', capacidade_maxima: 30, filial_id: '' })
+    reset({ nome: '', turno: '', horario_inicio: '', horario_fim: '', sala: '', capacidade_maxima: 30, filial_id: '' })
     setDialogOpen(true)
   }
 
   const abrirEdicao = (turma: Turma) => {
     setEditando(turma)
-    reset({ nome: turma.nome, turno: turma.turno || '', sala: turma.sala || '', capacidade_maxima: turma.capacidade_maxima || 30, filial_id: turma.filial_id || '' })
+    const [inicio, fim] = ((turma as any).horario || '').split(' - ')
+    reset({ 
+      nome: turma.nome, 
+      turno: turma.turno || '', 
+      horario_inicio: inicio || '',
+      horario_fim: fim || '',
+      sala: turma.sala || '', 
+      capacidade_maxima: turma.capacidade_maxima || 30, 
+      filial_id: turma.filial_id || '' 
+    })
     setDialogOpen(true)
   }
 
@@ -78,6 +89,7 @@ export function TurmasPage() {
       const payload = {
         nome: data.nome,
         turno: data.turno,
+        horario: data.horario_inicio && data.horario_fim ? `${data.horario_inicio} - ${data.horario_fim}` : null,
         sala: data.sala || null,
         capacidade_maxima: data.capacidade_maxima ? Number(data.capacidade_maxima) : null,
         filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
@@ -154,16 +166,26 @@ export function TurmasPage() {
                   {errors.turno && <p className="text-sm text-destructive">{errors.turno.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sala">Sala</Label>
-                  <Input id="sala" placeholder="Ex: Sala 3" {...register('sala')} />
+                  <Label>Horário (Início/Fim)</Label>
+                  <div className="flex items-center gap-2">
+                    <Input type="time" {...register('horario_inicio')} />
+                    <span className="text-muted-foreground">até</span>
+                    <Input type="time" {...register('horario_fim')} />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sala">Sala</Label>
+                  <Input id="sala" placeholder="Ex: Sala 3" {...register('sala')} />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="capacidade_maxima">Capacidade Máxima</Label>
                   <Input id="capacidade_maxima" type="number" placeholder="30" {...register('capacidade_maxima')} />
                   {errors.capacidade_maxima && <p className="text-sm text-destructive">{errors.capacidade_maxima.message}</p>}
                 </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
                 {filiais && filiais.length > 0 && (
                   <div className="space-y-2">
                     <Label>Filial</Label>
@@ -218,8 +240,9 @@ export function TurmasPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{turma.nome}</h3>
-                    <div className="flex gap-1 mt-0.5">
+                    <div className="flex flex-wrap gap-1 mt-0.5">
                       {turma.turno && <Badge variant="secondary" className="text-xs capitalize">{turma.turno}</Badge>}
+                      {(turma as any).horario && <Badge variant="outline" className="text-xs border-amber-200 bg-amber-50 text-amber-700">{(turma as any).horario}</Badge>}
                       {turma.sala && <Badge variant="outline" className="text-xs">{turma.sala}</Badge>}
                     </div>
                   </div>

@@ -32,7 +32,7 @@ export function FichaMatriculaPDF({ data }: { data: FichaMatriculaData }) {
               <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'black' }}>F</Text>
             </View>
             <View>
-              <Text style={baseStyles.logoText}>Fluxoo<span style={baseStyles.logoAccent}>Edu</span></Text>
+              <Text style={baseStyles.logoText}>Fluxoo<Text style={baseStyles.logoAccent}>Edu</Text></Text>
               <Text style={baseStyles.subtitle}>Sistema de Gestão Escolar</Text>
             </View>
           </View>
@@ -153,8 +153,22 @@ export function FichaMatriculaPDF({ data }: { data: FichaMatriculaData }) {
           </View>
         </View>
 
-        {/* Assinatura */}
-        <SignatureBlock name="Direção / Secretaria" role="Responsável pela Matrícula" />
+        {/* Declaração */}
+        <View style={baseStyles.declaration}>
+          <Text>
+            Declaro, para os devidos fins de direito, que as informações cadastrais prestadas neste documento são verdadeiras e assumo total responsabilidade por mantê-las atualizadas junto à secretaria da instituição.
+          </Text>
+        </View>
+
+        {/* Assinaturas */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 20 }}>
+          <View style={{ flex: 1 }}>
+            <SignatureBlock name="Responsável / Aluno" role="Assinatura do Requerente" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <SignatureBlock name="Direção / Secretaria" role="Responsável pela Matrícula" />
+          </View>
+        </View>
 
         {/* Footer */}
         <View style={baseStyles.footer}>

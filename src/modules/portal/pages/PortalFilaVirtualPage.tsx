@@ -22,6 +22,37 @@ export function PortalFilaVirtualPage() {
   const handleEntrarFila = async () => {
     if (!alunoSelecionado || !tenantId || !responsavel) return
 
+    // Validação de horário
+    const horarioTurma = alunoSelecionado.turma?.horario
+    if (horarioTurma) {
+      // Tenta extrair os horários (ex: "das 7:00 as 11:30" ou "07:00 - 12:00")
+      const times = horarioTurma.match(/(\d{1,2}:\d{2})/g)
+      if (times && times.length >= 2) {
+        const agora = new Date()
+        const [hInicio, mInicio] = times[0].split(':').map(Number)
+        const [hFim, mFim] = times[1].split(':').map(Number)
+
+        const dataInicio = new Date(agora)
+        dataInicio.setHours(hInicio, mInicio, 0)
+
+        const dataFim = new Date(agora)
+        dataFim.setHours(hFim, mFim, 0)
+
+        // Se o horário de fim for menor que o de início, assume que cruza a meia-noite
+        if (dataFim < dataInicio) {
+          dataFim.setDate(dataFim.getDate() + 1)
+        }
+
+        if (agora < dataInicio || agora > dataFim) {
+          toast.error(`Fora do horário: A fila só abre entre ${times[0]} e ${times[1]}.`, {
+            description: 'Você só pode ativar a fila durante o período de aula.',
+            duration: 5000
+          })
+          return
+        }
+      }
+    }
+
     try {
       await entrarMut.mutateAsync({
         tenant_id: tenantId,
