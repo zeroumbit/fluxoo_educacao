@@ -11,8 +11,9 @@ interface AlunoVinculado {
   tenant_id: string
   filial_id: string | null
   turma_id: string | null
-  turma: { id: string; nome: string; turno: string; horario?: string | null } | null
+  turma: { id: string; nome: string; turno: string; horario?: string | null; valor_mensalidade?: number | null } | null
   filial: { nome_unidade: string } | null
+  valor_matricula: number | null
 }
 
 interface PortalContextType {
@@ -40,7 +41,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
       // Tentar pegar matrícula ativa
       const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo')
+         .select('turno, serie_ano, ano_letivo, valor_matricula')
          .eq('aluno_id', vinculo.aluno.id)
          .eq('status', 'ativa')
          .maybeSingle()
@@ -48,14 +49,20 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       // Buscar turma que contém o aluno
       const { data: turma } = await supabase
         .from('turmas')
-        .select('id, nome, turno, horario')
+        .select('id, nome, turno, horario, valor_mensalidade')
         .eq('tenant_id', vinculo.aluno.tenant_id)
         .contains('alunos_ids', [vinculo.aluno.id])
         .maybeSingle()
 
       setAlunoSelecionado({
         ...vinculo.aluno,
-        turma: turma || (matricula ? { id: '', nome: matricula.serie_ano, turno: matricula.turno } : null)
+        turma: turma || (matricula ? { 
+          id: '', 
+          nome: matricula.serie_ano, 
+          turno: matricula.turno, 
+          valor_mensalidade: matricula.valor_matricula // Exibe o valor da matrícula se a turma não tiver valor próprio
+        } : null),
+        valor_matricula: matricula?.valor_matricula || null
       })
       setTenantId(vinculo.aluno.tenant_id)
     }
@@ -68,21 +75,27 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
       const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo')
+         .select('turno, serie_ano, ano_letivo, valor_matricula')
          .eq('aluno_id', vinculo.aluno.id)
          .eq('status', 'ativa')
          .maybeSingle()
       
       const { data: turma } = await supabase
         .from('turmas')
-        .select('id, nome, turno, horario')
+        .select('id, nome, turno, horario, valor_mensalidade')
         .eq('tenant_id', vinculo.aluno.tenant_id)
         .contains('alunos_ids', [vinculo.aluno.id])
         .maybeSingle()
 
       setAlunoSelecionado({
         ...vinculo.aluno,
-        turma: turma || (matricula ? { id: '', nome: matricula.serie_ano, turno: matricula.turno } : null)
+        turma: turma || (matricula ? { 
+          id: '', 
+          nome: matricula.serie_ano, 
+          turno: matricula.turno, 
+          valor_mensalidade: matricula.valor_matricula 
+        } : null),
+        valor_matricula: matricula?.valor_matricula || null
       })
       setTenantId(vinculo.aluno.tenant_id)
     }

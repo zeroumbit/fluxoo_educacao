@@ -24,6 +24,7 @@ const turmaSchema = z.object({
   sala: z.string().optional().or(z.literal('')),
   capacidade_maxima: z.any().transform((val) => Number(val)).pipe(z.number().min(1, 'Capacidade mínima de 1')),
   filial_id: z.string().optional().or(z.literal('')),
+  valor_mensalidade: z.any().transform((val) => val === '' ? 0 : Number(val)).pipe(z.number().min(0, 'Valor inválido')),
 })
 
 type TurmaFormValues = z.infer<typeof turmaSchema>
@@ -64,7 +65,7 @@ export function TurmasPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome: '', turno: '', horario_inicio: '', horario_fim: '', sala: '', capacidade_maxima: 30, filial_id: '' })
+    reset({ nome: '', turno: '', horario_inicio: '', horario_fim: '', sala: '', capacidade_maxima: 30, filial_id: '', valor_mensalidade: 0 })
     setDialogOpen(true)
   }
 
@@ -78,7 +79,8 @@ export function TurmasPage() {
       horario_fim: fim || '',
       sala: turma.sala || '', 
       capacidade_maxima: turma.capacidade_maxima || 30, 
-      filial_id: turma.filial_id || '' 
+      filial_id: turma.filial_id || '',
+      valor_mensalidade: turma.valor_mensalidade || 0
     })
     setDialogOpen(true)
   }
@@ -93,6 +95,7 @@ export function TurmasPage() {
         sala: data.sala || null,
         capacidade_maxima: data.capacidade_maxima ? Number(data.capacidade_maxima) : null,
         filial_id: data.filial_id && data.filial_id !== '' ? data.filial_id : null,
+        valor_mensalidade: Number(data.valor_mensalidade) || 0,
       }
 
       if (editando) {
@@ -185,7 +188,18 @@ export function TurmasPage() {
                   {errors.capacidade_maxima && <p className="text-sm text-destructive">{errors.capacidade_maxima.message}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_mensalidade">Valor da Mensalidade (R$)</Label>
+                  <Input 
+                    id="valor_mensalidade" 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0,00" 
+                    {...register('valor_mensalidade')} 
+                  />
+                  {errors.valor_mensalidade && <p className="text-sm text-destructive">{errors.valor_mensalidade.message}</p>}
+                </div>
                 {filiais && filiais.length > 0 && (
                   <div className="space-y-2">
                     <Label>Filial</Label>
@@ -252,8 +266,13 @@ export function TurmasPage() {
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleExcluir(turma.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                Capacidade: <span className="font-medium text-foreground">{turma.capacidade_maxima || '—'} alunos</span>
+              <div className="mt-4 flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  Capacidade: <span className="font-medium text-foreground">{turma.capacidade_maxima || '—'} alunos</span>
+                </div>
+                <div className="text-emerald-600 font-bold">
+                  R$ {Number(turma.valor_mensalidade || 0).toFixed(2).replace('.', ',')}
+                </div>
               </div>
             </CardContent>
           </Card>

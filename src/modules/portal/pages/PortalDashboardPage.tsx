@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { usePortalContext } from '../context'
 import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento } from '../hooks'
+import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
   Activity,
@@ -204,7 +205,21 @@ export function PortalDashboardPage() {
           <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="space-y-1">
               <h2 className="text-5xl md:text-7xl font-black text-slate-800 tracking-tighter leading-tight italic">{nomeAluno}</h2>
-              <p className="text-slate-400 font-bold text-xl">{turma?.nome || 'Turma não informada'} • <span className="text-teal-500">{turma?.turno || 'Turno não informado'}</span></p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <p className="text-slate-400 font-bold text-xl">{turma?.nome || 'Turma não informada'} • <span className="text-teal-500">{turma?.turno || 'Turno não informado'}</span></p>
+                <div className="flex items-center gap-3">
+                  {turma?.valor_mensalidade && (
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-black px-4 py-1.5 rounded-xl">
+                      Mensalidade: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)}
+                    </Badge>
+                  )}
+                  {alunoSelecionado?.valor_matricula && (
+                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-black px-4 py-1.5 rounded-xl">
+                      Matrícula: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(alunoSelecionado.valor_matricula)}
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className="flex flex-wrap justify-center lg:justify-start gap-8 border-t border-slate-50 pt-8">

@@ -144,6 +144,28 @@ export function useTrocarSenha() {
   })
 }
 
+export function useUpdatePerfil() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ responsavelId, dados }: { responsavelId: string; dados: any }) =>
+      portalService.atualizarPerfil(responsavelId, dados),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] })
+    },
+  })
+}
+
+export function useUpdateParentesco() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ vinculoId, grauParentesco }: { vinculoId: string; grauParentesco: string }) =>
+      portalService.atualizarParentesco(vinculoId, grauParentesco),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    },
+  })
+}
+
 // ==========================================
 // SOLICITAÇÃO DE DOCUMENTOS
 // ==========================================

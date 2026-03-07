@@ -107,7 +107,7 @@ export const portalService = {
   // ==========================================
   async buscarResponsavelPorUserId(userId: string) {
     const { data, error } = await supabase.from('responsaveis')
-      .select('id, cpf, nome, email, telefone')
+      .select('*')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -122,7 +122,7 @@ export const portalService = {
     console.log('DEBUG: Buscando vínculos para responsável:', responsavelId)
     const { data, error } = await supabase.from('aluno_responsavel')
       .select(`
-        id, responsavel_id, aluno_id, is_financeiro, is_academico, status,
+        id, responsavel_id, aluno_id, is_financeiro, is_academico, status, grau_parentesco,
         aluno:alunos(
           id, 
           nome_completo, 
@@ -452,5 +452,27 @@ export const portalService = {
 
     if (error) throw error
     return (data as any[]) || []
+  },
+
+  async atualizarPerfil(responsavelId: string, dados: any) {
+    const { error } = await supabase.from('responsaveis')
+      .update(dados)
+      .eq('id', responsavelId)
+    
+    if (error) throw error
+
+    await portalService.registrarAuditoria({
+      tipo: 'perfil_atualizado',
+      responsavel_id: responsavelId,
+      detalhes: { campos: Object.keys(dados) },
+    })
+  },
+
+  async atualizarParentesco(vinculoId: string, grauParentesco: string) {
+    const { error } = await supabase.from('aluno_responsavel')
+      .update({ grau_parentesco: grauParentesco })
+      .eq('id', vinculoId)
+    
+    if (error) throw error
   },
 }

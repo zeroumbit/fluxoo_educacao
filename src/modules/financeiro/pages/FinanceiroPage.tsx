@@ -86,9 +86,9 @@ export function FinanceiroPage() {
   const { data: configFin } = useConfigFinanceira()
 
   useEffect(() => {
-    // 1. Tentar pegar por mensalidade da turma (configurada na config financeira)
-    if (turmaDoAluno && configFin?.valores_mensalidade_turma?.[turmaDoAluno.id]) {
-      setValue('valor', configFin.valores_mensalidade_turma[turmaDoAluno.id])
+    // 1. Tentar pegar por mensalidade da turma (agora no cadastro de turmas)
+    if (turmaDoAluno && turmaDoAluno.valor_mensalidade) {
+      setValue('valor', turmaDoAluno.valor_mensalidade)
     } 
     // 2. Fallback para o valor da matrícula ativa (contrato individual)
     else if (matriculaAtiva && matriculaAtiva.valor_matricula) {

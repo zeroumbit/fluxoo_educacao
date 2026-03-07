@@ -160,7 +160,7 @@ export function PortalCobrancasPage() {
         {/* Card Informativo - 1 coluna (lateral direita) */}
         <div className="lg:col-span-1">
           <Card className="border border-slate-200 shadow-sm sticky top-6">
-            <CardHeader className="pb-3 border-b border-slate-100">
+            <CardHeader className="pt-[30px] pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-teal-50 flex items-center justify-center">
                   <BookOpen className="h-4 w-4 text-teal-600" />

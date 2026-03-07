@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useCriarAlunoComResponsavel, useAlunosAtivos } from '../hooks'
 import { useLimiteAlunos } from '@/modules/assinatura/hooks'
@@ -51,12 +52,14 @@ const alunoSchema = z.object({
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
   filial_id: z.string().optional(),
+  valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
+  data_ingresso: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
   responsavel_telefone: z.string().optional().or(z.literal('')),
   responsavel_email: z.string().email('E-mail obrigatório para acesso ao portal'),
-  responsavel_parentesco: z.string().optional(),
-  responsavel_senha: z.string().min(6, 'Senha mínima de 6 caracteres'),
+  responsavel_parentesco: z.string().min(1, 'Parentesco é obrigatório'),
+  responsavel_senha: z.string().optional(),
   responsavel_financeiro: z.string().min(1, 'Defina se é o responsável financeiro'),
 }).refine((data) => !data.cpf || validarCPF(data.cpf), {
   message: 'CPF inválido',
@@ -72,10 +75,10 @@ const alunoSchema = z.object({
 type AlunoFormValues = z.infer<typeof alunoSchema>
 
 const steps = [
-  { title: 'Dados Pessoais', icon: User, description: 'Informações do aluno' },
+  { title: 'Responsável', icon: Users, description: 'Dados do responsável' },
+  { title: 'Dados do Aluno', icon: User, description: 'Informações do aluno' },
   { title: 'Endereço', icon: Building2, description: 'Endereço do aluno' },
   { title: 'Saúde', icon: Heart, description: 'Informações de saúde' },
-  { title: 'Responsável', icon: Users, description: 'Dados do responsável' },
 ]
 
 export function AlunoCadastroPage() {
@@ -87,6 +90,8 @@ export function AlunoCadastroPage() {
   const { data: limite } = useLimiteAlunos()
   const { data: filiais } = useFiliais()
   const [showPassword, setShowPassword] = useState(false)
+  const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
+  const [buscandoCpf, setBuscandoCpf] = useState(false)
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -99,17 +104,18 @@ export function AlunoCadastroPage() {
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
     resolver: zodResolver(alunoSchema),
-    defaultValues: { 
-      nome_completo: '', 
-      data_nascimento: '',
-      estado: '',
-      cidade: '',
-      genero: '',
-      responsavel_parentesco: '',
-      cpf: '',
+    defaultValues: {
+      responsavel_nome: '',
       responsavel_cpf: '',
-      cep: '',
+      responsavel_email: '',
+      responsavel_parentesco: '',
       responsavel_financeiro: 'sim',
+      responsavel_senha: '',
+      nome_completo: '',
+      data_nascimento: '',
+      cep: '',
+      valor_mensalidade_atual: 0,
+      data_ingresso: new Date().toISOString().split('T')[0],
     },
   })
 
@@ -165,13 +171,59 @@ export function AlunoCadastroPage() {
     setValue('responsavel_telefone', mascaraTelefone(valor), { shouldValidate: true })
   }
 
+  const handleCpfResponsavelBlur = async () => {
+    const cpf = watch('responsavel_cpf')
+    if (!cpf || cpf.length < 14) return
+    
+    setBuscandoCpf(true)
+    const cpfLimpo = cpf.replace(/\D/g, '')
+    try {
+      const { data, error } = await supabase
+        .from('responsaveis')
+        .select('id, nome, email, telefone')
+        .eq('cpf', cpfLimpo)
+        .maybeSingle()
+        
+      if (data) {
+        setResponsavelEncontrado(true)
+        setValue('responsavel_nome', data.nome || '', { shouldValidate: true })
+        setValue('responsavel_email', data.email || '', { shouldValidate: true })
+        setValue('responsavel_telefone', data.telefone || '', { shouldValidate: true })
+        toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
+          description: 'Não é necessário criar uma nova senha.',
+          duration: 6000
+        })
+      } else {
+        if (responsavelEncontrado) {
+          setResponsavelEncontrado(false)
+          // Opcionalmente limpar campos se o usuário mudar o CPF para um inexistente
+          // mas talvez seja melhor deixar o que ele já digitou
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar responsável:', err)
+    } finally {
+      setBuscandoCpf(false)
+    }
+  }
+
   const validateStep = async () => {
     const fieldsPerStep: (keyof AlunoFormValues)[][] = [
+      ['responsavel_nome', 'responsavel_cpf', 'responsavel_financeiro', 'responsavel_parentesco'],
       ['nome_completo', 'data_nascimento'],
       ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'],
       [],
-      ['responsavel_nome', 'responsavel_cpf', 'responsavel_senha', 'responsavel_financeiro'],
     ]
+
+    // Validação extra para senha se for novo responsável
+    if (currentStep === 0 && !responsavelEncontrado) {
+      const senha = watch('responsavel_senha')
+      if (!senha || senha.length < 6) {
+        toast.error('Defina uma senha de no mínimo 6 caracteres para o novo responsável.')
+        return false
+      }
+    }
+
     return await trigger(fieldsPerStep[currentStep])
   }
 
@@ -210,7 +262,7 @@ export function AlunoCadastroPage() {
         nome: data.responsavel_nome,
         telefone: data.responsavel_telefone && data.responsavel_telefone !== '' ? data.responsavel_telefone : null,
         email: data.responsavel_email && data.responsavel_email !== '' ? data.responsavel_email : null,
-        senha_hash: data.responsavel_senha,
+        senha_hash: data.responsavel_senha || '',
         cep: null,
         logradouro: null,
         numero: null,
@@ -238,6 +290,8 @@ export function AlunoCadastroPage() {
         bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
         cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
         estado: data.estado && data.estado !== '' ? data.estado : null,
+        valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
+        data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -324,13 +378,13 @@ export function AlunoCadastroPage() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Card className="border-0 shadow-md">
-          <CardHeader>
+          <CardHeader className="pt-[30px]">
             <CardTitle>{steps[currentStep].title}</CardTitle>
             <CardDescription>{steps[currentStep].description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Step 1 - Dados Pessoais */}
-            {currentStep === 0 && (
+            {/* Step 2 - Dados do aluno */}
+            {currentStep === 1 && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome completo *</Label>
@@ -406,11 +460,35 @@ export function AlunoCadastroPage() {
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="valor_mensalidade_atual">Valor da Mensalidade (R$)</Label>
+                    <Input
+                      id="valor_mensalidade_atual"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      {...register('valor_mensalidade_atual')}
+                      className="w-full"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Cálculo automático de proporcional no primeiro mês</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="data_ingresso">Data de Ingresso</Label>
+                    <Input
+                      id="data_ingresso"
+                      type="date"
+                      {...register('data_ingresso')}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
               </>
             )}
 
-            {/* Step 2 - Endereço */}
-            {currentStep === 1 && (
+            {/* Step 3 - Endereço */}
+            {currentStep === 2 && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="cep">CEP *</Label>
@@ -498,8 +576,8 @@ export function AlunoCadastroPage() {
               </>
             )}
 
-            {/* Step 3 - Saúde */}
-            {currentStep === 2 && (
+            {/* Step 4 - Saúde */}
+            {currentStep === 3 && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="patologias">Possui alguma patologia?</Label>
@@ -518,36 +596,44 @@ export function AlunoCadastroPage() {
               </>
             )}
 
-            {/* Step 4 - Responsável */}
-            {currentStep === 3 && (
+            {/* Step 1 - Responsável */}
+            {currentStep === 0 && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="responsavel_nome">Nome do responsável *</Label>
-                  <Input 
-                    id="responsavel_nome" 
-                    placeholder="Digite o nome completo do responsável" 
-                    {...register('responsavel_nome')} 
-                  />
-                  {errors.responsavel_nome && <p className="text-sm text-destructive">{errors.responsavel_nome.message}</p>}
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2 sm:col-span-2">
                     <Label htmlFor="responsavel_cpf">CPF do responsável *</Label>
-                    <Input
-                      id="responsavel_cpf"
-                      placeholder="000.000.000-00"
-                      {...register('responsavel_cpf')}
-                      onChange={(e) => handleCpfChange(e, 'responsavel_cpf')}
-                      maxLength={14}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="responsavel_cpf"
+                        placeholder="000.000.000-00"
+                        {...register('responsavel_cpf')}
+                        onChange={(e) => {
+                          handleCpfChange(e, 'responsavel_cpf')
+                          if (e.target.value.length === 14) {
+                            // Pequeno timeout para garantir que o valor atualizou no form
+                            setTimeout(() => {
+                              const input = document.getElementById('responsavel_cpf')
+                              input?.blur()
+                            }, 100)
+                          }
+                        }}
+                        onBlur={handleCpfResponsavelBlur}
+                        maxLength={14}
+                        className="w-full"
+                      />
+                      {buscandoCpf && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
                     {errors.responsavel_cpf && (
                       <p className="text-sm text-destructive">{errors.responsavel_cpf.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_parentesco">Parentesco *</Label>
-                    <Select onValueChange={(v) => setValue('responsavel_parentesco', v)}>
+                    <Select value={watch('responsavel_parentesco')} onValueChange={(v) => setValue('responsavel_parentesco', v, { shouldValidate: true })}>
                       <SelectTrigger id="responsavel_parentesco" className="w-full">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -561,6 +647,29 @@ export function AlunoCadastroPage() {
                     </Select>
                   </div>
                 </div>
+
+                {responsavelEncontrado && (
+                  <div className="bg-sky-50 border border-sky-200 text-sky-800 p-4 rounded-xl flex items-start gap-4 shadow-sm my-2">
+                    <Users className="h-6 w-6 text-sky-600 shrink-0" />
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sky-900 leading-none">Responsável Identificado</h4>
+                      <p className="text-sm text-sky-700 font-medium">
+                        Este responsável já está na plataforma. Ele não precisa criar senha, basta preencher os demais campos.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="responsavel_nome">Nome do responsável *</Label>
+                  <Input 
+                    id="responsavel_nome" 
+                    placeholder="Digite o nome completo do responsável" 
+                    {...register('responsavel_nome')} 
+                  />
+                  {errors.responsavel_nome && <p className="text-sm text-destructive">{errors.responsavel_nome.message}</p>}
+                </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_telefone">Telefone</Label>
@@ -601,61 +710,67 @@ export function AlunoCadastroPage() {
                   {errors.responsavel_financeiro && <p className="text-sm text-destructive font-bold">{errors.responsavel_financeiro.message}</p>}
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest px-1">Obs: Isso define quem vê boletos e faz pagamentos via portal.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsavel_senha">Senha de acesso *</Label>
-                  <div className="relative">
-                    <Input
-                      id="responsavel_senha"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Mínimo 6 caracteres"
-                      {...register('responsavel_senha')}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  {errors.responsavel_senha && <p className="text-sm text-destructive">{errors.responsavel_senha.message}</p>}
-                  <p className="text-xs text-muted-foreground">Senha para o responsável acessar o portal</p>
-                </div>
-              </>
-            )}
 
-            {/* Unidade - dentro do step 4 (Responsável) */}
-            {currentStep === 3 && filiais && filiais.length > 0 && (
-              <div className="space-y-2 pt-4 border-t">
-                <Label htmlFor="filial_id">Unidade / Filial</Label>
-                <Select value={watch('filial_id')} onValueChange={(v) => setValue('filial_id', v)}>
-                  <SelectTrigger id="filial_id" className="w-full">
-                    <SelectValue placeholder="Selecione a unidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(filiais as any[])?.map((f: any) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
-              </div>
+                {!responsavelEncontrado && (
+                  <div className="space-y-2">
+                    <Label htmlFor="responsavel_senha">Senha de acesso *</Label>
+                    <div className="relative">
+                      <Input
+                        id="responsavel_senha"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Mínimo 6 caracteres"
+                        {...register('responsavel_senha')}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.responsavel_senha && <p className="text-sm text-destructive">{errors.responsavel_senha.message}</p>}
+                    <p className="text-xs text-muted-foreground">Senha para o responsável acessar o portal</p>
+                  </div>
+                )}
+
+                {filiais && filiais.length > 0 && (
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label htmlFor="filial_id">Unidade / Filial</Label>
+                    <Select value={watch('filial_id')} onValueChange={(v) => setValue('filial_id', v)}>
+                      <SelectTrigger id="filial_id" className="w-full">
+                        <SelectValue placeholder="Selecione a unidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(filiais as any[])?.map((f: any) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
 
         {/* Navigation */}
         <div className="flex justify-between mt-6">
-          <Button type="button" variant="outline" onClick={prevStep} disabled={currentStep === 0}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
-          </Button>
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <Button type="button" variant="outline" onClick={prevStep}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
+              </Button>
+            )}
+          </div>
           {currentStep < steps.length - 1 ? (
             <Button type="button" onClick={nextStep}>
               Próximo <ArrowRight className="ml-2 h-4 w-4" />

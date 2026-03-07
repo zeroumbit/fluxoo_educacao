@@ -1,5 +1,4 @@
 ## Qwen Added Memories
-
 ### Regras de Negócio - Super Admin
 - **O Super Admin NÃO tem qualquer gerência sobre as ações funcionais/administrativas das escolas.**
 - O Super Admin não pode criar, editar ou excluir dados administrativos das escolas (eventos, alunos, funcionários, turmas, financeiro, almoxarifado, etc.)
@@ -12,3 +11,4 @@
 
 ### UI/UX
 - Ao ajustar campos Select (Radix UI) em grids, sempre adicionar `className="w-full"` no `SelectTrigger` para ocupar 100% da largura da coluna. Sem isso, o select não se expande mesmo dentro de `grid-cols-2`.
+- UI/UX - Cards: Ao criar cards, sempre adicionar `className="pt-[30px]"` no CardHeader para evitar que títulos fiquem grudados no topo. Distância padrão de 30px é o ideal.

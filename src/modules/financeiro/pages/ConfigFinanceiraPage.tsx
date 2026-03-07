@@ -29,7 +29,6 @@ export function ConfigFinanceiraPage() {
     qr_code_auto: false,
     dinheiro_cartao_presencial: true,
     pix_qr_code_url: '',
-    valores_mensalidade_turma: {} as Record<string, number>,
     id: undefined as string | undefined,
   })
 
@@ -50,7 +49,6 @@ export function ConfigFinanceiraPage() {
         qr_code_auto: config.qr_code_auto || false,
         dinheiro_cartao_presencial: config.dinheiro_cartao_presencial ?? true,
         pix_qr_code_url: config.pix_qr_code_url || '',
-        valores_mensalidade_turma: config.valores_mensalidade_turma || {},
         id: config.id,
       })
     }
@@ -264,39 +262,6 @@ export function ConfigFinanceiraPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pt-8">
-            <CardTitle className="text-sm">Mensalidades por Turma</CardTitle>
-            <CardDescription>Defina o valor padrão da mensalidade para cada turma. Este valor será sugerido automaticamente ao criar novas cobranças no financeiro.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-6">
-             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-3">
-               {turmas?.map(turma => (
-                 <div key={turma.id} className="flex items-center justify-between gap-4 p-2 rounded-md hover:bg-zinc-50 transition-colors">
-                   <Label className="text-xs truncate font-medium text-zinc-700">{turma.nome}</Label>
-                   <div className="relative">
-                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">R$</span>
-                     <Input 
-                       type="number" 
-                       className="w-28 h-8 pl-7 text-right text-xs"
-                       placeholder="0,00"
-                       value={form.valores_mensalidade_turma[turma.id] || ''} 
-                       onChange={(e) => setForm({ 
-                         ...form, 
-                         valores_mensalidade_turma: { ...form.valores_mensalidade_turma, [turma.id]: +e.target.value } 
-                       })} 
-                     />
-                   </div>
-                 </div>
-               ))}
-               {(!turmas || turmas.length === 0) && (
-                 <p className="text-xs text-muted-foreground italic py-4">Nenhuma turma cadastrada para configurar.</p>
-               )}
-             </div>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={upsert.isPending} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md min-w-[200px]">

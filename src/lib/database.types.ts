@@ -112,6 +112,7 @@ export type Turma = {
   sala: string | null
   capacidade_maxima: number | null
   turno: string | null
+  valor_mensalidade: number | null
   created_at: string
   updated_at: string
 }

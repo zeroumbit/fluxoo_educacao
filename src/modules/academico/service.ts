@@ -12,6 +12,16 @@ export const academicoService = {
   async criarMatricula(matricula: any) {
     const { data, error } = await (supabase.from('matriculas' as any) as any).insert(matricula).select().single()
     if (error) throw error
+    
+    // Tenta gerar cobranças iniciais (proporcional, etc)
+    try {
+      const { financeiroService } = await import('@/modules/financeiro/service')
+      await financeiroService.gerarCobrancasIniciaisMatricula(data)
+    } catch (finError) {
+      console.error('⚠️ Erro ao gerar cobranças automáticas para matrícula:', finError)
+      // Não trava a criação da matrícula, apenas loga
+    }
+
     return data
   },
   async atualizarMatricula(id: string, matricula: any) {

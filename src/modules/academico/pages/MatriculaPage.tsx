@@ -4,15 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useMatriculas,
-  useCriarMatricula,
-  useMatriculaAtivaDoAluno,
-  useAtualizarMatricula,
-  useExcluirMatricula
-} from '../hooks'
-import { useConfigFinanceira } from '@/modules/financeiro/hooks-avancado'
+import { useMatriculas, useCriarMatricula, useMatriculaAtivaDoAluno, useAtualizarMatricula, useExcluirMatricula } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,7 +22,6 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
@@ -60,6 +53,7 @@ export default function MatriculaPage() {
   const { authUser } = useAuth()
   const { data: matriculas, isLoading } = useMatriculas()
   const { data: alunos } = useAlunos()
+  const { data: turmas } = useTurmas()
   const criar = useCriarMatricula()
   const atualizar = useAtualizarMatricula()
   const excluir = useExcluirMatricula()
@@ -88,7 +82,6 @@ export default function MatriculaPage() {
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
-  const { data: configFin } = useConfigFinanceira()
 
   useEffect(() => {
     if (matriculaExistente && tipoSelecionado === 'rematricula' && !isEditing) {
@@ -100,13 +93,24 @@ export default function MatriculaPage() {
   }, [matriculaExistente, tipoSelecionado, form, isEditing])
 
   useEffect(() => {
-    if (tipoSelecionado === 'nova' && serieSelecionada && configFin?.valores_matricula_serie && !isEditing) {
-      const valorPadrao = configFin.valores_matricula_serie[serieSelecionada]
-      if (valorPadrao) {
-        form.setValue('valor_matricula', valorPadrao)
+    if (tipoSelecionado === 'nova' && serieSelecionada && !isEditing) {
+      const turma = (turmas as any[])?.find(t => t.nome === serieSelecionada)
+      if (turma) {
+        // Mapeamento de turnos: matutino -> manha, vespertino -> tarde
+        const turnoMap: Record<string, string> = {
+          matutino: 'manha',
+          vespertino: 'tarde',
+          integral: 'integral',
+          noturno: 'noturno'
+        }
+        
+        form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
+        if (turma.valor_mensalidade) {
+          form.setValue('valor_matricula', turma.valor_mensalidade)
+        }
       }
     }
-  }, [serieSelecionada, tipoSelecionado, configFin, form, isEditing])
+  }, [serieSelecionada, tipoSelecionado, turmas, form, isEditing])
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -181,16 +185,9 @@ export default function MatriculaPage() {
               <Plus className="mr-2 h-4 w-4" /> Nova Matrícula
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[800px] w-[95vw] p-0 overflow-hidden border-none rounded-[32px] flex flex-col max-h-[90vh]">
-            <DialogHeader className="p-8 pb-0">
-              <DialogTitle className="text-2xl font-black tracking-tighter text-slate-800">{isEditing ? 'Editar Matrícula' : 'Nova Matrícula / Rematrícula'}</DialogTitle>
-              <DialogDescription className="text-slate-500 font-medium">
-                Preencha as informações para {isEditing ? 'atualizar' : 'realizar'} a matrícula do aluno.
-              </DialogDescription>
-            </DialogHeader>
-
-            <ScrollArea className="flex-1 p-8">
-              <form id="matricula-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <DialogContent className="max-w-[800px]">
+            <DialogHeader><DialogTitle>{isEditing ? 'Editar Matrícula' : 'Nova Matrícula / Rematrícula'}</DialogTitle></DialogHeader>
+            <form id="matricula-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
                   <RadioGroup
@@ -210,115 +207,115 @@ export default function MatriculaPage() {
                   </RadioGroup>
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="aluno_id" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno *</Label>
-                  <Select disabled={isEditing} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
-                    <SelectTrigger id="aluno_id" className="w-full h-12 rounded-xl border-slate-100 bg-slate-50 font-bold">
-                      <SelectValue placeholder="Selecione o aluno" />
+              <div className="space-y-2">
+                <Label htmlFor="aluno_id">Aluno *</Label>
+                <Select disabled={isEditing} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
+                  <SelectTrigger id="aluno_id" className="w-full">
+                    <SelectValue placeholder="Selecione o aluno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {alunos?.map((a: any) => (
+                      <SelectItem key={a.id} value={a.id} className="font-bold">
+                        {a.nome_completo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.aluno_id && (
+                  <p className="text-sm text-destructive">{form.formState.errors.aluno_id.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ano_letivo">Ano Letivo *</Label>
+                  <Input
+                    id="ano_letivo"
+                    type="number"
+                    {...form.register('ano_letivo')}
+                  />
+                  {form.formState.errors.ano_letivo && (
+                    <p className="text-sm text-destructive">{form.formState.errors.ano_letivo.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="serie_ano">Turma/Ano *</Label>
+                  <Select value={form.getValues('serie_ano')} onValueChange={(v) => form.setValue('serie_ano', v)}>
+                    <SelectTrigger id="serie_ano" className="w-full">
+                      <SelectValue placeholder="Selecione a turma" />
                     </SelectTrigger>
                     <SelectContent>
-                      {alunos?.map((a: any) => (
-                        <SelectItem key={a.id} value={a.id} className="font-bold">
-                          {a.nome_completo}
+                      {(turmas as any[])?.map((t: any) => (
+                        <SelectItem key={t.id} value={t.nome} className="font-bold">
+                          {t.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {form.formState.errors.aluno_id && (
-                    <p className="text-sm text-destructive">{form.formState.errors.aluno_id.message}</p>
+                  {form.formState.errors.serie_ano && (
+                    <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>
                   )}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="ano_letivo" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ano Letivo *</Label>
-                    <Input
-                      id="ano_letivo"
-                      type="number"
-                      {...form.register('ano_letivo')}
-                      className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="serie_ano" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Série/Ano *</Label>
-                    <Input
-                      id="serie_ano"
-                      placeholder="Ex: 1º Ano EM"
-                      {...form.register('serie_ano')}
-                      className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
-                    />
-                    {form.formState.errors.serie_ano && (
-                      <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>
-                    )}
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="turno">Turno *</Label>
+                  <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
+                    <SelectTrigger id="turno" className="w-full">
+                      <SelectValue placeholder="Selecione o turno" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manha">Manhã</SelectItem>
+                      <SelectItem value="tarde">Tarde</SelectItem>
+                      <SelectItem value="integral">Integral</SelectItem>
+                      <SelectItem value="noturno">Noturno</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="data_matricula">Data da Matrícula</Label>
+                  <Input
+                    id="data_matricula"
+                    type="date"
+                    {...form.register('data_matricula')}
+                  />
+                </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="valor_matricula">Valor (R$)</Label>
+                  <Input
+                    id="valor_matricula"
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    {...form.register('valor_matricula')}
+                  />
+                </div>
+                {isEditing && (
                   <div className="space-y-2">
-                    <Label htmlFor="turno" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turno *</Label>
-                    <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
-                      <SelectTrigger id="turno" className="w-full h-12 rounded-xl border-slate-100 bg-slate-50 font-bold">
-                        <SelectValue placeholder="Selecione o turno" />
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
+                      <SelectTrigger id="status" className="w-full">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="manha">Manhã</SelectItem>
-                        <SelectItem value="tarde">Tarde</SelectItem>
-                        <SelectItem value="integral">Integral</SelectItem>
-                        <SelectItem value="noturno">Noturno</SelectItem>
+                        <SelectItem value="ativa">Ativa</SelectItem>
+                        <SelectItem value="concluida">Concluída</SelectItem>
+                        <SelectItem value="cancelada">Cancelada</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="data_matricula" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data da Matrícula</Label>
-                    <Input
-                      id="data_matricula"
-                      type="date"
-                      {...form.register('data_matricula')}
-                      className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
-                    />
-                  </div>
-                </div>
+                )}
+              </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="valor_matricula" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valor (R$)</Label>
-                    <Input
-                      id="valor_matricula"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      {...form.register('valor_matricula')}
-                      className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold"
-                    />
-                  </div>
-                  {isEditing && (
-                    <div className="space-y-2">
-                      <Label htmlFor="status" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</Label>
-                      <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
-                        <SelectTrigger id="status" className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ativa">Ativa</SelectItem>
-                          <SelectItem value="concluida">Concluída</SelectItem>
-                          <SelectItem value="cancelada">Cancelada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-              </form>
-            </ScrollArea>
-
-            <DialogFooter className="p-8 pt-4 border-t bg-slate-50/50 flex justify-end gap-3">
-              <Button type="button" variant="ghost" onClick={handleCloseDialog} disabled={form.formState.isSubmitting} className="font-bold text-slate-400">
-                Cancelar
-              </Button>
-              <Button form="matricula-form" type="submit" disabled={form.formState.isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 font-bold px-8 rounded-xl h-12 shadow-lg shadow-indigo-200 min-w-[140px]">
-                {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {isEditing ? 'Salvar' : 'Confirmar'}
-              </Button>
-            </DialogFooter>
+              <DialogFooter className="sm:justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.formState.isSubmitting}>Cancelar</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>{isEditing ? 'Salvar' : 'Confirmar'}</Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -331,7 +328,7 @@ export default function MatriculaPage() {
                 <TableHead className="font-bold py-4">Aluno</TableHead>
                 <TableHead className="font-bold">Tipo</TableHead>
                 <TableHead className="font-bold">Ano</TableHead>
-                <TableHead className="font-bold">Série</TableHead>
+                <TableHead className="font-bold">Turma/Ano</TableHead>
                 <TableHead className="font-bold">Turno</TableHead>
                 <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="text-right font-bold pr-6">Ações</TableHead>

@@ -173,7 +173,8 @@ function App() {
               <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
-              <Route path="/portal/perfil" element={<PortalPerfilPage />} />`n               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
+              <Route path="/portal/perfil" element={<PortalPerfilPage />} />
+              <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 
             {/* Fallback */}

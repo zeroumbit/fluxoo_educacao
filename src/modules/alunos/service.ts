@@ -159,6 +159,22 @@ export const alunoService = {
 
     if (vincError) throw vincError
 
+    // Tenta gerar cobranças iniciais se houver valor de mensalidade
+    const dadosExtra = alunoDados as any
+    if (dadosExtra.valor_mensalidade_atual && dadosExtra.valor_mensalidade_atual > 0) {
+      try {
+        const { financeiroService } = await import('@/modules/financeiro/service')
+        await financeiroService.gerarCobrancasIniciaisGenerico({
+          aluno_id: alunoData.id,
+          tenant_id: alunoDados.tenant_id!,
+          data_inicio: dadosExtra.data_ingresso || new Date().toISOString().split('T')[0],
+          valor_mensalidade: dadosExtra.valor_mensalidade_atual,
+        })
+      } catch (finError) {
+        console.error('⚠️ Erro ao gerar cobrança inicial no cadastro de aluno:', finError)
+      }
+    }
+
     return alunoData
   },
 
