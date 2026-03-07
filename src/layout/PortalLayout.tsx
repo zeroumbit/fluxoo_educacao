@@ -104,24 +104,24 @@ export function PortalLayout() {
           </div>
         </nav>
 
-        {/* 2. Área de Conteúdo Dinâmico - pb-[500px] conforme solicitado */}
-        <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-10 space-y-12 pb-[500px]">
+        {/* 2. Área de Conteúdo Dinâmico */}
+        <main className="flex-1 max-w-7xl mx-auto w-full p-8 md:p-12 space-y-12 pb-12">
           <Outlet />
         </main>
-
-        {/* 3. Acesso Rápido Flutuante */}
+ 
+        {/* 3. Acesso Rápido Flutuante (Fixed) */}
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-6">
           <div className="bg-white/90 backdrop-blur-2xl border border-white/50 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] rounded-[40px] p-5 flex justify-between items-center px-8">
              <QuickActionFloating icon={Activity} label="Frequência" colorName="teal" onClick={() => navigate('/portal/frequencia')} />
              <QuickActionFloating icon={FileText} label="Boletim" colorName="blue" onClick={() => navigate('/portal/boletim')} />
              <QuickActionFloating icon={DollarSign} label="Pagamentos" colorName="emerald" onClick={() => navigate('/portal/cobrancas')} />
-             <QuickActionFloating icon={ShoppingCart} label="Loja" colorName="violet" />
+             <QuickActionFloating icon={ShoppingCart} label="Loja" colorName="violet" onClick={() => navigate('/portal/loja')} />
              <QuickActionFloating icon={Settings} label="Perfil" colorName="slate" />
           </div>
         </div>
-
+ 
         {/* 4. Footer Institucional */}
-        <footer className="bg-white border-t border-slate-100 py-20 px-8">
+        <footer className="bg-white border-t border-slate-100 pt-20 pb-60 px-8">
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
             <div className="space-y-6">
               <h2 className="text-2xl font-black italic tracking-tighter">FLUXOO<span className="text-teal-500">EDU</span></h2>

@@ -54,6 +54,7 @@ import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
 import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'
 import { PortalLivrosPage } from '@/modules/portal/pages/PortalLivrosPage'
 import { PortalAgendaPage } from '@/modules/portal/pages/PortalAgendaPage'
+import { PortalLojaPage } from '@/modules/portal/pages/PortalLojaPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -166,6 +167,7 @@ function App() {
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
+              <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
             </Route>
 

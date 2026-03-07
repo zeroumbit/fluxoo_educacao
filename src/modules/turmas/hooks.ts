@@ -3,6 +3,10 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { turmaService } from './service'
 import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
+import { z } from 'zod'
+
 export function useTurmas() {
   const { authUser } = useAuth()
   const query = useQuery({
@@ -95,4 +99,48 @@ export function useTurmaDoAluno(alunoId: string) {
     queryFn: () => turmaService.buscarPorAluno(alunoId, authUser!.tenantId),
     enabled: !!authUser?.tenantId && !!alunoId,
   })
+}
+
+// Validação conforme Regra 2.4
+const updateMensalidadeSchema = z.object({
+  turmaId: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  valor: z.number().positive("O valor deve ser maior que zero"),
+})
+
+/**
+ * Hook para gerir a atualização de mensalidades por turma
+ * Segue Regras 2.3 (Invalidar Cache) e 4.1 (Toast Feedback)
+ */
+export const useTurmaBilling = () => {
+  const queryClient = useQueryClient()
+
+  const updateMensalidadeTurma = useMutation({
+    mutationFn: async ({ turmaId, tenantId, valor }: z.infer<typeof updateMensalidadeSchema>) => {
+      // Chama a RPC do banco que processa a atualização em massa (Regra 1.5)
+      // @ts-ignore - RPC a ser adicionada no schema de tipos
+      const { error } = await supabase.rpc('rpc_atualizar_mensalidade_turma_em_lote', {
+        p_tenant_id: tenantId,
+        p_turma_id: turmaId,
+        p_novo_valor_cheio: valor
+      })
+
+      if (error) throw error
+    },
+    onSuccess: (_, variables) => {
+      // Invalida o cache para que a UI reflicta o novo valor (Regra 2.3)
+      queryClient.invalidateQueries({ queryKey: ['turmas', variables.tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['alunos', variables.turmaId] })
+      
+      toast.success('Mensalidade da turma atualizada com sucesso!')
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao atualizar mensalidade: ' + error.message)
+    }
+  })
+
+  return {
+    updateMensalidadeTurma,
+    isUpdating: updateMensalidadeTurma.isPending
+  }
 }
