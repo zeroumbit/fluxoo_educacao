@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useTemplates, useCriarTemplate, useDocumentosEmitidos, useEmitirDocumento } from '../hooks'
+import { useTemplates, useCriarTemplate, useDocumentosEmitidos, useEmitirDocumento, useSolicitacoesDocumento, useAtualizarSolicitacao, useVincularDocumentoSolicitacao } from '../hooks'
 import { useAlunos, useAluno } from '@/modules/alunos/hooks'
 import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { Button } from '@/components/ui/button'
@@ -18,11 +18,12 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
 import {
   Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search,
   FileCheck, GraduationCap, Scale, HeartPulse, LogOut,
   Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity,
-  Printer, Download, Eye, X
+  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package
 } from 'lucide-react'
 import * as Docs from '../DocumentEngineComponents'
 import { usePdf } from '@/hooks/usePdf'
@@ -62,6 +63,9 @@ export function DocumentosPage() {
   const { data: templates, isLoading: loadingTemplates } = useTemplates()
   const { data: emitidos, isLoading: loadingEmitidos } = useDocumentosEmitidos()
   const { data: alunos, isLoading: loadingAlunos } = useAlunos()
+  const { data: solicitacoes, isLoading: loadingSolicitacoes } = useSolicitacoesDocumento()
+  const atualizarSolicitacao = useAtualizarSolicitacao()
+  const vincularDocumento = useVincularDocumentoSolicitacao()
   const criarTemplate = useCriarTemplate()
   const emitir = useEmitirDocumento()
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null)
@@ -79,7 +83,7 @@ export function DocumentosPage() {
 
   const form = useForm({ resolver: zodResolver(templateSchema) })
 
-  const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos
+  const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos || loadingSolicitacoes
 
   const abrirNovoTemplate = () => {
     setEditando(null)
@@ -415,6 +419,14 @@ export function DocumentosPage() {
             <TabsTrigger value="emitidos" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
               Histórico
             </TabsTrigger>
+            <TabsTrigger value="solicitacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm relative">
+              Solicitações
+              {solicitacoes && solicitacoes.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 bg-teal-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                  {solicitacoes.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -555,6 +567,126 @@ export function DocumentosPage() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="solicitacoes" className="mt-0">
+          <Card className="rounded-[32px] border-slate-100 shadow-xl overflow-hidden">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {solicitacoes && solicitacoes.length > 0 ? (
+                  solicitacoes.map((sol: any) => {
+                    const statusColors: Record<string, string> = {
+                      pendente: 'bg-amber-50 text-amber-700 border-amber-200',
+                      em_analise: 'bg-blue-50 text-blue-700 border-blue-200',
+                      pronto: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                      entregue: 'bg-violet-50 text-violet-700 border-violet-200',
+                      recusado: 'bg-red-50 text-red-700 border-red-200',
+                    }
+                    return (
+                      <div
+                        key={sol.id}
+                        className="flex items-center justify-between p-5 rounded-2xl border hover:shadow-md transition-all bg-white"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="h-12 w-12 rounded-xl bg-teal-50 flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-teal-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-bold text-slate-800">
+                                {DOCUMENT_TYPES.find(d => d.id === sol.documento_tipo)?.label || sol.documento_tipo}
+                              </h4>
+                              <Badge className={cn("text-[9px] uppercase tracking-wider font-black border", statusColors[sol.status] || statusColors.pendente)}>
+                                {sol.status.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <span className="font-medium">{sol.aluno?.nome_completo || '—'}</span>
+                              <span>•</span>
+                              <span>Solicitado por: {sol.responsavel?.nome || '—'}</span>
+                              <span>•</span>
+                              <span>{new Date(sol.created_at).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            {sol.observacoes && (
+                              <p className="text-xs text-slate-600 mt-2 flex items-center gap-1">
+                                <Inbox className="h-3 w-3" />
+                                {sol.observacoes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {sol.status === 'pendente' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => atualizarSolicitacao.mutateAsync({ id: sol.id, updates: { status: 'em_analise' } })}
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" /> Analisar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => atualizarSolicitacao.mutateAsync({ id: sol.id, updates: { status: 'recusado' } })}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                              >
+                                <X className="h-4 w-4" /> Recusar
+                              </Button>
+                            </>
+                          )}
+                          {sol.status === 'em_analise' && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                // Abre modal para selecionar documento emitido ou criar novo
+                                toast.info('Funcionalidade: Vincular documento emitido')
+                              }}
+                              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                            >
+                              <Package className="h-4 w-4 mr-1" /> Marcar como Pronto
+                            </Button>
+                          )}
+                          {sol.status === 'pronto' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => atualizarSolicitacao.mutateAsync({ id: sol.id, updates: { status: 'entregue' } })}
+                              className="text-violet-600 border-violet-200 hover:bg-violet-50"
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-1" /> Confirmar Entrega
+                            </Button>
+                          )}
+                          {sol.status === 'entregue' && (
+                            <Badge className="bg-slate-100 text-slate-600 border-slate-200">
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Concluído
+                            </Badge>
+                          )}
+                          {sol.status === 'recusado' && (
+                            <Badge className="bg-red-100 text-red-600 border-red-200">
+                              <X className="h-3 w-3 mr-1" /> Recusado
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                    <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center">
+                      <Inbox className="h-10 w-10 text-slate-300" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-700">Nenhuma solicitação</p>
+                      <p className="text-sm text-slate-500 mt-1">
+                        As solicitações dos responsáveis aparecerão aqui
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

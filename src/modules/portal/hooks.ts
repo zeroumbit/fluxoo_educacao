@@ -145,6 +145,44 @@ export function useTrocarSenha() {
 }
 
 // ==========================================
+// SOLICITAÇÃO DE DOCUMENTOS
+// ==========================================
+export function useCriarSolicitacaoDocumento() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dados: {
+      tenant_id: string
+      aluno_id: string
+      responsavel_id: string
+      documento_tipo: string
+      observacoes?: string
+    }) => portalService.criarSolicitacaoDocumento(dados),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'solicitacoes'] })
+    },
+  })
+}
+
+export function useSolicitacoesDocumento() {
+  const { data: responsavel } = useResponsavel()
+  const { tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'solicitacoes', responsavel?.id, tenantId],
+    queryFn: () => portalService.buscarSolicitacoesDocumento(responsavel!.id, tenantId!),
+    enabled: !!responsavel?.id && !!tenantId,
+  })
+}
+
+export function useTemplatesDocumento() {
+  const { tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'templates-documento', tenantId],
+    queryFn: () => portalService.buscarTemplatesDocumento(tenantId!),
+    enabled: !!tenantId,
+  })
+}
+
+// ==========================================
 // BOLETIM
 // ==========================================
 export function useBoletins() {

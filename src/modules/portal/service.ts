@@ -399,4 +399,58 @@ export const portalService = {
     if (error) throw error
     return (data as any[]) || []
   },
+
+  // ==========================================
+  // SOLICITAÇÃO DE DOCUMENTOS
+  // ==========================================
+  async criarSolicitacaoDocumento(dados: {
+    tenant_id: string
+    aluno_id: string
+    responsavel_id: string
+    documento_tipo: string
+    observacoes?: string
+  }) {
+    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+      .insert({
+        ...dados,
+        status: 'pendente',
+      } as any)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    await portalService.registrarAuditoria({
+      tipo: 'solicitacao_documento',
+      responsavel_id: dados.responsavel_id,
+      detalhes: { aluno_id: dados.aluno_id, documento_tipo: dados.documento_tipo },
+    })
+
+    return data
+  },
+
+  async buscarSolicitacoesDocumento(responsavelId: string, tenantId: string) {
+    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+      .select(`
+        *,
+        aluno:alunos(nome_completo, nome_social),
+        documento_emitido:documentos_emitidos(id, titulo, created_at)
+      `)
+      .eq('responsavel_id', responsavelId)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
+  async buscarTemplatesDocumento(tenantId: string) {
+    const { data, error } = await (supabase.from('documento_templates' as any) as any)
+      .select('id, titulo, tipo')
+      .eq('tenant_id', tenantId)
+      .order('titulo', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
 }

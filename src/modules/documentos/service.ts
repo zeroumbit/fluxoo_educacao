@@ -24,4 +24,46 @@ export const documentosService = {
     if (error) throw error
     return data
   },
+
+  // ==========================================
+  // SOLICITAÇÕES DE DOCUMENTOS
+  // ==========================================
+  async listarSolicitacoes(tenantId: string) {
+    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+      .select(`
+        *,
+        aluno:alunos(nome_completo, nome_social),
+        responsavel:responsaveis(nome, cpf, telefone),
+        documento_emitido:documentos_emitidos(id, titulo, created_at)
+      `)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
+  async atualizarSolicitacao(id: string, updates: any) {
+    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async vincularDocumentoSolicitacao(solicitacaoId: string, documentoEmitidoId: string) {
+    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+      .update({
+        documento_emitido_id: documentoEmitidoId,
+        status: 'pronto',
+        analysed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', solicitacaoId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
 }

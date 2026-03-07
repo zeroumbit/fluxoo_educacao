@@ -18,3 +18,33 @@ export function useEmitirDocumento() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => documentosService.emitirDocumento(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['docs_emitidos'] }) })
 }
+
+// ==========================================
+// SOLICITAÇÕES DE DOCUMENTOS (ESCOLA)
+// ==========================================
+export function useSolicitacoesDocumento() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['doc_solicitacoes', authUser?.tenantId],
+    queryFn: () => documentosService.listarSolicitacoes(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+  })
+}
+
+export function useAtualizarSolicitacao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+      documentosService.atualizarSolicitacao(id, updates),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_solicitacoes'] }),
+  })
+}
+
+export function useVincularDocumentoSolicitacao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ solicitacaoId, documentoEmitidoId }: { solicitacaoId: string; documentoEmitidoId: string }) =>
+      documentosService.vincularDocumentoSolicitacao(solicitacaoId, documentoEmitidoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_solicitacoes', 'docs_emitidos'] }),
+  })
+}

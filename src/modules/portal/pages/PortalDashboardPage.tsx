@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { usePortalContext } from '../context'
-import { useDashboardAluno, useConfigPix } from '../hooks'
+import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento } from '../hooks'
 import {
   Loader2,
   Activity,
@@ -140,6 +140,7 @@ export function PortalDashboardPage() {
   const { alunoSelecionado, isLoading: loadingCtx, isMultiAluno, vinculos, selecionarAluno } = usePortalContext()
   const { data: dashboard, isLoading } = useDashboardAluno()
   const { data: configPix } = useConfigPix()
+  const { data: solicitacoes } = useSolicitacoesDocumento()
   const navigate = useNavigate()
   const [showPixModal, setShowPixModal] = useState(false)
 
@@ -249,10 +250,10 @@ export function PortalDashboardPage() {
       {dashboard && (
         <div className="flex flex-col md:flex-row gap-8">
           <StatCard
-            label="Frequência Mensal"
-            value={`${dashboard.frequencia.percentual}%`}
-            trend={dashboard.frequencia.totalRegistros > 0 ? `${dashboard.frequencia.totalPresencas} presenças` : 'Sem registros'}
-            icon={Activity}
+            label="Documentos Solicitados"
+            value={String(solicitacoes?.length || 0)}
+            trend={`${solicitacoes?.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length || 0} em andamento`}
+            icon={FileText}
             color="bg-teal-500"
           />
           <StatCard
