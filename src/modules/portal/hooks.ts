@@ -12,7 +12,7 @@ export function useResponsavel() {
   return useQuery({
     queryKey: ['portal', 'responsavel', authUser?.user.id],
     queryFn: () => portalService.buscarResponsavelPorUserId(authUser!.user.id),
-    enabled: !!authUser?.user?.id,
+    enabled: !!authUser?.user.id,
     staleTime: 10 * 60 * 1000,
   })
 }

@@ -168,6 +168,247 @@ export type ResponsavelInsert = Omit<Responsavel, 'id' | 'created_at' | 'updated
 }
 export type ResponsavelUpdate = Partial<ResponsavelInsert>
 
+// ========== MATRICULAS ==========
+export type Matricula = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  ano_letivo: number
+  serie_ano: string
+  turno: string
+  valor_matricula: number
+  status: 'ativa' | 'encerrada' | 'trancada' | 'cancelada'
+  data_matricula: string
+  created_at: string
+  updated_at: string
+}
+export type MatriculaInsert = Omit<Matricula, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type MatriculaUpdate = Partial<MatriculaInsert>
+
+// ========== EVENTOS ==========
+export type Evento = {
+  id: string
+  tenant_id: string
+  filial_id: string | null
+  titulo: string
+  descricao: string | null
+  data_inicio: string
+  data_fim: string
+  tipo: string
+  cor: string | null
+  created_at: string
+  updated_at: string
+}
+export type EventoInsert = Omit<Evento, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type EventoUpdate = Partial<EventoInsert>
+
+// ========== CONFIG_RECADOS ==========
+export type ConfigRecados = {
+  id: string
+  tenant_id: string
+  whatsapp_contato: string | null
+  email_contato: string | null
+  link_ajuda: string | null
+  updated_at: string
+}
+export type ConfigRecadosInsert = Omit<ConfigRecados, 'id' | 'updated_at'> & {
+  id?: string; updated_at?: string
+}
+export type ConfigRecadosUpdate = Partial<ConfigRecadosInsert>
+
+// ========== CONFIG_FINANCEIRA ==========
+export type ConfigFinanceira = {
+  id: string
+  tenant_id: string
+  pix_chave: string | null
+  pix_favorecido: string | null
+  dia_vencimento_padrao: number
+  instrucoes_pagamento: string | null
+  updated_at: string
+}
+export type ConfigFinanceiraInsert = Omit<ConfigFinanceira, 'id' | 'updated_at'> & {
+  id?: string; updated_at?: string
+}
+export type ConfigFinanceiraUpdate = Partial<ConfigFinanceiraInsert>
+
+// ========== CONTAS_PAGAR ==========
+export type ContaPagar = {
+  id: string
+  tenant_id: string
+  descricao: string
+  valor: number
+  data_vencimento: string
+  data_pagamento: string | null
+  status: 'pendente' | 'pago' | 'atrasado' | 'cancelado'
+  categoria: string | null
+  created_at: string
+  updated_at: string
+}
+export type ContaPagarInsert = Omit<ContaPagar, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type ContaPagarUpdate = Partial<ContaPagarInsert>
+
+// ========== DOCUMENTOS ==========
+export type DocumentoTemplate = {
+  id: string
+  tenant_id: string
+  tipo: string
+  titulo: string
+  corpo_html: string
+  created_at: string
+}
+export type DocumentoTemplateInsert = Omit<DocumentoTemplate, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type DocumentoTemplateUpdate = Partial<DocumentoTemplateInsert>
+
+export type DocumentoEmitido = {
+  id: string
+  tenant_id: string
+  template_id: string | null
+  aluno_id: string
+  titulo: string
+  conteudo_final: string
+  status: string
+  created_at: string
+}
+export type DocumentoEmitidoInsert = Omit<DocumentoEmitido, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type DocumentoEmitidoUpdate = Partial<DocumentoEmitidoInsert>
+
+export type DocumentSolicitation = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  responsavel_id: string
+  documento_tipo: string
+  status: 'pendente' | 'em_analise' | 'pronto' | 'entregue' | 'recusado'
+  observacoes: string | null
+  documento_emitido_id: string | null
+  analysed_at: string | null
+  created_at: string
+  updated_at: string
+}
+export type DocumentSolicitationInsert = Omit<DocumentSolicitation, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type DocumentSolicitationUpdate = Partial<DocumentSolicitationInsert>
+
+// ========== AUTORIZACOES ==========
+export type AutorizacaoModelo = {
+  id: string
+  tenant_id: string | null
+  categoria: string
+  titulo: string
+  descricao_curta: string
+  texto_completo: string
+  obrigatoria: boolean
+  ordem: number
+  ativa: boolean
+  created_at: string
+  updated_at: string
+}
+export type AutorizacaoModeloInsert = Omit<AutorizacaoModelo, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type AutorizacaoModeloUpdate = Partial<AutorizacaoModeloInsert>
+
+export type AutorizacaoResposta = {
+  id: string
+  tenant_id: string
+  modelo_id: string
+  aluno_id: string
+  responsavel_id: string
+  aceita: boolean
+  texto_lido: boolean
+  data_resposta: string
+  data_revogacao: string | null
+  created_at: string
+  updated_at: string
+}
+export type AutorizacaoRespostaInsert = Omit<AutorizacaoResposta, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type AutorizacaoRespostaUpdate = Partial<AutorizacaoRespostaInsert>
+
+export type AutorizacaoAuditoria = {
+  id: string
+  tenant_id: string
+  modelo_id: string
+  aluno_id: string
+  responsavel_id: string
+  acao: 'autorizou' | 'revogou' | 'releu'
+  created_at: string
+}
+export type AutorizacaoAuditoriaInsert = Omit<AutorizacaoAuditoria, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== SELOS ==========
+export type Selo = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  tipo: string
+  titulo: string
+  pontos: number
+  created_at: string
+}
+export type SeloInsert = Omit<Selo, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== FILA VIRTUAL ==========
+export type FilaVirtual = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  responsavel_id: string
+  status: 'aguardando' | 'atendido'
+  created_at: string
+  updated_at: string
+}
+export type FilaVirtualInsert = Omit<FilaVirtual, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type FilaVirtualUpdate = Partial<FilaVirtualInsert>
+
+// ========== ALMOXARIFADO ==========
+export type AlmoxarifadoItem = {
+  id: string
+  tenant_id: string
+  nome: string
+  quantidade: number
+  unidade: string
+  estoque_minimo: number
+  created_at: string
+  updated_at: string
+}
+export type AlmoxarifadoItemInsert = Omit<AlmoxarifadoItem, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type AlmoxarifadoItemUpdate = Partial<AlmoxarifadoItemInsert>
+
+export type AlmoxarifadoMovimentacao = {
+  id: string
+  tenant_id: string
+  item_id: string
+  quantidade: number
+  tipo: 'entrada' | 'saida'
+  observacao: string | null
+  responsavel_id: string | null
+  created_at: string
+}
+export type AlmoxarifadoMovimentacaoInsert = Omit<AlmoxarifadoMovimentacao, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
 // ========== ALUNO_RESPONSAVEL (N:N) ==========
 export type AlunoResponsavel = {
   id: string
@@ -513,9 +754,21 @@ export type Database = {
       solicitacoes_upgrade: { Row: SolicitacaoUpgrade; Insert: SolicitacaoUpgradeInsert; Update: SolicitacaoUpgradeUpdate; Relationships: any[] }
       configuracao_recebimento: { Row: ConfiguracaoRecebimento; Insert: ConfiguracaoRecebimentoInsert; Update: ConfiguracaoRecebimentoUpdate; Relationships: any[] }
       audit_logs: { Row: AuditLog; Insert: AuditLogInsert; Update: AuditLogUpdate; Relationships: any[] }
-      fila_virtual: { Row: any; Insert: any; Update: any; Relationships: any[] }
-      almoxarifado_itens: { Row: any; Insert: any; Update: any; Relationships: any[] }
-      almoxarifado_movimentacoes: { Row: any; Insert: any; Update: any; Relationships: any[] }
+      matriculas: { Row: Matricula; Insert: MatriculaInsert; Update: MatriculaUpdate; Relationships: any[] }
+      eventos: { Row: Evento; Insert: EventoInsert; Update: EventoUpdate; Relationships: any[] }
+      config_recados: { Row: ConfigRecados; Insert: ConfigRecadosInsert; Update: ConfigRecadosUpdate; Relationships: any[] }
+      config_financeira: { Row: ConfigFinanceira; Insert: ConfigFinanceiraInsert; Update: ConfigFinanceiraUpdate; Relationships: any[] }
+      contas_pagar: { Row: ContaPagar; Insert: ContaPagarInsert; Update: ContaPagarUpdate; Relationships: any[] }
+      documento_templates: { Row: DocumentoTemplate; Insert: DocumentoTemplateInsert; Update: DocumentoTemplateUpdate; Relationships: any[] }
+      documentos_emitidos: { Row: DocumentoEmitido; Insert: DocumentoEmitidoInsert; Update: DocumentoEmitidoUpdate; Relationships: any[] }
+      document_solicitations: { Row: DocumentSolicitation; Insert: DocumentSolicitationInsert; Update: DocumentSolicitationUpdate; Relationships: any[] }
+      autorizacoes_modelos: { Row: AutorizacaoModelo; Insert: AutorizacaoModeloInsert; Update: AutorizacaoModeloUpdate; Relationships: any[] }
+      autorizacoes_respostas: { Row: AutorizacaoResposta; Insert: AutorizacaoRespostaInsert; Update: AutorizacaoRespostaUpdate; Relationships: any[] }
+      autorizacoes_auditoria: { Row: AutorizacaoAuditoria; Insert: AutorizacaoAuditoriaInsert; Update: any; Relationships: any[] }
+      selos: { Row: Selo; Insert: SeloInsert; Update: any; Relationships: any[] }
+      fila_virtual: { Row: FilaVirtual; Insert: FilaVirtualInsert; Update: FilaVirtualUpdate; Relationships: any[] }
+      almoxarifado_itens: { Row: AlmoxarifadoItem; Insert: AlmoxarifadoItemInsert; Update: AlmoxarifadoItemUpdate; Relationships: any[] }
+      almoxarifado_movimentacoes: { Row: AlmoxarifadoMovimentacao; Insert: AlmoxarifadoMovimentacaoInsert; Update: any; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
