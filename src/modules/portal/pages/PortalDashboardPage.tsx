@@ -47,7 +47,7 @@ const vibrate = (ms: number = 30) => {
 // --- SKELETON LOADING (MOBILE FIRST) ---
 const DashboardSkeleton = () => (
   <div className="space-y-4 animate-pulse">
-    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-5 relative overflow-hidden">
+    <div className="bg-white p-5 md:p-12 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-5 relative overflow-hidden">
       <div className="flex flex-col md:flex-row items-center gap-4">
         <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-slate-100 flex-shrink-0" />
         <div className="flex-1 space-y-3 text-center md:text-left w-full">
@@ -81,7 +81,7 @@ const DashboardSkeleton = () => (
 // --- COMPONENTES AUXILIARES ---
 
 const StatCard = ({ label, value, trend, icon: Icon, color }: { label: string, value: string, trend: string, icon: any, color: string }) => (
-  <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 flex-1">
+  <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 flex-1">
     <div className="flex justify-between items-start">
       <div className={cn("w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center", color)}>
         <Icon size={18} className="text-white" />
@@ -299,15 +299,15 @@ export function PortalDashboardPage() {
             }
           }
         }}
-        className="bg-white p-5 md:p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-6 relative overflow-hidden cursor-grab active:cursor-grabbing"
+        className="bg-white p-5 md:p-12 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6 relative overflow-hidden cursor-grab active:cursor-grabbing"
       >
         <div className="absolute top-0 right-0 opacity-[0.02] -mr-12 -mt-12 pointer-events-none text-teal-500">
           <GraduationCap className="w-[200px] h-[200px] md:w-[300px] md:h-[300px]" />
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center gap-5 md:gap-8 relative z-10">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-8 relative z-10">
           <div className="relative pointer-events-none">
-            <div className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-2xl md:rounded-3xl bg-teal-500 flex items-center justify-center text-white text-3xl md:text-5xl font-bold shadow-lg shadow-teal-500/20 border-4 border-white">
+            <div className="w-20 h-20 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-2xl md:rounded-[2.5rem] bg-teal-500 flex items-center justify-center text-white text-3xl md:text-5xl font-bold shadow-lg shadow-teal-500/20 border-4 border-white">
               {nomeAluno.charAt(0)}
             </div>
             {isMultiAluno && vinculos && vinculos.length > 1 && (
@@ -331,12 +331,13 @@ export function PortalDashboardPage() {
             )}
           </div>
 
-          <div className="flex-1 text-center lg:text-left space-y-4 select-none">
+          <div className="flex-1 text-center md:text-left space-y-4 select-none">
             <div className="space-y-1">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800">{nomeAluno}</h2>
-              <div className="flex flex-col items-center lg:items-start gap-0.5">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-800">{nomeAluno}</h2>
+              <div className="flex flex-col md:flex-row md:items-center items-center gap-1 md:gap-3">
                 <p className="text-slate-400 font-medium text-sm">{turma?.nome || 'Carregando turma...'}</p>
-                <p className="text-teal-500 font-medium text-xs">{turma?.turno || 'Carregando turno...'}</p>
+                <div className="hidden md:block w-1 h-1 rounded-full bg-slate-200" />
+                <p className="text-teal-500 font-medium text-xs md:text-sm">{turma?.turno || 'Carregando turno...'}</p>
               </div>
               <div className="flex justify-center lg:justify-start items-center gap-2 flex-wrap pt-1">
                 {turma?.valor_mensalidade && (
@@ -352,8 +353,8 @@ export function PortalDashboardPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto -mx-5 px-5 scrollbar-hide">
-              <div className="flex gap-5 flex-nowrap border-t border-slate-50 pt-5 min-w-max">
+            <div className="overflow-x-auto md:overflow-visible -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide">
+              <div className="flex gap-6 md:gap-12 flex-nowrap md:flex-wrap border-t border-slate-50 pt-8 min-w-max md:min-w-0 md:justify-start justify-center">
                 <StudentActionIcon
                   icon={Calendar}
                   label="Agenda"
@@ -369,7 +370,7 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Card de Pagamento */}
-          <div className="bg-slate-900 p-5 rounded-2xl text-white shadow-lg min-w-full lg:min-w-[280px] relative overflow-hidden">
+          <div className="bg-slate-900 p-8 rounded-2xl md:rounded-[2.5rem] text-white shadow-lg min-w-full md:min-w-[320px] relative overflow-hidden">
              <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
                <QrCode size={100} />
              </div>
@@ -437,7 +438,7 @@ export function PortalDashboardPage() {
       )}
 
       {/* 3. Mural da Unidade - Avisos Completos */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+      <div className="bg-white p-8 md:p-12 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
         <div className="flex justify-between items-center">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
             <Megaphone className="text-teal-500" size={20} /> Mural

@@ -192,7 +192,10 @@ export function PortalLayout() {
         {/* 1. Menu Principal Superior - Desktop */}
         <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
+            <div 
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => navigate('/portal')}
+            >
               <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-xl shadow-teal-500/20">
                 <GraduationCap size={24} />
               </div>
@@ -248,7 +251,7 @@ export function PortalLayout() {
         </nav>
 
         {/* 2. Área de Conteúdo Dinâmico (SPA Navigation with AnimatePresence) */}
-        <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-12 pb-24 lg:pb-12 overflow-x-hidden">
+        <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-16 pb-24 lg:pb-12 overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
