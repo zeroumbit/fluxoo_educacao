@@ -32,6 +32,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5242880, // Aumentado para 5 MiB para suportar o bundle atual
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         runtimeCaching: [
           {
@@ -57,4 +58,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('@react-pdf/renderer')) return 'pdf-renderer';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('@radix-ui')) return 'ui-vendor';
+            if (id.includes('framer-motion')) return 'animations';
+            if (id.includes('date-fns')) return 'date-utils';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 })
