@@ -7,7 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, Save, GraduationCap, BookOpen, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import {
+  GraduationCap,
+  Save,
+  Plus,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  FileCheck,
+  CheckCircle2,
+  User,
+  LayoutGrid,
+  BookOpen
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export function NotasPage() {
@@ -131,28 +146,58 @@ export function NotasPage() {
     }
   }
 
-  const { data: todosAlunos, isLoading: isLoadingAlunos } = useQuery({
+  const { data: todosAlunos, isLoading: isLoadingAlunos, error: errorAlunos } = useQuery({
     queryKey: ['alunos_turma', turmaId],
     queryFn: async (): Promise<any[]> => {
-        // 1. Buscamos a turma para pegar o array de alunos_ids
-        const { data: turma, error: errTurma } = await supabase
+      if (!turmaId) return []
+      
+      try {
+        // 1. Buscamos info da turma para saber o nome exato
+        const { data: turmaInfo } = await supabase
           .from('turmas')
-          .select('alunos_ids')
+          .select('nome, tenant_id')
           .eq('id', turmaId)
           .single()
-          
-        if (errTurma) throw errTurma
-        if (!turma?.alunos_ids || turma.alunos_ids.length === 0) return []
 
-        // 2. Buscamos os alunos que pertencem a esses IDs
-        const { data, error } = await supabase
+        if (!turmaInfo) return []
+
+        // 2. Buscamos TODAS as matrículas do tenant (mais seguro para garantir que achamos o vínculo)
+        const { data: todasMatriculas, error: errMat } = await supabase
+          .from('matriculas')
+          .select('aluno_id, serie_ano, turma_id, status')
+          .eq('tenant_id', turmaInfo.tenant_id!)
+        
+        if (errMat || !todasMatriculas) return []
+
+        // 3. Filtramos as matrículas que correspondem a esta turma (por ID ou Nome aproximado)
+        // Removido o filtro rigoroso de status 'ativa' para garantir a exibição dos alunos
+        const matriculasFiltradas = todasMatriculas.filter(m => {
+          // Vínculo por ID direto
+          if (m.turma_id === turmaId) return true
+
+          // Vínculo por Nome da Série (normalizado)
+          const nomeTurmaNorm = (turmaInfo.nome || '').toLowerCase().trim().replace('º', '').replace('°', '')
+          const serieNorm = (m.serie_ano || '').toLowerCase().trim().replace('º', '').replace('°', '')
+          
+          return nomeTurmaNorm === serieNorm || (m.serie_ano === turmaInfo.nome)
+        })
+
+        if (matriculasFiltradas.length === 0) return []
+
+        // 4. Buscamos os nomes dos alunos separadamente (evita falhas de Join/RLS)
+        const ids = matriculasFiltradas.map(m => m.aluno_id)
+        const { data: alunosData, error: errAlu } = await supabase
           .from('alunos')
           .select('id, nome_completo')
-          .in('id', turma.alunos_ids)
-          .eq('status', 'ativo')
+          .in('id', ids)
         
-        if (error) throw error
-        return data as any[]
+        if (errAlu) return []
+        return alunosData || []
+        
+      } catch (err) {
+        console.error('❌ Erro crítico ao buscar alunos:', err)
+        return []
+      }
     },
     enabled: !!turmaId
   })
@@ -315,8 +360,8 @@ export function NotasPage() {
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        checked={todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId).length > 0 && selecionados.length === todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId).length}
-                        onChange={() => selecionarTodosVisiveis(todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId) || [])}
+                        checked={(todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).length > 0 && selecionados.length === (todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).length}
+                        onChange={() => selecionarTodosVisiveis((todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId))}
                       />
                     </th>
                     <th className="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno</th>
@@ -326,7 +371,7 @@ export function NotasPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {(todosAlunos || [])?.filter(a => alunoId === 'all' || a.id === alunoId).map((aluno: any) => (
+                  {(todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).map((aluno: any) => (
                     <tr key={aluno.id} className={`hover:bg-slate-50/50 transition-colors group ${selecionados.includes(aluno.id) ? 'bg-indigo-50/30' : ''}`}>
                       <td className="px-8 py-4">
                         <input 
@@ -408,6 +453,3 @@ export function NotasPage() {
   )
 }
 
-// Sub-query customizada para Alunos da Turma
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'

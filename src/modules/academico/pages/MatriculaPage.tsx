@@ -42,6 +42,7 @@ const matriculaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione um aluno'),
   ano_letivo: z.coerce.number().min(2024),
   serie_ano: z.string().min(1, 'Série é obrigatória'),
+  turma_id: z.string().optional(),
   turno: z.enum(['manha', 'tarde', 'integral', 'noturno']),
   data_matricula: z.string().min(1),
   valor_matricula: z.coerce.number().min(0).optional(),
@@ -109,6 +110,7 @@ export default function MatriculaPage() {
         }
         
         form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
+        form.setValue('turma_id', turma.id) // Salva o turma_id
         if (turma.valor_mensalidade) {
           form.setValue('valor_matricula', turma.valor_mensalidade)
         }
@@ -140,6 +142,7 @@ export default function MatriculaPage() {
       aluno_id: m.aluno_id,
       ano_letivo: m.ano_letivo,
       serie_ano: m.serie_ano,
+      turma_id: m.turma_id, // Adicionado para edição
       turno: m.turno,
       data_matricula: m.data_matricula,
       valor_matricula: m.valor_matricula,
@@ -158,6 +161,7 @@ export default function MatriculaPage() {
       ano_letivo: new Date().getFullYear(),
       aluno_id: '',
       serie_ano: '',
+      turma_id: '', // Resetar turma_id
       turno: 'integral' as any,
       valor_matricula: 450,
       status: 'ativa'
@@ -244,21 +248,28 @@ export default function MatriculaPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="serie_ano">Turma/Ano *</Label>
-                  <Select value={form.getValues('serie_ano')} onValueChange={(v) => form.setValue('serie_ano', v)}>
-                    <SelectTrigger id="serie_ano" className="w-full">
-                      <SelectValue placeholder="Selecione a turma" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(turmas as any[])?.map((t: any) => (
-                        <SelectItem key={t.id} value={t.nome} className="font-bold">
-                          {t.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.serie_ano && (
-                    <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>
-                  )}
+                   <Select 
+                     value={form.getValues('serie_ano')} 
+                     onValueChange={(v) => {
+                       form.setValue('serie_ano', v)
+                       const t = (turmas as any[])?.find(x => x.nome === v)
+                       if (t) form.setValue('turma_id', t.id)
+                     }}
+                   >
+                     <SelectTrigger id="serie_ano" className="w-full">
+                       <SelectValue placeholder="Selecione a turma" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {(turmas as any[])?.map((t: any) => (
+                         <SelectItem key={t.id} value={t.nome} className="font-bold">
+                           {t.nome}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                   {form.formState.errors.serie_ano && (
+                     <p className="text-sm text-destructive">{form.formState.errors.serie_ano.message}</p>
+                   )}
                 </div>
               </div>
 

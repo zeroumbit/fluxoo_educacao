@@ -183,6 +183,7 @@ export type Matricula = {
   aluno_id: string
   ano_letivo: number
   serie_ano: string
+  turma_id: string | null
   turno: string
   valor_matricula: number
   status: 'ativa' | 'encerrada' | 'trancada' | 'cancelada'
@@ -190,8 +191,8 @@ export type Matricula = {
   created_at: string
   updated_at: string
 }
-export type MatriculaInsert = Omit<Matricula, 'id' | 'created_at' | 'updated_at'> & {
-  id?: string; created_at?: string; updated_at?: string
+export type MatriculaInsert = Omit<Matricula, 'id' | 'created_at' | 'updated_at' | 'turma_id'> & {
+  id?: string; turma_id?: string | null; created_at?: string; updated_at?: string
 }
 export type MatriculaUpdate = Partial<MatriculaInsert>
 
