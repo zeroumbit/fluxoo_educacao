@@ -3,19 +3,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePortalContext } from '@/modules/portal/context'
 import { useUpdatePerfil, useUpdateParentesco } from '@/modules/portal/hooks'
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Shield, 
-  LogOut, 
-  Settings, 
-  MapPin, 
-  Loader2, 
-  Save, 
-  Check, 
+import {
+  User,
+  Mail,
+  Phone,
+  Shield,
+  LogOut,
+  Settings,
+  MapPin,
+  Loader2,
+  Save,
+  Check,
   Users,
-  CreditCard,
   ChevronRight,
   Info,
   Smartphone,
@@ -35,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (pattern: number | number[] = 20) => {
@@ -174,11 +174,16 @@ export function PortalPerfilPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-800">Perfil</h2>
-        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Conta & Identidade</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Perfil</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Conta & Identidade</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -372,39 +377,6 @@ export function PortalPerfilPage() {
             </CardContent>
           </Card>
 
-          {/* Institutional / Financial Quick View */}
-          <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
-             <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center">
-                   <CreditCard size={20} />
-                </div>
-                <div className="flex-1">
-                   <h3 className="text-base font-bold text-slate-800">Visão Financeira</h3>
-                   <p className="text-[10px] text-slate-400">Acordos Pedagógicos</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-                   <Info size={14} />
-                </div>
-             </div>
-             <CardContent className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                    <p className="text-[10px] font-medium uppercase text-slate-400 tracking-wider">Mensalidade</p>
-                    <h4 className="text-xl font-bold text-slate-900">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(alunoSelecionado?.turma?.valor_mensalidade || 0)}
-                    </h4>
-                    <p className="text-[10px] text-teal-500 font-medium">{alunoSelecionado?.turma?.nome || '—'}</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                    <p className="text-[10px] font-medium uppercase text-slate-400 tracking-wider">Contrato</p>
-                    <h4 className="text-xl font-bold text-slate-900">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(alunoSelecionado?.valor_matricula || 0)}
-                    </h4>
-                    <p className="text-[10px] text-teal-500 font-medium">{alunoSelecionado?.status || 'Ativo'}</p>
-                  </div>
-                </div>
-             </CardContent>
-          </Card>
         </div>
 
         {/* Sidebar Context */}
@@ -486,13 +458,6 @@ export function PortalPerfilPage() {
              </Button>
           </div>
         </div>
-      </div>
-
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
-          Retornar
-        </Button>
       </div>
     </div>
   )

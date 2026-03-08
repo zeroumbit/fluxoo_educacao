@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { 
-  ShoppingCart, 
-  Search, 
-  BookOpen, 
-  Tag, 
+import {
+  ShoppingCart,
+  Search,
+  BookOpen,
+  Tag,
   Star,
   Package,
   Plus,
@@ -19,15 +19,16 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetDescription,
-  SheetFooter 
+  SheetFooter
 } from '@/components/ui/sheet'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -128,12 +129,15 @@ export function PortalLojaPage() {
 
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
-      
+
       {/* 1. Header & Seção Principal */}
       <div className="flex flex-col gap-8 px-1">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase leading-none">Loja</h2>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Marketplace & Serviços</p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <BotaoVoltar />
+            <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase leading-none">Loja</h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Marketplace & Serviços</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -361,17 +365,6 @@ export function PortalLojaPage() {
           </div>
         </SheetContent>
       </Sheet>
-
-      {/* Footer de Navegação */}
-      <div className="flex justify-center pt-8">
-        <Button
-          variant="ghost"
-          onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-teal-600 transition-colors h-14 px-10 rounded-full bg-slate-50/50"
-        >
-          Voltar ao Início
-        </Button>
-      </div>
     </div>
   )
 }

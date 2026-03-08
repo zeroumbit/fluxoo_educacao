@@ -33,89 +33,119 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const { data: responsavel, isLoading: loadingResp } = useResponsavel()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
   
-  // Usar Zustand Persist para carregar instantaneamente o estado (PWA Hydration)
-  const { alunoSelecionado, setAlunoSelecionado } = usePortalStore()
+  // Zustand Persist
+  const { alunoSelecionado, setAlunoSelecionado, clearStore } = usePortalStore()
   const tenantId = alunoSelecionado?.tenant_id || null
 
+  // Efeito de Validação e Auto-seleção
   useEffect(() => {
+    // Se não há responsável logado (sessão expirou ou limpou), garante que o store está limpo
+    if (!loadingResp && !responsavel) {
+      clearStore()
+      return
+    }
+
+    if (vinculos && vinculos.length > 0) {
+      const idsVinculos = vinculos.map(v => v.aluno_id || v.aluno?.id)
+      
+      // Validação: Se o aluno no cache não pertence mais a este responsável, limpa e seleciona o primeiro
+      const alunoNoCacheInvalido = alunoSelecionado && !idsVinculos.includes(alunoSelecionado.id)
+      
+      if (!alunoSelecionado || alunoNoCacheInvalido) {
+        carregarDadosCompletos(vinculos[0])
+      } else if (!alunoSelecionado.turma) {
+        // Se já está selecionado mas faltam dados (turma), reidrata
+        const v = vinculos.find(v => (v.aluno_id || v.aluno?.id) === alunoSelecionado.id)
+        if (v) carregarDadosCompletos(v)
+      }
+    }
+
     async function carregarDadosCompletos(vinculo: any) {
       if (!vinculo?.aluno) return
 
-      // Tentar pegar matrícula ativa
-      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade') // Add valor_mensalidade if exists
-         .eq('aluno_id', vinculo.aluno.id)
-         .eq('status', 'ativa')
-         .maybeSingle()
-      
-      // Buscar turma que contém o aluno
-      const { data: turma } = await (supabase.from('turmas' as any) as any)
-        .select('id, nome, turno, valor_mensalidade')
-        .eq('tenant_id', vinculo.aluno.tenant_id)
-        .contains('alunos_ids', [vinculo.aluno.id])
-        .maybeSingle()
-      
-      const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? (matricula.valor_mensalidade || matricula.valor_matricula) : null)
+      try {
+        // Tentar pegar matrícula ativa
+        const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+           .select('turno, serie_ano, ano_letivo, valor_matricula')
+           .eq('aluno_id', vinculo.aluno.id)
+           .eq('status', 'ativa')
+           .maybeSingle()
+        
+        // Buscar turma que contém o aluno
+        const { data: turma } = await (supabase.from('turmas' as any) as any)
+          .select('id, nome, turno, valor_mensalidade')
+          .eq('tenant_id', vinculo.aluno.tenant_id)
+          .contains('alunos_ids', [vinculo.aluno.id])
+          .maybeSingle()
+        
+        const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
 
-      const alunoCompleto = {
-        ...vinculo.aluno,
-        turma: turma || (matricula ? { 
-          id: '', 
-          nome: matricula.serie_ano, 
-          turno: matricula.turno, 
-          valor_mensalidade: valorMensalidadeFinal 
-        } : null),
-        valor_matricula: matricula?.valor_matricula || null
+        const alunoCompleto = {
+          ...vinculo.aluno,
+          turma: turma || (matricula ? { 
+            id: '', 
+            nome: matricula.serie_ano, 
+            turno: matricula.turno, 
+            valor_mensalidade: valorMensalidadeFinal 
+          } : null),
+          valor_matricula: matricula?.valor_matricula || null
+        }
+        setAlunoSelecionado(alunoCompleto)
+      } catch (err) {
+        console.error('Erro ao carregar dados do aluno:', err)
+        // Em caso de erro, pelo menos define o básico
+        setAlunoSelecionado(vinculo.aluno)
       }
-      setAlunoSelecionado(alunoCompleto)
     }
-
-    // Só auto-seleciona se AINDA não tiver aluno persistido no cache ou se a lista de vinculos carregou e nada estava selecionado
-    if (vinculos && vinculos.length > 0 && !alunoSelecionado) {
-      carregarDadosCompletos(vinculos[0])
-    }
-  }, [vinculos, alunoSelecionado, setAlunoSelecionado])
+  }, [vinculos, responsavel, loadingResp, alunoSelecionado?.id, setAlunoSelecionado, clearStore])
 
   const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
-      // Optimistic Update para UX instantânea
+      // Optimistic Update
       setAlunoSelecionado({ 
         ...vinculo.aluno, 
-        turma: null, // skeleton mode temporary
+        turma: null,
         valor_matricula: null 
       })
 
-      // Background Fetch para obter dados da sub-entidade
-      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade')
-         .eq('aluno_id', vinculo.aluno.id)
-         .eq('status', 'ativa')
-         .maybeSingle()
-      
-      const { data: turma } = await (supabase.from('turmas' as any) as any)
-        .select('id, nome, turno, valor_mensalidade')
-        .eq('tenant_id', vinculo.aluno.tenant_id)
-        .contains('alunos_ids', [vinculo.aluno.id])
-        .maybeSingle()
+      try {
+        const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+           .select('turno, serie_ano, ano_letivo, valor_matricula')
+           .eq('aluno_id', vinculo.aluno.id)
+           .eq('status', 'ativa')
+           .maybeSingle()
+        
+        const { data: turma } = await (supabase.from('turmas' as any) as any)
+          .select('id, nome, turno, valor_mensalidade')
+          .eq('tenant_id', vinculo.aluno.tenant_id)
+          .contains('alunos_ids', [vinculo.aluno.id])
+          .maybeSingle()
 
-      const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? (matricula.valor_mensalidade || matricula.valor_matricula) : null)
+        const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
 
-      const alunoCompleto = {
-        ...vinculo.aluno,
-        turma: turma || (matricula ? { 
-          id: '', 
-          nome: matricula.serie_ano, 
-          turno: matricula.turno, 
-          valor_mensalidade: valorMensalidadeFinal 
-        } : null),
-        valor_matricula: matricula?.valor_matricula || null
+        const alunoCompleto = {
+          ...vinculo.aluno,
+          turma: turma || (matricula ? { 
+            id: '', 
+            nome: matricula.serie_ano, 
+            turno: matricula.turno, 
+            valor_mensalidade: valorMensalidadeFinal 
+          } : null),
+          valor_matricula: matricula?.valor_matricula || null
+        }
+        
+        setAlunoSelecionado(alunoCompleto)
+      } catch (err) {
+        console.error('Erro ao selecionar aluno:', err)
       }
-      
-      setAlunoSelecionado(alunoCompleto)
     }
   }
 
   const isMultiAluno = (vinculos?.length || 0) > 1
+  
+  // Loading estado: verdadeiro se estamos carregando o básico ou se temos vínculos mas ainda não selecionamos nada
+  const isInitializing = !!(vinculos && vinculos.length > 0 && !alunoSelecionado)
+  const contextLoading = !!(loadingResp || loadingVinculos || isInitializing)
 
   return (
     <PortalContext.Provider
@@ -126,7 +156,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         vinculos: vinculos || [],
         selecionarAluno,
         isMultiAluno,
-        isLoading: loadingResp || loadingVinculos,
+        isLoading: contextLoading,
       }}
     >
       {children}

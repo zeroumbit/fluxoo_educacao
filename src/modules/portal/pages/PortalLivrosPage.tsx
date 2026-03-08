@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { Button } from '@/components/ui/button'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -85,12 +86,15 @@ export function PortalLivrosPage() {
 
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
-      
+
       {/* 1. Header & Filtro */}
       <div className="flex flex-col gap-6 px-1">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <BotaoVoltar />
+            <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
+          </div>
         </div>
         {isMultiAluno && <SeletorAluno />}
       </div>
@@ -261,17 +265,6 @@ export function PortalLivrosPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Navigation Footer */}
-      <div className="flex justify-center pt-8">
-        <Button
-          variant="ghost"
-          onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-indigo-600 transition-colors h-14 px-10 rounded-full bg-slate-50/50"
-        >
-          Retornar à Central
-        </Button>
-      </div>
     </div>
   )
 }

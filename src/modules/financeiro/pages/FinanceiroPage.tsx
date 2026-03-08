@@ -9,7 +9,8 @@ import {
   useCriarCobranca, 
   useMarcarComoPago, 
   useExcluirCobranca,
-  useDesfazerPagamento 
+  useDesfazerPagamento,
+  useAtualizarCobranca 
 } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
@@ -31,7 +32,8 @@ import {
   Trash2, 
   AlertTriangle, 
   HelpCircle,
-  RotateCcw
+  RotateCcw,
+  Pencil
 } from 'lucide-react'
 import { isPast, format, isBefore, startOfDay, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -69,6 +71,8 @@ export function FinanceiroPage() {
   const excluirCobranca = useExcluirCobranca()
   const desfazerPagamento = useDesfazerPagamento()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [cobrancaEditando, setCobrancaEditando] = useState<any>(null)
+  const atualizarCobranca = useAtualizarCobranca()
 
   // Estados para diálogos de confirmação
   const [confirmPago, setConfirmPago] = useState<{ id: string; antecipado: boolean } | null>(null)
@@ -77,6 +81,12 @@ export function FinanceiroPage() {
 
   const { register, handleSubmit, reset, setValue, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(cobrancaSchema),
+    defaultValues: {
+      aluno_id: '',
+      descricao: '',
+      valor: 0,
+      data_vencimento: '',
+    }
   })
 
   // Assistência de preenchimento automático
@@ -86,6 +96,8 @@ export function FinanceiroPage() {
   const { data: configFin } = useConfigFinanceira()
 
   useEffect(() => {
+    if (cobrancaEditando) return // Não sugerir valores se estiver editando
+
     // 1. Tentar pegar por mensalidade da turma (agora no cadastro de turmas)
     if (turmaDoAluno && turmaDoAluno.valor_mensalidade) {
       setValue('valor', turmaDoAluno.valor_mensalidade)
@@ -106,20 +118,60 @@ export function FinanceiroPage() {
   const onSubmit = async (data: any) => {
     if (!authUser) return
     try {
-      await criarCobranca.mutateAsync({
-        tenant_id: authUser.tenantId,
-        aluno_id: data.aluno_id,
-        descricao: data.descricao,
-        valor: data.valor,
-        data_vencimento: data.data_vencimento,
-        status: 'a_vencer',
-      })
-      toast.success('Cobrança criada!')
-      reset()
-      setDialogOpen(false)
+      if (cobrancaEditando) {
+        await atualizarCobranca.mutateAsync({
+          id: cobrancaEditando.id,
+          cobranca: {
+            aluno_id: data.aluno_id,
+            descricao: data.descricao,
+            valor: data.valor,
+            data_vencimento: data.data_vencimento,
+          }
+        })
+        toast.success('Cobrança atualizada!')
+      } else {
+        await criarCobranca.mutateAsync({
+          tenant_id: authUser.tenantId,
+          aluno_id: data.aluno_id,
+          descricao: data.descricao,
+          valor: data.valor,
+          data_vencimento: data.data_vencimento,
+          status: 'a_vencer',
+        })
+        toast.success('Cobrança criada!')
+      }
+      handleFecharDialog()
     } catch {
-      toast.error('Erro ao criar')
+      toast.error(cobrancaEditando ? 'Erro ao atualizar' : 'Erro ao criar')
     }
+  }
+
+  const handleAbrirNovo = () => {
+    setCobrancaEditando(null)
+    reset({
+      aluno_id: '',
+      descricao: '',
+      valor: 0,
+      data_vencimento: '',
+    })
+    setDialogOpen(true)
+  }
+
+  const handleEditar = (cobranca: any) => {
+    setCobrancaEditando(cobranca)
+    reset({
+      aluno_id: cobranca.aluno_id,
+      descricao: cobranca.descricao,
+      valor: cobranca.valor,
+      data_vencimento: cobranca.data_vencimento.split('T')[0],
+    })
+    setDialogOpen(true)
+  }
+
+  const handleFecharDialog = () => {
+    setDialogOpen(false)
+    setCobrancaEditando(null)
+    reset()
   }
 
   const handleMarcarPago = async (id: string, antecipado: boolean) => {
@@ -186,23 +238,25 @@ export function FinanceiroPage() {
               <SelectItem value="atrasado">Atrasados</SelectItem>
             </SelectContent>
           </Select>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md">
-                <Plus className="mr-2 h-4 w-4" /> Nova Cobrança
-              </Button>
-            </DialogTrigger>
+          <Button onClick={handleAbrirNovo} className="bg-gradient-to-r from-emerald-600 to-green-600 shadow-md">
+            <Plus className="mr-2 h-4 w-4" /> Nova Cobrança
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={(open) => !open && handleFecharDialog()}>
             <DialogContent className="max-w-[800px]">
               <DialogHeader>
-                <DialogTitle>Nova Cobrança</DialogTitle>
+                <DialogTitle>{cobrancaEditando ? 'Editar Cobrança' : 'Nova Cobrança'}</DialogTitle>
                 <DialogDescription>
-                  Preencha as informações para criar uma nova cobrança.
+                  {cobrancaEditando ? 'Altere os dados da cobrança selecionada.' : 'Preencha as informações para criar uma nova cobrança.'}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="aluno_id">Aluno *</Label>
-                  <Select onValueChange={(v) => setValue('aluno_id', v)}>
+                  <Select 
+                    value={alunoIdSelecionado}
+                    onValueChange={(v) => setValue('aluno_id', v)}
+                    disabled={!!cobrancaEditando} // Geralmente não mudamos o aluno de uma fatura já emitida
+                  >
                     <SelectTrigger id="aluno_id" className="w-full">
                       <SelectValue placeholder="Selecione o aluno" />
                     </SelectTrigger>
@@ -254,11 +308,11 @@ export function FinanceiroPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={handleFecharDialog}>
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar'}
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (cobrancaEditando ? 'Salvar Alterações' : 'Criar')}
                   </Button>
                 </DialogFooter>
               </form>
@@ -320,6 +374,15 @@ export function FinanceiroPage() {
                             <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-blue-600 hover:bg-blue-50" 
+                          onClick={() => handleEditar(c)}
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 

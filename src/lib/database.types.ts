@@ -95,6 +95,10 @@ export type Aluno = {
   bairro: string | null
   cidade: string | null
   estado: string | null
+  desconto_valor: number | null
+  desconto_tipo: 'valor' | 'porcentagem' | null
+  desconto_inicio: string | null
+  desconto_fim: string | null
   created_at: string
   updated_at: string
 }

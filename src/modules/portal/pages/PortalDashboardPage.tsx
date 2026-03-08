@@ -334,9 +334,9 @@ export function PortalDashboardPage() {
           <div className="flex-1 text-center md:text-left space-y-4 select-none">
             <div className="space-y-1">
               <h2 className="text-2xl md:text-3xl font-bold text-slate-800">{nomeAluno}</h2>
-              <div className="flex flex-col md:flex-row md:items-center items-center gap-1 md:gap-3">
+              <div className="flex items-center justify-center md:justify-start gap-2">
                 <p className="text-slate-400 font-medium text-sm">{turma?.nome || 'Carregando turma...'}</p>
-                <div className="hidden md:block w-1 h-1 rounded-full bg-slate-200" />
+                <div className="w-1 h-1 rounded-full bg-slate-200" />
                 <p className="text-teal-500 font-medium text-xs md:text-sm">{turma?.turno || 'Carregando turno...'}</p>
               </div>
               <div className="flex justify-center lg:justify-start items-center gap-2 flex-wrap pt-1">

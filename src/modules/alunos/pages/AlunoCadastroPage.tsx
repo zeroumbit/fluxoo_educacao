@@ -30,6 +30,7 @@ import {
   EyeOff,
   CreditCard,
   MapPin,
+  Percent,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
@@ -92,6 +93,7 @@ export function AlunoCadastroPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
   const [buscandoCpf, setBuscandoCpf] = useState(false)
+  const [irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -178,27 +180,42 @@ export function AlunoCadastroPage() {
     setBuscandoCpf(true)
     const cpfLimpo = cpf.replace(/\D/g, '')
     try {
-      const { data, error } = await supabase
+      // 1. Buscar responsável
+      const { data: resp, error: respError } = await supabase
         .from('responsaveis')
         .select('id, nome, email, telefone')
         .eq('cpf', cpfLimpo)
         .maybeSingle()
         
-      if (data) {
+      if (resp) {
         setResponsavelEncontrado(true)
-        setValue('responsavel_nome', data.nome || '', { shouldValidate: true })
-        setValue('responsavel_email', data.email || '', { shouldValidate: true })
-        setValue('responsavel_telefone', data.telefone || '', { shouldValidate: true })
+        setValue('responsavel_nome', resp.nome || '', { shouldValidate: true })
+        setValue('responsavel_email', resp.email || '', { shouldValidate: true })
+        setValue('responsavel_telefone', resp.telefone || '', { shouldValidate: true })
+        
+        // 2. Buscar outros alunos vinculados a este responsável
+        const { data: vinculos } = await supabase
+          .from('aluno_responsavel')
+          .select('aluno_id, alunos(nome_completo)')
+          .eq('responsavel_id', resp.id)
+          .eq('is_financeiro', true)
+
+        if (vinculos && vinculos.length > 0) {
+          const alunosList = vinculos.map((v: any) => v.alunos.nome_completo);
+          setIrmaosExistentes(alunosList);
+          toast.warning('Atenção: Irmãos detectados!', {
+            description: `Este responsável já paga a mensalidade de: ${alunosList.join(', ')}. Sugerimos aplicar um desconto.`,
+            duration: 8000
+          })
+        }
+        
         toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
           description: 'Não é necessário criar uma nova senha.',
           duration: 6000
         })
       } else {
-        if (responsavelEncontrado) {
-          setResponsavelEncontrado(false)
-          // Opcionalmente limpar campos se o usuário mudar o CPF para um inexistente
-          // mas talvez seja melhor deixar o que ele já digitou
-        }
+        setResponsavelEncontrado(false)
+        setIrmaosExistentes([])
       }
     } catch (err) {
       console.error('Erro ao buscar responsável:', err)
@@ -292,6 +309,10 @@ export function AlunoCadastroPage() {
         estado: data.estado && data.estado !== '' ? data.estado : null,
         valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
         data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
+        desconto_valor: (data as any).desconto_valor || null,
+        desconto_tipo: (data as any).desconto_tipo || null,
+        desconto_inicio: (data as any).desconto_inicio || null,
+        desconto_fim: (data as any).desconto_fim || null,
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -320,8 +341,13 @@ export function AlunoCadastroPage() {
   if (limiteAtingido) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/alunos')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/alunos')}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 font-bold text-xs uppercase tracking-wider transition-all active:bg-slate-50"
+        >
+          <ArrowLeft size={16} />
+          Voltar
         </Button>
         <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-orange-50">
           <CardContent className="py-12 text-center">
@@ -340,8 +366,13 @@ export function AlunoCadastroPage() {
 
   return (
     <div className="space-y-6" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <Button variant="ghost" onClick={() => navigate('/alunos')}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/alunos')}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 font-bold text-xs uppercase tracking-wider transition-all active:bg-slate-50"
+      >
+        <ArrowLeft size={16} />
+        Voltar
       </Button>
 
       {/* Stepper */}
@@ -482,6 +513,60 @@ export function AlunoCadastroPage() {
                       {...register('data_ingresso')}
                       className="w-full"
                     />
+                  </div>
+                </div>
+
+                {/* Seção de Desconto no Cadastro */}
+                <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <Percent size={18} className="font-bold" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Desconto Especial</h4>
+                  </div>
+                  
+                  {irmaosExistentes.length > 0 && (
+                    <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
+                      <Users className="h-5 w-5 text-indigo-600" />
+                      <div>
+                        <p className="text-xs font-bold text-indigo-900 leading-tight">Sugestão: Desconto Multi-Irmão</p>
+                        <p className="text-[10px] text-indigo-700 italic">Responsável ja vinculado a: {irmaosExistentes.join(', ')}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <Label className="text-xs font-black uppercase text-zinc-400">Tipo</Label>
+                       <Select onValueChange={(v) => setValue('desconto_tipo' as any, v)}>
+                         <SelectTrigger className="h-10 rounded-xl bg-white">
+                           <SelectValue placeholder="Sem desconto" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="porcentagem">Porcentagem (%)</SelectItem>
+                           <SelectItem value="valor">Valor Fixo (R$)</SelectItem>
+                         </SelectContent>
+                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-xs font-black uppercase text-zinc-400">Valor</Label>
+                       <Input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0,00" 
+                        {...register('desconto_valor' as any)}
+                        className="h-10 rounded-xl bg-white"
+                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <Label className="text-xs font-black uppercase text-zinc-400">Válido De</Label>
+                        <Input type="date" {...register('desconto_inicio' as any)} className="h-10 rounded-xl bg-white text-xs" />
+                     </div>
+                     <div className="space-y-2">
+                        <Label className="text-xs font-black uppercase text-zinc-400">Válido Até</Label>
+                        <Input type="date" {...register('desconto_fim' as any)} className="h-10 rounded-xl bg-white text-xs" />
+                     </div>
                   </div>
                 </div>
               </>

@@ -13,6 +13,7 @@ import type { DisciplinaBoletim } from '@/lib/database.types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
@@ -111,13 +112,16 @@ export function PortalBoletimPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header & Filtros */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Boletim Escolar</h2>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Performance Acadêmica</p>
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Boletim Escolar</h2>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Performance Acadêmica</p>
+            </div>
           </div>
 
           <div className="flex gap-2">
@@ -265,13 +269,6 @@ export function PortalBoletimPage() {
           </div>
         )}
       </AnimatePresence>
-
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-emerald-600 h-11 px-6 rounded-full">
-          Voltar ao Início
-        </Button>
-      </div>
     </div>
   )
 }

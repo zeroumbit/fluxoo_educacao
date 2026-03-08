@@ -18,6 +18,7 @@ interface AlunoVinculado {
 interface PortalState {
   alunoSelecionado: AlunoVinculado | null
   setAlunoSelecionado: (aluno: AlunoVinculado | null) => void
+  clearStore: () => void
   ultimaRefreshedAt: number | null
 }
 
@@ -30,6 +31,7 @@ export const usePortalStore = create<PortalState>()(
         alunoSelecionado: aluno, 
         ultimaRefreshedAt: Date.now() 
       }),
+      clearStore: () => set({ alunoSelecionado: null, ultimaRefreshedAt: null }),
     }),
     {
       name: 'fluxoo-portal-storage',

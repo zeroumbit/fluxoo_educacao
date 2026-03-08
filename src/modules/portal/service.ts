@@ -301,6 +301,19 @@ export const portalService = {
     } : null
   },
 
+  async buscarConfigRecados(tenantId: string) {
+    const { data, error } = await supabase.from('escolas')
+      .select('telefone, email_gestor')
+      .eq('id', tenantId)
+      .maybeSingle()
+
+    if (error) throw error
+    return {
+      whatsapp_contato: data?.telefone || null,
+      email_contato: data?.email_gestor || null
+    }
+  },
+
   // ==========================================
   // FILA VIRTUAL
   // ==========================================

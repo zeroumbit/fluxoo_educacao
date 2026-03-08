@@ -136,8 +136,13 @@ export function AlunoDetalhePage() {
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Button variant="ghost" onClick={() => navigate('/alunos')} className="w-fit transition-colors hover:bg-zinc-100 rounded-xl">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Alunos
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/alunos')}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 font-bold text-xs uppercase tracking-wider transition-all active:bg-slate-50 w-fit"
+        >
+          <ArrowLeft size={16} />
+          Voltar para Alunos
         </Button>
         <div className="flex items-center gap-2">
           {isEditing ? (

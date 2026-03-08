@@ -9,6 +9,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -108,11 +109,16 @@ export function PortalFilaVirtualPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-800">Fila Virtual</h2>
-        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Chegada & Pick-up</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Fila Virtual</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Chegada & Pick-up</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -264,13 +270,6 @@ export function PortalFilaVirtualPage() {
               </p>
            </div>
         </div>
-      </div>
-
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
-          Retornar
-        </Button>
       </div>
     </div>
   )

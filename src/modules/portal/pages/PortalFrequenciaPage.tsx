@@ -9,6 +9,7 @@ import { ptBR } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
@@ -60,12 +61,15 @@ export function PortalFrequenciaPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Frequência</h2>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Histórico de Assiduidade</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Frequência</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Histórico de Assiduidade</p>
+          </div>
         </div>
         {isMultiAluno && <SeletorAluno />}
       </div>
@@ -195,16 +199,6 @@ export function PortalFrequenciaPage() {
         </AnimatePresence>
       </div>
 
-      {/* Footer */}
-      <div className="flex justify-center pt-4">
-        <Button
-          variant="ghost"
-          onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-emerald-600 h-11 px-6 rounded-full"
-        >
-          Retornar ao Portal
-        </Button>
-      </div>
     </div>
   )
 }

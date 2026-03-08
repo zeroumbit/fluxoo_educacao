@@ -3,6 +3,7 @@ import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/lib/database.types'
 import { isSuperAdminEmail } from '@/lib/config'
+import { usePortalStore } from '@/modules/portal/store'
 
 interface AuthUser {
   user: User
@@ -200,6 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setAuthUser(null)
+    // Limpar estado persistido do portal para evitar vazamento de dados entre usuários no mesmo navegador
+    usePortalStore.getState().clearStore()
     window.location.href = '/login'
   }
 

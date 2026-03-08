@@ -48,7 +48,7 @@ import { ConfigRecebimentoPage } from '@/modules/super-admin/pages/ConfigRecebim
 import { PortalDashboardPage } from '@/modules/portal/pages/PortalDashboardPage'
 import { PortalFrequenciaPage } from '@/modules/portal/pages/PortalFrequenciaPage'
 import { PortalAvisosPage } from '@/modules/portal/pages/PortalAvisosPage'
-import { PortalCobrancasPage } from '@/modules/portal/pages/PortalCobrancasPage'
+import PortalCobrancasPage from '@/modules/portal/pages/PortalCobrancasPage'
 import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualPage'
 import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
 import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'

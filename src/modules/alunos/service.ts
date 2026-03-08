@@ -10,7 +10,7 @@ export const alunoService = {
   async listar(tenantId: string) {
     const { data, error } = await supabase
       .from('alunos')
-      .select('*, filiais(nome_unidade)')
+      .select('*, filiais(nome_unidade), aluno_responsavel(*, responsaveis(id, cpf, nome))')
       .eq('tenant_id', tenantId)
       .order('nome_completo')
 

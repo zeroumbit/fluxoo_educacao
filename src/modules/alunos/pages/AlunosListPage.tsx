@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX, Shield } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX, Shield, Percent, Users } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
+import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
 
 export function AlunosListPage() {
   const { data: alunos, isLoading } = useAlunos()
@@ -37,6 +38,7 @@ export function AlunosListPage() {
   const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<any | null>(null)
+  const [alunoDesconto, setAlunoDesconto] = useState<any | null>(null)
 
   // Cria um Set com IDs de alunos com matrícula ativa para consulta rápida
   const alunosComMatriculaIds = useMemo(() => {
@@ -44,13 +46,46 @@ export function AlunosListPage() {
   }, [matriculasAtivas])
 
   const alunosFiltrados = useMemo(() => {
-    return (alunos as any[])?.filter((a) =>
+    const list = (alunos as any[])?.filter((a) =>
       a.nome_completo.toLowerCase().includes(busca.toLowerCase())
-    ).map((aluno) => ({
-      ...aluno,
-      temMatricula: alunosComMatriculaIds.has(aluno.id),
-    }))
+    ).map((aluno) => {
+      // Encontrar o CPF do responsável financeiro para agrupamento
+      const respFinanceiro = aluno.aluno_responsavel?.find((v: any) => v.is_financeiro);
+      return {
+        ...aluno,
+        temMatricula: alunosComMatriculaIds.has(aluno.id),
+        financeiroCpf: respFinanceiro?.responsaveis?.cpf || 'sem-financeiro',
+        financeiroNome: respFinanceiro?.responsaveis?.nome || '—'
+      }
+    })
+
+    // Ordenar para manter alunos com mesmo responsável juntos
+    return list?.sort((a, b) => {
+       if (a.financeiroCpf === b.financeiroCpf) {
+         return a.nome_completo.localeCompare(b.nome_completo);
+       }
+       return a.financeiroCpf.localeCompare(b.financeiroCpf);
+    });
   }, [alunos, busca, alunosComMatriculaIds])
+
+  // Detectar múltiplos alunos por responsável
+  const gruposMultiIrmaos = useMemo(() => {
+    const grupos: Record<string, any[]> = {};
+    alunosFiltrados?.forEach(a => {
+      if (a.financeiroCpf !== 'sem-financeiro') {
+        if (!grupos[a.financeiroCpf]) grupos[a.financeiroCpf] = [];
+        grupos[a.financeiroCpf].push(a);
+      }
+    });
+
+    return Object.entries(grupos)
+      .filter(([_, lista]) => lista.length > 1)
+      .map(([cpf, lista]) => ({
+        cpf,
+        responsavel: lista[0].financeiroNome,
+        alunos: lista
+      }));
+  }, [alunosFiltrados])
 
   const alunosSemMatriculaCount = alunosFiltrados?.filter(a => !a.temMatricula).length || 0
 
@@ -123,6 +158,32 @@ export function AlunosListPage() {
               <p className="text-xs text-amber-700 mt-0.5">
                 Estes alunos estão cadastrados mas não podem receber frequência. Regularize as matrículas na tela de Matrícula.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Alerta de Múltiplos Alunos por Responsável */}
+      {gruposMultiIrmaos.length > 0 && (
+        <Card className="border-0 shadow-md bg-indigo-50 ring-1 ring-indigo-200">
+          <CardContent className="py-4 flex items-start gap-4">
+            <Users className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-indigo-800">
+                {gruposMultiIrmaos.length} responsável(eis) com múltiplos alunos
+              </p>
+              <div className="mt-2 space-y-2">
+                {gruposMultiIrmaos.map(grupo => (
+                  <div key={grupo.cpf} className="bg-white/50 p-2 rounded-lg border border-indigo-100 flex items-center justify-between">
+                    <p className="text-xs text-indigo-700">
+                      <strong>{grupo.responsavel}</strong> tem {grupo.alunos.length} alunos vinculados.
+                    </p>
+                    <p className="text-[10px] font-black uppercase text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full ring-1 ring-indigo-200">
+                      Sugerir Desconto Multi-Irmãos
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -204,6 +265,20 @@ export function AlunosListPage() {
                       <Button 
                         variant="ghost" 
                         size="icon" 
+                        className={cn(
+                          "h-8 w-8 rounded-lg transition-colors",
+                          aluno.desconto_valor 
+                            ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" 
+                            : "text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        )}
+                        title={aluno.desconto_valor ? "Editar desconto ativo" : "Aplicar desconto"}
+                        onClick={(e) => { e.stopPropagation(); setAlunoDesconto(aluno); }}
+                      >
+                        <Percent className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
                         className="h-8 w-8 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         title="Ver autorizações dos responsáveis"
                         onClick={(e) => { e.stopPropagation(); setAlunoAutorizacoes(aluno); }}
@@ -253,12 +328,11 @@ export function AlunosListPage() {
         </CardContent>
       </Card>
 
-      {/* Modal Autorizações */}
-      <ModalAutorizacoesAluno
-        alunoId={alunoAutorizacoes?.id || null}
-        alunoNome={alunoAutorizacoes?.nome_completo}
-        open={!!alunoAutorizacoes}
-        onClose={() => setAlunoAutorizacoes(null)}
+      {/* Modal Desconto */}
+      <ModalDescontoAluno
+        aluno={alunoDesconto}
+        open={!!alunoDesconto}
+        onClose={() => setAlunoDesconto(null)}
       />
 
       {/* Modal de Exclusão */}

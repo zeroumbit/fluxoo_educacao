@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 const DOCUMENT_TYPE_ICONS: Record<string, any> = {
   ficha_matricula: FileText,
@@ -135,9 +136,14 @@ export function PortalDocumentosPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="text-left">
-          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 leading-tight">Meus Documentos</h1>
-          <p className="text-sm md:text-lg text-muted-foreground mt-1">Solicite documentos e acompanhe o status</p>
+        <div className="flex items-start gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div className="text-left">
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-800 leading-tight">Meus Documentos</h1>
+              <p className="text-sm md:text-lg text-muted-foreground mt-1">Solicite documentos e acompanhe o status</p>
+            </div>
+          </div>
         </div>
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <DialogTrigger asChild>
@@ -217,7 +223,7 @@ export function PortalDocumentosPage() {
       </div>
 
       {/* Lista de Solicitações */}
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md rounded-2xl md:rounded-[3rem]">
         <CardHeader className="pb-4 pt-10 px-6">
           <CardTitle className="text-xl font-black uppercase tracking-tight">Histórico de Solicitações</CardTitle>
           <CardDescription className="text-xs">Acompanhe o status dos documentos solicitados</CardDescription>

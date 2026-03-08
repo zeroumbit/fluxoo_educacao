@@ -10,6 +10,7 @@ import { ptBR } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
@@ -61,12 +62,15 @@ export function PortalAgendaPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Agenda</h2>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Calendário Institucional</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Agenda</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Calendário Institucional</p>
+          </div>
         </div>
         {isMultiAluno && <SeletorAluno />}
       </div>
@@ -153,13 +157,6 @@ export function PortalAgendaPage() {
             Toque em um evento para sincronizar com sua agenda e receber lembretes.
           </p>
         </div>
-      </div>
-
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
-          Retornar ao Portal
-        </Button>
       </div>
     </div>
   )

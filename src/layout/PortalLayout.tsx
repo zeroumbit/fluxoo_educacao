@@ -20,6 +20,7 @@ import {
   User,
   ShieldCheck
 } from 'lucide-react'
+import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -365,6 +366,8 @@ export function PortalLayout() {
             </div>
           </div>
         </footer>
+        {/* 6. PWA Install Prompt */}
+        <PwaInstallPrompt />
       </div>
     </PortalProvider>
   )

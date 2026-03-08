@@ -10,6 +10,7 @@ import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SeletorAluno } from '../components/SeletorAluno'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -144,13 +145,13 @@ function AvisoPortalCard({ aviso, expirado = false, expandedId, onToggleExpand }
 }
 
 export function PortalAvisosPage() {
-  const { alunoSelecionado, isMultiAluno } = usePortalContext()
+  const { alunoSelecionado, isMultiAluno, isLoading: loadingCtx } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id)
 
-  if (isLoading) return <AvisosSkeleton />
+  if (loadingCtx || isLoading) return <AvisosSkeleton />
 
   if (!alunoSelecionado) {
     return (
@@ -171,12 +172,15 @@ export function PortalAvisosPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Avisos</h2>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Mural da Unidade</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Avisos</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Mural da Unidade</p>
+          </div>
         </div>
         {isMultiAluno && <SeletorAluno />}
       </div>
@@ -259,13 +263,6 @@ export function PortalAvisosPage() {
            </div>
         </div>
       )}
-
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
-          Retornar ao Portal
-        </Button>
-      </div>
     </div>
   )
 }

@@ -29,6 +29,18 @@ export const financeiroService = {
     return data
   },
 
+  async atualizar(id: string, cobranca: Partial<CobrancaInsert>) {
+    const { data, error } = await supabase
+      .from('cobrancas')
+      .update(cobranca)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   async marcarComoPago(id: string) {
     const { error } = await supabase
       .from('cobrancas')
@@ -125,7 +137,29 @@ export const financeiroService = {
       const diaInicio = dataInicioObj.getDate()
       const diasRestantes = ultimoDiaMes - diaInicio + 1
       
-      const valorProporcional = (Number(valor_mensalidade) / ultimoDiaMes) * diasRestantes
+      // 2.1 Buscar desconto do aluno
+      const { data: aluno } = await supabase
+        .from('alunos')
+        .select('desconto_valor, desconto_tipo, desconto_inicio, desconto_fim')
+        .eq('id', aluno_id)
+        .single()
+
+      let valorMensalidadeComDesconto = Number(valor_mensalidade)
+      if (aluno?.desconto_valor) {
+        const hoje = new Date().toISOString().split('T')[0]
+        const inicioValido = !aluno.desconto_inicio || aluno.desconto_inicio <= hoje
+        const fimValido = !aluno.desconto_fim || aluno.desconto_fim >= hoje
+
+        if (inicioValido && fimValido) {
+          if (aluno.desconto_tipo === 'porcentagem') {
+            valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (aluno.desconto_valor / 100))
+          } else {
+            valorMensalidadeComDesconto = Math.max(0, valorMensalidadeComDesconto - aluno.desconto_valor)
+          }
+        }
+      }
+
+      const valorProporcional = (valorMensalidadeComDesconto / ultimoDiaMes) * diasRestantes
       
       // Data de vencimento - Baseada no dia padrão da escola
       let dataVencimento = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth(), diaVencimento)

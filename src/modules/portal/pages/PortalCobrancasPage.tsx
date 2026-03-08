@@ -1,26 +1,26 @@
 import { useState } from 'react'
-import { useCobrancasAluno, useConfigPix } from '../hooks'
+import { useCobrancasAluno, useConfigPix, useConfigRecados } from '../hooks'
 import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetDescription,
   SheetFooter
 } from '@/components/ui/sheet'
-import { 
-  CreditCard, 
-  Copy, 
-  CheckCircle2, 
-  AlertCircle, 
-  Info, 
-  Calendar, 
-  DollarSign, 
-  QrCode, 
+import {
+  CreditCard,
+  Copy,
+  CheckCircle2,
+  AlertCircle,
+  Info,
+  Calendar,
+  DollarSign,
+  QrCode,
   X,
   ChevronRight,
   ShieldCheck,
@@ -32,13 +32,14 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
 } from '@/components/ui/accordion'
 import { SeletorAluno } from '../components/SeletorAluno'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -58,10 +59,11 @@ const CobrancasSkeleton = () => (
   </div>
 )
 
-export function PortalCobrancasPage() {
+export default function PortalCobrancasPage() {
   const { alunoSelecionado, isMultiAluno, vinculos } = usePortalContext()
   const { data: cobrancas, isLoading } = useCobrancasAluno()
   const { data: configPix } = useConfigPix()
+  const { data: configRecados } = useConfigRecados()
 
   const [copiado, setCopiado] = useState(false)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
@@ -74,6 +76,17 @@ export function PortalCobrancasPage() {
       toast.success('Chave PIX copiada!')
       setTimeout(() => setCopiado(false), 2000)
     }
+  }
+
+  const handleAbrirWhatsApp = () => {
+    vibrate(50)
+    const numero = configRecados?.whatsapp_contato?.replace(/\D/g, '')
+    if (!numero) {
+      toast.error('Número de suporte não configurado.')
+      return
+    }
+    const msg = encodeURIComponent(`Olá, sou responsável por ${alunoSelecionado?.nome_completo} e gostaria de falar com a tesouraria.`)
+    window.open(`https://wa.me/55${numero}?text=${msg}`, '_blank')
   }
 
   const statusBadge = (status: string, vencimento: string) => {
@@ -130,7 +143,7 @@ export function PortalCobrancasPage() {
             Sem permissão financeira para este aluno.
           </p>
         </div>
-        <Button variant="ghost" className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-white" onClick={() => window.history.back()}>Voltar</Button>
+        <BotaoVoltar />
       </motion.div>
     )
   }
@@ -140,12 +153,15 @@ export function PortalCobrancasPage() {
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-      
+
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Cobranças</h2>
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Pagamentos & Boletos</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3">
+          <BotaoVoltar />
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Cobranças</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Pagamentos & Boletos</p>
+          </div>
         </div>
         {isMultiAluno && <SeletorAluno />}
       </div>
@@ -315,9 +331,12 @@ export function PortalCobrancasPage() {
                     Dúvidas sobre pagamentos? Fale com a tesouraria.
                  </p>
                </div>
-               <Button className="w-full bg-white text-slate-900 hover:bg-teal-50 rounded-xl font-semibold uppercase text-[10px] tracking-wider h-11 active:scale-95">
-                  Abrir Chamado
-               </Button>
+                <Button 
+                   onClick={handleAbrirWhatsApp}
+                   className="w-full bg-white text-slate-900 hover:bg-teal-50 rounded-xl font-semibold uppercase text-[10px] tracking-wider h-11 active:scale-95"
+                >
+                   Abrir Chamado
+                </Button>
              </div>
           </div>
         </div>
@@ -401,14 +420,6 @@ export function PortalCobrancasPage() {
           </div>
         </SheetContent>
       </Sheet>
-
-      {/* Manual Back Navigation */}
-      <div className="flex justify-center pt-4">
-        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
-          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
-          Retornar
-        </Button>
-      </div>
     </div>
   )
 }

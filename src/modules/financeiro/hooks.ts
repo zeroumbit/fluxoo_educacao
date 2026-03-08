@@ -41,6 +41,18 @@ export function useCriarCobranca() {
   })
 }
 
+export function useAtualizarCobranca() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, cobranca }: { id: string, cobranca: Partial<CobrancaInsert> }) => 
+      financeiroService.atualizar(id, cobranca),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ 'cobrancas' ] })
+      queryClient.invalidateQueries({ queryKey: [ 'dashboard' ] })
+    },
+  })
+}
+
 export function useMarcarComoPago() {
   const queryClient = useQueryClient()
   return useMutation({

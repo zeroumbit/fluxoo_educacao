@@ -81,12 +81,20 @@ export function useCobrancasAluno() {
     enabled: !!alunoSelecionado?.id && !!tenantId,
   })
 }
-
 export function useConfigPix() {
   const { tenantId } = usePortalContext()
   return useQuery({
     queryKey: ['portal', 'config-pix', tenantId],
     queryFn: () => portalService.buscarConfigPixEscola(tenantId!),
+    enabled: !!tenantId,
+  })
+}
+
+export function useConfigRecados() {
+  const { tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'config-recados', tenantId],
+    queryFn: () => portalService.buscarConfigRecados(tenantId!),
     enabled: !!tenantId,
   })
 }
