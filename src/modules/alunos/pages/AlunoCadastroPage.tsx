@@ -309,10 +309,10 @@ export function AlunoCadastroPage() {
         estado: data.estado && data.estado !== '' ? data.estado : null,
         valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
         data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
-        desconto_valor: (data as any).desconto_valor || null,
-        desconto_tipo: (data as any).desconto_tipo || null,
-        desconto_inicio: (data as any).desconto_inicio || null,
-        desconto_fim: (data as any).desconto_fim || null,
+        // desconto_valor: (data as any).desconto_valor || null,
+        // desconto_tipo: (data as any).desconto_tipo || null,
+        // desconto_inicio: (data as any).desconto_inicio || null,
+        // desconto_fim: (data as any).desconto_fim || null,
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -523,51 +523,13 @@ export function AlunoCadastroPage() {
                     <h4 className="font-bold text-sm uppercase tracking-wider">Desconto Especial</h4>
                   </div>
                   
-                  {irmaosExistentes.length > 0 && (
-                    <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex items-center gap-3">
-                      <Users className="h-5 w-5 text-indigo-600" />
+                    <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3 mt-4">
+                      <Users className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-bold text-indigo-900 leading-tight">Sugestão: Desconto Multi-Irmão</p>
-                        <p className="text-[10px] text-indigo-700 italic">Responsável ja vinculado a: {irmaosExistentes.join(', ')}</p>
+                        <p className="text-xs font-bold text-indigo-900 leading-tight">Sugestão: Matriz de Descontos (DSS)</p>
+                        <p className="text-[10px] text-indigo-700 leading-relaxed mt-1">Conclua o cadastro para aplicar um Override Financeiro auditado. {irmaosExistentes.length > 0 && `(Vínculo múltiplo detectado com: ${irmaosExistentes.join(', ')})`}</p>
                       </div>
                     </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <Label className="text-xs font-black uppercase text-zinc-400">Tipo</Label>
-                       <Select onValueChange={(v) => setValue('desconto_tipo' as any, v)}>
-                         <SelectTrigger className="h-10 rounded-xl bg-white">
-                           <SelectValue placeholder="Sem desconto" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="porcentagem">Porcentagem (%)</SelectItem>
-                           <SelectItem value="valor">Valor Fixo (R$)</SelectItem>
-                         </SelectContent>
-                       </Select>
-                    </div>
-                    <div className="space-y-2">
-                       <Label className="text-xs font-black uppercase text-zinc-400">Valor</Label>
-                       <Input 
-                        type="number" 
-                        step="0.01" 
-                        placeholder="0,00" 
-                        {...register('desconto_valor' as any)}
-                        className="h-10 rounded-xl bg-white"
-                       />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase text-zinc-400">Válido De</Label>
-                        <Input type="date" {...register('desconto_inicio' as any)} className="h-10 rounded-xl bg-white text-xs" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase text-zinc-400">Válido Até</Label>
-                        <Input type="date" {...register('desconto_fim' as any)} className="h-10 rounded-xl bg-white text-xs" />
-                     </div>
-                  </div>
                 </div>
               </>
             )}

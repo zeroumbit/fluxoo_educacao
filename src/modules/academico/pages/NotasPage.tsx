@@ -16,6 +16,7 @@ export function NotasPage() {
   const { data: disciplinas, isLoading: isLoadingDisciplinas } = useDisciplinas()
   
   const [turmaId, setTurmaId] = useState<string>('')
+  const [alunoId, setAlunoId] = useState<string>('all')
   const [disciplinaNome, setDisciplinaNome] = useState<string>('')
   const [bimestre, setBimestre] = useState<string>('1')
   const [anoLetivo] = useState<number>(new Date().getFullYear())
@@ -30,6 +31,12 @@ export function NotasPage() {
 
   // Estado local para as notas da tabela (para edição rápida)
   const [notasLocais, setNotasLocais] = useState<Record<string, { nota: string, faltas: string, observacoes: string }>>({})
+  const [selecionados, setSelecionados] = useState<string[]>([])
+  
+  // Inputs globais para aplicação em massa
+  const [globalNota, setGlobalNota] = useState<string>('')
+  const [globalFaltas, setGlobalFaltas] = useState<string>('')
+  const [globalObs, setGlobalObs] = useState<string>('')
 
   // Sincronizar notas locais quando os boletins carregarem
   useEffect(() => {
@@ -57,6 +64,40 @@ export function NotasPage() {
         [campo]: valor
       }
     }))
+  }
+
+  const aplicarMassa = () => {
+    if (selecionados.length === 0) {
+      toast.error('Selecione ao menos um aluno')
+      return
+    }
+
+    setNotasLocais(prev => {
+      const novo = { ...prev }
+      selecionados.forEach(id => {
+        novo[id] = {
+          nota: globalNota || (novo[id]?.nota || ''),
+          faltas: globalFaltas || (novo[id]?.faltas || '0'),
+          observacoes: globalObs || (novo[id]?.observacoes || '')
+        }
+      })
+      return novo
+    })
+    toast.success(`Aplicado a ${selecionados.length} alunos`)
+  }
+
+  const alternarSelecao = (alunoId: string) => {
+    setSelecionados(prev => 
+      prev.includes(alunoId) ? prev.filter(id => id !== alunoId) : [...prev, alunoId]
+    )
+  }
+
+  const selecionarTodosVisiveis = (alunosVisiveis: any[]) => {
+    if (selecionados.length > 0 && selecionados.length === alunosVisiveis.length) {
+      setSelecionados([])
+    } else {
+      setSelecionados(alunosVisiveis.map(a => a.id))
+    }
   }
 
   const salvarTodas = async () => {
@@ -93,14 +134,25 @@ export function NotasPage() {
   const { data: todosAlunos, isLoading: isLoadingAlunos } = useQuery({
     queryKey: ['alunos_turma', turmaId],
     queryFn: async (): Promise<any[]> => {
-        const { data, error } = await (supabase
-          .from('matriculas' as any) as any)
-          .select('aluno:alunos(id, nome_completo)')
-          .eq('turma_id', turmaId)
-          .eq('status' as any, 'ativa')
+        // 1. Buscamos a turma para pegar o array de alunos_ids
+        const { data: turma, error: errTurma } = await supabase
+          .from('turmas')
+          .select('alunos_ids')
+          .eq('id', turmaId)
+          .single()
+          
+        if (errTurma) throw errTurma
+        if (!turma?.alunos_ids || turma.alunos_ids.length === 0) return []
+
+        // 2. Buscamos os alunos que pertencem a esses IDs
+        const { data, error } = await supabase
+          .from('alunos')
+          .select('id, nome_completo')
+          .in('id', turma.alunos_ids)
+          .eq('status', 'ativo')
         
         if (error) throw error
-        return (data as any[]).map(m => m.aluno)
+        return data as any[]
     },
     enabled: !!turmaId
   })
@@ -131,9 +183,9 @@ export function NotasPage() {
       <Card className="border-none shadow-sm bg-white overflow-hidden rounded-[32px]">
         <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-4 space-y-2">
+            <div className="md:col-span-3 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma</label>
-              <Select value={turmaId} onValueChange={setTurmaId}>
+              <Select value={turmaId} onValueChange={(v) => { setTurmaId(v); setAlunoId('all'); }}>
                 <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
                   <SelectValue placeholder="Selecione a Turma" />
                 </SelectTrigger>
@@ -145,7 +197,22 @@ export function NotasPage() {
               </Select>
             </div>
 
-            <div className="md:col-span-4 space-y-2">
+            <div className="md:col-span-3 space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
+              <Select value={alunoId} onValueChange={setAlunoId} disabled={!turmaId}>
+                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
+                  <SelectValue placeholder={!turmaId ? "Aguardando Turma..." : "Todos os Alunos"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Alunos</SelectItem>
+                  {todosAlunos?.map((aluno: any) => (
+                    <SelectItem key={aluno.id} value={aluno.id}>{aluno.nome_completo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
               <Select value={disciplinaNome} onValueChange={setDisciplinaNome}>
                 <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
@@ -181,6 +248,47 @@ export function NotasPage() {
               </div>
             </div>
           </div>
+
+          {/* Painel de Aplicação em Massa */}
+          {turmaId && disciplinaNome && (
+            <div className="mt-8 p-6 bg-indigo-50/50 rounded-[24px] border border-indigo-100/50 flex flex-col md:flex-row items-end gap-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Nota Global</label>
+                <Input 
+                  placeholder="Ex: 8,5" 
+                  value={globalNota} 
+                  onChange={e => setGlobalNota(e.target.value)}
+                  className="bg-white border-indigo-100 rounded-xl h-11"
+                />
+              </div>
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Faltas Globais</label>
+                <Input 
+                  type="number" 
+                  placeholder="0" 
+                  value={globalFaltas} 
+                  onChange={e => setGlobalFaltas(e.target.value)}
+                  className="bg-white border-indigo-100 rounded-xl h-11"
+                />
+              </div>
+              <div className="flex-[2] w-full space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Obs. Global</label>
+                <Input 
+                  placeholder="Ex: Excelente participação" 
+                  value={globalObs} 
+                  onChange={e => setGlobalObs(e.target.value)}
+                  className="bg-white border-indigo-100 rounded-xl h-11"
+                />
+              </div>
+              <Button 
+                onClick={aplicarMassa}
+                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold h-11 px-6 rounded-xl shadow-md gap-2"
+              >
+                <CheckCircle2 size={18} />
+                Aplicar aos Selecionados ({selecionados.length})
+              </Button>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="p-0">
@@ -203,16 +311,32 @@ export function NotasPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50/30 border-b border-slate-100">
-                    <th className="text-left px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno</th>
+                    <th className="w-16 px-8 py-4">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId).length > 0 && selecionados.length === todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId).length}
+                        onChange={() => selecionarTodosVisiveis(todosAlunos?.filter(a => alunoId === 'all' || a.id === alunoId) || [])}
+                      />
+                    </th>
+                    <th className="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno</th>
                     <th className="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-32">Nota</th>
                     <th className="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-32">Faltas</th>
                     <th className="text-left px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Observações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {todosAlunos?.map((aluno: any) => (
-                    <tr key={aluno.id} className="hover:bg-slate-50/50 transition-colors group">
+                  {(todosAlunos || [])?.filter(a => alunoId === 'all' || a.id === alunoId).map((aluno: any) => (
+                    <tr key={aluno.id} className={`hover:bg-slate-50/50 transition-colors group ${selecionados.includes(aluno.id) ? 'bg-indigo-50/30' : ''}`}>
                       <td className="px-8 py-4">
+                        <input 
+                          type="checkbox" 
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          checked={selecionados.includes(aluno.id)}
+                          onChange={() => alternarSelecao(aluno.id)}
+                        />
+                      </td>
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
                             {aluno.nome_completo.charAt(0)}

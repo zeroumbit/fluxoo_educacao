@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { alunoService } from './service'
-import type { AlunoInsert, AlunoUpdate, ResponsavelInsert } from '@/lib/database.types'
+import { overrideService } from './overrides.service'
+import type { AlunoInsert, AlunoUpdate, ResponsavelInsert, OverrideFinanceiroInsert } from '@/lib/database.types'
 import { toast } from 'sonner'
 
 export function useAlunos() {
@@ -104,6 +105,37 @@ export function useAlternarFinanceiro() {
     onSuccess: () => {
       queryClient.invalidateQueries()
       toast.success('Responsabilidade atualizada!')
+    },
+  })
+}
+
+// ========== MOTOR DE OVERRIDES FINANCEIROS ==========
+
+export function useOverrideAtivo(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['overrides', alunoId, authUser?.tenantId],
+    queryFn: () => overrideService.listarAtivosPorAluno(alunoId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}
+
+export function useCriarOverride() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (override: OverrideFinanceiroInsert) => overrideService.criar(override),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['overrides', variables.aluno_id] })
+    },
+  })
+}
+
+export function useRevogarOverrides() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (alunoId: string) => overrideService.revogarTodosPorAluno(alunoId),
+    onSuccess: (_, alunoId) => {
+      queryClient.invalidateQueries({ queryKey: ['overrides', alunoId] })
     },
   })
 }

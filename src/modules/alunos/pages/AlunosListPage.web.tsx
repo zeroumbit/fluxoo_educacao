@@ -240,11 +240,6 @@ export function AlunosListPageWeb() {
                            ) : (
                              <UserCircle className="h-8 w-8" />
                            )}
-                           {aluno.desconto_valor && (
-                             <div className="absolute top-0 right-0 bg-rose-500 text-white p-1 rounded-bl-lg flex items-center justify-center" title="Aluno com Desconto">
-                                <Percent className="h-2 w-2" />
-                             </div>
-                           )}
                         </div>
                         <div>
                           <p className="font-bold text-zinc-800 text-base">{aluno.nome_completo}</p>
@@ -351,9 +346,9 @@ export function AlunosListPageWeb() {
       />
 
       <ModalAutorizacoesAluno 
-        isOpen={!!alunoAutorizacoes} 
+        open={!!alunoAutorizacoes} 
         onClose={() => setAlunoAutorizacoes(null)} 
-        studentId={alunoAutorizacoes?.id} 
+        alunoId={alunoAutorizacoes?.id} 
       />
 
       {/* Dialog de Exclusão */}

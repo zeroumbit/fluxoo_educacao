@@ -117,11 +117,15 @@ export type Turma = {
   capacidade_maxima: number | null
   turno: string | null
   valor_mensalidade: number | null
+  professores_ids: string[] | null
+  alunos_ids: string[] | null
+  livros: string[] | null
+  status: string | null
   created_at: string
   updated_at: string
 }
-export type TurmaInsert = Omit<Turma, 'id' | 'created_at' | 'updated_at'> & {
-  id?: string; created_at?: string; updated_at?: string
+export type TurmaInsert = Omit<Turma, 'id' | 'created_at' | 'updated_at' | 'professores_ids' | 'alunos_ids' | 'livros' | 'status'> & {
+  id?: string; professores_ids?: string[] | null; alunos_ids?: string[] | null; livros?: string[] | null; status?: string | null; created_at?: string; updated_at?: string
 }
 export type TurmaUpdate = Partial<TurmaInsert>
 
@@ -729,6 +733,48 @@ export type BoletimInsert = Omit<Boletim, 'id' | 'created_at' | 'updated_at'> & 
 
 export type BoletimUpdate = Partial<BoletimInsert>
 
+// ========== OVERRIDES FINANCEIROS ==========
+export type TipoOverrideFinanceiro = 'desconto_pontual' | 'desconto_permanente' | 'acordo' | 'negociacao'
+export type MotivoOverrideFinanceiro = 'vinculo_familiar' | 'bolsa_merito' | 'bolsa_atleta' | 'bolsa_funcionario' | 'retencao_evasao' | 'promocional' | 'outro'
+
+export type OverrideFinanceiro = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  tipo: TipoOverrideFinanceiro
+  motivo: MotivoOverrideFinanceiro
+  detalhes_motivo: string | null
+  percentual_desconto: number | null
+  valor_fixo_desconto: number | null
+  teto_maximo_desconto: number | null
+  vigencia_inicio: string
+  vigencia_fim: string | null
+  recalcular_automatico_em_reajuste: boolean
+  aplicado_por: string
+  status: string
+  created_at: string
+  updated_at: string
+}
+export type OverrideFinanceiroInsert = Omit<OverrideFinanceiro, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string;
+}
+export type OverrideFinanceiroUpdate = Partial<OverrideFinanceiroInsert>
+
+// ========== ALERTAS FINANCEIROS IGNORADOS ==========
+export type AlertaFinanceiroIgnorado = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  tipo_alerta: string
+  ignorado_por: string
+  ignorado_ate: string | null
+  created_at: string
+}
+export type AlertaFinanceiroIgnoradoInsert = Omit<AlertaFinanceiroIgnorado, 'id' | 'created_at'> & {
+  id?: string; created_at?: string;
+}
+
+
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'
 
@@ -773,9 +819,26 @@ export type Database = {
       fila_virtual: { Row: FilaVirtual; Insert: FilaVirtualInsert; Update: FilaVirtualUpdate; Relationships: any[] }
       almoxarifado_itens: { Row: AlmoxarifadoItem; Insert: AlmoxarifadoItemInsert; Update: AlmoxarifadoItemUpdate; Relationships: any[] }
       almoxarifado_movimentacoes: { Row: AlmoxarifadoMovimentacao; Insert: AlmoxarifadoMovimentacaoInsert; Update: any; Relationships: any[] }
+      overrides_financeiros: { Row: OverrideFinanceiro; Insert: OverrideFinanceiroInsert; Update: OverrideFinanceiroUpdate; Relationships: any[] }
+      alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: any; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
+      vw_alerta_evasao_familiar: { 
+        Row: { 
+          aluno_ativo_id: string
+          tenant_id: string
+          aluno_ativo_nome: string
+          turma_atual: string | null
+          responsavel: string
+          telefone_contato: string | null
+          irmao_que_saiu: string
+          motivo_saida: string
+          data_saida: string
+          nivel_risco: 'CRITICO' | 'ALTO' | 'MONITORAMENTO'
+        }
+        Relationships: any[]
+      }
     }
     Functions: { 
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean }

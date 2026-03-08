@@ -220,7 +220,14 @@ export function DashboardPageWeb() {
 
   // Se for funcionário e precisar de onboarding
   if (userRole === 'funcionario' && onboardingStatus?.needsOnboarding) {
-    return <OnboardingGuide status={onboardingStatus} />
+    return (
+      <OnboardingGuide status={{
+        perfilCompleto: !!onboardingStatus?.perfilCompleto,
+        possuiFilial: !!onboardingStatus?.possuiFilial,
+        possuiTurma: !!onboardingStatus?.possuiTurma,
+        possuiAluno: !!onboardingStatus?.possuiAluno
+      }} />
+    )
   }
 
   return (
@@ -294,7 +301,7 @@ export function DashboardPageWeb() {
                   <div key={idx} className="group p-6 rounded-[2rem] bg-zinc-50/50 border border-zinc-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
                     <div className="flex justify-between items-start mb-4">
                        <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-zinc-200 text-zinc-500 bg-white">
-                         {aviso.categoria || 'AVISO'}
+                          {'AVISO'}
                        </Badge>
                        <span className="text-[10px] font-bold text-zinc-400">
                          {format(new Date(aviso.created_at), "d 'de' MMM", { locale: ptBR })}
