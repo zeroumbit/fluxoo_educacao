@@ -3,29 +3,46 @@ import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, TrendingUp, CarFront, CheckCircle, XCircle } from 'lucide-react'
+import { Loader2, CarFront, CheckCircle, XCircle, ChevronRight, MapPin, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { SeletorAluno } from '../components/SeletorAluno'
+import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Helper de vibração
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(ms);
+  }
+}
+
+// --- SKELETON LOADING ---
+const FilaSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-32 bg-slate-900 rounded-2xl" />
+    <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+    <div className="space-y-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-white border border-slate-100 rounded-xl" />)}
+    </div>
+  </div>
+)
 
 export function PortalFilaVirtualPage() {
-  const { alunoSelecionado, tenantId, responsavel, isMultiAluno } = usePortalContext()
+  const { alunoSelecionado, tenantId, responsavel } = usePortalContext()
   const { data: historicoFila, isLoading } = useFilaVirtual()
   
   const entrarMut = useEntrarNaFila()
   const cancelarMut = useCancelarFila()
 
-  // Verifica se há alguma fila ativa (aguardando)
   const filaAtiva = historicoFila?.find(f => f.status === 'aguardando')
 
   const handleEntrarFila = async () => {
     if (!alunoSelecionado || !tenantId || !responsavel) return
+    vibrate([40, 20, 40])
 
-    // Validação de horário
     const horarioTurma = alunoSelecionado.turma?.horario
     if (horarioTurma) {
-      // Tenta extrair os horários (ex: "das 7:00 as 11:30" ou "07:00 - 12:00")
       const times = horarioTurma.match(/(\d{1,2}:\d{2})/g)
       if (times && times.length >= 2) {
         const agora = new Date()
@@ -34,18 +51,14 @@ export function PortalFilaVirtualPage() {
 
         const dataInicio = new Date(agora)
         dataInicio.setHours(hInicio, mInicio, 0)
-
         const dataFim = new Date(agora)
         dataFim.setHours(hFim, mFim, 0)
 
-        // Se o horário de fim for menor que o de início, assume que cruza a meia-noite
-        if (dataFim < dataInicio) {
-          dataFim.setDate(dataFim.getDate() + 1)
-        }
+        if (dataFim < dataInicio) dataFim.setDate(dataFim.getDate() + 1)
 
         if (agora < dataInicio || agora > dataFim) {
           toast.error(`Fora do horário: A fila só abre entre ${times[0]} e ${times[1]}.`, {
-            description: 'Você só pode ativar a fila durante o período de aula.',
+            description: 'Você só pode ativar a fila durante o período de saída.',
             duration: 5000
           })
           return
@@ -59,155 +72,206 @@ export function PortalFilaVirtualPage() {
         aluno_id: alunoSelecionado.id,
         responsavel_id: responsavel.id,
       })
+      vibrate(60)
       toast.success('Você entrou na Fila Virtual!')
     } catch (error: any) {
       toast.error(error.message || 'Erro ao entrar na fila.')
     }
   }
 
-  const handleCancelar = async (id: string) => {
+  const handleCancelar = async (id: string | undefined) => {
+    if (!id) return
     try {
+      vibrate(20)
       await cancelarMut.mutateAsync(id)
-      toast.success('Entrada cancelada da fila.')
+      toast.success('Operação cancelada.')
     } catch {
-      toast.error('Erro ao cancelar a fila.')
+      toast.error('Erro ao cancelar.')
     }
   }
 
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case 'aguardando': return <Badge className="bg-amber-100 text-amber-800 border-amber-200 uppercase px-3 py-1 font-bold">Aguardando na Portaria</Badge>
-      case 'atendido': return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 uppercase px-3 py-1 font-bold">Aluno Entregue</Badge>
-      case 'cancelado': return <Badge className="bg-zinc-100 text-zinc-600 border-zinc-200 uppercase px-3 py-1 font-bold">Cancelado</Badge>
-      default: return null
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
-      </div>
-    )
-  }
+  if (isLoading) return <FilaSkeleton />
 
   if (!alunoSelecionado) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <TrendingUp className="h-16 w-16 text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-[#1E293B]">Selecione um aluno</h2>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+            <CarFront className="h-8 w-8 text-slate-200" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-slate-800">Fila Virtual</h2>
+          <p className="text-sm text-slate-400">Selecione um aluno.</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
-        <h2 className="text-2xl font-bold tracking-tight text-[#1E293B]">Fila Virtual</h2>
-      </div>
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
       
-      <p className="text-[#64748B] font-medium text-sm px-1">Avise a escola que você está chegando para buscar o aluno.</p>
-
-      {isMultiAluno && <SeletorAluno />}
-
-      {/* Ação Principal - Teal Gradient */}
-      <Card className="border-0 shadow-2xl bg-gradient-to-br from-[#14B8A6] via-[#108A7D] to-[#134E4A] text-white overflow-hidden relative rounded-3xl">
-        <div className="absolute top-0 right-0 -mr-12 -mt-12 opacity-10">
-          <CarFront className="h-64 w-64 text-white" />
-        </div>
-        <CardContent className="p-8 md:p-10 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
-          <div className="text-center sm:text-left flex-1">
-            <h3 className="text-3xl font-black mb-3 tracking-tighter leading-none">
-              {filaAtiva ? 'Escola Alertada!' : 'Já está chegando?'}
-            </h3>
-            <p className="text-teal-50 max-w-sm text-sm opacity-90 leading-relaxed font-semibold italic">
-              {filaAtiva 
-                ? 'Seu nome já foi para o painel da portaria. A saída do aluno está sendo preparada.'
-                : 'Pressione o botão ao entrar no perímetro da escola para agilizar a entrega do aluno.'}
-            </p>
-          </div>
-          <div className="shrink-0 w-full sm:w-auto flex flex-col gap-3 min-w-[220px]">
-            {!filaAtiva ? (
-              <Button 
-                size="lg" 
-                className="w-full bg-white text-[#134E4A] hover:bg-teal-50 font-black h-16 shadow-2xl border-0 rounded-2xl text-sm tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
-                onClick={handleEntrarFila}
-                disabled={entrarMut.isPending}
-              >
-                {entrarMut.isPending ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CarFront className="h-7 w-7 mr-2 opacity-90" />}
-                ESTOU CHEGANDO
-              </Button>
-            ) : (
-              <Button 
-                variant="destructive" 
-                size="lg" 
-                className="w-full bg-red-500/90 hover:bg-red-600 text-white font-black h-16 shadow-2xl border-0 rounded-2xl text-sm tracking-widest uppercase transition-all hover:scale-103"
-                onClick={() => handleCancelar(filaAtiva.id)}
-                disabled={cancelarMut.isPending}
-              >
-                {cancelarMut.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <XCircle className="h-6 w-6 mr-2 opacity-80" />}
-                CANCELAR
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Histórico Recente */}
-      <div className="flex items-center gap-2 mt-12 mb-5 px-1">
-         <div className="h-1.5 w-1.5 rounded-full bg-[#14B8A6]" />
-         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#64748B]">Histórico Recente</h3>
+      {/* Header */}
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-800">Fila Virtual</h2>
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Chegada & Pick-up</p>
       </div>
-      
-      {historicoFila && historicoFila.length > 0 ? (
-        <Card className="border border-[#E2E8F0] shadow-sm bg-white rounded-2xl overflow-hidden">
-          <CardContent className="p-0 divide-y divide-slate-100">
-            {historicoFila.slice(0, 5).map((registro) => (
-              <div key={registro.id} className="flex items-center justify-between p-5 hover:bg-slate-50 transition-all group">
-                <div className="flex items-center gap-4">
-                   <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110 ${
-                    registro.status === 'aguardando' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                    registro.status === 'atendido' ? 'bg-[#CCFBF1] text-[#14B8A6] border-teal-100' :
-                    'bg-slate-50 text-slate-400 border-slate-100'
-                  }`}>
-                    {registro.status === 'aguardando' ? <CarFront className="h-5 w-5" /> :
-                     registro.status === 'atendido' ? <CheckCircle className="h-5 w-5" /> : 
-                     <XCircle className="h-5 w-5" />}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#1E293B] leading-none mb-2 text-sm">
-                      {format(new Date(registro.created_at), "dd 'de' MMM", { locale: ptBR })} às {format(new Date(registro.created_at), "HH:mm")}
-                    </h4>
-                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                       {alunoSelecionado.nome_social || alunoSelecionado.nome_completo}
-                    </p>
-                  </div>
-                </div>
-                <div className="hidden sm:block">
-                  <Badge variant="outline" className={`font-black text-[9px] uppercase tracking-widest px-3 py-1 shadow-none border ${
-                    registro.status === 'aguardando' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                    registro.status === 'atendido' ? 'bg-teal-50 text-[#14B8A6] border-teal-100' :
-                    'bg-slate-50 text-slate-500 border-slate-200'
-                  }`}>
-                    {registro.status === 'aguardando' ? 'Aguardando na Saída' :
-                     registro.status === 'atendido' ? 'Aluno Entregue' : 'Cancelado'}
-                  </Badge>
-                </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        
+        {/* Main Action Section */}
+        <div className="lg:col-span-2 space-y-5">
+          <Card className={cn(
+            "border border-slate-100 shadow-lg overflow-hidden relative rounded-2xl md:rounded-3xl transition-all",
+            filaAtiva ? "bg-slate-900" : "bg-gradient-to-br from-teal-500 to-teal-700"
+          )}>
+            <div className="absolute top-0 right-0 -mr-10 -mt-10 opacity-5 pointer-events-none">
+              <CarFront size={150} className="text-white" />
+            </div>
+            
+            <CardContent className="p-5 md:p-8 relative z-10 space-y-5">
+              <div className="space-y-2">
+                 <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center",
+                      filaAtiva ? "bg-teal-500 text-white" : "bg-white/10 text-white"
+                    )}>
+                       <MapPin size={16} />
+                    </div>
+                    <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider">
+                       {filaAtiva ? "Localização" : "Gestão de Fluxo"}
+                    </span>
+                 </div>
+                 <h3 className="text-lg md:text-xl font-bold text-white leading-tight">
+                   {filaAtiva ? "Aguardando na Portaria" : "Próximo da Instituição?"}
+                 </h3>
+                 <p className="text-xs text-white/60 leading-relaxed max-w-sm">
+                   {filaAtiva 
+                     ? "Seu alerta já está no painel da portaria."
+                     : "Acione ao entrar no perímetro da escola."}
+                 </p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="text-center py-24 bg-slate-50 border border-dashed border-[#E2E8F0] rounded-3xl flex flex-col items-center gap-4">
-           <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100">
-              <CarFront className="h-8 w-8 text-slate-200" />
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                 {!filaAtiva ? (
+                   <Button 
+                     onClick={handleEntrarFila}
+                     disabled={entrarMut.isPending}
+                     className="h-14 px-6 rounded-xl bg-white text-slate-900 hover:bg-teal-50 font-bold text-xs uppercase tracking-wider flex-1 shadow-lg active:scale-95"
+                   >
+                     {entrarMut.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <CarFront className="h-5 w-5 mr-2 text-teal-600" />}
+                     Estou Chegando
+                   </Button>
+                 ) : (
+                   <div className="flex flex-col w-full gap-3">
+                      <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-4 rounded-xl">
+                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                         <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider">Em processamento...</p>
+                      </div>
+                      <Button 
+                        variant="ghost"
+                        onClick={() => handleCancelar(filaAtiva?.id)}
+                        disabled={cancelarMut.isPending}
+                        className="h-11 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-400/10 font-semibold uppercase text-[10px] tracking-wider"
+                      >
+                        {cancelarMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
+                        Cancelar
+                      </Button>
+                   </div>
+                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Guidelines Context */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+             <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="w-9 h-9 rounded-lg bg-white text-teal-600 flex items-center justify-center shadow-sm mb-3">
+                   <Clock size={16} />
+                </div>
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Horários</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                   Fila abre 15min antes da saída: <span className="text-teal-600 font-semibold">{alunoSelecionado.turma?.horario || "Sob consulta"}</span>.
+                </p>
+             </div>
+             <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="w-9 h-9 rounded-lg bg-white text-teal-600 flex items-center justify-center shadow-sm mb-3">
+                   <CheckCircle size={16} />
+                </div>
+                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Confirmação</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                   O sistema registra quem efetuou a chamada e o horário.
+                </p>
+             </div>
+          </div>
+        </div>
+
+        {/* Sidebar Context / History */}
+        <div className="space-y-4">
+           <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Atividade de Hoje</h3>
+              <div className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
            </div>
-           <div className="space-y-1">
-             <p className="text-base font-bold text-[#1E293B]">Nenhum evento registrado</p>
-             <p className="text-[#64748B] text-xs font-medium">Os registros de hoje aparecerão aqui.</p>
+
+           <div className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {historicoFila && historicoFila.length > 0 ? (
+                  historicoFila.slice(0, 5).map((registro, idx) => (
+                    <motion.div 
+                      layout
+                      key={registro.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="p-4 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-between"
+                    >
+                       <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-9 h-9 rounded-lg flex items-center justify-center",
+                            registro.status === 'atendido' ? "bg-teal-50 text-teal-600" : 
+                            registro.status === 'aguardando' ? "bg-amber-50 text-amber-600" :
+                            "bg-slate-50 text-slate-300"
+                          )}>
+                             {registro.status === 'atendido' ? <CheckCircle size={16} /> :
+                              registro.status === 'aguardando' ? <CarFront size={16} /> : <XCircle size={16} />}
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold text-slate-800 leading-none mb-0.5">
+                               {registro.status === 'atendido' ? "Finalizado" : 
+                                registro.status === 'aguardando' ? "Em andamento" : "Cancelado"}
+                             </p>
+                             <p className="text-[10px] text-slate-400">{format(new Date(registro.created_at), "HH:mm", { locale: ptBR })}</p>
+                          </div>
+                       </div>
+                       <ChevronRight size={14} className="text-slate-200" />
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="py-10 text-center space-y-3 border-2 border-dashed border-slate-200 rounded-2xl">
+                     <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-200">
+                        <CarFront size={20} />
+                     </div>
+                     <p className="text-xs text-slate-400">
+                        Nenhum registro hoje.
+                     </p>
+                  </div>
+                )}
+              </AnimatePresence>
+           </div>
+
+           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 text-center space-y-2">
+              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Controle Escolar</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                 Para terceiros, utilize <span className="text-teal-600 font-semibold">Autorizações</span> na secretaria.
+              </p>
            </div>
         </div>
-      )}
+      </div>
+
+      <div className="flex justify-center pt-4">
+        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
+          Retornar
+        </Button>
+      </div>
     </div>
   )
 }

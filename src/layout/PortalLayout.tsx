@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PortalProvider } from '@/modules/portal/context'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   GraduationCap, 
   Home, 
@@ -17,8 +18,6 @@ import {
   ChevronDown,
   Menu,
   User,
-  X,
-  ChevronRight,
   ShieldCheck
 } from 'lucide-react'
 import {
@@ -34,6 +33,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+
+// Helper de Vibração Tátil Subtil (Haptic Feedback)
+const vibrate = (ms: number = 30) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(ms);
+  }
+}
 
 // --- COMPONENTES DE UI REUTILIZÁVEIS ---
 
@@ -70,47 +76,72 @@ const NavLinkDesktop = ({ icon: Icon, label, to, end, hasDropdown }: { icon: any
   );
 }
 
-const MobileBottomNavItem = ({ icon: Icon, label, to, onClick, isActive }: { icon: any, label: string, to?: string, onClick?: () => void, isActive?: boolean }) => {
-  const content = (
-    <div 
-      onClick={onClick}
-      className={cn(
-        "flex flex-col items-center justify-center flex-1 gap-1 py-1 transition-all",
-        isActive ? "text-teal-600" : "text-slate-400"
-      )}
-    >
-      <div className={cn(
-        "p-1.5 rounded-full transition-all",
-        isActive ? "bg-teal-50 scale-110" : ""
-      )}>
-        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-      </div>
-      <span className="text-[10px] font-bold tracking-tight">{label}</span>
-    </div>
-  );
+const MobileBottomNavItem = ({ icon: Icon, label, to, onClick, isActiveOverride }: { icon: any, label: string, to?: string, onClick?: () => void, isActiveOverride?: boolean }) => {
+  const handleTap = () => {
+    vibrate(30);
+    if (onClick) onClick();
+  };
 
   if (to && !onClick) {
     return (
-      <NavLink to={to} className="flex-1">
-        {({ isActive }) => (
-          <div className={cn(
-            "flex flex-col items-center justify-center flex-1 gap-1 py-1 transition-all",
-            isActive ? "text-teal-600" : "text-slate-400"
-          )}>
-             <div className={cn(
-                "p-1.5 rounded-full transition-all",
-                isActive ? "bg-teal-50 scale-110" : ""
-              )}>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-            <span className="text-[10px] font-bold tracking-tight">{label}</span>
-          </div>
-        )}
+      <NavLink to={to} className="flex-1 flex justify-center items-center min-h-[48px]" onClick={handleTap}>
+        {({ isActive }) => {
+          const active = isActiveOverride !== undefined ? isActiveOverride : isActive;
+          return (
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 py-1 transition-all",
+                active ? "text-teal-600" : "text-slate-400"
+              )}
+            >
+              <motion.div 
+                animate={{ scale: active ? 1.15 : 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={cn(
+                  "p-1.5 rounded-full transition-all",
+                  active ? "bg-teal-50" : ""
+                )}
+              >
+                <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+              </motion.div>
+              <span className={cn(
+                  "text-[10px] font-bold tracking-tight transition-all duration-300",
+                  active ? "max-h-4 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+              )}>{label}</span>
+            </motion.div>
+          );
+        }}
       </NavLink>
     );
   }
 
-  return content;
+  return (
+    <div className="flex-1 flex justify-center items-center min-h-[48px]" onClick={handleTap}>
+      <motion.div 
+        whileTap={{ scale: 0.9 }}
+        className={cn(
+          "flex flex-col items-center justify-center gap-1 py-1 transition-all",
+          isActiveOverride ? "text-teal-600" : "text-slate-400"
+        )}
+      >
+        <motion.div 
+          animate={{ scale: isActiveOverride ? 1.15 : 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={cn(
+            "p-1.5 rounded-full transition-all",
+            isActiveOverride ? "bg-teal-50" : ""
+          )}
+        >
+          <Icon size={24} strokeWidth={isActiveOverride ? 2.5 : 2} />
+        </motion.div>
+        <span className={cn(
+            "text-[10px] font-bold tracking-tight transition-all duration-300",
+            isActiveOverride ? "max-h-4 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+        )}>{label}</span>
+      </motion.div>
+    </div>
+  );
 };
 
 export function PortalLayout() {
@@ -120,6 +151,7 @@ export function PortalLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
+    vibrate(50)
     try {
       await signOut()
       window.location.href = '/login'
@@ -140,9 +172,22 @@ export function PortalLayout() {
     { label: 'Perfil', icon: User, to: '/portal/perfil' }, 
   ]
 
+  // Page Animation Variants for SPA Transitions
+  const pageVariants = {
+    initial: { opacity: 0, x: 20 },
+    in: { opacity: 1, x: 0 },
+    out: { opacity: 0, x: -20 }
+  };
+
+  const pageTransition = {
+    type: 'tween',
+    ease: 'anticipate',
+    duration: 0.3
+  } as const;
+
   return (
     <PortalProvider>
-      <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex flex-col relative">
+      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 flex flex-col relative overflow-x-hidden">
         
         {/* 1. Menu Principal Superior - Desktop */}
         <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4">
@@ -202,83 +247,105 @@ export function PortalLayout() {
           </div>
         </nav>
 
-        {/* 2. Área de Conteúdo Dinâmico */}
-        <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12 pb-32 lg:pb-12">
-          <Outlet />
+        {/* 2. Área de Conteúdo Dinâmico (SPA Navigation with AnimatePresence) */}
+        <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-12 pb-24 lg:pb-12 overflow-x-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
  
-        {/* 3. Navegação Mobile (Material Design Style) */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-2 py-2 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] flex items-center justify-around pb-safe">
-          <MobileBottomNavItem 
-            icon={Home} 
-            label="Home" 
-            to="/portal" 
-          />
-          <MobileBottomNavItem 
-            icon={DollarSign} 
-            label="Financeiro" 
-            to="/portal/cobrancas" 
-          />
-          
-          {/* Central Hamburger / Menu */}
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-               <div className="flex flex-col items-center justify-center flex-1 gap-1 py-1">
-                 <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-teal-500/30 -translate-y-4">
-                   <Menu size={24} />
-                 </div>
-                 <span className="text-[10px] font-bold tracking-tight text-slate-400 -translate-y-3">Menu</span>
-               </div>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-[32px] p-6 h-[70vh]">
-              <SheetHeader>
-                <SheetTitle className="text-left font-black italic tracking-tighter text-2xl flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white">
-                    <GraduationCap size={18} />
-                  </div>
-                  FLUXOO<span className="text-teal-500">EDU</span>
-                </SheetTitle>
-              </SheetHeader>
-              
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                {menuItems.map((item) => (
-                  <div 
-                    key={item.label}
-                    onClick={() => {
-                      navigate(item.to)
-                      setIsMobileMenuOpen(false)
-                    }}
-                    className="flex flex-col gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-teal-50 hover:border-teal-200 transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-600">
-                      <item.icon size={20} />
+        {/* 3. Navegação Mobile (App Shell Bottom Nav Pattern) */}
+        <div style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pt-1 pb-1">
+          <div className="flex items-center justify-around w-full max-w-md mx-auto px-2">
+            <MobileBottomNavItem 
+              icon={Home} 
+              label="Home" 
+              to="/portal" 
+            />
+            <MobileBottomNavItem 
+              icon={DollarSign} 
+              label="Fatura" 
+              to="/portal/cobrancas" 
+            />
+            
+            {/* Central Hamburger / Menu */}
+            <Sheet open={isMobileMenuOpen} onOpenChange={(open) => {
+              if (open) vibrate(20);
+              setIsMobileMenuOpen(open);
+            }}>
+              <SheetTrigger asChild>
+                <div className="flex-1 flex justify-center min-h-[48px]">
+                  <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center justify-center gap-1 cursor-pointer select-none">
+                    <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-teal-500/40 -translate-y-4 ring-4 ring-[#f8fafc]">
+                      <Menu size={24} />
                     </div>
-                    <span className="font-bold text-slate-700">{item.label}</span>
+                  </motion.div>
+                </div>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-[32px] p-0 h-[80vh] flex flex-col bg-slate-50">
+                <SheetHeader className="p-6 pb-2 shrink-0">
+                  <div className="mx-auto w-12 h-1.5 bg-slate-200 rounded-full mb-4" />
+                  <SheetTitle className="text-left font-black italic tracking-tighter text-2xl flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white shadow-md">
+                      <GraduationCap size={18} />
+                    </div>
+                    Menu<span className="text-teal-500">Fluxoo</span>
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {menuItems.map((item) => (
+                      <div 
+                        key={item.label}
+                        onClick={() => {
+                          vibrate(15);
+                          navigate(item.to);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex flex-col gap-3 p-5 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-teal-200 active:bg-slate-50 transition-all select-none"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
+                          <item.icon size={24} />
+                        </div>
+                        <span className="font-bold text-slate-700 text-sm tracking-tight">{item.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col gap-3">
-                 <button 
-                  onClick={handleSignOut}
-                  className="flex items-center justify-between w-full p-4 rounded-xl bg-red-50 text-red-600 font-bold"
-                 >
-                    Sair da Conta <LogOut size={18} />
-                 </button>
-              </div>
-            </SheetContent>
-          </Sheet>
+                <div className="p-6 bg-white border-t border-slate-100 shrink-0 pb-[env(safe-area-inset-bottom,1.5rem)]">
+                   <button 
+                    onClick={handleSignOut}
+                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-red-50 text-red-600 font-bold active:bg-red-100 transition-colors"
+                   >
+                      Sair da Conta <LogOut size={20} />
+                   </button>
+                </div>
+              </SheetContent>
+            </Sheet>
 
-          <MobileBottomNavItem 
-            icon={ShoppingCart} 
-            label="Loja" 
-            to="/portal/loja" 
-          />
-          <MobileBottomNavItem 
-            icon={User} 
-            label="Perfil" 
-            to="/portal/perfil" 
-          />
+            <MobileBottomNavItem 
+              icon={ShoppingCart} 
+              label="Loja" 
+              to="/portal/loja" 
+            />
+            <MobileBottomNavItem 
+              icon={User} 
+              label="Perfil" 
+              to="/portal/perfil" 
+            />
+          </div>
         </div>
  
         {/* 4. Footer Institucional - Somente Desktop/Large */}

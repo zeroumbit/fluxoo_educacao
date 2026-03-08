@@ -2,98 +2,209 @@ import { useFrequenciaAluno } from '../hooks'
 import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, CalendarCheck, Check, X, AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { CalendarCheck, Check, X, AlertCircle, TrendingUp, UserMinus, ChevronRight, Activity } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
+
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+}
+
+const FrequenciaSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+    <div className="h-36 bg-slate-900 rounded-2xl" />
+    <div className="grid grid-cols-2 gap-3">
+      {[1, 2].map(i => <div key={i} className="h-20 bg-white border border-slate-100 rounded-2xl" />)}
+    </div>
+    <div className="space-y-3">
+      {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white border border-slate-100 rounded-2xl" />)}
+    </div>
+  </div>
+)
 
 export function PortalFrequenciaPage() {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: frequencias, isLoading } = useFrequenciaAluno()
 
-  const statusIcon = (status: string) => {
-    switch (status) {
-      case 'presente': return <Check className="h-4 w-4 text-[#10B981]" />
-      case 'falta': return <X className="h-4 w-4 text-red-500" />
-      case 'justificada': return <AlertCircle className="h-4 w-4 text-[#F59E0B]" />
-      default: return null
-    }
-  }
-
-  const statusStyle = (status: string) => {
-    switch (status) {
-      case 'presente': return 'bg-[#CCFBF1] text-[#134E4A] border-teal-200'
-      case 'falta': return 'bg-red-50 text-red-700 border-red-100'
-      case 'justificada': return 'bg-amber-50 text-amber-700 border-amber-100'
-      default: return ''
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
-      </div>
-    )
-  }
+  if (isLoading) return <FrequenciaSkeleton />
 
   if (!alunoSelecionado) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <CalendarCheck className="h-16 w-16 text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-[#1E293B]">Selecione um aluno</h2>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+          <CalendarCheck className="h-8 w-8 text-slate-200" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-slate-800">Frequência</h2>
+          <p className="text-sm text-slate-400">Selecione um aluno para monitorar.</p>
+        </div>
       </div>
     )
   }
 
+  const totalDias = frequencias?.length || 0
+  const presencas = frequencias?.filter(f => f.status === 'presente').length || 0
+  const faltas = frequencias?.filter(f => f.status === 'falta').length || 0
+  const taxaPresenca = totalDias > 0 ? Math.round((presencas / totalDias) * 100) : 0
+
+  const statusConfig: Record<string, { label: string, color: string, icon: any, bg: string, ring: string }> = {
+    presente: { label: 'Presente', color: 'text-emerald-600', icon: Check, bg: 'bg-emerald-50', ring: 'ring-emerald-100' },
+    falta: { label: 'Falta', color: 'text-red-600', icon: X, bg: 'bg-red-50', ring: 'ring-red-100' },
+    justificada: { label: 'Justificada', color: 'text-amber-600', icon: AlertCircle, bg: 'bg-amber-50', ring: 'ring-amber-100' },
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
-        <h2 className="text-2xl font-bold tracking-tight text-[#1E293B]">Frequência Escolar</h2>
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+      
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Frequência</h2>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Histórico de Assiduidade</p>
+        </div>
+        {isMultiAluno && <SeletorAluno />}
       </div>
 
-      {isMultiAluno && <SeletorAluno />}
+      {/* Resumo */}
+      <div className="bg-slate-900 rounded-2xl md:rounded-3xl p-5 md:p-8 text-white relative overflow-hidden shadow-lg">
+         <div className="absolute right-0 top-0 opacity-5 -mr-10 -mt-10 pointer-events-none">
+            <Activity size={200} />
+         </div>
+         
+         <div className="relative z-10 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <TrendingUp size={20} />
+               </div>
+               <div>
+                  <h4 className="text-base md:text-lg font-bold leading-tight">Taxa de Frequência</h4>
+                  <p className="text-[10px] font-medium text-emerald-400/60 uppercase tracking-wider">Performance Acadêmica</p>
+               </div>
+            </div>
 
-      {frequencias && frequencias.length > 0 ? (
-        <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden bg-white">
-          <CardContent className="p-0 divide-y divide-slate-100">
-            {frequencias.map((freq) => (
-              <div key={freq.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4 hover:bg-slate-50 transition-all">
-                <div className="flex items-start gap-4">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border ${statusStyle(freq.status)} shadow-sm`}>
-                    {statusIcon(freq.status)}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[#1E293B] first-letter:uppercase">
-                      {format(new Date(freq.data_aula + 'T12:00:00'), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </h3>
-                    {freq.justificativa && (
-                      <p className="text-xs text-amber-800 mt-2 bg-amber-50/50 p-2 rounded-lg border border-amber-100 font-medium">
-                        <span className="font-bold mr-1 uppercase text-[9px]">Justificativa:</span>{freq.justificativa}
-                      </p>
-                    )}
-                  </div>
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div className="rounded-xl md:rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5 relative overflow-hidden">
+                <p className="text-2xl md:text-3xl font-bold text-white leading-none">{taxaPresenca}%</p>
+                <div className="flex items-center gap-2 mt-2">
+                   <div className="h-1 w-5 bg-emerald-500 rounded-full" />
+                   <p className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider">Assiduidade</p>
                 </div>
-                <div className="sm:text-right flex items-center sm:block gap-3">
-                  <Badge variant="outline" className={`${statusStyle(freq.status)} uppercase tracking-widest text-[10px] font-black border shadow-none px-3 py-1`}>
-                    {freq.status}
-                  </Badge>
+                <div className="absolute bottom-0 left-0 h-1 bg-emerald-500" style={{ width: `${taxaPresenca}%` }} />
+              </div>
+
+              <div className="rounded-xl md:rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5">
+                <p className="text-2xl md:text-3xl font-bold text-red-400 leading-none">{faltas}</p>
+                <div className="flex items-center gap-2 mt-2">
+                   <div className="h-1 w-5 bg-red-500/50 rounded-full" />
+                   <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider">Faltas</p>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border border-[#E2E8F0] border-dashed bg-slate-50/50">
-          <CardContent className="py-20 text-center text-slate-500">
-            <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100">
-              <CalendarCheck className="h-10 w-10 text-slate-300" />
             </div>
-            <h3 className="text-xl font-bold text-[#1E293B]">Sem registros</h3>
-            <p className="mt-2 text-sm max-w-xs mx-auto">Não encontramos dados recentes de frequência para este aluno.</p>
-          </CardContent>
-        </Card>
-      )}
+         </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-2">
+              <div className="h-1 w-5 bg-slate-900 rounded-full" />
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Timeline</h3>
+           </div>
+           <Badge variant="outline" className="text-[9px] font-semibold tracking-wider uppercase rounded-full border-slate-200 text-slate-400 px-3 py-1">
+             {totalDias} registros
+           </Badge>
+        </div>
+        
+        <AnimatePresence mode="popLayout">
+          {frequencias && frequencias.length > 0 ? (
+            <div className="space-y-3">
+              {frequencias.map((freq, idx) => {
+                const config = statusConfig[freq.status] || statusConfig.presente
+                const StatusIcon = config.icon
+                
+                return (
+                  <motion.div
+                    key={freq.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    onClick={() => vibrate(15)}
+                    className="group"
+                  >
+                    <Card className="border border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden active:scale-[0.98] transition-transform">
+                      <CardContent className="p-4 flex items-center justify-between gap-3">
+                         <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0", 
+                              config.bg, config.color
+                            )}>
+                               <StatusIcon size={18} />
+                            </div>
+                            <div className="min-w-0">
+                               <h4 className="text-sm font-bold text-slate-800 leading-tight truncate">
+                                  {format(new Date(freq.data_aula + 'T12:00:00'), "EEEE, dd/MM", { locale: ptBR })}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{config.label}</span>
+                                  {freq.justificativa && (
+                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 rounded-full">
+                                      <div className="w-1 h-1 bg-amber-400 rounded-full" />
+                                      <span className="text-[8px] font-bold text-amber-600 uppercase">Doc</span>
+                                    </div>
+                                  )}
+                                </div>
+                            </div>
+                         </div>
+                         <ChevronRight size={16} className="text-slate-200 shrink-0" />
+                      </CardContent>
+                      
+                      {freq.justificativa && (
+                        <div className="bg-slate-50 px-4 py-3 border-t border-slate-100">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-slate-500 italic line-clamp-2">"{freq.justificativa}"</p>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  </motion.div>
+                )
+              })}
+            </div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              className="bg-slate-50 p-10 md:p-16 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-4"
+            >
+              <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
+                <UserMinus size={28} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-800">Sem registros</h3>
+                <p className="text-sm text-slate-400 max-w-xs mx-auto">Nenhum registro de frequência encontrado para o ciclo atual.</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-center pt-4">
+        <Button
+          variant="ghost"
+          onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-emerald-600 h-11 px-6 rounded-full"
+        >
+          Retornar ao Portal
+        </Button>
+      </div>
     </div>
   )
 }

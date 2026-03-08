@@ -3,18 +3,38 @@ import {
   ShoppingCart, 
   Search, 
   BookOpen, 
-  UserPlus, 
-  ArrowRight, 
   Tag, 
   Star,
   Package,
-  Filter,
-  Users
+  Plus,
+  X,
+  Users,
+  Info,
+  ChevronRight,
+  ArrowLeft,
+  Heart,
+  ShieldCheck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter 
+} from '@/components/ui/sheet'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Helper de vibração
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(ms);
+  }
+}
 
 interface Product {
   id: string
@@ -28,11 +48,10 @@ interface Product {
 }
 
 const PRODUCTS: Product[] = [
-  // Material Escolar
   {
     id: 'm1',
     name: 'Kit Escolar Fundamental I',
-    description: 'Conjunto completo contendo cadernos, lápis de cor, estojo e mochila temática.',
+    description: 'Conjunto completo contendo cadernos, lápis de cor, estojo e mochila temática desenvolvida por especialistas.',
     price: 189.90,
     category: 'material',
     image: 'https://images.unsplash.com/photo-1572948852275-231cb30026e1?q=80&w=800&auto=format&fit=crop',
@@ -42,17 +61,16 @@ const PRODUCTS: Product[] = [
   {
     id: 'm2',
     name: 'Dicionário Escolar Ilustrado',
-    description: 'Nova ortografia com ilustrações facilitadoras para o aprendizado infantil.',
+    description: 'Nova ortografia com ilustrações facilitadoras para o aprendizado infantil e juvenil.',
     price: 45.00,
     category: 'material',
     image: 'https://images.unsplash.com/photo-1544640808-32ca72ac7f37?q=80&w=800&auto=format&fit=crop',
     rating: 4.5
   },
-  // Professores (Serviços/Cursos)
   {
     id: 'p1',
     name: 'Reforço de Matemática (Mensal)',
-    description: 'Acompanhamento personalizado para alunos com dificuldades em lógica e álgebra.',
+    description: 'Acompanhamento personalizado para alunos com dificuldades em lógica, álgebra e aritmética básica.',
     price: 250.00,
     category: 'professores',
     image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop',
@@ -62,7 +80,7 @@ const PRODUCTS: Product[] = [
   {
     id: 'p2',
     name: 'Curso de Inglês Preparatório',
-    description: 'Aulas extras focadas em conversação e preparação para exames internacionais.',
+    description: 'Aulas extras focadas em conversação imersiva e preparação para exames internacionais.',
     price: 320.00,
     category: 'professores',
     image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop',
@@ -70,10 +88,25 @@ const PRODUCTS: Product[] = [
   }
 ]
 
+// --- SKELETON LOADING ---
+const LojaSkeleton = () => (
+  <div className="space-y-12 animate-pulse px-1">
+    <div className="h-10 w-48 bg-slate-100 rounded-lg" />
+    <div className="flex gap-4 overflow-hidden">
+        <div className="w-48 h-12 bg-white border border-slate-50 rounded-full shrink-0" />
+        <div className="w-48 h-12 bg-white border border-slate-50 rounded-full shrink-0" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[1, 2, 3].map(i => <div key={i} className="h-96 bg-white border border-slate-50 rounded-[48px]" />)}
+    </div>
+  </div>
+)
+
 export function PortalLojaPage() {
   const [activeTab, setActiveTab] = useState<'material' | 'professores'>('material')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isLoading] = useState(false)
 
   const filteredProducts = PRODUCTS.filter(p => 
     p.category === activeTab && 
@@ -81,232 +114,263 @@ export function PortalLojaPage() {
      p.description.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
+  const handleTabChange = (tab: 'material' | 'professores') => {
+    vibrate(15)
+    setActiveTab(tab)
+  }
+
+  const handleProductClick = (product: Product) => {
+    vibrate(20)
+    setSelectedProduct(product)
+  }
+
+  if (isLoading) return <LojaSkeleton />
+
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
       
-      {/* 1. Hero Section - Marketplace Style */}
-      <div className="bg-white p-10 md:p-16 rounded-[56px] border border-slate-100 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] -mr-24 -mt-24 pointer-events-none rotate-12">
-          <ShoppingCart size={400} />
+      {/* 1. Header & Seção Principal */}
+      <div className="flex flex-col gap-8 px-1">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase leading-none">Loja</h2>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Marketplace & Serviços</p>
         </div>
 
-        <div className="max-w-3xl space-y-8 relative z-10">
-          <div className="flex items-center gap-2">
-            <Badge className="bg-teal-50 text-teal-600 border-teal-100 font-black text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full">
-              Marketplace FluxooEdu
-            </Badge>
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-5xl md:text-7xl font-black text-slate-800 tracking-tighter leading-tight italic">
-              A Loja da <span className="text-teal-500 underline decoration-8 decoration-teal-100">Escola</span>
-            </h1>
-            <p className="text-slate-400 font-bold text-lg md:text-xl">Materiais oficiais, cursos extras e serviços pedagógicos em um só lugar.</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           {/* Search Input */}
+           <div className="relative group">
+               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-teal-500 transition-colors" size={24} />
+               <Input 
+                 placeholder={`Pesquisar por ${activeTab === 'material' ? 'kits, livros...' : 'tutores, cursos...'}`}
+                 className="h-16 pl-16 pr-8 bg-white border-0 rounded-[28px] text-base font-bold placeholder:text-slate-300 shadow-sm transition-all focus-visible:ring-8 focus-visible:ring-teal-500/10 italic focus:ring-0"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+               />
+           </div>
 
-          <div className="relative group max-w-xl">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-teal-500 transition-colors" size={24} />
-            <Input 
-              placeholder={`Pesquisar em ${activeTab === 'material' ? 'materiais' : 'professores'}...`}
-              className="h-16 pl-16 pr-8 bg-slate-50 border-none rounded-[28px] text-lg font-bold placeholder:text-slate-300 shadow-inner group-focus-within:bg-white transition-all ring-0 focus-visible:ring-4 focus-visible:ring-teal-500/10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Menu de Categorias Principal */}
-      <div className="flex bg-white/50 p-2 rounded-[32px] border border-slate-100 w-fit backdrop-blur-md">
-        <button
-          onClick={() => setActiveTab('material')}
-          className={cn(
-            "py-4 px-8 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3",
-            activeTab === 'material' 
-            ? 'bg-slate-900 text-white shadow-2xl scale-105' 
-            : 'text-slate-400 hover:text-slate-600 hover:bg-white'
-          )}
-        >
-          <Package size={20} /> Material Escolar
-        </button>
-        <button
-          onClick={() => setActiveTab('professores')}
-          className={cn(
-            "py-4 px-8 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3",
-            activeTab === 'professores' 
-            ? 'bg-slate-900 text-white shadow-2xl scale-105' 
-            : 'text-slate-400 hover:text-slate-600 hover:bg-white'
-          )}
-        >
-          <Users size={20} /> Professores & Serviços
-        </button>
-      </div>
-
-      {/* 3. Grid de Produtos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredProducts.map((product) => (
-          <div 
-            key={product.id}
-            className="bg-white rounded-[48px] border border-slate-50 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden flex flex-col"
-          >
-            {/* Imagem do Produto */}
-            <div 
-              className="h-64 relative overflow-hidden p-4 cursor-pointer"
-              onClick={() => setSelectedProduct(product)}
-            >
-              <div className="w-full h-full rounded-[36px] overflow-hidden bg-slate-100">
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                />
-              </div>
-              {product.popular && (
-                <Badge className="absolute top-8 left-8 bg-amber-500 text-white font-black text-[9px] uppercase border-none px-3 py-1 shadow-lg shadow-amber-500/30">
-                  Mais procurado
-                </Badge>
-              )}
-              <div className="absolute top-8 right-8 bg-white/90 backdrop-blur-md p-2 rounded-2xl flex items-center gap-1 shadow-sm">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
-                <span className="text-[10px] font-black text-slate-800">{product.rating}</span>
-              </div>
-            </div>
-
-            {/* Info do Produto */}
-            <div className="p-10 pt-4 flex-1 flex flex-col space-y-4">
-              <div 
-                className="space-y-1 cursor-pointer"
-                onClick={() => setSelectedProduct(product)}
+           {/* Custom Filter Select (Tabs) */}
+           <div className="flex bg-slate-50/50 p-2 rounded-[32px] border border-slate-100/50 shadow-inner">
+              <button 
+                onClick={() => handleTabChange('material')}
+                className={cn(
+                  "flex-1 h-12 flex items-center justify-center gap-3 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all",
+                  activeTab === 'material' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-slate-600'
+                )}
               >
-                <h4 className="text-xl font-black text-slate-800 tracking-tight leading-tight group-hover:text-teal-600 transition-colors">
-                  {product.name}
-                </h4>
-                <p className="text-slate-400 text-sm font-medium leading-relaxed line-clamp-2">
-                  {product.description}
-                </p>
-              </div>
+                <Package size={18} /> Materiais
+              </button>
+              <button 
+                onClick={() => handleTabChange('professores')}
+                className={cn(
+                  "flex-1 h-12 flex items-center justify-center gap-3 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all",
+                  activeTab === 'professores' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-slate-600'
+                )}
+              >
+                <Users size={18} /> Serviços
+              </button>
+           </div>
+        </div>
+      </div>
 
-              <div className="pt-4 border-t border-slate-50 flex items-center justify-between mt-auto">
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Valor</p>
-                  <h5 className="text-2xl font-black text-slate-800 tracking-tighter">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                  </h5>
+      {/* 2. Grid de Produtos Pro Max - Imersivo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-1">
+        <AnimatePresence mode="popLayout">
+          {filteredProducts.map((product, idx) => (
+            <motion.div 
+              key={product.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: idx * 0.05 }}
+              className="group"
+            >
+              <div 
+                onClick={() => handleProductClick(product)}
+                className="bg-white rounded-[56px] border border-transparent shadow-sm hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-700 overflow-hidden flex flex-col h-full relative cursor-pointer"
+              >
+                {/* Visual Area */}
+                <div className="h-72 relative overflow-hidden">
+                  <img 
+                    src={product.image} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/0 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-700 backdrop-blur-0 group-hover:backdrop-blur-[2px]" />
+                  
+                  {product.popular && (
+                    <div className="absolute top-8 left-8">
+                      <Badge className="bg-amber-500/90 backdrop-blur-md text-white font-black text-[9px] uppercase tracking-[0.2em] border-0 px-5 py-2 rounded-full shadow-2xl">
+                        Destaque
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className="absolute top-8 right-8 scale-0 group-hover:scale-100 transition-all duration-500 active:scale-90">
+                     <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30 hover:bg-white hover:text-red-500">
+                        <Heart size={20} />
+                     </div>
+                  </div>
+                  
+                  <div className="absolute bottom-8 left-8 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
+                    <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/20 px-5 py-2 rounded-full shadow-2xl">
+                      <Star size={14} className="fill-amber-400 text-amber-400" />
+                      <span className="text-[11px] font-black text-white italic">{product.rating} Avaliações</span>
+                    </div>
+                  </div>
                 </div>
-                <button className="w-14 h-14 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white flex items-center justify-center shadow-xl shadow-teal-500/20 active:scale-90 transition-all">
-                  <PlusIcon size={24} />
-                </button>
+
+                {/* Info Area */}
+                <div className="p-10 flex-1 flex flex-col justify-between gap-8">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                       <div className="h-1.5 w-8 bg-teal-500 rounded-full" />
+                       <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Disponibilidade Imediata</span>
+                    </div>
+                    <h4 className="text-3xl font-black text-slate-800 tracking-tighter leading-tight italic uppercase group-hover:text-teal-600 transition-colors duration-500">
+                      {product.name}
+                    </h4>
+                    <p className="text-sm font-bold text-slate-400 italic leading-relaxed line-clamp-2">
+                       {product.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-auto pt-8 border-t border-slate-50">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Investimento</p>
+                      <h5 className="text-4xl font-black text-slate-900 tracking-tighter italic leading-none">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                      </h5>
+                    </div>
+                    <div className="w-16 h-16 rounded-[28px] bg-slate-900 text-white flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:bg-teal-500 group-hover:-translate-y-2 group-hover:rotate-6">
+                      <Plus size={32} />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {filteredProducts.length === 0 && (
-          <div className="col-span-full py-32 text-center space-y-6">
-            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto border-2 border-dashed border-slate-100">
-              <Search className="text-slate-200" size={40} />
+          <div className="col-span-full py-32 text-center space-y-8 bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 mx-1">
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-100">
+              <Search size={48} />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase">Nada encontrado</h3>
-              <p className="text-slate-400 font-bold max-w-sm mx-auto">Tente buscar por outros termos ou explore a outra categoria.</p>
+            <div className="space-y-3 px-8">
+              <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase leading-none">Catálogo Vazio</h3>
+              <p className="text-slate-400 text-sm font-bold italic leading-relaxed max-w-xs mx-auto">Não localizamos itens correspondentes para "{searchTerm}" neste departamento.</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* 4. Banner de Segurança/Marketplace */}
-      <div className="bg-slate-900 p-12 rounded-[56px] text-white flex flex-col md:flex-row items-center gap-12 relative overflow-hidden group">
-        <div className="absolute right-0 top-0 p-12 opacity-5 -mr-12 -mt-12 group-hover:rotate-12 transition-transform duration-700">
-          <BookOpen size={200} />
-        </div>
-        <div className="w-20 h-20 bg-teal-500 rounded-3xl flex items-center justify-center shrink-0 shadow-2xl shadow-teal-500/40">
-          <Tag size={40} />
-        </div>
-        <div className="space-y-2 text-center md:text-left">
-          <h3 className="text-3xl font-black tracking-tighter italic">Compra Garantida Escola</h3>
-          <p className="text-slate-400 font-medium text-sm max-w-2xl">
-            Todos os itens da loja são validados pela coordenação pedagógica. O pagamento é processado via FluxooEdu e a entrega/serviço é garantida pela instituição.
-          </p>
-        </div>
-        <button className="whitespace-nowrap bg-white text-slate-900 px-10 py-5 rounded-[22px] font-black text-xs uppercase tracking-widest hover:bg-teal-50 transition-all ml-auto active:scale-95">
-          Ver Meus Pedidos
-        </button>
+      {/* 3. Banner Informativo - Estilo Pro Max */}
+      <div className="bg-slate-900 rounded-[56px] p-12 md:p-16 text-white relative overflow-hidden group shadow-2xl mx-1 border border-slate-800">
+         <div className="absolute right-0 top-0 p-16 opacity-5 -mr-24 -mt-24 rotate-12 transition-transform group-hover:scale-110 duration-1000 pointer-events-none">
+            <Package size={450} />
+         </div>
+         <div className="flex flex-col md:flex-row items-center gap-12 relative z-10 text-center md:text-left">
+            <div className="w-20 h-20 rounded-[32px] bg-teal-500/20 backdrop-blur-md flex items-center justify-center text-teal-400 shrink-0 border border-teal-500/30 shadow-2xl">
+               <ShieldCheck size={40} />
+            </div>
+            <div className="space-y-4 grow">
+               <h4 className="text-3xl font-black italic uppercase tracking-tighter leading-none text-teal-400">Garantia Institucional</h4>
+               <p className="text-base font-bold text-slate-400 leading-relaxed italic max-w-2xl">
+                 Todos os itens e serviços listados possuem curadoria pedagógica e validação direta da rede de ensino para sua segurança total.
+               </p>
+            </div>
+            <Button className="h-16 px-12 rounded-[24px] bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-teal-500 hover:text-white transition-all active:scale-95 shadow-2xl border-0 shrink-0">
+              Histórico de Pedidos
+            </Button>
+         </div>
       </div>
 
-      {/* Modal Lateral (Detail Drawer) */}
-      {selectedProduct && <ProductDetailDrawer product={selectedProduct} onClose={() => setSelectedProduct(null)} />}
-    </div>
-  )
-}
+      {/* 4. Bottom Sheet de Detalhes - Imersivo Pro Max */}
+      <Sheet open={!!selectedProduct} onOpenChange={(open) => { if(!open) setSelectedProduct(null); vibrate(10); }}>
+        <SheetContent side="bottom" className="rounded-t-[56px] border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[95vh] focus:outline-none focus:ring-0">
+          <div className="px-12 pt-16 pb-20 space-y-12">
+            
+            {/* Header do Sheet */}
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[24px] bg-teal-50 text-teal-600 flex items-center justify-center shadow-sm">
+                     <ShoppingCart size={32} />
+                  </div>
+                  <div className="space-y-1">
+                     <h3 className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase leading-none">Checkout</h3>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] font-sans">Confirmação de Reserva</p>
+                  </div>
+               </div>
+               <button 
+                  onClick={() => setSelectedProduct(null)}
+                  className="w-16 h-16 rounded-[24px] bg-slate-50 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all active:scale-90"
+               >
+                  <X size={32} />
+               </button>
+            </div>
 
-function ProductDetailDrawer({ product, onClose }: { product: Product, onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[100] flex justify-end">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
-      
-      {/* Painel */}
-      <div className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-500">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/20">
-                <ShoppingCart size={20} />
-             </div>
-             <div>
-                <h3 className="font-black text-slate-800 tracking-tighter uppercase text-xs">Detalhes do Item</h3>
-                <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">Código: {product.id.toUpperCase()}</p>
-             </div>
+            {selectedProduct && (
+              <div className="space-y-12">
+                <div className="aspect-[16/10] w-full rounded-[48px] overflow-hidden bg-slate-50 border border-slate-100 shadow-inner relative group/detail">
+                   <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover group-hover/detail:scale-105 transition-transform duration-1000" />
+                   <div className="absolute top-8 left-8 flex gap-3">
+                      <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border-0 font-black text-[9px] uppercase tracking-widest px-5 py-2 rounded-full shadow-xl">
+                        {selectedProduct.category === 'material' ? 'Material Didático' : 'Serviço Educacional'}
+                      </Badge>
+                   </div>
+                </div>
+
+                <div className="space-y-8">
+                   <div className="space-y-4">
+                      <div className="flex items-center gap-3 bg-amber-50 rounded-full px-5 py-2 w-fit">
+                         <Star size={14} className="fill-amber-500 text-amber-500" />
+                         <span className="text-[11px] font-black text-amber-700 italic tracking-widest uppercase">{selectedProduct.rating} Ranking Global</span>
+                      </div>
+                      <h2 className="text-5xl font-black text-slate-800 tracking-tighter leading-none italic uppercase">{selectedProduct.name}</h2>
+                      <p className="text-slate-500 font-bold text-lg italic leading-relaxed max-w-4xl">{selectedProduct.description}</p>
+                   </div>
+
+                   <div className="bg-slate-50 p-10 rounded-[44px] border border-slate-100/50 flex flex-col gap-6 relative overflow-hidden">
+                      <div className="absolute right-0 top-0 p-10 opacity-5 pointer-events-none rotate-12">
+                         <Info size={150} />
+                      </div>
+                      <div className="flex items-center gap-4 text-[11px] font-black text-slate-900 uppercase tracking-[0.3em] italic">
+                         <div className="w-8 h-1.5 bg-teal-500 rounded-full" /> Procedimento de Coleta
+                      </div>
+                      <p className="text-base font-bold text-slate-500 italic leading-relaxed relative z-10">
+                        Após a reserva digital, a retirada deste item ocorrerá na recepção da unidade no prazo de 48h úteis, mediante apresentação de QR Code.
+                      </p>
+                   </div>
+
+                   <div className="flex flex-col sm:flex-row items-center justify-between gap-10 pt-10 border-t border-slate-100">
+                      <div className="space-y-2 text-center sm:text-left">
+                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] italic mb-2">Valor da Operação</p>
+                         <h4 className="text-6xl font-black text-slate-900 tracking-tighter italic leading-none">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedProduct?.price || 0)}
+                         </h4>
+                      </div>
+                      <Button 
+                         onClick={() => { vibrate(40); setSelectedProduct(null); }}
+                         className="w-full sm:w-auto h-20 px-16 rounded-[32px] bg-slate-900 text-white font-black uppercase tracking-[0.2em] text-xs shadow-2xl active:scale-95 transition-all border-0 hover:bg-teal-600"
+                      >
+                         Confirmar Reserva
+                      </Button>
+                   </div>
+                </div>
+              </div>
+            )}
           </div>
-          <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-100 transition-all shadow-sm active:scale-90">
-             <XIcon size={24} />
-          </button>
-        </div>
+        </SheetContent>
+      </Sheet>
 
-        <div className="flex-1 overflow-y-auto p-12 space-y-12">
-           {/* Banner/Imagem */}
-           <div className="aspect-square w-full rounded-[48px] overflow-hidden bg-slate-50 border border-slate-100 shadow-inner group">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-           </div>
-
-           {/* Informações */}
-           <div className="space-y-8">
-              <div className="space-y-3">
-                 <div className="flex items-center gap-2">
-                    <Badge className="bg-amber-100 text-amber-700 border-none font-black text-[9px] uppercase px-3 py-1 rounded-full flex items-center gap-1">
-                       <Star size={10} className="fill-amber-500 text-amber-500" /> {product.rating} Avaliação dos Pais
-                    </Badge>
-                    {product.popular && (
-                      <Badge className="bg-teal-50 text-teal-600 border-none font-black text-[9px] uppercase px-3 py-1 rounded-full">Destaque</Badge>
-                    )}
-                 </div>
-                 <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter leading-tight italic">{product.name}</h2>
-                 <p className="text-slate-400 font-bold text-lg leading-relaxed">{product.description}</p>
-              </div>
-
-              {/* Grid de Atributos */}
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100 flex flex-col gap-1">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoria</span>
-                    <span className="font-black text-slate-800 uppercase text-xs">{product.category === 'material' ? 'Material Escolar' : 'Professores'}</span>
-                 </div>
-                 <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-100 flex flex-col gap-1">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Disponibilidade</span>
-                    <span className="font-black text-emerald-500 uppercase text-xs flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Em estoque</span>
-                 </div>
-              </div>
-
-              <div className="p-8 rounded-[40px] bg-slate-900 text-white space-y-6">
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Investimento</p>
-                    <h4 className="text-5xl font-black tracking-tighter">
-                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                    </h4>
-                 </div>
-                 <Button className="w-full bg-teal-500 hover:bg-teal-400 py-8 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-2xl shadow-teal-500/20 flex items-center justify-center gap-3">
-                    <PlusIcon size={20} /> Adicionar ao Carrinho
-                 </Button>
-              </div>
-           </div>
-        </div>
+      {/* Footer de Navegação */}
+      <div className="flex justify-center pt-8">
+        <Button
+          variant="ghost"
+          onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-teal-600 transition-colors h-14 px-10 rounded-full bg-slate-50/50"
+        >
+          Voltar ao Início
+        </Button>
       </div>
     </div>
   )

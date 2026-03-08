@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, type ReactNode } from 'react'
 import { useResponsavel, useVinculosAtivos } from './hooks'
 import { supabase } from '@/lib/supabase'
+import { usePortalStore } from './store'
 
 interface AlunoVinculado {
   id: string
@@ -31,17 +32,18 @@ const PortalContext = createContext<PortalContextType | undefined>(undefined)
 export function PortalProvider({ children }: { children: ReactNode }) {
   const { data: responsavel, isLoading: loadingResp } = useResponsavel()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
-  const [alunoSelecionado, setAlunoSelecionado] = useState<AlunoVinculado | null>(null)
-  const [tenantId, setTenantId] = useState<string | null>(null)
+  
+  // Usar Zustand Persist para carregar instantaneamente o estado (PWA Hydration)
+  const { alunoSelecionado, setAlunoSelecionado } = usePortalStore()
+  const tenantId = alunoSelecionado?.tenant_id || null
 
-  // Auto-selecionar se só tem 1 aluno e carregar dados da turma
   useEffect(() => {
     async function carregarDadosCompletos(vinculo: any) {
       if (!vinculo?.aluno) return
 
       // Tentar pegar matrícula ativa
       const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo, valor_matricula')
+         .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade') // Add valor_mensalidade if exists
          .eq('aluno_id', vinculo.aluno.id)
          .eq('status', 'ativa')
          .maybeSingle()
@@ -55,7 +57,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       
       const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? (matricula.valor_mensalidade || matricula.valor_matricula) : null)
 
-      setAlunoSelecionado({
+      const alunoCompleto = {
         ...vinculo.aluno,
         turma: turma || (matricula ? { 
           id: '', 
@@ -64,19 +66,28 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           valor_mensalidade: valorMensalidadeFinal 
         } : null),
         valor_matricula: matricula?.valor_matricula || null
-      })
-      setTenantId(vinculo.aluno.tenant_id)
+      }
+      setAlunoSelecionado(alunoCompleto)
     }
 
+    // Só auto-seleciona se AINDA não tiver aluno persistido no cache ou se a lista de vinculos carregou e nada estava selecionado
     if (vinculos && vinculos.length > 0 && !alunoSelecionado) {
       carregarDadosCompletos(vinculos[0])
     }
-  }, [vinculos, alunoSelecionado])
+  }, [vinculos, alunoSelecionado, setAlunoSelecionado])
 
   const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
+      // Optimistic Update para UX instantânea
+      setAlunoSelecionado({ 
+        ...vinculo.aluno, 
+        turma: null, // skeleton mode temporary
+        valor_matricula: null 
+      })
+
+      // Background Fetch para obter dados da sub-entidade
       const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-         .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade') // Added valor_mensalidade
+         .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade')
          .eq('aluno_id', vinculo.aluno.id)
          .eq('status', 'ativa')
          .maybeSingle()
@@ -89,7 +100,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
       const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? (matricula.valor_mensalidade || matricula.valor_matricula) : null)
 
-      setAlunoSelecionado({
+      const alunoCompleto = {
         ...vinculo.aluno,
         turma: turma || (matricula ? { 
           id: '', 
@@ -98,8 +109,9 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           valor_mensalidade: valorMensalidadeFinal 
         } : null),
         valor_matricula: matricula?.valor_matricula || null
-      })
-      setTenantId(vinculo.aluno.tenant_id)
+      }
+      
+      setAlunoSelecionado(alunoCompleto)
     }
   }
 

@@ -4,16 +4,32 @@ import { useResponsavel } from '../hooks'
 import { useAutorizacoesPortal, useResponderAutorizacao } from '@/modules/autorizacoes/hooks'
 import { CATEGORIA_LABELS, CATEGORIA_CORES } from '@/modules/autorizacoes/service'
 import {
-  ShieldCheck, ShieldOff, Shield, ChevronDown, ChevronUp,
-  AlertTriangle, CheckCircle2, Clock, Loader2, ScrollText,
-  BookOpen, ChevronRight
+  ShieldCheck, ShieldOff, Shield, ChevronDown,
+  AlertTriangle, CheckCircle2, Clock, ScrollText,
+  ChevronRight, ArrowLeft, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Card, CardContent } from '@/components/ui/card'
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetDescription,
+  SheetFooter 
+} from '@/components/ui/sheet'
 import { toast } from 'sonner'
+import { motion, AnimatePresence } from 'framer-motion'
+import { SeletorAluno } from '../components/SeletorAluno'
+
+// Helper de vibração
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(ms);
+  }
+}
 
 type AutorizacaoModelo = {
   id: string
@@ -28,8 +44,21 @@ type AutorizacaoModelo = {
   resposta_id: string | null
 }
 
+// --- SKELETON LOADING ---
+const AutorizacoesSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-32 bg-slate-900 rounded-2xl" />
+    <div className="grid grid-cols-3 gap-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-white border border-slate-100 rounded-xl" />)}
+    </div>
+    <div className="space-y-3">
+        {[1, 2].map(i => <div key={i} className="h-20 bg-white border border-slate-100 rounded-2xl" />)}
+    </div>
+  </div>
+)
+
 export function PortalAutorizacoesPage() {
-  const { alunoSelecionado, tenantId } = usePortalContext()
+  const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const { data: responsavel } = useResponsavel()
   const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
   const responder = useResponderAutorizacao()
@@ -38,10 +67,8 @@ export function PortalAutorizacoesPage() {
   const [acao, setAcao] = useState<'autorizar' | 'revogar' | null>(null)
   const [textoLido, setTextoLido] = useState(false)
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const textoRef = useRef<HTMLDivElement>(null)
 
-  // Detecta quando o responsável rolou até o fim do texto
   useEffect(() => {
     const el = textoRef.current
     if (!el || !modalItem) return
@@ -49,15 +76,14 @@ export function PortalAutorizacoesPage() {
     setTextoLido(false)
 
     const handleScroll = () => {
-      const isBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 24
+      const isBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40
       if (isBottom) {
         setScrolledToBottom(true)
         setTextoLido(true)
       }
     }
     el.addEventListener('scroll', handleScroll)
-    // Para textos curtos que não precisam scrollar
-    if (el.scrollHeight <= el.clientHeight + 24) {
+    if (el.scrollHeight <= el.clientHeight + 40) {
       setScrolledToBottom(true)
       setTextoLido(true)
     }
@@ -65,18 +91,21 @@ export function PortalAutorizacoesPage() {
   }, [modalItem])
 
   const handleAbrirModal = (item: AutorizacaoModelo, acaoTipo: 'autorizar' | 'revogar') => {
+    vibrate(20)
     setModalItem(item)
     setAcao(acaoTipo)
-    setShowConfirm(false)
   }
 
   const handleConfirmar = async () => {
     if (!modalItem || !responsavel || !alunoSelecionado || !tenantId) return
+    
     if (acao === 'autorizar' && !textoLido) {
-      toast.warning('Por favor, leia o termo completo antes de autorizar.')
+      vibrate([30, 30])
+      toast.warning('Leia o termo completo para habilitar o aceite.')
       return
     }
 
+    vibrate(60)
     try {
       await responder.mutateAsync({
         tenant_id: tenantId,
@@ -87,284 +116,256 @@ export function PortalAutorizacoesPage() {
         texto_lido: textoLido,
       })
 
-      toast.success(
-        acao === 'autorizar'
-          ? `✅ "${modalItem.titulo}" autorizado com sucesso.`
-          : `🚫 "${modalItem.titulo}" revogado.`,
-        { duration: 5000 }
-      )
+      toast.success(acao === 'autorizar' ? '✅ Autorização registrada!' : '🚫 Autorização revogada.')
       setModalItem(null)
       setAcao(null)
     } catch {
-      toast.error('Erro ao salvar sua resposta. Tente novamente.')
+      toast.error('Ocorreu um erro ao salvar sua resposta.')
     }
   }
 
-  // Define ordem fixa para categorias obrigatórias
-  const ORDEM_OBRIGATORIAS = ['matricula', 'conduta', 'saude']
-
-  // Agrupa por categoria
   const agrupadas = (autorizacoes as AutorizacaoModelo[]).reduce((acc: Record<string, AutorizacaoModelo[]>, item) => {
     if (!acc[item.categoria]) acc[item.categoria] = []
     acc[item.categoria].push(item)
     return acc
   }, {})
 
-  // Ordena categorias: obrigatórias primeiro na ordem definida, depois mantém ordem original
-  const categoriasOrdenadas = Object.keys(agrupadas).sort((a, b) => {
-    const aIndex = ORDEM_OBRIGATORIAS.indexOf(a)
-    const bIndex = ORDEM_OBRIGATORIAS.indexOf(b)
-    
-    // Se ambas são obrigatórias, ordena pela ORDEM_OBRIGATORIAS
-    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
-    
-    // Se apenas uma é obrigatória, ela vem primeiro
-    if (aIndex !== -1) return -1
-    if (bIndex !== -1) return 1
-    
-    // Se nenhuma é obrigatória, mantém a ordem original (0)
-    return 0
-  })
-
   const totalAutorizadas = (autorizacoes as AutorizacaoModelo[]).filter(a => a.aceita === true).length
   const totalRecusadas = (autorizacoes as AutorizacaoModelo[]).filter(a => a.aceita === false).length
   const totalPendentes = (autorizacoes as AutorizacaoModelo[]).filter(a => a.aceita === null).length
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
-      </div>
-    )
-  }
+  if (isLoading) return <AutorizacoesSkeleton />
 
   if (!alunoSelecionado) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-        <Shield className="h-16 w-16 text-slate-200" />
-        <p className="font-bold text-slate-600">Selecione um aluno para ver as autorizações.</p>
-      </div>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+              <Shield className="h-8 w-8 text-slate-200" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-slate-800">Autorizações</h2>
+            <p className="text-sm text-slate-400">Selecione um aluno para gerenciar.</p>
+          </div>
+        </div>
     )
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+      
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-800">Autorizações</h1>
-        <p className="text-muted-foreground">
-          Gerencie as autorizações de <strong>{alunoSelecionado.nome_completo}</strong>
-        </p>
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Autorizações</h2>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Consentimento e LGPD</p>
+        </div>
+        {isMultiAluno && <SeletorAluno />}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-center">
-          <p className="text-3xl font-black text-emerald-600">{totalAutorizadas}</p>
-          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mt-1">Autorizadas</p>
-        </div>
-        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-center">
-          <p className="text-3xl font-black text-amber-600">{totalPendentes}</p>
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mt-1">Pendentes</p>
-        </div>
-        <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-center">
-          <p className="text-3xl font-black text-red-600">{totalRecusadas}</p>
-          <p className="text-xs font-bold text-red-700 uppercase tracking-wider mt-1">Não Autorizadas</p>
-        </div>
+      {/* Resumo */}
+      <div className="bg-slate-900 rounded-2xl p-5 md:p-6 text-white relative overflow-hidden shadow-lg">
+         <div className="absolute right-0 top-0 opacity-5 -mr-10 -mt-10 pointer-events-none">
+            <ShieldCheck size={200} />
+         </div>
+         
+         <div className="relative z-10 flex flex-col gap-5">
+            <div className="flex items-start gap-3">
+               <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <AlertTriangle size={16} />
+               </div>
+               <div>
+                  <h4 className="text-sm font-bold text-amber-400 mb-0.5">Aviso Importante</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Sua autorização é essencial para atividades extracurriculares e uso de imagem.
+                  </p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-center">
+                <p className="text-xl font-bold text-emerald-400 leading-none">{totalAutorizadas}</p>
+                <p className="text-[8px] font-medium text-white/30 uppercase tracking-wider mt-1">Ativas</p>
+              </div>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-center relative">
+                <p className="text-xl font-bold text-amber-400 leading-none">{totalPendentes}</p>
+                <p className="text-[8px] font-medium text-white/30 uppercase tracking-wider mt-1">Pendentes</p>
+                {totalPendentes > 0 && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />}
+              </div>
+              <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-center">
+                <p className="text-xl font-bold text-red-400 leading-none">{totalRecusadas}</p>
+                <p className="text-[8px] font-medium text-white/30 uppercase tracking-wider mt-1">Revogadas</p>
+              </div>
+            </div>
+         </div>
       </div>
 
-      {/* Aviso */}
-      <Card className="border-0 shadow-none bg-amber-50 border border-amber-100 rounded-2xl">
-        <CardContent className="flex items-start gap-3 py-4">
-          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold text-amber-800 text-sm">Sobre as autorizações</p>
-            <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-              Para autorizar um item, você deve ler o texto completo do termo. Você pode revogar qualquer autorização quando quiser, exceto as obrigatórias para a matrícula. Todas as ações são registradas com data e hora para fins jurídicos.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista por categoria */}
-      {categoriasOrdenadas.map((categoria) => {
-        const itens = agrupadas[categoria]
-        const cores = CATEGORIA_CORES[categoria] || { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' }
-        return (
-          <Card key={categoria} className="border-0 shadow-md">
-            <CardHeader className="pb-3 pt-6">
+      {/* 3. Lista de Itens */}
+      <div className="space-y-5">
+        {Object.entries(agrupadas).map(([categoria, itens], catIdx) => {
+          const cores = CATEGORIA_CORES[categoria] || { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' }
+          return (
+            <div key={categoria} className="space-y-3">
               <div className="flex items-center gap-2">
-                <Badge className={cn('text-[10px] uppercase tracking-widest font-black border', cores.bg, cores.text, cores.border)}>
-                  {CATEGORIA_LABELS[categoria] || categoria}
-                </Badge>
-                <span className="text-xs text-slate-400">
-                  {itens.filter(i => i.aceita === true).length}/{itens.length} autorizados
-                </span>
+                 <div className={cn("h-1 w-5 rounded-full", cores.bg)} />
+                 <h3 className={cn("text-xs font-bold uppercase tracking-wider", cores.text)}>
+                   {CATEGORIA_LABELS[categoria] || categoria}
+                 </h3>
               </div>
-            </CardHeader>
-            <CardContent className="divide-y divide-slate-50">
-              {itens.map((item) => {
-                const isAutorizado = item.aceita === true
-                const isRecusado = item.aceita === false
-                const isPendente = item.aceita === null
 
-                return (
-                  <div key={item.id} className="flex items-center justify-between py-4 gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className={cn(
-                        "mt-0.5 h-9 w-9 rounded-xl flex items-center justify-center shrink-0",
-                        isAutorizado ? 'bg-emerald-50' : isRecusado ? 'bg-red-50' : 'bg-slate-50'
-                      )}>
-                        {isAutorizado ? (
-                          <ShieldCheck className="h-5 w-5 text-emerald-600" />
-                        ) : isRecusado ? (
-                          <ShieldOff className="h-5 w-5 text-red-500" />
-                        ) : (
-                          <Clock className="h-5 w-5 text-slate-400" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-800 text-sm leading-tight flex items-center gap-1 flex-wrap">
-                          {item.titulo}
-                          {item.obrigatoria && (
-                            <Badge className="text-[9px] bg-red-50 text-red-600 border border-red-100 font-black uppercase tracking-wider">
-                              Obrigatório
-                            </Badge>
-                          )}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{item.descricao_curta}</p>
-                        {item.data_resposta && (
-                          <p className="text-[10px] text-slate-400 mt-1">
-                            {isAutorizado ? 'Autorizado' : 'Revogado'} em {new Date(item.data_resposta).toLocaleDateString('pt-BR')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {isAutorizado ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => !item.obrigatoria && handleAbrirModal(item, 'revogar')}
-                          disabled={item.obrigatoria}
-                          className={cn(
-                            "rounded-xl text-xs font-bold",
-                            item.obrigatoria
-                              ? 'opacity-50 cursor-not-allowed border-slate-100 text-slate-400'
-                              : 'border-red-100 text-red-600 hover:bg-red-50'
-                          )}
-                        >
-                          Revogar
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleAbrirModal(item, 'autorizar')}
-                          className="rounded-xl text-xs font-bold bg-teal-500 hover:bg-teal-600 shadow-md shadow-teal-500/20"
-                        >
-                          {isPendente ? 'Autorizar' : 'Reautorizar'}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </CardContent>
-          </Card>
-        )
-      })}
+              <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                  {itens.map((item, idx) => {
+                    const isAutorizado = item.aceita === true
+                    const config = isAutorizado ? statusConfig.pronto : item.aceita === false ? statusConfig.recusado : statusConfig.pendente
+                    const StatusIcon = config.icon
 
-      {/* Modal de Leitura e Confirmação */}
-      <Dialog open={!!modalItem} onOpenChange={(open) => !open && setModalItem(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              {acao === 'autorizar' ? (
-                <ShieldCheck className="h-5 w-5 text-teal-500" />
-              ) : (
-                <ShieldOff className="h-5 w-5 text-red-500" />
-              )}
-              {acao === 'autorizar' ? 'Autorizar' : 'Revogar Autorização'}
-            </DialogTitle>
-            <DialogDescription className="font-semibold text-slate-700 text-base mt-1">
-              {modalItem?.titulo}
-            </DialogDescription>
-          </DialogHeader>
-
-          {acao === 'revogar' ? (
-            <div className="space-y-4 py-4">
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold text-red-800">Você está revogando esta autorização</p>
-                    <p className="text-sm text-red-700 mt-1 leading-relaxed">
-                      Ao confirmar, você <strong>desautoriza</strong> a escola de realizar a ação descrita neste termo: <em>"{modalItem?.descricao_curta}"</em>.
-                    </p>
-                    <p className="text-xs text-red-600 mt-2">Esta ação fica registrada com data e hora para fins jurídicos. Você pode reautorizar a qualquer momento.</p>
-                  </div>
-                </div>
+                    return (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: (catIdx * 0.1) + (idx * 0.05) }}
+                        onClick={() => handleAbrirModal(item, isAutorizado ? 'revogar' : 'autorizar')}
+                        className="group"
+                      >
+                        <Card className="border border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden active:scale-[0.98] transition-transform cursor-pointer">
+                           <CardContent className="p-4 flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", config.bg)}>
+                                    <StatusIcon className={cn("h-5 w-5", config.color)} />
+                                 </div>
+                                 <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                       <h4 className="text-sm font-bold text-slate-800 truncate">
+                                          {item.titulo}
+                                       </h4>
+                                       {item.obrigatoria && (
+                                          <Badge className="bg-slate-900 border-0 text-white text-[7px] font-semibold uppercase px-1.5 h-4">
+                                            Obrig.
+                                          </Badge>
+                                       )}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 truncate mt-0.5">{item.descricao_curta}</p>
+                                 </div>
+                              </div>
+                              <ChevronRight className="text-slate-200 shrink-0" size={16} />
+                           </CardContent>
+                        </Card>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col gap-4 min-h-0 flex-1">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                <BookOpen className="h-4 w-4" />
-                Leia o termo completo antes de autorizar
-              </div>
-              
-              {/* Texto com scroll */}
-              <div
-                ref={textoRef}
-                className="bg-slate-50 rounded-2xl border border-slate-100 p-5 text-sm text-slate-700 leading-relaxed overflow-y-auto flex-1 min-h-[200px] max-h-[300px] prose prose-sm"
-              >
-                {modalItem?.texto_completo}
-              </div>
+          )
+        })}
+      </div>
 
-              {!scrolledToBottom && (
-                <p className="flex items-center gap-1.5 text-xs text-amber-600 font-bold">
-                  <ChevronDown className="h-4 w-4 animate-bounce" />
-                  Role até o final do texto para habilitar a confirmação
-                </p>
-              )}
-
-              {scrolledToBottom && (
-                <div className="flex items-center gap-2 text-xs text-emerald-600 font-bold">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Texto lido — você pode confirmar a autorização
+      {/* 4. Sheet Imersivo */}
+      <Sheet open={!!modalItem} onOpenChange={(open) => !open && setModalItem(null)}>
+        <SheetContent side="bottom" className="rounded-t-3xl px-5 pt-6 pb-8 border-0 shadow-2xl overflow-y-auto max-h-[90vh] focus:outline-none bg-white">
+          <SheetHeader className="space-y-3">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", acao === 'autorizar' ? 'bg-teal-50 text-teal-600' : 'bg-red-50 text-red-600')}>
+                      {acao === 'autorizar' ? <ShieldCheck size={20} /> : <ShieldOff size={20} />}
+                   </div>
+                   <div>
+                      <SheetTitle className="text-lg font-bold text-slate-800">
+                         {acao === 'autorizar' ? 'Autorizar' : 'Revogar'}
+                      </SheetTitle>
+                      <p className="text-[10px] text-slate-400 font-medium">Instrumento de Consentimento</p>
+                   </div>
                 </div>
-              )}
-            </div>
-          )}
+                <button onClick={() => setModalItem(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+                   <ArrowLeft size={16} className="rotate-90" />
+                </button>
+             </div>
+             <div>
+                <SheetDescription className="text-base font-bold text-slate-800">
+                   {modalItem?.titulo}
+                </SheetDescription>
+             </div>
+          </SheetHeader>
 
-          <DialogFooter className="gap-2 pt-4 border-t border-slate-100">
-            <Button variant="outline" onClick={() => setModalItem(null)} className="rounded-xl">
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmar}
-              disabled={
-                responder.isPending ||
-                (acao === 'autorizar' && !textoLido)
-              }
+          <div className="py-5 space-y-5">
+            {acao === 'revogar' ? (
+              <div className="bg-red-50 p-5 rounded-xl border border-red-100 space-y-3">
+                 <div className="w-9 h-9 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+                    <ShieldOff size={18} />
+                 </div>
+                 <p className="text-sm text-red-900 leading-relaxed">
+                   Ao revogar, a instituição será notificada.
+                 </p>
+                 <div className="bg-white p-3 rounded-lg border border-red-100">
+                    <p className="text-xs text-red-600">"{modalItem?.descricao_curta}"</p>
+                 </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-[10px] font-semibold text-teal-600 uppercase tracking-wider bg-teal-50 px-3 py-2 rounded-full w-fit">
+                   <ScrollText size={14} />
+                   Leitura Obrigatória
+                </div>
+
+                <div ref={textoRef}
+                  className="bg-slate-50 rounded-xl border border-slate-100 p-5 text-sm text-slate-700 leading-relaxed overflow-y-auto min-h-[200px] max-h-[350px]">
+                  {modalItem?.texto_completo}
+                </div>
+
+                <div className="flex items-center gap-3">
+                   <AnimatePresence mode="wait">
+                     {!scrolledToBottom ? (
+                       <motion.div key="wait" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 text-amber-500">
+                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center animate-bounce">
+                             <ChevronDown size={14} />
+                          </div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider">Role até o fim</span>
+                       </motion.div>
+                     ) : (
+                       <motion.div key="done" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-2 text-emerald-600">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                             <CheckCircle2 size={14} />
+                          </div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider">Documento validado</span>
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <SheetFooter className="gap-3">
+            <Button onClick={handleConfirmar}
+              disabled={responder.isPending || (acao === 'autorizar' && !textoLido)}
               className={cn(
-                "rounded-xl font-bold",
-                acao === 'autorizar'
-                  ? 'bg-teal-500 hover:bg-teal-600 shadow-lg shadow-teal-500/20'
-                  : 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20'
-              )}
-            >
-              {responder.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : acao === 'autorizar' ? (
-                'Confirmar Autorização'
-              ) : (
-                'Confirmar Revogação'
-              )}
+                "w-full h-12 rounded-xl font-semibold uppercase tracking-wider text-xs active:scale-95 transition-all",
+                acao === 'autorizar' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white'
+              )}>
+              {responder.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : acao === 'autorizar' ? 'Confirmar Aceite' : 'Revogar'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button variant="ghost" onClick={() => setModalItem(null)}
+              className="w-full h-10 rounded-xl text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Agora Não
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Footer Navigation Back */}
+      <div className="flex justify-center pt-4">
+        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
+          Retornar ao Portal
+        </Button>
+      </div>
     </div>
   )
+}
+
+const statusConfig: Record<string, { label: string, color: string, icon: any, bg: string }> = {
+    pendente: { label: 'Pendente', color: 'text-amber-600', icon: Clock, bg: 'bg-amber-50' },
+    pronto: { label: 'Autorizado', color: 'text-emerald-600', icon: ShieldCheck, bg: 'bg-emerald-50' },
+    recusado: { label: 'Revogado', color: 'text-red-600', icon: ShieldOff, bg: 'bg-red-50' },
 }

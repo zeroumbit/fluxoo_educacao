@@ -1,15 +1,41 @@
 import { usePortalContext } from '../context'
 import { useQuery } from '@tanstack/react-query'
 import { portalService } from '../service'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, Calendar, MapPin, Users, Clock, ChevronRight } from 'lucide-react'
+import { Calendar, Users, Clock, ChevronRight, Info, Heart } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { SeletorAluno } from '../components/SeletorAluno'
+
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+}
+
+const AgendaSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+    {[1, 2, 3].map(i => (
+      <div key={i} className="h-32 bg-white border border-slate-100 rounded-2xl shadow-sm flex overflow-hidden">
+        <div className="w-20 bg-slate-50" />
+        <div className="flex-1 p-4 space-y-3">
+          <div className="h-5 bg-slate-50 rounded w-3/4" />
+          <div className="h-4 bg-slate-50 rounded w-full" />
+          <div className="flex gap-3">
+            <div className="h-6 bg-slate-50 rounded-full w-20" />
+            <div className="h-6 bg-slate-50 rounded-full w-20" />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)
 
 export function PortalAgendaPage() {
-  const { tenantId } = usePortalContext()
+  const { tenantId, isMultiAluno } = usePortalContext()
   
   const { data: eventos, isLoading } = useQuery({
     queryKey: ['portal', 'eventos', tenantId],
@@ -17,117 +43,122 @@ export function PortalAgendaPage() {
     enabled: !!tenantId
   })
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
-      </div>
-    )
-  }
-
-  const formatarData = (dataStr: string) => {
-    try {
-      return format(parseISO(dataStr), "dd 'de' MMMM", { locale: ptBR })
-    } catch {
-      return dataStr
-    }
-  }
-
   const formatarDiaSemana = (dataStr: string) => {
-    try {
-      return format(parseISO(dataStr), "eeee", { locale: ptBR })
-    } catch {
-      return ''
-    }
+    try { return format(parseISO(dataStr), "eeee", { locale: ptBR }) }
+    catch { return '' }
   }
+  const formatarData = (dataStr: string) => {
+    try { return format(parseISO(dataStr), "dd 'de' MMMM", { locale: ptBR }) }
+    catch { return dataStr }
+  }
+  const getDia = (dataStr: string) => dataStr.split('-')[2]
+  const getMes = (dataStr: string) => {
+    try { return format(parseISO(dataStr), "MMM", { locale: ptBR }) }
+    catch { return '' }
+  }
+
+  if (isLoading) return <AgendaSkeleton />
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+      
+      {/* Header */}
+      <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#134E4A] flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-[#14B8A6]" />
-            Agenda e Eventos
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Fique por dentro de tudo o que acontece na escola
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Agenda</h2>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Calendário Institucional</p>
+        </div>
+        {isMultiAluno && <SeletorAluno />}
+      </div>
+
+      {/* Timeline */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-1 w-5 bg-slate-900 rounded-full" />
+          <p className="text-xs font-bold uppercase text-slate-800 tracking-wider">Próximos Eventos</p>
+        </div>
+
+        <AnimatePresence mode="popLayout">
+          {eventos && eventos.length > 0 ? (
+            <div className="space-y-3">
+              {eventos.map((evento: any, idx: number) => (
+                <motion.div
+                  key={evento.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={() => vibrate(15)}
+                  className="group cursor-pointer"
+                >
+                  <Card className="border border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden flex flex-col sm:flex-row active:scale-[0.98] transition-transform">
+                    
+                    {/* Data */}
+                    <div className="sm:w-24 bg-slate-900 flex sm:flex-col items-center justify-center p-4 text-white shrink-0 gap-2 sm:gap-0.5 group-hover:bg-teal-600 transition-colors">
+                       <span className="text-2xl sm:text-3xl font-bold leading-none">{getDia(evento.data_inicio)}</span>
+                       <span className="text-[10px] font-medium uppercase tracking-wider opacity-50">{getMes(evento.data_inicio)}</span>
+                    </div>
+
+                    <CardContent className="p-4 flex-1">
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover:text-teal-600 transition-colors">
+                            {evento.nome}
+                          </h3>
+                          {evento.publico_alvo === 'toda_escola' && (
+                            <Heart size={14} className="text-teal-500 fill-current shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                          {evento.description || evento.descricao || 'Atividade escolar programada.'}
+                        </p>
+                        <div className="flex flex-wrap gap-4 pt-1">
+                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
+                            <Clock size={12} className="text-slate-300" />
+                            {formatarDiaSemana(evento.data_inicio)}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                            <Users size={12} className="text-slate-300" />
+                            {evento.publico_alvo?.replace('_', ' ') || 'toda escola'}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-50 p-10 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-4">
+              <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
+                <Calendar size={28} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-800">Agenda vazia</h3>
+                <p className="text-sm text-slate-400 max-w-xs mx-auto">Nenhum evento publicado para os próximos dias.</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Info */}
+      <div className="bg-slate-900 rounded-2xl p-5 md:p-6 text-white flex items-start gap-4 shadow-lg">
+        <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
+          <Info size={18} />
+        </div>
+        <div>
+          <h5 className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1">Dica</h5>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Toque em um evento para sincronizar com sua agenda e receber lembretes.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6">
-        {eventos && eventos.length > 0 ? (
-          eventos.map((evento: any) => (
-            <Card key={evento.id} className="border-none shadow-md overflow-hidden bg-white group hover:shadow-xl transition-all duration-300 rounded-2xl">
-              <div className="flex flex-col md:flex-row">
-                {/* Data Block */}
-                <div className="md:w-32 bg-gradient-to-br from-[#14B8A6] to-[#0D9488] p-6 flex flex-col items-center justify-center text-white shrink-0">
-                  <span className="text-3xl font-black mb-1">
-                    {evento.data_inicio.split('-')[2]}
-                  </span>
-                  <span className="text-xs font-bold uppercase tracking-tighter opacity-80">
-                    {formatarData(evento.data_inicio).split(' de ')[1]}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <CardContent className="p-6 flex-grow flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                       <h3 className="text-xl font-black text-[#134E4A] group-hover:text-[#14B8A6] transition-colors leading-tight">
-                         {evento.nome}
-                       </h3>
-                       <Badge variant="secondary" className="bg-[#F0FDFA] text-[#0D9488] border-none font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
-                         {evento.publico_alvo === 'toda_escola' ? 'Geral' : 'Específico'}
-                       </Badge>
-                    </div>
-
-                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-2">
-                      {evento.description || evento.descricao || 'Nenhuma descrição fornecida para este evento.'}
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <div className="flex items-center gap-1.5 text-slate-400">
-                        <Clock className="h-4 w-4 text-[#14B8A6]" />
-                        <span className="text-xs font-bold">{formatarDiaSemana(evento.data_inicio)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-400">
-                        <Users className="h-4 w-4 text-[#14B8A6]" />
-                        <span className="text-xs font-bold capitalize">{evento.publico_alvo?.replace('_', ' ') || 'Toda Escola'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end mt-4 md:mt-0">
-                    <Button variant="ghost" className="text-[#14B8A6] font-bold text-xs gap-1 hover:bg-[#F0FDFA] rounded-full group/btn">
-                      Ver detalhes
-                      <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-200">
-              <Calendar size={40} />
-            </div>
-            <div className="max-w-xs transition-all animate-in fade-in slide-in-from-bottom-2">
-              <h3 className="text-lg font-bold text-slate-700">Sem eventos próximos</h3>
-              <p className="text-slate-500 text-sm mt-1">No momento não há eventos programados para os próximos dias.</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-center pt-8">
-        <Button
-          variant="outline"
-          onClick={() => window.history.back()}
-          className="border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/10 rounded-full font-bold px-8"
-        >
-          Voltar
+      <div className="flex justify-center pt-4">
+        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
+          Retornar ao Portal
         </Button>
       </div>
     </div>

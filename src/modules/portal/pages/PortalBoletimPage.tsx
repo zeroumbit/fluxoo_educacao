@@ -1,349 +1,275 @@
 import { useState } from 'react'
 import { usePortalContext } from '../context'
 import { useBoletins } from '../hooks'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import {
-  Loader2,
-  BookOpen,
-  GraduationCap,
-  TrendingUp,
-  AlertCircle,
-  FileText,
-  Calendar,
-  ChevronRight,
+  GraduationCap, TrendingUp, Activity, Award, Info, Calendar, Layers, FileText
 } from 'lucide-react'
 import type { DisciplinaBoletim } from '@/lib/database.types'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { SeletorAluno } from '../components/SeletorAluno'
+
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
+}
+
+const BoletimSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {[1, 2, 3].map(i => <div key={i} className="h-28 bg-white border border-slate-100 rounded-2xl" />)}
+    </div>
+    <div className="h-64 bg-slate-50 rounded-2xl" />
+  </div>
+)
+
+const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
+  const isAprovado = disciplina.nota >= 7
+  const isRecuperacao = disciplina.nota >= 5 && disciplina.nota < 7
+
+  return (
+    <div className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between group shadow-sm active:scale-[0.98] transition-transform">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={cn(
+          "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+          isAprovado ? 'bg-emerald-50 text-emerald-600' : 
+          isRecuperacao ? 'bg-amber-50 text-amber-600' : 
+          'bg-red-50 text-red-600'
+        )}>
+          <Award size={16} />
+        </div>
+        <div className="min-w-0">
+          <h4 className="text-sm font-bold text-slate-800 leading-tight truncate">{disciplina.disciplina}</h4>
+          <div className="flex items-center gap-3 mt-0.5">
+            <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+              <Activity size={10} /> {disciplina.faltas} faltas
+            </span>
+            {disciplina.observacoes && (
+              <span className="text-[9px] font-semibold text-teal-600 uppercase">Obs</span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="text-right shrink-0 ml-2">
+        <div className={cn(
+          "text-xl font-bold leading-none",
+          isAprovado ? 'text-emerald-500' : isRecuperacao ? 'text-amber-500' : 'text-red-500'
+        )}>
+          {disciplina.nota.toFixed(1)}
+        </div>
+        <p className="text-[9px] font-medium text-slate-300 uppercase tracking-wider mt-0.5">nota</p>
+      </div>
+    </div>
+  )
+}
 
 export function PortalBoletimPage() {
-  const { alunoSelecionado, tenantId } = usePortalContext()
+  const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: boletins, isLoading } = useBoletins()
   
-  const [anoSelecionado, setAnoSelecionado] = useState<string>(
-    new Date().getFullYear().toString()
-  )
+  const [anoSelecionado, setAnoSelecionado] = useState<string>(new Date().getFullYear().toString())
   const [bimestreSelecionado, setBimestreSelecionado] = useState<string>('todos')
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
-      </div>
-    )
-  }
+  if (isLoading) return <BoletimSkeleton />
 
   if (!alunoSelecionado) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
-        <BookOpen className="h-16 w-16 text-slate-300" />
-        <h2 className="text-xl font-bold text-[#1E293B]">Nenhum aluno selecionado</h2>
-        <p className="text-slate-500">Selecione um aluno para visualizar o boletim.</p>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+          <GraduationCap className="h-8 w-8 text-slate-200" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-slate-800">Boletim Escolar</h2>
+          <p className="text-sm text-slate-400 max-w-xs">Selecione um aluno para ver as notas.</p>
+        </div>
       </div>
     )
   }
 
-  // Filtrar boletins pelo ano selecionado
-  const boletinsFiltrados = (boletins || []).filter(
-    (b) => b.ano_letivo.toString() === anoSelecionado
-  )
-
-  // Filtrar por bimestre específico ou mostrar todos
+  const boletinsFiltrados = (boletins || []).filter(b => b.ano_letivo.toString() === anoSelecionado)
   const boletimExibido = bimestreSelecionado === 'todos'
     ? boletinsFiltrados
-    : boletinsFiltrados.filter((b) => b.bimestre.toString() === bimestreSelecionado)
+    : boletinsFiltrados.filter(b => b.bimestre.toString() === bimestreSelecionado)
 
-  // Calcular média geral do aluno
-  const calcularMediaGeral = () => {
+  const mediaGeral = (() => {
     if (boletinsFiltrados.length === 0) return 0
-    let totalNotas = 0
-    let totalDisciplinas = 0
-    
-    boletinsFiltrados.forEach((boletim) => {
-      boletim.disciplinas.forEach((disc: DisciplinaBoletim) => {
-        totalNotas += disc.nota
-        totalDisciplinas++
-      })
-    })
-    
+    let totalNotas = 0, totalDisciplinas = 0
+    boletinsFiltrados.forEach(b => b.disciplinas.forEach((d: DisciplinaBoletim) => { totalNotas += d.nota; totalDisciplinas++ }))
     return totalDisciplinas > 0 ? (totalNotas / totalDisciplinas).toFixed(1) : '0'
-  }
+  })()
 
-  // Calcular total de faltas
-  const calcularTotalFaltas = () => {
-    let totalFaltas = 0
-    boletinsFiltrados.forEach((boletim) => {
-      boletim.disciplinas.forEach((disc: DisciplinaBoletim) => {
-        totalFaltas += disc.faltas
-      })
-    })
-    return totalFaltas
-  }
-
-  const mediaGeral = calcularMediaGeral()
-  const totalFaltas = calcularTotalFaltas()
+  const totalFaltas = (() => {
+    let sum = 0
+    boletinsFiltrados.forEach(b => b.disciplinas.forEach((d: DisciplinaBoletim) => { sum += d.faltas }))
+    return sum
+  })()
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Cabeçalho */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#134E4A] flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-[#14B8A6]" />
-            Boletim Escolar
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Acompanhe o desempenho acadêmico de {alunoSelecionado.nome_social || alunoSelecionado.nome_completo}
-          </p>
-        </div>
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+      
+      {/* Header & Filtros */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Boletim Escolar</h2>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Performance Acadêmica</p>
+          </div>
 
-        {/* Filtros */}
-        <div className="flex gap-2">
-          <Select value={anoSelecionado} onValueChange={setAnoSelecionado}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={anoSelecionado} onValueChange={v => { vibrate(15); setAnoSelecionado(v); }}>
+              <SelectTrigger className="w-24 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={bimestreSelecionado} onValueChange={setBimestreSelecionado}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos bimestres</SelectItem>
-              <SelectItem value="1">1º Bimestre</SelectItem>
-              <SelectItem value="2">2º Bimestre</SelectItem>
-              <SelectItem value="3">3º Bimestre</SelectItem>
-              <SelectItem value="4">4º Bimestre</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={bimestreSelecionado} onValueChange={v => { vibrate(15); setBimestreSelecionado(v); }}>
+              <SelectTrigger className="w-36 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="1">1º Bimestre</SelectItem>
+                <SelectItem value="2">2º Bimestre</SelectItem>
+                <SelectItem value="3">3º Bimestre</SelectItem>
+                <SelectItem value="4">4º Bimestre</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+        {isMultiAluno && <SeletorAluno />}
       </div>
 
-      {/* Cards de Resumo */}
+      {/* Stats */}
       {boletinsFiltrados.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border border-[#E2E8F0] shadow-sm bg-white">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">
-                Média Geral
-              </CardTitle>
-              <div className="h-9 w-9 rounded-lg bg-[#CCFBF1] flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-[#14B8A6]" />
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col justify-between gap-4 border border-slate-100 relative overflow-hidden">
+            <div className="flex justify-between items-start">
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <TrendingUp size={16} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-[#134E4A]">{mediaGeral}</div>
-              <p className="text-[10px] text-[#64748B] mt-1 font-medium">
-                {Number(mediaGeral) >= 7 ? (
-                  <span className="text-emerald-600 font-bold">✓ Excelente</span>
-                ) : Number(mediaGeral) >= 5 ? (
-                  <span className="text-amber-600 font-bold">! Atenção</span>
-                ) : (
-                  <span className="text-red-600 font-bold">✗ Reforço</span>
-                )}
-              </p>
-            </CardContent>
-          </Card>
+              <div className="relative w-10 h-10">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-100" strokeWidth="3" />
+                  <motion.circle cx="18" cy="18" r="16" fill="none" className="stroke-emerald-500" strokeWidth="3.5" strokeDasharray="100"
+                    initial={{ strokeDashoffset: 100 }} animate={{ strokeDashoffset: 100 - (Number(mediaGeral) * 10) }}
+                    transition={{ duration: 1.5, ease: "easeOut" }} strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-slate-600">
+                  {Math.round(Number(mediaGeral) * 10)}%
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">Média</p>
+              <h4 className="text-2xl font-bold text-slate-800 leading-none">{mediaGeral}</h4>
+            </div>
+          </div>
 
-          <Card className="border border-[#E2E8F0] shadow-sm bg-white">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">
-                Total de Faltas
-              </CardTitle>
-              <div className="h-9 w-9 rounded-lg bg-red-50 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-[#1E293B]">{totalFaltas}</div>
-              <p className="text-[10px] text-[#64748B] mt-1 font-medium">
-                {totalFaltas > 10 ? (
-                  <span className="text-red-600 font-bold">Limite crítico</span>
-                ) : totalFaltas > 5 ? (
-                  <span className="text-amber-600 font-bold">Atenção</span>
-                ) : (
-                  <span className="text-emerald-600 font-bold">✓ Dentro do limite</span>
-                )}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col justify-between gap-4 border border-slate-100">
+            <div className="w-9 h-9 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
+              <Activity size={16} />
+            </div>
+            <div>
+              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">Faltas</p>
+              <h4 className="text-2xl font-bold text-slate-800 leading-none">{totalFaltas}</h4>
+            </div>
+          </div>
 
-          <Card className="border border-[#E2E8F0] shadow-sm bg-white">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">
-                Boletins
-              </CardTitle>
-              <div className="h-9 w-9 rounded-lg bg-[#CCFBF1] flex items-center justify-center">
-                <FileText className="h-5 w-5 text-[#14B8A6]" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-[#134E4A]">{boletinsFiltrados.length}</div>
-              <p className="text-[10px] text-[#64748B] mt-1 font-medium">
-                {bimestreSelecionado === 'todos' ? 'bimestres' : 'bimestre(s)'} cadastrados
-              </p>
-            </CardContent>
-          </Card>
+          <div className="hidden md:flex bg-slate-900 rounded-2xl shadow-lg p-4 md:p-6 flex-col justify-between gap-4 text-white">
+            <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-teal-400">
+              <FileText size={16} />
+            </div>
+            <div>
+              <p className="text-[9px] font-medium text-teal-400 uppercase tracking-wider">Períodos</p>
+              <h4 className="text-2xl font-bold leading-none">{boletinsFiltrados.length}/4</h4>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Boletins */}
-      {boletimExibido.length === 0 ? (
-        <Card className="border border-dashed border-slate-300 bg-slate-50">
-          <CardContent className="py-12 flex flex-col items-center justify-center text-center">
-            <GraduationCap className="h-12 w-12 text-slate-300 mb-4" />
-            <h3 className="text-lg font-semibold text-slate-700">Nenhum boletim encontrado</h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Não há boletins cadastrados para {anoSelecionado}
-              {bimestreSelecionado !== 'todos' && ` no ${bimestreSelecionado}º bimestre`}.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {(boletimExibido as any[]).map((boletim) => (
-            <Card key={boletim.id} className="border border-[#E2E8F0] shadow-md overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#134E4A]/5 to-[#14B8A6]/5 border-b border-[#E2E8F0]">
-                <div className="flex items-center justify-between">
+      {/* Bimestres */}
+      <AnimatePresence mode="popLayout">
+        {boletimExibido.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-50 p-10 md:p-16 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-4">
+            <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
+              <GraduationCap size={28} />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-800">Sem notas disponíveis</h3>
+              <p className="text-sm text-slate-400 max-w-xs mx-auto">As notas para este período ainda não foram publicadas.</p>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="space-y-5">
+            {(boletimExibido as any[]).map((boletim, bIndex) => (
+              <motion.div
+                key={boletim.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: bIndex * 0.1 }}
+                className="bg-slate-50 rounded-2xl md:rounded-3xl p-2 space-y-2"
+              >
+                {/* Header */}
+                <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 flex justify-between items-center shadow-sm">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-[#14B8A6] flex items-center justify-center">
-                      <Calendar className="h-5 w-5 text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center">
+                      <GraduationCap size={20} />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-[#134E4A]">
-                        {boletim.bimestre}º Bimestre - {boletim.ano_letivo}
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        Emitido em: {new Date(boletim.data_emissao || boletim.created_at).toLocaleDateString('pt-BR')}
-                      </CardDescription>
+                      <h3 className="text-base md:text-lg font-bold text-slate-800">{boletim.bimestre}º Bimestre</h3>
+                      <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{boletim.ano_letivo}</p>
                     </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs font-bold uppercase tracking-widest ${
-                      boletim.status === 'ativo' || !boletim.status
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-slate-50 text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    {boletim.status || 'Ativo'}
+                  <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-semibold px-3 py-1 rounded-full hidden sm:flex">
+                    Ativo
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-[#E2E8F0]">
-                      <tr>
-                        <th className="text-left text-[10px] font-bold text-[#64748B] uppercase tracking-widest px-4 py-3">
-                          Disciplina
-                        </th>
-                        <th className="text-center text-[10px] font-bold text-[#64748B] uppercase tracking-widest px-4 py-3">
-                          Nota
-                        </th>
-                        <th className="text-center text-[10px] font-bold text-[#64748B] uppercase tracking-widest px-4 py-3">
-                          Faltas
-                        </th>
-                        <th className="text-left text-[10px] font-bold text-[#64748B] uppercase tracking-widest px-4 py-3">
-                          Observações
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(boletim.disciplinas as DisciplinaBoletim[]).map((disciplina, idx) => (
-                        <tr
-                          key={idx}
-                          className={`border-b border-[#E2E8F0] last:border-0 hover:bg-slate-50 transition-colors ${
-                            disciplina.nota < 5 ? 'bg-red-50/50' : ''
-                          }`}
-                        >
-                          <td className="px-4 py-3">
-                            <span className="text-sm font-semibold text-[#1E293B]">
-                              {disciplina.disciplina}
-                            </span>
-                          </td>
-                          <td className="text-center px-4 py-3">
-                            <Badge
-                              className={`text-xs font-bold ${
-                                disciplina.nota >= 7
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : disciplina.nota >= 5
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {disciplina.nota.toFixed(1)}
-                            </Badge>
-                          </td>
-                          <td className="text-center px-4 py-3">
-                            <span
-                              className={`text-sm font-bold ${
-                                disciplina.faltas > 10
-                                  ? 'text-red-600'
-                                  : disciplina.faltas > 5
-                                  ? 'text-amber-600'
-                                  : 'text-emerald-600'
-                              }`}
-                            >
-                              {disciplina.faltas}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {disciplina.observacoes ? (
-                              <span className="text-xs text-[#64748B] italic">
-                                {disciplina.observacoes}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-slate-300">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                {/* Disciplinas */}
+                <div className="p-2 space-y-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                    {(boletim.disciplinas as DisciplinaBoletim[]).map((disc, dIdx) => (
+                      <DisciplinaCard key={dIdx} disciplina={disc} />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Observações Gerais */}
-                {boletim.observacoes_gerais && (
-                  <div className="bg-slate-50 border-t border-[#E2E8F0] px-4 py-3">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-[#14B8A6] mt-0.5 shrink-0" />
+                {/* Observações */}
+                {(boletim.observacoes_gerais || boletim.disciplinas.some((d: any) => d.observacoes)) && (
+                  <div className="bg-slate-900 mx-2 mb-2 rounded-xl md:rounded-2xl p-4 md:p-6 text-white">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-teal-400 shrink-0">
+                        <Info size={16} />
+                      </div>
                       <div>
-                        <p className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-1">
-                          Observações Gerais
+                        <h5 className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1">Observações</h5>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {boletim.observacoes_gerais || "Desempenho consistente. Manter foco nas revisões."}
                         </p>
-                        <p className="text-sm text-[#1E293B]">{boletim.observacoes_gerais}</p>
                       </div>
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
 
-      {/* Botão Voltar */}
       <div className="flex justify-center pt-4">
-        <Button
-          variant="outline"
-          onClick={() => window.history.back()}
-          className="border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/10"
-        >
-          Voltar ao Dashboard
+        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-emerald-600 h-11 px-6 rounded-full">
+          Voltar ao Início
         </Button>
       </div>
     </div>

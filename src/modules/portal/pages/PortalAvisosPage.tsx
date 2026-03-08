@@ -4,11 +4,19 @@ import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, Megaphone, BellRing, ChevronDown, ChevronUp, Clock, CheckCircle2 } from 'lucide-react'
+import { Megaphone, BellRing, ChevronDown, ChevronUp, Clock, Info, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { format, parseISO, isAfter, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { SeletorAluno } from '../components/SeletorAluno'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+import { SeletorAluno } from '../components/SeletorAluno'
+
+// Helper de vibração
+const vibrate = (ms: number | number[] = 20) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(ms);
+  }
+}
 
 // Helper de vigência
 function avisoEstaAtivo(aviso: { data_fim?: string | null }): boolean {
@@ -18,9 +26,17 @@ function avisoEstaAtivo(aviso: { data_fim?: string | null }): boolean {
   return isAfter(fim, hoje) || fim.getTime() === hoje.getTime()
 }
 
-// ---------------------------------------------------------------------------
-// Card de Aviso — Portal
-// ---------------------------------------------------------------------------
+// --- SKELETON LOADING ---
+const AvisosSkeleton = () => (
+  <div className="space-y-4 animate-pulse">
+    <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+    <div className="h-28 bg-slate-900 rounded-2xl" />
+    <div className="space-y-3">
+        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white border border-slate-100 rounded-2xl" />)}
+    </div>
+  </div>
+)
+
 interface AvisoPortalCardProps {
   aviso: any
   expirado?: boolean
@@ -33,115 +49,100 @@ function AvisoPortalCard({ aviso, expirado = false, expandedId, onToggleExpand }
   const isExpanded = expandedId === aviso.id
 
   return (
-    <Card className={cn(
-      'border overflow-hidden transition-all',
-      expirado
-        ? 'border-slate-100 bg-slate-50/50 opacity-60 hover:opacity-80 shadow-none'
-        : 'border-[#E2E8F0] shadow-sm hover:shadow-md bg-white'
-    )}>
-      <CardContent className="p-0">
-        <div className="flex items-stretch">
-          {/* Barra lateral colorida */}
-          <div className={cn(
-            'w-1.5 shrink-0',
-            expirado ? 'bg-zinc-200' : (isGeral ? 'bg-[#14B8A6]' : 'bg-[#3B82F6]')
-          )} />
-
-          <div className="p-6 flex items-start gap-5 flex-1">
-            {/* Ícone */}
-            <div className={cn(
-              'h-11 w-11 rounded-xl flex items-center justify-center shrink-0',
-              expirado ? 'bg-zinc-100' : (isGeral ? 'bg-[#CCFBF1]' : 'bg-blue-50')
-            )}>
-              {expirado
-                ? <Clock className="h-5 w-5 text-zinc-400" />
-                : isGeral
-                  ? <Megaphone className="h-5 w-5 text-[#14B8A6]" />
-                  : <BellRing className="h-5 w-5 text-blue-500" />
-              }
-            </div>
-
-            {/* Conteúdo */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <h3 className={cn(
-                  'text-base font-bold leading-tight tracking-tight',
-                  expirado ? 'text-slate-400' : 'text-[#1E293B]'
-                )}>
-                  {aviso.titulo}
-                </h3>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'whitespace-nowrap px-3 py-1 font-bold text-[10px] uppercase tracking-widest border',
-                      expirado
-                        ? 'bg-zinc-50 text-zinc-400 border-zinc-200'
-                        : isGeral
-                          ? 'bg-teal-50 text-[#14B8A6] border-teal-100'
-                          : 'bg-blue-50 text-blue-600 border-blue-100'
-                    )}
-                  >
-                    {isGeral ? 'Comunicado Geral' : `Turma: ${aviso.turma?.nome ?? ''}`}
-                  </Badge>
-                  {expirado && (
-                    <Badge variant="outline" className="text-[10px] text-zinc-400 border-zinc-200 bg-zinc-50">
-                      Expirado
-                    </Badge>
-                  )}
-                </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="group"
+    >
+      <Card className={cn(
+        'border border-slate-100 shadow-sm transition-all duration-500 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98]',
+        expirado ? 'bg-slate-50/50 grayscale-[0.8]' : 'bg-white'
+      )} onClick={() => { vibrate(15); onToggleExpand(aviso.id); }}>
+        <CardContent className="p-0">
+          <div className="flex flex-col">
+            <div className="p-4 flex items-start gap-3">
+              {/* Icon Container */}
+              <div className={cn(
+                'h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all',
+                expirado 
+                  ? 'bg-slate-100 text-slate-400' 
+                  : (isGeral 
+                      ? 'bg-teal-50 text-teal-500' 
+                      : 'bg-indigo-50 text-indigo-500')
+              )}>
+                {expirado
+                  ? <Clock className="h-5 w-5" />
+                  : isGeral ? <Megaphone className="h-5 w-5" /> : <BellRing className="h-5 w-5" />
+                }
               </div>
 
-              <p className={cn(
-                'text-sm whitespace-pre-wrap leading-relaxed',
-                expirado ? 'text-slate-400' : 'text-[#64748B]',
-                !isExpanded ? 'line-clamp-3' : ''
-              )}>
-                {aviso.conteudo}
-              </p>
-
-              <div className="mt-4 pt-3 border-t border-slate-50 flex flex-wrap items-center justify-between gap-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                <div className="flex items-center gap-4">
-                  <span>
-                    Publicado em {format(new Date(aviso.created_at), "dd 'de' MMMM", { locale: ptBR })} às {format(new Date(aviso.created_at), 'HH:mm')}
-                  </span>
-                  {aviso.data_fim && (
-                    <span className={cn(
-                      'flex items-center gap-1',
-                      expirado ? 'text-red-400' : 'text-amber-500'
+              {/* Content Container */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col gap-1.5">
+                   <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={cn(
+                        'text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border-0',
+                        expirado 
+                          ? 'bg-slate-200 text-slate-500' 
+                          : (isGeral ? 'bg-teal-500 text-white' : 'bg-indigo-500 text-white')
+                      )}>
+                        {isGeral ? 'Geral' : `${aviso.turma?.nome ?? 'Turma'}`}
+                      </Badge>
+                      {expirado && (
+                        <Badge className="bg-red-100 text-red-500 text-[8px] font-semibold uppercase border-0 px-2 py-0.5">Arquivado</Badge>
+                      )}
+                   </div>
+                   <h3 className={cn(
+                      'text-sm font-bold leading-tight transition-colors',
+                      expirado ? 'text-slate-400' : 'text-slate-800'
                     )}>
-                      <Clock className="h-3 w-3" />
-                      {expirado ? 'Encerrou' : 'Encerra'} em {format(parseISO(aviso.data_fim), 'dd/MM/yyyy')}
-                    </span>
-                  )}
+                      {aviso.titulo}
+                   </h3>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onToggleExpand(aviso.id)}
-                  className={cn(
-                    'font-bold text-xs rounded-full gap-1 h-7 px-3',
-                    expirado ? 'text-zinc-400 hover:bg-zinc-100' : 'text-[#14B8A6] hover:bg-[#F0FDFA]'
-                  )}
-                >
-                  {isExpanded ? (
-                    <><span>Ver menos</span><ChevronUp className="h-3.5 w-3.5" /></>
-                  ) : (
-                    <><span>Ver mais</span><ChevronDown className="h-3.5 w-3.5" /></>
-                  )}
-                </Button>
+
+                <AnimatePresence>
+                  <motion.p 
+                    layout
+                    className={cn(
+                      'text-xs leading-relaxed transition-all',
+                      expirado ? 'text-slate-400' : 'text-slate-500',
+                      !isExpanded ? 'line-clamp-2' : ''
+                    )}
+                  >
+                    {aviso.conteudo}
+                  </motion.p>
+                </AnimatePresence>
+
+                <div className="pt-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 text-[10px] font-medium text-slate-300 uppercase tracking-wider">
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} className="text-slate-300" />
+                      {format(new Date(aviso.created_at), "dd/MM", { locale: ptBR })}
+                    </span>
+                    {aviso.data_fim && (
+                      <span className={cn('flex items-center gap-1', expirado ? 'text-red-300' : 'text-amber-500')}>
+                        {expirado ? 'Até' : 'Exp.'} {format(parseISO(aviso.data_fim), 'dd/MM')}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center transition-all bg-slate-50 text-slate-300',
+                    isExpanded && 'rotate-180 bg-slate-900 text-white'
+                  )}>
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Página principal
-// ---------------------------------------------------------------------------
 export function PortalAvisosPage() {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
@@ -149,93 +150,122 @@ export function PortalAvisosPage() {
 
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id)
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
-      </div>
-    )
-  }
+  if (isLoading) return <AvisosSkeleton />
 
   if (!alunoSelecionado) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <Megaphone className="h-16 w-16 text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-[#1E293B]">Selecione um aluno</h2>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+            <Megaphone className="h-8 w-8 text-slate-200" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-slate-800">Avisos</h2>
+          <p className="text-sm text-slate-400">Selecione um aluno para ver os avisos.</p>
+        </div>
       </div>
     )
   }
 
-  // Separação por vigência
   const avisosAtivos = (avisos ?? []).filter(a => avisoEstaAtivo(a as any))
   const avisosExpirados = (avisos ?? []).filter(a => !avisoEstaAtivo(a as any))
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
-        <h2 className="text-2xl font-bold tracking-tight text-[#1E293B]">Mural de Avisos</h2>
+    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+      
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">Avisos</h2>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Mural da Unidade</p>
+        </div>
+        {isMultiAluno && <SeletorAluno />}
       </div>
 
-      {isMultiAluno && <SeletorAluno />}
-
-      {/* Lista vazia */}
-      {(!avisos || avisos.length === 0) && (
-        <Card className="border border-[#E2E8F0] border-dashed bg-slate-50/50">
-          <CardContent className="py-20 text-center text-slate-500">
-            <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100">
-              <Megaphone className="h-10 w-10 text-slate-300" />
+      {/* Banner */}
+      <div className="bg-slate-900 rounded-2xl p-5 md:p-6 text-white relative overflow-hidden shadow-lg">
+         <div className="absolute right-0 top-0 opacity-5 -mr-10 -mt-10 pointer-events-none">
+            <Megaphone size={200} />
+         </div>
+         <div className="flex items-start gap-4 relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+               <BellRing size={20} />
             </div>
-            <h3 className="text-xl font-bold text-[#1E293B]">Mural Vazio</h3>
-            <p className="mt-2 text-sm max-w-xs mx-auto">Não há comunicados para a turma deste aluno.</p>
-          </CardContent>
-        </Card>
-      )}
+            <div>
+               <h4 className="text-sm font-bold text-teal-400 mb-1">Canal Direto</h4>
+               <p className="text-xs text-slate-400 leading-relaxed">
+                 Acompanhe eventos e informes importantes da instituição.
+               </p>
+            </div>
+         </div>
+      </div>
 
-      {/* Avisos Ativos */}
-      {avisosAtivos.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-[#14B8A6]" />
-            <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-              Comunicados ativos ({avisosAtivos.length})
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {avisosAtivos.map(aviso => (
-              <AvisoPortalCard
-                key={aviso.id}
-                aviso={aviso}
-                expandedId={expandedId}
-                onToggleExpand={handleToggle}
-              />
-            ))}
-          </div>
+      {/* 3. Empty State Handling */}
+      {(!avisos || avisos.length === 0) && (
+        <div className="py-10 text-center space-y-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
+             <AlertTriangle size={28} />
+           </div>
+           <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-800">Sem avisos</h3>
+              <p className="text-sm text-slate-400 max-w-xs mx-auto">Nenhum aviso publicado no momento.</p>
+           </div>
         </div>
       )}
 
-      {/* Avisos Expirados */}
+      {/* 4. Categoría: Publicações Ativas */}
+      {avisosAtivos.length > 0 && (
+        <div className="space-y-4">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Ativos</h3>
+              </div>
+              <Badge variant="outline" className="text-[9px] font-semibold tracking-wider uppercase rounded-full border-slate-200 text-slate-400 px-3 py-1">
+                {avisosAtivos.length}
+              </Badge>
+           </div>
+           <div className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {avisosAtivos.map(aviso => (
+                  <AvisoPortalCard
+                    key={aviso.id}
+                    aviso={aviso}
+                    expandedId={expandedId}
+                    onToggleExpand={handleToggle}
+                  />
+                ))}
+              </AnimatePresence>
+           </div>
+        </div>
+      )}
+
+      {/* 5. Categoría: Histórico Arquivado */}
       {avisosExpirados.length > 0 && (
         <div className="space-y-3 mt-6">
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-            <Clock className="h-4 w-4 text-slate-300" />
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-              Histórico · Expirados ({avisosExpirados.length})
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {avisosExpirados.map(aviso => (
-              <AvisoPortalCard
-                key={aviso.id}
-                aviso={aviso}
-                expirado
-                expandedId={expandedId}
-                onToggleExpand={handleToggle}
-              />
-            ))}
-          </div>
+           <div className="flex items-center gap-2 border-t border-slate-100 pt-6">
+              <Clock className="h-3 w-3 text-slate-300" />
+              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Arquivados ({avisosExpirados.length})</h3>
+           </div>
+           <div className="space-y-6">
+              {avisosExpirados.map(aviso => (
+                <AvisoPortalCard
+                  key={aviso.id}
+                  aviso={aviso}
+                  expirado
+                  expandedId={expandedId}
+                  onToggleExpand={handleToggle}
+                />
+              ))}
+           </div>
         </div>
       )}
+
+      <div className="flex justify-center pt-4">
+        <Button variant="ghost" onClick={() => { vibrate(10); window.history.back(); }}
+          className="text-slate-400 font-semibold uppercase text-[10px] tracking-widest hover:text-teal-600 h-11 px-6 rounded-full">
+          Retornar ao Portal
+        </Button>
+      </div>
     </div>
   )
 }
