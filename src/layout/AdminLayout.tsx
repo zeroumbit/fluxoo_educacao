@@ -240,9 +240,9 @@ export function AdminLayout() {
 
       {/* Main Content */}
       <main className="lg:pl-64">
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="lg:p-8 max-w-7xl mx-auto min-h-screen">
           {isBlocked && window.location.pathname !== '/dashboard' ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
+            <div className="p-6 flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
               <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">
                 <Lock className="h-8 w-8" />
               </div>
@@ -257,7 +257,9 @@ export function AdminLayout() {
               </Button>
             </div>
           ) : (
-            <Outlet />
+            <div className="pb-24 lg:pb-0">
+               <Outlet />
+            </div>
           )}
         </div>
       </main>
