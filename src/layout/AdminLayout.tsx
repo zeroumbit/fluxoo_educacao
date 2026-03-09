@@ -33,6 +33,7 @@ import {
   CarFront
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useRBACInit, useCanAccessModule, useHasPermission } from '@/hooks/usePermissions'
 
 const navigationGroups = [
   {
@@ -82,11 +83,21 @@ const navigationGroups = [
       { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog },
     ],
   },
+  {
+    label: 'Configurações',
+    items: [
+      { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield },
+      { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList },
+    ],
+  },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { authUser, signOut } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
+
+  // Inicializar RBAC para funcionários
+  useRBACInit()
 
   // Super admin não tem dashboard com assinatura
   const { data: dashboard, isLoading } = isSuperAdmin

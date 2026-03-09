@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/modules/auth/AuthContext'
@@ -35,6 +35,8 @@ import { DocumentosPage } from '@/modules/documentos/pages/DocumentosPage'
 import { AlmoxarifadoPage } from '@/modules/almoxarifado/pages/AlmoxarifadoPage'
 import { PerfilEscolaPage } from '@/modules/escola-perfil/pages/PerfilEscolaPage'
 import { PlanoPage } from '@/modules/assinatura/pages/PlanoPage'
+import { PerfisPage } from '@/modules/rbac/pages/PerfisPage'
+import { AuditoriaPage } from '@/modules/rbac/pages/AuditoriaPage'
 
 // Pages - Super Admin
 import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
@@ -153,6 +155,9 @@ function App() {
               <Route path="/portaria-expresso" element={<FilaVirtualAdminPage />} />
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
               <Route path="/plano" element={<PlanoPage />} />
+              {/* RBAC V2.2 - Configurações */}
+              <Route path="/configuracoes/perfis" element={<PerfisPage />} />
+              <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
             </Route>
 
             {/* Portal do ResponsÃ¡vel */}

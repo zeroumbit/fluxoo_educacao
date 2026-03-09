@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/lib/database.types'
 import { isSuperAdminEmail } from '@/lib/config'
 import { usePortalStore } from '@/modules/portal/store'
+import { useRBACStore } from '@/stores/rbac.store'
 
 interface AuthUser {
   user: User
@@ -203,6 +204,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthUser(null)
     // Limpar estado persistido do portal para evitar vazamento de dados entre usuários no mesmo navegador
     usePortalStore.getState().clearStore()
+    // Limpar permissões RBAC cacheadas
+    useRBACStore.getState().clearPermissions()
     window.location.href = '/login'
   }
 
