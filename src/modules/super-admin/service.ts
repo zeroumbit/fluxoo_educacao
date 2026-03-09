@@ -20,12 +20,26 @@ export const superAdminService = {
       .order('created_at', { ascending: false })
       .limit(5)
 
+    // Saúde Financeira Global (Todos os Tenantes)
+    const [cobrancasRes, contasPagarRes, salariosRes] = await Promise.all([
+      (supabase.from('cobrancas' as any) as any).select('valor').in('status', ['a_vencer', 'atrasado']),
+      (supabase.from('contas_pagar' as any) as any).select('valor').neq('status', 'pago'),
+      (supabase.from('funcionarios' as any) as any).select('salario_bruto').eq('status', 'ativo').gt('salario_bruto', 0)
+    ])
+
+    const totalReceber = (cobrancasRes.data as any[])?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+    const totalDespesas = (contasPagarRes.data as any[])?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+    const totalSalarios = (salariosRes.data as any[])?.reduce((acc, c) => acc + (Number(c.salario_bruto) || 0), 0) || 0
+
+    const saudeFinanceiraGlobal = totalReceber - (totalDespesas + totalSalarios)
+
     return {
       totalEscolas: totalEscolas || 0,
       assinaturasAtivas: assinaturasAtivas || 0,
       totalAlunos: totalAlunos || 0,
       faturasPendentes: faturasPendentes || 0,
       escolasRecentes: (escolasRecentes as any[]) || [],
+      saudeFinanceiraGlobal
     }
   },
 

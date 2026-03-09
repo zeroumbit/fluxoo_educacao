@@ -172,16 +172,18 @@ export function DashboardPageWeb() {
 
   const radarEvasao = dashboardData?.radarEvasao || []
   const avisosRecentes = dashboardData?.avisosRecentes || []
-  
+
   const totalAlunos = dashboardData?.totalAlunosAtivos || 0
   const limiteAlunos = dashboardData?.limiteAlunos || 1
   const recebimentos = dashboardData?.totalReceber || 0
+  const pagamentos = dashboardData?.totalPagar || 0
+  const saudeFinanceira = recebimentos - pagamentos
 
   const metrics = [
     {
       label: 'Total de Alunos',
       value: totalAlunos,
-      sub: `${totalAlunos} matrículas ativas`,
+      sub: `${totalAlunos} matrículas ativas (${totalAlunos > 0 ? Math.min(100, Math.round((totalAlunos / limiteAlunos) * 100)) : 0}% da licença)`,
       icon: Users,
       iconBg: 'bg-indigo-50',
       iconColor: 'text-indigo-600',
@@ -198,12 +200,13 @@ export function DashboardPageWeb() {
       path: '/financeiro'
     },
     {
-      label: 'Saúde da Operação',
-      value: `${Math.min(100, Math.round((totalAlunos / limiteAlunos) * 100))}%`,
-      sub: totalAlunos > 0 ? 'Taxa de ocupação da licença' : 'Sem alunos ainda',
+      label: 'Contas',
+      value: `R$ ${saudeFinanceira.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: saudeFinanceira >= 0 ? 'Saúde financeira positiva' : 'Atenção ao fluxo de caixa',
       icon: TrendingUp,
-      iconBg: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
+      iconBg: saudeFinanceira >= 0 ? 'bg-emerald-50' : 'bg-rose-50',
+      iconColor: saudeFinanceira >= 0 ? 'text-emerald-600' : 'text-rose-600',
+      warning: saudeFinanceira < 0,
       path: '/financeiro-relatorios'
     },
     {
@@ -256,35 +259,32 @@ export function DashboardPageWeb() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 ${radarEvasao.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2 lg:max-w-4xl mx-auto w-full'} gap-8`}>
         {/* Lado Esquerdo: Radar e Alertas */}
-        <section className="lg:col-span-1 space-y-6">
-          <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden">
-            <CardHeader className="p-8 pb-4">
-              <div className="flex items-center justify-between mb-2">
-                 <div className="h-10 w-10 rounded-2xl bg-rose-100 flex items-center justify-center">
-                    <AlertTriangle className="h-5 w-5 text-rose-600" />
-                 </div>
-                 <ArrowUpRight className="h-5 w-5 text-rose-300" />
-              </div>
-              <CardTitle className="text-xl font-black text-rose-900 tracking-tight">Radar de Evasão</CardTitle>
-              <p className="text-xs font-semibold text-rose-600/70 mt-1 uppercase tracking-widest">Alunos em Risco Crítico</p>
-            </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              {radarEvasao.map((aluno) => (
-                <RadarCard key={aluno.aluno_id} aluno={aluno} />
-              ))}
-              {radarEvasao.length === 0 && (
-                <div className="py-12 text-center bg-white/50 rounded-[2rem] border border-dashed border-rose-200">
-                  <p className="text-sm font-bold text-rose-400">Nenhum alerta crítico hoje!</p>
+        {radarEvasao.length > 0 && (
+          <section className="lg:col-span-1 space-y-6">
+            <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden">
+              <CardHeader className="p-8 pb-4">
+                <div className="flex items-center justify-between mb-2">
+                   <div className="h-10 w-10 rounded-2xl bg-rose-100 flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 text-rose-600" />
+                   </div>
+                   <ArrowUpRight className="h-5 w-5 text-rose-300" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+                <CardTitle className="text-xl font-black text-rose-900 tracking-tight">Radar de Evasão</CardTitle>
+                <p className="text-xs font-semibold text-rose-600/70 mt-1 uppercase tracking-widest">Alunos em Risco Crítico</p>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {radarEvasao.map((aluno) => (
+                  <RadarCard key={aluno.aluno_id} aluno={aluno} />
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         {/* Lado Direito: Comunicados e Atividade */}
-        <section className="lg:col-span-2 space-y-6">
+        <section className={`${radarEvasao.length > 0 ? 'lg:col-span-2' : 'lg:col-span-2'} space-y-6`}>
           <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white">
             <CardHeader className="p-8 flex flex-row items-center justify-between">
               <div>

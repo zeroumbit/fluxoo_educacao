@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, CreditCard, Users, ShieldCheck, Loader2 } from 'lucide-react'
+import { Building2, CreditCard, Users, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSuperAdminDashboard } from '../hooks'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +21,7 @@ export function SuperAdminDashboardPageWeb() {
     )
   }
 
-  const { totalEscolas, assinaturasAtivas, totalAlunos, escolasRecentes } = dashboard
+  const { totalEscolas, assinaturasAtivas, totalAlunos, escolasRecentes, saudeFinanceiraGlobal } = dashboard
 
   return (
     <div className="space-y-6">
@@ -76,18 +76,22 @@ export function SuperAdminDashboardPageWeb() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-indigo-50 to-blue-50">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-slate-50 to-zinc-50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-indigo-800">
-              Status do Sistema
-            </CardTitle>
-            <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center shadow-sm">
-              <ShieldCheck className="h-5 w-5 text-indigo-600" />
+            <div>
+              <CardTitle className="text-sm font-medium text-slate-800">
+                Saúde Global
+              </CardTitle>
+            </div>
+            <div className={`h-9 w-9 rounded-lg flex items-center justify-center shadow-sm ${saudeFinanceiraGlobal >= 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+              <TrendingUp className={`h-5 w-5 ${saudeFinanceiraGlobal >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-indigo-800">Online</div>
-            <p className="text-xs text-indigo-700 mt-1">Todos os serviços ativos</p>
+            <div className={`text-2xl font-bold tracking-tight ${saudeFinanceiraGlobal >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+              R$ {saudeFinanceiraGlobal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Consolidado de todas as escolas</p>
           </CardContent>
         </Card>
       </div>
