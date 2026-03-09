@@ -49,7 +49,7 @@ const navigationGroups = [
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
       { name: 'Turmas', href: '/turmas', icon: BookOpen },
-      { name: 'Notas', href: '/notas', icon: GraduationCap },
+      { name: 'Boletim', href: '/notas', icon: GraduationCap },
       { name: 'Livros', href: '/livros', icon: BookOpen },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
       { name: 'Atividades', href: '/atividades', icon: FileText },
