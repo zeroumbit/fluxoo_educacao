@@ -10,6 +10,7 @@ import {
   Loader2,
   ArrowUpRight,
   BookOpen,
+  TrendingUp,
   ChevronRight,
   Plus,
   Search,
@@ -111,31 +112,31 @@ export function DashboardPageMobile() {
           </div>
         </motion.section>
 
-        {/* Stats Principais com Design Premium */}
-        <motion.section variants={item} className="grid grid-cols-1 gap-4">
+        {/* Stats Principais com Design Premium - Estilo Bento Grid */}
+        <motion.section variants={item} className="grid grid-cols-2 gap-4">
           <Card 
              onClick={() => navigate('/alunos')}
-             className="rounded-[2.5rem] border-0 shadow-xl shadow-indigo-100 overflow-hidden active:scale-[0.98] transition-all bg-gradient-to-br from-indigo-600 to-indigo-700 text-white group"
+             className="col-span-2 rounded-[2.5rem] border-0 shadow-xl shadow-indigo-100 overflow-hidden active:scale-[0.98] transition-all bg-gradient-to-br from-indigo-600 to-indigo-700 text-white group"
           >
              <CardContent className="p-7 relative overflow-hidden">
                 <Users className="absolute -right-4 -bottom-4 h-32 w-32 text-white/10 group-hover:scale-110 transition-transform" />
                 <div className="relative z-10 space-y-4">
                    <div className="flex justify-between items-start">
-                      <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/10">
                          <Users className="h-5 w-5 text-white" />
                       </div>
                       <ArrowUpRight className="h-5 w-5 text-white/50" />
                    </div>
                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 opacity-80 mb-1">Total de Alunos Ativos</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 opacity-80 mb-1">Total de Alunos</p>
                       <p className="text-4xl font-black tracking-tighter">{dashboardData?.totalAlunosAtivos || 0}</p>
                    </div>
                    <div className="pt-2">
-                       <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                       <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/5">
                           <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.min(((dashboardData?.totalAlunosAtivos || 0) / (dashboardData?.limiteAlunos || 1)) * 100, 100)}%` }}
-                            className="h-full bg-white" 
+                            className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
                           />
                        </div>
                        <p className="text-[8px] font-bold text-indigo-100 mt-2 opacity-70">
@@ -146,21 +147,63 @@ export function DashboardPageMobile() {
              </CardContent>
           </Card>
 
+          {/* Inadimplência */}
           <Card 
              onClick={() => navigate('/financeiro')}
-             className="rounded-[2.5rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white group border border-slate-100"
+             className="rounded-[2rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white group border border-slate-100"
           >
-             <CardContent className="p-7 flex items-center gap-5">
-                <div className="h-16 w-16 rounded-3xl bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100">
-                   <CreditCard className="h-8 w-8 text-rose-500" />
+             <CardContent className="p-5 space-y-3">
+                <div className="h-10 w-10 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100">
+                   <CreditCard className="h-5 w-5 text-rose-500" />
                 </div>
-                <div className="flex-1 min-w-0">
-                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Inadimplência</p>
-                   <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                      R$ {dashboardData?.totalReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <div>
+                   <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Pendentes</p>
+                   <p className="text-lg font-black text-slate-900 tracking-tight">
+                      R$ {dashboardData?.totalReceber.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                    </p>
-                   <p className="text-[10px] font-bold text-rose-500 flex items-center gap-1 mt-1 font-mono">
-                      <AlertTriangle className="h-3 w-3" /> Recebimentos Pendentes
+                </div>
+             </CardContent>
+          </Card>
+
+          {/* Saúde Financeira (Contas) */}
+          <Card 
+             onClick={() => navigate('/financeiro-relatorios')}
+             className="rounded-[2rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white group border border-slate-100"
+          >
+             <CardContent className="p-5 space-y-3">
+                {(() => {
+                  const valor = (dashboardData?.totalReceber || 0) - (dashboardData?.totalPagar || 0)
+                  const isPositive = valor >= 0
+                  return (
+                    <>
+                      <div className={`h-10 w-10 rounded-2xl ${isPositive ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'} flex items-center justify-center border`}>
+                         <TrendingUp className={`h-5 w-5 ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`} />
+                      </div>
+                      <div>
+                         <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Saldo Proj.</p>
+                         <p className={`text-lg font-black tracking-tight ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            R$ {valor.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                         </p>
+                      </div>
+                    </>
+                  )
+                })()}
+             </CardContent>
+          </Card>
+
+          {/* Alertas Ativos */}
+          <Card 
+             onClick={() => navigate('/frequencia')}
+             className="col-span-2 rounded-[2rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white group border border-slate-100"
+          >
+             <CardContent className="p-5 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
+                   <AlertTriangle className="h-6 w-6 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                   <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Alertas no Radar</p>
+                   <p className="text-lg font-black text-slate-900 tracking-tight">
+                      {dashboardData?.radarEvasao?.length || 0} Alunos em risco
                    </p>
                 </div>
                 <ChevronRight className="h-5 w-5 text-slate-300" />

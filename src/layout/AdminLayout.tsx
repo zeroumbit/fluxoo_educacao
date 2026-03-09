@@ -124,23 +124,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="p-6">
+      {/* Logo mobile-friendly no menu full-screen */}
+      <div className="p-6 flex items-center justify-between lg:block">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-md">
-            <GraduationCap className="h-5 w-5 text-white" />
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-100">
+            <GraduationCap className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="font-bold text-lg leading-tight">Gestão Escolar</h2>
-            <p className="text-xs text-muted-foreground">Painel Administrativo</p>
+            <h2 className="font-bold text-xl leading-tight tracking-tight">Fluxoo</h2>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/50">Educacional</p>
           </div>
         </div>
+        {onNavigate && (
+           <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden h-10 w-10 rounded-full bg-zinc-100">
+              <ChevronRight className="h-5 w-5 text-zinc-500" />
+           </Button>
+        )}
       </div>
 
-      <Separator />
+      <Separator className="opacity-50" />
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+      {/* Navigation - Ampliado para mobile */}
+      <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto scrollbar-hide">
+
         {navigationGroups.map((group) => {
           const isGroupBlocked = isBlocked && group.label !== 'Principal'
           
@@ -158,19 +164,23 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={isGroupBlocked ? (e) => e.preventDefault() : onNavigate}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group',
+                        'flex items-center gap-3 lg:gap-3 px-4 py-4 lg:px-3 lg:py-2 rounded-2xl lg:rounded-lg text-[16px] lg:text-sm font-semibold lg:font-medium transition-all duration-300 active:scale-[0.98] lg:active:scale-100 group',
                         isActive && !isGroupBlocked
-                          ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 shadow-sm'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                        isGroupBlocked && "cursor-not-allowed"
+                          ? 'bg-indigo-600 lg:bg-indigo-50 text-white lg:text-indigo-700 shadow-lg lg:shadow-none shadow-indigo-100'
+                          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
+                        isGroupBlocked && "cursor-not-allowed grayscale"
                       )
                     }
                   >
                     {({ isActive }) => (
                       <>
-                        <item.icon className={cn('h-4 w-4 transition-colors flex-shrink-0', (isActive && !isGroupBlocked) ? 'text-indigo-600' : '')} />
+                        <item.icon className={cn('h-5 w-5 lg:h-4 lg:w-4 transition-colors flex-shrink-0', (isActive && !isGroupBlocked) ? 'text-white lg:text-indigo-600' : 'text-zinc-400')} />
                         <span className="flex-1 truncate">{item.name}</span>
-                        {(isActive && !isGroupBlocked) && <ChevronRight className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />}
+                        {(isActive && !isGroupBlocked) ? (
+                          <div className="h-1.5 w-1.5 rounded-full bg-white lg:bg-indigo-400 opacity-50" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 lg:h-3.5 lg:w-3.5 text-zinc-300 flex-shrink-0 lg:opacity-0 group-hover:opacity-100" />
+                        )}
                       </>
                     )}
                   </NavLink>
@@ -233,21 +243,77 @@ export function AdminLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - Agora acionado pelo BottomNav */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="fixed top-4 left-4 z-40 lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
           <SidebarContent onNavigate={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
+
+      {/* Bottom Navigation para Mobile (App Style) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-t border-zinc-200/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-around h-20 px-4">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              cn(
+                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+              )
+            }
+          >
+            <LayoutDashboard className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-tight">Home</span>
+          </NavLink>
+
+          <NavLink
+            to="/alunos"
+            className={({ isActive }) =>
+              cn(
+                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+              )
+            }
+          >
+            <Users className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-tight">Alunos</span>
+          </NavLink>
+
+          {/* Botão Central de Menu */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex flex-col items-center justify-center -translate-y-4 bg-gradient-to-br from-indigo-600 to-blue-700 h-16 w-16 rounded-2xl shadow-lg shadow-indigo-200 active:scale-90 transition-transform"
+          >
+            <Menu className="h-7 w-7 text-white" />
+          </button>
+
+          <NavLink
+            to="/financeiro"
+            className={({ isActive }) =>
+              cn(
+                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+              )
+            }
+          >
+            <CreditCard className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-tight">Cobranças</span>
+          </NavLink>
+
+          <NavLink
+            to="/perfil-escola"
+            className={({ isActive }) =>
+              cn(
+                "flex flex-col items-center gap-1.5 transition-all duration-300",
+                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+              )
+            }
+          >
+            <UserCog className="h-6 w-6" />
+            <span className="text-[10px] font-bold tracking-tight">Perfil</span>
+          </NavLink>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="lg:pl-64">
@@ -268,7 +334,7 @@ export function AdminLayout() {
               </Button>
             </div>
           ) : (
-            <div className="pb-24 lg:pb-0">
+            <div className="pb-32 lg:pb-0">
                <Outlet />
             </div>
           )}

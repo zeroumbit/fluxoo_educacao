@@ -34,8 +34,10 @@ import {
   Pencil,
   Trash2,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft
 } from 'lucide-react'
+import { MatriculasListPageMobile } from './MatriculasListPage.mobile'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),
@@ -189,13 +191,23 @@ export default function MatriculaPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleCloseDialog(); else setDialogOpen(true) }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
+            <Button className="hidden lg:flex bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
               <Plus className="mr-2 h-4 w-4" /> Nova Matrícula
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[800px]">
-            <DialogHeader><DialogTitle>{isEditing ? 'Editar Matrícula' : 'Nova Matrícula / Rematrícula'}</DialogTitle></DialogHeader>
-            <form id="matricula-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <DialogContent className="max-w-[800px] max-sm:h-[100dvh] max-sm:max-w-none max-sm:rounded-none border-0 flex flex-col p-0">
+            <DialogHeader className="p-6 pb-0 sm:block flex flex-row items-center gap-4">
+               <button onClick={handleCloseDialog} className="lg:hidden p-2 -ml-2">
+                  <ChevronLeft className="h-6 w-6 text-slate-900" />
+               </button>
+               <div>
+                <DialogTitle className="text-xl font-black tracking-tight">{isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}</DialogTitle>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mt-0.5">Gestão Acadêmica</p>
+               </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <form id="matricula-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
                   <RadioGroup
@@ -326,16 +338,25 @@ export default function MatriculaPage() {
                 )}
               </div>
 
-              <DialogFooter className="sm:justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={form.formState.isSubmitting}>Cancelar</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{isEditing ? 'Salvar' : 'Confirmar'}</Button>
-              </DialogFooter>
+              <div className="pt-6 pb-10 lg:pb-0 flex flex-col lg:flex-row lg:justify-end gap-3 border-t lg:border-0">
+                <Button type="button" variant="ghost" className="lg:variant-outline h-12 lg:h-10 order-2 lg:order-1" onClick={handleCloseDialog} disabled={form.formState.isSubmitting}>Cancelar</Button>
+                <Button type="submit" className="h-12 lg:h-10 order-1 lg:order-2 bg-indigo-600" disabled={form.formState.isSubmitting}>{isEditing ? 'Salvar Alterações' : 'Finalizar Matrícula'}</Button>
+              </div>
             </form>
+           </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
+      <div className="lg:hidden">
+        <MatriculasListPageMobile 
+          matriculas={matriculas || []} 
+          onNew={() => setDialogOpen(true)}
+          onEdit={handleEdit}
+        />
+      </div>
+
+      <Card className="hidden lg:block border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
         <CardContent className="p-0">
           <Table>
             <TableHeader className="bg-slate-50">
