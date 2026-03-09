@@ -222,17 +222,61 @@ export function FuncionariosPage() {
   })
   const userForm = useForm<UserFormData>({ resolver: zodResolver(userSchema) as any })
 
-  // Transforma o catálogo em options para o MultiSelect
-  const funcaoOptions = useMemo(() =>
-    (funcoesCatalogo as any[]).map(f => ({ value: f.nome, label: f.nome, group: f.categoria })),
-    [funcoesCatalogo]
-  )
+  // Ordem personalizada das categorias (grupos) solicitada pelo usuário
+  const CATEGORY_ORDER = [
+    '1. Direção e Gestão Geral',
+    '3. Corpo Docente',
+    '2. Coordenação e Supervisão Pedagógica',
+    '4. Equipe Técnico-Pedagógica',
+    '5. Secretaria e Administração',
+    '6. Equipe de Apoio Pedagógico',
+    '7. Biblioteca e Laboratórios',
+    '8. Orientação e Disciplina',
+    '9. Equipe de Apoio Operacional',
+    '10. Tecnologia e Comunicação',
+    '11. Manutenção e Infraestrutura',
+    '12. Serviços Terceirizados',
+    '13. Atendimento e Comunidade',
+    '14. Gestão Financeira e Comercial',
+    '15. Outros Cargos Específicos'
+  ]
 
-  // Categorias únicas (para o modal de nova função)
-  const categorias = useMemo(() =>
-    Array.from(new Set((funcoesCatalogo as any[]).map(f => f.categoria))).sort(),
-    [funcoesCatalogo]
-  )
+  // Transforma o catálogo em opções para o MultiSelect com ordenação customizada
+  const funcaoOptions = useMemo(() => {
+    const options = (funcoesCatalogo as any[]).map(f => ({ 
+      value: f.nome, 
+      label: f.nome, 
+      group: f.categoria 
+    }))
+
+    return options.sort((a, b) => {
+      const idxA = CATEGORY_ORDER.indexOf(a.group)
+      const idxB = CATEGORY_ORDER.indexOf(b.group)
+      
+      if (idxA !== idxB) {
+        if (idxA === -1) return 1
+        if (idxB === -1) return -1
+        return idxA - idxB
+      }
+      
+      return a.label.localeCompare(b.label)
+    })
+  }, [funcoesCatalogo])
+
+  // Categorias únicas com a mesma ordenação customizada (para o modal de nova função)
+  const categorias = useMemo(() => {
+    const uniqueCats = Array.from(new Set((funcoesCatalogo as any[]).map(f => f.categoria)))
+    
+    return uniqueCats.sort((a, b) => {
+      const idxA = CATEGORY_ORDER.indexOf(a)
+      const idxB = CATEGORY_ORDER.indexOf(b)
+      
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      return a.localeCompare(b)
+    })
+  }, [funcoesCatalogo])
 
   const handleSalarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSalarioInput(e.target.value)
@@ -375,7 +419,7 @@ export function FuncionariosPage() {
                 <div className="space-y-2">
                   <Label>Mês de Referência</Label>
                   <Select value={String(mesFolha)} onValueChange={(v) => setMesFolha(Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Mês" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Mês" /></SelectTrigger>
                     <SelectContent>
                       {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((m, i) => (
                         <SelectItem key={i+1} value={String(i+1)}>{m}</SelectItem>
@@ -386,7 +430,7 @@ export function FuncionariosPage() {
                 <div className="space-y-2">
                   <Label>Ano</Label>
                   <Select value={String(anoFolha)} onValueChange={(v) => setAnoFolha(Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Ano" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Ano" /></SelectTrigger>
                     <SelectContent>
                       {[2024, 2025, 2026, 2027].map(a => (
                         <SelectItem key={a} value={String(a)}>{a}</SelectItem>
