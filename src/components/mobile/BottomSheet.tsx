@@ -36,16 +36,16 @@ export function BottomSheet({
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* Sheet — centralização via left-0/right-0/mx-auto, SEM translateX no motion */}
           <motion.div
             className={cn(
-              "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] z-[101] bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden",
+              "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[640px] z-[101] bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden",
               sizeVariants[size]
             )}
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            initial={{ y: '100%', translateX: '-50%' }}
-            animate={{ y: 0, translateX: '-50%' }}
-            exit={{ y: '100%', translateX: '-50%' }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             drag="y"
             dragConstraints={{ top: 0 }}

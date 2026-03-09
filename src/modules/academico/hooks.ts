@@ -6,6 +6,14 @@ export function useMatriculas() {
   const { authUser } = useAuth()
   return useQuery({ queryKey: ['matriculas', authUser?.tenantId], queryFn: () => academicoService.listarMatriculas(authUser!.tenantId), enabled: !!authUser?.tenantId })
 }
+export function useMatricula(id: string | null) {
+  const { authUser } = useAuth()
+  return useQuery({ 
+    queryKey: ['matricula', id, authUser?.tenantId], 
+    queryFn: () => academicoService.listarMatriculas(authUser!.tenantId).then(list => list.find((m: any) => m.id === id)), 
+    enabled: !!authUser?.tenantId && !!id 
+  })
+}
 export function useCriarMatricula() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => academicoService.criarMatricula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) })
