@@ -84,6 +84,9 @@ export type Aluno = {
   nome_social: string | null
   data_nascimento: string
   cpf: string | null
+  rg: string | null
+  genero: string | null
+  foto_url: string | null
   patologias: string[] | null
   medicamentos: string[] | null
   observacoes_saude: string | null
