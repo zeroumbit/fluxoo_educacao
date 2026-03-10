@@ -14,7 +14,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check-env": "node scripts/check-env.js"
+    "check-env": "node scripts/check-env.js",
+    "git:fix": "powershell scripts/fix-git-lock.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

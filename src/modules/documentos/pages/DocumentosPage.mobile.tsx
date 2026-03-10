@@ -423,7 +423,8 @@ export function DocumentosPageMobile() {
                             </div>
                         )}
                       </NativeCard>
-                    </motion.div>
+                    </div>
+                  </motion.div>
                  ))
                )}
             </div>
@@ -540,6 +541,7 @@ export function DocumentosPageMobile() {
       )}
 
       {/* Emission Sheet */}
+      <BottomSheet 
         isOpen={isEmitModalOpen} 
         onClose={() => setIsEmitModalOpen(false)} 
         title="Emissão Rápida" 
