@@ -133,8 +133,8 @@ export function FinanceiroPageMobile() {
   const filteredCobrancas = useMemo(() => {
     if (!cobrancas) return []
     return cobrancas.filter(c => 
-      c.alunos?.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+      ((c as any).alunos?.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()))
     )
   }, [cobrancas, searchTerm])
 
@@ -229,7 +229,7 @@ export function FinanceiroPageMobile() {
           <ArrowLeft className="h-5 w-5 text-slate-500" />
         </button>
       }
-      rightAction={
+      rightActions={
         <button onClick={() => setHelpOpen(true)} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
           <HelpCircle className="h-5 w-5 text-indigo-500" />
         </button>
@@ -350,14 +350,14 @@ export function FinanceiroPageMobile() {
 
                       {/* Middle Row: Main Data */}
                       <div className="flex justify-between items-start gap-4">
-                         <div className="flex-1 min-w-0">
-                           <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight line-clamp-2">
-                             {cob.alunos?.nome_completo || 'Cobrança Avulsa / Externo'}
-                           </h3>
-                           <p className="text-[11px] font-medium text-slate-500 mt-1.5 leading-tight italic">
-                             {cob.descricao}
-                           </p>
-                         </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight line-clamp-2">
+                              {(cob as any).alunos?.nome_completo || 'Cobrança Avulsa / Externo'}
+                            </h3>
+                            <p className="text-[11px] font-medium text-slate-500 mt-1.5 leading-tight italic">
+                              {cob.descricao}
+                            </p>
+                          </div>
                          <div className="text-right shrink-0">
                             <div className={cn(
                                "text-xl font-black tracking-tight leading-none",
@@ -584,7 +584,7 @@ export function FinanceiroPageMobile() {
             <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 space-y-6">
                <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Aluno / Benemérito</p>
-                  <p className="font-bold text-slate-900 dark:text-white text-lg leading-tight">{selectedCobranca.alunos?.nome_completo || 'Cobrança Avulsa'}</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-lg leading-tight">{(selectedCobranca as any).alunos?.nome_completo || 'Cobrança Avulsa'}</p>
                </div>
 
                <div className="grid grid-cols-2 gap-8">

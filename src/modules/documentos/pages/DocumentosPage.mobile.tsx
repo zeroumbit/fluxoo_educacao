@@ -374,7 +374,12 @@ export function DocumentosPageMobile() {
                ) : (
                  solicitacoes.map((sol: any, idx: number) => (
                     <motion.div key={sol.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                      <NativeCard className="p-4 space-y-4 border-l-4" style={{ borderLeftColor: sol.status === 'pendente' ? '#f59e0b' : '#10b981' }}>
+                    <div className="relative group">
+                      <div 
+                        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl z-20" 
+                        style={{ backgroundColor: sol.status === 'pendente' ? '#f59e0b' : '#10b981' }} 
+                      />
+                      <NativeCard className="p-4 space-y-4">
                         <div className="flex justify-between items-start">
                             <div className="flex-1 min-w-0 pr-2">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -454,7 +459,7 @@ export function DocumentosPageMobile() {
                             <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{m.descricao_curta}</p>
                           </div>
                           <div className={cn("h-8 w-8 rounded-full flex items-center justify-center shrink-0", m.ativa ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400")}>
-                             {m.ativa ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
+                             {m.ativa ? <ShieldCheck className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                           </div>
                         </div>
                         <div className="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/50 mt-1">
@@ -535,11 +540,10 @@ export function DocumentosPageMobile() {
       )}
 
       {/* Emission Sheet */}
-      <BottomSheet 
         isOpen={isEmitModalOpen} 
         onClose={() => setIsEmitModalOpen(false)} 
         title="Emissão Rápida" 
-        size="lg"
+        size="full"
       >
          <div className="space-y-6 pt-2 pb-12">
             <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
