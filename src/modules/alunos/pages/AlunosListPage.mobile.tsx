@@ -1,198 +1,240 @@
-import React, { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAlunos } from '../hooks'
+import { useAlunos, useExcluirAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
-import { 
-  Search, 
-  Plus, 
-  User, 
-  ChevronRight, 
-  Filter, 
-  Loader2,
-  GraduationCap,
-  Sparkles,
-  MoreVertical,
-  UserPlus
+import {
+  Search,
+  Plus,
+  User,
+  ChevronRight,
+  Filter,
+  ArrowLeft,
+  X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { get, set } from 'idb-keyval'
 
-/**
- * VERSÃO MOBILE DA LISTAGEM DE ALUNOS (MOBILE FIRST PRO)
- * Otimizada para escaneamento rápido, busca fluida e visual premium.
- */
+const CACHE_KEY = 'alunos_list_cache'
+
 export function AlunosListPageMobile() {
   const navigate = useNavigate()
-  const { data: alunos, isLoading } = useAlunos()
+  const { data: alunos, isLoading, refetch } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
-  const [searchTerm, setSearchTerm] = useState('')
+  const excluirAluno = useExcluirAluno()
 
-  const alunosComMatriculaIds = React.useMemo(() => {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [cachedAlunos, setCachedAlunos] = useState<any[]>([])
+
+  useEffect(() => {
+    get(CACHE_KEY).then(val => { if (val) setCachedAlunos(val) })
+  }, [])
+
+  useEffect(() => {
+    if (alunos) set(CACHE_KEY, alunos)
+  }, [alunos])
+
+  const displayAlunos = (alunos || cachedAlunos) as any[]
+
+  const alunosComMatriculaIds = useMemo(() => {
     return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
   }, [matriculasAtivas])
 
-  const filteredAlunos = (alunos as any[])?.filter(a => 
-    a.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.cpf?.includes(searchTerm)
-  )
+  const filteredAlunos = useMemo(() => {
+    return displayAlunos?.filter(a =>
+      a.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.cpf?.includes(searchTerm)
+    )
+  }, [displayAlunos, searchTerm])
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
+  const onRefresh = async () => { await refetch() }
+
+  const handleExcluir = async (aluno: any) => {
+    if (aluno.status === 'ativo') {
+      toast.error('Não é possível excluir um aluno ativo.', {
+        description: 'Desative-o primeiro.',
+        position: 'top-center'
+      })
     }
   }
 
-  const item = {
-    hidden: { x: -10, opacity: 0 },
-    show: { x: 0, opacity: 1 }
-  }
-
-  if (isLoading) {
+  // Skeleton Loading
+  if (isLoading && !cachedAlunos.length) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-4">
-        <motion.div
-           animate={{ rotate: 360 }}
-           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        >
-          <Loader2 className="h-10 w-10 text-indigo-500" />
-        </motion.div>
-        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Carregando alunos...</p>
+      <div className="min-h-screen bg-slate-50/50 pb-32">
+        <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-4">
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          {[1, 2, 3, 4, 5].map(i => (
+            <Skeleton key={i} className="h-[88px] w-full rounded-2xl" />
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-32">
-       {/* Top Bar Fixa / Glassmorphism */}
-       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-4 space-y-4">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+      {/* ── Sticky Top: Search ── */}
+      <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
+        <div className="mx-auto w-full max-w-[640px] px-4 py-3 space-y-3">
+          {/* Header row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-               <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-                  <UserPlus className="h-5 w-5" />
-               </div>
-               <div>
-                  <h1 className="text-xl font-black text-slate-900 tracking-tight">Alunos</h1>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                     {filteredAlunos?.length || 0} Registros
-                  </p>
-               </div>
-            </div>
-            <button 
-               onClick={() => navigate('/alunos/novo')}
-               className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-200 active:scale-90 transition-transform"
-            >
-               <Plus className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input 
-                placeholder="Buscar por nome ou CPF..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11 h-12 rounded-[1.2rem] border-0 shadow-none bg-slate-100/50 focus-visible:ring-indigo-500 font-medium text-sm"
-              />
-            </div>
-            <Button variant="outline" className="h-12 w-12 rounded-[1.2rem] border-0 shadow-none bg-slate-100/50">
-              <Filter className="h-4 w-4 text-slate-600" />
-            </Button>
-          </div>
-       </div>
-
-       {/* Lista de Alunos */}
-       <motion.div 
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="px-4 py-6 space-y-3"
-       >
-          <AnimatePresence>
-            {(filteredAlunos as any[])?.map((aluno) => (
-              <motion.div key={aluno.id} variants={item} layout>
-                <Card 
-                  onClick={() => navigate(`/alunos/${aluno.id}`)}
-                  className="rounded-[2rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white relative group border border-slate-50"
-                >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-indigo-600 shrink-0 border border-slate-100 overflow-hidden">
-                      {aluno.foto_url ? (
-                        <img src={aluno.foto_url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                      ) : (
-                        <div className="flex flex-col items-center">
-                           <User className="h-8 w-8 text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-900 text-sm truncate leading-none mb-1.5">{aluno.nome_completo}</h3>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge className={`text-[8px] font-black uppercase tracking-tighter px-2 border-0 rounded-lg ${
-                          aluno.status === 'ativo' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                        }`}>
-                          {aluno.status}
-                        </Badge>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 shrink-0 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-50">
-                          <div className={`h-1.5 w-1.5 rounded-full ${alunosComMatriculaIds.has(aluno.id) ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]'}`} />
-                          <span className="truncate max-w-[80px]">{aluno.filiais?.nome_unidade || 'S/ Unidade'}</span>
-                        </div>
-                      </div>
-                      <p className="text-[9px] font-bold text-slate-300 mt-2 uppercase tracking-[0.1em]">CPF: {aluno.cpf || 'Não informado'}</p>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-2">
-                       <ChevronRight className="h-5 w-5 text-slate-200 group-hover:text-indigo-400 transition-colors" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-
-          {filteredAlunos?.length === 0 && !isLoading && (
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="py-24 text-center space-y-4"
-            >
-              <div className="h-24 w-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto border-2 border-dashed border-slate-200/50">
-                 <Search className="h-10 w-10 text-slate-200" />
-              </div>
-              <div>
-                 <p className="text-sm font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Sem resultados</p>
-                 <p className="text-xs text-slate-300 font-medium">Tente buscar por outro termo ou CPF.</p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setSearchTerm('')}
-                className="rounded-xl h-10 border-slate-200 text-indigo-600 font-black text-[10px] uppercase tracking-widest"
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => navigate('/dashboard')}
+                className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
               >
-                 Limpar Busca
-              </Button>
-            </motion.div>
-          )}
-       </motion.div>
+                <ArrowLeft className="h-4 w-4 text-slate-500" />
+              </motion.button>
+              <div>
+                <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Alunos</h1>
+                <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                  {filteredAlunos?.length || 0} registros
+                </p>
+              </div>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setIsFilterOpen(true)}
+              className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+            >
+              <Filter className="h-4 w-4 text-slate-500" />
+            </motion.button>
+          </div>
 
-       {/* Botão Flutuante (FAB) para Adicionar Aluno */}
-       <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate('/alunos/novo')}
-          className="fixed bottom-24 right-6 h-16 w-16 rounded-full bg-indigo-600 shadow-2xl shadow-indigo-300 flex items-center justify-center text-white z-50 border-4 border-white"
-       >
-          <Sparkles className="h-7 w-7" />
-       </motion.button>
+          {/* Search input */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome ou CPF..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-11 rounded-xl border-0 bg-slate-100/80 dark:bg-slate-800/80 focus-visible:ring-indigo-500 text-base font-medium"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1">
+                <X className="h-4 w-4 text-slate-400" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="mx-auto w-full max-w-[640px] px-4 pt-5">
+        <PullToRefresh onRefresh={onRefresh}>
+          <div className="space-y-3">
+            <AnimatePresence mode="popLayout">
+              {filteredAlunos?.map((aluno, idx) => (
+                <motion.div
+                  key={aluno.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03, duration: 0.25 }}
+                  layout
+                >
+                  <NativeCard
+                    swipeable
+                    onClick={() => navigate(`/alunos/${aluno.id}`)}
+                    onDelete={() => handleExcluir(aluno)}
+                    onEdit={() => navigate(`/alunos/${aluno.id}?edit=true`)}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      {/* Avatar */}
+                      <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-600 overflow-hidden">
+                        {aluno.foto_url ? (
+                          <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-6 w-6 text-slate-300" />
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-[14px] truncate leading-tight">
+                            {aluno.nome_completo}
+                          </h3>
+                          <Badge className={`text-[8px] font-black h-[18px] px-1.5 rounded-md border-0 shrink-0 ${
+                            alunosComMatriculaIds.has(aluno.id)
+                              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30'
+                              : 'bg-amber-50 text-amber-500 dark:bg-amber-900/30'
+                          }`}>
+                            {alunosComMatriculaIds.has(aluno.id) ? 'ATIVO' : 'PEND.'}
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate leading-none">
+                          {aluno.filiais?.nome_unidade || 'Sem Unidade'}
+                        </p>
+                      </div>
+
+                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 ml-1" />
+                    </div>
+                  </NativeCard>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {/* Empty State */}
+            {filteredAlunos?.length === 0 && (
+              <div className="py-16 text-center">
+                <div className="h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800 mx-auto flex items-center justify-center mb-4">
+                  <Search className="h-7 w-7 text-slate-200" />
+                </div>
+                <p className="font-black text-slate-300 text-sm mb-1">Nenhum resultado</p>
+                <p className="text-slate-400 text-xs">Tente outra busca.</p>
+                <Button variant="outline" onClick={() => setSearchTerm('')} className="mt-4 rounded-xl text-xs font-bold">
+                  Limpar busca
+                </Button>
+              </div>
+            )}
+          </div>
+        </PullToRefresh>
+      </div>
+
+      {/* FAB */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => navigate('/alunos/novo')}
+        className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+      >
+        <Plus className="h-6 w-6" />
+      </motion.button>
+
+      {/* Filter Bottom Sheet */}
+      <BottomSheet
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        title="Filtrar Alunos"
+        size="half"
+      >
+        <div className="space-y-6 pt-4">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</label>
+            <div className="flex gap-2">
+              {['Todos', 'Ativos', 'Inativos'].map(s => (
+                <Button key={s} variant="outline" className="flex-1 rounded-xl h-12 text-xs font-bold active:bg-indigo-50 active:text-indigo-700 active:border-indigo-200">
+                  {s}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <Button className="w-full h-14 rounded-2xl bg-indigo-600 font-bold" onClick={() => setIsFilterOpen(false)}>
+            Aplicar
+          </Button>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

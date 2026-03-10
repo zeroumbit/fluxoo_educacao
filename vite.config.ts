@@ -68,10 +68,9 @@ export default defineConfig({
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
             if (id.includes('@react-pdf/renderer')) return 'pdf-renderer';
-            if (id.includes('lucide-react')) return 'icons';
-            if (id.includes('@radix-ui')) return 'ui-vendor';
-            if (id.includes('framer-motion')) return 'animations';
             if (id.includes('date-fns')) return 'date-utils';
+            // Mantendo bibliotecas de UI (Radix, Framer Motion, Lucide) no mesmo chunk do React
+            // para evitar problemas de dependências entre chunks no runtime
             return 'vendor';
           }
         }

@@ -1,147 +1,197 @@
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
+  Search, 
+  Plus, 
   User, 
   ChevronRight, 
-  GraduationCap, 
-  Calendar,
+  Filter, 
+  X,
+  GraduationCap,
   Layers,
+  Calendar,
   Clock,
-  Plus
+  ArrowLeft,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { useMatriculas, useExcluirMatricula } from '../hooks'
+import { get, set } from 'idb-keyval'
+import { toast } from 'sonner'
 
-interface MatriculasListPageMobileProps {
-  matriculas: any[]
-  onNew: () => void
-  onEdit: (m: any) => void
-}
+const CACHE_KEY = 'matriculas_list_cache'
 
-export function MatriculasListPageMobile({ matriculas, onNew, onEdit }: MatriculasListPageMobileProps) {
+export function MatriculasListPageMobile() {
   const navigate = useNavigate()
+  const { data: matriculas, isLoading, refetch } = useMatriculas()
+  const deleteMatricula = useExcluirMatricula()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [cachedData, setCachedData] = useState<any[]>([])
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+  useEffect(() => {
+    get(CACHE_KEY).then(val => { if (val) setCachedData(val) })
+  }, [])
+
+  useEffect(() => {
+    if (matriculas) set(CACHE_KEY, matriculas)
+  }, [matriculas])
+
+  const displayData = (matriculas || cachedData) as any[]
+  const isActuallyLoading = isLoading && !cachedData.length
+
+  const filteredData = useMemo(() => {
+    return displayData?.filter(m => 
+      m.aluno?.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.serie_ano?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [displayData, searchTerm])
+
+  const onRefresh = async () => { await refetch() }
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    try {
+      await deleteMatricula.mutateAsync(deleteId)
+      toast.success('Matrícula excluída')
+      setDeleteId(null)
+    } catch {
+      toast.error('Erro ao excluir')
     }
   }
 
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
+  if (isActuallyLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+        <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-4">
+          <Skeleton className="h-12 w-full rounded-2xl" />
+          {[1, 2, 3, 4, 5].map(i => (
+            <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6 pb-24">
-      {/* Header com Ação Principal */}
-      <div className="flex items-center justify-between px-1">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Matrículas</h1>
-          <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Fluxo Acadêmico</p>
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+      <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
+        <div className="mx-auto w-full max-w-[640px] px-4 py-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate('/dashboard')} className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <ArrowLeft className="h-4 w-4 text-slate-500" />
+              </motion.button>
+              <div>
+                <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Matrículas</h1>
+                <p className="text-[10px] font-bold text-slate-400 mt-0.5">{filteredData?.length || 0} registros</p>
+              </div>
+            </div>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsFilterOpen(true)} className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Filter className="h-4 w-4 text-slate-500" />
+            </motion.button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input 
+              placeholder="Buscar por aluno ou turma..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-11 rounded-xl border-0 bg-slate-100/80 dark:bg-slate-800/80 focus-visible:ring-indigo-500 text-base font-medium"
+            />
+            {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1"><X className="h-4 w-4 text-slate-400" /></button>}
+          </div>
         </div>
-        <button
-          onClick={onNew}
-          className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 active:scale-90 transition-transform"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
       </div>
 
-      {/* Lista de Matrículas (App Style) */}
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="space-y-4"
-      >
-        {matriculas?.map((m, idx) => (
-          <motion.div key={m.id} variants={item}>
-            <Card 
-              onClick={() => onEdit(m)}
-              className="rounded-[2rem] border-0 shadow-sm overflow-hidden active:scale-[0.98] transition-all bg-white group border border-slate-50"
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  {/* Avatar do Aluno */}
-                  <div className="h-14 w-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-inner">
-                    <User className="h-7 w-7 opacity-80" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-bold text-slate-900 truncate pr-2 leading-tight">
-                        {m.aluno?.nome_completo || 'Sem Nome'}
-                      </h3>
-                      <Badge 
-                        variant={m.tipo === 'nova' ? 'default' : 'outline'} 
-                        className="text-[8px] font-black uppercase tracking-tighter shrink-0 rounded-lg px-2"
-                      >
-                        {m.tipo === 'nova' ? 'NOVA' : 'REMAT'}
-                      </Badge>
+      <div className="mx-auto w-full max-w-[640px] px-4 pt-5">
+        <PullToRefresh onRefresh={onRefresh}>
+          <div className="space-y-3">
+            <AnimatePresence mode="popLayout">
+              {filteredData?.map((m, idx) => (
+                <motion.div key={m.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03, duration: 0.25 }} layout>
+                  <NativeCard 
+                    swipeable 
+                    onClick={() => navigate(`/alunos/${m.aluno_id}`)}
+                    onEdit={() => navigate(`/matriculas/nova?id=${m.id}`)}
+                    onDelete={() => setDeleteId(m.id)}
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-600 overflow-hidden">
+                        {m.aluno?.foto_url ? <img src={m.aluno.foto_url} alt="" className="w-full h-full object-cover" /> : <User className="h-6 w-6 text-slate-300" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1 gap-2">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-[14px] truncate leading-tight">{m.aluno?.nome_completo || 'Sem Nome'}</h3>
+                          <Badge className={`text-[8px] font-black h-[18px] px-1.5 rounded-md border-0 shrink-0 ${m.status === 'ativa' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-500'}`}>{m.status.toUpperCase()}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100/50"><Layers className="h-2.5 w-2.5 text-indigo-500" /><span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase">{m.serie_ano}</span></div>
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100"><Calendar className="h-2.5 w-2.5 text-slate-400" /><span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">{m.ano_letivo}</span></div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 mt-1" />
                     </div>
+                  </NativeCard>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-                    {/* Detalhes do Curso em Chips */}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100/50">
-                        <Layers className="h-3 w-3 text-indigo-500" />
-                        <span className="text-[10px] font-black text-indigo-700 uppercase tracking-tighter">{m.serie_ano}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100">
-                        <Calendar className="h-3 w-3 text-slate-400" />
-                        <span className="text-[10px] font-bold text-slate-500">{m.ano_letivo}</span>
-                      </div>
-                    </div>
-
-                    {/* Footer do Card com Status e CTA */}
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "h-2 w-2 rounded-full shadow-[0_0_8px]",
-                          m.status === 'ativa' ? "bg-emerald-500 shadow-emerald-200" : "bg-red-400 shadow-red-100"
-                        )} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{m.status}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/alunos/${m.aluno_id}`)
-                          }}
-                          className="text-[10px] font-black uppercase text-indigo-600 active:opacity-50"
-                        >
-                          Perfil
-                        </button>
-                        <ChevronRight className="h-4 w-4 text-slate-300 group-active:text-indigo-400" />
-                      </div>
-                    </div>
-                  </div>
+            {filteredData?.length === 0 && (
+              <div className="py-20 text-center">
+                <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 border border-slate-50">
+                   <GraduationCap className="h-10 w-10 text-slate-300" />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-
-        {(!matriculas || matriculas.length === 0) && (
-          <div className="py-20 text-center space-y-4">
-            <div className="h-20 w-20 bg-slate-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 border border-slate-50">
-               <GraduationCap className="h-10 w-10 text-slate-300" />
-            </div>
-            <h3 className="text-lg font-black text-slate-900 tracking-tight leading-none">Nenhuma Matrícula</h3>
-            <p className="text-xs font-medium text-slate-400 max-w-[200px] mx-auto leading-relaxed">
-              Inicie um novo processo acadêmico clicando no botão acima.
-            </p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Nenhuma Matrícula</h3>
+                <p className="text-xs font-medium text-slate-400 max-w-[200px] mx-auto mt-2 leading-relaxed">Inicie um novo processo clicando no botão abaixo.</p>
+              </div>
+            )}
           </div>
-        )}
-      </motion.div>
+        </PullToRefresh>
+      </div>
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate('/matriculas/nova')} className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950">
+        <Plus className="h-6 w-6" />
+      </motion.button>
+
+      <BottomSheet isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} title="Filtrar Matrículas" size="half">
+        <div className="space-y-6 pt-4">
+          <div className="space-y-3">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['Todos', 'Ativa', 'Concluída', 'Cancelada'].map(s => <Button key={s} variant="outline" className="rounded-xl h-12 text-xs font-bold">{s}</Button>)}
+            </div>
+          </div>
+          <Button className="w-full h-14 rounded-2xl bg-indigo-600 font-bold" onClick={() => setIsFilterOpen(false)}>Aplicar Filtros</Button>
+        </div>
+      </BottomSheet>
+
+      {/* Delete Confirmation Sheet (Rule 4) */}
+      <BottomSheet isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Excluir Matrícula">
+         <div className="space-y-6 pt-6 text-center">
+            <div className="h-20 w-20 bg-red-50 rounded-[2rem] flex items-center justify-center mx-auto mb-2"><Trash2 className="h-10 w-10 text-red-500" /></div>
+            <div className="space-y-1 px-4">
+               <h4 className="text-lg font-black text-slate-900">Confirmar Exclusão</h4>
+               <p className="text-xs text-slate-500 font-medium">Esta ação não pode ser desfeita. Deseja realmente excluir esta matrícula?</p>
+            </div>
+            <div className="flex gap-3 mt-6">
+               <Button variant="outline" className="flex-1 h-14 rounded-2xl font-bold" onClick={() => setDeleteId(null)}>Cancelar</Button>
+               <Button className="flex-1 h-14 rounded-2xl bg-red-600 font-bold" onClick={handleDelete} disabled={deleteMatricula.isPending}>
+                  {deleteMatricula.isPending ? 'Excluindo...' : 'Sim, Excluir'}
+               </Button>
+            </div>
+         </div>
+      </BottomSheet>
     </div>
   )
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ')
 }
