@@ -295,15 +295,15 @@ export function PortalLojaPage() {
             
             {/* Header do Sheet */}
             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 rounded-[24px] bg-teal-50 text-teal-600 flex items-center justify-center shadow-sm">
-                     <ShoppingCart size={32} />
+                    <ShoppingCart size={32} />
                   </div>
                   <div className="space-y-1">
-                     <h3 className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase leading-none">Checkout</h3>
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] font-sans">Confirmação de Reserva</p>
+                    <SheetTitle className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase leading-none">Checkout</SheetTitle>
+                    <SheetDescription className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] font-sans">Confirmação de Reserva</SheetDescription>
                   </div>
-               </div>
+                </div>
                <button 
                   onClick={() => setSelectedProduct(null)}
                   className="w-16 h-16 rounded-[24px] bg-slate-50 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all active:scale-90"

@@ -4,7 +4,7 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,6 +146,8 @@ export function SuperAdminLayout() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
+          <SheetTitle className="sr-only">Menu Administrativo</SheetTitle>
+          <SheetDescription className="sr-only">Navegação avançada para super administradores.</SheetDescription>
           <SidebarContent onNavigate={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>

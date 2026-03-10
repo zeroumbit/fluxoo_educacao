@@ -427,15 +427,15 @@ export default function PortalCobrancasPage() {
 function HeaderClose({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex items-center justify-between">
-       <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-             <DollarSign size={20} />
+            <DollarSign size={20} />
           </div>
           <div>
-             <h3 className="text-lg font-bold text-slate-800">Checkout</h3>
-             <p className="text-[10px] text-slate-400">Pagamento Seguro</p>
+            <SheetTitle className="text-lg font-bold text-slate-800">Checkout</SheetTitle>
+            <SheetDescription className="text-[10px] text-slate-400">Pagamento Seguro</SheetDescription>
           </div>
-       </div>
+        </div>
        <button 
           onClick={() => { vibrate(15); onClose(); }}
           className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 active:scale-90"

@@ -6,7 +6,7 @@ import { useDashboard } from '@/modules/alunos/dashboard.hooks'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
   LayoutDashboard,
   Users,
@@ -246,6 +246,8 @@ export function AdminLayout() {
       {/* Mobile Sidebar - Agora acionado pelo BottomNav */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
+          <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+          <SheetDescription className="sr-only">Acesse as funcionalidades do sistema através do menu lateral.</SheetDescription>
           <SidebarContent onNavigate={() => setSidebarOpen(false)} />
         </SheetContent>
       </Sheet>
