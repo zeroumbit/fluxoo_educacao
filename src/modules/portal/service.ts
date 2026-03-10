@@ -166,20 +166,20 @@ export const portalService = {
         .eq('tenant_id', tenantId)
         .gte('data_aula', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
       ,
-      // Cobranças pendentes
+      // Cobranças pendentes (todas)
       (supabase.from('cobrancas' as any) as any)
-        .select('id, valor, status, data_vencimento')
+        .select('id, valor, status, data_vencimento, descricao')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
-        .in('status', ['a_vencer', 'atrasado'])
+        .in('status', ['a_vencer', 'atrasado', 'pago'])
       ,
       // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
       (supabase.from('mural_avisos' as any) as any)
         .select(`
-          id, 
-          titulo, 
-          conteudo, 
-          created_at, 
+          id,
+          titulo,
+          conteudo,
+          created_at,
           turma_id,
           publico_alvo,
           data_fim,
@@ -195,14 +195,26 @@ export const portalService = {
     const totalPresencas = frequencias.filter((f: any) => f.status === 'presente').length
     const totalFaltas = frequencias.filter((f: any) => f.status === 'falta').length
     const totalJustificadas = frequencias.filter((f: any) => f.status === 'justificada').length
-    
+
     // Percentual: Presenças + Justificadas contam para o índice de frequência legal
     const percentualFrequencia = frequencias.length > 0
       ? Math.round(((totalPresencas + totalJustificadas) / frequencias.length) * 100) : 100
 
     const cobrancas = (cobrancasRes.data as any[]) || []
-    const totalPendente = cobrancas.reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
-    const totalAtrasadas = cobrancas.filter((c: any) => c.status === 'atrasado').length
+    
+    // Separa cobranças de matrícula das demais (mensalidades)
+    const cobrancasMatricula = cobrancas.filter((c: any) => 
+      c.descricao?.toLowerCase().includes('matrícula') || c.descricao?.toLowerCase().includes('matricula')
+    )
+    const cobrancasMensalidade = cobrancas.filter((c: any) => 
+      !c.descricao?.toLowerCase().includes('matrícula') && !c.descricao?.toLowerCase().includes('matricula')
+    )
+    
+    // Total pendente considera apenas mensalidades (matrícula paga não aparece mais)
+    const totalPendente = cobrancasMensalidade
+      .filter((c: any) => ['a_vencer', 'atrasado'].includes(c.status))
+      .reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
+    const totalAtrasadas = cobrancasMensalidade.filter((c: any) => c.status === 'atrasado').length
 
     let todosAvisos = (avisosRes.data as any[]) || []
     todosAvisos = todosAvisos.filter((a: any) => {
@@ -223,6 +235,7 @@ export const portalService = {
         totalPendente,
         totalAtrasadas,
         totalCobrancas: cobrancas.length,
+        cobrancasMatricula, // Retorna cobranças de matrícula para verificação
       },
       avisosRecentes: todosAvisos.slice(0, 3)
     }

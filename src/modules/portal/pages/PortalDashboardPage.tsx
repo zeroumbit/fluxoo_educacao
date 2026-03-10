@@ -342,12 +342,13 @@ export function PortalDashboardPage() {
               <div className="flex justify-center lg:justify-start items-center gap-2 flex-wrap pt-1">
                 {turma?.valor_mensalidade && (
                   <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-semibold px-2 py-0.5 rounded-lg text-[10px]">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)}
+                    Mensalidade: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)}
                   </Badge>
                 )}
-                {alunoSelecionado?.valor_matricula && (
+                {/* Exibe valor da matrícula APENAS se houver cobrança de matrícula pendente ou atrasada */}
+                {dashboard?.financeiro?.cobrancasMatricula?.some((c: any) => ['a_vencer', 'atrasado'].includes(c.status)) && (
                   <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-semibold px-2 py-0.5 rounded-lg text-[10px]">
-                    Matr: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(alunoSelecionado.valor_matricula)}
+                    Matrícula pendente
                   </Badge>
                 )}
               </div>
