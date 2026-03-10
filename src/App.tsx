@@ -7,6 +7,7 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
+import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Admin (Escola)
 import { DashboardPage } from '@/modules/alunos/pages/DashboardPage'
@@ -188,6 +189,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster richColors position="top-right" />
+          <PwaInstallPrompt />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

@@ -43,8 +43,8 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
-      // Only show after a short delay to not annoy the user immediately
-      const timer = setTimeout(() => setIsVisible(true), 3000);
+      // Faster show for "guaranteed" first access
+      const timer = setTimeout(() => setIsVisible(true), 1000);
       return () => clearTimeout(timer);
     };
 
@@ -52,7 +52,7 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
 
     // For iOS, we show manually since there's no native prompt
     if (isIOS) {
-      const timer = setTimeout(() => setIsVisible(true), 4000);
+      const timer = setTimeout(() => setIsVisible(true), 2000);
       return () => clearTimeout(timer);
     }
 

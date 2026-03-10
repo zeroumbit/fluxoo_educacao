@@ -121,82 +121,82 @@ export function MatriculaFormPageWeb() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate('/matriculas')} className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-slate-500">
-          <ArrowLeft size={16} /> Voltar
+        <Button variant="ghost" onClick={() => navigate('/matriculas')} className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-slate-500 hover:text-indigo-600 transition-colors">
+          <ArrowLeft size={16} /> Voltar para listagem
         </Button>
       </div>
 
-      <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50 px-8 py-10 border-b border-slate-100">
-          <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">{editId ? 'Editar Matrícula' : 'Nova Matrícula'}</CardTitle>
-          <CardDescription className="text-sm font-medium text-slate-400 uppercase tracking-widest mt-1">Processo Acadêmico</CardDescription>
+      <Card className="border-0 shadow-md overflow-hidden bg-white">
+        <CardHeader className="pt-[30px] px-8">
+          <CardTitle className="text-xl font-bold text-slate-900">{editId ? 'Editar Matrícula' : 'Nova Matrícula'}</CardTitle>
+          <CardDescription className="text-sm text-slate-500">Preencha os dados acadêmicos do aluno para finalizar o processo.</CardDescription>
         </CardHeader>
         <CardContent className="p-8">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-slate-700">Tipo de Operação *</Label>
               <RadioGroup
                 onValueChange={(v) => form.setValue('tipo', v as any)}
-                className="flex gap-8 p-6 bg-slate-50 rounded-2xl border border-slate-100"
+                className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 w-fit"
                 value={form.getValues('tipo')}
                 disabled={!!editId}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="nova" id="nova" />
-                  <Label htmlFor="nova" className="cursor-pointer font-bold text-slate-700">Nova Matrícula</Label>
+                  <Label htmlFor="nova" className="cursor-pointer font-medium text-slate-700">Nova Matrícula</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="rematricula" id="rematricula" />
-                  <Label htmlFor="rematricula" className="cursor-pointer font-bold text-slate-700">Rematrícula</Label>
+                  <Label htmlFor="rematricula" className="cursor-pointer font-medium text-slate-700">Rematrícula</Label>
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="aluno_id">Aluno *</Label>
               <Select disabled={!!editId} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
-                <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200">
+                <SelectTrigger id="aluno_id" className="h-14 rounded-2xl border-slate-200 bg-white">
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
                   {alunos?.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id} className="font-bold">{a.nome_completo}</SelectItem>
+                    <SelectItem key={a.id} value={a.id} className="font-medium">{a.nome_completo}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ano Letivo *</Label>
-                <Input type="number" {...form.register('ano_letivo')} className="h-12 rounded-xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ano_letivo">Ano Letivo *</Label>
+                <Input id="ano_letivo" type="number" {...form.register('ano_letivo')} className="h-14 rounded-2xl" />
               </div>
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turma/Ano *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="serie_ano">Turma/Ano *</Label>
                 <Select value={form.getValues('serie_ano')} onValueChange={(v) => {
                   form.setValue('serie_ano', v)
                   const t = (turmas as any[])?.find(x => x.nome === v)
                   if (t) form.setValue('turma_id', t.id)
                 }}>
-                  <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200">
+                  <SelectTrigger id="serie_ano" className="h-14 rounded-2xl border-slate-200 bg-white">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent>
                     {(turmas as any[])?.map((t: any) => (
-                      <SelectItem key={t.id} value={t.nome} className="font-bold">{t.nome}</SelectItem>
+                      <SelectItem key={t.id} value={t.nome} className="font-medium">{t.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turno *</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="turno">Turno *</Label>
                 <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
-                  <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200">
+                  <SelectTrigger id="turno" className="h-14 rounded-2xl border-slate-200 bg-white">
                     <SelectValue placeholder="Turno" />
                   </SelectTrigger>
                   <SelectContent>
@@ -207,22 +207,22 @@ export function MatriculaFormPageWeb() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data da Matrícula</Label>
-                <Input type="date" {...form.register('data_matricula')} className="h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Label htmlFor="data_matricula">Data da Matrícula</Label>
+                <Input id="data_matricula" type="date" {...form.register('data_matricula')} className="h-14 rounded-2xl" />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valor da Matrícula (R$)</Label>
-                <Input type="number" step="0.01" {...form.register('valor_matricula')} className="h-12 rounded-xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="valor_matricula">Valor da Matrícula (R$)</Label>
+                <Input id="valor_matricula" type="number" step="0.01" {...form.register('valor_matricula')} className="h-14 rounded-2xl font-bold" />
               </div>
               {editId && (
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
                   <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
-                    <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200">
+                    <SelectTrigger id="status" className="h-14 rounded-2xl border-slate-200 bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -237,7 +237,7 @@ export function MatriculaFormPageWeb() {
 
             <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => navigate('/matriculas')} className="h-12 px-8 rounded-xl font-bold">Cancelar</Button>
-              <Button type="submit" disabled={form.formState.isSubmitting} className="h-12 px-10 rounded-xl bg-indigo-600 font-bold">
+              <Button type="submit" disabled={form.formState.isSubmitting} className="h-12 px-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white transition-all">
                 {form.formState.isSubmitting ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
                 ) : (

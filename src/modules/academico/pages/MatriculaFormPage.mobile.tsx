@@ -155,8 +155,8 @@ export function MatriculaFormPageMobile() {
       </div>
 
       <div className="mx-auto w-full max-w-[640px] px-4 pt-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
-          <div className="space-y-3">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tipo de Operação</Label>
             <RadioGroup
               onValueChange={(v) => form.setValue('tipo', v as any)}
@@ -181,7 +181,7 @@ export function MatriculaFormPageMobile() {
             </RadioGroup>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Aluno *</Label>
             <Select disabled={!!editId} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
               <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
@@ -196,14 +196,14 @@ export function MatriculaFormPageMobile() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ano Letivo *</Label>
-              <Input type="number" {...form.register('ano_letivo')} inputMode="numeric" className="h-14 rounded-2xl text-base font-bold bg-white" />
+              <Input type="number" {...form.register('ano_letivo')} inputMode="numeric" className="h-14 rounded-2xl text-base font-medium" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma/Ano *</Label>
               <Select value={form.getValues('serie_ano')} onValueChange={(v) => form.setValue('serie_ano', v)}>
-                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white">
+                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
                   <SelectValue placeholder="Série" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
@@ -216,42 +216,42 @@ export function MatriculaFormPageMobile() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
               <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
-                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white">
+                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  <SelectItem value="manha">Manhã</SelectItem>
-                  <SelectItem value="tarde">Tarde</SelectItem>
-                  <SelectItem value="integral">Integral</SelectItem>
-                  <SelectItem value="noturno">Noturno</SelectItem>
+                  <SelectItem value="manha" className="py-3">Manhã</SelectItem>
+                  <SelectItem value="tarde" className="py-3">Tarde</SelectItem>
+                  <SelectItem value="integral" className="py-3">Integral</SelectItem>
+                  <SelectItem value="noturno" className="py-3">Noturno</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Data Matrícula</Label>
-              <Input type="date" {...form.register('data_matricula')} className="h-14 rounded-2xl text-base font-bold bg-white" />
+              <Input type="date" {...form.register('data_matricula')} className="h-14 rounded-2xl text-base font-medium" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor Matrícula</Label>
-              <Input type="number" step="0.01" {...form.register('valor_matricula')} inputMode="decimal" className="h-14 rounded-2xl text-base font-black bg-white" />
+              <Input type="number" step="0.01" {...form.register('valor_matricula')} inputMode="decimal" className="h-14 rounded-2xl text-base font-bold" />
             </div>
             {editId && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</Label>
                 <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
-                  <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white">
+                  <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
-                    <SelectItem value="ativa">Ativa</SelectItem>
-                    <SelectItem value="concluida">Concluída</SelectItem>
-                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                    <SelectItem value="ativa" className="py-3">Ativa</SelectItem>
+                    <SelectItem value="concluida" className="py-3">Concluída</SelectItem>
+                    <SelectItem value="cancelada" className="py-3">Cancelada</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
