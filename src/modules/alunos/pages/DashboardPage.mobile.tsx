@@ -9,7 +9,6 @@ import {
   TrendingUp,
   ChevronRight,
   Plus,
-  Search,
   Calendar,
   Zap,
   Bell
@@ -94,22 +93,13 @@ export function DashboardPageMobile() {
           <div className="space-y-7 pt-6">
 
             {/* ── Saudação ── */}
-            <section className="flex items-end justify-between">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
-                  {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </p>
-                <h1 className="text-[1.625rem] font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                  Fluxoo <span className="text-indigo-600">Edu</span>
-                </h1>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700"
-                onClick={() => navigate('/alunos')}
-              >
-                <Search className="h-5 w-5 text-slate-400" />
-              </motion.button>
+            <section>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
+                {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+              </p>
+              <h1 className="text-[1.625rem] font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                Fluxoo <span className="text-indigo-600">Edu</span>
+              </h1>
             </section>
 
             {/* ── Ações Rápidas ── */}

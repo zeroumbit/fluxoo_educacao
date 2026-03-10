@@ -157,7 +157,7 @@ export function MatriculaFormPageWeb() {
             <div className="space-y-2">
               <Label htmlFor="aluno_id">Aluno *</Label>
               <Select disabled={!!editId} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
-                <SelectTrigger id="aluno_id" className="h-14 rounded-2xl border-slate-200 bg-white">
+                <SelectTrigger id="aluno_id">
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,7 +171,7 @@ export function MatriculaFormPageWeb() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ano_letivo">Ano Letivo *</Label>
-                <Input id="ano_letivo" type="number" {...form.register('ano_letivo')} className="h-14 rounded-2xl" />
+                <Input id="ano_letivo" type="number" {...form.register('ano_letivo')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="serie_ano">Turma/Ano *</Label>
@@ -180,7 +180,7 @@ export function MatriculaFormPageWeb() {
                   const t = (turmas as any[])?.find(x => x.nome === v)
                   if (t) form.setValue('turma_id', t.id)
                 }}>
-                  <SelectTrigger id="serie_ano" className="h-14 rounded-2xl border-slate-200 bg-white">
+                  <SelectTrigger id="serie_ano">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent>
@@ -196,7 +196,7 @@ export function MatriculaFormPageWeb() {
               <div className="space-y-2">
                 <Label htmlFor="turno">Turno *</Label>
                 <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
-                  <SelectTrigger id="turno" className="h-14 rounded-2xl border-slate-200 bg-white">
+                  <SelectTrigger id="turno">
                     <SelectValue placeholder="Turno" />
                   </SelectTrigger>
                   <SelectContent>
@@ -209,20 +209,20 @@ export function MatriculaFormPageWeb() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="data_matricula">Data da Matrícula</Label>
-                <Input id="data_matricula" type="date" {...form.register('data_matricula')} className="h-14 rounded-2xl" />
+                <Input id="data_matricula" type="date" {...form.register('data_matricula')} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="valor_matricula">Valor da Matrícula (R$)</Label>
-                <Input id="valor_matricula" type="number" step="0.01" {...form.register('valor_matricula')} className="h-14 rounded-2xl font-bold" />
+                <Input id="valor_matricula" type="number" step="0.01" {...form.register('valor_matricula')} className="font-bold" />
               </div>
               {editId && (
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
-                    <SelectTrigger id="status" className="h-14 rounded-2xl border-slate-200 bg-white">
+                    <SelectTrigger id="status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

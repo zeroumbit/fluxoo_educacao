@@ -30,7 +30,8 @@ import {
   UserCog,
   Lock,
   TrendingUp,
-  CarFront
+  CarFront,
+  Home
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRBACInit, useCanAccessModule, useHasPermission } from '@/hooks/usePermissions'
@@ -264,7 +265,7 @@ export function AdminLayout() {
               )
             }
           >
-            <LayoutDashboard className="h-6 w-6" />
+            <Home className="h-6 w-6" />
             <span className="text-[10px] font-bold tracking-tight">Home</span>
           </NavLink>
 

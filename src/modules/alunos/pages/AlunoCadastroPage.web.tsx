@@ -801,33 +801,53 @@ export function AlunoCadastroPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
                   </div>
                 )}
               </>
             )}
           </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        <div className="flex justify-between mt-6">
-          <div className="flex gap-2">
-            {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={prevStep}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
+          
+          <DialogFooter className="p-6 bg-slate-50/50 border-t flex flex-row items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className="font-bold text-xs uppercase tracking-widest"
+            >
+              Anterior
+            </Button>
+            
+            {currentStep === steps.length - 1 ? (
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-12 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all active:scale-95"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cadastrando...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-5 w-5" />
+                    Finalizar Cadastro
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={nextStep}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 h-12 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95"
+              >
+                Próximo
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
-          </div>
-          {currentStep < steps.length - 1 ? (
-            <Button type="button" onClick={nextStep}>
-              Próximo <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700">
-              {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>) : (<><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>)}
-            </Button>
-          )}
-        </div>
+          </DialogFooter>
+        </Card>
       </form>
     </div>
   )
