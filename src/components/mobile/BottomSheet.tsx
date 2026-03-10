@@ -1,6 +1,8 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface BottomSheetProps {
   isOpen: boolean
@@ -60,10 +62,18 @@ export function BottomSheet({
             </div>
 
             {title && (
-              <div className="px-6 py-2 shrink-0">
+              <div className="px-6 py-2 shrink-0 flex items-center justify-between">
                 <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
                   {title}
                 </h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  onClick={onClose}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
             )}
 

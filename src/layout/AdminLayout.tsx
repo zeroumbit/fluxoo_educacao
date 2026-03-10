@@ -254,7 +254,7 @@ export function AdminLayout() {
 
       {/* Bottom Navigation para Mobile (App Style) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-t border-zinc-200/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center justify-around h-20 px-4">
+        <div className="mx-auto w-full max-w-[640px] flex items-center justify-around h-20 px-4">
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>

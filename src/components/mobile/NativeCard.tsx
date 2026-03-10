@@ -66,8 +66,8 @@ export function NativeCard({
     <div className="relative">
       {/* Background swipe actions */}
       <div className="absolute inset-0 flex items-center justify-between px-5 rounded-2xl overflow-hidden pointer-events-none">
-        <motion.div style={{ opacity: editOpacity }} className="flex items-center gap-2 text-teal-600">
-          <div className="h-9 w-9 rounded-full bg-teal-50 flex items-center justify-center">
+        <motion.div style={{ opacity: editOpacity }} className="flex items-center gap-2 text-indigo-600">
+          <div className="h-9 w-9 rounded-full bg-indigo-50 flex items-center justify-center">
             <Edit2 className="h-4 w-4" />
           </div>
         </motion.div>
