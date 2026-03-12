@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 export function FinanceiroRelatoriosPage() {
   const { data: fechamento, isLoading } = useFechamentoMensal()
@@ -24,25 +25,25 @@ export function FinanceiroRelatoriosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Relatórios Financeiros</h1>
-        <p className="text-muted-foreground">Visão consolidada do fluxo de caixa previsto vs recebido.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Relatórios Financeiros</h1>
+        <p className="text-muted-foreground font-medium">Visão consolidada do fluxo de caixa previsto vs recebido.</p>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <CardHeader className="pt-8">
-          <CardTitle className="text-lg flex items-center gap-2">
+      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
+          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
             <TrendingUp className="h-5 w-5 text-indigo-600" />
             Fechamento Mensal
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-slate-50">
               <TableRow>
-                <TableHead>Mês (Competência)</TableHead>
-                <TableHead>Valor Previsto Total</TableHead>
-                <TableHead>Valor Recebido (Pago)</TableHead>
-                <TableHead>Total em Aberto</TableHead>
+                <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Mês (Competência)</TableHead>
+                <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Valor Previsto Total</TableHead>
+                <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Valor Recebido (Pago)</TableHead>
+                <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Total em Aberto</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -53,11 +54,11 @@ export function FinanceiroRelatoriosPage() {
                   const labelMes = mesData.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()
                   
                   return (
-                    <TableRow key={idx}>
-                      <TableCell className="font-semibold text-zinc-900">{labelMes}</TableCell>
-                      <TableCell>R$ {Number(item.total_previsto).toFixed(2)}</TableCell>
-                      <TableCell className="text-emerald-600 font-medium">R$ {Number(item.total_recebido).toFixed(2)}</TableCell>
-                      <TableCell className={Number(item.total_em_aberto) > 0 ? 'text-red-600' : 'text-zinc-600'}>
+                    <TableRow key={idx} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                      <TableCell className="px-6 py-4 font-bold text-slate-900">{labelMes}</TableCell>
+                      <TableCell className="px-6 py-4 font-medium text-slate-600">R$ {Number(item.total_previsto).toFixed(2)}</TableCell>
+                      <TableCell className="px-6 py-4 text-emerald-600 font-bold">R$ {Number(item.total_recebido).toFixed(2)}</TableCell>
+                      <TableCell className={cn("px-6 py-4 font-bold", Number(item.total_em_aberto) > 0 ? 'text-rose-600' : 'text-slate-600')}>
                         R$ {Number(item.total_em_aberto).toFixed(2)}
                       </TableCell>
                     </TableRow>

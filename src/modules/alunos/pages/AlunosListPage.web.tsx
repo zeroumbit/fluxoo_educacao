@@ -126,50 +126,50 @@ export function AlunosListPageWeb() {
     <div className="space-y-6">
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                   <Users className="h-6 w-6 text-indigo-600" />
+                <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center">
+                   <Users className="h-6 w-6 text-slate-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total de Alunos</p>
-                   <p className="text-2xl font-black text-zinc-900">{alunos?.length || 0}</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total de Alunos</p>
+                   <p className="text-2xl font-bold text-slate-900">{alunos?.length || 0}</p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
-             <div className="flex items-center gap-4 text-emerald-600">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                   <Shield className="h-6 w-6" />
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+             <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                   <Shield className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/50">Matriculados</p>
-                   <p className="text-2xl font-black">{alunosComMatriculaIds.size}</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/50">Matriculados</p>
+                   <p className="text-2xl font-bold text-emerald-700">{alunosComMatriculaIds.size}</p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
-             <div className="flex items-center gap-4 text-amber-600">
-                <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center">
-                   <FileX className="h-6 w-6" />
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+             <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                   <FileX className="h-6 w-6 text-amber-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-600/50">Sem Matrícula</p>
-                   <p className="text-2xl font-black">{alunosSemMatriculaCount}</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/50">Sem Matrícula</p>
+                   <p className="text-2xl font-bold text-amber-700">{alunosSemMatriculaCount}</p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-rose-50/50 shadow-sm overflow-hidden p-6 ring-1 ring-rose-100">
+          <Card className="rounded-xl border border-rose-100 bg-rose-50/30 shadow-sm overflow-hidden p-6">
              <div className="flex items-center gap-4 text-rose-600">
-                <div className="h-12 w-12 rounded-2xl bg-rose-100 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center">
                    <Users className="h-6 w-6" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-rose-600/50">Irmãos Detectados</p>
-                   <p className="text-2xl font-black">{gruposMultiIrmaos.length} Famílias</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600/50">Irmãos Detectados</p>
+                   <p className="text-2xl font-bold">{gruposMultiIrmaos.length} Famílias</p>
                 </div>
              </div>
           </Card>
@@ -177,25 +177,25 @@ export function AlunosListPageWeb() {
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Gerenciamento de Alunos</h1>
-          <p className="text-zinc-500 font-medium">Visualize e gerencie todos os estudantes da sua escola</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gerenciamento de Alunos</h1>
+          <p className="text-muted-foreground">Visualize e gerencie todos os estudantes da sua escola</p>
         </div>
         <Button 
            onClick={() => navigate('/alunos/novo')}
-           className="bg-indigo-600 hover:bg-indigo-700 h-12 px-6 rounded-2xl shadow-xl shadow-indigo-100 font-bold transition-all hover:-translate-y-0.5"
+           className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
         >
-          <Plus className="mr-2 h-5 w-5" /> Adicionar Aluno
+          <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
         </Button>
       </div>
 
-      <Card className="border border-zinc-100 shadow-sm rounded-[2.5rem] overflow-hidden bg-white">
+      <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
         <CardContent className="p-0">
-          <div className="p-6 border-b border-zinc-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                    placeholder="Buscar por nome ou CPF..."
-                   className="pl-12 h-12 bg-zinc-50/50 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-2xl font-medium"
+                   className="pl-12 h-11 bg-slate-50 border-slate-200 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-xl font-medium"
                    value={busca}
                    onChange={(e) => setBusca(e.target.value)}
                 />
@@ -203,23 +203,23 @@ export function AlunosListPageWeb() {
              
              {/* Filtros Ativos / Alertas Rápidos */}
              {gruposMultiIrmaos.length > 0 && (
-               <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-2xl border border-amber-100">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                     {gruposMultiIrmaos.length} famílias com múltiplos alunos detectadas
-                  </p>
-               </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100">
+                   <AlertCircle className="h-4 w-4 text-amber-600" />
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                      {gruposMultiIrmaos.length} famílias detectadas
+                   </p>
+                </div>
              )}
           </div>
 
           <Table>
-            <TableHeader className="bg-zinc-50/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="py-4 font-black uppercase tracking-widest text-[10px] text-zinc-400 pl-8">Aluno</TableHead>
-                <TableHead className="font-black uppercase tracking-widest text-[10px] text-zinc-400">Responsável / Família</TableHead>
-                <TableHead className="font-black uppercase tracking-widest text-[10px] text-zinc-400">Matrícula</TableHead>
-                <TableHead className="font-black uppercase tracking-widest text-[10px] text-zinc-400 text-center">Status</TableHead>
-                <TableHead className="text-right py-4 font-black uppercase tracking-widest text-[10px] text-zinc-400 pr-8">Ferramentas</TableHead>
+            <TableHeader className="bg-slate-50">
+              <TableRow className="hover:bg-transparent border-slate-100">
+                <TableHead className="py-4 font-bold text-slate-800 pl-8">Aluno</TableHead>
+                <TableHead className="font-bold text-slate-800">Responsável</TableHead>
+                <TableHead className="font-bold text-slate-800">Matrícula</TableHead>
+                <TableHead className="font-bold text-slate-800 text-center">Status</TableHead>
+                <TableHead className="text-right py-4 font-bold text-slate-800 pr-8">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,28 +233,28 @@ export function AlunosListPageWeb() {
                     onClick={() => navigate(`/alunos/${aluno.id}`)}
                   >
                     <TableCell className="py-5 pl-8">
-                      <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:scale-105 transition-transform overflow-hidden relative border border-zinc-200 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:scale-105 transition-transform overflow-hidden relative border border-slate-200">
                            {aluno.foto_url ? (
                              <img src={aluno.foto_url} className="w-full h-full object-cover" />
                            ) : (
-                             <UserCircle className="h-8 w-8" />
+                             <UserCircle className="h-6 w-6" />
                            )}
                         </div>
                         <div>
-                          <p className="font-bold text-zinc-800 text-base">{aluno.nome_completo}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">{aluno.cpf || 'CPF não cadastrado'}</p>
+                          <p className="font-bold text-slate-700">{aluno.nome_completo}</p>
+                          <p className="text-[10px] font-medium text-slate-400">{aluno.cpf || '—'}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                        <div>
-                          <p className="font-bold text-zinc-700 text-sm">{aluno.financeiroNome}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{aluno.financeiroCpf}</p>
+                          <p className="font-bold text-slate-600 text-sm">{aluno.financeiroNome}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                             <p className="text-[10px] text-slate-400">{aluno.financeiroCpf}</p>
                              {temIrmao && (
-                               <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-[8px] font-black border-0 rounded px-1.5 leading-none">
-                                  MULTIFAMILIA
+                               <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-[8px] font-bold border-0 rounded px-1.5 h-4">
+                                  FAMÍLIA
                                </Badge>
                              )}
                           </div>
@@ -264,10 +264,10 @@ export function AlunosListPageWeb() {
                        <div className="flex items-center gap-2">
                           <div className={cn(
                              "h-2 w-2 rounded-full",
-                             aluno.temMatricula ? "bg-emerald-500" : "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                             aluno.temMatricula ? "bg-emerald-500" : "bg-amber-400"
                           )} />
                           <p className={cn(
-                             "text-[10px] font-black uppercase tracking-tighter",
+                             "text-[10px] font-bold uppercase",
                              aluno.temMatricula ? "text-emerald-700" : "text-amber-700"
                           )}>
                              {aluno.temMatricula ? 'Ativa 2024' : 'Sem Matrícula'}
@@ -276,18 +276,18 @@ export function AlunosListPageWeb() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge className={cn(
-                        "rounded-xl px-4 py-1.5 text-[10px] font-black uppercase border-0 tracking-widest shadow-none",
-                        aluno.status === 'ativo' ? "bg-emerald-50 text-emerald-600" : "bg-zinc-100 text-zinc-400"
+                        "rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
+                        aluno.status === 'ativo' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-500 border-slate-200"
                       )}>
                         {aluno.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-8">
-                      <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 text-indigo-500 hover:bg-indigo-50 rounded-xl"
+                          className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
                           onClick={() => setAlunoDesconto(aluno)}
                           title="Gerenciar Desconto"
                         >
@@ -296,7 +296,7 @@ export function AlunosListPageWeb() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 text-zinc-400 hover:bg-zinc-100 rounded-xl"
+                          className="h-8 w-8 text-slate-400 hover:bg-slate-100"
                           onClick={() => setAlunoAutorizacoes(aluno)}
                           title="Gerenciar Autorizações"
                         >
@@ -305,7 +305,7 @@ export function AlunosListPageWeb() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 text-zinc-400 hover:bg-zinc-100 rounded-xl"
+                          className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                           onClick={() => navigate(`/alunos/${aluno.id}`)}
                           title="Ver Detalhes"
                         >
@@ -314,7 +314,7 @@ export function AlunosListPageWeb() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 text-rose-500 hover:bg-rose-50 rounded-xl"
+                          className="h-8 w-8 text-rose-500 hover:bg-rose-50"
                           onClick={(e) => handleExcluir(aluno, e)}
                           title="Excluir Aluno"
                         >
@@ -331,7 +331,7 @@ export function AlunosListPageWeb() {
           {alunosFiltrados?.length === 0 && (
              <div className="py-24 text-center">
                 <Users className="h-16 w-16 text-zinc-100 mx-auto mb-4" />
-                <p className="text-xl font-black text-zinc-300">Nenhum aluno encontrado.</p>
+                <p className="text-xl font-bold text-zinc-300">Nenhum aluno encontrado.</p>
                 <p className="text-zinc-400 mt-1">Refine sua busca ou cadastre um novo aluno.</p>
              </div>
           )}
@@ -353,29 +353,32 @@ export function AlunosListPageWeb() {
 
       {/* Dialog de Exclusão */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="rounded-3xl border-0 shadow-2xl">
-          <DialogHeader>
-            <div className="h-14 w-14 rounded-2xl bg-rose-50 flex items-center justify-center mb-4">
-               <AlertCircle className="h-7 w-7 text-rose-600" />
+        <DialogContent className="rounded-xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
+          <DialogHeader className="p-6 pb-2">
+            <div className="h-12 w-12 rounded-xl bg-rose-50 flex items-center justify-center mb-4">
+               <AlertCircle className="h-6 w-6 text-rose-600" />
             </div>
-            <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight">Confirmar Exclusão</DialogTitle>
-            <DialogDescription className="text-zinc-500 font-medium pt-2">
+            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">Confirmar Exclusão</DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm">
               Você tem certeza que deseja excluir <strong>{alunoParaExcluir?.nome_completo}</strong>? 
-              <br/><br/>
-              Esta ação é definitiva e apagará todo o histórico acadêmico e financeiro do aluno. 
-              <strong> Recomenda-se apenas desativar o cadastro</strong> para manter os registros históricos.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-8 flex gap-3">
+          <div className="px-6 py-2">
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Esta ação é definitiva e apagará todo o histórico acadêmico e financeiro do aluno. 
+              <strong> Recomenda-se apenas desativar o cadastro</strong> para manter os registros históricos.
+            </p>
+          </div>
+          <DialogFooter className="p-6 bg-slate-50 mt-4 flex gap-3">
             <Button 
                variant="ghost" 
-               className="flex-1 rounded-2xl h-12 font-bold" 
+               className="flex-1 rounded-xl h-11 font-bold text-slate-600" 
                onClick={() => setShowDeleteDialog(false)}
             >
                Manter Aluno
             </Button>
             <Button 
-               className="flex-1 rounded-2xl bg-rose-600 hover:bg-rose-700 h-12 font-bold shadow-xl shadow-rose-100" 
+               className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 h-11 font-bold shadow-md" 
                onClick={confirmarExclusao}
             >
                Excluir Definitivamente

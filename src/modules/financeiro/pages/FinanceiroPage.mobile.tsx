@@ -145,32 +145,33 @@ export function FinanceiroPageMobile() {
       <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
         <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-6">
           {/* Header de Saldo */}
-          <div className="bg-indigo-600 p-6 rounded-[32px] text-white shadow-xl shadow-indigo-100 dark:shadow-none relative overflow-hidden">
+          {/* Header de Saldo */}
+          <div className="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-200/50 dark:shadow-none relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
               <Wallet size={120} />
             </div>
-            <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Saldo Recebido</p>
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Saldo Recebido</p>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold opacity-60">R$</span>
-              <h2 className="text-4xl font-black">{totals.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
+              <h2 className="text-3xl font-bold">{totals.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
             </div>
             
             <div className="mt-8 flex items-center justify-between gap-4">
-              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-emerald-400/20 flex items-center justify-center">
+              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 border border-white/10">
+                <div className="h-8 w-8 rounded-lg bg-emerald-400/20 flex items-center justify-center">
                   <ArrowDownCircle size={16} className="text-emerald-300" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold opacity-70 uppercase">Recebido</p>
+                  <p className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Recebido</p>
                   <p className="font-bold text-sm">R$ {totals.pagos.toFixed(0)}</p>
                 </div>
               </div>
-              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-amber-400/20 flex items-center justify-center">
-                  <AlertCircle size={16} className="text-amber-300" />
+              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 border border-white/10">
+                <div className="h-8 w-8 rounded-lg bg-amber-400/20 flex items-center justify-center">
+                   <AlertCircle size={16} className="text-amber-300" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold opacity-70 uppercase">Pendente</p>
+                  <p className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Pendente</p>
                   <p className="font-bold text-sm">R$ {totals.pendentes.toFixed(0)}</p>
                 </div>
               </div>
@@ -183,7 +184,7 @@ export function FinanceiroPageMobile() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
                 placeholder="Buscar cobrança..." 
-                className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-none shadow-sm pl-12 text-base w-full"
+                className="h-12 rounded-xl bg-white dark:bg-slate-900 border-none shadow-sm pl-12 text-base w-full"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
               />
@@ -231,9 +232,9 @@ export function FinanceiroPageMobile() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-black text-indigo-600">R$ {Number(c.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <p className="font-bold text-indigo-600">R$ {Number(c.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                         <div className={cn(
-                          "text-[9px] font-black uppercase tracking-widest mt-0.5",
+                          "text-[9px] font-bold uppercase tracking-widest mt-0.5",
                           c.status === 'pago' ? "text-emerald-500" : 
                           c.status === 'atrasado' ? "text-rose-500" : "text-amber-500"
                         )}>
@@ -293,25 +294,25 @@ export function FinanceiroPageMobile() {
               {errors.descricao && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.descricao.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Valor (R$)</Label>
-                <Input 
-                  {...register('valor')}
-                  className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none px-5 text-base font-black text-indigo-600 w-full"
-                  placeholder="0,00"
-                />
-                {errors.valor && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.valor.message}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Valor (R$)</Label>
+                  <Input 
+                    {...register('valor')}
+                    className="h-14 rounded-xl bg-slate-50 dark:bg-slate-800 border-none px-5 text-base font-bold text-indigo-600 w-full"
+                    placeholder="0,00"
+                  />
+                  {errors.valor && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.valor.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-400 tracking-widest ml-1">Vencimento</Label>
+                  <Input 
+                    {...register('data_vencimento')}
+                    type="date"
+                    className="h-14 rounded-xl bg-slate-50 dark:bg-slate-800 border-none px-5 text-base font-bold w-full"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Vencimento</Label>
-                <Input 
-                  {...register('data_vencimento')}
-                  type="date"
-                  className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none px-5 text-base font-bold w-full"
-                />
-              </div>
-            </div>
 
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Status Inicial</Label>
@@ -330,9 +331,9 @@ export function FinanceiroPageMobile() {
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full h-16 rounded-[24px] bg-indigo-600 text-white font-black text-lg shadow-xl shadow-indigo-100"
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-base shadow-lg shadow-indigo-200/50"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'LANÇAR COBRANÇA'}
+              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : 'LANÇAR COBRANÇA'}
             </Button>
           </form>
         </BottomSheet>
@@ -341,43 +342,43 @@ export function FinanceiroPageMobile() {
         <BottomSheet isOpen={detailOpen} onClose={() => setDetailOpen(false)} title="Detalhes da Cobrança">
           {selectedCobranca && (
             <div className="px-1 pb-12 space-y-8">
-              <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-[32px] space-y-2">
-                <p className="text-zinc-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">Valor da Cobrança</p>
-                <h2 className="text-4xl font-black text-indigo-600">
+              <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-[2rem] space-y-2">
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Valor da Cobrança</p>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
                   R$ {Number(selectedCobranca.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </h2>
                 <div className={cn(
-                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
-                  selectedCobranca.status === 'pago' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : 
-                  selectedCobranca.status === 'atrasado' ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                  "px-4 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest mt-2",
+                  selectedCobranca.status === 'pago' ? "bg-emerald-50 text-emerald-600" : 
+                  selectedCobranca.status === 'atrasado' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"
                 )}>
                   {selectedCobranca.status === 'pago' ? 'RECEBIDO' : selectedCobranca.status === 'atrasado' ? 'VENCIDO' : 'EM ABERTO'}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <LayoutGrid size={20} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Descrição</span>
+                    <LayoutGrid size={18} className="text-slate-400" />
+                    <span className="text-sm font-bold text-slate-500">Descrição</span>
                   </div>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.descricao}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedCobranca.descricao}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <Calendar size={20} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Vencimento</span>
+                    <Calendar size={18} className="text-slate-400" />
+                    <span className="text-sm font-bold text-slate-500">Vencimento</span>
                   </div>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">{new Date(selectedCobranca.data_vencimento).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{new Date(selectedCobranca.data_vencimento).toLocaleDateString('pt-BR')}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <User size={20} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Aluno</span>
+                    <User size={18} className="text-slate-400" />
+                    <span className="text-sm font-bold text-slate-500">Aluno</span>
                   </div>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.alunos?.nome_completo || '—'}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedCobranca.alunos?.nome_completo || '—'}</span>
                 </div>
               </div>
 
@@ -385,14 +386,14 @@ export function FinanceiroPageMobile() {
                 {selectedCobranca.status !== 'pago' ? (
                   <Button 
                     onClick={() => handleBaixar(selectedCobranca.id)}
-                    className="w-full h-16 rounded-[24px] bg-emerald-600 text-white font-black text-lg shadow-xl shadow-emerald-100 dark:shadow-none"
+                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-base shadow-lg shadow-emerald-100 dark:shadow-none"
                   >
                     MARCAR COMO PAGO
                   </Button>
                 ) : (
                   <Button 
                     onClick={() => handleEstornar(selectedCobranca.id)}
-                    className="w-full h-16 rounded-[24px] bg-amber-500 text-white font-black text-lg shadow-xl shadow-amber-100 dark:shadow-none"
+                    className="w-full h-14 rounded-2xl bg-amber-500 text-white font-bold text-base shadow-lg shadow-amber-100 dark:shadow-none"
                   >
                     ESTORNAR PAGAMENTO
                   </Button>

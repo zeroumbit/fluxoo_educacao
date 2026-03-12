@@ -167,7 +167,7 @@ export function NotasPageMobile() {
             <motion.button 
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsFilterOpen(true)}
-              className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400"
+              className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500"
             >
               <Filter className="h-4 w-4" />
             </motion.button>
@@ -175,8 +175,8 @@ export function NotasPageMobile() {
         </div>
 
         <div className="mx-auto w-full max-w-[640px] px-4 pt-16 text-center">
-          <div className="h-20 w-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-3xl mx-auto flex items-center justify-center mb-6 text-indigo-500">
-            <BookOpen className="h-10 w-10" />
+          <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 border border-slate-50">
+            <BookOpen className="h-10 w-10 text-slate-300" />
           </div>
           <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Configure o Diário</h3>
           <p className="text-slate-500 text-sm max-w-[240px] mx-auto mb-8">
@@ -225,7 +225,7 @@ export function NotasPageMobile() {
                 <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none truncate">
                   {turmaId ? turmas?.find(t => t.id === turmaId)?.nome : 'Notas'}
                 </h1>
-                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider truncate">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
                   {disciplinaNome} • {bimestre}º Bimestre
                 </span>
               </div>
@@ -291,9 +291,9 @@ export function NotasPageMobile() {
                       >
                         <div className="flex items-center gap-4">
                           <div className={cn(
-                            "h-12 w-12 rounded-xl flex items-center justify-center text-lg font-black shrink-0",
-                            hasGrade ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" 
-                                     : "bg-slate-50 text-slate-300 dark:bg-slate-800 dark:text-slate-600"
+                            "h-12 w-12 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 border",
+                            hasGrade ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                     : "bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-800 dark:text-slate-600"
                           )}>
                             {hasGrade ? notaInfo.nota : aluno.nome_completo.charAt(0)}
                           </div>
@@ -373,7 +373,7 @@ function FilterSheet({
       <div className="space-y-6 pt-4">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Turma</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Turma</Label>
             <div className="grid grid-cols-2 gap-2">
               {turmas?.map((t: any) => (
                 <button
@@ -393,7 +393,7 @@ function FilterSheet({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Disciplina</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Disciplina</Label>
             <div className="flex flex-wrap gap-2">
               {disciplinas?.map((d: any) => (
                 <button
@@ -413,7 +413,7 @@ function FilterSheet({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bimestre</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bimestre</Label>
             <div className="grid grid-cols-4 gap-2">
               {['1', '2', '3', '4'].map((b) => (
                 <button
@@ -467,35 +467,35 @@ function EditSheet({ isOpen, onClose, aluno, notaInicial, onSave, isSaving }: an
       <div className="space-y-6 pt-4">
         {aluno && (
           <div className="flex items-center gap-4 mb-2">
-            <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black">
+            <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold border border-slate-100">
               {aluno.nome_completo.charAt(0)}
             </div>
             <div>
               <h4 className="font-bold text-slate-900 dark:text-white">{aluno.nome_completo}</h4>
-              <p className="text-xs text-slate-500">ID: {aluno.id.split('-')[0]}</p>
+              <p className="text-xs text-slate-400">ID: {aluno.id.split('-')[0]}</p>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nota Final</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nota Final</Label>
             <Input 
               inputMode="decimal"
               placeholder="0.0"
               value={nota}
               onChange={e => setNota(e.target.value)}
-              className="h-14 rounded-2xl text-base font-black text-center text-indigo-600"
+              className="h-14 rounded-xl text-base font-bold text-center text-indigo-600"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Faltas</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Faltas</Label>
             <Input 
               inputMode="numeric"
               placeholder="0"
               value={faltas}
               onChange={e => setFaltas(e.target.value)}
-              className="h-14 rounded-2xl text-base font-bold text-center"
+              className="h-14 rounded-xl text-base font-bold text-center"
             />
           </div>
         </div>
