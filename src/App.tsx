@@ -7,6 +7,7 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
+import { ShopLayout } from '@/layout/ShopLayout'
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Admin (Escola)
@@ -178,11 +179,21 @@ function App() {
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
-              <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
               <Route path="/portal/perfil" element={<PortalPerfilPage />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
+            </Route>
+
+            {/* Marketplace Independente - Abre em Nova Aba */}
+            <Route
+              element={
+                <ProtectedRoute allowedRoles={['responsavel']}>
+                  <ShopLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/portal/loja" element={<PortalLojaPage />} />
             </Route>
 
             {/* Fallback */}

@@ -14,6 +14,13 @@ interface AuthUser {
   nome: string
   areasAcesso?: string[]
   funcionarioId?: string
+  endereco?: {
+    logradouro: string | null
+    numero: string | null
+    bairro: string | null
+    cidade: string | null
+    estado: string | null
+  }
 }
 
 interface AuthContextType {
@@ -119,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 4. Responsável
       const respRes = await withTimeout(
-        supabase.from('responsaveis').select('nome').eq('user_id', user.id).maybeSingle() as any,
+        supabase.from('responsaveis').select('nome, logradouro, numero, bairro, cidade, estado').eq('user_id', user.id).maybeSingle() as any,
         5000
       ) as any
 
@@ -129,6 +136,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tenantId: '',
           role: 'responsavel',
           nome: respRes.data.nome,
+          endereco: {
+            logradouro: respRes.data.logradouro,
+            numero: respRes.data.numero,
+            bairro: respRes.data.bairro,
+            cidade: respRes.data.cidade,
+            estado: respRes.data.estado,
+          }
         })
         return
       }

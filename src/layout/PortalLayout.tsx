@@ -231,7 +231,9 @@ export function PortalLayout() {
 
               <NavLinkDesktop icon={DollarSign} label="Financeiro" to="/portal/cobrancas" />
               <NavLinkDesktop icon={Megaphone} label="Avisos" to="/portal/avisos" />
-              <NavLinkDesktop icon={ShoppingCart} label="Loja" to="/portal/loja" />
+              <a href="/portal/loja" target="_blank" rel="noopener noreferrer">
+                <NavLinkDesktop icon={ShoppingCart} label="Loja" />
+              </a>
               <NavLinkDesktop icon={User} label="Perfil" to="/portal/perfil" />
             </div>
 
@@ -313,7 +315,11 @@ export function PortalLayout() {
                         key={item.label}
                         onClick={() => {
                           vibrate(15);
-                          navigate(item.to);
+                          if (item.label === 'Loja') {
+                            window.open(item.to, '_blank');
+                          } else {
+                            navigate(item.to);
+                          }
                           setIsMobileMenuOpen(false);
                         }}
                         className="flex flex-col gap-3 p-5 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-teal-200 active:bg-slate-50 transition-all select-none"
@@ -338,11 +344,12 @@ export function PortalLayout() {
               </SheetContent>
             </Sheet>
 
-            <MobileBottomNavItem 
-              icon={ShoppingCart} 
-              label="Loja" 
-              to="/portal/loja" 
-            />
+            <div className="flex-1 flex justify-center items-center min-h-[48px]" onClick={() => window.open('/portal/loja', '_blank')}>
+              <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center justify-center gap-1 text-slate-400">
+                <ShoppingCart size={24} />
+                <span className="text-[10px] font-bold">Loja</span>
+              </motion.div>
+            </div>
             <MobileBottomNavItem 
               icon={User} 
               label="Perfil" 

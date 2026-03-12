@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import {
   ShoppingCart,
   Search,
@@ -50,7 +51,7 @@ interface Product {
   price_promocional?: number
   price_pix?: number
   price_credit?: number
-  category: 'livros' | 'materiais' | 'serviços'
+  category: 'livros' | 'materiais' | 'serviços' | 'vestuario'
   subcategory?: 'escolares' | 'ficção'
   image: string
   rating: number
@@ -145,6 +146,21 @@ const PRODUCTS: Product[] = [
     reviews: [
       { id: 'r5', user: 'Carla Menezes', rating: 5, comment: 'O professor é excelente, as notas do meu filho melhoraram muito.', date: '12 Mar 2024' }
     ]
+  },
+  {
+    id: 'v1',
+    name: 'Uniforme Escolar - Camiseta Oficial',
+    description: 'Camiseta oficial da escola, tecido dry-fit de alta qualidade, resistente a múltiplas lavagens.',
+    price: 45.00,
+    price_pix: 40.50,
+    price_credit: 45.00,
+    category: 'vestuario',
+    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
+    rating: 4.9,
+    metadata: [
+      { label: 'Tamanhos', value: 'P, M, G, GG' },
+      { label: 'Material', value: '100% Algodão' }
+    ]
   }
 ]
 
@@ -164,16 +180,31 @@ const LojaSkeleton = () => (
 
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
-  const [activeCategory, setActiveCategory] = useState<'livros' | 'materiais' | 'serviços'>('livros')
+  const [searchParams] = useSearchParams()
+  const [activeCategory, setActiveCategory] = useState<'livros' | 'materiais' | 'serviços' | 'vestuario' | 'all'>('all')
   const [activeSubcategory, setActiveSubcategory] = useState<'escolares' | 'ficção' | 'all'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isLoading] = useState(false)
 
+  // Sincronizar busca e categoria da URL
+  useEffect(() => {
+    const q = searchParams.get('q') || ''
+    setSearchTerm(q)
+
+    const cat = searchParams.get('cat')
+    if (cat === 'livros') setActiveCategory('livros')
+    else if (cat === 'material-escolar') setActiveCategory('materiais')
+    else if (cat === 'vestuario') setActiveCategory('vestuario')
+    else setActiveCategory('all')
+  }, [searchParams])
+
   const filteredProducts = PRODUCTS.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                       p.description.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
+    if (activeCategory === 'all') return matchSearch
+
     if (activeCategory === 'livros') {
       const matchSub = activeSubcategory === 'all' || p.subcategory === activeSubcategory
       return p.category === 'livros' && matchSub && matchSearch
@@ -182,7 +213,8 @@ export function PortalLojaPage() {
     return p.category === activeCategory && matchSearch
   })
 
-  const handleCategoryChange = (cat: 'livros' | 'materiais' | 'serviços') => {
+
+  const handleCategoryChange = (cat: 'livros' | 'materiais' | 'serviços' | 'vestuario' | 'all') => {
     vibrate(15)
     setActiveCategory(cat)
     if (cat !== 'livros') setActiveSubcategory('all')
@@ -198,94 +230,9 @@ export function PortalLojaPage() {
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
 
-      {/* 1. Header & Marketplace Menu */}
+      {/* Header removido - Agora está no Layout */}
       <div className="flex flex-col gap-6">
-        {/* Marketplace Menu Bar */}
-        <div className="bg-white border border-slate-100 rounded-xl shadow-sm p-1.5 flex flex-wrap items-center gap-2">
-          <div className="flex items-center bg-slate-50 p-1 rounded-lg">
-             <button 
-                onClick={() => handleCategoryChange('livros')}
-                className={cn(
-                  "px-4 h-9 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
-                  activeCategory === 'livros' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-indigo-600"
-                )}
-             >
-                Livros
-             </button>
-             {activeCategory === 'livros' && (
-               <div className="flex items-center ml-2 border-l border-slate-200 pl-2 gap-1 animate-in slide-in-from-left-2 duration-300">
-                  <button 
-                    onClick={() => setActiveSubcategory('all')}
-                    className={cn(
-                      "px-3 h-7 rounded text-[9px] font-bold uppercase transition-all",
-                      activeSubcategory === 'all' ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-slate-200"
-                    )}
-                  >
-                    Todos
-                  </button>
-                  <button 
-                    onClick={() => setActiveSubcategory('escolares')}
-                    className={cn(
-                      "px-3 h-7 rounded text-[9px] font-bold uppercase transition-all",
-                      activeSubcategory === 'escolares' ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-slate-200"
-                    )}
-                  >
-                    Escolares
-                  </button>
-                  <button 
-                    onClick={() => setActiveSubcategory('ficção')}
-                    className={cn(
-                      "px-3 h-7 rounded text-[9px] font-bold uppercase transition-all",
-                      activeSubcategory === 'ficção' ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-slate-200"
-                    )}
-                  >
-                    Ficção
-                  </button>
-               </div>
-             )}
-          </div>
-
-          <button 
-            onClick={() => handleCategoryChange('materiais')}
-            className={cn(
-              "px-4 h-11 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2",
-              activeCategory === 'materiais' ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-600 hover:bg-slate-50"
-            )}
-          >
-            <Package size={16} /> Materiais Escolares
-          </button>
-
-          <button 
-            onClick={() => handleCategoryChange('serviços')}
-            className={cn(
-              "px-4 h-11 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2",
-              activeCategory === 'serviços' ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-600 hover:bg-slate-50"
-            )}
-          >
-            <Users size={16} /> Serviços
-          </button>
-
-          <div className="ml-auto flex items-center gap-2 pr-2 border-l border-slate-100 pl-4">
-            <button className="h-11 px-4 rounded-lg text-slate-500 hover:bg-slate-50 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider">
-               <Tag size={16} /> Pedidos
-            </button>
-            <button className="h-11 w-11 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center relative hover:bg-indigo-100 transition-colors">
-               <ShoppingCart size={20} />
-               <span className="absolute -top-1 -right-1 h-5 w-5 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">0</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Search Input Bar */}
-        <div className="relative group max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
-            <Input 
-              placeholder="Digite o que você está procurando..."
-              className="h-12 pl-12 pr-6 bg-white border border-slate-100 rounded-xl text-sm font-bold placeholder:text-slate-300 shadow-sm transition-all focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus:ring-0"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
+          {/* Espaço para filtro rápido se necessário no futuro */}
       </div>
 
       {/* 2. Grid de Produtos - Refatorado */}
@@ -312,7 +259,7 @@ export function PortalLojaPage() {
                   />
                   {product.popular && (
                     <div className="absolute top-2 left-2">
-                       <Badge className="bg-indigo-600 text-white font-bold text-[8px] uppercase px-2 py-0.5 rounded-md border-0">
+                       <Badge className="bg-teal-600 text-white font-bold text-[8px] uppercase px-2 py-0.5 rounded-md border-0">
                          Destaque
                        </Badge>
                     </div>
@@ -337,9 +284,9 @@ export function PortalLojaPage() {
                       <span className="font-bold text-slate-400 line-through">R$ {product.price.toFixed(2)}</span>
                     </div>
                     {product.price_promocional && (
-                      <div className="flex items-center justify-between border-b border-indigo-50 pb-1">
-                        <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-tighter">Promocional:</span>
-                        <span className="text-sm font-bold text-indigo-600">R$ {product.price_promocional.toFixed(2)}</span>
+                      <div className="flex items-center justify-between border-b border-teal-50 pb-1">
+                        <span className="text-[9px] font-bold text-teal-600 uppercase tracking-tighter">Promocional:</span>
+                        <span className="text-sm font-bold text-teal-600">R$ {product.price_promocional.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-2 pt-1 mt-1">
@@ -356,7 +303,7 @@ export function PortalLojaPage() {
 
                   <div className="mt-auto pt-3">
                     <Button 
-                      className="w-full h-9 bg-slate-100 hover:bg-indigo-600 text-slate-600 hover:text-white rounded-lg transition-all border-0 shadow-none font-bold text-xs gap-2"
+                      className="w-full h-9 bg-slate-100 hover:bg-teal-600 text-slate-600 hover:text-white rounded-lg transition-all border-0 shadow-none font-bold text-xs gap-2"
                       onClick={(e) => { e.stopPropagation(); vibrate(20); }}
                     >
                       <Plus size={16} /> Adicionar
@@ -446,7 +393,7 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
           )}>
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
             <div className="absolute top-6 left-6 flex gap-2">
-               <Badge className="bg-indigo-600 text-white border-0 font-bold text-[10px] uppercase px-3 py-1 rounded-md shadow-lg">
+               <Badge className="bg-teal-600 text-white border-0 font-bold text-[10px] uppercase px-3 py-1 rounded-md shadow-lg">
                  {product.category === 'livros' ? 'Livro' : product.category === 'materiais' ? 'Material' : 'Serviço'}
                </Badge>
                {product.popular && (
@@ -472,8 +419,8 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
           )}>
             {/* Cabeçalho do Produto */}
             <div className="space-y-4">
-               <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-[0.2em]">
-                  <Star size={16} className="fill-indigo-600" /> {product.rating} • {product.reviews?.length || 0} Avaliações
+               <div className="flex items-center gap-2 text-teal-600 font-bold text-xs uppercase tracking-[0.2em]">
+                  <Star size={16} className="fill-teal-600" /> {product.rating} • {product.reviews?.length || 0} Avaliações
                </div>
                <h2 className={cn(
                  "font-bold text-slate-900 leading-none tracking-tighter",
@@ -500,7 +447,7 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
             {isMobile && (
                <div className="space-y-6">
                   <PriceCards product={product} />
-                  <Button className="w-full h-16 bg-indigo-600 text-white rounded-xl font-bold text-lg uppercase tracking-widest shadow-xl shadow-indigo-100 border-0">
+                  <Button className="w-full h-16 bg-teal-600 text-white rounded-xl font-bold text-lg uppercase tracking-widest shadow-xl shadow-teal-100 border-0">
                      Comprar Agora
                   </Button>
                </div>
@@ -509,7 +456,7 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
             {/* Tabs de Detalhes Adicionais */}
             <div className="space-y-8">
                <div className="flex items-center gap-8 border-b border-slate-100 pb-2">
-                  <span className="text-sm font-bold text-slate-900 border-b-2 border-indigo-600 pb-2">Avaliações</span>
+                  <span className="text-sm font-bold text-slate-900 border-b-2 border-teal-600 pb-2">Avaliações</span>
                   <span className="text-sm font-bold text-slate-400">Especificações</span>
                </div>
                
@@ -518,14 +465,14 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
                     <div key={review.id} className="p-6 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                             <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                             <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 font-bold">
                                 {review.user.charAt(0)}
                              </div>
                              <div>
                                 <p className="text-sm font-bold text-slate-800">{review.user}</p>
                                 <div className="flex items-center gap-1">
                                    {[...Array(5)].map((_, i) => (
-                                     <Star key={i} size={10} className={cn("fill-indigo-600", i >= review.rating && "text-slate-300 fill-transparent")} />
+                                     <Star key={i} size={10} className={cn("fill-teal-600", i >= review.rating && "text-slate-300 fill-transparent")} />
                                    ))}
                                 </div>
                              </div>
@@ -550,7 +497,7 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
                           </div>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">{item.category}</p>
                           <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.name}</p>
-                          <p className="text-xs font-bold text-indigo-600">R$ {item.price_promocional?.toFixed(2) || item.price.toFixed(2)}</p>
+                          <p className="text-xs font-bold text-teal-600">R$ {item.price_promocional?.toFixed(2) || item.price.toFixed(2)}</p>
                        </div>
                      ))}
                   </div>
@@ -577,10 +524,10 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
            <div className="flex items-center gap-4">
               <div className="text-right">
                  <p className="text-[10px] font-bold text-slate-400 uppercase line-through">R$ {product.price.toFixed(2)}</p>
-                 <p className="text-xl font-bold text-indigo-600 leading-none">R$ {product.price_promocional?.toFixed(2)}</p>
+                 <p className="text-xl font-bold text-teal-600 leading-none">R$ {product.price_promocional?.toFixed(2)}</p>
               </div>
               <Button 
-                className="h-14 px-12 bg-indigo-600 hover:bg-slate-900 text-white rounded-xl shadow-lg shadow-indigo-100 font-bold uppercase tracking-[0.2em] text-xs border-0 transition-all active:scale-95"
+                className="h-14 px-12 bg-teal-600 hover:bg-slate-900 text-white rounded-xl shadow-lg shadow-teal-100 font-bold uppercase tracking-[0.2em] text-xs border-0 transition-all active:scale-95"
                 onClick={() => { vibrate(40); onClose(); }}
               >
                  Confirmar Compra
