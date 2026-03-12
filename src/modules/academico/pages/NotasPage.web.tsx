@@ -200,55 +200,56 @@ export function NotasPageWeb() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Cards de Resumo estilo AlunosListPage */}
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6 gap-4">
              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                   <User className="h-6 w-6 text-indigo-600" />
+                <div className="h-12 w-12 rounded-xl bg-slate-50 flex items-center justify-center">
+                   <User className="h-6 w-6 text-slate-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total de Alunos</p>
-                   <p className="text-2xl font-black text-zinc-900">{todosAlunos?.length || 0}</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total de Alunos</p>
+                   <p className="text-2xl font-bold text-slate-900">{todosAlunos?.length || 0}</p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
-             <div className="flex items-center gap-4 text-emerald-600">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                   <CheckCircle2 className="h-6 w-6" />
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+             <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                   <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/50">Notas Lançadas</p>
-                   <p className="text-2xl font-black text-zinc-900">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/50">Notas Lançadas</p>
+                   <p className="text-2xl font-bold text-slate-900">
                      {Object.values(notasLocais).filter(n => n.nota && n.nota !== '').length}
                    </p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-white shadow-sm overflow-hidden p-6 ring-1 ring-zinc-50">
-             <div className="flex items-center gap-4 text-amber-600">
-                <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center">
-                   <AlertCircle className="h-6 w-6" />
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+             <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                   <AlertCircle className="h-6 w-6 text-amber-600" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-600/50">Faltas no Período</p>
-                   <p className="text-2xl font-black text-zinc-900">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/50">Faltas no Período</p>
+                   <p className="text-2xl font-bold text-slate-900">
                      {Object.values(notasLocais).reduce((acc, n) => acc + (parseInt(n.faltas) || 0), 0)}
                    </p>
                 </div>
              </div>
           </Card>
 
-          <Card className="rounded-[2.5rem] border-0 bg-indigo-50/50 shadow-sm overflow-hidden p-6 ring-1 ring-indigo-100">
+          <Card className="rounded-xl border border-indigo-100 bg-indigo-50/30 shadow-sm overflow-hidden p-6">
              <div className="flex items-center gap-4 text-indigo-600">
-                <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center">
                    <LayoutGrid className="h-6 w-6" />
                 </div>
                 <div>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600/50">Ciclo Atual</p>
-                   <p className="text-2xl font-black text-zinc-900">{bimestre}º Bimestre</p>
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600/50">Ciclo Atual</p>
+                   <p className="text-2xl font-bold text-slate-900">{bimestre}º Bimestre</p>
                 </div>
              </div>
           </Card>
@@ -256,29 +257,29 @@ export function NotasPageWeb() {
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Diário de Notas</h1>
-          <p className="text-zinc-500 font-medium">Lançamento de desempenho acadêmico e faltas</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Diário de Notas</h1>
+          <p className="text-muted-foreground">Lançamento de desempenho acadêmico e faltas</p>
         </div>
         
         <div className="flex items-center gap-2">
            <Button 
             onClick={salvarTodas} 
             disabled={isSaving || !turmaId || !disciplinaNome}
-            className="bg-indigo-600 hover:bg-indigo-700 h-13 px-8 rounded-2xl shadow-xl shadow-indigo-100 font-bold transition-all hover:-translate-y-0.5 gap-2"
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 px-8 rounded-xl shadow-md font-bold transition-all gap-2"
            >
-             {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : <Save className="h-5 w-5" />}
+             {isSaving ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="h-4 w-4" />}
              Salvar Notas do Diário
            </Button>
         </div>
       </div>
 
-      <Card className="border border-zinc-100 shadow-sm bg-white overflow-hidden rounded-[2.5rem]">
-        <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-6">
+      <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden rounded-xl">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-3 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Turma</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Turma</label>
               <Select value={turmaId} onValueChange={(v) => { setTurmaId(v); setAlunoId('all'); }}>
-                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
                   <SelectValue placeholder="Selecione a Turma" />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,9 +291,9 @@ export function NotasPageWeb() {
             </div>
 
             <div className="md:col-span-3 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Aluno</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
               <Select value={alunoId} onValueChange={setAlunoId} disabled={!turmaId}>
-                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
                   <SelectValue placeholder={!turmaId ? "Aguardando Turma..." : "Todos os Alunos"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -305,9 +306,9 @@ export function NotasPageWeb() {
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Disciplina</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
               <Select value={disciplinaNome} onValueChange={setDisciplinaNome}>
-                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
                   <SelectValue placeholder="Selecione a Disciplina" />
                 </SelectTrigger>
                 <SelectContent>
@@ -319,9 +320,9 @@ export function NotasPageWeb() {
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Bimestre</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Bimestre</label>
               <Select value={bimestre} onValueChange={setBimestre}>
-                <SelectTrigger className="w-full bg-white border-slate-200 h-12 rounded-xl">
+                <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -334,8 +335,8 @@ export function NotasPageWeb() {
             </div>
 
             <div className="md:col-span-2 space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Ano Letivo</label>
-              <div className="flex items-center justify-center h-12 px-4 bg-zinc-50 rounded-xl text-zinc-500 font-bold border border-zinc-100">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Ano Letivo</label>
+              <div className="flex items-center justify-center h-11 px-4 bg-slate-50 rounded-xl text-slate-500 font-bold border border-slate-200">
                 {anoLetivo}
               </div>
             </div>
@@ -343,40 +344,40 @@ export function NotasPageWeb() {
 
           {/* Painel de Aplicação em Massa */}
           {turmaId && disciplinaNome && (
-            <div className="mt-8 p-6 bg-indigo-50/50 rounded-[24px] border border-indigo-100/50 flex flex-col md:flex-row items-end gap-4 animate-in slide-in-from-top-2 duration-300">
+            <div className="mt-8 p-6 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row items-end gap-4 animate-in slide-in-from-top-2 duration-300">
               <div className="flex-1 w-full space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Nota Global</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Nota Global</label>
                 <Input 
                   placeholder="Ex: 8,5" 
                   value={globalNota} 
                   onChange={e => setGlobalNota(e.target.value)}
-                  className="bg-white border-indigo-100 rounded-xl h-11"
+                  className="bg-white border-slate-200 rounded-xl h-11"
                 />
               </div>
               <div className="flex-1 w-full space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Faltas Globais</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Faltas Globais</label>
                 <Input 
                   type="number" 
                   placeholder="0" 
                   value={globalFaltas} 
                   onChange={e => setGlobalFaltas(e.target.value)}
-                  className="bg-white border-indigo-100 rounded-xl h-11"
+                  className="bg-white border-slate-200 rounded-xl h-11"
                 />
               </div>
               <div className="flex-[2] w-full space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Obs. Global</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Obs. Global</label>
                 <Input 
                   placeholder="Ex: Excelente participação" 
                   value={globalObs} 
                   onChange={e => setGlobalObs(e.target.value)}
-                  className="bg-white border-indigo-100 rounded-xl h-11"
+                  className="bg-white border-slate-200 rounded-xl h-11"
                 />
               </div>
               <Button 
                 onClick={aplicarMassa}
-                className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold h-11 px-6 rounded-xl shadow-md gap-2"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 px-6 rounded-xl shadow-md gap-2"
               >
-                <CheckCircle2 size={18} />
+                <CheckCircle2 size={16} />
                 Aplicar aos Selecionados ({selecionados.length})
               </Button>
             </div>
@@ -402,19 +403,19 @@ export function NotasPageWeb() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-zinc-50/50 border-b border-zinc-100">
+                  <tr className="bg-slate-50 border-b border-slate-100">
                     <th className="w-16 px-8 py-4">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                         checked={(todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).length > 0 && selecionados.length === (todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).length}
                         onChange={() => selecionarTodosVisiveis((todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId))}
                       />
                     </th>
-                    <th className="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Aluno</th>
-                    <th className="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 w-32">Nota</th>
-                    <th className="text-center px-4 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 w-32">Faltas</th>
-                    <th className="text-left px-8 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Observações</th>
+                    <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Aluno</th>
+                    <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-32">Nota</th>
+                    <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-32">Faltas</th>
+                    <th className="text-left px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Observações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -430,12 +431,12 @@ export function NotasPageWeb() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold text-sm">
                             {aluno.nome_completo.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-bold text-zinc-700">{aluno.nome_completo}</p>
-                            <p className="text-[10px] text-zinc-400 font-medium">ID: {aluno.id.split('-')[0]}</p>
+                            <p className="font-bold text-slate-700">{aluno.nome_completo}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">ID: {aluno.id.split('-')[0]}</p>
                           </div>
                         </div>
                       </td>
@@ -445,7 +446,7 @@ export function NotasPageWeb() {
                           placeholder="0,0"
                           value={notasLocais[aluno.id]?.nota || ''}
                           onChange={(e) => handleNotaChange(aluno.id, 'nota', e.target.value)}
-                          className="text-center font-black text-indigo-600 focus:ring-indigo-500 rounded-xl h-11 border-slate-200"
+                          className="text-center font-bold text-indigo-700 focus:ring-indigo-500 rounded-xl h-11 border-slate-200"
                         />
                       </td>
                       <td className="px-4 py-4">
@@ -454,7 +455,7 @@ export function NotasPageWeb() {
                           placeholder="0"
                           value={notasLocais[aluno.id]?.faltas || ''}
                           onChange={(e) => handleNotaChange(aluno.id, 'faltas', e.target.value)}
-                          className="text-center font-bold text-zinc-600 focus:ring-indigo-500 rounded-xl h-11 border-zinc-200"
+                          className="text-center font-bold text-slate-600 focus:ring-indigo-500 rounded-xl h-11 border-slate-200"
                         />
                       </td>
                       <td className="px-8 py-4">
@@ -462,7 +463,7 @@ export function NotasPageWeb() {
                           placeholder="Ex: Ótimo desempenho"
                           value={notasLocais[aluno.id]?.observacoes || ''}
                           onChange={(e) => handleNotaChange(aluno.id, 'observacoes', e.target.value)}
-                          className="bg-slate-50 border-transparent focus:bg-white focus:border-slate-200 rounded-xl h-11 text-sm text-slate-600"
+                          className="bg-slate-50 border-slate-100 focus:bg-white focus:border-slate-200 rounded-xl h-11 text-sm text-slate-600"
                         />
                       </td>
                     </tr>

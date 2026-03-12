@@ -148,7 +148,7 @@ export function AlunosListPageMobile() {
                     onDelete={() => handleExcluir(aluno)}
                     onEdit={() => navigate(`/alunos/${aluno.id}?edit=true`)}
                   >
-                    <div className="flex items-center gap-3.5">
+                    <div className="flex items-start gap-3.5">
                       {/* Avatar */}
                       <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-600 overflow-hidden">
                         {aluno.foto_url ? (
@@ -160,7 +160,7 @@ export function AlunosListPageMobile() {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-start justify-between gap-2 mb-1">
                           <h3 className="font-bold text-slate-900 dark:text-white text-[14px] truncate leading-tight">
                             {aluno.nome_completo}
                           </h3>
@@ -172,12 +172,21 @@ export function AlunosListPageMobile() {
                             {alunosComMatriculaIds.has(aluno.id) ? 'ATIVO' : 'PEND.'}
                           </Badge>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate leading-none">
-                          {aluno.filiais?.nome_unidade || 'Sem Unidade'}
-                        </p>
+                        
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100/50">
+                              <User className="h-2.5 w-2.5 text-indigo-500" />
+                              <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase">ESTUDANTE</span>
+                           </div>
+                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100">
+                              <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                                 {aluno.filiais?.nome_unidade || 'Sem Unidade'}
+                              </span>
+                           </div>
+                        </div>
                       </div>
 
-                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 ml-1" />
+                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 mt-1" />
                     </div>
                   </NativeCard>
                 </motion.div>
@@ -186,13 +195,15 @@ export function AlunosListPageMobile() {
 
             {/* Empty State */}
             {filteredAlunos?.length === 0 && (
-              <div className="py-16 text-center">
-                <div className="h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800 mx-auto flex items-center justify-center mb-4">
-                  <Search className="h-7 w-7 text-slate-200" />
+              <div className="py-20 text-center">
+                <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 border border-slate-50">
+                  <User className="h-10 w-10 text-slate-300" />
                 </div>
-                <p className="font-black text-slate-300 text-sm mb-1">Nenhum resultado</p>
-                <p className="text-slate-400 text-xs">Tente outra busca.</p>
-                <Button variant="outline" onClick={() => setSearchTerm('')} className="mt-4 rounded-xl text-xs font-bold">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Nenhum Aluno</h3>
+                <p className="text-xs font-medium text-slate-400 max-w-[200px] mx-auto mt-2 leading-relaxed">
+                   Refine sua busca ou cadastre um novo aluno no botão abaixo.
+                </p>
+                <Button variant="outline" onClick={() => setSearchTerm('')} className="mt-6 rounded-xl text-xs font-bold px-8">
                   Limpar busca
                 </Button>
               </div>
@@ -207,7 +218,7 @@ export function AlunosListPageMobile() {
         animate={{ scale: 1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate('/alunos/novo')}
-        className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+        className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
       >
         <Plus className="h-6 w-6" />
       </motion.button>

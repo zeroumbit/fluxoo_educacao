@@ -137,54 +137,67 @@ export function FinanceiroPageWeb() {
   return (
     <div className="space-y-6">
       {/* Header com Resumo */}
+      {/* Header com Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm bg-indigo-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-indigo-600">Total Gerado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-black text-indigo-900">R$ {stats.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </CardContent>
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <Banknote className="h-6 w-6 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Gerado</p>
+              <p className="text-2xl font-bold text-slate-900">R$ {stats.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </Card>
-        <Card className="border-0 shadow-sm bg-emerald-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-emerald-600">Total Recebido</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-black text-emerald-900">R$ {stats.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </CardContent>
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <ArrowDownCircle className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/50">Total Recebido</p>
+              <p className="text-2xl font-bold text-slate-900">R$ {stats.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </Card>
-        <Card className="border-0 shadow-sm bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-600">A Receber</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-black text-amber-900">R$ {stats.a_vencer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </CardContent>
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/50">A Receber</p>
+              <p className="text-2xl font-bold text-slate-900">R$ {stats.a_vencer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </Card>
-        <Card className="border-0 shadow-sm bg-rose-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-rose-600">Em Atraso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-black text-rose-900">R$ {stats.atrasados.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          </CardContent>
+        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-rose-50 flex items-center justify-center">
+              <ArrowUpCircle className="h-6 w-6 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600/50">Em Atraso</p>
+              <p className="text-2xl font-bold text-slate-900">R$ {stats.atrasados.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </Card>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input 
               placeholder="Buscar por aluno ou descrição..." 
-              className="pl-9 bg-slate-50 border-0 rounded-xl"
+              className="pl-9 h-11 bg-white border-slate-200 rounded-xl"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
           </div>
           <Select value={filtroStatus} onValueChange={(v: any) => setFiltroStatus(v)}>
-            <SelectTrigger className="w-[180px] bg-white rounded-xl border-zinc-200">
+            <SelectTrigger className="w-[180px] h-11 bg-white rounded-xl border-slate-200">
               <Filter className="h-4 w-4 mr-2 text-slate-400" />
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -199,8 +212,8 @@ export function FinanceiroPageWeb() {
 
         <Dialog open={dialogOpen} onOpenChange={(val) => { setDialogOpen(val); if(!val) reset(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-100 px-6 font-bold">
-              <Plus className="mr-2 h-5 w-5" /> Nova Cobrança
+            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 text-white rounded-xl shadow-md px-6 font-bold gap-2">
+              <Plus className="h-5 w-5" /> Nova Cobrança
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
@@ -212,13 +225,13 @@ export function FinanceiroPageWeb() {
             <div className="py-4">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Aluno</Label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
                   <Select 
                     value={alunoIdSelecionado} 
                     onValueChange={(val) => setValue('aluno_id', val)}
                     disabled={!!cobrancaEditando}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
                       <SelectValue placeholder="Selecione o aluno" />
                     </SelectTrigger>
                     <SelectContent>
@@ -233,32 +246,32 @@ export function FinanceiroPageWeb() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Descrição</Label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Descrição</label>
                   <Input 
                     {...register('descricao')}
                     placeholder="Ex: Mensalidade Julho/2024"
-                    className="w-full"
+                    className="w-full h-11 border-slate-200 rounded-xl"
                   />
                   {errors.descricao && <p className="text-xs text-rose-500 font-bold">{errors.descricao.message}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Valor (R$)</Label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</label>
                     <Input 
                       type="number"
                       step="0.01"
                       {...register('valor')}
-                      className="w-full"
+                      className="w-full h-11 border-slate-200 rounded-xl"
                     />
                     {errors.valor && <p className="text-xs text-rose-500 font-bold">{errors.valor.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Vencimento</Label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Vencimento</label>
                     <Input 
                       type="date"
                       {...register('data_vencimento')}
-                      className="w-full"
+                      className="w-full h-11 border-slate-200 rounded-xl"
                     />
                     {errors.data_vencimento && <p className="text-xs text-rose-500 font-bold">{errors.data_vencimento.message}</p>}
                   </div>
@@ -279,44 +292,44 @@ export function FinanceiroPageWeb() {
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-sm overflow-hidden rounded-2xl border border-slate-100">
+      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-600">Aluno / Responsável</TableHead>
-              <TableHead className="font-bold text-slate-600">Descrição</TableHead>
-              <TableHead className="font-bold text-slate-600">Vencimento</TableHead>
-              <TableHead className="font-bold text-slate-600">Valor</TableHead>
-              <TableHead className="font-bold text-slate-600">Status</TableHead>
-              <TableHead className="text-right"></TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Aluno / Responsável</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Descrição</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Vencimento</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Valor</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Status</TableHead>
+              <TableHead className="text-right px-6"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCobrancas.map((c: any) => (
-              <TableRow key={c.id} className="hover:bg-slate-50 transition-colors">
-                <TableCell>
+              <TableRow key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                <TableCell className="px-6 py-4">
                   <p className="font-bold text-slate-900">{c.alunos?.nome_completo}</p>
-                  <p className="text-xs text-slate-500">{c.alunos?.email_acesso}</p>
+                  <p className="text-xs text-slate-400 font-medium">{c.alunos?.email_acesso}</p>
                 </TableCell>
-                <TableCell className="text-slate-600 font-medium">{c.descricao}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-slate-600">
+                <TableCell className="px-6 py-4 text-slate-600 font-medium">{c.descricao}</TableCell>
+                <TableCell className="px-6 py-4">
+                  <div className="flex items-center gap-2 text-slate-500 font-medium">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     {new Date(c.data_vencimento).toLocaleDateString('pt-BR')}
                   </div>
                 </TableCell>
-                <TableCell className="font-bold text-indigo-600">
+                <TableCell className="px-6 py-4 font-bold text-indigo-700">
                   R$ {Number(c.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-6 py-4">
                   <Badge variant="outline" className={cn(
-                    "rounded-full px-3 py-1 font-bold",
-                    c.status === 'pago' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                    c.status === 'atrasado' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                    "bg-amber-50 text-amber-600 border-amber-100"
+                    "rounded-md px-3 py-1 font-bold border-0",
+                    c.status === 'pago' ? "bg-emerald-50 text-emerald-600" :
+                    c.status === 'atrasado' ? "bg-rose-50 text-rose-600" :
+                    "bg-amber-50 text-amber-500"
                   )}>
-                    {c.status === 'pago' ? 'Recebido' : 
-                     c.status === 'atrasado' ? 'Em Atraso' : 'Em Aberto'}
+                    {c.status === 'pago' ? 'RECEBIDO' : 
+                     c.status === 'atrasado' ? 'ATRASADO' : 'EM ABERTO'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
