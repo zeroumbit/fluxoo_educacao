@@ -102,6 +102,8 @@ export type Aluno = {
   desconto_tipo: 'valor' | 'porcentagem' | null
   desconto_inicio: string | null
   desconto_fim: string | null
+  valor_mensalidade_atual: number | null
+  data_ingresso: string | null
   created_at: string
   updated_at: string
 }

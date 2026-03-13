@@ -53,8 +53,6 @@ const alunoSchema = z.object({
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
   filial_id: z.string().optional(),
-  valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
-  data_ingresso: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
   responsavel_telefone: z.string().optional().or(z.literal('')),
@@ -116,8 +114,6 @@ export function AlunoCadastroPage() {
       nome_completo: '',
       data_nascimento: '',
       cep: '',
-      valor_mensalidade_atual: 0,
-      data_ingresso: new Date().toISOString().split('T')[0],
     },
   })
 
@@ -307,12 +303,6 @@ export function AlunoCadastroPage() {
         bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
         cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
         estado: data.estado && data.estado !== '' ? data.estado : null,
-        valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
-        data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
-        // desconto_valor: (data as any).desconto_valor || null,
-        // desconto_tipo: (data as any).desconto_tipo || null,
-        // desconto_inicio: (data as any).desconto_inicio || null,
-        // desconto_fim: (data as any).desconto_fim || null,
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))

@@ -111,7 +111,12 @@ export function MatriculaFormPageMobile() {
         }
         form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
         form.setValue('turma_id', turma.id)
-        if (turma.valor_mensalidade) form.setValue('valor_matricula', turma.valor_mensalidade)
+        if (turma.valor_mensalidade) {
+          form.setValue('valor_matricula', turma.valor_mensalidade)
+          toast.info(`Mensalidade: R$ ${turma.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
+            description: `Turma ${turma.nome}`
+          })
+        }
       }
     }
   }, [serieSelecionada, tipoSelecionado, turmas, form, editId])
@@ -121,13 +126,43 @@ export function MatriculaFormPageMobile() {
     try {
       if (editId) {
         await atualizar.mutateAsync({ id: editId, data })
+        // Atualizar o valor da mensalidade do aluno baseado na turma
+        if (data.aluno_id && data.valor_matricula) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ valor_mensalidade_atual: data.valor_matricula })
+          })
+        }
         toast.success('Alterações salvas!')
       } else {
         await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+        // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
+        if (data.aluno_id && data.valor_matricula) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ 
+              valor_mensalidade_atual: data.valor_matricula,
+              data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
+            })
+          })
+        }
         toast.success('Matrícula realizada!')
       }
       navigate('/matriculas')
-    } catch {
+    } catch (err: any) {
+      console.error('Erro ao salvar matrícula:', err)
       toast.error('Erro ao salvar matrícula')
     }
   }

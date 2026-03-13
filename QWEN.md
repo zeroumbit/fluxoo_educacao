@@ -13,3 +13,4 @@
 - Ao ajustar campos Select (Radix UI) em grids, sempre adicionar `className="w-full"` no `SelectTrigger` para ocupar 100% da largura da coluna. Sem isso, o select não se expande mesmo dentro de `grid-cols-2`.
 - UI/UX - Cards: Ao criar cards, sempre adicionar `className="pt-[30px]"` no CardHeader para evitar que títulos fiquem grudados no topo. Distância padrão de 30px é o ideal.
 - Regra de cores da plataforma: Admin das Escolas usa cor azul como padrão; Portão dos Responsáveis usa cor verde como padrão.
+- Quando houver erro "The requested module '/src/App.tsx' does not provide an export named 'default'": 1) Usar `export default function App()` direto na definição da função (mais robusto para Vite/HMR); 2) Em main.tsx, usar importação explícita `import App from './App.tsx'`; 3) Corrigir caracteres especiais em comentários que podem causar problemas de codificação; 4) Executar `npm run build` para validar sintaxe e exportação padrão.

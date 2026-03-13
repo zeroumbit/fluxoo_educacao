@@ -40,9 +40,13 @@ export function AlunosListPageWeb() {
   const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<any | null>(null)
   const [alunoDesconto, setAlunoDesconto] = useState<any | null>(null)
 
-  // Cria um Set com IDs de alunos com matrícula ativa para consulta rápida
-  const alunosComMatriculaIds = useMemo(() => {
-    return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
+  // Cria um Map com IDs de alunos com matrícula ativa para consulta rápida (inclui ano_letivo)
+  const alunosComMatriculaMap = useMemo(() => {
+    const map = new Map<string, { temMatricula: boolean; anoLetivo?: number }>()
+    matriculasAtivas?.forEach(m => {
+      map.set(m.aluno_id, { temMatricula: true, anoLetivo: m.ano_letivo })
+    })
+    return map
   }, [matriculasAtivas])
 
   const alunosFiltrados = useMemo(() => {
@@ -51,9 +55,11 @@ export function AlunosListPageWeb() {
     ).map((aluno) => {
       // Encontrar o CPF do responsável financeiro para agrupamento
       const respFinanceiro = aluno.aluno_responsavel?.find((v: any) => v.is_financeiro);
+      const matriculaInfo = alunosComMatriculaMap.get(aluno.id)
       return {
         ...aluno,
-        temMatricula: alunosComMatriculaIds.has(aluno.id),
+        temMatricula: matriculaInfo?.temMatricula || false,
+        anoLetivo: matriculaInfo?.anoLetivo,
         financeiroCpf: respFinanceiro?.responsaveis?.cpf || 'sem-financeiro',
         financeiroNome: respFinanceiro?.responsaveis?.nome || '—'
       }
@@ -66,7 +72,7 @@ export function AlunosListPageWeb() {
        }
        return a.financeiroCpf.localeCompare(b.financeiroCpf);
     });
-  }, [alunos, busca, alunosComMatriculaIds])
+  }, [alunos, busca, alunosComMatriculaMap])
 
   // Detectar múltiplos alunos por responsável
   const gruposMultiIrmaos = useMemo(() => {
@@ -145,7 +151,7 @@ export function AlunosListPageWeb() {
                 </div>
                 <div>
                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/50">Matriculados</p>
-                   <p className="text-2xl font-bold text-emerald-700">{alunosComMatriculaIds.size}</p>
+                   <p className="text-2xl font-bold text-emerald-700">{alunosComMatriculaMap.size}</p>
                 </div>
              </div>
           </Card>
@@ -270,7 +276,7 @@ export function AlunosListPageWeb() {
                              "text-[10px] font-bold uppercase",
                              aluno.temMatricula ? "text-emerald-700" : "text-amber-700"
                           )}>
-                             {aluno.temMatricula ? 'Ativa 2024' : 'Sem Matrícula'}
+                             {aluno.temMatricula ? `Ativa ${aluno.anoLetivo || new Date().getFullYear()}` : 'Sem Matrícula'}
                           </p>
                        </div>
                     </TableCell>

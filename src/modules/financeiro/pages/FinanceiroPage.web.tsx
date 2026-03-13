@@ -31,7 +31,7 @@ import {
   Banknote,
   FileDown
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency, formatDate } from '@/lib/utils'
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione o aluno'),
@@ -55,6 +55,8 @@ export function FinanceiroPageWeb() {
   const [cobrancaEditando, setCobrancaEditando] = useState<any>(null)
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'a_vencer' | 'pago' | 'atrasado'>('todos')
   const [busca, setBusca] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [cobrancaExcluindo, setCobrancaExcluindo] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
     resolver: zodResolver(cobrancaSchema),
@@ -100,12 +102,33 @@ export function FinanceiroPageWeb() {
   }
 
   const handleExcluir = async (id: string) => {
-    if (!confirm('Deseja excluir esta cobrança permanentemente?')) return
+    // Buscar o aluno da cobrança para validar a regra
+    const cobranca = cobrancas?.find((c: any) => c.id === id)
+    const aluno = alunos?.find((a: any) => a.id === cobranca?.aluno_id)
+    
+    // Regra: Alunos matriculados (com turma ativa) não podem ter cobranças deletadas
+    // Isso garante que alunos ativos sempre tenham um histórico financeiro vinculado
+    if (aluno?.turma_atual) {
+      toast.error('Não permitido!', {
+        description: 'Alunos matriculados não podem ter cobranças deletadas. Caso necessário, encerre a matrícula antes.'
+      })
+      return
+    }
+
+    setCobrancaExcluindo(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmarExclusao = async () => {
+    if (!cobrancaExcluindo) return
     try {
-      await excluirCobranca.mutateAsync(id)
-      toast.success('Cobrança excluída!')
-    } catch {
-      toast.error('Erro ao excluir.')
+      await excluirCobranca.mutateAsync(cobrancaExcluindo)
+      toast.success('Cobrança excluída com sucesso!')
+      setDeleteDialogOpen(false)
+      setCobrancaExcluindo(null)
+      refetch()
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao excluir cobrança')
     }
   }
 
@@ -136,7 +159,12 @@ export function FinanceiroPageWeb() {
 
   return (
     <div className="space-y-6">
-      {/* Header com Resumo */}
+      {/* Título e Subtítulo */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gestão Financeira</h1>
+        <p className="text-muted-foreground">Controle de cobranças, recebimentos e fluxo de caixa</p>
+      </div>
+
       {/* Header com Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
@@ -146,7 +174,7 @@ export function FinanceiroPageWeb() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Gerado</p>
-              <p className="text-2xl font-bold text-slate-900">R$ {stats.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-slate-900">{formatCurrency(stats.total)}</p>
             </div>
           </div>
         </Card>
@@ -157,7 +185,7 @@ export function FinanceiroPageWeb() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/50">Total Recebido</p>
-              <p className="text-2xl font-bold text-slate-900">R$ {stats.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-slate-900">{formatCurrency(stats.pagos)}</p>
             </div>
           </div>
         </Card>
@@ -168,7 +196,7 @@ export function FinanceiroPageWeb() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/50">A Receber</p>
-              <p className="text-2xl font-bold text-slate-900">R$ {stats.a_vencer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-slate-900">{formatCurrency(stats.a_vencer)}</p>
             </div>
           </div>
         </Card>
@@ -179,7 +207,7 @@ export function FinanceiroPageWeb() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600/50">Em Atraso</p>
-              <p className="text-2xl font-bold text-slate-900">R$ {stats.atrasados.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-slate-900">{formatCurrency(stats.atrasados)}</p>
             </div>
           </div>
         </Card>
@@ -290,6 +318,63 @@ export function FinanceiroPageWeb() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-rose-600" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-slate-900">Excluir Cobrança</DialogTitle>
+              </div>
+              <DialogDescription className="text-slate-500 font-medium pt-2">
+                Você está prestes a excluir esta cobrança permanentemente. Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-bold text-rose-800">Atenção!</p>
+                  <p className="text-rose-700 font-medium mt-1">
+                    Todos os dados relacionados a esta cobrança serão removidos permanentemente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+                disabled={excluirCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold border-slate-200 hover:bg-slate-50"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmarExclusao}
+                disabled={excluirCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold bg-rose-600 text-white hover:bg-rose-700"
+              >
+                {excluirCobranca.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
@@ -315,11 +400,11 @@ export function FinanceiroPageWeb() {
                 <TableCell className="px-6 py-4">
                   <div className="flex items-center gap-2 text-slate-500 font-medium">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    {new Date(c.data_vencimento).toLocaleDateString('pt-BR')}
+                    {formatDate(c.data_vencimento)}
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4 font-bold text-indigo-700">
-                  R$ {Number(c.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(c.valor || 0)}
                 </TableCell>
                 <TableCell className="px-6 py-4">
                   <Badge variant="outline" className={cn(

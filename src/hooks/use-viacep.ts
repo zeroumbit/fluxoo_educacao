@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URLS } from '@/lib/constants'
 
 export const ESTADOS_BRASIL = [
   { value: 'AC', label: 'Acre' },
@@ -41,7 +42,7 @@ export function useViaCEP() {
 
     setLoading(true)
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanedCEP}/json/`)
+      const response = await fetch(`${API_URLS.VIACEP}/${cleanedCEP}/json/`)
       const data = await response.json()
       
       if (data.erro) {
@@ -69,7 +70,7 @@ export function useViaCEP() {
 
     setLoadingCities(true)
     try {
-      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
+      const response = await fetch(`${API_URLS.IBGE_MUNICIPIOS}/${uf}/municipios`)
       const data = await response.json()
       
       const formattedCities = data.map((city: any) => ({

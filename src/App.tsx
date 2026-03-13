@@ -90,7 +90,7 @@ function RootRedirect() {
   return <Navigate to="/dashboard" replace />
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -105,7 +105,7 @@ function App() {
             {/* Login do Portal */}
             <Route path="/portal/login" element={<PortalLoginPage />} />
 
-            {/* Cadastro de Escola - PÃºblico */}
+            {/* Cadastro de Escola - Público */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
 
             {/* Super Admin Routes */}
@@ -143,7 +143,7 @@ function App() {
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
               <Route path="/livros" element={<LivrosPage />} />
-              {/* Novos MÃ³dulos */}
+              {/* Novos Módulos */}
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/matriculas/nova" element={<MatriculaFormPage />} />
@@ -164,7 +164,7 @@ function App() {
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
             </Route>
 
-            {/* Portal do ResponsÃ¡vel */}
+            {/* Portal do Responsável */}
             <Route
               element={
                 <ProtectedRoute allowedRoles={['responsavel']}>
@@ -206,6 +206,4 @@ function App() {
     </QueryClientProvider>
   )
 }
-
-export default App
 

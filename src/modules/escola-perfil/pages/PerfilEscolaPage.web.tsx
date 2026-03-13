@@ -70,11 +70,16 @@ export function PerfilEscolaPageWeb() {
 
   const handleSave = async () => {
     if (!authUser?.tenantId) return
+    if (!form.telefone) {
+      toast.error('O número de Telefone/WhatsApp é obrigatório para que os pais possam enviar comprovantes.')
+      return
+    }
     setSaving(true)
     try {
       const { error } = await (supabase.from('escolas' as any) as any)
         .update({ ...form, updated_at: new Date().toISOString() }).eq('id', authUser.tenantId)
       if (error) throw error
+
       toast.success('Perfil atualizado com sucesso!')
     } catch { toast.error('Erro ao salvar') }
     finally { setSaving(false) }
@@ -210,7 +215,19 @@ export function PerfilEscolaPageWeb() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>E-mail da Escola</Label><Input type="email" value={form.email_gestor} onChange={(e) => setForm({ ...form, email_gestor: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                Telefone / WhatsApp (Obrigatório)
+                <span className="text-[10px] bg-red-50 text-red-500 px-1.5 py-0.5 rounded uppercase font-bold">Obrigatório</span>
+              </Label>
+              <Input 
+                value={form.telefone} 
+                onChange={(e) => setForm({ ...form, telefone: e.target.value })} 
+                placeholder="(00) 00000-0000"
+                className={!form.telefone ? "border-red-200 focus-visible:ring-red-500" : ""}
+              />
+              <p className="text-[10px] text-slate-400">Este número será usado para recebimento de comprovantes via WhatsApp.</p>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -107,6 +107,18 @@ export function FinanceiroPageMobile() {
   }
 
   const handleExcluir = async (id: string) => {
+    // Buscar o aluno da cobrança para validar a regra
+    const cobranca = cobrancas?.find((c: any) => c.id === id)
+    const aluno = alunos?.find((a: any) => a.id === cobranca?.aluno_id)
+    
+    // Regra: Alunos matriculados não podem ter cobranças deletadas
+    if (aluno?.turma_atual) {
+      toast.error('Não permitido!', {
+        description: 'Alunos matriculados não podem ter cobranças deletadas.'
+      })
+      return
+    }
+
     if (!confirm('Deseja excluir este registro?')) return
     try {
       await excluirCobranca.mutateAsync(id)
@@ -144,7 +156,12 @@ export function FinanceiroPageMobile() {
     <PullToRefresh onRefresh={async () => { await refetch() }}>
       <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
         <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-6">
-          {/* Header de Saldo */}
+          {/* Título e Subtítulo */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestão Financeira</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Controle de cobranças, recebimentos e fluxo de caixa</p>
+          </div>
+
           {/* Header de Saldo */}
           <div className="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-200/50 dark:shadow-none relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
