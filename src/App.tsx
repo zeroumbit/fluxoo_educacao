@@ -199,7 +199,7 @@ function App() {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="top-center" expand={true} visibleToasts={6} className="z-[99999]" />
           <PwaInstallPrompt />
         </AuthProvider>
       </BrowserRouter>

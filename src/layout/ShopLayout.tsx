@@ -61,7 +61,7 @@ export function ShopLayout() {
             <div className="flex items-center gap-4 md:gap-12">
               {/* Logo */}
               <div 
-                className="flex items-center gap-3 cursor-pointer shrink-0"
+                className="flex items-center gap-3 cursor-pointer shrink-0 md:w-56"
                 onClick={() => navigate('/portal')}
               >
                 <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/20">
@@ -135,20 +135,28 @@ export function ShopLayout() {
             </div>
 
             {/* Segunda Linha - Endereço e Categorias */}
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 border-t border-slate-50 pt-2">
-              <div className="flex items-center gap-1.5 text-slate-400 max-w-[400px] truncate hover:text-teal-600 transition-colors cursor-pointer group">
-                <MapPin size={14} className="group-hover:animate-bounce" />
-                <span className="uppercase tracking-tight">Enviar para {authUser?.nome?.split(' ')[0]} - <span className="text-slate-500">{formattedAddress}</span></span>
+            <div className="flex items-center gap-4 md:gap-12 text-xs font-bold text-slate-500 border-t border-slate-50 pt-2 pb-1 overflow-hidden">
+              <div className="flex items-start gap-1.5 text-slate-400 cursor-pointer group transition-colors shrink-0 md:w-56 overflow-hidden">
+                <MapPin size={14} className="mt-1 group-hover:animate-bounce group-hover:text-teal-600 shrink-0" />
+                <div className="flex flex-col min-w-0 pr-2">
+                  <span className="uppercase tracking-tight text-[10px] text-slate-400 group-hover:text-teal-600 transition-colors truncate">
+                    Enviar para {authUser?.nome?.split(' ')[0]}
+                  </span>
+                  <span className="text-slate-600 truncate text-[11px] font-medium transition-colors group-hover:text-teal-600">
+                    {formattedAddress}
+                  </span>
+                </div>
               </div>
 
-              <nav className="hidden md:flex items-center gap-8">
-                <NavLink to="/portal/loja?cat=livros" className={({ isActive }) => cn("uppercase tracking-widest text-[10px] hover:text-teal-600 transition-colors", isActive && "text-teal-600")}>Livros</NavLink>
-                <NavLink to="/portal/loja?cat=material-escolar" className="uppercase tracking-widest text-[10px] hover:text-teal-600 transition-colors">Material Escolar</NavLink>
-                <NavLink to="/portal/loja?cat=vestuario" className="uppercase tracking-widest text-[10px] hover:text-teal-600 transition-colors">Vestuário</NavLink>
+              {/* Menu de Categorias - Alinhado com o início da barra de busca */}
+              <nav className="hidden md:flex items-center gap-8 mt-1">
+                <NavLink to="/portal/loja?cat=livros" className={({ isActive }) => cn("uppercase tracking-[0.15em] text-[10px] hover:text-teal-600 transition-colors shrink-0", isActive && "text-teal-600")}>Livros</NavLink>
+                <NavLink to="/portal/loja?cat=material-escolar" className="uppercase tracking-[0.15em] text-[10px] hover:text-teal-600 transition-colors shrink-0">Material Escolar</NavLink>
+                <NavLink to="/portal/loja?cat=vestuario" className="uppercase tracking-[0.15em] text-[10px] hover:text-teal-600 transition-colors shrink-0">Vestuário</NavLink>
               </nav>
 
-              <div className="hidden md:block ml-auto">
-                <NavLink to="/portal/loja/vender" className="uppercase tracking-widest text-[10px] text-teal-600 font-black flex items-center gap-1 hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-all border border-teal-100">
+              <div className="hidden md:block ml-auto mt-1">
+                <NavLink to="/portal/loja/vender" className="uppercase tracking-widest text-[10px] text-teal-600 font-black flex items-center gap-1 hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-all border border-teal-100 whitespace-nowrap">
                   Vender Items
                 </NavLink>
               </div>

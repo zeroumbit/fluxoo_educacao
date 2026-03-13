@@ -75,6 +75,18 @@ export const portalService = {
     }
   },
 
+  async reencaminharConfirmacao(email: string) {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/portal/login`,
+      },
+    })
+    if (error) throw error
+    return true
+  },
+
   // ==========================================
   // ACEITE LGPD / PRIMEIRO ACESSO
   // ==========================================

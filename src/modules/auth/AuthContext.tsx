@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 4. Responsável
       const respRes = await withTimeout(
-        supabase.from('responsaveis').select('nome, logradouro, numero, bairro, cidade, estado').eq('user_id', user.id).maybeSingle() as any,
+        supabase.from('responsaveis').select('nome, logradouro, numero, bairro, cidade, estado, cep, complemento').eq('user_id', user.id).maybeSingle() as any,
         5000
       ) as any
 

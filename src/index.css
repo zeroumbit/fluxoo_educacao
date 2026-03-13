@@ -60,6 +60,15 @@
   }
 }
 
+/* Garantir que toasts do Sonner se sobreponham a todos os elementos */
+[data-sonner-toaster] {
+  z-index: 99999 !important;
+}
+
+[data-sonner-toast] {
+  z-index: 99999 !important;
+}
+
 /* Scrollbar hidden utility for horizontal scroll areas */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

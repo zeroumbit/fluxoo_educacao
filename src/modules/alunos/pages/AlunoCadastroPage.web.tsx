@@ -209,10 +209,13 @@ export function AlunoCadastroPage() {
           })
         }
         
-        toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
-          description: 'Não é necessário criar uma nova senha.',
-          duration: 6000
-        })
+        // Pequeno delay para não sobrecarregar visualmente e evitar sobreposição instantânea
+        setTimeout(() => {
+          toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
+            description: 'Não é necessário criar uma nova senha.',
+            duration: 6000
+          })
+        }, 500)
       } else {
         setResponsavelEncontrado(false)
         setIrmaosExistentes([])
@@ -221,6 +224,29 @@ export function AlunoCadastroPage() {
       console.error('Erro ao buscar responsável:', err)
     } finally {
       setBuscandoCpf(false)
+    }
+  }
+
+  const handleCpfAlunoBlur = async () => {
+    const cpf = watch('cpf')
+    if (!cpf || cpf.length < 14) return
+    
+    const cpfLimpo = cpf.replace(/\D/g, '')
+    try {
+      const { data } = await supabase
+        .from('alunos')
+        .select('id, nome_completo')
+        .eq('cpf', cpfLimpo)
+        .maybeSingle()
+        
+      if (data) {
+        toast.warning('Atenção: CPF já cadastrado!', {
+          description: `Já existe um aluno (${data.nome_completo}) com este CPF no sistema.`,
+          duration: 8000
+        })
+      }
+    } catch (err) {
+      console.error('Erro ao verificar CPF do aluno:', err)
     }
   }
 
@@ -244,7 +270,9 @@ export function AlunoCadastroPage() {
     return await trigger(fieldsPerStep[currentStep])
   }
 
-  const nextStep = async () => {
+  const nextStep = async (e?: React.MouseEvent | React.FormEvent) => {
+    e?.preventDefault()
+    e?.stopPropagation()
     const isValid = await validateStep()
     if (isValid && currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
   }
@@ -254,6 +282,9 @@ export function AlunoCadastroPage() {
   }
 
   const onSubmit = async (data: AlunoFormValues) => {
+    // Trava de segurança: só permite submeter se estiver no último step
+    if (currentStep !== steps.length - 1) return
+
     if (!authUser) return
     if (limiteAtingido) {
       toast.error('Limite de alunos atingido!')
@@ -474,6 +505,7 @@ export function AlunoCadastroPage() {
                       placeholder="000.000.000-00"
                       {...register('cpf')}
                       onChange={(e) => handleCpfChange(e, 'cpf')}
+                      onBlur={handleCpfAlunoBlur}
                       maxLength={14}
                       className="w-full"
                     />
@@ -839,7 +871,7 @@ export function AlunoCadastroPage() {
             ) : (
               <Button
                 type="button"
-                onClick={nextStep}
+                onClick={(e) => nextStep(e)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 h-12 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95"
               >
                 Próximo
