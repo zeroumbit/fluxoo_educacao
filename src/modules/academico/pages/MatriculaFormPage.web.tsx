@@ -109,13 +109,43 @@ export function MatriculaFormPageWeb() {
     try {
       if (editId) {
         await atualizar.mutateAsync({ id: editId, data })
+        // Atualizar o valor da mensalidade do aluno baseado na turma
+        if (data.aluno_id && data.valor_matricula) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ valor_mensalidade_atual: data.valor_matricula })
+          })
+        }
         toast.success('Matrícula atualizada!')
       } else {
-        await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+        const result = await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+        // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
+        if (data.aluno_id && data.valor_matricula) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ 
+              valor_mensalidade_atual: data.valor_matricula,
+              data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
+            })
+          })
+        }
         toast.success('Matrícula realizada!')
       }
       navigate('/matriculas')
-    } catch {
+    } catch (err: any) {
+      console.error('Erro ao salvar matrícula:', err)
       toast.error('Erro ao salvar matrícula')
     }
   }
@@ -178,14 +208,23 @@ export function MatriculaFormPageWeb() {
                 <Select value={form.getValues('serie_ano')} onValueChange={(v) => {
                   form.setValue('serie_ano', v)
                   const t = (turmas as any[])?.find(x => x.nome === v)
-                  if (t) form.setValue('turma_id', t.id)
+                  if (t) {
+                    form.setValue('turma_id', t.id)
+                    // Atualizar automaticamente o valor da mensalidade baseado na turma
+                    if (t.valor_mensalidade) {
+                      form.setValue('valor_matricula', t.valor_mensalidade)
+                      toast.info(`Mensalidade atualizada para R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
+                        description: `Valor baseado na turma ${t.nome}`
+                      })
+                    }
+                  }
                 }}>
                   <SelectTrigger id="serie_ano">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent>
                     {(turmas as any[])?.map((t: any) => (
-                      <SelectItem key={t.id} value={t.nome} className="font-medium">{t.nome}</SelectItem>
+                      <SelectItem key={t.id} value={t.nome} className="font-medium">{t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

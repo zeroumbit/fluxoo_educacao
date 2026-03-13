@@ -13,6 +13,14 @@ import {
   SheetFooter
 } from '@/components/ui/sheet'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { useIsMobile } from '@/hooks/use-mobile'
+import {
   CreditCard,
   Copy,
   CheckCircle2,
@@ -30,7 +38,7 @@ import {
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Accordion,
@@ -38,6 +46,7 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion'
+import { UI_CONFIG } from '@/lib/constants'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 
@@ -60,10 +69,11 @@ const CobrancasSkeleton = () => (
 )
 
 export default function PortalCobrancasPage() {
+  const isMobile = useIsMobile()
   const { alunoSelecionado, isMultiAluno, vinculos } = usePortalContext()
   const { data: cobrancas, isLoading } = useCobrancasAluno()
   const { data: configPix } = useConfigPix()
-  const { data: configRecados } = useConfigRecados()
+  const { data: configRecados } = useConfigRecados(alunoSelecionado?.tenant_id)
 
   const [copiado, setCopiado] = useState(false)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
@@ -74,19 +84,47 @@ export default function PortalCobrancasPage() {
       navigator.clipboard.writeText(configPix.chave_pix)
       setCopiado(true)
       toast.success('Chave PIX copiada!')
-      setTimeout(() => setCopiado(false), 2000)
+      setTimeout(() => setCopiado(false), UI_CONFIG.STATUS_RESET_DELAY)
     }
   }
 
   const handleAbrirWhatsApp = () => {
     vibrate(50)
-    const numero = configRecados?.whatsapp_contato?.replace(/\D/g, '')
-    if (!numero) {
+    const numeroRaw = configRecados?.whatsapp_contato || ''
+    const numero = numeroRaw.replace(/\D/g, '')
+    
+    if (!numero || numero.length < 8) {
       toast.error('Número de suporte não configurado.')
       return
     }
+
+    const numeroCompleto = numero.startsWith('55') ? numero : `55${numero}`
     const msg = encodeURIComponent(`Olá, sou responsável por ${alunoSelecionado?.nome_completo} e gostaria de falar com a tesouraria.`)
-    window.open(`https://wa.me/55${numero}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${numeroCompleto}?text=${msg}`, '_blank')
+  }
+
+  const handleEnviarComprovante = (valor: number, descricao: string) => {
+    vibrate(30)
+    
+    // Tenta pegar o número de várias fontes para garantir
+    const numeroRaw = configRecados?.whatsapp_contato || ''
+    const numero = numeroRaw.replace(/\D/g, '')
+    
+    if (!numero || numero.length < 8) {
+      toast.error('A escola não cadastrou um número de WhatsApp no perfil para receber comprovantes. Entre em contato com a secretaria.', {
+        duration: 5000,
+        description: 'Dica: O gestor deve preencher o campo Telefone na página de Perfil da Escola.'
+      })
+      return
+    }
+
+    // Formatação internacional: garante 55 se não tiver
+    const numeroCompleto = numero.startsWith('55') ? numero : `55${numero}`
+    const msg = encodeURIComponent(`Olá, estou enviando o comprovante do PIX de ${formatCurrency(valor)} referente a ${descricao} (Aluno: ${alunoSelecionado?.nome_completo || 'Não identificado'}).`)
+    
+    // Abre o WhatsApp
+    const url = `https://wa.me/${numeroCompleto}?text=${msg}`
+    window.open(url, '_blank')
   }
 
   const statusBadge = (status: string, vencimento: string) => {
@@ -217,7 +255,7 @@ export default function PortalCobrancasPage() {
                                 <div className="flex items-center gap-3 mt-0.5">
                                   <span className="flex items-center gap-1 text-[10px] text-slate-400">
                                      <Calendar size={10} />
-                                     {format(new Date(cobranca.data_vencimento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
+                                     {formatDate(cobranca.data_vencimento)}
                                   </span>
                                   {statusBadge(cobranca.status, cobranca.data_vencimento)}
                                 </div>
@@ -225,9 +263,7 @@ export default function PortalCobrancasPage() {
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
-                               <p className={cn("text-lg font-bold leading-none", isAtrasado ? 'text-red-600' : 'text-slate-900')}>
-                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobranca.valor)}
-                               </p>
+                                 {formatCurrency(cobranca.valor)}
                                <ChevronRight size={16} className="text-slate-200" />
                             </div>
                           </div>
@@ -258,7 +294,7 @@ export default function PortalCobrancasPage() {
                         </div>
                      </div>
                      <p className="text-sm font-bold text-slate-300 shrink-0">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobranca.valor)}
+                        {formatCurrency(cobranca.valor)}
                      </p>
                   </div>
                 ))}
@@ -342,89 +378,50 @@ export default function PortalCobrancasPage() {
         </div>
       </div>
 
-      {/* 5. Bottom Sheet PIX Checkout - Pro Max Style */}
-      <Sheet open={!!cobrancaAtiva} onOpenChange={(open) => { if(!open) setCobrancaAtiva(null); vibrate(10); }}>
-        <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh] focus:outline-none">
-          <div className="px-5 pt-6 pb-8 space-y-5">
-            
-            <HeaderClose onClose={() => setCobrancaAtiva(null)} />
-            
-            <div className="flex flex-col gap-5">
-               <div className="text-center space-y-3">
-                  <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mx-auto">
-                     <QrCode size={24} />
-                  </div>
-                  <div className="space-y-0.5">
-                    <h3 className="text-lg font-bold text-slate-800">Checkout PIX</h3>
-                    <p className="text-[10px] text-slate-400">{configPix?.favorecido || 'Portal Fluxoo EDU'}</p>
-                  </div>
-               </div>
-
-               <div className="bg-slate-900 rounded-2xl p-5 text-center text-white relative overflow-hidden">
-                 <div className="absolute top-0 right-0 opacity-5 pointer-events-none">
-                     <DollarSign size={100} />
-                 </div>
-                 <p className="text-[10px] font-medium text-teal-400 uppercase tracking-wider mb-2">Total</p>
-                 <h2 className="text-3xl font-bold leading-none">
-                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cobrancaAtiva?.valor || 0)}
-                 </h2>
-                 <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 border-t border-white/5 pt-3">{cobrancaAtiva?.descricao}</p>
-               </div>
-
-               {configPix?.qr_code_url ? (
-                 <div className="flex flex-col items-center justify-center p-5 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                    <p className="text-[10px] text-slate-400 mb-4 flex items-center gap-2">Escaneie com seu banco</p>
-                    <div className="p-4 bg-white rounded-2xl shadow-lg border border-slate-100">
-                       <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-48 h-48 object-contain" />
-                    </div>
-                 </div>
-               ) : configPix?.chave_pix ? (
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-3">
-                       <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider text-center">Copia e Cola</p>
-                       <div className="font-mono text-xs text-slate-600 break-all bg-white p-4 rounded-lg border border-slate-200 text-center">
-                          {configPix.chave_pix}
-                       </div>
-                       <Button 
-                         onClick={handleCopiarChave}
-                         className="w-full bg-slate-900 text-white rounded-xl h-12 active:scale-95 font-semibold text-xs uppercase tracking-wider gap-2"
-                       >
-                         {copiado ? <CheckCircle2 size={18} className="text-teal-400" /> : <Copy size={18} />}
-                         {copiado ? 'Copiado!' : 'Copiar Chave'}
-                       </Button>
-                    </div>
-
-                    {configPix.instrucoes_extras && (
-                      <div className="flex gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
-                        <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-800 leading-relaxed">{configPix.instrucoes_extras}</p>
-                      </div>
-                    )}
-                  </div>
-               ) : (
-                  <div className="p-10 text-center space-y-3 bg-red-50 rounded-2xl border-2 border-dashed border-red-200">
-                      <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-                      <div className="space-y-1">
-                         <h4 className="text-base font-bold text-red-900">Indisponível</h4>
-                         <p className="text-xs text-red-800/80 max-w-xs mx-auto">PIX não ativado pela instituição.</p>
-                      </div>
-                  </div>
-               )}
+      {/* 5. Responsive Checkout Modal */}
+      {isMobile ? (
+        <Sheet open={!!cobrancaAtiva} onOpenChange={(open) => { if(!open) setCobrancaAtiva(null); vibrate(10); }}>
+          <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh] focus:outline-none">
+            <div className="px-5 pt-6 pb-8 space-y-5">
+              <CheckoutHeader onClose={() => setCobrancaAtiva(null)} isMobile={true} />
+              <CheckoutBody 
+                cobrancaAtiva={cobrancaAtiva} 
+                configPix={configPix} 
+                copiado={copiado} 
+                handleCopiarChave={handleCopiarChave}
+                configRecados={configRecados}
+                alunoNome={alunoSelecionado?.nome_completo}
+                onEnviarComprovante={handleEnviarComprovante}
+              />
             </div>
-            
-            <div className="flex justify-center">
-              <p className="text-[9px] text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                 <ShieldCheck size={12} className="text-teal-500" /> Conexão SSL/TLS
-              </p>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!cobrancaAtiva} onOpenChange={(open) => { if(!open) setCobrancaAtiva(null); vibrate(10); }}>
+          <DialogContent className="max-w-md border-0 p-0 overflow-hidden bg-white shadow-2xl rounded-2xl focus:outline-none">
+            <div className="px-6 py-8 space-y-6">
+              <CheckoutHeader onClose={() => setCobrancaAtiva(null)} isMobile={false} />
+              <CheckoutBody 
+                cobrancaAtiva={cobrancaAtiva} 
+                configPix={configPix} 
+                copiado={copiado} 
+                handleCopiarChave={handleCopiarChave}
+                configRecados={configRecados}
+                alunoNome={alunoSelecionado?.nome_completo}
+                onEnviarComprovante={handleEnviarComprovante}
+              />
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
 
-function HeaderClose({ onClose }: { onClose: () => void }) {
+function CheckoutHeader({ onClose, isMobile }: { onClose: () => void, isMobile: boolean }) {
+  const Title = isMobile ? SheetTitle : DialogTitle;
+  const Description = isMobile ? SheetDescription : DialogDescription;
+  
   return (
     <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -432,16 +429,112 @@ function HeaderClose({ onClose }: { onClose: () => void }) {
             <DollarSign size={20} />
           </div>
           <div>
-            <SheetTitle className="text-lg font-bold text-slate-800">Checkout</SheetTitle>
-            <SheetDescription className="text-[10px] text-slate-400">Pagamento Seguro</SheetDescription>
+            <Title className="text-lg font-bold text-slate-800">Checkout</Title>
+            <Description className="text-[10px] text-slate-400">Pagamento Seguro</Description>
           </div>
         </div>
-       <button 
-          onClick={() => { vibrate(15); onClose(); }}
-          className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 active:scale-90"
-       >
-          <X size={16} />
-       </button>
+    </div>
+  )
+}
+
+function CheckoutBody({ cobrancaAtiva, configPix, copiado, handleCopiarChave, configRecados, alunoNome, onEnviarComprovante }: any) {
+  const handleEnviarComprovanteLocal = () => {
+    onEnviarComprovante(cobrancaAtiva?.valor || 0, cobrancaAtiva?.descricao || '')
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+       <div className="text-center space-y-3">
+          <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mx-auto">
+             <QrCode size={24} />
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-lg font-bold text-slate-800">Checkout PIX</h3>
+            <p className="text-[10px] text-slate-400">{configPix?.favorecido || 'Portal Fluxoo EDU'}</p>
+          </div>
+       </div>
+
+       <div className="bg-slate-900 rounded-2xl p-5 text-center text-white relative overflow-hidden">
+         <div className="absolute top-0 right-0 opacity-5 pointer-events-none">
+             <DollarSign size={100} />
+         </div>
+         <p className="text-[10px] font-medium text-teal-400 uppercase tracking-wider mb-2">Total</p>
+         <h2 className="text-3xl font-bold leading-none">
+           {formatCurrency(cobrancaAtiva?.valor || 0)}
+         </h2>
+         <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 border-t border-white/5 pt-3">{cobrancaAtiva?.descricao}</p>
+       </div>
+
+       {configPix?.qr_code_url ? (
+         <div className="flex flex-col items-center justify-center p-5 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+            <p className="text-[10px] text-slate-400 mb-4 flex items-center gap-2">Escaneie com seu banco</p>
+            <div className="p-4 bg-white rounded-2xl shadow-lg border border-slate-100">
+               <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-48 h-48 object-contain" />
+            </div>
+         </div>
+       ) : configPix?.chave_pix ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-3">
+               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider text-center">Copia e Cola</p>
+               <div className="font-mono text-xs text-slate-600 break-all bg-white p-4 rounded-lg border border-slate-200 text-center">
+                  {configPix.chave_pix}
+               </div>
+               <Button 
+                 onClick={handleCopiarChave}
+                 className="w-full bg-slate-900 text-white rounded-xl h-12 active:scale-95 font-semibold text-xs uppercase tracking-wider gap-2"
+               >
+                 {copiado ? <CheckCircle2 size={18} className="text-teal-400" /> : <Copy size={18} />}
+                 {copiado ? 'Copiado!' : 'Copiar Chave'}
+               </Button>
+            </div>
+
+            {configPix.instrucoes_extras && (
+              <div className="flex gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 leading-relaxed">{configPix.instrucoes_extras}</p>
+              </div>
+            )}
+          </div>
+       ) : (
+          <div className="p-10 text-center space-y-3 bg-red-50 rounded-2xl border-2 border-dashed border-red-200">
+              <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
+              <div className="space-y-1">
+                 <h4 className="text-base font-bold text-red-900">Indisponível</h4>
+                 <p className="text-xs text-red-800/80 max-w-xs mx-auto">PIX não ativado pela instituição.</p>
+              </div>
+          </div>
+       )}
+
+       {/* Instrução de Comprovante */}
+       <div className="px-1">
+         <div className="p-4 rounded-xl bg-slate-900 text-white shadow-xl relative overflow-hidden group border border-teal-500/20">
+            <div className="absolute right-0 top-0 opacity-10 -mr-4 -mt-4 group-hover:scale-110 transition-transform">
+               <ShieldCheck size={80} />
+            </div>
+            <div className="relative z-10 space-y-3">
+               <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Próximo Passo</span>
+               </div>
+               <p className="text-xs text-slate-300 leading-relaxed">
+                  Após o pagamento, envie o comprovante para agilizar a baixa no sistema.
+               </p>
+               <Button 
+                  onClick={handleEnviarComprovanteLocal}
+                  variant="outline"
+                  className="w-full bg-white/5 hover:bg-white/10 text-white border-white/10 rounded-xl h-10 text-[10px] font-bold uppercase tracking-wider gap-2 transition-all"
+               >
+                  Enviar Comprovante
+               </Button>
+            </div>
+         </div>
+       </div>
+       
+       <div className="flex justify-center">
+         <p className="text-[9px] text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <ShieldCheck size={12} className="text-teal-500" /> Conexão SSL/TLS
+         </p>
+       </div>
     </div>
   )
 }

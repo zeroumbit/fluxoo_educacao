@@ -10,24 +10,101 @@ export const alunoService = {
   async listar(tenantId: string) {
     const { data, error } = await supabase
       .from('alunos')
-      .select('*, filiais(nome_unidade), aluno_responsavel(*, responsaveis(id, cpf, nome))')
+      .select(`
+        *,
+        filiais(nome_unidade),
+        aluno_responsavel(*, responsaveis(id, cpf, nome))
+      `)
       .eq('tenant_id', tenantId)
       .order('nome_completo')
 
     if (error) throw error
-    return data
+
+    // Buscar matrículas ativas e turmas para cada aluno
+    const { data: matriculas } = await supabase
+      .from('matriculas')
+      .select(`
+        aluno_id,
+        status,
+        data_matricula,
+        turmas(id, nome, valor_mensalidade)
+      `)
+      .in('aluno_id', (data as any[])?.map(a => a.id) || [])
+      .eq('status', 'ativa')
+
+    // Extrair valor da mensalidade e data de ingresso da turma atual para cada aluno
+    return (data as any[])?.map(aluno => {
+      const matriculaAtiva = matriculas?.find((m: any) => m.aluno_id === aluno.id && m.status === 'ativa')
+      if (matriculaAtiva && matriculaAtiva.turmas) {
+        aluno.valor_mensalidade_atual = matriculaAtiva.turmas.valor_mensalidade
+        aluno.turma_atual = matriculaAtiva.turmas
+        aluno.data_ingresso = matriculaAtiva.data_matricula
+      }
+      return aluno
+    }) || []
   },
 
   async buscarPorId(id: string, tenantId: string) {
-    const { data, error } = await supabase
+    console.log('🔍 [alunoService] buscarPorId:', { id, tenantId })
+    
+    const { data: aluno, error: alunoError } = await supabase
       .from('alunos')
-      .select('*, filiais(nome_unidade), aluno_responsavel(*, responsaveis(*))')
+      .select(`
+        *,
+        filiais(nome_unidade),
+        aluno_responsavel(*, responsaveis(*))
+      `)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single()
 
-    if (error) throw error
-    return data
+    console.log('📦 [alunoService] Resultado aluno:', { data: aluno, error: alunoError })
+
+    if (alunoError) {
+      console.error('❌ [alunoService] Erro ao buscar aluno:', alunoError)
+      throw alunoError
+    }
+
+    // Buscar matrícula ativa do aluno
+    if (aluno) {
+      console.log('🎓 [alunoService] Buscando matrícula para:', id)
+      const { data: matricula, error: matError } = await supabase
+        .from('matriculas')
+        .select(`
+          id,
+          status,
+          ano_letivo,
+          serie_ano,
+          turno,
+          data_matricula,
+          turma_id
+        `)
+        .eq('aluno_id', id)
+        .eq('status', 'ativa')
+        .maybeSingle()
+
+      console.log('📦 [alunoService] Resultado matrícula:', { matricula, matError })
+
+      // Buscar turma separadamente
+      if (matricula && matricula.turma_id) {
+        console.log('🏫 [alunoService] Buscando turma:', matricula.turma_id)
+        const { data: turma, error: turmaError } = await supabase
+          .from('turmas')
+          .select('id, nome, valor_mensalidade')
+          .eq('id', matricula.turma_id)
+          .maybeSingle()
+
+        console.log('📦 [alunoService] Resultado turma:', { turma, turmaError })
+
+        if (turma && !turmaError) {
+          (aluno as any).valor_mensalidade_atual = turma.valor_mensalidade
+          (aluno as any).turma_atual = turma
+          (aluno as any).data_ingresso = matricula.data_matricula
+        }
+      }
+    }
+
+    return aluno
   },
 
   async contarAtivos(tenantId: string) {

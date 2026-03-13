@@ -90,8 +90,10 @@ export function useConfigPix() {
   })
 }
 
-export function useConfigRecados() {
-  const { tenantId } = usePortalContext()
+export function useConfigRecados(tenantIdOverride?: string | null) {
+  const { tenantId: contextTenantId } = usePortalContext()
+  const tenantId = tenantIdOverride || contextTenantId
+  
   return useQuery({
     queryKey: ['portal', 'config-recados', tenantId],
     queryFn: () => portalService.buscarConfigRecados(tenantId!),

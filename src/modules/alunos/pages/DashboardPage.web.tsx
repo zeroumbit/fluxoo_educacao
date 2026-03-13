@@ -190,7 +190,7 @@ export function DashboardPageWeb() {
       path: '/alunos'
     },
     {
-      label: 'Inadimplência',
+      label: 'Mensalidades',
       value: `R$ ${recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       sub: recebimentos > 0 ? `Cobranças pendentes identificadas` : `Em dia`,
       icon: CreditCard,

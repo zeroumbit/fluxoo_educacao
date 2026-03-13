@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, CreditCard, Users, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useSuperAdminDashboard } from '../hooks'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
@@ -89,7 +89,7 @@ export function SuperAdminDashboardPageWeb() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold tracking-tight ${saudeFinanceiraGlobal >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-              R$ {saudeFinanceiraGlobal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {formatCurrency(saudeFinanceiraGlobal)}
             </div>
             <p className="text-xs text-slate-500 mt-1">Consolidado de todas as escolas</p>
           </CardContent>
@@ -116,7 +116,7 @@ export function SuperAdminDashboardPageWeb() {
                       <div>
                         <h4 className="font-medium text-sm">{escola.razao_social}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(escola.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          {formatDate(escola.created_at, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
