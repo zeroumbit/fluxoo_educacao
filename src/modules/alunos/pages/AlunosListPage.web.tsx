@@ -371,7 +371,7 @@ export function AlunosListPageWeb() {
           </DialogHeader>
           <div className="px-6 py-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-slate-600 font-bold mb-3">Esta ação irá:</p>
+              <p className="text-sm text-slate-600 font-bold mb-3">Para excluir este aluno, será necessário:</p>
               <ol className="text-xs text-slate-600 space-y-2 list-decimal list-inside">
                 <li>Excluir cobranças do aluno (se houver)</li>
                 <li>Excluir matrículas (se houver)</li>
