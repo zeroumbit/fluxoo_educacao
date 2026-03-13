@@ -7,8 +7,6 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
-import { ShopLayout } from '@/layout/ShopLayout'
-import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Admin (Escola)
 import { DashboardPage } from '@/modules/alunos/pages/DashboardPage'
@@ -90,7 +88,7 @@ function RootRedirect() {
   return <Navigate to="/dashboard" replace />
 }
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -105,7 +103,7 @@ export default function App() {
             {/* Login do Portal */}
             <Route path="/portal/login" element={<PortalLoginPage />} />
 
-            {/* Cadastro de Escola - Público */}
+            {/* Cadastro de Escola - PÃºblico */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
 
             {/* Super Admin Routes */}
@@ -143,7 +141,7 @@ export default function App() {
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
               <Route path="/livros" element={<LivrosPage />} />
-              {/* Novos Módulos */}
+              {/* Novos MÃ³dulos */}
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/matriculas/nova" element={<MatriculaFormPage />} />
@@ -164,7 +162,7 @@ export default function App() {
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
             </Route>
 
-            {/* Portal do Responsável */}
+            {/* Portal do ResponsÃ¡vel */}
             <Route
               element={
                 <ProtectedRoute allowedRoles={['responsavel']}>
@@ -179,31 +177,22 @@ export default function App() {
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
+              <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
               <Route path="/portal/perfil" element={<PortalPerfilPage />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 
-            {/* Marketplace Independente - Abre em Nova Aba */}
-            <Route
-              element={
-                <ProtectedRoute allowedRoles={['responsavel']}>
-                  <ShopLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/portal/loja" element={<PortalLojaPage />} />
-            </Route>
-
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Toaster richColors position="top-center" expand={true} visibleToasts={6} className="z-[99999]" />
-          <PwaInstallPrompt />
+          <Toaster richColors position="top-right" />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   )
 }
+
+export default App
 

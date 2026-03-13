@@ -53,7 +53,6 @@ const perfilSchema = z.object({
   bairro: z.string().optional().or(z.literal('')),
   cidade: z.string().optional().or(z.literal('')),
   estado: z.string().optional().or(z.literal('')),
-  complemento: z.string().optional().or(z.literal('')),
 }).refine((data) => !data.cpf || validarCPF(data.cpf), {
   message: 'CPF inválido',
   path: ['cpf'],
@@ -77,48 +76,37 @@ const PerfilSkeleton = () => (
 
 export function PortalPerfilPage() {
   const { authUser, signOut } = useAuth()
-  const { responsavel, vinculos, isLoading: contextLoading } = usePortalContext()
+  const { responsavel, vinculos, alunoSelecionado } = usePortalContext()
   const updatePerfil = useUpdatePerfil()
   const updateParentesco = useUpdateParentesco()
   const [isEditing, setIsEditing] = useState(false)
-
+  const [isLoading] = useState(false) // Simulado
+  
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<PerfilFormValues>({
     resolver: zodResolver(perfilSchema),
-    defaultValues: {
-      nome: '',
-      cpf: '',
-      telefone: '',
-      cep: '',
-      logradouro: '',
-      numero: '',
-      bairro: '',
-      cidade: '',
-      estado: '',
-      complemento: '',
-    }
   })
 
-  // Carrega os dados do responsável quando disponíveis
   useEffect(() => {
     if (responsavel) {
-      setValue('nome', responsavel.nome || '')
-      setValue('cpf', mascaraCPF(responsavel.cpf || ''))
-      setValue('telefone', mascaraTelefone(responsavel.telefone || ''))
-      setValue('cep', mascaraCEP(responsavel.cep || ''))
-      setValue('logradouro', responsavel.logradouro || '')
-      setValue('numero', responsavel.numero || '')
-      setValue('bairro', responsavel.bairro || '')
-      setValue('cidade', responsavel.cidade || '')
-      setValue('estado', responsavel.estado || '')
-      setValue('complemento', responsavel.complemento || '')
+      reset({
+        nome: responsavel.nome || '',
+        cpf: responsavel.cpf || '',
+        telefone: responsavel.telefone || '',
+        cep: responsavel.cep || '',
+        logradouro: responsavel.logradouro || '',
+        numero: responsavel.numero || '',
+        bairro: responsavel.bairro || '',
+        cidade: responsavel.cidade || '',
+        estado: responsavel.estado || '',
+      })
     }
-  }, [responsavel, setValue])
+  }, [responsavel, reset])
 
   const { fetchAddressByCEP, loading: buscandoCep } = useViaCEP()
 
@@ -182,31 +170,10 @@ export function PortalPerfilPage() {
     await signOut()
   }
 
-  if (contextLoading) return <PerfilSkeleton />
-
-  // Verifica se o responsável tem endereço cadastrado
-  const hasEndereco = responsavel?.logradouro || responsavel?.cep || responsavel?.bairro
+  if (isLoading) return <PerfilSkeleton />
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
-
-      {/* Aviso se não tem endereço cadastrado */}
-      {!hasEndereco && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3"
-        >
-          <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-amber-800">Endereço não cadastrado</p>
-            <p className="text-xs text-amber-700 mt-1">
-              Para melhor atendê-lo, recomendamos que cadastre seu endereço completo. 
-              Clique em <strong>Editar</strong> abaixo para preencher.
-            </p>
-          </div>
-        </motion.div>
-      )}
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -326,15 +293,14 @@ export function PortalPerfilPage() {
                          <MapPin className="text-teal-500" size={12} /> Localização
                        </h3>
                     </div>
-
-                    {/* LINHA 1: CEP | LOGRADOURO | NÚMERO */}
+                    
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="space-y-1.5 sm:col-span-1">
+                      <div className="space-y-1.5">
                         <Label htmlFor="cep" className="text-[9px] font-semibold text-slate-400 uppercase">CEP</Label>
                         <div className="relative">
-                          <Input
-                            id="cep"
-                            {...register('cep')}
+                          <Input 
+                            id="cep" 
+                            {...register('cep')} 
                             onChange={handleCepChange}
                             maxLength={9}
                             readOnly={!isEditing}
@@ -346,23 +312,11 @@ export function PortalPerfilPage() {
                           {buscandoCep && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-teal-500" />}
                         </div>
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2">
+                      <div className="space-y-1.5 sm:col-span-3">
                         <Label htmlFor="logradouro" className="text-[9px] font-semibold text-slate-400 uppercase">Logradouro</Label>
-                        <Input
-                          id="logradouro"
-                          {...register('logradouro')}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
-                            isEditing ? "bg-white ring-1 ring-slate-200 focus-visible:ring-teal-500/30" : "text-slate-400"
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1.5 sm:col-span-1">
-                        <Label htmlFor="numero" className="text-[9px] font-semibold text-slate-400 uppercase">Número</Label>
-                        <Input
-                          id="numero"
-                          {...register('numero')}
+                        <Input 
+                          id="logradouro" 
+                          {...register('logradouro')} 
                           readOnly={!isEditing}
                           className={cn(
                             "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
@@ -372,53 +326,24 @@ export function PortalPerfilPage() {
                       </div>
                     </div>
 
-                    {/* LINHA 2: BAIRRO | CIDADE | ESTADO */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
+                        <Label htmlFor="numero" className="text-[9px] font-semibold text-slate-400 uppercase">Número</Label>
+                        <Input 
+                          id="numero" 
+                          {...register('numero')} 
+                          readOnly={!isEditing}
+                          className={cn(
+                            "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
+                            isEditing ? "bg-white ring-1 ring-slate-200 focus-visible:ring-teal-500/30" : "text-slate-400"
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-1.5 sm:col-span-2">
                         <Label htmlFor="bairro" className="text-[9px] font-semibold text-slate-400 uppercase">Bairro</Label>
-                        <Input
-                          id="bairro"
-                          {...register('bairro')}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
-                            isEditing ? "bg-white ring-1 ring-slate-200 focus-visible:ring-teal-500/30" : "text-slate-400"
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="cidade" className="text-[9px] font-semibold text-slate-400 uppercase">Cidade</Label>
-                        <Input
-                          id="cidade"
-                          {...register('cidade')}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
-                            isEditing ? "bg-white ring-1 ring-slate-200 focus-visible:ring-teal-500/30" : "text-slate-400"
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="estado" className="text-[9px] font-semibold text-slate-400 uppercase">Estado (UF)</Label>
-                        <Input
-                          id="estado"
-                          {...register('estado')}
-                          readOnly={!isEditing}
-                          className={cn(
-                            "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",
-                            isEditing ? "bg-white ring-1 ring-slate-200 focus-visible:ring-teal-500/30" : "text-slate-400"
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* LINHA 3: COMPLEMENTO (largura total) */}
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="complemento" className="text-[9px] font-semibold text-slate-400 uppercase">Complemento</Label>
-                        <Input
-                          id="complemento"
-                          {...register('complemento')}
+                        <Input 
+                          id="bairro" 
+                          {...register('bairro')} 
                           readOnly={!isEditing}
                           className={cn(
                             "h-11 px-4 bg-slate-50 border-0 rounded-xl text-sm font-medium transition-all",

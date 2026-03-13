@@ -139,31 +139,9 @@ export function PortalLoginPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-600 rounded-xl p-4 flex flex-col gap-3 animate-shake">
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider">
-                    <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
-                    {error}
-                  </div>
-                  
-                  {error.includes('e-mail de ativação') && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const email = error.split('enviado para ')[1]
-                        if (email) {
-                          try {
-                            await portalService.reencaminharConfirmacao(email)
-                            toast.success('E-mail de confirmação enviado! Verifique sua caixa de entrada.')
-                          } catch (err) {
-                            toast.error('Erro ao reenviar e-mail. Tente novamente em alguns minutos.')
-                          }
-                        }
-                      }}
-                      className="text-[10px] font-black uppercase tracking-widest text-[#14B8A6] hover:text-[#134E4A] transition-colors text-left underline underline-offset-4 ml-5"
-                    >
-                      Não recebeu? Reenviar e-mail de confirmação
-                    </button>
-                  )}
+                <div className="bg-red-50 border border-red-100 text-red-600 text-[10px] font-bold uppercase tracking-wider rounded-xl p-4 flex items-center gap-3 animate-shake">
+                  <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+                  {error}
                 </div>
               )}
 

@@ -53,6 +53,8 @@ const alunoSchema = z.object({
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
   filial_id: z.string().optional(),
+  valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
+  data_ingresso: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
   responsavel_telefone: z.string().optional().or(z.literal('')),
@@ -114,6 +116,8 @@ export function AlunoCadastroPage() {
       nome_completo: '',
       data_nascimento: '',
       cep: '',
+      valor_mensalidade_atual: 0,
+      data_ingresso: new Date().toISOString().split('T')[0],
     },
   })
 
@@ -205,13 +209,10 @@ export function AlunoCadastroPage() {
           })
         }
         
-        // Pequeno delay para não sobrecarregar visualmente e evitar sobreposição instantânea
-        setTimeout(() => {
-          toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
-            description: 'Não é necessário criar uma nova senha.',
-            duration: 6000
-          })
-        }, 500)
+        toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
+          description: 'Não é necessário criar uma nova senha.',
+          duration: 6000
+        })
       } else {
         setResponsavelEncontrado(false)
         setIrmaosExistentes([])
@@ -220,29 +221,6 @@ export function AlunoCadastroPage() {
       console.error('Erro ao buscar responsável:', err)
     } finally {
       setBuscandoCpf(false)
-    }
-  }
-
-  const handleCpfAlunoBlur = async () => {
-    const cpf = watch('cpf')
-    if (!cpf || cpf.length < 14) return
-    
-    const cpfLimpo = cpf.replace(/\D/g, '')
-    try {
-      const { data } = await supabase
-        .from('alunos')
-        .select('id, nome_completo')
-        .eq('cpf', cpfLimpo)
-        .maybeSingle()
-        
-      if (data) {
-        toast.warning('Atenção: CPF já cadastrado!', {
-          description: `Já existe um aluno (${data.nome_completo}) com este CPF no sistema.`,
-          duration: 8000
-        })
-      }
-    } catch (err) {
-      console.error('Erro ao verificar CPF do aluno:', err)
     }
   }
 
@@ -266,9 +244,7 @@ export function AlunoCadastroPage() {
     return await trigger(fieldsPerStep[currentStep])
   }
 
-  const nextStep = async (e?: React.MouseEvent | React.FormEvent) => {
-    e?.preventDefault()
-    e?.stopPropagation()
+  const nextStep = async () => {
     const isValid = await validateStep()
     if (isValid && currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
   }
@@ -278,9 +254,6 @@ export function AlunoCadastroPage() {
   }
 
   const onSubmit = async (data: AlunoFormValues) => {
-    // Trava de segurança: só permite submeter se estiver no último step
-    if (currentStep !== steps.length - 1) return
-
     if (!authUser) return
     if (limiteAtingido) {
       toast.error('Limite de alunos atingido!')
@@ -334,6 +307,12 @@ export function AlunoCadastroPage() {
         bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
         cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
         estado: data.estado && data.estado !== '' ? data.estado : null,
+        valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
+        data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
+        // desconto_valor: (data as any).desconto_valor || null,
+        // desconto_tipo: (data as any).desconto_tipo || null,
+        // desconto_inicio: (data as any).desconto_inicio || null,
+        // desconto_fim: (data as any).desconto_fim || null,
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -495,7 +474,6 @@ export function AlunoCadastroPage() {
                       placeholder="000.000.000-00"
                       {...register('cpf')}
                       onChange={(e) => handleCpfChange(e, 'cpf')}
-                      onBlur={handleCpfAlunoBlur}
                       maxLength={14}
                       className="w-full"
                     />
@@ -823,53 +801,33 @@ export function AlunoCadastroPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
                   </div>
                 )}
               </>
             )}
           </CardContent>
-          
-          <DialogFooter className="p-6 bg-slate-50/50 border-t flex flex-row items-center justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              className="font-bold text-xs uppercase tracking-widest"
-            >
-              Anterior
-            </Button>
-            
-            {currentStep === steps.length - 1 ? (
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-12 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all active:scale-95"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Cadastrando...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-5 w-5" />
-                    Finalizar Cadastro
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={(e) => nextStep(e)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 h-12 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95"
-              >
-                Próximo
-                <ArrowRight className="ml-2 h-4 w-4" />
+        </Card>
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-6">
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <Button type="button" variant="outline" onClick={prevStep}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
               </Button>
             )}
-          </DialogFooter>
-        </Card>
+          </div>
+          {currentStep < steps.length - 1 ? (
+            <Button type="button" onClick={nextStep}>
+              Próximo <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700">
+              {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>) : (<><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>)}
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   )

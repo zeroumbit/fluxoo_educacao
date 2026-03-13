@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
+import App from './App'
 import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner' // toast for update notification
 
@@ -18,23 +18,13 @@ const updateSW = registerSW({
         onClick: () => updateSW(true) // will update and location.reload()
       },
       duration: 10000,
-      position: 'top-center',
-      className: 'z-[9999]',
-      classNames: {
-        toast: 'z-[9999]',
-        content: 'z-[9999]'
-      }
+      position: 'top-center'
     });
   },
   onOfflineReady() {
     toast.success('App pronto para uso offline', {
       description: 'Você pode acessar os dados carregados mesmo sem internet.',
-      position: 'top-center',
-      className: 'z-[9999]',
-      classNames: {
-        toast: 'z-[9999]',
-        content: 'z-[9999]'
-      }
+      position: 'top-center'
     });
   },
 })

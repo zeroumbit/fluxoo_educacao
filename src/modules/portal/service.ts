@@ -75,18 +75,6 @@ export const portalService = {
     }
   },
 
-  async reencaminharConfirmacao(email: string) {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/portal/login`,
-      },
-    })
-    if (error) throw error
-    return true
-  },
-
   // ==========================================
   // ACEITE LGPD / PRIMEIRO ACESSO
   // ==========================================
@@ -327,34 +315,15 @@ export const portalService = {
   },
 
   async buscarConfigRecados(tenantId: string) {
-    try {
-      // Prioridade para os dados diretos da escola, que é onde o usuário edita no Perfil
-      const { data: escola, error: escolaErr } = await supabase
-        .from('escolas')
-        .select('telefone, email_gestor')
-        .eq('id', tenantId)
-        .maybeSingle()
+    const { data, error } = await supabase.from('escolas')
+      .select('telefone, email_gestor')
+      .eq('id', tenantId)
+      .maybeSingle()
 
-      if (escolaErr) console.warn('Erro ao buscar dados da escola:', escolaErr)
-
-      // Fallback para config_recados se necessário, mas usando select(*) para evitar erro 400 de colunas inexistentes
-      const { data: config, error: configErr } = await (supabase.from('config_recados' as any) as any)
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .maybeSingle()
-      
-      if (configErr) {
-        // Se der 400 aqui, provavelmente a tabela ou colunas não existem como esperado
-        console.warn('Erro ao buscar config_recados (ignorado):', configErr)
-      }
-
-      return {
-        whatsapp_contato: config?.whatsapp_contato || escola?.telefone || null,
-        email_contato: config?.email_contato || escola?.email_gestor || null
-      }
-    } catch (err) {
-      console.error('Falha crítica ao buscar contatos:', err)
-      return { whatsapp_contato: null, email_contato: null }
+    if (error) throw error
+    return {
+      whatsapp_contato: data?.telefone || null,
+      email_contato: data?.email_gestor || null
     }
   },
 
