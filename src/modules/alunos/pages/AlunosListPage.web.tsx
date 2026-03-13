@@ -366,25 +366,34 @@ export function AlunosListPageWeb() {
             </div>
             <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">Confirmar Exclusão</DialogTitle>
             <DialogDescription className="text-slate-500 font-medium pt-2 text-sm">
-              Você tem certeza que deseja excluir <strong>{alunoParaExcluir?.nome_completo}</strong>? 
+              Você tem certeza que deseja excluir <strong>{alunoParaExcluir?.nome_completo}</strong>?
             </DialogDescription>
           </DialogHeader>
-          <div className="px-6 py-2">
+          <div className="px-6 py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-slate-600 font-bold mb-3">Esta ação irá:</p>
+              <ol className="text-xs text-slate-600 space-y-2 list-decimal list-inside">
+                <li>Excluir cobranças do aluno (se houver)</li>
+                <li>Excluir matrículas (se houver)</li>
+                <li>Remover vínculos com responsáveis (se houver)</li>
+                <li>Aí sim excluir o aluno</li>
+              </ol>
+            </div>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Esta ação é definitiva e apagará todo o histórico acadêmico e financeiro do aluno. 
+              Esta ação é definitiva e apagará todo o histórico acadêmico e financeiro do aluno.
               <strong> Recomenda-se apenas desativar o cadastro</strong> para manter os registros históricos.
             </p>
           </div>
           <DialogFooter className="p-6 bg-slate-50 mt-4 flex gap-3">
-            <Button 
-               variant="ghost" 
-               className="flex-1 rounded-xl h-11 font-bold text-slate-600" 
+            <Button
+               variant="ghost"
+               className="flex-1 rounded-xl h-11 font-bold text-slate-600"
                onClick={() => setShowDeleteDialog(false)}
             >
                Manter Aluno
             </Button>
-            <Button 
-               className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 h-11 font-bold shadow-md" 
+            <Button
+               className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 h-11 font-bold shadow-md"
                onClick={confirmarExclusao}
             >
                Excluir Definitivamente
