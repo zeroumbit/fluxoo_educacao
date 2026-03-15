@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { usePortalContext } from '../context'
 import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento, useTransferenciasPortal, useResponderTransferencia } from '../hooks'
+import { ModalFichaAluno } from '../components/ModalFichaAluno'
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -224,6 +225,7 @@ export function PortalDashboardPage() {
   const responderTransferencia = useResponderTransferencia()
   const navigate = useNavigate()
   const [showPixModal, setShowPixModal] = useState(false)
+  const [showFichaModal, setShowFichaModal] = useState(false)
   const [modalTransferencia, setModalTransferencia] = useState<any>(null)
   const [recusando, setRecusando] = useState(false)
   const [motivoRecusa, setMotivoRecusa] = useState('')
@@ -355,8 +357,8 @@ export function PortalDashboardPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide py-2">
-              <div className="flex gap-4 md:gap-10 flex-nowrap border-t border-slate-50 pt-8 min-w-max justify-center">
+            <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide py-2 scroll-smooth">
+              <div className="flex gap-6 md:gap-10 flex-nowrap border-t border-slate-50 pt-8 min-w-max justify-start md:justify-center">
                 <StudentActionIcon
                   icon={Calendar}
                   label="Agenda"
@@ -367,7 +369,15 @@ export function PortalDashboardPage() {
                 <StudentActionIcon icon={FileText} label="Boletim" colorName="violet" onClick={() => navigate('/portal/boletim')} />
                 <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
                 <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
-                <StudentActionIcon icon={UserCircle} label="Perfil" colorName="slate" onClick={() => navigate('/portal/perfil')} />
+                <StudentActionIcon 
+                  icon={UserCircle} 
+                  label="Perfil" 
+                  colorName="slate" 
+                  onClick={() => {
+                    vibrate(40);
+                    setShowFichaModal(true);
+                  }} 
+                />
               </div>
             </div>
           </div>
@@ -484,6 +494,11 @@ export function PortalDashboardPage() {
       </div>
 
       {showPixModal && <PixModal onClose={() => setShowPixModal(false)} valor={fin?.totalPendente || 0} configPix={configPix} />}
+
+      <ModalFichaAluno 
+        open={showFichaModal} 
+        onOpenChange={setShowFichaModal} 
+      />
 
       {/* MODAL DE CONSENTIMENTO DE TRANSFERÊNCIA */}
       <Dialog open={!!modalTransferencia} onOpenChange={(open) => {
