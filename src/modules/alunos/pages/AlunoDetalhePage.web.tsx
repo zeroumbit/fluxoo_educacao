@@ -390,10 +390,10 @@ export function AlunoDetalhePageWeb() {
                <div className="space-y-1">
                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Mensalidade Atual</p>
                  {isEditing ? (
-                   <Input 
-                     type="number" 
-                     value={formData?.valor_mensalidade_atual} 
-                     onChange={(e) => setFormData({...formData, valor_mensalidade_atual: Number(e.target.value)})} 
+                   <Input
+                     type="number"
+                     value={formData?.valor_mensalidade_atual}
+                     onChange={(e) => setFormData({...formData, valor_mensalidade_atual: Number(e.target.value)})}
                      className="h-11 bg-white/10 border-white/20 text-white rounded-xl"
                    />
                  ) : (
@@ -402,6 +402,17 @@ export function AlunoDetalhePageWeb() {
                    </h4>
                  )}
                </div>
+               
+               {/* Turma / Ano do Aluno */}
+               {(aluno as any).turma_atual && (aluno as any).turma_atual.nome && (
+                 <div className="space-y-1">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Turma / Ano</p>
+                   <h4 className="text-xl font-black">
+                     {(aluno as any).turma_atual.nome} {((aluno as any).ano_letivo) && `- ${((aluno as any).ano_letivo)}`}
+                   </h4>
+                 </div>
+               )}
+               
                <div className="h-px bg-white/10 w-full" />
                <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">

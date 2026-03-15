@@ -86,6 +86,7 @@ export const alunoService = {
           ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
           ;(aluno as any).turma_atual = turmaData
           ;(aluno as any).data_ingresso = matricula.data_matricula
+          ;(aluno as any).ano_letivo = matricula.ano_letivo
         }
       }
     }
