@@ -29,7 +29,8 @@ import {
   Star,
   ShieldAlert,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  UserCircle
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -354,8 +355,8 @@ export function PortalDashboardPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto md:overflow-visible -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide">
-              <div className="flex gap-6 md:gap-12 flex-nowrap md:flex-wrap border-t border-slate-50 pt-8 min-w-max md:min-w-0 md:justify-start justify-center">
+            <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide py-2">
+              <div className="flex gap-4 md:gap-10 flex-nowrap border-t border-slate-50 pt-8 min-w-max justify-center">
                 <StudentActionIcon
                   icon={Calendar}
                   label="Agenda"
@@ -366,6 +367,7 @@ export function PortalDashboardPage() {
                 <StudentActionIcon icon={FileText} label="Boletim" colorName="violet" onClick={() => navigate('/portal/boletim')} />
                 <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
                 <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
+                <StudentActionIcon icon={UserCircle} label="Perfil" colorName="slate" onClick={() => navigate('/portal/perfil')} />
               </div>
             </div>
           </div>

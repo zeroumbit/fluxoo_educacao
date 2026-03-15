@@ -109,38 +109,9 @@ export function MatriculaFormPageWeb() {
     try {
       if (editId) {
         await atualizar.mutateAsync({ id: editId, data })
-        // Atualizar o valor da mensalidade do aluno baseado na turma
-        if (data.aluno_id && data.valor_matricula) {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ valor_mensalidade_atual: data.valor_matricula })
-          })
-        }
         toast.success('Matrícula atualizada!')
       } else {
         const result = await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
-        // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
-        if (data.aluno_id && data.valor_matricula) {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ 
-              valor_mensalidade_atual: data.valor_matricula,
-              data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
-            })
-          })
-        }
         toast.success('Matrícula realizada!')
       }
       navigate('/matriculas')

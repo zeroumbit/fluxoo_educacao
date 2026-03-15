@@ -24,7 +24,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Plus,
   Loader2,
@@ -54,6 +54,7 @@ type MatriculaFormData = z.infer<typeof matriculaSchema>
 
 export function MatriculaListPageWeb() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { authUser } = useAuth()
   const { data: matriculas, isLoading } = useMatriculas()
   const { data: alunos } = useAlunos()
@@ -80,6 +81,19 @@ export function MatriculaListPageWeb() {
       status: 'ativa'
     }
   })
+
+  // Efeito para abrir o diálogo automaticamente se vier do cadastro de aluno
+  useEffect(() => {
+    const state = location.state as { aluno_id?: string; autoOpen?: boolean }
+    if (state?.autoOpen && state?.aluno_id) {
+      setDialogOpen(true)
+      setIsEditing(false)
+      form.setValue('aluno_id', state.aluno_id)
+      
+      // Limpar o estado para não reabrir se der refresh
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location, form, navigate])
 
   // Assistência de preenchimento automático
   const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
@@ -243,21 +257,30 @@ export function MatriculaListPageWeb() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="serie_ano">Turma/Ano *</Label>
-                   <Select 
-                     value={form.getValues('serie_ano')} 
-                     onValueChange={(v) => {
-                       form.setValue('serie_ano', v)
-                       const t = (turmas as any[])?.find(x => x.nome === v)
-                       if (t) form.setValue('turma_id', t.id)
-                     }}
-                   >
+                    <Select 
+                      value={form.getValues('serie_ano')} 
+                      onValueChange={(v) => {
+                        form.setValue('serie_ano', v)
+                        const t = (turmas as any[])?.find(x => x.nome === v)
+                        if (t) {
+                          form.setValue('turma_id', t.id)
+                          // Atualiza o valor dinamicamente se a turma tiver valor definido
+                          if (t.valor_mensalidade) {
+                            form.setValue('valor_matricula', t.valor_mensalidade)
+                            toast.info(`Valor atualizado para R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
+                              description: `Baseado na turma ${t.nome}`
+                            })
+                          }
+                        }
+                      }}
+                    >
                      <SelectTrigger id="serie_ano" className="w-full">
                        <SelectValue placeholder="Selecione a turma" />
                      </SelectTrigger>
                      <SelectContent>
                        {(turmas as any[])?.map((t: any) => (
                          <SelectItem key={t.id} value={t.nome} className="font-bold">
-                           {t.nome}
+                           {t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
                          </SelectItem>
                        ))}
                      </SelectContent>

@@ -21,8 +21,7 @@ export const alunoService = {
     if (error) throw error
 
     // Buscar matrículas ativas e turmas para cada aluno
-    const { data: matriculas } = await supabase
-      .from('matriculas')
+    const { data: matriculas } = await (supabase.from('matriculas' as any) as any)
       .select(`
         aluno_id,
         status,
@@ -60,8 +59,7 @@ export const alunoService = {
 
     // Buscar matrícula ativa do aluno
     if (aluno) {
-      const { data: matricula, error: matError } = await supabase
-        .from('matriculas')
+      const { data: matricula, error: matError } = await (supabase.from('matriculas' as any) as any)
         .select(`
           id,
           status,
@@ -235,8 +233,12 @@ export const alunoService = {
           data_inicio: dadosExtra.data_ingresso || new Date().toISOString().split('T')[0],
           valor_mensalidade: dadosExtra.valor_mensalidade_atual,
         })
-      } catch (finError) {
+      } catch (finError: any) {
         console.error('⚠️ Erro ao gerar cobrança inicial no cadastro de aluno:', finError)
+        // Propaga erro se for algo estrutural que impeça o funcionamento financeiro
+        if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
+           throw new Error('Erro ao gerar cobrança inicial: verifique se os dados financeiros da unidade estão configurados.')
+        }
       }
     }
 

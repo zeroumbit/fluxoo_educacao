@@ -189,7 +189,7 @@ export const financeiroService = {
     const { data: turma } = await (supabase.from('turmas' as any) as any)
       .select('valor_mensalidade')
       .eq('tenant_id', matricula.tenant_id)
-      .eq('nome', matricula.serie_ano)
+      .eq('id', matricula.turma_id)
       .maybeSingle()
 
     // Lógica inteligente: se a turma tiver valor, usa ele. 
@@ -204,5 +204,47 @@ export const financeiroService = {
       valor_matricula: Number(matricula.valor_matricula),
       unidade: matricula.serie_ano
     })
+  },
+
+  async sincronizarCobrancasMatricula(matricula: any) {
+    // Busca cobranças pendentes do aluno que sejam de mensalidade/matrícula
+    const { data: cobrancas, error } = await supabase
+      .from('cobrancas')
+      .select('*')
+      .eq('aluno_id', matricula.aluno_id)
+      .eq('tenant_id', matricula.tenant_id)
+      .in('status', ['a_vencer', 'atrasado'])
+
+    if (error || !cobrancas) return
+
+    for (const cobranca of cobrancas) {
+      const desc = cobranca.descricao.toLowerCase()
+      const isMatricula = desc.includes('matrícula') || desc.includes('matricula')
+      const isMensalidade = desc.includes('mensalidade')
+
+      // Sincroniza valor da taxa de matrícula
+      if (isMatricula && !isMensalidade) {
+        if (Number(cobranca.valor) !== Number(matricula.valor_matricula)) {
+          await this.atualizar(cobranca.id, { valor: Number(matricula.valor_matricula) })
+        }
+      }
+      
+      // Sincroniza valores de mensalidades pendentes (opcional, dependendo da regra, mas solicitado pelo usuário)
+      // Se a turma tiver valor de mensalidade, usamos ela como base
+      if (isMensalidade) {
+         // Buscamos o valor da turma se necessário ou usamos o valor da matrícula como referência
+          const { data: turma } = await (supabase.from('turmas' as any) as any)
+            .select('valor_mensalidade')
+            .eq('tenant_id', matricula.tenant_id)
+            .eq('id', matricula.turma_id)
+            .maybeSingle()
+          
+          const novoValor = turma?.valor_mensalidade || matricula.valor_matricula || cobranca.valor
+          
+          if (Number(cobranca.valor) !== Number(novoValor)) {
+            await this.atualizar(cobranca.id, { valor: Number(novoValor) })
+          }
+      }
+    }
   }
 }

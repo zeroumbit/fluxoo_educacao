@@ -501,4 +501,28 @@ export const portalService = {
     
     if (error) throw error
   },
+
+  async buscarAlunoCompleto(alunoId: string, tenantId: string) {
+    const { data, error } = await supabase.from('alunos')
+      .select('*')
+      .eq('id', alunoId)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async atualizarAluno(alunoId: string, responsavelId: string, dados: any) {
+    const { error } = await supabase.from('alunos')
+      .update(dados)
+      .eq('id', alunoId)
+    
+    if (error) throw error
+
+    await portalService.registrarAuditoria({
+      tipo: 'aluno_perfil_atualizado',
+      responsavel_id: responsavelId,
+      detalhes: { aluno_id: alunoId, campos: Object.keys(dados) },
+    })
+  }
 }

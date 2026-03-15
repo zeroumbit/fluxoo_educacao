@@ -19,16 +19,21 @@ export function useCriarMatricula() {
   return useMutation({ mutationFn: (d: any) => academicoService.criarMatricula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) })
 }
 export function useAtualizarMatricula() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] })
+    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, authUser!.tenantId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['matriculas'] })
+      qc.invalidateQueries({ queryKey: ['portal'] }) // Força o Portal a atualizar valores e turmas
+    }
   })
 }
 export function useExcluirMatricula() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => academicoService.excluirMatricula(id),
+    mutationFn: (id: string) => academicoService.excluirMatricula(id, authUser!.tenantId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] })
   })
 }
@@ -59,12 +64,14 @@ export function useCriarPlanoAula() {
   return useMutation({ mutationFn: (d: any) => academicoService.criarPlanoAula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
 }
 export function useAtualizarPlanoAula() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, authUser!.tenantId, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
 }
 export function useExcluirPlanoAula() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (id: string) => academicoService.excluirPlanoAula(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
+  return useMutation({ mutationFn: (id: string) => academicoService.excluirPlanoAula(id, authUser!.tenantId), onSuccess: () => qc.invalidateQueries({ queryKey: ['planos_aula'] }) })
 }
 
 export function useAtividades() {
@@ -76,12 +83,14 @@ export function useCriarAtividade() {
   return useMutation({ mutationFn: (d: any) => academicoService.criarAtividade(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
 }
 export function useAtualizarAtividade() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarAtividade(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarAtividade(id, authUser!.tenantId, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
 }
 export function useExcluirAtividade() {
+  const { authUser } = useAuth()
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (id: string) => academicoService.excluirAtividade(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
+  return useMutation({ mutationFn: (id: string) => academicoService.excluirAtividade(id, authUser!.tenantId), onSuccess: () => qc.invalidateQueries({ queryKey: ['atividades'] }) })
 }
 
 export function useSelos() {

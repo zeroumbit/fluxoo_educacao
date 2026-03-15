@@ -14,9 +14,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DialogFooter } from '@/components/ui/dialog'
 import {
   ArrowLeft,
   ArrowRight,
@@ -94,6 +101,8 @@ export function AlunoCadastroPage() {
   const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
   const [buscandoCpf, setBuscandoCpf] = useState(false)
   const [irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
+  const [showPostCadastroModal, setShowPostCadastroModal] = useState(false)
+  const [lastCreatedAluno, setLastCreatedAluno] = useState<any>(null)
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -103,6 +112,7 @@ export function AlunoCadastroPage() {
     setValue,
     watch,
     trigger,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
     resolver: zodResolver(alunoSchema) as any,
@@ -114,12 +124,53 @@ export function AlunoCadastroPage() {
       responsavel_financeiro: 'sim',
       responsavel_senha: '',
       nome_completo: '',
+      nome_social: '',
       data_nascimento: '',
       cep: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      patologias: '',
+      medicamentos: '',
+      observacoes_saude: '',
       valor_mensalidade_atual: 0,
       data_ingresso: new Date().toISOString().split('T')[0],
     },
   })
+
+  const resetForm = () => {
+    reset({
+      responsavel_nome: '',
+      responsavel_cpf: '',
+      responsavel_email: '',
+      responsavel_parentesco: '',
+      responsavel_financeiro: 'sim',
+      responsavel_senha: '',
+      nome_completo: '',
+      nome_social: '',
+      data_nascimento: '',
+      cep: '',
+      logradouro: '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
+      patologias: '',
+      medicamentos: '',
+      observacoes_saude: '',
+      valor_mensalidade_atual: 0,
+      data_ingresso: new Date().toISOString().split('T')[0],
+      filial_id: watch('filial_id') // Mantém a filial selecionada
+    })
+    setCurrentStep(0)
+    setResponsavelEncontrado(false)
+    setIrmaosExistentes([])
+    setShowPostCadastroModal(false)
+  }
 
   // Selecionar automaticamente a matriz se houver filiais
   useEffect(() => {
@@ -318,15 +369,16 @@ export function AlunoCadastroPage() {
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
       console.log('📝 Payload Aluno:', JSON.stringify(payloadAluno, null, 2))
 
-      await criarAlunoComResponsavel.mutateAsync({
+      const result = await criarAlunoComResponsavel.mutateAsync({
         responsavel: payloadResponsavel,
         aluno: payloadAluno as any, // Cast temporário se necessário para AlunoInsert
         grauParentesco: data.responsavel_parentesco || null,
         isFinanceiro: data.responsavel_financeiro === 'sim'
       })
 
+      setLastCreatedAluno(result)
       toast.success('Aluno cadastrado com sucesso!')
-      navigate('/alunos')
+      setShowPostCadastroModal(true)
     } catch (err: any) {
       console.error('Erro detalhado ao cadastrar aluno:', err)
 
@@ -829,6 +881,43 @@ export function AlunoCadastroPage() {
           )}
         </div>
       </form>
+
+      {/* Modal Pós-Cadastro */}
+      <Dialog open={showPostCadastroModal} onOpenChange={setShowPostCadastroModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <Check className="h-5 w-5" />
+              Aluno Cadastrado!
+            </DialogTitle>
+            <DialogDescription>
+              O que você deseja fazer agora com <strong>{lastCreatedAluno?.nome_completo}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-sm font-bold"
+              onClick={() => navigate('/matriculas', { state: { aluno_id: lastCreatedAluno?.id, autoOpen: true } })}
+            >
+              Matricular este aluno agora
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full h-11 text-xs"
+              onClick={resetForm}
+            >
+              Cadastrar outro novo aluno
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full h-10 text-xs text-muted-foreground"
+              onClick={() => navigate('/alunos')}
+            >
+              Ir para lista de alunos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

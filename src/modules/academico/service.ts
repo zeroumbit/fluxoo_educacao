@@ -17,26 +17,59 @@ export const academicoService = {
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.gerarCobrancasIniciaisMatricula(data)
-    } catch (finError) {
+    } catch (finError: any) {
       console.error('⚠️ Erro ao gerar cobranças automáticas para matrícula:', finError)
-      // Não trava a criação da matrícula, apenas loga
+      // Agora vamos lançar um erro mais descritivo se for algo estrutural
+      if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
+        throw new Error('Erro de integridade ao gerar cobranças. Verifique as configurações da turma.')
+      }
+      // Para outros erros, mantemos apenas o log para não travar a matrícula, 
+      // mas poderíamos mudar essa política se o usuário quiser 100% de sucesso financeiro.
     }
 
     return data
   },
-  async atualizarMatricula(id: string, matricula: any) {
-    const { data, error } = await (supabase.from('matriculas' as any) as any)
+  async atualizarMatricula(id: string, tenantId: string, matricula: any) {
+    // 1. Atualizar a matrícula
+    const { data: updatedList, error } = await (supabase.from('matriculas' as any) as any)
       .update(matricula)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
-      .single()
+    
     if (error) throw error
-    return data
+    if (!updatedList || updatedList.length === 0) throw new Error('Matrícula não encontrada.')
+    
+    const updatedMatricula = updatedList[0]
+
+    // 2. Sincronizar com Aluno (Reflexão no cadastro e portal)
+    try {
+      await (supabase.from('alunos' as any) as any)
+        .update({ 
+          valor_mensalidade_atual: updatedMatricula.valor_matricula,
+          status: updatedMatricula.status === 'ativa' ? 'ativo' : 'inativo'
+        })
+        .eq('id', updatedMatricula.aluno_id)
+        .eq('tenant_id', tenantId)
+    } catch (alunoError) {
+      console.error('⚠️ Erro ao sincronizar dados do aluno:', alunoError)
+    }
+
+    // 3. Sincronizar Financeiro (Reflexão nas cobranças)
+    try {
+      const { financeiroService } = await import('@/modules/financeiro/service')
+      await financeiroService.sincronizarCobrancasMatricula(updatedMatricula)
+    } catch (finError) {
+      console.error('⚠️ Erro ao sincronizar cobranças financeiras:', finError)
+    }
+
+    return updatedMatricula
   },
-  async excluirMatricula(id: string) {
+  async excluirMatricula(id: string, tenantId: string) {
     const { error } = await (supabase.from('matriculas' as any) as any)
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
   async verificarMatriculaAtiva(alunoId: string, tenantId: string) {
@@ -116,13 +149,14 @@ export const academicoService = {
 
     return plano
   },
-  async atualizarPlanoAula(id: string, planoComTurmas: any) {
+  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any) {
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
     // 1. Atualizar o plano de aula
     const { data: plano, error: planoError } = await (supabase.from('planos_aula' as any) as any)
       .update(planoData)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
     if (planoError) throw planoError
@@ -147,10 +181,11 @@ export const academicoService = {
 
     return plano
   },
-  async excluirPlanoAula(id: string) {
+  async excluirPlanoAula(id: string, tenantId: string) {
     const { error } = await (supabase.from('planos_aula' as any) as any)
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
 
@@ -190,13 +225,14 @@ export const academicoService = {
 
     return atividade
   },
-  async atualizarAtividade(id: string, atividadeComTurmas: any) {
+  async atualizarAtividade(id: string, tenantId: string, atividadeComTurmas: any) {
     const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
 
     // 1. Atualizar a atividade
     const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
       .update(atividadeData)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
     if (atividadeError) throw atividadeError
@@ -221,10 +257,11 @@ export const academicoService = {
 
     return atividade
   },
-  async excluirAtividade(id: string) {
+  async excluirAtividade(id: string, tenantId: string) {
     const { error } = await (supabase.from('atividades' as any) as any)
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
 
@@ -248,6 +285,7 @@ export const academicoService = {
       const { error } = await (supabase.from('boletins' as any) as any)
         .update(data)
         .eq('id', id)
+        .eq('tenant_id', data.tenant_id)
       if (error) throw error
       return true
     } else {
@@ -260,10 +298,11 @@ export const academicoService = {
     }
   },
 
-  async excluirBoletim(id: string) {
+  async excluirBoletim(id: string, tenantId: string) {
     const { error } = await (supabase.from('boletins' as any) as any)
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
 
@@ -293,6 +332,7 @@ export const academicoService = {
       const { error } = await (supabase.from('boletins' as any) as any)
         .update({ disciplinas, updated_at: new Date().toISOString() })
         .eq('id', existente.id)
+        .eq('tenant_id', existente.tenant_id)
       if (error) throw error
       return true
     } else {

@@ -60,11 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('id, razao_social')
             .eq('gestor_user_id', user.id)
             .maybeSingle() as any,
-          15000
+          5000
         ) as any
 
         if (!resp) {
-          console.warn('🕒 Timeout ou erro na busca da escola (15s)')
+          console.warn('🕒 Timeout ou erro na busca da escola (5s)')
           setAuthUser({
             user, session,
             tenantId: '',

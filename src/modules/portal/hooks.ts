@@ -254,3 +254,25 @@ export function useBoletins() {
     staleTime: 5 * 60 * 1000,
   })
 }
+
+export function useAlunoCompleto() {
+  const { alunoSelecionado, tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'aluno-completo', alunoSelecionado?.id, tenantId],
+    queryFn: () => portalService.buscarAlunoCompleto(alunoSelecionado!.id, tenantId!),
+    enabled: !!alunoSelecionado?.id && !!tenantId,
+  })
+}
+
+export function useUpdateAlunoPortal() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ alunoId, responsavelId, dados }: { alunoId: string; responsavelId: string; dados: any }) =>
+      portalService.atualizarAluno(alunoId, responsavelId, dados),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo', variables.alunoId] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    },
+  })
+}
