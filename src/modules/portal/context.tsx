@@ -64,29 +64,54 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       if (!vinculo?.aluno) return
 
       try {
-        // Tentar pegar matrícula ativa
+        // Tentar pegar matrícula ativa COM TURMA_VINCULO
         const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-           .select('turno, serie_ano, ano_letivo, valor_matricula')
+           .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
            .eq('aluno_id', vinculo.aluno.id)
            .eq('status', 'ativa')
            .maybeSingle()
-        
-        // Buscar turma que contém o aluno
-        const { data: turma } = await (supabase.from('turmas' as any) as any)
-          .select('id, nome, turno, valor_mensalidade')
-          .eq('tenant_id', vinculo.aluno.tenant_id)
-          .contains('alunos_ids', [vinculo.aluno.id])
-          .maybeSingle()
-        
+
+        let turma = null
+
+        // PRIORIDADE 1: Buscar turma pelo turma_id da matrícula (migration 046)
+        if (matricula?.turma_id) {
+          const { data: turmaData } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('id', matricula.turma_id)
+            .maybeSingle()
+          turma = turmaData
+        }
+
+        // PRIORIDADE 2: Fallback - buscar turma que contém o aluno no alunos_ids
+        if (!turma) {
+          const { data: turmaFallback } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .contains('alunos_ids', [vinculo.aluno.id])
+            .maybeSingle()
+          turma = turmaFallback
+        }
+
+        // PRIORIDADE 3: Fallback final - buscar turma por nome/turno
+        if (!turma && matricula) {
+          const { data: turmaNome } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .eq('nome', matricula.serie_ano)
+            .or(`turno.eq.${matricula.turno},turno.eq.${matricula.turno === 'manha' ? 'matutino' : matricula.turno === 'tarde' ? 'vespertino' : matricula.turno}`)
+            .maybeSingle()
+          turma = turmaNome
+        }
+
         const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
 
         const alunoCompleto = {
           ...vinculo.aluno,
-          turma: turma || (matricula ? { 
-            id: '', 
-            nome: matricula.serie_ano, 
-            turno: matricula.turno, 
-            valor_mensalidade: valorMensalidadeFinal 
+          turma: turma || (matricula ? {
+            id: '',
+            nome: matricula.serie_ano,
+            turno: matricula.turno,
+            valor_mensalidade: valorMensalidadeFinal
           } : null),
           valor_matricula: matricula?.valor_matricula || null
         }
@@ -102,38 +127,64 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
       // Optimistic Update
-      setAlunoSelecionado({ 
-        ...vinculo.aluno, 
+      setAlunoSelecionado({
+        ...vinculo.aluno,
         turma: null,
-        valor_matricula: null 
+        valor_matricula: null
       })
 
       try {
         const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-           .select('turno, serie_ano, ano_letivo, valor_matricula')
+           .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
            .eq('aluno_id', vinculo.aluno.id)
            .eq('status', 'ativa')
            .maybeSingle()
-        
-        const { data: turma } = await (supabase.from('turmas' as any) as any)
-          .select('id, nome, turno, valor_mensalidade')
-          .eq('tenant_id', vinculo.aluno.tenant_id)
-          .contains('alunos_ids', [vinculo.aluno.id])
-          .maybeSingle()
+
+        let turma = null
+
+        // PRIORIDADE 1: Buscar turma pelo turma_id da matrícula (migration 046)
+        if (matricula?.turma_id) {
+          const { data: turmaData } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('id', matricula.turma_id)
+            .maybeSingle()
+          turma = turmaData
+        }
+
+        // PRIORIDADE 2: Fallback - buscar turma que contém o aluno no alunos_ids
+        if (!turma) {
+          const { data: turmaFallback } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .contains('alunos_ids', [vinculo.aluno.id])
+            .maybeSingle()
+          turma = turmaFallback
+        }
+
+        // PRIORIDADE 3: Fallback final - buscar turma por nome/turno
+        if (!turma && matricula) {
+          const { data: turmaNome } = await (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .eq('nome', matricula.serie_ano)
+            .or(`turno.eq.${matricula.turno},turno.eq.${matricula.turno === 'manha' ? 'matutino' : matricula.turno === 'tarde' ? 'vespertino' : matricula.turno}`)
+            .maybeSingle()
+          turma = turmaNome
+        }
 
         const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
 
         const alunoCompleto = {
           ...vinculo.aluno,
-          turma: turma || (matricula ? { 
-            id: '', 
-            nome: matricula.serie_ano, 
-            turno: matricula.turno, 
-            valor_mensalidade: valorMensalidadeFinal 
+          turma: turma || (matricula ? {
+            id: '',
+            nome: matricula.serie_ano,
+            turno: matricula.turno,
+            valor_mensalidade: valorMensalidadeFinal
           } : null),
           valor_matricula: matricula?.valor_matricula || null
         }
-        
+
         setAlunoSelecionado(alunoCompleto)
       } catch (err) {
         console.error('Erro ao selecionar aluno:', err)
