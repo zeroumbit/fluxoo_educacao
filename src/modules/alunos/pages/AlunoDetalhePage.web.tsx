@@ -229,12 +229,6 @@ export function AlunoDetalhePageWeb() {
                 )}>
                   {aluno.status}
                 </Badge>
-                {(aluno as any).serie_ano && (
-                  <Badge className="px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest bg-indigo-100 text-indigo-700 border-0 shadow-sm shadow-indigo-50">
-                    <Users size={12} className="mr-1.5" />
-                    {(aluno as any).serie_ano} {(aluno as any).turma_nome ? `• ${(aluno as any).turma_nome}` : ''}
-                  </Badge>
-                )}
                 {filial && (
                   <Badge variant="outline" className="px-4 py-1.5 rounded-full font-bold text-[10px] uppercase tracking-widest border-slate-200 text-slate-500">
                     <Building2 size={12} className="mr-1.5" /> {filial.nome_unidade}
@@ -505,39 +499,39 @@ export function AlunoDetalhePageWeb() {
            </div>
         </CardHeader>
         <CardContent className="p-10">
-           <div className="space-y-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {vinculos?.map((v, i) => (
-                <div key={i} className="group p-6 rounded-3xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-xl hover:border-white transition-all duration-500 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full">
-                   <div className="flex items-start lg:items-center gap-4 w-full">
+                <div key={i} className="group p-6 rounded-3xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-xl hover:border-white transition-all duration-500 flex flex-col sm:flex-row justify-between items-center gap-4">
+                   <div className="flex items-center gap-4 text-center sm:text-left">
                       <div className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center font-black text-indigo-600 shrink-0">
                          {v.responsaveis.nome.charAt(0)}
                       </div>
-                      <div className="space-y-2 flex-1 min-w-0">
-                         <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-black text-slate-800 text-lg leading-tight break-words">{v.responsaveis.nome}</p>
+                      <div className="space-y-1">
+                         <div className="flex items-center gap-2 justify-center sm:justify-start">
+                            <p className="font-black text-slate-800 text-lg leading-tight">{v.responsaveis.nome}</p>
                             {v.is_financeiro && (
-                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black uppercase px-2 py-0 shrink-0">PAGADOR</Badge>
+                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black uppercase px-2 py-0">PAGADOR</Badge>
                             )}
                          </div>
-                         <div className="flex flex-wrap gap-x-4 gap-y-2">
+                         <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-start">
                            <p className="text-[10px] text-indigo-600 uppercase font-black tracking-widest">{v.grau_parentesco}</p>
-                           {v.responsaveis.email && <p className="text-[10px] text-slate-400 font-bold"><Mail size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.email}</p>}
-                           {v.responsaveis.telefone && <p className="text-[10px] text-slate-400 font-bold"><Phone size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.telefone}</p>}
+                           {v.responsaveis.email && <p className="text-[10px] text-slate-400 font-bold"><Mail size={10} className="inline mr-1" /> {v.responsaveis.email}</p>}
+                           {v.responsaveis.telefone && <p className="text-[10px] text-slate-400 font-bold"><Phone size={10} className="inline mr-1" /> {v.responsaveis.telefone}</p>}
                          </div>
                       </div>
                    </div>
-
-                   <div className="flex gap-2 w-full lg:w-auto lg:shrink-0">
+                   
+                   <div className="flex gap-2 shrink-0">
                       {v.responsaveis.user_id ? (
                         <div className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black border border-emerald-100 flex items-center gap-1.5">
                            <Lock size={12} /> ACESSO ATIVO
                         </div>
                       ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
                           onClick={() => setActivatingResp({id: v.responsaveis.id, nome: v.responsaveis.nome})}
-                          className="flex-1 lg:flex-none rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                          className="rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                         >
                           Ativar Acesso
                         </Button>
