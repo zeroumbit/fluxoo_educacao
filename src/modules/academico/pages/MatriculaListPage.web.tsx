@@ -111,11 +111,8 @@ export function MatriculaListPageWeb() {
   }, [matriculaExistente, tipoSelecionado, form, isEditing])
 
   useEffect(() => {
-    // Sincroniza valores baseados na turma/série selecionada
-    // Removida a trava !isEditing para permitir que ao mudar a turma durante a edição, o valor também atualize
-    if (serieSelecionada && turmas) {
+    if (tipoSelecionado === 'nova' && serieSelecionada && turmas && !isEditing) {
       const turma = (turmas as any[])?.find(t => t.nome === serieSelecionada)
-      
       if (turma) {
         const turnoMap: Record<string, string> = {
           matutino: 'manha',
@@ -124,17 +121,14 @@ export function MatriculaListPageWeb() {
           noturno: 'noturno'
         }
         
-        // Só atualizamos se os campos ainda não tiverem sido alterados manualmente pelo usuário no form
-        // ou se for rematricula e estivermos mudando de série
         form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
         form.setValue('turma_id', turma.id)
-        
         if (turma.valor_mensalidade) {
-           form.setValue('valor_matricula', turma.valor_mensalidade)
+          form.setValue('valor_matricula', turma.valor_mensalidade)
         }
       }
     }
-  }, [serieSelecionada, turmas, form])
+  }, [serieSelecionada, tipoSelecionado, turmas, form, isEditing])
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -270,21 +264,11 @@ export function MatriculaListPageWeb() {
                         const t = (turmas as any[])?.find(x => x.nome === v)
                         if (t) {
                           form.setValue('turma_id', t.id)
-                          // Sincroniza o turno da turma
-                          const turnoMap: Record<string, string> = {
-                            matutino: 'manha',
-                            vespertino: 'tarde',
-                            integral: 'integral',
-                            noturno: 'noturno'
-                          }
-                          form.setValue('turno', (turnoMap[t.turno] || t.turno) as any)
-
-                          // Atualiza o valor dinamicamente baseado na tabela de turmas (informação real do banco)
+                          // Atualiza o valor dinamicamente se a turma tiver valor definido
                           if (t.valor_mensalidade) {
                             form.setValue('valor_matricula', t.valor_mensalidade)
-                            toast.info(`Valor atualizado: R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
-                              description: `Preço base da turma: ${t.nome}`,
-                              icon: '💰'
+                            toast.info(`Valor atualizado para R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
+                              description: `Baseado na turma ${t.nome}`
                             })
                           }
                         }

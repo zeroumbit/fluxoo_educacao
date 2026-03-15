@@ -30,55 +30,17 @@ export const academicoService = {
     return data
   },
   async atualizarMatricula(id: string, tenantId: string, matricula: any) {
-    console.log('📝 [academicoService.atualizarMatricula] Iniciando update:', { id, tenantId, fields: Object.keys(matricula) })
-
-    // 0. Limpeza rigorosa: Remover campos que não pertencem à tabela matriculas
-    const { 
-      aluno, // campo de join do select
-      responsaveis, // campo de join
-      turma, // campo de join
-      id: _id, // nunca atualizar o PK
-      tenant_id: _t, // nunca atualizar o tenant_id
-      created_at: _c,
-      updated_at: _u,
-      ...cleanMatricula 
-    } = matricula
-
-    // Verificação preventiva (opcional, para debug de 404)
-    const { data: check } = await (supabase.from('matriculas' as any) as any)
-      .select('id, tenant_id')
-      .eq('id', id)
-      .maybeSingle()
-    
-    if (!check) {
-      console.error(`❌ [academicoService.atualizarMatricula] Registro ${id} NÃO existe no banco.`)
-      throw new Error(`Matrícula ${id} não encontrada.`)
-    }
-
-    if (check.tenant_id !== tenantId) {
-      console.error(`❌ [academicoService.atualizarMatricula] Tenant mismatch: Registro é do tenant ${check.tenant_id} mas usuário enviou ${tenantId}`)
-      // Em desenvolvimento, se o RLS está desativado, poderíamos até ignorar o tenant_id no .eq(), 
-      // mas mantemos por segurança.
-    }
-
     // 1. Atualizar a matrícula
     const { data: updatedList, error } = await (supabase.from('matriculas' as any) as any)
-      .update(cleanMatricula)
+      .update(matricula)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .select()
     
-    if (error) {
-      console.error('❌ [academicoService.atualizarMatricula] Erro no PATCH:', error)
-      throw error
-    }
-
-    if (!updatedList || updatedList.length === 0) {
-      console.error('⚠️ [academicoService.atualizarMatricula] Nenhuma linha afetada. O 404 persiste.')
-      throw new Error("Erro ao atualizar: Registro não encontrado ou RLS bloqueou a operação.")
-    }
+    if (error) throw error
+    if (!updatedList || updatedList.length === 0) throw new Error('Matrícula não encontrada.')
+    
     const updatedMatricula = updatedList[0]
-    console.log('✅ [academicoService.atualizarMatricula] Sucesso:', updatedMatricula.id)
 
     // 2. Sincronizar com Aluno (Reflexão no cadastro e portal)
     try {
