@@ -16,6 +16,7 @@ export function useAlunos() {
 
 export function useAluno(id: string) {
   const { authUser } = useAuth()
+  
   return useQuery({
     queryKey: ['alunos', id, authUser?.tenantId],
     queryFn: () => alunoService.buscarPorId(id, authUser!.tenantId),

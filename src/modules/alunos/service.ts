@@ -45,8 +45,6 @@ export const alunoService = {
   },
 
   async buscarPorId(id: string, tenantId: string) {
-    console.log('🔍 [alunoService] buscarPorId:', { id, tenantId })
-    
     const { data: aluno, error: alunoError } = await supabase
       .from('alunos')
       .select(`
@@ -58,16 +56,10 @@ export const alunoService = {
       .eq('tenant_id', tenantId)
       .single()
 
-    console.log('📦 [alunoService] Resultado aluno:', { data: aluno, error: alunoError })
-
-    if (alunoError) {
-      console.error('❌ [alunoService] Erro ao buscar aluno:', alunoError)
-      throw alunoError
-    }
+    if (alunoError) throw alunoError
 
     // Buscar matrícula ativa do aluno
     if (aluno) {
-      console.log('🎓 [alunoService] Buscando matrícula para:', id)
       const { data: matricula, error: matError } = await supabase
         .from('matriculas')
         .select(`
@@ -83,23 +75,19 @@ export const alunoService = {
         .eq('status', 'ativa')
         .maybeSingle()
 
-      console.log('📦 [alunoService] Resultado matrícula:', { matricula, matError })
-
       // Buscar turma separadamente
       if (matricula && matricula.turma_id) {
-        console.log('🏫 [alunoService] Buscando turma:', matricula.turma_id)
         const { data: turma, error: turmaError } = await supabase
           .from('turmas')
           .select('id, nome, valor_mensalidade')
           .eq('id', matricula.turma_id)
           .maybeSingle()
 
-        console.log('📦 [alunoService] Resultado turma:', { turma, turmaError })
-
         if (turma && !turmaError) {
-          (aluno as any).valor_mensalidade_atual = turma.valor_mensalidade
-          (aluno as any).turma_atual = turma
-          (aluno as any).data_ingresso = matricula.data_matricula
+          const turmaData = turma as { valor_mensalidade?: number | null }
+          ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
+          ;(aluno as any).turma_atual = turmaData
+          ;(aluno as any).data_ingresso = matricula.data_matricula
         }
       }
     }

@@ -24,15 +24,15 @@ export function AlunoDetalhePageWeb() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isEditingInitial = searchParams.get('edit') === 'true'
-  
-  const { data: aluno, isLoading } = useAluno(id || '')
+
+  const { data: aluno, isLoading, error } = useAluno(id || '')
   const atualizarAluno = useAtualizarAluno()
   const ativarAcesso = useAtivarAcessoPortal()
   const alternarFinanceiro = useAlternarFinanceiro()
-  
+
   const [isEditing, setIsEditing] = useState(isEditingInitial)
   const [formData, setFormData] = useState<any>(null)
-  
+
   const [activatingResp, setActivatingResp] = useState<{ id: string, nome: string } | null>(null)
   const [newPassword, setNewPassword] = useState('')
 
@@ -108,7 +108,24 @@ export function AlunoDetalhePageWeb() {
     )
   }
 
-  if (!aluno) return null
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 font-bold">Erro ao carregar dados do aluno</p>
+          <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!aluno) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Aluno não encontrado</p>
+      </div>
+    )
+  }
 
   const vinculos = (aluno as any).aluno_responsavel as any[]
   const filial = (aluno as any).filiais as { nome_unidade: string } | null
