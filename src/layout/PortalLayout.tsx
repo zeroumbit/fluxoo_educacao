@@ -332,15 +332,6 @@ export function PortalLayout() {
                     ))}
                   </div>
                 </div>
-
-                <div className="p-6 bg-white border-t border-slate-100 shrink-0 pb-[env(safe-area-inset-bottom,1.5rem)]">
-                   <button 
-                    onClick={handleSignOut}
-                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-red-50 text-red-600 font-bold active:bg-red-100 transition-colors"
-                   >
-                      Sair da Conta <LogOut size={20} />
-                   </button>
-                </div>
               </SheetContent>
             </Sheet>
 
