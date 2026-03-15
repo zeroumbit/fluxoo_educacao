@@ -82,10 +82,12 @@ export const alunoService = {
           .maybeSingle()
 
         if (turma && !turmaError) {
-          const turmaData = turma as { valor_mensalidade?: number | null }
+          const turmaData = turma as any
           ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
           ;(aluno as any).turma_atual = turmaData
           ;(aluno as any).data_ingresso = matricula.data_matricula
+          ;(aluno as any).serie_ano = matricula.serie_ano
+          ;(aluno as any).turma_nome = turmaData.nome
           ;(aluno as any).ano_letivo = matricula.ano_letivo
         }
       }
