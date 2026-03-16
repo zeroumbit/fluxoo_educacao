@@ -11,13 +11,31 @@ CREATE TABLE IF NOT EXISTS public.logs_financeiros (
     created_at timestamptz DEFAULT now()
 );
 
--- Habilitar RLS por segurança
+-- Habilitar RLS
 ALTER TABLE public.logs_financeiros ENABLE ROW LEVEL SECURITY;
 
--- Política básica para gestores verem logs (mantendo o padrão do sistema)
-DROP POLICY IF EXISTS "Gestores podem ver logs do seu tenant" ON public.logs_financeiros;
-CREATE POLICY "Gestores podem ver logs do seu tenant" ON public.logs_financeiros
-    FOR ALL USING (tenant_id::text = auth.jwt() ->> 'tenant_id');
+-- 1. Qualquer usuário autenticado pode registrar logs (necessário para triggers de matricula/financeiro)
+DROP POLICY IF EXISTS "Qualquer autenticado pode inserir logs" ON public.logs_financeiros;
+CREATE POLICY "Qualquer autenticado pode inserir logs" ON public.logs_financeiros
+    FOR INSERT TO authenticated
+    WITH CHECK (true);
+
+-- 2. Visualização restrita: Super Admin ou usuários do próprio Tenant
+DROP POLICY IF EXISTS "Ver logs do próprio tenant" ON public.logs_financeiros;
+CREATE POLICY "Ver logs do próprio tenant" ON public.logs_financeiros
+    FOR SELECT TO authenticated
+    USING (
+        (auth.jwt() ->> 'role' = 'super_admin') OR
+        (tenant_id IN (SELECT tenant_id FROM public.funcionarios WHERE user_id = auth.uid())) OR
+        (tenant_id IN (SELECT id FROM public.escolas WHERE gestor_user_id = auth.uid()))
+    );
+
+-- 3. Service role acesso total
+DROP POLICY IF EXISTS "Service role acesso total logs" ON public.logs_financeiros;
+CREATE POLICY "Service role acesso total logs" ON public.logs_financeiros
+    FOR ALL TO service_role
+    USING (true)
+    WITH CHECK (true);
 
 -- 2. Corrigir função de sincronização de mensalidade (Referência: Migration 055)
 CREATE OR REPLACE FUNCTION public.fn_sincronizar_mensalidade_do_aluno()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PortalProvider } from '@/modules/portal/context'
@@ -13,7 +13,6 @@ import {
   FileText, 
   LogOut, 
   ShoppingCart, 
-  Settings,
   Calendar,
   ChevronDown,
   Menu,

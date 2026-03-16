@@ -98,8 +98,9 @@ WHERE (COALESCE(f.faltas_consecutivas, 0) > 3 OR COALESCE(c.cobrancas_atrasadas,
 -- 7. MATERIALIZED VIEW MENSAL — FECHAMENTO DE CAIXA
 -- ==============================================================================
 DROP MATERIALIZED VIEW IF EXISTS mv_fechamento_mensal;
+DROP VIEW IF EXISTS mv_fechamento_mensal;
 
-CREATE MATERIALIZED VIEW mv_fechamento_mensal AS
+CREATE OR REPLACE VIEW mv_fechamento_mensal WITH (security_invoker = on) AS
 SELECT
     tenant_id,
     DATE_TRUNC('month', data_vencimento) AS mes,
