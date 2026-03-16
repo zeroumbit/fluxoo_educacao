@@ -32,6 +32,7 @@ export interface DashboardData {
     possuiAluno: boolean
   }
   radarEvasao: RadarAluno[]
+  alunosSemMatricula: number
 }
 
 export const dashboardService = {
@@ -47,6 +48,7 @@ export const dashboardService = {
       radarRes,
       contasPagarRes,
       salariosRes,
+      alunosSemMatriculaRes,
     ] = await Promise.all([
       supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
@@ -58,6 +60,7 @@ export const dashboardService = {
       (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false }),
       (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago'),
       supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0),
+      supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).is('matricula_id', null),
     ])
 
     if (!escolaRes.data) {
@@ -108,6 +111,7 @@ export const dashboardService = {
         possuiAluno: (alunosRes.count || 0) > 0,
       },
       radarEvasao: radarData,
+      alunosSemMatricula: alunosSemMatriculaRes.count || 0,
     }
   },
 }

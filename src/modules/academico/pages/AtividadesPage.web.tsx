@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, FileText, ExternalLink, Pencil, Trash2, AlertTriangle, Clock } from 'lucide-react'
+import { Plus, Loader2, FileText, ExternalLink, Pencil, Trash2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const schema = z.object({

@@ -165,9 +165,15 @@ export function AlunoCadastroPageMobile() {
     setBuscandoCpf(true)
     const cpfLimpo = cpf.replace(/\D/g, '')
     try {
-      const { data: resp } = await supabase.from('responsaveis').select('id, nome, email, telefone').eq('cpf', cpfLimpo).maybeSingle()
+      const { data: resp } = await supabase.from('responsaveis').select('id, nome, email, telefone, user_id').eq('cpf', cpfLimpo).maybeSingle()
       if (resp) {
-        setResponsavelEncontrado(true)
+        if (resp.user_id) {
+          setResponsavelEncontrado(true)
+          toast.info('Responsável identificado!')
+        } else {
+          setResponsavelEncontrado(false)
+          toast.success('Histórico encontrado!')
+        }
         setValue('responsavel_nome', resp.nome || '', { shouldValidate: true })
         setValue('responsavel_email', resp.email || '', { shouldValidate: true })
         setValue('responsavel_telefone', resp.telefone || '', { shouldValidate: true })
@@ -214,6 +220,7 @@ export function AlunoCadastroPageMobile() {
   const prevStep = () => { if (currentStep > 0) setCurrentStep(currentStep - 1) }
 
   const onSubmit = async (data: AlunoFormValues) => {
+    if (currentStep !== steps.length - 1) return
     if (!authUser) return
     if (limiteAtingido) { toast.error('Limite de alunos atingido!'); return }
     try {
@@ -244,6 +251,14 @@ export function AlunoCadastroPageMobile() {
       navigate('/alunos')
     } catch (err: any) {
       toast.error('Erro: ' + (err?.message || 'Verifique os campos.'))
+    }
+  }
+
+  // Prevenção extra: Não permitir que o ENTER submeta o formulário em campos de input
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+      e.preventDefault()
+      nextStep()
     }
   }
 
@@ -297,7 +312,10 @@ export function AlunoCadastroPageMobile() {
 
       {/* ── Form Content ── */}
       <div className="mx-auto w-full max-w-[640px] px-4 pt-6">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form 
+          onSubmit={handleSubmit(onSubmit)}
+          onKeyDown={handleKeyDown}
+        >
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, x: 20 }}
@@ -342,8 +360,8 @@ export function AlunoCadastroPageMobile() {
                     <div className="bg-sky-50 border border-sky-200 text-sky-800 p-4 rounded-2xl flex items-start gap-3">
                       <Users className="h-5 w-5 text-sky-600 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-bold text-sm text-sky-900">Responsável Identificado</h4>
-                        <p className="text-xs text-sky-700 mt-0.5">Os dados foram preenchidos automaticamente.</p>
+                        <h4 className="font-bold text-sm text-sky-900">Acesso Portal Ativo</h4>
+                        <p className="text-xs text-sky-700 mt-0.5">Responsável já possui acesso. Não é necessário nova senha.</p>
                       </div>
                     </div>
                   )}
@@ -550,27 +568,31 @@ export function AlunoCadastroPageMobile() {
                 </>
               )}
             </div>
-          </motion.div>
-
-          {/* ── Navigation Buttons (Fixo no Bottom) ── */}
-          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
-            <div className="mx-auto w-full max-w-[640px] px-4 py-3 flex gap-3">
-              {currentStep > 0 && (
-                <Button type="button" variant="outline" onClick={prevStep} className="flex-1 h-14 rounded-2xl font-bold text-base">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-                </Button>
-              )}
-              {currentStep < steps.length - 1 ? (
-                <Button type="button" onClick={nextStep} className="flex-1 h-14 rounded-2xl bg-indigo-600 font-bold text-base">
-                  Próximo <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button type="submit" disabled={isSubmitting} className="flex-1 h-14 rounded-2xl bg-emerald-600 font-bold text-base">
-                  {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Check className="mr-2 h-4 w-4" /> Cadastrar</>}
-                </Button>
-              )}
+            {/* ── Navigation Buttons (Fixo no Bottom) ── */}
+            <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
+              <div className="mx-auto w-full max-w-[640px] px-4 py-3 flex gap-3">
+                {currentStep > 0 && (
+                  <Button type="button" variant="outline" onClick={prevStep} className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-200">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                  </Button>
+                )}
+                {currentStep < steps.length - 1 ? (
+                  <Button key="btn-next-mobile" type="button" onClick={nextStep} className="flex-1 h-14 rounded-2xl bg-indigo-600 font-bold text-base shadow-lg shadow-indigo-100">
+                    Próximo <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button 
+                    key="btn-save-mobile"
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="flex-1 h-14 rounded-2xl bg-emerald-600 font-bold text-base shadow-lg shadow-emerald-100"
+                  >
+                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          </motion.div>
         </form>
       </div>
     </div>

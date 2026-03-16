@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -38,7 +38,6 @@ const superAdminNavigation = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { authUser, signOut } = useAuth()
-  const navigate = useNavigate()
 
   const handleSignOut = async () => {
     try {

@@ -14,10 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro } from '../hooks'
+import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro, useDesvincularResponsavel, useAtualizarResponsavel, useVincularResponsavel, useCriarAlunoComResponsavel, useCriarResponsavelAndVincular } from '../hooks'
 import { cn } from '@/lib/utils'
+import { mascaraCPF, mascaraTelefone, validarCPF } from '@/lib/validacoes'
+import { supabase } from '@/lib/supabase'
 
 export function AlunoDetalhePageWeb() {
   const { id } = useParams<{ id: string }>()
@@ -29,12 +32,30 @@ export function AlunoDetalhePageWeb() {
   const atualizarAluno = useAtualizarAluno()
   const ativarAcesso = useAtivarAcessoPortal()
   const alternarFinanceiro = useAlternarFinanceiro()
+  const desvincularResponsavel = useDesvincularResponsavel()
+  const atualizarResponsavel = useAtualizarResponsavel()
+  const vincularResponsavel = useVincularResponsavel()
+  const criarResponsavelAndVincular = useCriarResponsavelAndVincular()
 
   const [isEditing, setIsEditing] = useState(isEditingInitial)
   const [formData, setFormData] = useState<any>(null)
 
   const [activatingResp, setActivatingResp] = useState<{ id: string, nome: string } | null>(null)
+  const [editingResp, setEditingResp] = useState<any | null>(null)
   const [newPassword, setNewPassword] = useState('')
+
+  const [showAddGuardian, setShowAddGuardian] = useState(false)
+  const [newGuardianData, setNewGuardianData] = useState({
+    cpf: '',
+    nome: '',
+    email: '',
+    telefone: '',
+    parentesco: '',
+    isFinanceiro: false
+  })
+  const [isSearchingCpf, setIsSearchingCpf] = useState(false)
+  const [existingResponsibleId, setExistingResponsibleId] = useState<string | null>(null)
+  const [deletingVinculo, setDeletingVinculo] = useState<{ id: string, nome: string } | null>(null)
 
   useEffect(() => {
     if (aluno && !formData) {
@@ -104,6 +125,93 @@ export function AlunoDetalhePageWeb() {
       setNewPassword('')
     } catch (err: any) {
       toast.error(err.message || 'Erro ao ativar acesso')
+    }
+  }
+
+  const handleUpdateResponsavel = async () => {
+    if (!editingResp) return
+    try {
+      const { id, ...payload } = editingResp
+      await atualizarResponsavel.mutateAsync({ id, responsavel: payload })
+      setEditingResp(null)
+    } catch (err: any) {
+      toast.error('Erro ao atualizar responsável: ' + err.message)
+    }
+  }
+
+  const handleTrocarPagador = async (vinculoId: string) => {
+    if (!id) return
+    try {
+      await alternarFinanceiro.mutateAsync({ vinculoId, isFinanceiro: true, alunoId: id })
+    } catch (err: any) {
+      toast.error('Erro ao trocar pagador: ' + err.message)
+    }
+  }
+
+  const handleSearchCpf = async (cpf: string) => {
+    const limpo = cpf.replace(/\D/g, '')
+    if (limpo.length !== 11) return
+    
+    setIsSearchingCpf(true)
+    try {
+      const { data, error } = await supabase
+        .from('responsaveis')
+        .select('*')
+        .eq('cpf', limpo)
+        .maybeSingle()
+      
+      if (data) {
+        setExistingResponsibleId(data.id)
+        setNewGuardianData({
+          ...newGuardianData,
+          nome: data.nome,
+          email: data.email || '',
+          telefone: data.telefone || ''
+        })
+        toast.info('Responsável encontrado!')
+      } else {
+        setExistingResponsibleId(null)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSearchingCpf(false)
+    }
+  }
+
+  const handleAddGuardian = async () => {
+    if (!id || !aluno) return
+    if (!newGuardianData.cpf || !newGuardianData.nome || !newGuardianData.parentesco) {
+      toast.error('Preencha os campos obrigatórios')
+      return
+    }
+
+    try {
+      if (existingResponsibleId) {
+        // Apenas vincular
+        await vincularResponsavel.mutateAsync({
+          alunoId: id,
+          responsavelId: existingResponsibleId,
+          grauParentesco: newGuardianData.parentesco
+        })
+      } else {
+        // Criar e vincular
+        await criarResponsavelAndVincular.mutateAsync({
+           alunoId: id,
+           responsavel: {
+              nome: newGuardianData.nome,
+              cpf: newGuardianData.cpf,
+              email: newGuardianData.email,
+              telefone: newGuardianData.telefone
+           },
+           grauParentesco: newGuardianData.parentesco
+        })
+      }
+      setShowAddGuardian(false)
+      setNewGuardianData({ cpf: '', nome: '', email: '', telefone: '', parentesco: '', isFinanceiro: false })
+      setExistingResponsibleId(null)
+    } catch (err: any) {
+      toast.error('Erro ao vincular: ' + err.message)
     }
   }
 
@@ -250,12 +358,11 @@ export function AlunoDetalhePageWeb() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Lado Esquerdo: Dados Cadastrais e Endereço */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Dados Pessoais */}
-          <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+      {/* Dados Cadastrais e Endereço - Largura Total */}
+      <div className="space-y-8">
+
+        {/* Dados Pessoais */}
+        <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
             <CardHeader className="pt-8 pb-4 px-8 flex flex-row items-center justify-between bg-slate-50/50">
                <div>
                   <CardTitle className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
@@ -300,10 +407,10 @@ export function AlunoDetalhePageWeb() {
                  )}
                </div>
             </CardContent>
-          </Card>
+        </Card>
 
-          {/* Endereço */}
-          <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+        {/* Endereço */}
+        <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
             <CardHeader className="pt-8 pb-4 px-8 flex flex-row items-center justify-between bg-slate-50/50">
                <div>
                   <CardTitle className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
@@ -376,73 +483,20 @@ export function AlunoDetalhePageWeb() {
                   </div>
                </div>
             </CardContent>
-          </Card>
-        </div>
+        </Card>
+      </div>
 
-        {/* Lado Direito: Saúde e Responsáveis */}
-        <div className="space-y-8">
-          
-          {/* Financeiro / Escolar */}
-          <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-indigo-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-               <CreditCard size={100} />
-            </div>
-            <CardHeader className="pt-8 pb-2 px-8">
-               <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2">
-                 <CreditCard className="h-5 w-5" /> Escolar & Planos
-               </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8 pt-4 space-y-6 relative z-10">
-               <div className="space-y-1">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Mensalidade Atual</p>
-                 {isEditing ? (
-                   <Input
-                     type="number"
-                     value={formData?.valor_mensalidade_atual}
-                     onChange={(e) => setFormData({...formData, valor_mensalidade_atual: Number(e.target.value)})}
-                     className="h-11 bg-white/10 border-white/20 text-white rounded-xl"
-                   />
-                 ) : (
-                   <h4 className="text-3xl font-black">
-                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((aluno as any).valor_mensalidade_atual || 0)}
-                   </h4>
-                 )}
-               </div>
-               
-               {/* Turma / Ano do Aluno */}
-               {(aluno as any).turma_atual && (aluno as any).turma_atual.nome && (
-                 <div className="space-y-1">
-                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Turma / Ano</p>
-                   <h4 className="text-xl font-black">
-                     {(aluno as any).turma_atual.nome} {((aluno as any).ano_letivo) && `- ${((aluno as any).ano_letivo)}`}
-                   </h4>
-                 </div>
-               )}
-               
-               <div className="h-px bg-white/10 w-full" />
-               <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={20} className="text-indigo-200" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200 leading-none mb-1">Status Acadêmico</p>
-                    <p className="text-sm font-bold uppercase">{aluno.status === 'ativo' ? 'Matrícula Ativa' : 'Inativo / Trancado'}</p>
-                  </div>
-               </div>
-            </CardContent>
-          </Card>
-
-          {/* Saúde */}
-          <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
-            <CardHeader className="pt-8 pb-4 px-8 flex flex-row items-center justify-between bg-rose-50/50">
-               <div>
-                  <CardTitle className="text-xl font-black text-rose-800 tracking-tight flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-rose-500" /> Saúde & Atenção
-                  </CardTitle>
-                  <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1">Cuidados e restrições médicas</p>
-               </div>
-            </CardHeader>
-            <CardContent className="p-8 space-y-6">
+      {/* Saúde & Atenção - Largura Total */}
+      <Card className="rounded-[2rem] border-0 shadow-xl shadow-slate-200/40 bg-white overflow-hidden">
+          <CardHeader className="pt-8 pb-4 px-8 flex flex-row items-center justify-between bg-rose-50/50">
+             <div>
+                <CardTitle className="text-xl font-black text-rose-800 tracking-tight flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-rose-500" /> Saúde & Atenção
+                </CardTitle>
+                <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1">Cuidados e restrições médicas</p>
+             </div>
+          </CardHeader>
+          <CardContent className="p-8 space-y-6">
                <div className="space-y-3">
                  <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Patologias</Label>
                  {isEditing ? (
@@ -488,9 +542,7 @@ export function AlunoDetalhePageWeb() {
                  )}
                </div>
             </CardContent>
-          </Card>
-        </div>
-      </div>
+        </Card>
 
       {/* Responsáveis Section */}
       <Card className="rounded-[2.5rem] border-0 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden mt-4">
@@ -527,22 +579,65 @@ export function AlunoDetalhePageWeb() {
                       </div>
                    </div>
 
-                   <div className="flex gap-2 w-full lg:w-auto lg:shrink-0">
-                      {v.responsaveis.user_id ? (
-                        <div className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black border border-emerald-100 flex items-center gap-1.5">
-                           <Lock size={12} /> ACESSO ATIVO
-                        </div>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setActivatingResp({id: v.responsaveis.id, nome: v.responsaveis.nome})}
-                          className="flex-1 lg:flex-none rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                        >
-                          Ativar Acesso
-                        </Button>
-                      )}
-                   </div>
+                    <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:shrink-0">
+                       {/* Botão de Pagador (Switch) */}
+                       <Button
+                         variant={v.is_financeiro ? "default" : "outline"}
+                         size="sm"
+                         onClick={() => !v.is_financeiro && handleTrocarPagador(v.id)}
+                         className={cn(
+                           "rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-4",
+                           v.is_financeiro ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm" : "border-slate-200 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                         )}
+                         title={v.is_financeiro ? "Este é o pagador atual" : "Defenir como pagador principal"}
+                       >
+                          {v.is_financeiro ? "PAGADOR ATUAL" : "ASSUMIR FINANCEIRO"}
+                       </Button>
+
+                       <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingResp({
+                            id: v.responsaveis.id,
+                            nome: v.responsaveis.nome,
+                            cpf: v.responsaveis.cpf || '',
+                            email: v.responsaveis.email || '',
+                            telefone: v.responsaveis.telefone || ''
+                          })}
+                          className="h-10 w-10 text-indigo-600 hover:bg-indigo-50 rounded-xl"
+                          title="Editar Cadastro do Responsável"
+                       >
+                          <Edit2 size={18} />
+                       </Button>
+
+                       <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingVinculo({ id: v.id, nome: v.responsaveis.nome })
+                          }}
+                          className="h-10 w-10 text-rose-500 hover:bg-rose-50 rounded-xl"
+                          title="Desvincular Responsável"
+                       >
+                          <Trash2 size={18} />
+                       </Button>
+                       
+                       {v.responsaveis.user_id ? (
+                         <div className="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black border border-slate-200 flex items-center gap-1.5">
+                            <Lock size={12} /> ACESSO PORTAL
+                         </div>
+                       ) : (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => setActivatingResp({id: v.responsaveis.id, nome: v.responsaveis.nome})}
+                           className="flex-1 lg:flex-none rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                         >
+                           Liberar Acesso
+                         </Button>
+                       )}
+                    </div>
                 </div>
               ))}
            </div>
@@ -592,6 +687,250 @@ export function AlunoDetalhePageWeb() {
                 {ativarAcesso.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmar e Ativar'}
              </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Editar Responsável */}
+      <Dialog open={!!editingResp} onOpenChange={() => setEditingResp(null)}>
+        <DialogContent className="rounded-[2.5rem] border-0 p-0 overflow-hidden bg-white shadow-2xl max-w-md">
+          <div className="bg-indigo-600 p-8 text-white">
+             <div className="flex items-center gap-4">
+               <div className="h-14 w-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
+                  <Edit2 size={24} />
+               </div>
+               <div>
+                  <DialogTitle className="text-xl font-black">Editar Responsável</DialogTitle>
+                  <p className="text-indigo-100 text-xs font-medium">Atualizando dados cadastrais</p>
+               </div>
+             </div>
+          </div>
+          <div className="p-8 space-y-4">
+             <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
+                <Input 
+                   value={editingResp?.nome} 
+                   onChange={(e) => setEditingResp({...editingResp, nome: e.target.value})} 
+                   className="h-12 rounded-xl border-slate-100"
+                />
+             </div>
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">CPF</Label>
+                  <Input 
+                    value={editingResp?.cpf} 
+                    onChange={(e) => setEditingResp({...editingResp, cpf: e.target.value})} 
+                    className="h-12 rounded-xl border-slate-100"
+                  />
+               </div>
+               <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefone</Label>
+                  <Input 
+                    value={editingResp?.telefone} 
+                    onChange={(e) => setEditingResp({...editingResp, telefone: e.target.value})} 
+                    className="h-12 rounded-xl border-slate-100"
+                  />
+               </div>
+             </div>
+             <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail</Label>
+                <Input 
+                   value={editingResp?.email} 
+                   onChange={(e) => setEditingResp({...editingResp, email: e.target.value})} 
+                   className="h-12 rounded-xl border-slate-100"
+                />
+             </div>
+          </div>
+          <DialogFooter className="p-8 pt-0 flex gap-3">
+             <Button 
+                variant="ghost" 
+                onClick={() => setEditingResp(null)}
+                className="rounded-xl font-bold text-slate-400"
+             >
+               Cancelar
+             </Button>
+             <Button 
+                onClick={handleUpdateResponsavel} 
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase tracking-widest h-12"
+             >
+                {atualizarResponsavel.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Salvar Dados'}
+             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Adicionar Novo Responsável */}
+      <Dialog open={showAddGuardian} onOpenChange={setShowAddGuardian}>
+        <DialogContent className="rounded-[2.5rem] border-0 p-0 overflow-hidden bg-white shadow-2xl max-w-md">
+           <div className="bg-indigo-600 p-8 text-white">
+              <div className="flex items-center gap-4">
+                 <div className="h-14 w-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
+                    <PlusCircle size={24} />
+                 </div>
+                 <div>
+                    <DialogTitle className="text-xl font-black">Novo Vínculo</DialogTitle>
+                    <p className="text-indigo-100 text-xs font-medium">Vincular novo responsável ao aluno</p>
+                 </div>
+              </div>
+           </div>
+           <div className="p-8 space-y-4">
+              <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">CPF (Buscar ou Cadastrar)</Label>
+                 <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input 
+                        value={newGuardianData.cpf} 
+                        onChange={(e) => {
+                           const val = mascaraCPF(e.target.value)
+                           setNewGuardianData({...newGuardianData, cpf: val})
+                        }} 
+                        maxLength={14}
+                        placeholder="000.000.000-00"
+                        className="h-12 rounded-xl border-slate-100"
+                      />
+                      {isSearchingCpf && (
+                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+                         </div>
+                      )}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={() => handleSearchCpf(newGuardianData.cpf)}
+                      className="h-12 w-12 rounded-xl border-slate-100 text-indigo-600"
+                    >
+                       <Search size={18} />
+                    </Button>
+                 </div>
+              </div>
+
+              <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
+                 <Input 
+                    value={newGuardianData.nome} 
+                    onChange={(e) => setNewGuardianData({...newGuardianData, nome: e.target.value})} 
+                    placeholder="Nome do responsável"
+                    className="h-12 rounded-xl border-slate-100"
+                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail</Label>
+                    <Input 
+                       value={newGuardianData.email} 
+                       onChange={(e) => setNewGuardianData({...newGuardianData, email: e.target.value})} 
+                       placeholder="email@escola.com"
+                       className="h-12 rounded-xl border-slate-100"
+                    />
+                 </div>
+                 <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefone</Label>
+                    <Input 
+                       value={newGuardianData.telefone} 
+                       onChange={(e) => {
+                          const val = mascaraTelefone(e.target.value)
+                          setNewGuardianData({...newGuardianData, telefone: val})
+                       }} 
+                       placeholder="(00) 00000-0000"
+                       className="h-12 rounded-xl border-slate-100"
+                    />
+                 </div>
+              </div>
+
+              <div className="space-y-2">
+                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Grau de Parentesco</Label>
+                  <Select 
+                    value={newGuardianData.parentesco} 
+                    onValueChange={(v) => setNewGuardianData({...newGuardianData, parentesco: v})}
+                  >
+                    <SelectTrigger className="h-12 rounded-xl border-slate-100">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pai">Pai</SelectItem>
+                      <SelectItem value="mae">Mãe</SelectItem>
+                      <SelectItem value="avo">Avô/Avó</SelectItem>
+                      <SelectItem value="tio">Tio/Tia</SelectItem>
+                      <SelectItem value="outro">Outro (Tutor/Guardião)</SelectItem>
+                    </SelectContent>
+                  </Select>
+              </div>
+
+              {existingResponsibleId && (
+                 <div className="bg-emerald-50 p-4 rounded-2xl flex items-center gap-3 border border-emerald-100">
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <p className="text-[11px] text-emerald-700 font-bold uppercase tracking-wider">Pessoa já cadastrada no sistema</p>
+                 </div>
+              )}
+           </div>
+           <DialogFooter className="p-8 pt-0 flex gap-3">
+              <Button 
+                 variant="ghost" 
+                 onClick={() => setShowAddGuardian(false)}
+                 className="rounded-xl font-bold text-slate-400"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                 onClick={handleAddGuardian} 
+                 disabled={vincularResponsavel.isPending || criarResponsavelAndVincular.isPending}
+                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black uppercase tracking-widest h-12"
+              >
+                 {(vincularResponsavel.isPending || criarResponsavelAndVincular.isPending) ? <Loader2 className="animate-spin h-5 w-5" /> : (existingResponsibleId ? 'Vincular Existente' : 'Criar e Vincular')}
+              </Button>
+           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Confirmar Exclusão de Responsável */}
+      <Dialog open={!!deletingVinculo} onOpenChange={() => setDeletingVinculo(null)}>
+        <DialogContent className="rounded-[2.5rem] border-0 p-0 overflow-hidden bg-white shadow-2xl max-w-md">
+           <div className="bg-rose-600 p-8 text-white">
+              <div className="flex items-center gap-4">
+                 <div className="h-14 w-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
+                    <Trash2 size={24} />
+                 </div>
+                 <div>
+                    <DialogTitle className="text-xl font-black">Desvincular Responsável</DialogTitle>
+                    <p className="text-rose-100 text-xs font-medium">Confirme a remoção do vínculo</p>
+                 </div>
+              </div>
+           </div>
+           <div className="p-8 space-y-6">
+              <div className="space-y-3">
+                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                    Tem certeza que deseja desvincular <strong className="text-slate-900">{deletingVinculo?.nome}</strong> do aluno?
+                 </p>
+                 <div className="bg-rose-50 p-4 rounded-2xl flex items-start gap-3 border border-rose-100">
+                    <Info size={16} className="text-rose-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-rose-700 leading-relaxed font-medium">
+                       Esta ação não exclui o cadastro do responsável, apenas remove o vínculo com este aluno.
+                    </p>
+                 </div>
+              </div>
+           </div>
+           <DialogFooter className="p-8 pt-0 flex gap-3">
+              <Button
+                 variant="ghost"
+                 onClick={() => setDeletingVinculo(null)}
+                 className="rounded-xl font-bold text-slate-400"
+              >
+                Cancelar
+              </Button>
+              <Button
+                 onClick={() => {
+                   if (deletingVinculo?.id) {
+                     desvincularResponsavel.mutate(deletingVinculo.id)
+                     setDeletingVinculo(null)
+                   }
+                 }}
+                 disabled={desvincularResponsavel.isPending}
+                 className="flex-1 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black uppercase tracking-widest h-12"
+              >
+                 {desvincularResponsavel.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirmar Desvinculação'}
+              </Button>
+           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -93,7 +93,29 @@ export function MatriculaFormPageWeb() {
   const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
+  const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
+
+  // Filtragem inteligente de alunos
+  const alunosFiltrados = alunos?.filter((aluno: any) => {
+    if (editId) return true
+    
+    const jaMatriculadoNoAno = matriculas?.some((m: any) => 
+      m.aluno_id === aluno.id && 
+      m.status === 'ativa' && 
+      Number(m.ano_letivo) === Number(anoLetivoSelecionado)
+    )
+
+    if (tipoSelecionado === 'nova') {
+      return !jaMatriculadoNoAno
+    }
+    
+    if (tipoSelecionado === 'rematricula') {
+      return !jaMatriculadoNoAno
+    }
+
+    return true
+  })
 
   useEffect(() => {
     if (matriculaExistente && (tipoSelecionado as string) === 'rematricula' && !editId) {
@@ -162,7 +184,7 @@ export function MatriculaFormPageWeb() {
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
-                  {alunos?.map((a: any) => (
+                  {alunosFiltrados?.map((a: any) => (
                     <SelectItem key={a.id} value={a.id} className="font-medium">{a.nome_completo}</SelectItem>
                   ))}
                 </SelectContent>

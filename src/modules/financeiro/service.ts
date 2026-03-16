@@ -2,7 +2,46 @@ import { supabase } from '@/lib/supabase'
 import type { CobrancaInsert } from '@/lib/database.types'
 
 export const financeiroService = {
+  /**
+   * REPARO AUTOMÁTICO: Atualiza cobranças 'a_vencer' para 'atrasado' se a data passou.
+   * Isso garante que a listagem e os filtros reflitam a realidade sem depender de cron jobs.
+   */
+  async repararStatusAtrasados(tenantId: string) {
+    // 0. Busca configuração de carência
+    const { data: config } = await (supabase.from('config_financeira' as any) as any)
+      .select('dias_carencia')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
+    const carencia = config?.dias_carencia || 0
+    const hoje = new Date()
+    
+    // Data limite: vencimento < (hoje - carencia) => atrasado
+    const dataLimite = new Date(hoje)
+    dataLimite.setDate(hoje.getDate() - carencia)
+    const dataLimiteIso = dataLimite.toISOString().split('T')[0]
+    
+    // 1. Marcar como atrasado o que venceu ALÉM da carência
+    await supabase
+      .from('cobrancas')
+      .update({ status: 'atrasado' })
+      .eq('tenant_id', tenantId)
+      .eq('status', 'a_vencer')
+      .lt('data_vencimento', dataLimiteIso)
+
+    // 2. Voltar para 'a_vencer' se a data foi prorrogada OU está dentro da carência (segurança)
+    await supabase
+      .from('cobrancas')
+      .update({ status: 'a_vencer' })
+      .eq('tenant_id', tenantId)
+      .eq('status', 'atrasado')
+      .gte('data_vencimento', dataLimiteIso)
+  },
+
   async listar(tenantId: string, filtroStatus?: string) {
+    // Garante integridade antes de listar
+    await this.repararStatusAtrasados(tenantId)
+
     let query = supabase
       .from('cobrancas')
       .select('*, alunos(nome_completo)')
@@ -51,6 +90,8 @@ export const financeiroService = {
   },
 
   async contarAbertas(tenantId: string) {
+    await this.repararStatusAtrasados(tenantId)
+
     const { count, error } = await supabase
       .from('cobrancas')
       .select('*', { count: 'exact', head: true })
@@ -62,6 +103,8 @@ export const financeiroService = {
   },
 
   async listarPorAluno(alunoId: string, tenantId: string) {
+    await this.repararStatusAtrasados(tenantId)
+
     const { data, error } = await supabase
       .from('cobrancas')
       .select('*')
@@ -118,7 +161,8 @@ export const financeiroService = {
         descricao: `Taxa de Matrícula${sufixo}`,
         valor: Number(valor_matricula),
         data_vencimento: data_inicio, 
-        status: 'a_vencer'
+        status: 'a_vencer',
+        tipo_cobranca: 'mensalidade'
       })
     }
 
@@ -137,14 +181,15 @@ export const financeiroService = {
       const diaInicio = dataInicioObj.getDate()
       const diasRestantes = ultimoDiaMes - diaInicio + 1
       
-      // 2.1 Buscar desconto do aluno
+      let valorMensalidadeComDesconto = Number(valor_mensalidade)
+      
+      // 2.1 Buscar desconto individual do aluno
       const { data: aluno } = await supabase
         .from('alunos')
         .select('desconto_valor, desconto_tipo, desconto_inicio, desconto_fim')
         .eq('id', aluno_id)
         .single()
 
-      let valorMensalidadeComDesconto = Number(valor_mensalidade)
       if (aluno?.desconto_valor) {
         const hoje = new Date().toISOString().split('T')[0]
         const inicioValido = !aluno.desconto_inicio || aluno.desconto_inicio <= hoje
@@ -155,6 +200,34 @@ export const financeiroService = {
             valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (aluno.desconto_valor / 100))
           } else {
             valorMensalidadeComDesconto = Math.max(0, valorMensalidadeComDesconto - aluno.desconto_valor)
+          }
+        }
+      }
+
+      // 2.2 Buscar desconto de irmãos (Regra de Negócio)
+      const { data: configFin } = await (supabase.from('config_financeira' as any) as any)
+        .select('desconto_irmaos')
+        .eq('tenant_id', tenant_id)
+        .maybeSingle()
+
+      if (configFin?.desconto_irmaos > 0) {
+        // Busca responsáveis deste aluno
+        const { data: meusResponsaveis } = await (supabase.from('aluno_responsavel' as any) as any)
+          .select('responsavel_id')
+          .eq('aluno_id', aluno_id)
+        
+        if (meusResponsaveis && meusResponsaveis.length > 0) {
+          const respIds = meusResponsaveis.map((r: any) => r.responsavel_id)
+          // Verifica se algum desses responsáveis tem outro aluno vinculado (irmão)
+          const { data: irmaos } = await (supabase.from('aluno_responsavel' as any) as any)
+            .select('aluno_id')
+            .in('responsavel_id', respIds)
+            .neq('aluno_id', aluno_id)
+            .limit(1)
+
+          if (irmaos && irmaos.length > 0) {
+            // Aplicar desconto de irmão configurado na escola (cumulativo com individual)
+            valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (configFin.desconto_irmaos / 100))
           }
         }
       }
@@ -178,7 +251,8 @@ export const financeiroService = {
           descricao: `1ª Mensalidade Proporcional (${diasRestantes} dias)${sufixo}`,
           valor: valorFormatado,
           data_vencimento: dataVencimento.toISOString().split('T')[0],
-          status: 'a_vencer'
+          status: 'a_vencer',
+          tipo_cobranca: 'mensalidade'
         })
       }
     }
@@ -213,6 +287,7 @@ export const financeiroService = {
       .select('*')
       .eq('aluno_id', matricula.aluno_id)
       .eq('tenant_id', matricula.tenant_id)
+      .eq('tipo_cobranca', 'mensalidade') // Sincroniza apenas o que é mensalidade/matrícula base
       .in('status', ['a_vencer', 'atrasado'])
 
     if (error || !cobrancas) return

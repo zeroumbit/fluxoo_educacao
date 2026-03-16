@@ -77,6 +77,7 @@ export default function PortalCobrancasPage() {
 
   const [copiado, setCopiado] = useState(false)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
+  const [checkoutMulti, setCheckoutMulti] = useState(false) // Modo carrinho unificado
 
   const handleCopiarChave = () => {
     vibrate(40)
@@ -128,17 +129,31 @@ export default function PortalCobrancasPage() {
   }
 
   const statusBadge = (status: string, vencimento: string) => {
-    const isAtrasado = status === 'a_vencer' && new Date(vencimento) < new Date(new Date().setHours(0,0,0,0))
+    const carencia = configPix?.dias_carencia || 0
+    const dataVenc = new Date(vencimento + 'T12:00:00')
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    // Status atrasado só aparece se passar da carência
+    const limiteCarencia = new Date(dataVenc)
+    limiteCarencia.setDate(dataVenc.getDate() + carencia)
+    
+    const isAtrasado = status === 'a_vencer' && hoje > limiteCarencia
+    const isVencidoMasNaCarencia = status === 'a_vencer' && hoje > dataVenc && hoje <= limiteCarencia
+    
     const displayStatus = isAtrasado ? 'atrasado' : status
-
+    const labels: Record<string, string> = {
+      a_vencer: isVencidoMasNaCarencia ? 'Vencido' : 'Pendente', 
+      pago: 'Pago', 
+      atrasado: 'Atrasado', 
+      cancelado: 'Cancelada',
+    }
+    
     const styles: Record<string, string> = {
-      a_vencer: 'bg-amber-100 text-amber-700',
+      a_vencer: isVencidoMasNaCarencia ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700',
       pago: 'bg-teal-100 text-teal-700 font-bold',
       atrasado: 'bg-red-100 text-red-700 font-bold',
       cancelado: 'bg-slate-100 text-slate-500',
-    }
-    const labels: Record<string, string> = {
-      a_vencer: 'Pendente', pago: 'Pago', atrasado: 'Atrasado', cancelado: 'Cancelada',
     }
 
     return (
@@ -218,10 +233,46 @@ export default function PortalCobrancasPage() {
                   <Badge className="bg-slate-900 text-white text-[8px] font-semibold tracking-wider uppercase rounded-full px-3 h-5 border-0">{pendentes.length}</Badge>
                </div>
 
+               {/* Carrinho Unificado */}
+               {pendentes.length > 1 && (
+                 <motion.div 
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-100 flex items-center justify-between"
+                 >
+                   <div className="flex items-center gap-3">
+                     <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center font-bold">
+                       {pendentes.length}
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">Carrinho Unificado</p>
+                       <p className="text-xl font-black">
+                         {formatCurrency(pendentes.reduce((acc, c) => acc + (c.valor || 0), 0))}
+                       </p>
+                     </div>
+                   </div>
+                   <Button 
+                     onClick={() => { vibrate(40); setCheckoutMulti(true); }}
+                     className="bg-white text-indigo-600 hover:bg-slate-50 font-bold uppercase text-[10px] tracking-wider rounded-xl h-10 px-4 active:scale-95"
+                   >
+                     Pagar Tudo
+                   </Button>
+                 </motion.div>
+               )}
+
                <div className="space-y-3">
                   <AnimatePresence mode="popLayout">
                     {pendentes.map((cobranca, idx) => {
-                      const isAtrasado = new Date(cobranca.data_vencimento) < new Date(new Date().setHours(0,0,0,0))
+                      const carencia = configPix?.dias_carencia || 0
+                      const dataVenc = new Date(cobranca.data_vencimento + 'T12:00:00')
+                      const hoje = new Date()
+                      hoje.setHours(0,0,0,0)
+                      
+                      const limiteCarencia = new Date(dataVenc)
+                      limiteCarencia.setDate(dataVenc.getDate() + carencia)
+                      
+                      const isAtrasado = hoje > limiteCarencia
+                      
                       return (
                         <motion.div 
                           layout
@@ -258,6 +309,12 @@ export default function PortalCobrancasPage() {
                                      {formatDate(cobranca.data_vencimento)}
                                   </span>
                                   {statusBadge(cobranca.status, cobranca.data_vencimento)}
+                                  <Badge className={cn(
+                                    "px-1.5 py-0 text-[7px] font-bold uppercase tracking-widest border-0",
+                                    cobranca.tipo_cobranca === 'mensalidade' ? "bg-blue-50 text-blue-600" : "bg-slate-50 text-slate-400"
+                                  )}>
+                                    {cobranca.tipo_cobranca === 'mensalidade' ? 'Mensalidade' : 'Avulso'}
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
@@ -283,20 +340,20 @@ export default function PortalCobrancasPage() {
              </div>
              <div className="space-y-2">
                 {pagos.map(cobranca => (
-                  <div key={cobranca.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between opacity-80">
-                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-500 flex items-center justify-center shrink-0">
-                           <CheckCircle2 size={16} />
-                        </div>
-                        <div className="min-w-0">
-                           <h4 className="text-xs font-bold text-slate-700 truncate">{cobranca.descricao}</h4>
-                           <p className="text-[10px] text-slate-300">{format(new Date(cobranca.data_vencimento + 'T12:00:00'), 'MMM yyyy', { locale: ptBR })}</p>
-                        </div>
-                     </div>
-                     <p className="text-sm font-bold text-slate-300 shrink-0">
-                        {formatCurrency(cobranca.valor)}
-                     </p>
-                  </div>
+                   <div key={cobranca.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between opacity-80">
+                      <div className="flex items-center gap-3 min-w-0">
+                         <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-500 flex items-center justify-center shrink-0">
+                            <CheckCircle2 size={16} />
+                         </div>
+                         <div className="min-w-0">
+                            <h4 className="text-xs font-bold text-slate-700 truncate">{cobranca.descricao}</h4>
+                            <p className="text-[10px] text-slate-300">{format(new Date(cobranca.data_vencimento + 'T12:00:00'), 'MMM yyyy', { locale: ptBR })}</p>
+                         </div>
+                      </div>
+                      <p className="text-sm font-bold text-slate-300 shrink-0">
+                         {formatCurrency(cobranca.valor)}
+                      </p>
+                   </div>
                 ))}
                 {(!pagos || pagos.length === 0) && !isLoading && (
                   <div className="py-10 text-center space-y-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
@@ -340,14 +397,24 @@ export default function PortalCobrancasPage() {
                   <AccordionContent className="pt-3 space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                        <div className="bg-red-50 p-3 rounded-xl border border-red-100">
-                          <span className="block text-[8px] font-semibold text-red-400 uppercase tracking-wider mb-1">Atraso</span>
-                          <span className="text-lg font-bold text-red-600">2%</span>
+                          <span className="block text-[8px] font-semibold text-red-400 uppercase tracking-wider mb-1">Atraso (Multa)</span>
+                          <span className="text-lg font-bold text-red-600">
+                            {configPix?.multa_atraso_percentual || 2}%
+                          </span>
                        </div>
                        <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                          <span className="block text-[8px] font-semibold text-amber-400 uppercase tracking-wider mb-1">Mora</span>
-                          <span className="text-lg font-bold text-amber-600">1%</span>
+                          <span className="block text-[8px] font-semibold text-amber-400 uppercase tracking-wider mb-1">Mora (Juros)</span>
+                          <span className="text-lg font-bold text-amber-600">
+                            {configPix?.juros_mora_mensal || 1}%
+                            <small className="text-[8px] ml-1">/mês</small>
+                          </span>
                        </div>
                     </div>
+                    {(configPix?.dias_carencia || 0) > 0 && (
+                      <p className="text-[10px] text-slate-400 mt-3 italic">
+                        * Isenção de encargos se pago em até {configPix?.dias_carencia} dias após o vencimento.
+                      </p>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
              </Accordion>
@@ -380,12 +447,14 @@ export default function PortalCobrancasPage() {
 
       {/* 5. Responsive Checkout Modal */}
       {isMobile ? (
-        <Sheet open={!!cobrancaAtiva} onOpenChange={(open) => { if(!open) setCobrancaAtiva(null); vibrate(10); }}>
+        <Sheet open={!!cobrancaAtiva || checkoutMulti} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); } vibrate(10); }}>
           <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh] focus:outline-none">
             <div className="px-5 pt-6 pb-8 space-y-5">
-              <CheckoutHeader onClose={() => setCobrancaAtiva(null)} isMobile={true} />
+              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); }} isMobile={true} />
               <CheckoutBody 
                 cobrancaAtiva={cobrancaAtiva} 
+                checkoutMulti={checkoutMulti}
+                pendentes={pendentes}
                 configPix={configPix} 
                 copiado={copiado} 
                 handleCopiarChave={handleCopiarChave}
@@ -397,12 +466,14 @@ export default function PortalCobrancasPage() {
           </SheetContent>
         </Sheet>
       ) : (
-        <Dialog open={!!cobrancaAtiva} onOpenChange={(open) => { if(!open) setCobrancaAtiva(null); vibrate(10); }}>
+        <Dialog open={!!cobrancaAtiva || checkoutMulti} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); } vibrate(10); }}>
           <DialogContent className="max-w-md border-0 p-0 overflow-hidden bg-white shadow-2xl rounded-2xl focus:outline-none">
             <div className="px-6 py-8 space-y-6">
-              <CheckoutHeader onClose={() => setCobrancaAtiva(null)} isMobile={false} />
+              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); }} isMobile={false} />
               <CheckoutBody 
                 cobrancaAtiva={cobrancaAtiva} 
+                checkoutMulti={checkoutMulti}
+                pendentes={pendentes}
                 configPix={configPix} 
                 copiado={copiado} 
                 handleCopiarChave={handleCopiarChave}
@@ -437,19 +508,62 @@ function CheckoutHeader({ onClose, isMobile }: { onClose: () => void, isMobile: 
   )
 }
 
-function CheckoutBody({ cobrancaAtiva, configPix, copiado, handleCopiarChave, configRecados, alunoNome, onEnviarComprovante }: any) {
+function CheckoutBody({ 
+  cobrancaAtiva, 
+  checkoutMulti, 
+  pendentes, 
+  configPix, 
+  copiado, 
+  handleCopiarChave, 
+  configRecados, 
+  alunoNome, 
+  onEnviarComprovante 
+}: any) {
+  
+  const calcularValorCobranca = (c: any) => {
+    if (!c) return 0
+    const v = Number(c.valor)
+    const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+    const hoje = new Date()
+    hoje.setHours(0,0,0,0)
+    
+    const carencia = configPix?.dias_carencia || 0
+    const limiteCarencia = new Date(dataVenc)
+    limiteCarencia.setDate(dataVenc.getDate() + carencia)
+    
+    if (hoje <= limiteCarencia) return v
+    
+    const multaPerc = (configPix?.multa_atraso_percentual || 0) / 100
+    const multaFixa = Number(configPix?.multa_atraso_valor_fixo || 0)
+    const valorMulta = (v * multaPerc) + multaFixa
+    
+    const jurosMensalPerc = (configPix?.juros_mora_mensal || 0) / 100
+    const diasAtraso = Math.floor((hoje.getTime() - dataVenc.getTime()) / (1000 * 60 * 60 * 24))
+    const valorJuros = v * (jurosMensalPerc / 30) * diasAtraso
+    
+    return v + valorMulta + valorJuros
+  }
+
+  const valorTotalCalculado = checkoutMulti 
+    ? pendentes.reduce((acc: number, c: any) => acc + calcularValorCobranca(c), 0)
+    : calcularValorCobranca(cobrancaAtiva)
+
   const handleEnviarComprovanteLocal = () => {
-    onEnviarComprovante(cobrancaAtiva?.valor || 0, cobrancaAtiva?.descricao || '')
+    const valor = valorTotalCalculado
+    const descricao = checkoutMulti ? `${pendentes.length} cobranças (Carrinho Unificado)` : cobrancaAtiva?.descricao
+    onEnviarComprovante(valor, descricao)
   }
 
   return (
     <div className="flex flex-col gap-5">
        <div className="text-center space-y-3">
           <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mx-auto">
-             <QrCode size={24} />
+             {checkoutMulti ? <CreditCard size={24} /> : <QrCode size={24} />}
           </div>
           <div className="space-y-0.5">
-            <h3 className="text-lg font-bold text-slate-800">Checkout PIX</h3>
+            <h3 className="text-lg font-bold text-slate-800">
+              {checkoutMulti ? 'Pagamento Unificado' : 'Checkout PIX'}
+            </h3>
             <p className="text-[10px] text-slate-400">{configPix?.favorecido || 'Portal Fluxoo EDU'}</p>
           </div>
        </div>
@@ -458,11 +572,47 @@ function CheckoutBody({ cobrancaAtiva, configPix, copiado, handleCopiarChave, co
          <div className="absolute top-0 right-0 opacity-5 pointer-events-none">
              <DollarSign size={100} />
          </div>
-         <p className="text-[10px] font-medium text-teal-400 uppercase tracking-wider mb-2">Total</p>
+         <p className="text-[10px] font-medium text-teal-400 uppercase tracking-wider mb-2">Total a Pagar</p>
          <h2 className="text-3xl font-bold leading-none">
-           {formatCurrency(cobrancaAtiva?.valor || 0)}
+           {formatCurrency(valorTotalCalculado)}
          </h2>
-         <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 border-t border-white/5 pt-3">{cobrancaAtiva?.descricao}</p>
+         
+         {checkoutMulti ? (
+           <div className="mt-3 space-y-1">
+             <p className="text-[9px] text-teal-400/80 font-bold uppercase tracking-widest">Compilado de {pendentes.length} títulos</p>
+             {pendentes.some((c: any) => {
+               const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+               const hoje = new Date()
+               hoje.setHours(0,0,0,0)
+               return hoje > dataVenc
+             }) && (
+               <p className="text-[8px] text-rose-400 font-bold animate-pulse uppercase tracking-wider">Contém títulos vencidos com encargos</p>
+             )}
+           </div>
+         ) : (
+           (() => {
+             if (!cobrancaAtiva) return null
+             const dataVenc = new Date(cobrancaAtiva.data_vencimento + 'T12:00:00')
+             const hoje = new Date()
+             hoje.setHours(0,0,0,0)
+             
+             if (hoje > dataVenc) {
+               const carencia = configPix?.dias_carencia || 0
+               const limiteCarencia = new Date(dataVenc)
+               limiteCarencia.setDate(dataVenc.getDate() + carencia)
+               
+               if (hoje > limiteCarencia) {
+                  return <p className="text-[9px] text-red-400 mt-2 font-bold animate-pulse">VALOR ATUALIZADO COM MULTA E JUROS</p>
+               } else {
+                  return <p className="text-[9px] text-orange-400 mt-2 font-bold">VENCIDO (DENTRO DA CARÊNCIA)</p>
+               }
+             }
+             return null
+           })()
+         )}
+         <p className="text-[10px] text-white/30 uppercase tracking-wider mt-3 border-t border-white/5 pt-3">
+           {checkoutMulti ? 'Seleção de Diversas Pendências' : cobrancaAtiva?.descricao}
+         </p>
        </div>
 
        {configPix?.qr_code_url ? (

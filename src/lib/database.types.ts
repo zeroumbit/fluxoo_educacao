@@ -484,11 +484,12 @@ export type Cobranca = {
   valor: number
   data_vencimento: string
   status: string
+  tipo_cobranca: 'mensalidade' | 'avulso' // Novo campo: tipo de cobrança
   created_at: string
   updated_at: string
 }
-export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at'> & {
-  id?: string; created_at?: string; updated_at?: string
+export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca'> & {
+  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; created_at?: string; updated_at?: string
 }
 export type CobrancaUpdate = Partial<CobrancaInsert>
 

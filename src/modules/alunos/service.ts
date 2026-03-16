@@ -261,12 +261,90 @@ export const alunoService = {
   },
 
   async excluir(id: string) {
+    // 0. Verificar pendências financeiras (REGRA: não pode excluir com pendências)
+    const { data: pendencias, error: pendenciaError } = await supabase
+      .from('cobrancas')
+      .select('id')
+      .eq('aluno_id', id)
+      .in('status', ['a_vencer', 'atrasado'])
+    
+    if (pendenciaError) throw pendenciaError
+    if (pendencias && pendencias.length > 0) {
+      throw new Error(`Não é possível excluir o aluno pois existem ${pendencias.length} cobranças pendentes ou em atraso. Resolva o financeiro primeiro.`)
+    }
+
+    // 1. Coletar IDs dos responsáveis vinculados antes de deletar
+    const { data: vinculosPre } = await supabase
+      .from('aluno_responsavel')
+      .select('responsavel_id')
+      .eq('aluno_id', id)
+    
+    const responsaveisIds = vinculosPre?.map(v => v.responsavel_id).filter(Boolean) as string[] || []
+
+    // 2. Limpeza de registros dependentes (Cascata manual)
+    // Vínculos familiares
+    await supabase.from('aluno_responsavel').delete().eq('aluno_id', id)
+    
+    // Academico
+    await (supabase.from('matriculas' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('boletins' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('selos' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('frequencias' as any) as any).delete().eq('aluno_id', id)
+    
+    // Autorizacoes
+    await (supabase.from('autorizacoes_respostas' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('autorizacoes_auditoria' as any) as any).delete().eq('aluno_id', id)
+
+    // Portal / Outros
+    await (supabase.from('fila_virtual' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('document_solicitations' as any) as any).delete().eq('aluno_id', id)
+    await (supabase.from('documentos_emitidos' as any) as any).delete().eq('aluno_id', id)
+
+    // 3. Tentar excluir o aluno
     const { error } = await supabase
       .from('alunos')
       .delete()
       .eq('id', id)
 
-    if (error) throw error
+    if (error) {
+      // Mapear erros comuns do Postgres para mensagens amigáveis em PT-BR
+      if (error.code === '23503') {
+        if (error.message.includes('matriculas')) {
+          throw new Error('O aluno ainda possui matrículas vinculadas que não puderam ser removidas automaticamente.')
+        }
+        if (error.message.includes('cobrancas')) {
+          throw new Error('Não é possível excluir o aluno pois ele possui histórico de cobranças (pagas ou canceladas). Entre em contato com o suporte para exclusão total de dados históricos.')
+        }
+        throw new Error(`Não é possível excluir o aluno devido a dependências em: ${error.message.split('violation: ')[1] || 'outras tabelas'}`)
+      }
+      throw error
+    }
+
+    // 4. Pós-exclusão: Tratar responsáveis órfãos (OPÇÃO A)
+    if (responsaveisIds.length > 0) {
+      for (const respId of responsaveisIds) {
+        // Verificar se este responsável ainda tem algum aluno (ativo ou inativo)
+        const { count } = await supabase
+          .from('aluno_responsavel')
+          .select('*', { count: 'exact', head: true })
+          .eq('responsavel_id', respId)
+
+        if (count === 0) {
+          // Órfão total: Invalida acesso ao portal mas mantém registro nominal/CPF para financeiro
+          await supabase
+            .from('responsaveis')
+            .update({
+              user_id: null,
+              senha_hash: '',
+              status: 'inativo',
+              primeiro_acesso: false
+            })
+            .eq('id', respId)
+          
+          console.log(`👤 Responsável ${respId} ficou órfão e teve acesso ao portal revogado.`)
+        }
+      }
+    }
   },
 
   async listarPorFilial(filialId: string, tenantId: string) {
@@ -331,10 +409,76 @@ export const alunoService = {
     return authData.user
   },
 
-  async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean) {
+  async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean, alunoId?: string) {
+    if (isFinanceiro && alunoId) {
+      // REGRA: Somente UM pode ser o pagador. Remove flag de todos os outros deste aluno.
+      await supabase
+        .from('aluno_responsavel')
+        .update({ is_financeiro: false })
+        .eq('aluno_id', alunoId)
+    }
+
     const { error } = await supabase
       .from('aluno_responsavel')
       .update({ is_financeiro: isFinanceiro })
+      .eq('id', vinculoId)
+
+    if (error) throw error
+  },
+
+  async atualizarResponsavel(id: string, responsavel: Partial<ResponsavelInsert>) {
+    // Se tiver CPF, garante que está limpo
+    const payload = { ...responsavel }
+    if (payload.cpf) payload.cpf = payload.cpf.replace(/\D/g, '')
+
+    const { data, error } = await supabase
+      .from('responsaveis')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async vincularExistente(alunoId: string, responsavelId: string, grauParentesco: string) {
+    const { error } = await supabase
+      .from('aluno_responsavel')
+      .insert({
+        aluno_id: alunoId,
+        responsavel_id: responsavelId,
+        grau_parentesco: grauParentesco,
+        is_financeiro: false,
+        is_academico: true,
+        status: 'ativo'
+      })
+    if (error) throw error
+  },
+
+  async criarResponsavelAndVincular(alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string) {
+    // 1. Criar responsável
+    const { data: novoResp, error: respError } = await supabase
+      .from('responsaveis')
+      .insert({
+        ...responsavel,
+        cpf: responsavel.cpf?.replace(/\D/g, '')
+      } as any)
+      .select()
+      .single()
+
+    if (respError) throw respError
+
+    // 2. Vincular
+    await this.vincularExistente(alunoId, novoResp.id, grauParentesco)
+    
+    return novoResp
+  },
+
+  async desvincularResponsavel(vinculoId: string) {
+    const { error } = await supabase
+      .from('aluno_responsavel')
+      .delete()
       .eq('id', vinculoId)
 
     if (error) throw error

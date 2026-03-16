@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAlunos, useExcluirAluno } from '../hooks'
+import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX, Shield, Percent, Users } from 'lucide-react'
+import { Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, AlertCircle, FileX, Shield, Percent, Users, UserMinus } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -34,11 +34,15 @@ export function AlunosListPageWeb() {
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
   const excluirAluno = useExcluirAluno()
+  const atualizarAluno = useAtualizarAluno()
 
   const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<any | null>(null)
   const [alunoDesconto, setAlunoDesconto] = useState<any | null>(null)
+  const [alunoParaDesativar, setAlunoParaDesativar] = useState<any | null>(null)
+  const [showDesativarDialog, setShowDesativarDialog] = useState(false)
+  const [confirmacaoDesativar, setConfirmacaoDesativar] = useState(false)
 
   // Cria um Map com IDs de alunos com matrícula ativa para consulta rápida (inclui ano_letivo)
   const alunosComMatriculaMap = useMemo(() => {
@@ -108,6 +112,29 @@ export function AlunosListPageWeb() {
     setShowDeleteDialog(true)
   }
 
+  const handleDesativar = (aluno: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setAlunoParaDesativar(aluno)
+    setShowDesativarDialog(true)
+    setConfirmacaoDesativar(false)
+  }
+
+  const confirmarDesativacao = async () => {
+    if (!alunoParaDesativar || !confirmacaoDesativar) return
+    try {
+      await atualizarAluno.mutateAsync({ 
+        id: alunoParaDesativar.id, 
+        aluno: { status: 'inativo' } 
+      })
+      toast.success('Aluno desativado com sucesso!')
+      setShowDesativarDialog(false)
+      setAlunoParaDesativar(null)
+      setConfirmacaoDesativar(false)
+    } catch (err: any) {
+      toast.error('Erro ao desativar aluno: ' + (err.message || 'Erro desconhecido'))
+    }
+  }
+
   const confirmarExclusao = async () => {
     if (!alunoParaExcluir) return
     try {
@@ -116,7 +143,11 @@ export function AlunosListPageWeb() {
       setShowDeleteDialog(false)
       setAlunoParaExcluir(null)
     } catch (err: any) {
-      toast.error('Erro ao excluir aluno: ' + err.message)
+      // Prioriza a mensagem amigável que vem do service
+      const mensagemErro = err.message || 'Erro inesperado ao excluir aluno.'
+      toast.error('Não foi possível excluir', {
+        description: mensagemErro.includes('violation') ? 'Existem vínculos que impedem a exclusão.' : mensagemErro
+      })
     }
   }
 
@@ -225,7 +256,7 @@ export function AlunosListPageWeb() {
                 <TableHead className="font-bold text-slate-800">Responsável</TableHead>
                 <TableHead className="font-bold text-slate-800">Matrícula</TableHead>
                 <TableHead className="font-bold text-slate-800 text-center">Status</TableHead>
-                <TableHead className="text-right py-4 font-bold text-slate-800 pr-8">Ações</TableHead>
+                <TableHead className="py-4 font-bold text-slate-800 text-left">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -288,8 +319,8 @@ export function AlunosListPageWeb() {
                         {aluno.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right pr-8">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-left">
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -317,6 +348,17 @@ export function AlunosListPageWeb() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {aluno.status === 'ativo' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                            onClick={(e) => handleDesativar(aluno, e)}
+                            title="Desativar Aluno"
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -371,13 +413,12 @@ export function AlunosListPageWeb() {
           </DialogHeader>
           <div className="px-6 py-4">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-slate-600 font-bold mb-3">Para excluir este aluno, será necessário:</p>
-              <ol className="text-xs text-slate-600 space-y-2 list-decimal list-inside">
-                <li>Excluir cobranças do aluno (se houver)</li>
-                <li>Excluir matrículas (se houver)</li>
-                <li>Remover vínculos com responsáveis (se houver)</li>
-                <li>Aí sim excluir o aluno</li>
-              </ol>
+              <p className="text-sm text-slate-600 font-bold mb-3">Antes de excluir, considere:</p>
+              <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside">
+                <li>O sistema removerá automaticamente os vínculos com responsáveis</li>
+                <li>Matrículas e cobranças ativas ainda impedem a exclusão por segurança</li>
+                <li>Todo o histórico financeiro e acadêmico será perdido</li>
+              </ul>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed">
               Esta ação é definitiva e apagará todo o histórico acadêmico e financeiro do aluno.
@@ -398,6 +439,110 @@ export function AlunosListPageWeb() {
             >
                Excluir Definitivamente
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Desativação com Dupla Confirmação */}
+      <Dialog open={showDesativarDialog} onOpenChange={(open) => {
+        setShowDesativarDialog(open)
+        if (!open) {
+          setAlunoParaDesativar(null)
+          setConfirmacaoDesativar(false)
+        }
+      }}>
+        <DialogContent className="rounded-xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
+          <DialogHeader className="p-6 pb-2">
+            <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
+               <UserMinus className="h-6 w-6 text-amber-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">
+              {confirmacaoDesativar ? 'Segunda Confirmação' : 'Confirmar Desativação'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm">
+              {confirmacaoDesativar 
+                ? `Tem certeza que deseja DESATIVAR ${alunoParaDesativar?.nome_completo}?`
+                : `Você está prestes a desativar o aluno ${alunoParaDesativar?.nome_completo}.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!confirmacaoDesativar ? (
+            <div className="px-6 py-4 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-slate-700 font-bold mb-2 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  Atenção - Ação Importante
+                </p>
+                <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                  <li>O aluno não poderá mais acessar o portal da família</li>
+                  <li>A matrícula será considerada inativa</li>
+                  <li>O histórico será mantido para consulta</li>
+                  <li>Você poderá reativar o aluno a qualquer momento</li>
+                </ul>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <strong className="text-slate-900">Recomendação:</strong> Esta é a ação recomendada para alunos que deixaram a escola. 
+                  Diferente da exclusão, a desativação preserva todo o histórico acadêmico e financeiro.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="px-6 py-4">
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                <p className="text-sm text-rose-800 font-bold flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-rose-600" />
+                  Última confirmação necessária
+                </p>
+                <p className="text-xs text-rose-700 mt-2">
+                  Esta ação irá DESATIVAR o aluno imediatamente. Confirme apenas se tiver certeza.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="p-6 bg-slate-50 mt-4 flex gap-3">
+            {!confirmacaoDesativar ? (
+              <>
+                <Button
+                  variant="ghost"
+                  className="flex-1 rounded-xl h-11 font-bold text-slate-600"
+                  onClick={() => setShowDesativarDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-700 h-11 font-bold shadow-md text-white"
+                  onClick={() => setConfirmacaoDesativar(true)}
+                >
+                  Continuar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className="flex-1 rounded-xl h-11 font-bold text-slate-600"
+                  onClick={() => {
+                    setConfirmacaoDesativar(false)
+                  }}
+                >
+                  Voltar
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 h-11 font-bold shadow-md text-white"
+                  onClick={confirmarDesativacao}
+                  disabled={atualizarAluno.isPending}
+                >
+                  {atualizarAluno.isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    'Confirmar Desativação'
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

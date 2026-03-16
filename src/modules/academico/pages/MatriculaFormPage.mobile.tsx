@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { 
+  useMatriculas,
   useCriarMatricula, 
   useMatriculaAtivaDoAluno,
   useMatricula,
@@ -52,6 +53,7 @@ export function MatriculaFormPageMobile() {
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('id')
   const { authUser } = useAuth()
+  const { data: matriculas } = useMatriculas()
   const { data: alunos } = useAlunos()
   const { data: turmas } = useTurmas()
   const { data: mData, isLoading: isLoadingM } = useMatricula(editId)
@@ -91,7 +93,29 @@ export function MatriculaFormPageMobile() {
   const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
+  const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
+
+  // Filtragem inteligente de alunos
+  const alunosFiltrados = alunos?.filter((aluno: any) => {
+    if (editId) return true
+    
+    const jaMatriculadoNoAno = matriculas?.some((m: any) => 
+      m.aluno_id === aluno.id && 
+      m.status === 'ativa' && 
+      Number(m.ano_letivo) === Number(anoLetivoSelecionado)
+    )
+
+    if (tipoSelecionado === 'nova') {
+      return !jaMatriculadoNoAno
+    }
+    
+    if (tipoSelecionado === 'rematricula') {
+      return !jaMatriculadoNoAno
+    }
+
+    return true
+  })
 
   useEffect(() => {
     if (matriculaExistente && (tipoSelecionado as string) === 'rematricula' && !editId) {
@@ -223,7 +247,7 @@ export function MatriculaFormPageMobile() {
                 <SelectValue placeholder="Selecione o aluno" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl">
-                {alunos?.map((a: any) => (
+                {alunosFiltrados?.map((a: any) => (
                   <SelectItem key={a.id} value={a.id} className="font-bold py-3">{a.nome_completo}</SelectItem>
                 ))}
               </SelectContent>

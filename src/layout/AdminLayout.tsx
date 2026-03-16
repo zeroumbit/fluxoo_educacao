@@ -150,7 +150,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         {navigationGroups.map((group) => {
           const isGroupBlocked = isBlocked && group.label !== 'Principal'
-          
+
           return (
             <div key={group.label} className={cn(isGroupBlocked && "opacity-50 pointer-events-none")}>
               <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 flex items-center justify-between">
@@ -212,8 +212,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={handleSignOut}
           className="w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
         >

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useDashboard } from '../dashboard.hooks'
@@ -12,11 +13,62 @@ import {
   TrendingUp,
   ArrowUpRight,
   BookOpen,
+  X,
+  GraduationCap,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import type { AvisoRecente, RadarAluno } from '../dashboard.service'
+import { useState, useEffect } from 'react'
+
+// ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Alunos Sem Matrícula
+// ---------------------------------------------------------------------------
+interface AlunosSemMatriculaNotificationProps {
+  count: number
+  onDismiss: () => void
+}
+
+function AlunosSemMatriculaNotification({ count, onDismiss }: AlunosSemMatriculaNotificationProps) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-amber-600 hover:text-amber-700"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+            <GraduationCap className="h-6 w-6 text-amber-600" />
+          </div>
+          
+          <div className="flex-1">
+            <h3 className="font-black text-amber-900 text-lg tracking-tight mb-1">
+              Alunos sem Matrícula
+            </h3>
+            <p className="text-sm font-medium text-amber-700 mb-4">
+              Você tem <strong className="font-black">{count} {count === 1 ? 'aluno' : 'alunos'}</strong> cadastrado{count === 1 ? '' : 's'} sem matrícula ativa. 
+              Regularize a situação para garantir o acesso completo ao sistema.
+            </p>
+            
+            <Button
+              onClick={() => navigate('/matriculas')}
+              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-amber-200"
+            >
+              Realizar Matrícula Agora
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Card de Métrica
@@ -127,12 +179,14 @@ export function DashboardPageWeb() {
   const { authUser } = useAuth()
   const userRole = authUser?.role
 
-  const { 
-    data: dashboardData, 
-    isLoading, 
+  const {
+    data: dashboardData,
+    isLoading,
     error,
-    refetch: refreshDashboard 
+    refetch: refreshDashboard
   } = useDashboard()
+
+  const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
 
   const onboardingStatus = {
     needsOnboarding: false,
@@ -251,6 +305,14 @@ export function DashboardPageWeb() {
            </div>
         </div>
       </div>
+
+      {/* Notificação de Alunos Sem Matrícula */}
+      {dashboardData?.alunosSemMatricula && dashboardData.alunosSemMatricula > 0 && showAlunosSemMatriculaNotification && (
+        <AlunosSemMatriculaNotification
+          count={dashboardData.alunosSemMatricula}
+          onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
+        />
+      )}
 
       {/* Grid de Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('escolas')
             .select('id, razao_social')
             .eq('gestor_user_id', user.id)
+            .limit(1)
             .maybeSingle() as any,
           5000
         ) as any
@@ -101,7 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 3. Funcionário
       const funcRes = await withTimeout(
-        supabase.from('funcionarios').select('tenant_id, nome_completo, areas_acesso, id').eq('user_id', user.id).maybeSingle() as any,
+        supabase.from('funcionarios')
+          .select('tenant_id, nome_completo, areas_acesso, id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle() as any,
         5000
       ) as any
 
@@ -119,7 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 4. Responsável
       const respRes = await withTimeout(
-        supabase.from('responsaveis').select('nome').eq('user_id', user.id).maybeSingle() as any,
+        supabase.from('responsaveis')
+          .select('nome')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle() as any,
         5000
       ) as any
 

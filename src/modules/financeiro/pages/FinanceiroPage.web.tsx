@@ -70,7 +70,8 @@ export function FinanceiroPageWeb() {
       await criarCobranca.mutateAsync({
         ...data,
         tenant_id: authUser.tenantId,
-        status: 'a_vencer'
+        status: 'a_vencer',
+        tipo_cobranca: 'avulso'
       })
       toast.success('Cobrança criada com sucesso!')
       setDialogOpen(false)
@@ -396,7 +397,17 @@ export function FinanceiroPageWeb() {
                   <p className="font-bold text-slate-900">{c.alunos?.nome_completo}</p>
                   <p className="text-xs text-slate-400 font-medium">{c.alunos?.email_acesso}</p>
                 </TableCell>
-                <TableCell className="px-6 py-4 text-slate-600 font-medium">{c.descricao}</TableCell>
+                <TableCell className="px-6 py-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-slate-600 font-medium">{c.descricao}</span>
+                    <Badge variant="outline" className={cn(
+                      "w-fit px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider border-0",
+                      c.tipo_cobranca === 'mensalidade' ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
+                    )}>
+                      {c.tipo_cobranca === 'mensalidade' ? 'Mensalidade' : 'Avulso'}
+                    </Badge>
+                  </div>
+                </TableCell>
                 <TableCell className="px-6 py-4">
                   <div className="flex items-center gap-2 text-slate-500 font-medium">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />

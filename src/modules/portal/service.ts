@@ -158,6 +158,14 @@ export const portalService = {
   // DASHBOARD
   // ==========================================
   async buscarDashboardAluno(alunoId: string, tenantId: string, turmaId?: string | null) {
+    // Garante que o status de atraso esteja correto antes de calcular as estatísticas
+    try {
+      const { financeiroService } = await import('@/modules/financeiro/service')
+      await financeiroService.repararStatusAtrasados(tenantId)
+    } catch (e) {
+      console.warn('Falha ao reparar atrasos no dashboard:', e)
+    }
+
     const [frequenciaRes, cobrancasRes, avisosRes] = await Promise.all([
       // Frequência recente (últimos 30 dias)
       (supabase.from('frequencias' as any) as any)
@@ -285,6 +293,13 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
+    try {
+      const { financeiroService } = await import('@/modules/financeiro/service')
+      await financeiroService.repararStatusAtrasados(tenantId)
+    } catch (e) {
+      console.warn('Falha ao reparar atrasos na listagem do portal:', e)
+    }
+
     const { data, error } = await (supabase.from('cobrancas' as any) as any)
       .select('*')
       .eq('aluno_id', alunoId)
@@ -296,22 +311,29 @@ export const portalService = {
   },
 
   async buscarConfigPixEscola(tenantId: string) {
-    // Busca a config de PIX específica da escola (tenant)
+    // Busca a config de PIX e regras financeiras da escola
     const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .select('pix_habilitado, chave_pix, nome_favorecido, instrucoes_responsavel, pix_qr_code_url')
+      .select('*')
       .eq('tenant_id', tenantId)
       .maybeSingle()
-
-    if (error) throw error
     
-    // Converte para o formato esperado pelo componente se necessário
-    return data ? {
+    if (error) throw error
+    if (!data) return null
+    
+    return {
       pix_manual_ativo: data.pix_habilitado,
-      chave_pix: data.chave_pix,
-      favorecido: data.nome_favorecido,
-      instrucoes_extras: data.instrucoes_responsavel,
-      qr_code_url: data.pix_qr_code_url
-    } : null
+      chave_pix: data.chave_pix || data.pix_chave,
+      favorecido: data.nome_favorecido || data.pix_favorecido,
+      qr_code_url: data.pix_qr_code_url,
+      instrucoes_extras: data.instrucoes_responsavel || data.instrucoes_pagamento,
+      qr_code_auto: data.qr_code_auto,
+      dias_carencia: data.dias_carencia || 0,
+      // Regras de Multa e Juros dinâmicas
+      multa_atraso_percentual: data.multa_atraso_percentual || 2,
+      multa_atraso_valor_fixo: data.multa_atraso_valor_fixo || 0,
+      juros_mora_mensal: data.juros_mora_mensal || 1,
+      desconto_pontualidade: data.desconto_pontualidade || 0
+    }
   },
 
   async buscarConfigRecados(tenantId: string) {

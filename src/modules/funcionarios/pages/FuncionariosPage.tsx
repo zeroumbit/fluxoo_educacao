@@ -77,10 +77,6 @@ const PLATFORM_FUNCTIONS = [
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function formatarMoeda(valor: number): string {
-  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 function parsearMoeda(valor: string): number {
   if (!valor) return 0
   const limpo = valor.replace(/[^\d,.-]/g, '')

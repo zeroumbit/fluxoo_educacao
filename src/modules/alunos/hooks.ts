@@ -101,12 +101,62 @@ export function useAtivarAcessoPortal() {
 export function useAlternarFinanceiro() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ vinculoId, isFinanceiro }: { vinculoId: string; isFinanceiro: boolean }) =>
-      alunoService.alternarResponsavelFinanceiro(vinculoId, isFinanceiro),
+    mutationFn: ({ vinculoId, isFinanceiro, alunoId }: { vinculoId: string; isFinanceiro: boolean; alunoId?: string }) =>
+      alunoService.alternarResponsavelFinanceiro(vinculoId, isFinanceiro, alunoId),
     onSuccess: () => {
       queryClient.invalidateQueries()
-      toast.success('Responsabilidade atualizada!')
+      toast.success('Responsável financeiro atualizado!')
     },
+  })
+}
+
+export function useAtualizarResponsavel() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, responsavel }: { id: string; responsavel: Partial<ResponsavelInsert> }) =>
+      alunoService.atualizarResponsavel(id, responsavel),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      toast.success('Dados do responsável atualizados!')
+    },
+  })
+}
+
+export function useVincularResponsavel() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ alunoId, responsavelId, grauParentesco }: { alunoId: string, responsavelId: string, grauParentesco: string }) =>
+      alunoService.vincularExistente(alunoId, responsavelId, grauParentesco),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      toast.success('Novo responsável vinculado!')
+    },
+  })
+}
+
+export function useCriarResponsavelAndVincular() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ alunoId, responsavel, grauParentesco }: { alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string }) =>
+      alunoService.criarResponsavelAndVincular(alunoId, responsavel, grauParentesco),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      toast.success('Novo responsável criado e vinculado!')
+    },
+  })
+}
+
+export function useDesvincularResponsavel() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (vinculoId: string) => alunoService.desvincularResponsavel(vinculoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      toast.success('Responsável desvinculado com sucesso.')
+    },
+    onError: (err: any) => {
+      toast.error('Erro ao desvincular: ' + err.message)
+    }
   })
 }
 

@@ -3,28 +3,74 @@ import { supabase } from '@/lib/supabase'
 export const academicoService = {
   // MATRÍCULAS
   async listarMatriculas(tenantId: string) {
-    const { data, error } = await (supabase.from('matriculas' as any) as any)
+    const { data, error } = await supabase.from('matriculas' as any)
       .select('*, aluno:alunos(nome_completo, cpf)')
       .eq('tenant_id', tenantId).order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
   async criarMatricula(matricula: any) {
-    const { data, error } = await (supabase.from('matriculas' as any) as any).insert(matricula).select().single()
-    if (error) throw error
+    console.log('🚀 [academicoService.criarMatricula] Iniciando criação:', JSON.stringify(matricula, null, 2))
+    
+    // Limpeza rigorosa: Enviar apenas o que o banco espera (baseado em database.types.ts)
+    const payload = {
+      tenant_id: matricula.tenant_id,
+      aluno_id: matricula.aluno_id,
+      ano_letivo: Number(matricula.ano_letivo),
+      serie_ano: matricula.serie_ano,
+      turma_id: matricula.turma_id || null,
+      turno: matricula.turno,
+      valor_matricula: Number(matricula.valor_matricula),
+      status: matricula.status || 'ativa',
+      data_matricula: matricula.data_matricula || new Date().toISOString().split('T')[0]
+    }
+
+    console.log('📤 [academicoService.criarMatricula] Payload limpo:', JSON.stringify(payload, null, 2))
+
+    if (!payload.tenant_id || !payload.aluno_id) {
+      const errorMsg = 'Dados obrigatórios ausentes: tenant_id ou aluno_id.';
+      console.error('❌ [academicoService.criarMatricula]', errorMsg, payload);
+      throw new Error(errorMsg);
+    }
+
+    // Tenta primeiro com plural (padrão do sistema)
+    const { data: insertedData, error } = await supabase.from('matriculas' as any)
+      .insert(payload)
+      .select()
+
+    if (error) {
+      console.error('❌ [academicoService.criarMatricula] Erro no Supabase:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
+      
+      // Erro 42P01: Tabela inexistente. No contexto de matrícula, geralmente é uma trigger quebrada (logs_financeiros)
+      if (error.code === '42P01') {
+         throw new Error(`Erro de Banco de Dados: Uma regra de automação (Trigger) está tentando acessar uma tabela inexistente (${error.message}). Por favor, execute a migration 058 no SQL Editor.`);
+      }
+      
+      throw error
+    }
+    
+    const data = insertedData?.[0]
+    if (!data) {
+      console.error('⚠️ [academicoService.criarMatricula] Inserção sem retorno de dados. RLS pode estar bloqueando o retorno (SELECT).')
+      throw new Error('Matrícula inserida, mas nenhum dado retornado pelo banco.')
+    }
+
+    console.log('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
     
     // Tenta gerar cobranças iniciais (proporcional, etc)
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.gerarCobrancasIniciaisMatricula(data)
     } catch (finError: any) {
-      console.error('⚠️ Erro ao gerar cobranças automáticas para matrícula:', finError)
-      // Agora vamos lançar um erro mais descritivo se for algo estrutural
+      console.error('⚠️ [academicoService.criarMatricula] Erro ao gerar cobranças automáticas:', finError)
       if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
         throw new Error('Erro de integridade ao gerar cobranças. Verifique as configurações da turma.')
       }
-      // Para outros erros, mantemos apenas o log para não travar a matrícula, 
-      // mas poderíamos mudar essa política se o usuário quiser 100% de sucesso financeiro.
     }
 
     return data

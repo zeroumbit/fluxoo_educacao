@@ -19,8 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter
+  DialogDescription
 } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -234,17 +233,28 @@ export function AlunoCadastroPage() {
       // 1. Buscar responsável
       const { data: resp, error: respError } = await supabase
         .from('responsaveis')
-        .select('id, nome, email, telefone')
+        .select('id, nome, email, telefone, user_id')
         .eq('cpf', cpfLimpo)
         .maybeSingle()
         
       if (resp) {
-        setResponsavelEncontrado(true)
+        // Agora só consideramos "Identificado" se ele já tiver acesso ao Portal (user_id)
+        if (resp.user_id) {
+          setResponsavelEncontrado(true)
+          toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
+            description: 'Não é necessário criar uma nova senha.',
+            duration: 6000
+          })
+        } else {
+          setResponsavelEncontrado(false)
+          toast.success('Histórico encontrado!', {
+            description: 'Dados básicos preenchidos. Defina uma senha para este novo acesso.'
+          })
+        }
+
         setValue('responsavel_nome', resp.nome || '', { shouldValidate: true })
         setValue('responsavel_email', resp.email || '', { shouldValidate: true })
         setValue('responsavel_telefone', resp.telefone || '', { shouldValidate: true })
-        
-        // 2. Buscar outros alunos vinculados a este responsável
         const { data: vinculos } = await supabase
           .from('aluno_responsavel')
           .select('aluno_id, alunos(nome_completo)')
@@ -259,11 +269,6 @@ export function AlunoCadastroPage() {
             duration: 8000
           })
         }
-        
-        toast.info('Responsável identificado! Ele já possui conta na plataforma.', {
-          description: 'Não é necessário criar uma nova senha.',
-          duration: 6000
-        })
       } else {
         setResponsavelEncontrado(false)
         setIrmaosExistentes([])
@@ -295,6 +300,8 @@ export function AlunoCadastroPage() {
     return await trigger(fieldsPerStep[currentStep])
   }
 
+  // const [lastStepChangeTime, setLastStepChangeTime] = useState(0)
+
   const nextStep = async () => {
     const isValid = await validateStep()
     if (isValid && currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
@@ -305,6 +312,12 @@ export function AlunoCadastroPage() {
   }
 
   const onSubmit = async (data: AlunoFormValues) => {
+    // Definitive Fix: Prevent auto-submission unless we are on the HEALTH step (index 3)
+    if (currentStep < steps.length - 1) {
+      nextStep()
+      return
+    }
+
     if (!authUser) return
     if (limiteAtingido) {
       toast.error('Limite de alunos atingido!')
@@ -360,10 +373,6 @@ export function AlunoCadastroPage() {
         estado: data.estado && data.estado !== '' ? data.estado : null,
         valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
         data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
-        // desconto_valor: (data as any).desconto_valor || null,
-        // desconto_tipo: (data as any).desconto_tipo || null,
-        // desconto_inicio: (data as any).desconto_inicio || null,
-        // desconto_fim: (data as any).desconto_fim || null,
       }
 
       console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -389,6 +398,15 @@ export function AlunoCadastroPage() {
       toast.error(errorMessage, { duration: 8000 })
     }
   }
+
+  // Prevenção extra: Não permitir que o ENTER submeta o formulário em campos de input
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+      e.preventDefault()
+      nextStep()
+    }
+  }
+
 
   if (limiteAtingido) {
     return (
@@ -459,7 +477,10 @@ export function AlunoCadastroPage() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form 
+        onSubmit={handleSubmit(onSubmit)}
+        onKeyDown={handleKeyDown}
+      >
         <Card className="border-0 shadow-md">
           <CardHeader className="pt-[30px]">
             <CardTitle>{steps[currentStep].title}</CardTitle>
@@ -579,7 +600,7 @@ export function AlunoCadastroPage() {
                       <Users className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
                       <div>
                         <p className="text-xs font-bold text-indigo-900 leading-tight">Sugestão: Matriz de Descontos (DSS)</p>
-                        <p className="text-[10px] text-indigo-700 leading-relaxed mt-1">Conclua o cadastro para aplicar um Override Financeiro auditado. {irmaosExistentes.length > 0 && `(Vínculo múltiplo detectado com: ${irmaosExistentes.join(', ')})`}</p>
+                        <p className="text-[10px] text-indigo-700 leading-relaxed mt-1">Conclua o cadastro e caso deseje poderá aplicar descontos para o aluno. {irmaosExistentes.length > 0 && `(Vínculo múltiplo detectado com: ${irmaosExistentes.join(', ')})`}</p>
                       </div>
                     </div>
                 </div>
@@ -751,9 +772,9 @@ export function AlunoCadastroPage() {
                   <div className="bg-sky-50 border border-sky-200 text-sky-800 p-4 rounded-xl flex items-start gap-4 shadow-sm my-2">
                     <Users className="h-6 w-6 text-sky-600 shrink-0" />
                     <div className="space-y-1">
-                      <h4 className="font-bold text-sky-900 leading-none">Responsável Identificado</h4>
+                      <h4 className="font-bold text-sky-900 leading-none">Acesso Portal Ativo</h4>
                       <p className="text-sm text-sky-700 font-medium">
-                        Este responsável já está na plataforma. Ele não precisa criar senha, basta preencher os demais campos.
+                        Este responsável já possui cadastro de acesso ao portal. Não é necessário definir uma nova senha.
                       </p>
                     </div>
                   </div>
@@ -871,12 +892,25 @@ export function AlunoCadastroPage() {
             )}
           </div>
           {currentStep < steps.length - 1 ? (
-            <Button type="button" onClick={nextStep}>
+            <Button 
+              key="btn-next-footer"
+              type="button" 
+              onClick={nextStep}
+            >
               Próximo <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700">
-              {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>) : (<><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>)}
+            <Button 
+              key="btn-save-footer"
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+            >
+              {isSubmitting ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
+              ) : (
+                <><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>
+              )}
             </Button>
           )}
         </div>

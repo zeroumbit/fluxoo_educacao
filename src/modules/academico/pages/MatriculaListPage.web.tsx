@@ -99,7 +99,31 @@ export function MatriculaListPageWeb() {
   const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
+  const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
+
+  // Filtragem inteligente de alunos baseada no tipo de operação
+  const alunosFiltrados = alunos?.filter((aluno: any) => {
+    if (isEditing) return true
+
+    const jaMatriculadoNoAno = matriculas?.some((m: any) => 
+      m.aluno_id === aluno.id && 
+      m.status === 'ativa' && 
+      Number(m.ano_letivo) === Number(anoLetivoSelecionado)
+    )
+
+    if (tipoSelecionado === 'nova') {
+      return !jaMatriculadoNoAno
+    }
+
+    if (tipoSelecionado === 'rematricula') {
+      // Para rematricula, mostramos apenas quem JÁ possui matrícula (para poder renovar)
+      // Ou se preferir apenas desconsiderar quem já está no ano selecionado:
+      return !jaMatriculadoNoAno
+    }
+
+    return true
+  })
 
   useEffect(() => {
     if (matriculaExistente && (tipoSelecionado as string) === 'rematricula' && !isEditing) {
@@ -238,7 +262,7 @@ export function MatriculaListPageWeb() {
                     <SelectValue placeholder="Selecione o aluno" />
                   </SelectTrigger>
                   <SelectContent>
-                    {alunos?.map((a: any) => (
+                    {alunosFiltrados?.map((a: any) => (
                       <SelectItem key={a.id} value={a.id} className="font-bold">
                         {a.nome_completo}
                       </SelectItem>
