@@ -224,10 +224,10 @@ export function MarketplaceConfigPage() {
       {/* Grid Principal */}
       <div className="grid grid-cols-1 gap-6">
         <Card className="border-0 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden bg-white">
-          <CardHeader className="border-b border-slate-50 p-6 bg-slate-50/30">
+          <CardHeader className="border-b border-slate-50 p-8 pt-10 bg-slate-50/30">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-slate-900">Categorias Permitidas</CardTitle>
+                <CardTitle className="text-2xl font-black tracking-tighter text-slate-900">Categorias Permitidas</CardTitle>
                 <CardDescription className="font-medium">Define as opções que estarão disponíveis para os lojistas.</CardDescription>
               </div>
               <div className="relative w-72">

@@ -1,6 +1,6 @@
 import { useFechamentoMensal } from '../hooks-avancado'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, TrendingUp, AlertCircle, Wallet, DollarSign, CreditCard, PiggyBank } from 'lucide-react'
+import { Loader2, TrendingUp, AlertCircle, Wallet, DollarSign, CreditCard, PiggyBank, RotateCw } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -36,8 +36,41 @@ interface FechamentoMensal {
 }
 
 export function FinanceiroRelatoriosPage() {
-  const { data: fechamento, isLoading } = useFechamentoMensal()
+  const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()
   const canExport = useHasPermission('financeiro.relatorios.export')
+
+  // Função para exportar CSV
+  const handleExport = () => {
+    if (!fechamento || fechamento.length === 0) return
+
+    const headers = ['Mês', 'Receitas Previsto', 'Receitas Recebido', 'Receitas Aberto', 'Despesas Previsto', 'Despesas Pago', 'Despesas Aberto', 'Saldo Atual', 'Saldo Previsto']
+    const rows = fechamento.map(item => [
+      new Date(item.mes).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+      item.total_receitas_previsto,
+      item.total_receitas_recebido,
+      item.total_receitas_aberto,
+      item.total_despesas_previsto,
+      item.total_despesas_pago,
+      item.total_despesas_aberto,
+      item.saldo,
+      item.saldo_previsto
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   // Calcular totais consolidados (últimos 12 meses)
   const totaisGerais = useMemo(() => {
@@ -88,14 +121,31 @@ export function FinanceiroRelatoriosPage() {
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Relatórios Financeiros</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Relatórios Financeiros</h1>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+              onClick={() => refetch()}
+              disabled={isRefetching}
+            >
+              <RotateCw className={cn("h-4 w-4", isRefetching && "animate-spin")} />
+            </Button>
+          </div>
           <p className="text-muted-foreground font-medium">Visão consolidada do fluxo de caixa: receitas, despesas e saldo.</p>
         </div>
-        {canExport && (
-          <Button variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-            <TrendingUp className="mr-2 h-4 w-4" /> Exportar Relatório (CSV)
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {canExport && (
+            <Button 
+              variant="outline" 
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              onClick={handleExport}
+            >
+              <TrendingUp className="mr-2 h-4 w-4" /> Exportar Relatório (CSV)
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Cards de Resumo Geral */}
@@ -180,12 +230,15 @@ export function FinanceiroRelatoriosPage() {
       </div>
 
       {/* Tabela Detalhada por Mês */}
-      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
-          <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
-            <TrendingUp className="h-5 w-5 text-indigo-600" />
-            Fechamento Mensal Detalhado
-          </CardTitle>
+      <Card className="border-0 shadow-xl shadow-slate-200/50 overflow-hidden rounded-[32px] bg-white">
+        <CardHeader className="flex flex-row items-center justify-between p-8 pt-10">
+          <div>
+            <CardTitle className="text-2xl font-black tracking-tighter text-slate-800 flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-indigo-600" />
+              Fechamento Mensal Detalhado
+            </CardTitle>
+            <p className="text-slate-400 text-xs font-medium mt-1">Análise comparativa de receitas, despesas e saldo final por competência.</p>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>

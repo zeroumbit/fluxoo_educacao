@@ -10,7 +10,6 @@ export const academicoService = {
     return (data as any[]) || []
   },
   async criarMatricula(matricula: any) {
-    console.log('🚀 [academicoService.criarMatricula] Iniciando criação:', JSON.stringify(matricula, null, 2))
     
     // Limpeza rigorosa: Enviar apenas o que o banco espera (baseado em database.types.ts)
     const payload = {
@@ -25,8 +24,6 @@ export const academicoService = {
       data_matricula: matricula.data_matricula || new Date().toISOString().split('T')[0]
     }
 
-    console.log('📤 [academicoService.criarMatricula] Payload limpo:', JSON.stringify(payload, null, 2))
-
     if (!payload.tenant_id || !payload.aluno_id) {
       const errorMsg = 'Dados obrigatórios ausentes: tenant_id ou aluno_id.';
       console.error('❌ [academicoService.criarMatricula]', errorMsg, payload);
@@ -36,29 +33,21 @@ export const academicoService = {
     // Tenta primeiro com plural (padrão do sistema)
     const { data: insertedData, error } = await supabase.from('matriculas' as any)
       .insert(payload)
-      .select()
+      .select('id')
+      .single()
 
     if (error) {
-      console.error('❌ [academicoService.criarMatricula] Erro no Supabase:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      })
-      
-      // Erro 42P01: Tabela inexistente. No contexto de matrícula, geralmente é uma trigger quebrada (logs_financeiros)
       if (error.code === '42P01') {
          throw new Error(`Erro de Banco de Dados: Uma regra de automação (Trigger) está tentando acessar uma tabela inexistente (${error.message}). Por favor, execute a migration 058 no SQL Editor.`);
       }
-      
       throw error
     }
     
-    const data = insertedData?.[0]
-    if (!data) {
-      console.error('⚠️ [academicoService.criarMatricula] Inserção sem retorno de dados. RLS pode estar bloqueando o retorno (SELECT).')
+    if (!insertedData) {
       throw new Error('Matrícula inserida, mas nenhum dado retornado pelo banco.')
     }
+
+    const data = insertedData as unknown as { id: string }
 
     console.log('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
     

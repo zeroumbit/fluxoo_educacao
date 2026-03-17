@@ -18,6 +18,7 @@ import {
   LogOut,
   GraduationCap,
   ChevronRight,
+  X,
   Building2,
   Shield,
   Briefcase,
@@ -138,7 +139,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         {onNavigate && (
            <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden h-10 w-10 rounded-full bg-zinc-100">
-              <ChevronRight className="h-5 w-5 text-zinc-500" />
+              <X className="h-5 w-5 text-zinc-500" />
            </Button>
         )}
       </div>
@@ -195,7 +196,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Separator />
 
       {/* User */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 pb-24 lg:pb-4 space-y-2">
         <div className="flex items-center gap-3 py-2.5 px-3">
           <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-xs">
@@ -246,7 +247,7 @@ export function AdminLayout() {
 
       {/* Mobile Sidebar - Agora acionado pelo BottomNav */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
+        <SheetContent side="left" showCloseButton={false} className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
           <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
           <SheetDescription className="sr-only">Acesse as funcionalidades do sistema através do menu lateral.</SheetDescription>
           <SidebarContent onNavigate={() => setSidebarOpen(false)} />
@@ -254,7 +255,7 @@ export function AdminLayout() {
       </Sheet>
 
       {/* Bottom Navigation para Mobile (App Style) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-t border-zinc-200/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-t border-zinc-200/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
         <div className="mx-auto w-full max-w-[640px] flex items-center justify-around h-20 px-4">
           <NavLink
             to="/dashboard"

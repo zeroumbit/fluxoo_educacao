@@ -73,18 +73,15 @@ export function PlanoAulaPage() {
 
     try {
       if (editingId) {
-        console.log('✏️ [PlanoAula] Atualizando plano existente:', editingId)
         await atualizar.mutateAsync({ id: editingId, data: payload })
         toast.success('Plano de aula atualizado com sucesso!')
       } else {
-        console.log('➕ [PlanoAula] Criando novo plano')
         await criar.mutateAsync(payload)
         toast.success('Plano de aula registrado com sucesso!')
       }
       handleClose()
       refetch()
     } catch (error: any) {
-      console.error('❌ [PlanoAula] Erro ao salvar:', error)
       toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`)
     }
   }
@@ -295,7 +292,7 @@ export function PlanoAulaPage() {
                       {new Date(p.data_aula).toLocaleDateString()}
                     </div>
                   </TableCell>
-                  <TableCell className="pl-4">
+                  <TableCell className="pl-8">
                     <div className="flex flex-wrap gap-2">
                       {(p.planos_aula_turmas || []).map((v: any, idx: number) => (
                         <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-indigo-100 rounded-full text-xs font-semibold text-indigo-700 shadow-sm">

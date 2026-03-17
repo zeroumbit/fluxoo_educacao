@@ -6,12 +6,23 @@ import { isSuperAdminEmail } from '@/lib/config'
 import { usePortalStore } from '@/modules/portal/store'
 import { useRBACStore } from '@/stores/rbac.store'
 
+interface Endereco {
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+}
+
 interface AuthUser {
   user: User
   session: Session
   tenantId: string
   role: UserRole
   nome: string
+  endereco?: Endereco
   areasAcesso?: string[]
   funcionarioId?: string
 }
@@ -52,12 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 2. GESTOR
       if (user.user_metadata?.role === 'gestor') {
-        console.log('🔍 Buscando escola para gestor:', user.id)
-        
         const resp = await withTimeout(
           supabase
             .from('escolas')
-            .select('id, razao_social')
+            .select('id, razao_social, logradouro, numero, bairro, cidade, estado, cep')
             .eq('gestor_user_id', user.id)
             .limit(1)
             .maybeSingle() as any,
@@ -65,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ) as any
 
         if (!resp) {
-          console.warn('🕒 Timeout ou erro na busca da escola (5s)')
           setAuthUser({
             user, session,
             tenantId: '',
@@ -77,20 +85,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data: escola, error: erro } = resp as { data: any, error: any }
         if (erro) console.error('❌ Erro na busca da escola:', erro.message)
-        console.log('📊 Resultado da busca da escola:', { escola, erro })
         
         if (escola) {
-          console.log('✅ Tenant vinculado:', (escola as any).id)
           setAuthUser({
             user, session,
             tenantId: (escola as any).id,
             role: 'gestor',
             nome: user.user_metadata?.full_name || 'Gestor',
+            endereco: {
+              logradouro: escola.logradouro,
+              numero: escola.numero,
+              bairro: escola.bairro,
+              cidade: escola.cidade,
+              estado: escola.estado,
+              cep: escola.cep
+            }
           })
           return
         }
 
-        console.warn('⚠️ Gestor logado mas sem escola no banco!')
         setAuthUser({
           user, session,
           tenantId: '',
@@ -125,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 4. Responsável
       const respRes = await withTimeout(
         supabase.from('responsaveis')
-          .select('nome')
+          .select('nome, logradouro, numero, complemento, bairro, cidade, estado, cep')
           .eq('user_id', user.id)
           .limit(1)
           .maybeSingle() as any,
@@ -138,6 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tenantId: '',
           role: 'responsavel',
           nome: respRes.data.nome,
+          endereco: {
+            logradouro: respRes.data.logradouro,
+            numero: respRes.data.numero,
+            complemento: respRes.data.complemento,
+            bairro: respRes.data.bairro,
+            cidade: respRes.data.cidade,
+            estado: respRes.data.estado,
+            cep: respRes.data.cep
+          }
         })
         return
       }
@@ -166,14 +188,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleAuthChange = async (event: string, session: Session | null) => {
       if (!mounted) return
       
-      console.log('🔄 Evento de Autenticação:', event, '| Usuário:', session?.user?.id || 'nenhum')
-
       if (session?.user) {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           if (loadingLock) return
           loadingLock = true
           try {
-            console.log('🆔 MEU ID DE USUÁRIO:', session.user.id)
             await loadUserProfile(session.user, session)
           } finally {
             loadingLock = false
