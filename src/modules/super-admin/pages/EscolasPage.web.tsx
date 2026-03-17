@@ -140,18 +140,18 @@ export function EscolasPageWeb() {
           <Table>
             <TableHeader className="bg-zinc-50/50">
               <TableRow>
-                <TableHead className="pl-6">Instituição</TableHead>
-                <TableHead>Gestor / Contato</TableHead>
-                <TableHead>Plano / Pagto</TableHead>
-                <TableHead>Cadastro</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right pr-6">Ações</TableHead>
+                <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Instituição</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Gestor / Contato</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Plano / Pagto</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEscolas?.map((escola) => (
                 <TableRow key={escola.id} className="group hover:bg-zinc-50/50 transition-colors">
-                  <TableCell className="pl-6">
+                  <TableCell className="pl-8">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100/50">
                         <Building2 className="h-5 w-5 text-indigo-600" />
@@ -194,7 +194,7 @@ export function EscolasPageWeb() {
                   <TableCell>
                     {getStatusBadge(escola.status_assinatura)}
                   </TableCell>
-                  <TableCell className="text-right pr-6">
+                  <TableCell className="text-right pr-8">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-zinc-200/50">

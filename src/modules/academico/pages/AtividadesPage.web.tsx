@@ -310,17 +310,17 @@ export function AtividadesPage() {
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow>
-                <TableHead className="w-[30%]">Título</TableHead>
-                <TableHead className="w-[30%]">Turma(s) / Turno</TableHead>
-                <TableHead className="w-[15%]">Tipo</TableHead>
-                <TableHead className="w-[15%]">Disciplina</TableHead>
-                <TableHead className="text-right sr-only">Ações</TableHead>
+                <TableHead className="w-[30%] pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Título</TableHead>
+                <TableHead className="w-[30%] text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turma(s) / Turno</TableHead>
+                <TableHead className="w-[15%] text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
+                <TableHead className="w-[15%] text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Disciplina</TableHead>
+                <TableHead className="text-right pr-8 sr-only text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {atividades?.map((a: any) => (
                 <TableRow key={a.id} className="group hover:bg-slate-50/80 transition-colors">
-                  <TableCell className="font-medium">
+                  <TableCell className="pl-8 font-medium">
                     <div className="flex flex-col">
                       <span>{a.titulo}</span>
                       {a.descricao && <span className="text-[11px] text-muted-foreground line-clamp-1 font-normal">{a.descricao}</span>}
@@ -346,7 +346,7 @@ export function AtividadesPage() {
                   <TableCell className="text-muted-foreground text-sm">
                     {a.disciplina || '—'}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="pr-8">
                     <div className="flex items-center justify-end gap-1">
                       {a.anexo_url && (
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" asChild>

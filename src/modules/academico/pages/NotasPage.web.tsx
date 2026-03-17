@@ -404,7 +404,7 @@ export function NotasPageWeb() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="w-16 px-8 py-4">
+                    <th className="w-16 pl-8 py-4">
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -415,13 +415,13 @@ export function NotasPageWeb() {
                     <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Aluno</th>
                     <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-32">Nota</th>
                     <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 w-32">Faltas</th>
-                    <th className="text-left px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Observações</th>
+                    <th className="text-left py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 pr-8">Observações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {(todosAlunos || []).filter(a => alunoId === 'all' || a.id === alunoId).map((aluno: any) => (
                     <tr key={aluno.id} className={`hover:bg-slate-50/50 transition-colors group ${selecionados.includes(aluno.id) ? 'bg-indigo-50/30' : ''}`}>
-                      <td className="px-8 py-4">
+                      <td className="pl-8 py-4">
                         <input 
                           type="checkbox" 
                           className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -458,7 +458,7 @@ export function NotasPageWeb() {
                           className="text-center font-bold text-slate-600 focus:ring-indigo-500 rounded-xl h-11 border-slate-200"
                         />
                       </td>
-                      <td className="px-8 py-4">
+                      <td className="pr-8 py-4">
                         <Input 
                           placeholder="Ex: Ótimo desempenho"
                           value={notasLocais[aluno.id]?.observacoes || ''}

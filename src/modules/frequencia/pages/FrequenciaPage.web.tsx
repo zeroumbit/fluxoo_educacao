@@ -310,7 +310,7 @@ export function FrequenciaPageWeb() {
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-b border-slate-200">
                     <TableHead className="w-[60px] text-center text-slate-400 font-black">#</TableHead>
-                    <TableHead className="py-6 text-slate-800 font-black uppercase tracking-widest text-[10px]">Nome do Estudante</TableHead>
+                    <TableHead className="py-6 text-slate-800 font-black uppercase tracking-widest text-[10px] pl-8">Nome do Estudante</TableHead>
                     <TableHead className="w-[380px] text-right text-slate-800 font-black uppercase tracking-widest text-[10px] pr-8">Frequência e Justificativa</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -324,7 +324,7 @@ export function FrequenciaPageWeb() {
                         <TableCell className="text-center">
                           <span className="text-slate-400 font-black text-sm">{String(index + 1).padStart(2, '0')}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="pl-8">
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">
                               {aluno.nome_completo}

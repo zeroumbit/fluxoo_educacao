@@ -256,7 +256,7 @@ export function AlunosListPageWeb() {
                 <TableHead className="font-bold text-slate-800">Responsável</TableHead>
                 <TableHead className="font-bold text-slate-800">Matrícula</TableHead>
                 <TableHead className="font-bold text-slate-800 text-center">Status</TableHead>
-                <TableHead className="py-4 font-bold text-slate-800 text-left">Ações</TableHead>
+                <TableHead className="py-4 font-bold text-slate-800 text-right pr-8">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -319,8 +319,8 @@ export function AlunosListPageWeb() {
                         {aluno.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-left">
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-right pr-8">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="icon"

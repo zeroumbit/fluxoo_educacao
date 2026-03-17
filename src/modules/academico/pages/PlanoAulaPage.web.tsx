@@ -279,23 +279,23 @@ export function PlanoAulaPage() {
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow>
-                <TableHead className="w-[120px]">Data</TableHead>
-                <TableHead>Turma(s) / Turno</TableHead>
-                <TableHead>Disciplina</TableHead>
-                <TableHead>Conteúdo</TableHead>
-                <TableHead className="text-right sr-only">Ações</TableHead>
+                <TableHead className="w-[120px] pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turma(s) / Turno</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Disciplina</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Conteúdo</TableHead>
+                <TableHead className="text-right pr-8 sr-only text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {planos?.map((p: any) => (
                 <TableRow key={p.id} className="group hover:bg-indigo-50/30 transition-colors">
-                  <TableCell className="font-medium text-slate-600">
+                  <TableCell className="pl-8 font-medium text-slate-600">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-indigo-500" />
                       {new Date(p.data_aula).toLocaleDateString()}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="pl-4">
                     <div className="flex flex-wrap gap-2">
                       {(p.planos_aula_turmas || []).map((v: any, idx: number) => (
                         <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-indigo-100 rounded-full text-xs font-semibold text-indigo-700 shadow-sm">
@@ -316,7 +316,7 @@ export function PlanoAulaPage() {
                       {p.conteudo_realizado && <p className="text-[11px] text-emerald-600 font-medium line-clamp-1 mt-0.5">Realizado: {p.conteudo_realizado}</p>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleView(p)}>
                         <Eye className="h-4 w-4" />

@@ -223,11 +223,11 @@ export function AlmoxarifadoPage() {
         <TabsList><TabsTrigger value="estoque"><Package className="h-4 w-4 mr-1" />Estoque</TabsTrigger><TabsTrigger value="historico"><ArrowDownUp className="h-4 w-4 mr-1" />Histórico</TabsTrigger></TabsList>
         <TabsContent value="estoque">
           <Card className="border-0 shadow-md"><CardContent className="p-0">
-            <Table><TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Categoria</TableHead><TableHead>Quantidade</TableHead><TableHead>Custo Unit.</TableHead><TableHead>Alerta</TableHead><TableHead className="w-[100px]">Ações</TableHead></TableRow></TableHeader>
+            <Table><TableHeader><TableRow><TableHead className="pl-8">Item</TableHead><TableHead>Categoria</TableHead><TableHead>Quantidade</TableHead><TableHead>Custo Unit.</TableHead><TableHead>Alerta</TableHead><TableHead className="w-[100px] pr-8 text-right">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
                 {itens?.map((i: any) => (
                   <TableRow key={i.id}>
-                    <TableCell className="font-bold">{i.nome}</TableCell>
+                    <TableCell className="font-bold pl-8">{i.nome}</TableCell>
                     <TableCell><Badge variant="outline">{i.categoria || '—'}</Badge></TableCell>
                     <TableCell>
                       <span className={i.quantidade <= (i.alerta_estoque_minimo || 0) ? 'text-red-600 font-bold' : ''}>{i.quantidade}</span>
@@ -235,8 +235,8 @@ export function AlmoxarifadoPage() {
                     </TableCell>
                     <TableCell>R$ {Number(i.custo_unitario || 0).toFixed(2)}</TableCell>
                     <TableCell>{i.alerta_estoque_minimo || '—'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
+                    <TableCell className="pr-8">
+                      <div className="flex gap-1 justify-end">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(i)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -253,12 +253,12 @@ export function AlmoxarifadoPage() {
         </TabsContent>
         <TabsContent value="historico">
           <Card className="border-0 shadow-md"><CardContent className="p-0">
-            <Table><TableHeader><TableRow><TableHead>Item</TableHead><TableHead>Tipo</TableHead><TableHead>Qtd.</TableHead><TableHead>Justificativa</TableHead><TableHead>Data</TableHead></TableRow></TableHeader>
+            <Table><TableHeader><TableRow><TableHead className="pl-8">Item</TableHead><TableHead>Tipo</TableHead><TableHead>Qtd.</TableHead><TableHead>Justificativa</TableHead><TableHead className="pr-8 text-right">Data</TableHead></TableRow></TableHeader>
               <TableBody>
                 {movs?.map((m: any) => (
-                  <TableRow key={m.id}><TableCell className="font-bold">{m.item?.nome || '—'}</TableCell>
+                  <TableRow key={m.id}><TableCell className="font-bold pl-8">{m.item?.nome || '—'}</TableCell>
                     <TableCell><Badge className={m.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}>{m.tipo === 'entrada' ? '+ Entrada' : '- Saída'}</Badge></TableCell>
-                    <TableCell>{m.quantidade}</TableCell><TableCell>{m.justificativa || '—'}</TableCell><TableCell className="text-sm text-muted-foreground">{new Date(m.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{m.quantidade}</TableCell><TableCell>{m.justificativa || '—'}</TableCell><TableCell className="text-sm text-muted-foreground pr-8 text-right">{new Date(m.created_at).toLocaleDateString('pt-BR')}</TableCell>
                   </TableRow>))}
                 {(!movs || movs.length === 0) && <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Nenhuma movimentação.</TableCell></TableRow>}
               </TableBody></Table>

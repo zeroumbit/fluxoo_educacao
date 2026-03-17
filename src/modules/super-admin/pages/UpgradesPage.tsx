@@ -66,14 +66,14 @@ export function UpgradesPage() {
           <Table>
             <TableHeader className="bg-zinc-50/50">
               <TableRow>
-                <TableHead className="pl-6">Escola</TableHead>
-                <TableHead>Limite Atual</TableHead>
-                <TableHead>Limite Solicitado</TableHead>
-                <TableHead>Valor Atual</TableHead>
-                <TableHead>Valor Proposto</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right pr-6">Ações</TableHead>
+                <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Escola</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Limite Atual</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Limite Solicitado</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Valor Atual</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Valor Proposto</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,7 +84,7 @@ export function UpgradesPage() {
               )}
               {upgrades?.map((u: any) => (
                 <TableRow key={u.id} className="hover:bg-zinc-50/50 transition-colors">
-                  <TableCell className="pl-6 font-bold text-zinc-900">{u.escola?.razao_social || '—'}</TableCell>
+                  <TableCell className="pl-8 font-bold text-zinc-900">{u.escola?.razao_social || '—'}</TableCell>
                   <TableCell className="text-sm">{u.limite_atual} alunos</TableCell>
                   <TableCell className="text-sm font-bold text-indigo-700">{u.limite_solicitado} alunos</TableCell>
                   <TableCell className="text-sm">R$ {Number(u.valor_atual).toFixed(2)}</TableCell>
@@ -93,7 +93,7 @@ export function UpgradesPage() {
                     {format(new Date(u.created_at), "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
                   <TableCell>{getStatusBadge(u.status)}</TableCell>
-                  <TableCell className="text-right pr-6">
+                  <TableCell className="text-right pr-8">
                     {u.status === 'pendente' && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

@@ -126,13 +126,13 @@ export function FaturasPage() {
                 <Table>
                   <TableHeader className="bg-zinc-50/50">
                     <TableRow>
-                      <TableHead className="pl-6">Escola</TableHead>
-                      <TableHead>Competência</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Comprovante</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right pr-6">Ações</TableHead>
+                      <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Escola</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Competência</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Valor</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Vencimento</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Comprovante</TableHead>
+                      <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -143,7 +143,7 @@ export function FaturasPage() {
                     )}
                     {filtered?.map((f: any) => (
                       <TableRow key={f.id} className="hover:bg-zinc-50/50 transition-colors">
-                        <TableCell className="pl-6 font-bold text-zinc-900">{f.escola?.razao_social || '—'}</TableCell>
+                        <TableCell className="pl-8 font-bold text-zinc-900">{f.escola?.razao_social || '—'}</TableCell>
                         <TableCell className="text-sm">
                           {f.competencia ? format(new Date(f.competencia), 'MMM/yyyy', { locale: ptBR }).toUpperCase() : '—'}
                         </TableCell>
@@ -162,7 +162,7 @@ export function FaturasPage() {
                           )}
                         </TableCell>
                         <TableCell>{getStatusBadge(f.status)}</TableCell>
-                        <TableCell className="text-right pr-6">
+                        <TableCell className="text-right pr-8">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>

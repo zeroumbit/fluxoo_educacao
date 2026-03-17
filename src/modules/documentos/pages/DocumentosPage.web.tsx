@@ -506,9 +506,9 @@ export function DocumentosPage() {
               <Table>
                 <TableHeader className="bg-slate-50/50">
                   <TableRow className="hover:bg-transparent border-slate-100">
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-8">Título do Documento</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipo</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Ações</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-8">Título do Documento</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -544,10 +544,10 @@ export function DocumentosPage() {
               <Table>
                 <TableHeader className="bg-slate-50/50">
                   <TableRow className="hover:bg-transparent border-slate-100">
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-8">Documento</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Aluno</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</TableHead>
-                    <TableHead className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Ações</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-8">Documento</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Aluno</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-8">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

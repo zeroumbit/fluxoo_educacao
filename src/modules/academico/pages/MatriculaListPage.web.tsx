@@ -370,19 +370,19 @@ export function MatriculaListPageWeb() {
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="font-bold py-4">Aluno</TableHead>
-                <TableHead className="font-bold">Tipo</TableHead>
-                <TableHead className="font-bold">Ano</TableHead>
-                <TableHead className="font-bold">Turma/Ano</TableHead>
-                <TableHead className="font-bold">Turno</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="text-right font-bold pr-6">Ações</TableHead>
+                <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-4">Aluno</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ano</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turma/Ano</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turno</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {matriculas?.map((m: any) => (
                 <TableRow key={m.id} className="transition-colors">
-                  <TableCell className="font-bold text-slate-700 py-4">
+                  <TableCell className="pl-8 font-bold text-slate-700 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                         <User className="h-4 w-4" />
@@ -406,7 +406,7 @@ export function MatriculaListPageWeb() {
                       {m.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right pr-4">
+                  <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" onClick={() => navigate(`/alunos/${m.aluno_id}`)}>
                         <User className="h-4 w-4" />

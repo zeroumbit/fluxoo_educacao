@@ -180,17 +180,17 @@ export function ContasPagarPage() {
       </Dialog>
       <Card className="border-0 shadow-md"><CardContent className="p-0">
         <Table>
-          <TableHeader><TableRow><TableHead>Conta</TableHead><TableHead>Favorecido</TableHead><TableHead>Vencimento</TableHead><TableHead>Valor</TableHead><TableHead>Recorrente</TableHead><TableHead>Status</TableHead><TableHead className="w-[100px]">Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead className="pl-8">Conta</TableHead><TableHead className="pl-4">Favorecido</TableHead><TableHead className="pl-4">Vencimento</TableHead><TableHead className="pl-4">Valor</TableHead><TableHead className="pl-4">Recorrente</TableHead><TableHead className="pl-4">Status</TableHead><TableHead className="w-[100px] text-right pr-8">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {contas?.map((c: any) => (
               <TableRow key={c.id}>
-                <TableCell className="font-bold">{c.nome}</TableCell>
-                <TableCell>{c.favorecido || '—'}</TableCell>
-                <TableCell>{c.data_vencimento}</TableCell>
-                <TableCell>R$ {Number(c.valor).toFixed(2)}</TableCell>
-                <TableCell>{c.recorrente ? <Badge className="bg-blue-100 text-blue-800">Sim</Badge> : 'Não'}</TableCell>
-                <TableCell><Badge className={c.status === 'pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}>{c.status}</Badge></TableCell>
-                <TableCell>
+                <TableCell className="pl-8 font-bold">{c.nome}</TableCell>
+                <TableCell className="pl-4">{c.favorecido || '—'}</TableCell>
+                <TableCell className="pl-4">{c.data_vencimento}</TableCell>
+                <TableCell className="pl-4">R$ {Number(c.valor).toFixed(2)}</TableCell>
+                <TableCell className="pl-4">{c.recorrente ? <Badge className="bg-blue-100 text-blue-800">Sim</Badge> : 'Não'}</TableCell>
+                <TableCell className="pl-4"><Badge className={c.status === 'pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}>{c.status}</Badge></TableCell>
+                <TableCell className="pr-8">
                   <div className="flex gap-1">
                     {canPay && c.status !== 'pago' && (
                       <Button 

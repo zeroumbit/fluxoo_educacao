@@ -390,18 +390,18 @@ export function FinanceiroPageWeb() {
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Aluno / Responsável</TableHead>
+              <TableHead className="font-bold text-slate-500 pl-8 h-12 uppercase text-[10px] tracking-widest">Aluno / Responsável</TableHead>
               <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Descrição</TableHead>
               <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Vencimento</TableHead>
               <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Valor</TableHead>
               <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Status</TableHead>
-              <TableHead className="text-right px-6"></TableHead>
+              <TableHead className="text-right pr-8 h-12"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCobrancas.map((c: any) => (
               <TableRow key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                <TableCell className="px-6 py-4">
+                <TableCell className="pl-8 py-4">
                   <p className="font-bold text-slate-900">{c.alunos?.nome_completo}</p>
                   <p className="text-xs text-slate-400 font-medium">{c.alunos?.email_acesso}</p>
                 </TableCell>
@@ -436,7 +436,7 @@ export function FinanceiroPageWeb() {
                      c.status === 'atrasado' ? 'ATRASADO' : 'EM ABERTO'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right pr-8">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600"><MoreHorizontal className="h-4 w-4" /></Button>

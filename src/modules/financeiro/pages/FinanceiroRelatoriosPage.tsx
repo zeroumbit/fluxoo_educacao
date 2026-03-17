@@ -191,7 +191,7 @@ export function FinanceiroRelatoriosPage() {
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
-                <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest" rowSpan={2}>Mês</TableHead>
+                <TableHead className="font-bold text-slate-500 pl-8 h-12 uppercase text-[10px] tracking-widest" rowSpan={2}>Mês</TableHead>
                 <TableHead colSpan={3} className="font-bold text-emerald-600 px-6 h-12 uppercase text-[10px] tracking-widest text-center border-b-2 border-emerald-200">
                   RECEITAS
                 </TableHead>
@@ -213,7 +213,7 @@ export function FinanceiroRelatoriosPage() {
                 <TableHead className="font-semibold text-rose-600/70 px-4 h-10 uppercase text-[9px]">Em Aberto</TableHead>
                 {/* Saldo */}
                 <TableHead className="font-semibold text-indigo-600/70 px-4 h-10 uppercase text-[9px]">Atual</TableHead>
-                <TableHead className="font-semibold text-indigo-600/70 px-4 h-10 uppercase text-[9px]">Previsto</TableHead>
+                <TableHead className="font-semibold text-indigo-600/70 px-4 h-10 uppercase text-[9px] pr-8 text-right">Previsto</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,7 +227,7 @@ export function FinanceiroRelatoriosPage() {
 
                   return (
                     <TableRow key={idx} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                      <TableCell className="px-6 py-4 font-bold text-slate-900">{labelMes}</TableCell>
+                      <TableCell className="pl-8 py-4 font-bold text-slate-900">{labelMes}</TableCell>
                       
                       {/* Receitas */}
                       <TableCell className="px-4 py-4 text-right font-medium text-emerald-700">
@@ -259,7 +259,7 @@ export function FinanceiroRelatoriosPage() {
                         {formatCurrency(item.saldo || 0)}
                       </TableCell>
                       <TableCell className={cn(
-                        "px-4 py-4 text-right font-bold",
+                        "pr-8 py-4 text-right font-bold",
                         saldoPrevistoPositivo ? "text-indigo-600" : "text-amber-600"
                       )}>
                         {formatCurrency(item.saldo_previsto || 0)}

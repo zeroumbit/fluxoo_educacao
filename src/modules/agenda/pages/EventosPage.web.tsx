@@ -176,17 +176,17 @@ export function EventosPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Evento</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Público</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead className="w-[100px] text-right">Ações</TableHead>
+                  <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Evento</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Período</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Público</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Descrição</TableHead>
+                  <TableHead className="w-[100px] text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {eventos?.map((e: any) => (
                   <TableRow key={e.id}>
-                    <TableCell className="font-bold">{e.nome}</TableCell>
+                    <TableCell className="pl-8 font-bold">{e.nome}</TableCell>
                     <TableCell className="text-sm">
                       {e.data_inicio}
                       {e.data_termino && <span className="text-muted-foreground"> até {e.data_termino}</span>}
@@ -197,7 +197,7 @@ export function EventosPage() {
                     <TableCell className="max-w-[250px] truncate text-muted-foreground">
                       {e.descricao || '—'}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-8">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(e)}>
                           <Pencil className="h-4 w-4" />

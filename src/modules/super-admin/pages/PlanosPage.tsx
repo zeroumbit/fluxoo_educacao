@@ -199,11 +199,11 @@ export function PlanosPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Valor p/ Aluno</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nome</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Descrição</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Valor p/ Aluno</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,7 +214,7 @@ export function PlanosPage() {
               ) : (
                 filteredPlanos?.map((plano: any) => (
                   <TableRow key={plano.id}>
-                    <TableCell className="font-bold">{plano.nome}</TableCell>
+                    <TableCell className="pl-8 font-bold">{plano.nome}</TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{plano.descricao_curta || '—'}</TableCell>
                     <TableCell className="font-bold text-indigo-700">R$ {Number(plano.valor_por_aluno).toFixed(2)}</TableCell>
                     <TableCell>
@@ -224,7 +224,7 @@ export function PlanosPage() {
                         <div className="flex items-center text-zinc-400 gap-1 text-sm font-medium"><XCircle className="h-4 w-4" />Inativo</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-8">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => {
                           handleOpenModulos(plano.id)

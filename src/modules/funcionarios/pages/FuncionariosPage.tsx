@@ -626,11 +626,11 @@ export function FuncionariosPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="pl-4">Nome</TableHead>
-                      <TableHead className="pl-4">Função(ões)</TableHead>
-                      <TableHead className="pl-4">Admissão</TableHead>
-                      <TableHead className="pl-4">Acesso</TableHead>
-                      <TableHead className="text-right pr-4">Ações</TableHead>
+                      <TableHead className="pl-8 text-slate-500 uppercase text-[10px] tracking-widest font-bold">Nome</TableHead>
+                      <TableHead className="pl-4 text-slate-500 uppercase text-[10px] tracking-widest font-bold">Função(ões)</TableHead>
+                      <TableHead className="pl-4 text-slate-500 uppercase text-[10px] tracking-widest font-bold">Admissão</TableHead>
+                      <TableHead className="pl-4 text-slate-500 uppercase text-[10px] tracking-widest font-bold">Acesso</TableHead>
+                      <TableHead className="text-right pr-8 text-slate-500 uppercase text-[10px] tracking-widest font-bold">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -642,7 +642,7 @@ export function FuncionariosPage() {
 
                       return (
                         <TableRow key={f.id}>
-                          <TableCell className="pl-4">
+                          <TableCell className="pl-8">
                             <div>
                               <p className="font-bold">{f.nome_completo}</p>
                               {f.como_chamado && <p className="text-xs text-muted-foreground">{f.como_chamado}</p>}
@@ -667,7 +667,7 @@ export function FuncionariosPage() {
                               : <Badge variant="secondary">Sem acesso</Badge>
                             }
                           </TableCell>
-                          <TableCell className="text-right pr-4 space-x-1">
+                          <TableCell className="text-right pr-8 space-x-1">
                             <Button
                                 size="sm"
                                 variant="outline"

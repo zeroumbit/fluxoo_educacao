@@ -246,7 +246,7 @@ export function MarketplaceConfigPage() {
               <Table>
                 <TableHeader className="bg-slate-50/50">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-16 h-12"></TableHead>
+                    <TableHead className="w-20 pl-8 h-12"></TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest pl-0">Nome da Categoria</TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Descrição</TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">Status</TableHead>
@@ -273,7 +273,7 @@ export function MarketplaceConfigPage() {
                       const IconComp = ICON_OPTIONS.find(i => i.name === cat.icone)?.icon || Package
                       return (
                         <TableRow key={cat.id} className="group hover:bg-slate-50/50 transition-colors">
-                          <TableCell className="w-16">
+                          <TableCell className="w-20 pl-8">
                             <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 transition-transform group-hover:scale-110">
                               <IconComp className="h-5 w-5" />
                             </div>
