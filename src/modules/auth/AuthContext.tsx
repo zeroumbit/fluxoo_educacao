@@ -6,7 +6,7 @@ import { isSuperAdminEmail } from '@/lib/config'
 import { usePortalStore } from '@/modules/portal/store'
 import { useRBACStore } from '@/stores/rbac.store'
 
-interface Endereco {
+export interface Endereco {
   logradouro?: string
   numero?: string
   complemento?: string
@@ -16,7 +16,7 @@ interface Endereco {
   cep?: string
 }
 
-interface AuthUser {
+export interface AuthUser {
   user: User
   session: Session
   tenantId: string

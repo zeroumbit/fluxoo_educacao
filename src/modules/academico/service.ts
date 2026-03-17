@@ -31,7 +31,7 @@ export const academicoService = {
     }
 
     // Tenta primeiro com plural (padrão do sistema)
-    const { data: insertedData, error } = await supabase.from('matriculas' as any)
+    const { data: insertedData, error } = await (supabase.from('matriculas' as any) as any)
       .insert(payload)
       .select('id')
       .single()
