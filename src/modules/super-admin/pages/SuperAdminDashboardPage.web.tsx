@@ -32,7 +32,7 @@ export function SuperAdminDashboardPageWeb() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-[30px]">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Escolas
             </CardTitle>
@@ -47,7 +47,7 @@ export function SuperAdminDashboardPageWeb() {
         </Card>
 
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-[30px]">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Assinaturas Ativas
             </CardTitle>
@@ -62,7 +62,7 @@ export function SuperAdminDashboardPageWeb() {
         </Card>
 
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-[30px]">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total de Alunos
             </CardTitle>
@@ -77,7 +77,7 @@ export function SuperAdminDashboardPageWeb() {
         </Card>
 
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-slate-50 to-zinc-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-[30px]">
             <div>
               <CardTitle className="text-sm font-medium text-slate-800">
                 Saúde Global
@@ -98,7 +98,7 @@ export function SuperAdminDashboardPageWeb() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4 border-0 shadow-md">
-          <CardHeader>
+          <CardHeader className="pt-[30px]">
             <CardTitle>Escolas Recentes</CardTitle>
           </CardHeader>
           <CardContent>
@@ -134,7 +134,7 @@ export function SuperAdminDashboardPageWeb() {
           </CardContent>
         </Card>
         <Card className="col-span-3 border-0 shadow-md flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-4 pt-[30px]">
             <div>
               <CardTitle>Health Score</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">Instituições em risco ou estáveis</p>

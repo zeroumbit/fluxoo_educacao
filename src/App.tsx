@@ -46,6 +46,7 @@ import { EscolasPage } from '@/modules/super-admin/pages/EscolasPage'
 import { FaturasPage } from '@/modules/super-admin/pages/FaturasPage'
 import { UpgradesPage } from '@/modules/super-admin/pages/UpgradesPage'
 import { ConfigRecebimentoPage } from '@/modules/super-admin/pages/ConfigRecebimentoPage'
+import { MarketplaceConfigPage } from '@/modules/super-admin/pages/MarketplaceConfigPage'
 
 // Pages - Portal
 import { PortalDashboardPage } from '@/modules/portal/pages/PortalDashboardPage'
@@ -116,6 +117,7 @@ function App() {
             >
               <Route path="/admin/dashboard" element={<SuperAdminDashboardPage />} />
               <Route path="/admin/escolas" element={<EscolasPage />} />
+              <Route path="/admin/marketplace" element={<MarketplaceConfigPage />} />
               <Route path="/admin/planos" element={<PlanosPage />} />
               <Route path="/admin/faturas" element={<FaturasPage />} />
               <Route path="/admin/upgrades" element={<UpgradesPage />} />

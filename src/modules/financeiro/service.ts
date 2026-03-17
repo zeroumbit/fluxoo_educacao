@@ -140,7 +140,9 @@ export const financeiroService = {
     data_inicio: string,
     valor_mensalidade: number,
     valor_matricula?: number,
-    unidade?: string
+    unidade?: string,
+    turma_id?: string | null,
+    ano_letivo?: number | null
   }) {
     const { 
       aluno_id, 
@@ -162,7 +164,9 @@ export const financeiroService = {
         valor: Number(valor_matricula),
         data_vencimento: data_inicio, 
         status: 'a_vencer',
-        tipo_cobranca: 'mensalidade'
+        tipo_cobranca: 'mensalidade',
+        turma_id: params.turma_id || null,
+        ano_letivo: params.ano_letivo || null
       })
     }
 
@@ -252,7 +256,9 @@ export const financeiroService = {
           valor: valorFormatado,
           data_vencimento: dataVencimento.toISOString().split('T')[0],
           status: 'a_vencer',
-          tipo_cobranca: 'mensalidade'
+          tipo_cobranca: 'mensalidade',
+          turma_id: params.turma_id || null,
+          ano_letivo: params.ano_letivo || null
         })
       }
     }
@@ -276,7 +282,9 @@ export const financeiroService = {
       data_inicio: matricula.data_matricula,
       valor_mensalidade: Number(valorMensalidadeBase),
       valor_matricula: Number(matricula.valor_matricula),
-      unidade: matricula.serie_ano
+      unidade: matricula.serie_ano,
+      turma_id: matricula.turma_id,
+      ano_letivo: Number(matricula.ano_letivo)
     })
   },
 

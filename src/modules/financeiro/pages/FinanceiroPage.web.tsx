@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useRBACInit, useHasPermission } from '@/hooks/usePermissions'
 import { useCobrancas, useCriarCobranca, useMarcarComoPago, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,11 @@ export function FinanceiroPageWeb() {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
     resolver: zodResolver(cobrancaSchema),
   })
+
+  // Permissões
+  const canCreate = useHasPermission('financeiro.cobrancas.create')
+  const canPay = useHasPermission('financeiro.cobrancas.baixa_manual')
+  const canDelete = useHasPermission('financeiro.cobrancas.cancel')
 
   const alunoIdSelecionado = watch('aluno_id')
 
@@ -239,86 +245,88 @@ export function FinanceiroPageWeb() {
           </Select>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={(val) => { setDialogOpen(val); if(!val) reset(); }}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 text-white rounded-xl shadow-md px-6 font-bold gap-2">
-              <Plus className="h-5 w-5" /> Nova Cobrança
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Nova Cobrança</DialogTitle>
-              <DialogDescription>Gere um título financeiro para um aluno.</DialogDescription>
-            </DialogHeader>
-            
-            <div className="py-4">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
-                  <Select 
-                    value={alunoIdSelecionado} 
-                    onValueChange={(val) => setValue('aluno_id', val)}
-                    disabled={!!cobrancaEditando}
-                  >
-                    <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
-                      <SelectValue placeholder="Selecione o aluno" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {alunos?.map((aluno) => (
-                        <SelectItem key={aluno.id} value={aluno.id}>
-                          {aluno.nome_completo}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.aluno_id && <p className="text-xs text-rose-500 font-bold">{errors.aluno_id.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Descrição</label>
-                  <Input 
-                    {...register('descricao')}
-                    placeholder="Ex: Mensalidade Julho/2024"
-                    className="w-full h-11 border-slate-200 rounded-xl"
-                  />
-                  {errors.descricao && <p className="text-xs text-rose-500 font-bold">{errors.descricao.message}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+        {canCreate && (
+          <Dialog open={dialogOpen} onOpenChange={(val) => { setDialogOpen(val); if(!val) reset(); }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 text-white rounded-xl shadow-md px-6 font-bold gap-2">
+                <Plus className="h-5 w-5" /> Nova Cobrança
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nova Cobrança</DialogTitle>
+                <DialogDescription>Gere um título financeiro para um aluno.</DialogDescription>
+              </DialogHeader>
+              
+              <div className="py-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
+                    <Select 
+                      value={alunoIdSelecionado} 
+                      onValueChange={(val) => setValue('aluno_id', val)}
+                      disabled={!!cobrancaEditando}
+                    >
+                      <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
+                        <SelectValue placeholder="Selecione o aluno" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {alunos?.map((aluno) => (
+                          <SelectItem key={aluno.id} value={aluno.id}>
+                            {aluno.nome_completo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.aluno_id && <p className="text-xs text-rose-500 font-bold">{errors.aluno_id.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Descrição</label>
                     <Input 
-                      type="number"
-                      step="0.01"
-                      {...register('valor')}
+                      {...register('descricao')}
+                      placeholder="Ex: Mensalidade Julho/2024"
                       className="w-full h-11 border-slate-200 rounded-xl"
                     />
-                    {errors.valor && <p className="text-xs text-rose-500 font-bold">{errors.valor.message}</p>}
+                    {errors.descricao && <p className="text-xs text-rose-500 font-bold">{errors.descricao.message}</p>}
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Vencimento</label>
-                    <Input 
-                      type="date"
-                      {...register('data_vencimento')}
-                      className="w-full h-11 border-slate-200 rounded-xl"
-                    />
-                    {errors.data_vencimento && <p className="text-xs text-rose-500 font-bold">{errors.data_vencimento.message}</p>}
-                  </div>
-                </div>
 
-                <DialogFooter>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full"
-                  >
-                    {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar Cobrança'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </div>
-          </DialogContent>
-        </Dialog>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        {...register('valor')}
+                        className="w-full h-11 border-slate-200 rounded-xl"
+                      />
+                      {errors.valor && <p className="text-xs text-rose-500 font-bold">{errors.valor.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Vencimento</label>
+                      <Input 
+                        type="date"
+                        {...register('data_vencimento')}
+                        className="w-full h-11 border-slate-200 rounded-xl"
+                      />
+                      {errors.data_vencimento && <p className="text-xs text-rose-500 font-bold">{errors.data_vencimento.message}</p>}
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="w-full"
+                    >
+                      {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirmar Cobrança'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {/* Modal de Confirmação de Exclusão */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -434,18 +442,25 @@ export function FinanceiroPageWeb() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600"><MoreHorizontal className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl p-2 border-slate-100">
-                      {c.status !== 'pago' ? (
-                        <DropdownMenuItem onClick={() => handleBaixar(c.id)} className="text-emerald-600 font-bold focus:bg-emerald-50 rounded-lg">
-                          <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Pago
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => handleEstornar(c.id)} className="text-amber-600 font-bold focus:bg-amber-50 rounded-lg">
-                          <Undo2 className="mr-2 h-4 w-4" /> Estornar Pagamento
+                      {canPay && (
+                        c.status !== 'pago' ? (
+                          <DropdownMenuItem onClick={() => handleBaixar(c.id)} className="text-emerald-600 font-bold focus:bg-emerald-50 rounded-lg">
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como Pago
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleEstornar(c.id)} className="text-amber-600 font-bold focus:bg-amber-50 rounded-lg">
+                            <Undo2 className="mr-2 h-4 w-4" /> Estornar Pagamento
+                          </DropdownMenuItem>
+                        )
+                      )}
+                      {canDelete && (
+                        <DropdownMenuItem onClick={() => handleExcluir(c.id)} className="text-rose-600 font-bold focus:bg-rose-50 rounded-lg">
+                          <Trash2 className="mr-2 h-4 w-4" /> Excluir Cobrança
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => handleExcluir(c.id)} className="text-rose-600 font-bold focus:bg-rose-50 rounded-lg">
-                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Cobrança
-                      </DropdownMenuItem>
+                      {!canPay && !canDelete && (
+                         <DropdownMenuItem disabled className="text-slate-400 text-xs">Sem permissão de edição</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

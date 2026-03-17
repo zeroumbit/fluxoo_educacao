@@ -62,6 +62,7 @@ const PLATFORM_FUNCTIONS = [
   { value: 'frequencia', label: 'Frequência/Chamada' },
   { value: 'mural', label: 'Mural de Avisos' },
   { value: 'financeiro', label: 'Financeiro (Geral)' },
+  { value: 'financeiro_view', label: 'Financeiro (Somente Leitura)' },
   { value: 'contas_pagar', label: 'Contas a Pagar' },
   { value: 'config_financeira', label: 'Configuração Financeira' },
   { value: 'funcionarios', label: 'Funcionários' },
@@ -625,11 +626,11 @@ export function FuncionariosPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Função(ões)</TableHead>
-                      <TableHead>Admissão</TableHead>
-                      <TableHead>Acesso</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="pl-4">Nome</TableHead>
+                      <TableHead className="pl-4">Função(ões)</TableHead>
+                      <TableHead className="pl-4">Admissão</TableHead>
+                      <TableHead className="pl-4">Acesso</TableHead>
+                      <TableHead className="text-right pr-4">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -641,13 +642,13 @@ export function FuncionariosPage() {
 
                       return (
                         <TableRow key={f.id}>
-                          <TableCell>
+                          <TableCell className="pl-4">
                             <div>
                               <p className="font-bold">{f.nome_completo}</p>
                               {f.como_chamado && <p className="text-xs text-muted-foreground">{f.como_chamado}</p>}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="pl-4">
                             <div className="flex flex-wrap gap-1">
                               {funcoesList.length > 0
                                 ? funcoesList.map(fn => (
@@ -657,16 +658,16 @@ export function FuncionariosPage() {
                               }
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="pl-4 text-sm text-muted-foreground">
                             {f.data_admissao || '—'}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="pl-4">
                             {f.user_id
                               ? <Badge className="bg-emerald-100 text-emerald-800">Com acesso</Badge>
                               : <Badge variant="secondary">Sem acesso</Badge>
                             }
                           </TableCell>
-                          <TableCell className="text-right space-x-1">
+                          <TableCell className="text-right pr-4 space-x-1">
                             <Button
                                 size="sm"
                                 variant="outline"

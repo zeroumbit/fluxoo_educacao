@@ -484,7 +484,9 @@ export type Cobranca = {
   valor: number
   data_vencimento: string
   status: string
-  tipo_cobranca: 'mensalidade' | 'avulso' // Novo campo: tipo de cobrança
+  tipo_cobranca: 'mensalidade' | 'avulso'; // Novo campo: tipo de cobrança
+  turma_id?: string | null;
+  ano_letivo?: number | null;
   created_at: string
   updated_at: string
 }

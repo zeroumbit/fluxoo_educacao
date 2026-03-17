@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useRBACInit, useHasPermission } from '@/hooks/usePermissions'
 import { Plus, Loader2, Wallet, Edit2, Trash2, AlertTriangle, Check } from 'lucide-react'
 
 const schema = z.object({
@@ -38,6 +39,11 @@ export function ContasPagarPage() {
   const [contaParaPagar, setContaParaPagar] = useState<any | null>(null)
   const [recorrente, setRecorrente] = useState(false)
   const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) as any })
+
+  // Permissões
+  const canCreate = useHasPermission('financeiro.contas_pagar.create')
+  const canEdit = useHasPermission('financeiro.contas_pagar.edit')
+  const canPay = useHasPermission('financeiro.contas_pagar.pay')
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -97,22 +103,24 @@ export function ContasPagarPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div><h1 className="text-2xl font-bold tracking-tight">Contas a Pagar</h1><p className="text-muted-foreground">Controle despesas e fornecedores</p></div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-gradient-to-r from-red-600 to-rose-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button></DialogTrigger>
-          <DialogContent className="max-w-[800px]">
-            <DialogHeader><DialogTitle>Nova Conta a Pagar</DialogTitle></DialogHeader>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message as React.ReactNode}</p>}</div>
-              <div className="space-y-2"><Label>Favorecido / Fornecedor</Label><Input placeholder="Nome do fornecedor" {...form.register('favorecido')} /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Data de Vencimento *</Label><Input type="date" {...form.register('data_vencimento')} /></div>
-                <div className="space-y-2"><Label>Valor (R$) *</Label><Input type="number" step="0.01" {...form.register('valor')} /></div>
-              </div>
-              <div className="flex items-center gap-2"><Switch checked={recorrente} onCheckedChange={setRecorrente} /><Label>Cobrança Recorrente</Label></div>
-              <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Registrar'}</Button></div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        {canCreate && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button className="bg-gradient-to-r from-red-600 to-rose-600 shadow-md"><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button></DialogTrigger>
+            <DialogContent className="max-w-[800px]">
+              <DialogHeader><DialogTitle>Nova Conta a Pagar</DialogTitle></DialogHeader>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2"><Label>Nome da Conta *</Label><Input placeholder="Ex: Conta de Luz" {...form.register('nome')} />{form.formState.errors.nome && <p className="text-sm text-destructive">{form.formState.errors.nome.message as React.ReactNode}</p>}</div>
+                <div className="space-y-2"><Label>Favorecido / Fornecedor</Label><Input placeholder="Nome do fornecedor" {...form.register('favorecido')} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Data de Vencimento *</Label><Input type="date" {...form.register('data_vencimento')} /></div>
+                  <div className="space-y-2"><Label>Valor (R$) *</Label><Input type="number" step="0.01" {...form.register('valor')} /></div>
+                </div>
+                <div className="flex items-center gap-2"><Switch checked={recorrente} onCheckedChange={setRecorrente} /><Label>Cobrança Recorrente</Label></div>
+                <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Registrar'}</Button></div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Dialog de Edição */}
@@ -184,7 +192,7 @@ export function ContasPagarPage() {
                 <TableCell><Badge className={c.status === 'pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}>{c.status}</Badge></TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    {c.status !== 'pago' && (
+                    {canPay && c.status !== 'pago' && (
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -195,12 +203,17 @@ export function ContasPagarPage() {
                         <Check className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(c)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeletar(c)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleEditar(c)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canEdit && ( // Usando canEdit para deletar também simplificadamente ou criar canDelete se necessário no RBAC
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeletar(c)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {!canPay && !canEdit && <span className="text-[10px] text-muted-foreground italic px-2">Read-only</span>}
                   </div>
                 </TableCell>
               </TableRow>

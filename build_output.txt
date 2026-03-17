@@ -1,0 +1,7 @@
+
+> fluxoo-educacao@0.1.0 build
+> tsc -b && vite build
+
+src/layout/ShopLayout.tsx(30,29): error TS2339: Property 'endereco' does not exist on type 'AuthUser'.
+src/modules/academico/service.ts(63,79): error TS2339: Property 'id' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'id' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.

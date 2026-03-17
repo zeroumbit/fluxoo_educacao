@@ -93,7 +93,7 @@ function MetricCard({ label, value, sub, icon: Icon, iconBg, iconColor, warning,
         warning ? 'border-amber-100 bg-amber-50/20' : 'border-zinc-100 bg-white'
       } ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-6">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-[30px]">
         <CardTitle className={`text-[10px] font-black uppercase tracking-[0.2em] ${warning ? 'text-amber-600' : 'text-zinc-400'}`}>
           {label}
         </CardTitle>
@@ -326,7 +326,7 @@ export function DashboardPageWeb() {
         {radarEvasao.length > 0 && (
           <section className="lg:col-span-1 space-y-6">
             <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden">
-              <CardHeader className="p-8 pb-4">
+              <CardHeader className="p-8 pb-4 pt-[30px]">
                 <div className="flex items-center justify-between mb-2">
                    <div className="h-10 w-10 rounded-2xl bg-rose-100 flex items-center justify-center">
                       <AlertTriangle className="h-5 w-5 text-rose-600" />
@@ -348,7 +348,7 @@ export function DashboardPageWeb() {
         {/* Lado Direito: Comunicados e Atividade */}
         <section className={`${radarEvasao.length > 0 ? 'lg:col-span-2' : 'lg:col-span-2'} space-y-6`}>
           <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white">
-            <CardHeader className="p-8 flex flex-row items-center justify-between">
+            <CardHeader className="p-8 flex flex-row items-center justify-between pt-[30px]">
               <div>
                 <CardTitle className="text-2xl font-black text-zinc-900 tracking-tight">Mural de Comunicados</CardTitle>
                 <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-widest flex items-center gap-2">
