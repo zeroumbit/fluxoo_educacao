@@ -21,7 +21,8 @@ import {
   Globe,
   Lock,
   MessageSquare,
-  ShoppingBag
+  ShoppingBag,
+  Cookie
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -195,7 +196,7 @@ export function PortalLayout() {
         {/* 1. Menu Principal Superior - Desktop */}
         <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div 
+            <div
               className="flex items-center gap-3 cursor-pointer"
               onClick={() => navigate('/portal')}
             >
@@ -372,11 +373,14 @@ export function PortalLayout() {
               <div className="space-y-4">
                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institucional</p>
                 <div className="flex flex-col gap-3">
-                  <a href="#" target="_blank" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                  <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
                     <Globe size={14} /> Termos de Uso
                   </a>
-                  <a href="#" target="_blank" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                  <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
                     <Lock size={14} /> Política de Privacidade
+                  </a>
+                  <a href="/politica-cookies" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                    <Cookie size={14} /> Cookies
                   </a>
                 </div>
               </div>

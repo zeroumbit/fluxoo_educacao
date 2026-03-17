@@ -343,6 +343,7 @@ export function PortalDashboardPage() {
           </div>
         </div>
       ))}
+
       <motion.div 
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
@@ -404,7 +405,6 @@ export function PortalDashboardPage() {
                     Mensalidade: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)}
                   </Badge>
                 )}
-                {/* Exibe valor da matrícula APENAS se houver cobrança de matrícula pendente ou atrasada */}
                 {dashboard?.financeiro?.cobrancasMatricula?.some((c: any) => ['a_vencer', 'atrasado'].includes(c.status)) && (
                   <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-semibold px-2 py-0.5 rounded-lg text-[10px]">
                     Matrícula pendente
@@ -413,8 +413,8 @@ export function PortalDashboardPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 scrollbar-hide py-2 scroll-smooth">
-              <div className="flex gap-6 md:gap-10 flex-nowrap border-t border-slate-50 pt-8 min-w-max justify-start md:justify-center">
+            <div className="overflow-x-auto scrollbar-hide py-2 w-full h-fit">
+              <div className="flex gap-6 md:gap-10 border-t border-slate-50 pt-8 justify-start md:justify-center min-w-max">
                 <StudentActionIcon
                   icon={Calendar}
                   label="Agenda"
@@ -459,7 +459,11 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Card de Pagamento */}
-          <div className="bg-slate-900 p-8 rounded-2xl md:rounded-[2.5rem] text-white shadow-lg min-w-full md:min-w-[320px] relative overflow-hidden">
+          <motion.div 
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/portal/cobrancas')}
+            className="bg-slate-900 p-8 rounded-2xl md:rounded-[2.5rem] text-white shadow-lg min-w-full md:min-w-[320px] relative overflow-hidden cursor-pointer hover:bg-slate-800 transition-colors group"
+          >
              <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
                <QrCode size={100} />
              </div>
@@ -474,16 +478,19 @@ export function PortalDashboardPage() {
                 {fin?.totalAtrasadas ? `${fin.totalAtrasadas} pendentes` : 'Tudo em dia'}
              </p>
              <button 
-                onClick={() => setShowPixModal(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPixModal(true);
+                }}
                 className="w-full bg-teal-500 hover:bg-teal-400 py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 relative z-10 active:scale-95"
              >
                 <QrCode size={16} /> Pagar via PIX
              </button>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* SEÇÃO DO CONTRATO (ABAIXO DO NOME DO RESPONSÁVEL CARD) */}
+      {/* SEÇÃO DO CONTRATO */}
       <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:border-indigo-100 hover:shadow-md transition-all duration-300">
         <div className="flex items-center gap-5">
           <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-inner">
@@ -536,7 +543,7 @@ export function PortalDashboardPage() {
         </div>
       </div>
 
-      {/* 2. Estatísticas Rápidas (StatCards) - Dados reais do dashboard */}
+      {/* 2. Estatísticas Rápidas */}
       {dashboard && (
         <div className="flex flex-col md:flex-row gap-3">
           <StatCard

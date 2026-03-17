@@ -178,6 +178,13 @@ export function PortalLoginPage() {
               <p className="text-[10px] text-slate-400 text-center leading-relaxed font-semibold italic">
                 Primeiro acesso? Utilize a senha PIN fornecida pela instituição no ato da matrícula.
               </p>
+              <div className="mt-4 flex justify-center gap-4">
+                 <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors">Termos de Uso</a>
+                 <span className="text-slate-200">|</span>
+                 <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors">Privacidade</a>
+                 <span className="text-slate-200">|</span>
+                 <a href="/politica-cookies" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors">Cookies</a>
+              </div>
             </div>
           </form>
 

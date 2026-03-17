@@ -304,13 +304,33 @@ export function EscolaCadastroPage() {
                       </button>
                     </div>
                     {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
-                    <div className="flex items-center gap-4 pt-2">
-                      <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
-                        Termos de Uso
-                      </a>
-                      <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
-                        Políticas de Privacidade
-                      </a>
+                    <div className="flex flex-col gap-3 pt-3">
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        />
+                        <span className="text-xs text-zinc-600 leading-relaxed">
+                          Li e concordo com os{' '}
+                          <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
+                            Termos de Uso
+                          </a>
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
+                        />
+                        <span className="text-xs text-zinc-600 leading-relaxed">
+                          Li e concordo com as{' '}
+                          <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
+                            Políticas de Privacidade
+                          </a>
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>

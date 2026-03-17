@@ -62,6 +62,10 @@ import { PortalLojaPage } from '@/modules/portal/pages/PortalLojaPage'
 import { PortalDocumentosPage } from '@/modules/portal/pages/PortalDocumentosPage'
 import { PortalPerfilPage } from '@/modules/portal/pages/PortalPerfilPage'
 import { PortalAutorizacoesPage } from '@/modules/portal/pages/PortalAutorizacoesPage'
+import { TermosUsoPage } from '@/modules/portal/pages/TermosUsoPage'
+import { PrivacidadePage } from '@/modules/portal/pages/PrivacidadePage'
+import { CookiesPage } from '@/modules/portal/pages/CookiesPage'
+import { CookieConsent } from '@/components/shared/CookieConsent'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +110,11 @@ function App() {
 
             {/* Cadastro de Escola - Público */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
+
+            {/* Termos de Uso - Público */}
+            <Route path="/termos-de-uso" element={<TermosUsoPage />} />
+            <Route path="/politica-privacidade" element={<PrivacidadePage />} />
+            <Route path="/politica-cookies" element={<CookiesPage />} />
 
             {/* Super Admin Routes */}
             <Route
@@ -190,6 +199,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           <Toaster richColors position="top-right" />
+          <CookieConsent />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
