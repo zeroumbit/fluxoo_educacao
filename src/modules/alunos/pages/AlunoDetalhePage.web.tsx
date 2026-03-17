@@ -340,7 +340,9 @@ export function AlunoDetalhePageWeb() {
                 {(aluno as any).serie_ano && (
                   <Badge className="px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest bg-indigo-100 text-indigo-700 border-0 shadow-sm shadow-indigo-50">
                     <Users size={12} className="mr-1.5" />
-                    {(aluno as any).serie_ano} {(aluno as any).turma_nome ? `• ${(aluno as any).turma_nome}` : ''}
+                    {(aluno as any).turma_nome && (aluno as any).turma_nome.includes((aluno as any).serie_ano) 
+                      ? (aluno as any).turma_nome 
+                      : `${(aluno as any).serie_ano}${(aluno as any).turma_nome ? ` • ${(aluno as any).turma_nome}` : ''}`}
                   </Badge>
                 )}
                 {filial && (

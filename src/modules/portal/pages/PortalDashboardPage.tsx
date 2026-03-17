@@ -405,11 +405,15 @@ export function PortalDashboardPage() {
                     Mensalidade: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)}
                   </Badge>
                 )}
-                {dashboard?.financeiro?.cobrancasMatricula?.some((c: any) => ['a_vencer', 'atrasado'].includes(c.status)) && (
+                {alunoSelecionado?.status === 'ativo' ? (
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-semibold px-2 py-0.5 rounded-lg text-[10px]">
+                    Matriculado(a)
+                  </Badge>
+                ) : dashboard?.financeiro?.cobrancasMatricula?.some((c: any) => ['a_vencer', 'atrasado'].includes(c.status)) ? (
                   <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-semibold px-2 py-0.5 rounded-lg text-[10px]">
                     Matrícula pendente
                   </Badge>
-                )}
+                ) : null}
               </div>
             </div>
             
