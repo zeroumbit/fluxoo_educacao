@@ -31,6 +31,7 @@ interface AuthContextType {
   authUser: AuthUser | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signInPortal: (cpf: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
@@ -192,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           if (loadingLock) return
           loadingLock = true
+          setLoading(true)
           try {
             await loadUserProfile(session.user, session)
           } finally {
@@ -227,6 +229,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null }
   }
 
+  const signInPortal = async (cpf: string, password: string) => {
+    setLoading(true)
+    try {
+      const { portalService } = await import('@/modules/portal/service')
+      await portalService.loginPorCpf(cpf, password)
+      return { error: null }
+    } catch (error: any) {
+      setLoading(false)
+      return { error: error.message }
+    }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setAuthUser(null)
@@ -238,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ authUser, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ authUser, loading, signIn, signInPortal, signOut }}>
       {children}
     </AuthContext.Provider>
   )

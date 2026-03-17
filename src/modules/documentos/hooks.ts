@@ -10,6 +10,14 @@ export function useCriarTemplate() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (d: any) => documentosService.criarTemplate(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) })
 }
+export function useAtualizarTemplate() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, updates }: { id: string; updates: any }) => documentosService.atualizarTemplate(id, updates), onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) })
+}
+export function useExcluirTemplate() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (id: string) => documentosService.excluirTemplate(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) })
+}
 export function useDocumentosEmitidos() {
   const { authUser } = useAuth()
   return useQuery({ queryKey: ['docs_emitidos', authUser?.tenantId], queryFn: () => documentosService.listarEmitidos(authUser!.tenantId), enabled: !!authUser?.tenantId })

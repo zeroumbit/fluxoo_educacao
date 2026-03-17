@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { usePortalContext } from '../context'
+import { supabase } from '@/lib/supabase'
 import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento, useTransferenciasPortal, useResponderTransferencia } from '../hooks'
 import { ModalFichaAluno } from '../components/ModalFichaAluno'
+import { ModalContratoEscola } from '../components/ModalContratoEscola'
+import { PortalModalPage } from '../components/PortalModalPage'
+import { PortalAgendaPage } from './PortalAgendaPage'
+import { PortalFrequenciaPage } from './PortalFrequenciaPage'
+import { PortalBoletimPage } from './PortalBoletimPage'
+import { PortalLivrosPage } from './PortalLivrosPage'
+import { PortalFilaVirtualPage } from './PortalFilaVirtualPage'
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -31,7 +39,14 @@ import {
   ShieldAlert,
   ThumbsUp,
   ThumbsDown,
-  UserCircle
+  UserCircle,
+  Eye,
+  Download,
+  Printer,
+  Globe,
+  Lock,
+  MessageSquare,
+  ShoppingBag
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -79,11 +94,18 @@ const DashboardSkeleton = () => (
     </div>
   </div>
 )
-
 // --- COMPONENTES AUXILIARES ---
 
-const StatCard = ({ label, value, trend, icon: Icon, color }: { label: string, value: string, trend: string, icon: any, color: string }) => (
-  <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 flex-1">
+const StatCard = ({ label, value, trend, icon: Icon, color, onClick }: { label: string, value: string, trend: string, icon: any, color: string, onClick?: () => void }) => (
+  <motion.div 
+    whileHover={{ y: -5 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className={cn(
+      "bg-white p-4 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6 flex-1 cursor-pointer transition-all hover:shadow-md",
+      onClick && "hover:border-teal-100"
+    )}
+  >
     <div className="flex justify-between items-start">
       <div className={cn("w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center", color)}>
         <Icon size={18} className="text-white" />
@@ -96,24 +118,25 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: { label: string, v
       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
       <h4 className="text-xl md:text-2xl font-bold text-slate-800">{value}</h4>
     </div>
-  </div>
+  </motion.div>
 );
+
 
 const StudentActionIcon = ({ icon: Icon, label, colorName, onClick, badge }: { icon: any, label: string, colorName: string, onClick?: () => void, badge?: string }) => {
   return (
-    <motion.div 
-      whileTap={{ scale: 0.9 }} 
-      className="flex flex-col items-center gap-1.5 group cursor-pointer relative" 
+    <motion.div
+      whileTap={{ scale: 0.9 }}
+      className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
       onClick={() => {
         vibrate(20);
         if (onClick) onClick();
       }}
     >
       <div className={cn(
-        "w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all active:scale-95",
-        `bg-${colorName}-500/10`
+        "w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm",
+        `bg-${colorName}-100`
       )}>
-        <Icon size={20} className={`text-${colorName}-500`} />
+        <Icon size={20} className={`text-${colorName}-600`} />
       </div>
       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center max-w-[56px] leading-tight">
         {label}
@@ -217,7 +240,7 @@ const PixModal = ({ onClose, valor, configPix }: { onClose: () => void, valor: n
 };
 
 export function PortalDashboardPage() {
-  const { alunoSelecionado, isLoading: loadingCtx, isMultiAluno, vinculos, selecionarAluno } = usePortalContext()
+  const { responsavel, alunoSelecionado, isLoading: loadingCtx, isMultiAluno, vinculos, selecionarAluno } = usePortalContext()
   const { data: dashboard, isLoading } = useDashboardAluno()
   const { data: configPix } = useConfigPix()
   const { data: solicitacoes } = useSolicitacoesDocumento()
@@ -229,6 +252,39 @@ export function PortalDashboardPage() {
   const [modalTransferencia, setModalTransferencia] = useState<any>(null)
   const [recusando, setRecusando] = useState(false)
   const [motivoRecusa, setMotivoRecusa] = useState('')
+  const [showContratoModal, setShowContratoModal] = useState(false)
+  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+
+  // Estados para os novos Modais
+  const [modalOpen, setModalOpen] = useState({
+    agenda: false,
+    frequencia: false,
+    boletim: false,
+    livros: false,
+    fila: false
+  })
+
+  const openModal = (key: keyof typeof modalOpen) => {
+    vibrate(40)
+    setModalOpen(prev => ({ ...prev, [key]: true }))
+  }
+
+  // Carregar informações da escola para o contrato
+  useEffect(() => {
+    async function fetchEscola() {
+      if (!alunoSelecionado?.tenant_id) return
+      const { data } = await supabase.from('escolas').select('*').eq('id', alunoSelecionado.tenant_id).maybeSingle()
+      if (data) setEscolaInfo(data)
+    }
+    fetchEscola()
+  }, [alunoSelecionado?.tenant_id])
+
+  // Lógica de Primeiro Acesso - Abre contrato se não aceitou
+  useEffect(() => {
+    if (responsavel && !responsavel.termos_aceitos) {
+      setShowContratoModal(true)
+    }
+  }, [responsavel])
 
   if (loadingCtx || isLoading) {
     return <DashboardSkeleton />
@@ -363,20 +419,40 @@ export function PortalDashboardPage() {
                   icon={Calendar}
                   label="Agenda"
                   colorName="teal"
-                  onClick={() => navigate('/portal/agenda')}
+                  onClick={() => openModal('agenda')}
                 />
-                <StudentActionIcon icon={Activity} label="Frequência" colorName="emerald" onClick={() => navigate('/portal/frequencia')} />
-                <StudentActionIcon icon={FileText} label="Boletim" colorName="violet" onClick={() => navigate('/portal/boletim')} />
-                <StudentActionIcon icon={Library} label="Livros" colorName="indigo" onClick={() => navigate('/portal/livros')} />
-                <StudentActionIcon icon={Clock} label="Fila" colorName="blue" onClick={() => navigate('/portal/fila')} />
-                <StudentActionIcon 
-                  icon={UserCircle} 
-                  label="Perfil" 
-                  colorName="slate" 
+                <StudentActionIcon
+                  icon={BookOpen}
+                  label="Diário"
+                  colorName="emerald"
+                  onClick={() => openModal('frequencia')}
+                />
+                <StudentActionIcon
+                  icon={FileText}
+                  label="Boletim"
+                  colorName="violet"
+                  onClick={() => openModal('boletim')}
+                />
+                <StudentActionIcon
+                  icon={Library}
+                  label="Livros"
+                  colorName="indigo"
+                  onClick={() => openModal('livros')}
+                />
+                <StudentActionIcon
+                  icon={Clock}
+                  label="Fila"
+                  colorName="blue"
+                  onClick={() => openModal('fila')}
+                />
+                <StudentActionIcon
+                  icon={UserCircle}
+                  label="Perfil"
+                  colorName="slate"
                   onClick={() => {
                     vibrate(40);
                     setShowFichaModal(true);
-                  }} 
+                  }}
                 />
               </div>
             </div>
@@ -407,6 +483,59 @@ export function PortalDashboardPage() {
         </div>
       </motion.div>
 
+      {/* SEÇÃO DO CONTRATO (ABAIXO DO NOME DO RESPONSÁVEL CARD) */}
+      <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:border-indigo-100 hover:shadow-md transition-all duration-300">
+        <div className="flex items-center gap-5">
+          <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-inner">
+            <FileText className="h-7 w-7" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-800 tracking-tight">Contrato da Escola</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-0.5">Ano Letivo 2026 • Documento Oficial</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Button 
+            variant="ghost" 
+            onClick={() => {
+              vibrate(40);
+              setShowContratoModal(true);
+            }}
+            className="flex-1 md:flex-none h-12 px-6 rounded-xl bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white border border-slate-100 transition-all font-bold text-[10px] uppercase tracking-widest"
+          >
+            <Eye className="mr-2.5 h-4 w-4" /> Ver Contrato
+          </Button>
+          
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                vibrate(40);
+                setShowContratoModal(true);
+              }}
+              className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+              title="Baixar Contrato"
+            >
+              <Download className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                vibrate(40);
+                setShowContratoModal(true);
+              }}
+              className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+              title="Imprimir Contrato"
+            >
+              <Printer className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* 2. Estatísticas Rápidas (StatCards) - Dados reais do dashboard */}
       {dashboard && (
         <div className="flex flex-col md:flex-row gap-3">
@@ -416,6 +545,7 @@ export function PortalDashboardPage() {
             trend={`${solicitacoes?.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length || 0} em andamento`}
             icon={FileText}
             color="bg-teal-500"
+            onClick={() => navigate('/portal/documentos')}
           />
           <StatCard
             label="Total Pendente"
@@ -423,6 +553,7 @@ export function PortalDashboardPage() {
             trend={fin?.totalAtrasadas ? `${fin.totalAtrasadas} em atraso` : 'Tudo em dia'}
             icon={DollarSign}
             color="bg-amber-500"
+            onClick={() => navigate('/portal/cobrancas')}
           />
           <StatCard
             label="Avisos Recentes"
@@ -430,6 +561,7 @@ export function PortalDashboardPage() {
             trend="Últimos 30 dias"
             icon={Megaphone}
             color="bg-blue-500"
+            onClick={() => navigate('/portal/avisos')}
           />
         </div>
       )}
@@ -498,6 +630,17 @@ export function PortalDashboardPage() {
       <ModalFichaAluno 
         open={showFichaModal} 
         onOpenChange={setShowFichaModal} 
+      />
+
+      <ModalContratoEscola
+        open={showContratoModal}
+        onClose={() => setShowContratoModal(false)}
+        responsavel={responsavel}
+        tenantId={alunoSelecionado.tenant_id}
+        alunoNome={alunoSelecionado?.nome_completo}
+        escolaNome={escolaInfo?.razao_social}
+        escolaCnpj={escolaInfo?.cnpj}
+        escolaEndereco={escolaInfo ? `${escolaInfo.logradouro}, ${escolaInfo.numero} - ${escolaInfo.bairro}, ${escolaInfo.cidade}/${escolaInfo.estado}` : undefined}
       />
 
       {/* MODAL DE CONSENTIMENTO DE TRANSFERÊNCIA */}
@@ -620,6 +763,63 @@ export function PortalDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* MODAIS DE AÇÕES DO ALUNO */}
+      <PortalModalPage
+        open={modalOpen.agenda}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, agenda: open }))}
+        title="Agenda"
+        subtitle="Calendário Institucional"
+        icon={Calendar}
+        colorClass="bg-teal-600"
+      >
+        <PortalAgendaPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.frequencia}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, frequencia: open }))}
+        title="Diário"
+        subtitle="Frequência e Conteúdos"
+        icon={BookOpen}
+        colorClass="bg-emerald-600"
+      >
+        <PortalFrequenciaPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.boletim}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, boletim: open }))}
+        title="Boletim"
+        subtitle="Performance Acadêmica"
+        icon={FileText}
+        colorClass="bg-violet-600"
+      >
+        <PortalBoletimPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.livros}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, livros: open }))}
+        title="Biblioteca"
+        subtitle="Acervo de Materiais"
+        icon={Library}
+        colorClass="bg-indigo-600"
+      >
+        <PortalLivrosPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.fila}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, fila: open }))}
+        title="Fila Virtual"
+        subtitle="Chegada & Pick-up"
+        icon={Clock}
+        colorClass="bg-blue-600"
+      >
+        <PortalFilaVirtualPage hideHeader />
+      </PortalModalPage>
+
     </div>
   )
 }

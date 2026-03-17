@@ -304,6 +304,14 @@ export function EscolaCadastroPage() {
                       </button>
                     </div>
                     {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
+                    <div className="flex items-center gap-4 pt-2">
+                      <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
+                        Termos de Uso
+                      </a>
+                      <a href="#" target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
+                        Políticas de Privacidade
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}

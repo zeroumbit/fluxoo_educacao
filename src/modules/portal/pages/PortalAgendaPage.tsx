@@ -35,7 +35,7 @@ const AgendaSkeleton = () => (
   </div>
 )
 
-export function PortalAgendaPage() {
+export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { tenantId, isMultiAluno } = usePortalContext()
   
   const { data: eventos, isLoading } = useQuery({
@@ -64,16 +64,18 @@ export function PortalAgendaPage() {
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <BotaoVoltar />
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Agenda</h2>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Calendário Institucional</p>
+      {!hideHeader && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Agenda</h2>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Calendário Institucional</p>
+            </div>
           </div>
+          {isMultiAluno && <SeletorAluno />}
         </div>
-        {isMultiAluno && <SeletorAluno />}
-      </div>
+      )}
 
       {/* Timeline */}
       <div className="space-y-4">

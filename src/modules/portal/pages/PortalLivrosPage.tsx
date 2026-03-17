@@ -32,7 +32,7 @@ const LivrosSkeleton = () => (
     </div>
 )
 
-export function PortalLivrosPage() {
+export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const [busca, setBusca] = useState('')
   const [capaAberta, setCapaAberta] = useState<string | null>(null)
@@ -88,16 +88,18 @@ export function PortalLivrosPage() {
     <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
 
       {/* 1. Header & Filtro */}
-      <div className="flex flex-col gap-6 px-1">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <BotaoVoltar />
-            <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
+      {!hideHeader && (
+        <div className="flex flex-col gap-6 px-1">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <BotaoVoltar />
+              <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
+            </div>
           </div>
+          {isMultiAluno && <SeletorAluno />}
         </div>
-        {isMultiAluno && <SeletorAluno />}
-      </div>
+      )}
 
       {/* 2. Hero Section - Modern Search Gradient Shell */}
       <div className="bg-indigo-600 p-12 md:p-16 rounded-[56px] shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-10 items-center justify-between text-white mx-1 border border-indigo-500 shadow-indigo-200">

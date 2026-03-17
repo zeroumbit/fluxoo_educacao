@@ -49,6 +49,7 @@ import {
 } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useModelosAutorizacaoAdmin } from '@/modules/autorizacoes/hooks'
+import { ContratoTab } from '../components/ContratoTab'
 
 // Components Mobile
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
@@ -82,7 +83,7 @@ const DOCUMENT_TYPES = [
   { id: 'termo_material', label: 'Termo de Material', category: 'secretaria', icon: FileText },
 ]
 
-type Tab = 'central' | 'historico' | 'solicitacoes' | 'autorizacoes' | 'modelos'
+type Tab = 'central' | 'contrato' | 'historico' | 'solicitacoes' | 'autorizacoes' | 'modelos'
 
 export function DocumentosPageMobile() {
   const { authUser } = useAuth()
@@ -110,6 +111,28 @@ export function DocumentosPageMobile() {
       return matchCategory && matchSearch
     })
   }, [selectedCategory, searchTerm])
+
+  const dedupedEmitidos = useMemo(() => {
+    if (!emitidos) return []
+    const seen = new Set()
+    return emitidos.filter((doc: any) => {
+      const key = `${doc.titulo}-${doc.aluno_id}-${doc.conteudo_final}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [emitidos])
+
+  const dedupedTemplates = useMemo(() => {
+    if (!templates) return []
+    const seen = new Set()
+    return templates.filter((t: any) => {
+      const key = `${t.titulo}-${t.tipo}-${t.corpo_html}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [templates])
 
   const getPreviewData = (alunoId: string) => {
     const aluno = alunos?.find((a: any) => a.id === alunoId) as any
@@ -212,6 +235,7 @@ export function DocumentosPageMobile() {
         <div className="flex gap-2 py-3 min-w-max">
             {[
               { id: 'central', label: 'Emitir', icon: FileText },
+              { id: 'contrato', label: 'Contrato', icon: FileText },
               { id: 'historico', label: 'Histórico', icon: History },
               { id: 'solicitacoes', label: 'Solicitações', icon: Inbox },
               { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck },
@@ -319,20 +343,26 @@ export function DocumentosPageMobile() {
             </div>
           )}
 
+          {activeTab === 'contrato' && (
+            <div className="pb-12">
+              <ContratoTab />
+            </div>
+          )}
+
           {activeTab === 'historico' && (
             <div className="space-y-4">
-               {loadingEmitidos ? (
-                 <div className="space-y-4">
-                    {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
-                 </div>
-               ) : !emitidos?.length ? (
-                 <div className="py-20 text-center flex flex-col items-center">
+                {loadingEmitidos ? (
+                  <div className="space-y-4">
+                     {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
+                  </div>
+                ) : !dedupedEmitidos?.length ? (
+                  <div className="py-20 text-center flex flex-col items-center">
                     <History className="h-12 w-12 text-slate-200 mb-4" />
                     <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Nenhum documento emitido</h3>
                     <p className="text-slate-500 text-sm mt-2 max-w-[240px]">Os documentos gerados pelo painel aparecerão aqui.</p>
                  </div>
                ) : (
-                 emitidos.map((doc: any, idx: number) => (
+                 dedupedEmitidos.map((doc: any, idx: number) => (
                     <motion.div key={doc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
                       <NativeCard className="p-4 flex flex-col gap-4">
                         <div className="flex justify-between items-start">
@@ -491,14 +521,14 @@ export function DocumentosPageMobile() {
                  <div className="space-y-4">
                     {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
                  </div>
-               ) : !templates?.length ? (
+               ) : !dedupedTemplates?.length ? (
                  <div className="py-20 text-center flex flex-col items-center">
                     <Settings2 className="h-12 w-12 text-slate-200 mb-4" />
                     <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Nenhum modelo customizado</h3>
                     <p className="text-slate-500 text-sm mt-2 max-w-[240px]">Crie modelos de documentos personalizados para sua escola.</p>
                  </div>
                ) : (
-                 templates.map((t: any, idx: number) => (
+                 dedupedTemplates.map((t: any, idx: number) => (
                     <motion.div key={idx} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
                       <NativeCard className="p-4 flex items-center justify-between group">
                         <div className="flex items-center gap-4">

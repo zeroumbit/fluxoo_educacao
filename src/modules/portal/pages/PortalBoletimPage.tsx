@@ -69,7 +69,7 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
   )
 }
 
-export function PortalBoletimPage() {
+export function PortalBoletimPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: boletins, isLoading } = useBoletins()
   
@@ -114,44 +114,46 @@ export function PortalBoletimPage() {
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
 
       {/* Header & Filtros */}
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-3">
-            <BotaoVoltar />
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Boletim Escolar</h2>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Performance Acadêmica</p>
+      {!hideHeader && (
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3">
+              <BotaoVoltar />
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800">Boletim Escolar</h2>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Performance Acadêmica</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Select value={anoSelecionado} onValueChange={v => { vibrate(15); setAnoSelecionado(v); }}>
+                <SelectTrigger className="w-24 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={bimestreSelecionado} onValueChange={v => { vibrate(15); setBimestreSelecionado(v); }}>
+                <SelectTrigger className="w-36 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="1">1º Bimestre</SelectItem>
+                  <SelectItem value="2">2º Bimestre</SelectItem>
+                  <SelectItem value="3">3º Bimestre</SelectItem>
+                  <SelectItem value="4">4º Bimestre</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-
-          <div className="flex gap-2">
-            <Select value={anoSelecionado} onValueChange={v => { vibrate(15); setAnoSelecionado(v); }}>
-              <SelectTrigger className="w-24 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={bimestreSelecionado} onValueChange={v => { vibrate(15); setBimestreSelecionado(v); }}>
-              <SelectTrigger className="w-36 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="1">1º Bimestre</SelectItem>
-                <SelectItem value="2">2º Bimestre</SelectItem>
-                <SelectItem value="3">3º Bimestre</SelectItem>
-                <SelectItem value="4">4º Bimestre</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isMultiAluno && <SeletorAluno />}
         </div>
-        {isMultiAluno && <SeletorAluno />}
-      </div>
+      )}
 
       {/* Stats */}
       {boletinsFiltrados.length > 0 && (

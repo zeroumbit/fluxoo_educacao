@@ -28,7 +28,7 @@ const FrequenciaSkeleton = () => (
   </div>
 )
 
-export function PortalFrequenciaPage() {
+export function PortalFrequenciaPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
   const { data: frequencias, isLoading } = useFrequenciaAluno()
 
@@ -63,16 +63,18 @@ export function PortalFrequenciaPage() {
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <BotaoVoltar />
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Frequência</h2>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Histórico de Assiduidade</p>
+      {!hideHeader && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Frequência</h2>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Histórico de Assiduidade</p>
+            </div>
           </div>
+          {isMultiAluno && <SeletorAluno />}
         </div>
-        {isMultiAluno && <SeletorAluno />}
-      </div>
+      )}
 
       {/* Resumo */}
       <div className="bg-slate-900 rounded-2xl md:rounded-3xl p-5 md:p-8 text-white relative overflow-hidden shadow-lg">

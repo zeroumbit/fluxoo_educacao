@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
   useModelosAutorizacaoAdmin,
@@ -132,7 +132,20 @@ export function AutorizacoesAdminTab() {
     }
   }
 
-  const modelosFiltrados = (modelos as Modelo[]).filter((m) => {
+  const dedupedModelos = useMemo(() => {
+    if (!modelos) return []
+    const seen = new Set()
+    // Ordenamos por ID descendente (se for UUID v4 ou similar pode não ser temporal, mas assumindo que o retorno do hook já vem ordenado ou queremos apenas um)
+    // Na verdade, filtramos mantendo o primeiro que encontrarmos com a mesma chave
+    return (modelos as Modelo[]).filter((m) => {
+      const key = `${m.titulo}-${m.categoria}-${m.tenant_id}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [modelos])
+
+  const modelosFiltrados = dedupedModelos.filter((m) => {
     const matchBusca = m.titulo.toLowerCase().includes(busca.toLowerCase())
     const matchCategoria = filtroCategoria === 'todas' || m.categoria === filtroCategoria
     return matchBusca && matchCategoria

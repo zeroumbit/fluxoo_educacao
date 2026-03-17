@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useTemplates, useCriarTemplate, useDocumentosEmitidos, useEmitirDocumento, useSolicitacoesDocumento, useAtualizarSolicitacao, useVincularDocumentoSolicitacao } from '../hooks'
+import { useTemplates, useCriarTemplate, useAtualizarTemplate, useExcluirTemplate, useDocumentosEmitidos, useEmitirDocumento, useSolicitacoesDocumento, useAtualizarSolicitacao, useVincularDocumentoSolicitacao } from '../hooks'
 import { useAlunos, useAluno } from '@/modules/alunos/hooks'
-import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
+import { useMatriculaAtivaDoAluno, useHistoricoNotasAluno } from '@/modules/academico/hooks'
+import { useEscola } from '@/modules/escolas/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,12 +24,14 @@ import {
   Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search,
   FileCheck, GraduationCap, Scale, HeartPulse, LogOut,
   Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity,
-  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package, ShieldCheck
+  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package, ShieldCheck,
+  AlertTriangle
 } from 'lucide-react'
 import * as Docs from '../DocumentEngineComponents'
 import { usePdf } from '@/hooks/usePdf'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
 import { AutorizacoesAdminTab } from '@/modules/autorizacoes/components/AutorizacoesAdminTab'
+import { ContratoTab } from '../components/ContratoTab'
 
 const templateSchema = z.object({
   tipo: z.string().min(1),
@@ -68,11 +71,15 @@ export function DocumentosPage() {
   const atualizarSolicitacao = useAtualizarSolicitacao()
   const vincularDocumento = useVincularDocumentoSolicitacao()
   const criarTemplate = useCriarTemplate()
+  const atualizarTemplate = useAtualizarTemplate()
+  const excluirTemplate = useExcluirTemplate()
   const emitir = useEmitirDocumento()
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null)
   const [selectedAluno, setSelectedAluno] = useState('')
   const { data: matriculaAtiva } = useMatriculaAtivaDoAluno(selectedAluno)
-  const { data: alunoCompleto } = useAluno(selectedAluno) // Carrega dados completos para o preview e emissão
+  const { data: alunoCompleto } = useAluno(selectedAluno)
+  const { data: historicoNotas } = useHistoricoNotasAluno(selectedAluno)
+  const { data: escola } = useEscola(authUser?.tenantId || '')
 
   const [activeTab, setActiveTab] = useState('central')
   const [openTemplate, setOpenTemplate] = useState(false)
@@ -81,15 +88,81 @@ export function DocumentosPage() {
   const [docParaVisualizar, setDocParaVisualizar] = useState<any>(null)
   const [editando, setEditando] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [templateParaExcluir, setTemplateParaExcluir] = useState<{ id: string; titulo: string } | null>(null)
 
   const form = useForm({ resolver: zodResolver(templateSchema) })
 
   const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos || loadingSolicitacoes
 
+  // Desduplicação de Histórico (Mantém apenas o mais recente se forem idênticos)
+  const dedupedEmitidos = useMemo(() => {
+    if (!emitidos) return []
+    const seen = new Set()
+    return emitidos.filter((doc: any) => {
+      const key = `${doc.titulo}-${doc.aluno_id}-${doc.conteudo_final}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [emitidos])
+
+  // Desduplicação de Templates
+  const dedupedTemplates = useMemo(() => {
+    if (!templates) return []
+    const seen = new Set()
+    return templates.filter((t: any) => {
+      const key = `${t.titulo}-${t.tipo}-${t.corpo_html}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [templates])
+
   const abrirNovoTemplate = () => {
     setEditando(null)
     form.reset({ tipo: '', titulo: '', corpo_html: 'Conteúdo padrão...' })
     setOpenTemplate(true)
+  }
+
+  const handleEditarTemplate = (template: any) => {
+    setEditando(template)
+    form.reset({ tipo: template.tipo, titulo: template.titulo, corpo_html: template.corpo_html })
+    setOpenTemplate(true)
+  }
+
+  const handleExcluirTemplate = (template: any) => {
+    setTemplateParaExcluir({ id: template.id, titulo: template.titulo })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmarExclusaoTemplate = async () => {
+    if (!templateParaExcluir) return
+    try {
+      await excluirTemplate.mutateAsync(templateParaExcluir.id)
+      toast.success('Template excluído com sucesso!')
+      setDeleteDialogOpen(false)
+      setTemplateParaExcluir(null)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao excluir template')
+    }
+  }
+
+  const handleSalvarTemplate = async (data: any) => {
+    if (!authUser) return
+    try {
+      if (editando?.id) {
+        await atualizarTemplate.mutateAsync({ id: editando.id, updates: data })
+        toast.success('Template atualizado com sucesso!')
+      } else {
+        await criarTemplate.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+        toast.success('Template criado com sucesso!')
+      }
+      setOpenTemplate(false)
+      setEditando(null)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar template')
+    }
   }
 
   const getPreviewData = (alunoId: string) => {
@@ -125,9 +198,19 @@ export function DocumentosPage() {
       serieAno: matriculaAtiva?.serie_ano || '—',
       dataMatricula: matriculaAtiva?.data_matricula ? new Date(matriculaAtiva.data_matricula + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
       valorMatricula: matriculaAtiva?.valor_matricula || 0,
-      hashValidacao: 'VIVID-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      hashValidacao: 'DOC-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
       parentesco: 'Responsável',
-      responsavelFinanceiro: financeiroRel?.nome || 'Principal'
+      responsavelFinanceiro: financeiroRel?.nome || 'Principal',
+      notas: historicoNotas ? historicoNotas.flatMap((b: any) => 
+        (b.disciplinas || []).map((d: any) => ({
+          disciplina: `${d.disciplina} (${b.bimestre}º Bim / ${b.ano_letivo})`,
+          media: d.nota,
+          faltas: d.faltas || 0,
+          situacao: d.nota >= 7 ? 'Aprovado' : 'Em Recuperação'
+        }))
+      ) : [],
+      sintesePedagogica: historicoNotas?.[0]?.observacoes || '',
+      parecerFinal: historicoNotas?.some((b: any) => b.bimestre === 4) ? 'Aprovado para a série seguinte' : 'Em curso'
     }
   }
 
@@ -335,10 +418,10 @@ export function DocumentosPage() {
         <div className="flex justify-between items-start mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center print:bg-teal-500">
-              <span className="text-white font-black text-xl">F</span>
+              <span className="text-white font-black text-xl">{escola?.razao_social?.[0] || 'E'}</span>
             </div>
             <div>
-              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Fluxoo Educação</h2>
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">{escola?.razao_social || 'Instituição de Ensino'}</h2>
               <h1 className="text-lg font-black tracking-tighter text-slate-800">{DOCUMENT_TYPES.find(d => d.id === type)?.label}</h1>
             </div>
           </div>
@@ -366,8 +449,8 @@ export function DocumentosPage() {
         {/* Rodapé Digital Fluxoo */}
         <div className="print-footer mt-12 pt-8 border-t border-slate-100 flex flex-col items-center gap-4 opacity-40 print:opacity-100">
           <div className="w-32 h-[1px] bg-slate-300" />
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assinatura Digital Fluxoo</p>
-          <p className="text-[8px] font-mono text-slate-300">{data?.hashValidacao || 'VALID-ID-8822'}</p>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Autenticação Digital • {escola?.razao_social || 'Instituição'}</p>
+          <p className="text-[8px] font-mono text-slate-300">{data?.hashValidacao || '—'}</p>
         </div>
       </div>
     )
@@ -398,19 +481,22 @@ export function DocumentosPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-3 py-1 bg-teal-50 text-[10px] font-black text-teal-600 uppercase tracking-widest rounded-full border border-teal-100">
               Vivid Document Engine v2.0
             </span>
           </div>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-800">Cental de Documentos</h1>
+          <h1 className="text-4xl font-black tracking-tighter text-slate-800 whitespace-nowrap">Central de Documentos</h1>
           <p className="text-slate-500 text-sm font-medium">Emissão inteligente e automação de documentos oficiais.</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-slate-100/50 p-1 rounded-2xl w-fit">
           <TabsList className="bg-transparent h-12 gap-1 border-0">
+            <TabsTrigger value="contrato" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5" /> Contrato
+            </TabsTrigger>
             <TabsTrigger value="autorizacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5" /> Autorizações
             </TabsTrigger>
@@ -436,11 +522,16 @@ export function DocumentosPage() {
       </div>
 
       <Tabs value={activeTab} className="mt-8">
+        <TabsContent value="contrato" className="mt-0">
+          <ContratoTab />
+        </TabsContent>
+
         <TabsContent value="autorizacoes" className="mt-0">
           <AutorizacoesAdminTab />
         </TabsContent>
 
         <TabsContent value="central" className="mt-0 space-y-8">
+          {/* Documentos Padrão */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {DOCUMENT_TYPES.map((doc) => (
@@ -482,6 +573,43 @@ export function DocumentosPage() {
               </div>
             </div>
           </div>
+
+          {/* Templates Personalizados da Escola */}
+          {dedupedTemplates && dedupedTemplates.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-teal-600" />
+                <h2 className="text-lg font-semibold">Modelos Personalizados</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {dedupedTemplates.map((template: any) => {
+                  const IconComponent = DOCUMENT_TYPES.find(d => d.id === template.tipo)?.icon || FileText
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => { setSelectedDocType(template.tipo); setOpenEmitir(true); }}
+                      className="group relative bg-white border border-slate-100 p-6 rounded-[32px] text-left hover:border-teal-200 hover:shadow-2xl hover:shadow-teal-500/10 transition-all duration-500 overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                        <IconComponent className="w-12 h-12 text-teal-500" />
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-teal-50 group-hover:bg-teal-100 transition-colors">
+                        <IconComponent className="w-6 h-6 text-teal-600" />
+                      </div>
+                      <p className="text-[9px] font-black text-teal-600 uppercase tracking-widest mb-1">PERSONALIZADO</p>
+                      <h3 className="font-bold text-slate-800 leading-tight pr-8">{template.titulo}</h3>
+                      <p className="text-[10px] text-slate-400 mt-2">
+                        {tipoLabels[template.tipo] || 'Modelo customizado'}
+                      </p>
+                      <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-teal-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                        Emitir agora <ArrowRight className="w-3 h-3" />
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="templates" className="mt-0">
@@ -512,7 +640,7 @@ export function DocumentosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {templates?.filter((t: any) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase())).map((t: any) => (
+                  {dedupedTemplates?.filter((t: any) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase())).map((t: any) => (
                     <TableRow key={t.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                       <TableCell className="font-bold text-slate-700 pl-8">{t.titulo}</TableCell>
                       <TableCell>
@@ -522,10 +650,20 @@ export function DocumentosPage() {
                       </TableCell>
                       <TableCell className="text-right pr-8">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-indigo-50 hover:text-indigo-600" onClick={() => { setEditando(t); form.reset(t); setOpenTemplate(true); }}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="w-8 h-8 rounded-lg hover:bg-indigo-50 hover:text-indigo-600" 
+                            onClick={() => handleEditarTemplate(t)}
+                          >
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-red-50 hover:text-red-600">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="w-8 h-8 rounded-lg hover:bg-red-50 hover:text-red-600"
+                            onClick={() => handleExcluirTemplate(t)}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -551,7 +689,7 @@ export function DocumentosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {emitidos?.map((d: any) => (
+                  {dedupedEmitidos?.map((d: any) => (
                     <TableRow key={d.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                       <TableCell className="font-bold text-slate-700 pl-8">{d.titulo}</TableCell>
                       <TableCell className="text-slate-500 font-medium">{d.aluno?.nome_completo || '—'}</TableCell>
@@ -787,11 +925,7 @@ export function DocumentosPage() {
           </DialogHeader>
 
           <ScrollArea className="flex-1 p-8">
-            <form id="template-form" className="space-y-6" onSubmit={form.handleSubmit((data) => {
-              if (!authUser) return;
-              criarTemplate.mutate({ ...data, tenant_id: authUser.tenantId });
-              setOpenTemplate(false);
-            })}>
+            <form className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo Base</Label>
@@ -820,12 +954,74 @@ export function DocumentosPage() {
 
           <DialogFooter className="p-8 pt-4 border-t bg-slate-50/50 flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={() => setOpenTemplate(false)} className="font-bold text-slate-400">Cancelar</Button>
-            <Button form="template-form" type="submit" className="bg-teal-500 hover:bg-teal-600 font-bold px-8 rounded-xl h-12 shadow-lg shadow-teal-500/20">
-              Salvar Template
+            <Button 
+              type="button" 
+              onClick={form.handleSubmit(handleSalvarTemplate)}
+              className="bg-teal-500 hover:bg-teal-600 font-bold px-8 rounded-xl h-12 shadow-lg shadow-teal-500/20"
+            >
+              {editando ? 'Salvar Alterações' : 'Salvar Template'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão de Template */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-rose-600" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-slate-900">Excluir Template</DialogTitle>
+            </div>
+            <DialogDescription className="text-slate-500 font-medium pt-2">
+              Você está prestes a excluir o template <strong className="text-slate-700">"{templateParaExcluir?.titulo}"</strong>. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-bold text-rose-800">Atenção!</p>
+                <p className="text-rose-700 font-medium mt-1">
+                  Todos os dados relacionados a este template serão removidos permanentemente.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={excluirTemplate.isPending}
+              className="flex-1 sm:flex-none h-11 font-bold border-slate-200 hover:bg-slate-50"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmarExclusaoTemplate}
+              disabled={excluirTemplate.isPending}
+              className="flex-1 sm:flex-none h-11 font-bold bg-rose-600 text-white hover:bg-rose-700"
+            >
+              {excluirTemplate.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={openVisualizar} onOpenChange={setOpenVisualizar}>
         <DialogContent className="max-w-[1000px] w-[95vw] h-[90vh] p-0 overflow-hidden border-none rounded-[32px] flex flex-col printing-dialog">
           <DialogHeader className="p-8 pb-4 flex flex-row items-center justify-between border-b bg-white">

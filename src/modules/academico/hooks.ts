@@ -130,3 +130,12 @@ export function useUpsertNota() {
     }
   })
 }
+
+export function useHistoricoNotasAluno(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['historico_notas_aluno', authUser?.tenantId, alunoId],
+    queryFn: () => academicoService.listarHistoricoNotasAluno(authUser!.tenantId, alunoId),
+    enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}

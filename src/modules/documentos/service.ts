@@ -12,6 +12,21 @@ export const documentosService = {
     if (error) throw error
     return data
   },
+  async atualizarTemplate(id: string, updates: any) {
+    const { data, error } = await (supabase.from('documento_templates' as any) as any)
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+  async excluirTemplate(id: string) {
+    const { error } = await (supabase.from('documento_templates' as any) as any)
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
   async listarEmitidos(tenantId: string) {
     const { data, error } = await (supabase.from('documentos_emitidos' as any) as any)
       .select('*, template:documento_templates(titulo, tipo), aluno:alunos(nome_completo)')

@@ -28,8 +28,7 @@ const FilaSkeleton = () => (
     </div>
   </div>
 )
-
-export function PortalFilaVirtualPage() {
+export function PortalFilaVirtualPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, tenantId, responsavel } = usePortalContext()
   const { data: historicoFila, isLoading } = useFilaVirtual()
   
@@ -111,15 +110,17 @@ export function PortalFilaVirtualPage() {
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <BotaoVoltar />
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Fila Virtual</h2>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Chegada & Pick-up</p>
+      {!hideHeader && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div className="flex flex-col gap-0.5">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Fila Virtual</h2>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Chegada & Pick-up</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         

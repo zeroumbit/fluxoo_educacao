@@ -106,7 +106,7 @@ export const FichaIndividualContent = ({ data }: { data: any }) => {
         <h3 className="text-lg font-black tracking-tighter text-slate-800 mb-4">Síntese Pedagógica</h3>
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Observações do Professor</p>
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          {data?.sintesePedagogica || 'Nenhuma observação registrada para o período atual. O aluno tem demonstrado desenvolvimento adequado em relação às expectativas de aprendizagem estabelecidas para a etapa.'}
+          {data?.sintesePedagogica || '—'}
         </p>
       </div>
 
@@ -115,15 +115,15 @@ export const FichaIndividualContent = ({ data }: { data: any }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Integração Escolar</p>
-            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.integracao || 'Adequada'}</p>
+            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.integracao || '—'}</p>
           </div>
           <div>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Disciplina e Conduta</p>
-            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.disciplina || 'Excelente'}</p>
+            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.disciplina || '—'}</p>
           </div>
           <div>
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Organização Pessoal</p>
-            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.organizacao || 'Em desenvolvimento'}</p>
+            <p className="text-sm font-bold text-slate-700">{data?.socioemocional?.organizacao || '—'}</p>
           </div>
         </div>
       </div>
@@ -165,12 +165,7 @@ export const DeclaracaoMatriculaContent = ({ data }: { data: any }) => {
 // 4. Histórico Escolar
 // ==========================================
 export const HistoricoEscolarContent = ({ data }: { data: any }) => {
-  const notas = data?.notas || [
-    { disciplina: 'Língua Portuguesa', media: '8.5', faltas: 2, situacao: 'Aprovado' },
-    { disciplina: 'Matemática', media: '7.0', faltas: 4, situacao: 'Aprovado' },
-    { disciplina: 'Ciências', media: '9.0', faltas: 0, situacao: 'Aprovado' },
-    { disciplina: 'História', media: '8.0', faltas: 1, situacao: 'Aprovado' }
-  ];
+  const notas = data?.notas || [];
 
   return (
     <div className="space-y-6">
@@ -204,7 +199,7 @@ export const HistoricoEscolarContent = ({ data }: { data: any }) => {
       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Parecer Final do Conselho de Classe</p>
         <p className="text-sm text-slate-600 leading-relaxed text-justify">
-          {data?.parecerFinal || 'O aluno foi considerado APTO e APROVADO para prosseguimento regular de seus estudos no período letivo subsequente.'}
+          {data?.parecerFinal || '—'}
         </p>
       </div>
     </div>
@@ -232,7 +227,7 @@ export const TransferenciaContent = ({ data }: { data: any }) => {
 
       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Status Interno de Documentação</p>
-        <p className="text-sm font-bold text-slate-700">Aguardando emissão do dossiê final</p>
+        <p className="text-sm font-bold text-slate-700">{data?.statusDocumentacao || '—'}</p>
       </div>
     </div>
   );
@@ -275,7 +270,7 @@ export const DesistenciaContent = ({ data }: { data: any }) => {
 // 7. Autorização para Saída Antecipada
 // ==========================================
 export const SaidaAntecipadaContent = ({ data }: { data: any }) => {
-  const pessoasAutorizadas = data?.pessoasAutorizadasSaida || ['Maria Silva (Avó)', 'João Mendes (Tio)'];
+  const pessoasAutorizadas = data?.pessoasAutorizadasSaida || [];
 
   return (
     <div className="space-y-6">

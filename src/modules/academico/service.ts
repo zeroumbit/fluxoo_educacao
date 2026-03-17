@@ -387,6 +387,18 @@ export const academicoService = {
     }
   },
 
+  async listarHistoricoNotasAluno(tenantId: string, alunoId: string) {
+    const { data, error } = await (supabase.from('boletins' as any) as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('aluno_id', alunoId)
+      .order('ano_letivo', { ascending: false })
+      .order('bimestre', { ascending: true })
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
   // SELOS
   async listarSelos(tenantId: string) {
     const { data, error } = await (supabase.from('selos' as any) as any)

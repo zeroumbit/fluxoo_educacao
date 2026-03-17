@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, Loader2, Eye, EyeOff, Lock, Check } from 'lucide-react'
 import { validarEmail } from '@/lib/validacoes'
+import { useAuth } from './AuthContext'
 
 const loginSchema = z.object({
   email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),
@@ -19,8 +20,18 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { authUser, loading, signIn } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Redireciona se já estiver logado
+  useEffect(() => {
+    if (!loading && authUser) {
+      if (authUser.role === 'super_admin') navigate('/admin/dashboard', { replace: true })
+      else if (authUser.role === 'responsavel') navigate('/portal', { replace: true })
+      else navigate('/dashboard', { replace: true })
+    }
+  }, [authUser, loading, navigate])
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -28,23 +39,17 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setError(null)
-    const { data: { session }, error } = await supabase.auth.signInWithPassword({ 
-      email: data.email, 
-      password: data.password 
-    })
+    const result = await signIn(data.email, data.password)
 
-    if (error) {
-      setError(error.message)
+    if (result.error) {
+      setError(result.error)
       return
     }
 
-    const role = session?.user?.user_metadata?.role
-    if (role === 'super_admin' || data.email.includes('fluxoo.edu')) {
+    // A navegação agora pode ser feita baseada no papel ou deixada para o RootRedirect
+    // Mas para uma experiência mais rápida, podemos tentar inferir aqui
+    if (data.email.includes('fluxoo.edu')) {
       navigate('/admin/dashboard')
-    } else if (role === 'responsavel') {
-      navigate('/portal')
-    } else {
-      navigate('/dashboard')
     }
   }
 

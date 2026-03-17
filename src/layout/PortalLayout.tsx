@@ -17,7 +17,11 @@ import {
   ChevronDown,
   Menu,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Globe,
+  Lock,
+  MessageSquare,
+  ShoppingBag
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -358,15 +362,51 @@ export function PortalLayout() {
         </div>
  
         {/* 4. Footer Institucional - Somente Desktop/Large */}
-        <footer className="bg-white border-t border-slate-100 pt-20 pb-20 lg:pb-40 px-8 hidden md:block">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16">
-            <div className="space-y-6">
+        <footer className="bg-white border-t border-slate-100 pt-20 pb-12 lg:pb-32 px-8 hidden md:block">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+            <div className="space-y-6 max-w-xs">
               <h2 className="text-2xl font-black italic tracking-tighter">FLUXOO<span className="text-teal-500">EDU</span></h2>
-              <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                Inovação na comunicação escolar, trazendo transparência e praticidade para o dia a dia da sua família.
-              </p>
             </div>
-            <div className="space-y-6 text-center md:text-right flex flex-col justify-end">
+
+            <div className="flex flex-wrap gap-x-12 gap-y-6 flex-1 justify-center md:justify-start">
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Institucional</p>
+                <div className="flex flex-col gap-3">
+                  <a href="#" target="_blank" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                    <Globe size={14} /> Termos de Uso
+                  </a>
+                  <a href="#" target="_blank" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                    <Lock size={14} /> Política de Privacidade
+                  </a>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Acesso Rápido</p>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => navigate('/portal/cobrancas')} className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                    <DollarSign size={14} /> Financeiro
+                  </button>
+                  <button onClick={() => navigate('/portal/loja')} className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold text-left">
+                    <ShoppingBag size={14} /> Loja Online
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Suporte & Notificações</p>
+                <div className="flex flex-col gap-3">
+                  <a href="https://wa.me/5500000000000" target="_blank" className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold">
+                    <MessageSquare size={14} /> Suporte Escolar
+                  </a>
+                  <button onClick={() => navigate('/portal/avisos')} className="text-xs text-slate-400 hover:text-teal-600 transition-colors flex items-center gap-2 font-semibold text-left">
+                    <Megaphone size={14} /> Central de Avisos
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6 text-right self-end">
                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">© {new Date().getFullYear()} Fluxoo Tecnologia</p>
             </div>
           </div>

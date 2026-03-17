@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { GraduationCap, Loader2, Eye, EyeOff, User, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { mascaraCPF } from '@/lib/validacoes'
+import { useAuth } from '@/modules/auth/AuthContext'
 
 const portalLoginSchema = z.object({
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
@@ -20,8 +21,16 @@ type PortalLoginForm = z.infer<typeof portalLoginSchema>
 
 export function PortalLoginPage() {
   const navigate = useNavigate()
+  const { authUser, loading, signInPortal } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Redireciona se já estiver logado
+  useEffect(() => {
+    if (!loading && authUser && authUser.role === 'responsavel') {
+      navigate('/portal', { replace: true })
+    }
+  }, [authUser, loading, navigate])
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PortalLoginForm>({
     resolver: zodResolver(portalLoginSchema),
@@ -29,13 +38,15 @@ export function PortalLoginPage() {
 
   const onSubmit = async (data: PortalLoginForm) => {
     setError(null)
-    try {
-      await portalService.loginPorCpf(data.cpf, data.password)
-      toast.success('Login realizado com sucesso!')
-      navigate('/portal')
-    } catch (err: any) {
-      setError(err.message || 'Erro ao realizar login.')
+    const result = await signInPortal(data.cpf, data.password)
+
+    if (result.error) {
+      setError(result.error)
+      return
     }
+
+    toast.success('Login realizado com sucesso!')
+    navigate('/portal')
   }
 
   // Função para formatar CPF enquanto digita
