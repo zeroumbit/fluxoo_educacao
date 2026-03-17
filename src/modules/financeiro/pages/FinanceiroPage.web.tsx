@@ -58,6 +58,12 @@ export function FinanceiroPageWeb() {
   const [busca, setBusca] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [cobrancaExcluindo, setCobrancaExcluindo] = useState<string | null>(null)
+  
+  const [payDialogOpen, setPayDialogOpen] = useState(false)
+  const [cobrancaPagando, setCobrancaPagando] = useState<string | null>(null)
+  
+  const [undoDialogOpen, setUndoDialogOpen] = useState(false)
+  const [cobrancaEstornando, setCobrancaEstornando] = useState<string | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
     resolver: zodResolver(cobrancaSchema),
@@ -88,21 +94,35 @@ export function FinanceiroPageWeb() {
     }
   }
 
-  const handleBaixar = async (id: string) => {
-    if (!confirm('Deseja marcar esta cobrança como paga?')) return
+  const handleBaixar = (id: string) => {
+    setCobrancaPagando(id)
+    setPayDialogOpen(true)
+  }
+
+  const handleConfirmarBaixa = async () => {
+    if (!cobrancaPagando) return
     try {
-      await baixarCobranca.mutateAsync(id)
+      await baixarCobranca.mutateAsync(cobrancaPagando)
       toast.success('Cobrança baixada!')
+      setPayDialogOpen(false)
+      setCobrancaPagando(null)
     } catch {
       toast.error('Erro ao baixar.')
     }
   }
 
-  const handleEstornar = async (id: string) => {
-    if (!confirm('Deseja estornar este pagamento? O status voltará para "A Vencer".')) return
+  const handleEstornar = (id: string) => {
+    setCobrancaEstornando(id)
+    setUndoDialogOpen(true)
+  }
+
+  const handleConfirmarEstorno = async () => {
+    if (!cobrancaEstornando) return
     try {
-      await estornarCobranca.mutateAsync(id)
+      await estornarCobranca.mutateAsync(cobrancaEstornando)
       toast.success('Pagamento estornado!')
+      setUndoDialogOpen(false)
+      setCobrancaEstornando(null)
     } catch {
       toast.error('Erro ao estornar.')
     }
@@ -330,6 +350,7 @@ export function FinanceiroPageWeb() {
 
         {/* Modal de Confirmação de Exclusão */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          {/* ... existing content ... */}
           <DialogContent className="max-w-md">
             <DialogHeader>
               <div className="flex items-center gap-3">
@@ -379,6 +400,96 @@ export function FinanceiroPageWeb() {
                     <Trash2 className="h-4 w-4 mr-2" />
                     Excluir
                   </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Confirmação de Pagamento */}
+        <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-slate-900">Confirmar Pagamento</DialogTitle>
+              </div>
+              <DialogDescription className="text-slate-500 font-medium pt-2">
+                Deseja confirmar o recebimento desta cobrança? O status será alterado para "Pago".
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
+                <Banknote className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-bold text-emerald-800">Processo Irreversível?</p>
+                  <p className="text-emerald-700 font-medium mt-1">
+                    Isso registrará a entrada no seu fluxo de caixa. Você poderá estornar depois se necessário.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setPayDialogOpen(false)}
+                disabled={baixarCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold border-slate-200"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmarBaixa}
+                disabled={baixarCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                {baixarCobranca.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Confirmar Recebimento'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Estorno */}
+        <Dialog open={undoDialogOpen} onOpenChange={setUndoDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <Undo2 className="h-5 w-5 text-amber-600" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-slate-900">Estornar Pagamento</DialogTitle>
+              </div>
+              <DialogDescription className="text-slate-500 font-medium pt-2">
+                Tem certeza que deseja estornar este pagamento? A cobrança voltará ao status "Em Aberto".
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setUndoDialogOpen(false)}
+                disabled={estornarCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold border-slate-200"
+              >
+                Voltar
+              </Button>
+              <Button
+                onClick={handleConfirmarEstorno}
+                disabled={estornarCobranca.isPending}
+                className="flex-1 sm:flex-none h-11 font-bold bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-200/50"
+              >
+                {estornarCobranca.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Confirmar Estorno'
                 )}
               </Button>
             </DialogFooter>
