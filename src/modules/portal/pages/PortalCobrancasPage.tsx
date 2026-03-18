@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCobrancasAluno, useConfigPix, useConfigRecados } from '../hooks'
 import { usePortalContext } from '../context'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,7 +33,8 @@ import {
   ChevronRight,
   ShieldCheck,
   TrendingDown,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -49,6 +50,8 @@ import {
 import { UI_CONFIG } from '@/lib/constants'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { BotaoVoltar } from '../components/BotaoVoltar'
+import { InvoiceDetail } from '../components/InvoiceDetail'
+import { supabase } from '@/lib/supabase'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -70,7 +73,7 @@ const CobrancasSkeleton = () => (
 
 export default function PortalCobrancasPage() {
   const isMobile = useIsMobile()
-  const { alunoSelecionado, isMultiAluno, vinculos } = usePortalContext()
+  const { alunoSelecionado, isMultiAluno, vinculos, responsavel } = usePortalContext()
   const { data: cobrancas, isLoading } = useCobrancasAluno()
   const { data: configPix } = useConfigPix()
   const { data: configRecados } = useConfigRecados(alunoSelecionado?.tenant_id)
@@ -78,6 +81,68 @@ export default function PortalCobrancasPage() {
   const [copiado, setCopiado] = useState(false)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
   const [checkoutMulti, setCheckoutMulti] = useState(false) // Modo carrinho unificado
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+  const [alunoInfo, setAlunoInfo] = useState<any>(null)
+  const [responsavelInfo, setResponsavelInfo] = useState<any>(null)
+
+  // Carregar dados da escola, aluno e responsável
+  useEffect(() => {
+    async function fetchData() {
+      if (!alunoSelecionado?.tenant_id) return
+
+      // Buscar dados da escola
+      const { data: escola } = await supabase
+        .from('escolas')
+        .select('*')
+        .eq('id', alunoSelecionado.tenant_id)
+        .maybeSingle()
+
+      if (escola) setEscolaInfo(escola)
+
+      // Buscar dados do aluno com turma e filial
+      const { data: aluno } = await supabase
+        .from('alunos')
+        .select('*')
+        .eq('id', alunoSelecionado.id)
+        .maybeSingle()
+
+      if (aluno) {
+        // Buscar turma e filial separadamente se necessário
+        const alunoAny = aluno as any
+        if (alunoAny.turma_id) {
+          const { data: turma } = await supabase
+            .from('turmas')
+            .select('nome, turno')
+            .eq('id', alunoAny.turma_id)
+            .maybeSingle()
+          alunoAny.turma = turma
+        }
+        if (alunoAny.filial_id) {
+          const { data: filial } = await supabase
+            .from('filiais')
+            .select('nome_unidade')
+            .eq('id', alunoAny.filial_id)
+            .maybeSingle()
+          alunoAny.filial = filial
+        }
+        setAlunoInfo(alunoAny)
+      }
+
+      // Buscar dados completos do responsável
+      if (responsavel?.id) {
+        const { data: resp } = await supabase
+          .from('responsaveis')
+          .select('*')
+          .eq('id', responsavel.id)
+          .maybeSingle()
+
+        if (resp) setResponsavelInfo(resp)
+      }
+    }
+    fetchData()
+  }, [alunoSelecionado?.tenant_id, alunoSelecionado?.id, responsavel?.id])
 
   const handleCopiarChave = () => {
     vibrate(40)
@@ -274,7 +339,7 @@ export default function PortalCobrancasPage() {
                       const isAtrasado = hoje > limiteCarencia
                       
                       return (
-                        <motion.div 
+                        <motion.div
                           layout
                           key={cobranca.id}
                           initial={{ opacity: 0, x: -10 }}
@@ -285,7 +350,11 @@ export default function PortalCobrancasPage() {
                             "group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm cursor-pointer overflow-hidden relative active:scale-[0.98] transition-transform",
                             isAtrasado && "ring-2 ring-red-100"
                           )}
-                          onClick={() => { vibrate(20); setCobrancaAtiva(cobranca); }}
+                          onClick={() => {
+                            vibrate(20)
+                            setCobrancaAtiva(cobranca)
+                            setShowInvoice(true)
+                          }}
                         >
                           {isAtrasado && (
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
@@ -320,8 +389,10 @@ export default function PortalCobrancasPage() {
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
-                                 {formatCurrency(cobranca.valor)}
-                               <ChevronRight size={16} className="text-slate-200" />
+                              <div className="flex flex-col items-end">
+                                <span className="text-sm font-bold text-slate-800">{formatCurrency(cobranca.valor)}</span>
+                                <ChevronRight size={16} className="text-slate-200" />
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -447,10 +518,10 @@ export default function PortalCobrancasPage() {
 
       {/* 5. Responsive Checkout Modal */}
       {isMobile ? (
-        <Sheet open={!!cobrancaAtiva || checkoutMulti} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); } vibrate(10); }}>
+        <Sheet open={!!cobrancaAtiva || checkoutMulti || showCheckout} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); setShowCheckout(false); } vibrate(10); }}>
           <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh] focus:outline-none">
             <div className="px-5 pt-6 pb-8 space-y-5">
-              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); }} isMobile={true} />
+              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); setShowCheckout(false); }} isMobile={true} />
               <CheckoutBody 
                 cobrancaAtiva={cobrancaAtiva} 
                 checkoutMulti={checkoutMulti}
@@ -466,16 +537,16 @@ export default function PortalCobrancasPage() {
           </SheetContent>
         </Sheet>
       ) : (
-        <Dialog open={!!cobrancaAtiva || checkoutMulti} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); } vibrate(10); }}>
+        <Dialog open={!!cobrancaAtiva || checkoutMulti || showCheckout} onOpenChange={(open) => { if(!open) { setCobrancaAtiva(null); setCheckoutMulti(false); setShowCheckout(false); } vibrate(10); }}>
           <DialogContent className="max-w-md border-0 p-0 overflow-hidden bg-white shadow-2xl rounded-2xl focus:outline-none">
             <div className="px-6 py-8 space-y-6">
-              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); }} isMobile={false} />
-              <CheckoutBody 
-                cobrancaAtiva={cobrancaAtiva} 
+              <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); setShowCheckout(false); }} isMobile={false} />
+              <CheckoutBody
+                cobrancaAtiva={cobrancaAtiva}
                 checkoutMulti={checkoutMulti}
                 pendentes={pendentes}
-                configPix={configPix} 
-                copiado={copiado} 
+                configPix={configPix}
+                copiado={copiado}
                 handleCopiarChave={handleCopiarChave}
                 configRecados={configRecados}
                 alunoNome={alunoSelecionado?.nome_completo}
@@ -485,6 +556,22 @@ export default function PortalCobrancasPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal Fatura Detalhada */}
+      <InvoiceDetail
+        open={showInvoice}
+        onClose={() => setShowInvoice(false)}
+        cobranca={cobrancaAtiva}
+        escola={escolaInfo}
+        aluno={alunoInfo}
+        responsavel={responsavelInfo || responsavel}
+        configPix={configPix}
+        calcularValorCobranca={(c: any) => calcularValorCobranca(c, configPix)}
+        onPagar={() => {
+          setShowInvoice(false)
+          setShowCheckout(true)
+        }}
+      />
     </div>
   )
 }
@@ -508,6 +595,31 @@ function CheckoutHeader({ onClose, isMobile }: { onClose: () => void, isMobile: 
   )
 }
 
+// Função auxiliar para cálculo de encargos
+function calcularValorCobranca(c: any, configPix?: any) {
+  if (!c) return 0
+  const v = Number(c.valor)
+  const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+  const hoje = new Date()
+  hoje.setHours(0,0,0,0)
+
+  const carencia = configPix?.dias_carencia || 0
+  const limiteCarencia = new Date(dataVenc)
+  limiteCarencia.setDate(dataVenc.getDate() + carencia)
+
+  if (hoje <= limiteCarencia) return v
+
+  const multaPerc = (configPix?.multa_atraso_percentual || 0) / 100
+  const multaFixa = Number(configPix?.multa_atraso_valor_fixo || 0)
+  const valorMulta = (v * multaPerc) + multaFixa
+
+  const jurosMensalPerc = (configPix?.juros_mora_mensal || 0) / 100
+  const diasAtraso = Math.floor((hoje.getTime() - dataVenc.getTime()) / (1000 * 60 * 60 * 24))
+  const valorJuros = v * (jurosMensalPerc / 30) * diasAtraso
+
+  return v + valorMulta + valorJuros
+}
+
 function CheckoutBody({ 
   cobrancaAtiva, 
   checkoutMulti, 
@@ -516,37 +628,13 @@ function CheckoutBody({
   copiado, 
   handleCopiarChave, 
   configRecados, 
-  alunoNome, 
-  onEnviarComprovante 
+  alunoNome,
+  onEnviarComprovante
 }: any) {
-  
-  const calcularValorCobranca = (c: any) => {
-    if (!c) return 0
-    const v = Number(c.valor)
-    const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
-    const hoje = new Date()
-    hoje.setHours(0,0,0,0)
-    
-    const carencia = configPix?.dias_carencia || 0
-    const limiteCarencia = new Date(dataVenc)
-    limiteCarencia.setDate(dataVenc.getDate() + carencia)
-    
-    if (hoje <= limiteCarencia) return v
-    
-    const multaPerc = (configPix?.multa_atraso_percentual || 0) / 100
-    const multaFixa = Number(configPix?.multa_atraso_valor_fixo || 0)
-    const valorMulta = (v * multaPerc) + multaFixa
-    
-    const jurosMensalPerc = (configPix?.juros_mora_mensal || 0) / 100
-    const diasAtraso = Math.floor((hoje.getTime() - dataVenc.getTime()) / (1000 * 60 * 60 * 24))
-    const valorJuros = v * (jurosMensalPerc / 30) * diasAtraso
-    
-    return v + valorMulta + valorJuros
-  }
 
-  const valorTotalCalculado = checkoutMulti 
-    ? pendentes.reduce((acc: number, c: any) => acc + calcularValorCobranca(c), 0)
-    : calcularValorCobranca(cobrancaAtiva)
+  const valorTotalCalculado = checkoutMulti
+    ? pendentes.reduce((acc: number, c: any) => acc + calcularValorCobranca(c, configPix), 0)
+    : calcularValorCobranca(cobrancaAtiva, configPix)
 
   const handleEnviarComprovanteLocal = () => {
     const valor = valorTotalCalculado
