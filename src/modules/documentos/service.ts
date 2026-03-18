@@ -34,7 +34,48 @@ export const documentosService = {
     if (error) throw error
     return (data as any[]) || []
   },
+  async verificarPendenciasAutorizacao(tenantId: string, alunoId: string) {
+    // 1. Busca modelos obrigatórios ativos para este tenant ou globais
+    const { data: modelos, error: errModelos } = await supabase
+      .from('autorizacoes_modelos')
+      .select('id, titulo')
+      .eq('obrigatoria', true)
+      .eq('ativa', true)
+      .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
+
+    if (errModelos) throw errModelos
+    if (!modelos || modelos.length === 0) return { temPendencia: false }
+
+    // 2. Busca respostas de aceite para estes modelos e este aluno
+    const modeloIds = modelos.map(m => m.id)
+    const { data: respostas, error: errRespostas } = await supabase
+      .from('autorizacoes_respostas')
+      .select('modelo_id')
+      .eq('aluno_id', alunoId)
+      .eq('aceita', true)
+      .in('modelo_id', modeloIds)
+
+    if (errRespostas) throw errRespostas
+
+    // 3. Compara: Algum modelo obrigatório não tem resposta de aceite?
+    const modelosAceitos = new Set(respostas?.map(r => r.modelo_id) || [])
+    const pendentes = modelos.filter(m => !modelosAceitos.has(m.id))
+
+    return {
+      temPendencia: pendentes.length > 0,
+      modelosPendentes: pendentes.map(m => m.titulo)
+    }
+  },
+
   async emitirDocumento(doc: any) {
+    // Validação de pendências de autorização antes de emitir
+    if (doc.aluno_id) {
+      const { temPendencia, modelosPendentes } = await this.verificarPendenciasAutorizacao(doc.tenant_id, doc.aluno_id)
+      if (temPendencia) {
+        throw new Error(`Não é possível emitir o documento. O aluno possui autorizações obrigatórias pendentes: ${(modelosPendentes || []).join(', ')}`)
+      }
+    }
+
     const { data, error } = await (supabase.from('documentos_emitidos' as any) as any).insert(doc).select().single()
     if (error) throw error
     return data

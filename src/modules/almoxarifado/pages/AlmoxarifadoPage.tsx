@@ -15,11 +15,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, Package, ArrowDownUp, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Loader2, Package, ArrowDownUp, AlertTriangle, Edit2, Trash2, Wallet } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DialogFooter, DialogDescription } from '@/components/ui/dialog'
 
 const itemSchema = z.object({ nome: z.string().min(1), categoria: z.string().optional(), quantidade: z.coerce.number().min(0), alerta_estoque_minimo: z.coerce.number().optional(), custo_unitario: z.coerce.number().optional() })
-const movSchema = z.object({ item_id: z.string().min(1), tipo: z.enum(['entrada', 'saida']), quantidade: z.coerce.number().min(1), justificativa: z.string().optional() })
+const movSchema = z.object({ 
+  item_id: z.string().min(1), 
+  tipo: z.enum(['entrada', 'saida']), 
+  quantidade: z.coerce.number().min(1), 
+  justificativa: z.string().optional(),
+  fornecedor: z.string().optional(),
+  valor_total: z.coerce.number().optional(),
+  gerar_financeiro: z.boolean().default(false),
+  vencimento_financeiro: z.string().optional()
+})
 
 type ItemFormData = z.infer<typeof itemSchema>
 type MovFormData = z.infer<typeof movSchema>
@@ -44,7 +54,11 @@ export function AlmoxarifadoPage() {
       tipo: 'entrada',
       item_id: '',
       quantidade: 0,
-      justificativa: ''
+      justificativa: '',
+      gerar_financeiro: false,
+      fornecedor: '',
+      valor_total: 0,
+      vencimento_financeiro: new Date().toISOString().split('T')[0]
     } 
   })
 
@@ -148,6 +162,41 @@ export function AlmoxarifadoPage() {
                   <Label>Justificativa</Label>
                   <Input placeholder="Ex: Compra mensal, Uso em sala de aula..." {...movForm.register('justificativa')} />
                 </div>
+
+                {movForm.watch('tipo') === 'entrada' && (
+                  <div className="p-4 bg-indigo-50/50 rounded-lg space-y-4 border border-indigo-100">
+                    <div className="flex items-center gap-2 text-indigo-700 font-semibold mb-2">
+                      <Wallet className="h-4 w-4" />
+                      <span>Integração Financeira</span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="gerar_fin" 
+                        onCheckedChange={(checked) => movForm.setValue('gerar_financeiro', !!checked)} 
+                        checked={movForm.watch('gerar_financeiro')}
+                      />
+                      <Label htmlFor="gerar_fin" className="cursor-pointer">Gerar Conta a Pagar automaticamente?</Label>
+                    </div>
+
+                    {movForm.watch('gerar_financeiro') && (
+                      <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                          <Label>Fornecedor</Label>
+                          <Input placeholder="Nome do fornecedor" {...movForm.register('fornecedor')} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valor Total (R$)</Label>
+                          <Input type="number" step="0.01" placeholder="0,00" {...movForm.register('valor_total')} />
+                        </div>
+                        <div className="space-y-2 col-span-2">
+                          <Label>Data de Vencimento</Label>
+                          <Input type="date" {...movForm.register('vencimento_financeiro')} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button>
                   <Button type="submit">Registrar</Button>

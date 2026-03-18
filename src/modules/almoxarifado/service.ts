@@ -104,6 +104,41 @@ export const almoxarifadoService = {
         })
         .eq('id', mov.item_id)
     }
+
+    // 3. Integração Financeira (Contas a Pagar)
+    if (mov.tipo === 'entrada' && mov.gerar_financeiro && mov.valor_total > 0) {
+      try {
+        const { financeiroService } = await import('@/modules/financeiro/service')
+        
+        // Busca nome do item para a descrição
+        const { data: itemInfo } = await supabase
+          .from('almoxarifado_itens')
+          .select('nome')
+          .eq('id', mov.item_id)
+          .single()
+
+        const conta = await (financeiroService as any).criarContaPagar({
+          tenant_id: mov.tenant_id,
+          nome: `Compra de Material: ${itemInfo?.nome || 'Item do Almoxarifado'}`,
+          favorecido: mov.fornecedor || 'Fornecedor não informado',
+          valor: mov.valor_total,
+          data_vencimento: mov.vencimento_financeiro || new Date().toISOString().split('T')[0],
+          status: 'ativo',
+          categoria: 'Almoxarifado'
+        })
+
+        // Vincula o ID do financeiro na movimentação
+        if (conta?.id) {
+          await supabase
+            .from('almoxarifado_movimentacoes')
+            .update({ financeiro_id: (conta as any).id })
+            .eq('id', data.id)
+        }
+      } catch (finError) {
+        console.error('⚠️ Erro ao gerar integração financeira do almoxarifado:', finError)
+      }
+    }
+
     return data
   },
 

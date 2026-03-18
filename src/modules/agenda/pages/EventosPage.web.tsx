@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle, Megaphone } from 'lucide-react'
 
 const eventoSchema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -22,6 +23,7 @@ const eventoSchema = z.object({
   data_termino: z.string().optional(),
   publico_alvo: z.string().optional(),
   descricao: z.string().optional(),
+  publicar_no_mural: z.boolean().default(false),
 })
 
 export function EventosPage() {
@@ -41,7 +43,7 @@ export function EventosPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    form.reset({ nome: '', data_inicio: '', data_termino: '', publico_alvo: '', descricao: '' })
+    form.reset({ nome: '', data_inicio: '', data_termino: '', publico_alvo: '', descricao: '', publicar_no_mural: false })
     setOpen(true)
   }
 
@@ -53,6 +55,7 @@ export function EventosPage() {
       data_termino: evento.data_termino || '',
       publico_alvo: evento.publico_alvo || '',
       descricao: evento.descricao || '',
+      publicar_no_mural: evento.publicar_no_mural || false,
     })
     setOpen(true)
   }
@@ -153,6 +156,19 @@ export function EventosPage() {
               <div className="space-y-2">
                 <Label htmlFor="descricao">Descrição</Label>
                 <Textarea id="descricao" {...form.register('descricao')} />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                  <Checkbox 
+                    id="mural" 
+                    onCheckedChange={(v) => form.setValue('publicar_no_mural', !!v)}
+                    checked={form.watch('publicar_no_mural')}
+                  />
+                  <Label htmlFor="mural" className="flex items-center gap-2 cursor-pointer font-medium text-amber-900">
+                    <Megaphone className="h-4 w-4" />
+                    Publicar automaticamente no Mural de Avisos?
+                  </Label>
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>

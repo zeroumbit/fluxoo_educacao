@@ -329,5 +329,70 @@ export const financeiroService = {
           }
       }
     }
-  }
+  },
+
+  // ==========================================
+  // CONTAS A PAGAR (DESPESAS)
+  // ==========================================
+  async listarContasPagar(tenantId: string) {
+    const { data, error } = await supabase
+      .from('contas_pagar')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('data_vencimento', { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+
+  async criarContaPagar(conta: any) {
+    const { data, error } = await supabase
+      .from('contas_pagar')
+      .insert({
+        ...conta,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async atualizarContaPagar(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('contas_pagar')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async excluirContaPagar(id: string) {
+    const { error } = await supabase
+      .from('contas_pagar')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+  },
+
+  async marcarContaComoPaga(id: string) {
+    const { error } = await supabase
+      .from('contas_pagar')
+      .update({ 
+        status: 'pago',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+
+    if (error) throw error
+  },
 }
