@@ -8,8 +8,6 @@ import {
   ArrowLeft,
   LayoutGrid,
   Search,
-  Clock,
-  DollarSign,
   Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card'
 import { useTurmaStore } from '../store'
 import { TurmaDetail } from '../components/TurmaDetail'
+import { TurmaCard } from '../components/TurmaCard'
 import { useTurmas, useCriarTurma } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useFuncionarios } from '@/modules/funcionarios/hooks'
@@ -40,13 +39,6 @@ const turmaSchema = z.object({
 })
 
 type TurmaFormValues = z.infer<typeof turmaSchema>
-
-const turnoLabels: Record<string, string> = {
-  matutino: 'Matutino',
-  vespertino: 'Vespertino',
-  noturno: 'Noturno',
-  integral: 'Integral'
-}
 
 export function TurmasPageWeb() {
   const {
@@ -223,63 +215,14 @@ export function TurmasPageWeb() {
           </div>
         ) : (
           turmasFiltradas.map((turma: any) => (
-            <Card 
-              key={turma.id} 
-              className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-              onClick={() => handleGerir(turma.id, 'dados')}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                      <LayoutGrid className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-base">{turma.nome}</h3>
-                      <Badge className="bg-slate-50 text-slate-600 font-bold text-[10px] uppercase tracking-wider mt-1">
-                        {turnoLabels[turma.turno] || turma.turno}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Badge className={turma.status === 'ativa' ? 'bg-emerald-50 text-emerald-600 font-bold text-[10px] uppercase tracking-wider' : 'bg-slate-50 text-slate-400 font-bold text-[10px] uppercase tracking-wider'}>
-                    {turma.status}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Clock className="h-4 w-4 text-slate-400" />
-                      <span className="font-medium">{turma.horario || '—'}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleGerir(turma.id, 'dados')
-                      }}
-                      className="h-9 w-9 rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
-                      title="Gerenciar turma"
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <span className="font-medium">{turma.capacidade || 0} alunos</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <DollarSign className="h-4 w-4 text-emerald-500" />
-                    <span className="font-bold text-slate-800">
-                      {turma.valor_mensalidade 
-                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)
-                        : '—'
-                      }
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <TurmaCard
+              key={turma.id}
+              turma={turma}
+              alunosCount={storeAlunos.filter((a: any) => (a as any).turma_atual?.id === turma.id || a.turma_id === turma.id).length}
+              onViewAlunos={() => handleGerir(turma.id, 'alunos')}
+              onViewGrade={() => handleGerir(turma.id, 'grade')}
+              onManage={() => handleGerir(turma.id, 'dados')}
+            />
           ))
         )}
       </div>

@@ -2,12 +2,12 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Users, 
-  Calendar, 
-  Settings, 
-  BookOpen, 
-  Clock, 
+import {
+  Users,
+  Calendar,
+  Settings,
+  BookOpen,
+  Clock,
   DollarSign,
   ChevronRight
 } from 'lucide-react'
@@ -33,8 +33,8 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
             <div className="flex items-center gap-4">
               <div className={cn(
                 "h-14 w-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500 shadow-lg",
-                isAtiva 
-                  ? "bg-gradient-to-br from-teal-400 to-emerald-500 shadow-teal-200/50" 
+                isAtiva
+                  ? "bg-gradient-to-br from-teal-400 to-emerald-500 shadow-teal-200/50"
                   : "bg-gradient-to-br from-slate-300 to-slate-400 shadow-slate-200/50"
               )}>
                 <BookOpen className="h-7 w-7 text-white" />
@@ -56,7 +56,7 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 </div>
               </div>
             </div>
-            <button 
+            <button
               onClick={onManage}
               className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
@@ -93,8 +93,8 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 </span>
              </div>
              <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-indigo-500 rounded-full" 
+                <div
+                  className="h-full bg-indigo-500 rounded-full"
                   style={{ width: `${(alunosCount / ((turma as any).capacidade_maxima || 30)) * 100}%` }}
                 />
              </div>
@@ -102,27 +102,27 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
         </div>
 
         <div className="p-3 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2">
-           <Button 
-            variant="ghost" 
-            size="sm" 
+           <Button
+            variant="ghost"
+            size="sm"
             onClick={onViewAlunos}
             className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
            >
               <Users size={16} className="text-indigo-500" />
               Alunos
            </Button>
-           <Button 
-            variant="ghost" 
-            size="sm" 
+           <Button
+            variant="ghost"
+            size="sm"
             onClick={onViewGrade}
             className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
            >
               <Calendar size={16} className="text-teal-500" />
               Grade
            </Button>
-           <Button 
-            variant="ghost" 
-            size="sm" 
+           <Button
+            variant="ghost"
+            size="sm"
             onClick={onManage}
             className="rounded-xl h-11 font-bold text-xs gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
            >

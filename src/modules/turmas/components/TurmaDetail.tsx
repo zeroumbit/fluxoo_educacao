@@ -1,15 +1,10 @@
 import React from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent } from '@/components/ui/card'
-import { 
-  Info, 
-  Users, 
-  GraduationCap, 
-  CalendarDays,
-  FileText,
-  MessageSquare,
-  BarChart3,
-  Pencil
+import {
+  Info,
+  Users,
+  GraduationCap,
+  CalendarDays
 } from 'lucide-react'
 import { useTurmaStore } from '../store'
 import { TabDadosGerais } from './TabDadosGerais'
@@ -31,33 +26,33 @@ export function TurmaDetail({ turmaId, initialTab = 'dados' }: TurmaDetailProps)
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
       <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-[2rem] h-auto mb-8 grid grid-cols-2 md:grid-cols-4 gap-2">
-          <TabsTrigger 
-            value="dados" 
-            className="rounded-[1.5rem] py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-indigo-600 font-black text-xs uppercase tracking-widest gap-2"
+        <TabsList className="bg-white border border-slate-200 rounded-lg p-1 h-auto mb-6 inline-flex gap-1">
+          <TabsTrigger
+            value="dados"
+            className="rounded-md px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 font-bold text-sm transition-all"
           >
-            <Info size={16} />
+            <Info size={16} className="mr-2" />
             Dados Gerais
           </TabsTrigger>
-          <TabsTrigger 
-            value="alunos" 
-            className="rounded-[1.5rem] py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-indigo-600 font-black text-xs uppercase tracking-widest gap-2"
+          <TabsTrigger
+            value="alunos"
+            className="rounded-md px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 font-bold text-sm transition-all"
           >
-            <Users size={16} />
+            <Users size={16} className="mr-2" />
             Alunos
           </TabsTrigger>
-          <TabsTrigger 
-            value="professores" 
-            className="rounded-[1.5rem] py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-indigo-600 font-black text-xs uppercase tracking-widest gap-2"
+          <TabsTrigger
+            value="professores"
+            className="rounded-md px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 font-bold text-sm transition-all"
           >
-            <GraduationCap size={16} />
+            <GraduationCap size={16} className="mr-2" />
             Professores
           </TabsTrigger>
-          <TabsTrigger 
-            value="grade" 
-            className="rounded-[1.5rem] py-4 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-indigo-600 font-black text-xs uppercase tracking-widest gap-2"
+          <TabsTrigger
+            value="grade"
+            className="rounded-md px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-600 font-bold text-sm transition-all"
           >
-            <CalendarDays size={16} />
+            <CalendarDays size={16} className="mr-2" />
             Grade Horária
           </TabsTrigger>
         </TabsList>
