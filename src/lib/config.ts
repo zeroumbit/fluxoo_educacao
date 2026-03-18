@@ -2,7 +2,11 @@
  * Configurações do Sistema
  */
 
-export const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL || 'zeroumbit@gmail.com'
+export const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL
+
+if (import.meta.env.PROD && !SUPER_ADMIN_EMAIL) {
+  console.warn('⚠️ VITE_SUPER_ADMIN_EMAIL não definido em ambiente de produção!')
+}
 
 /**
  * Verifica se um e-mail pertence ao super admin

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, FileText, CheckCircle2, Loader2, Download, Printer } from 'lucide-react'
+import DOMPurify from 'dompurify'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { portalService } from '../service'
@@ -177,7 +178,7 @@ export function ModalContratoEscola({
               ) : (
                 <div 
                   className="contract-display font-serif text-zinc-800 leading-[1.4] text-sm md:text-base selection:bg-indigo-50"
-                  dangerouslySetInnerHTML={{ __html: contratoHtml }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contratoHtml) }}
                 />
               )}
 

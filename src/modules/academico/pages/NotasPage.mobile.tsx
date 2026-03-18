@@ -370,76 +370,92 @@ function FilterSheet({
 }: any) {
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Filtros do Diário" size="half">
-      <div className="space-y-6 pt-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Turma</Label>
-            <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-col h-full min-h-0 pt-2">
+        {/* Scrollable Content Area */}
+        <div className="px-1 pb-10 space-y-7 overflow-y-auto">
+          {/* Bimestre — Mais estiloso/nativo */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">
+              Período Letivo
+            </Label>
+            <div className="grid grid-cols-4 gap-2">
+              {['1', '2', '3', '4'].map((b) => (
+                <motion.button
+                  key={b}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setBimestre(b)}
+                  className={cn(
+                    "relative h-14 rounded-2xl text-[14px] font-black transition-all border-2",
+                    bimestre === b 
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-200 dark:shadow-none" 
+                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500"
+                  )}
+                >
+                  {b}º
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Turmas — Scroll horizontal para poupar espaço vertical se houver muitas */}
+          <div className="space-y-3">
+             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">
+              Turmas Disponíveis
+            </Label>
+            <div className="flex overflow-x-auto pb-2 gap-2 snap-x hide-scrollbar">
               {turmas?.map((t: any) => (
-                <button
+                <motion.button
                   key={t.id}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setTurmaId(t.id)}
                   className={cn(
-                    "h-12 px-4 rounded-xl text-xs font-bold transition-all border",
+                    "h-11 px-6 rounded-2xl text-[13px] font-bold transition-all border-2 whitespace-nowrap snap-start",
                     turmaId === t.id 
-                      ? "bg-indigo-600 border-indigo-600 text-white" 
+                      ? "bg-slate-900 border-slate-900 text-white shadow-lg" 
                       : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
                   )}
                 >
                   {t.nome}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bimestre</Label>
-            <div className="grid grid-cols-4 gap-2">
-              {['1', '2', '3', '4'].map((b) => (
-                <button
-                  key={b}
-                  onClick={() => setBimestre(b)}
-                  className={cn(
-                    "h-12 rounded-xl text-xs font-bold transition-all border",
-                    bimestre === b 
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
-                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                  )}
-                >
-                  {b}º Bim
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Disciplina</Label>
+          {/* Disciplinas — Chips mais refinados */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">
+              Matéria / Disciplina
+            </Label>
             <div className="flex flex-wrap gap-2">
               {disciplinas?.map((d: any) => (
-                <button
+                <motion.button
                   key={d.id}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setDisciplinaNome(d.nome)}
                   className={cn(
-                    "px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border",
+                    "px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all border",
                     disciplinaNome === d.nome 
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
-                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                      ? "bg-indigo-50 border-indigo-200 text-indigo-600 font-black shadow-sm" 
+                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400"
                   )}
                 >
                   {d.nome}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
         </div>
 
-        <Button 
-          className="w-full h-14 rounded-2xl bg-indigo-600 font-bold text-base mt-4" 
-          onClick={onClose}
-          disabled={!turmaId || !disciplinaNome}
-        >
-          Aplicar Filtros
-        </Button>
+        {/* Floating/Fixed Action Button at bottom, with massive padding for safe-area */}
+        <div className="pt-4 pb-12 mt-auto">
+          <Button 
+            className="w-full h-15 rounded-2xl bg-indigo-600 font-black text-base shadow-2xl shadow-indigo-100 dark:shadow-none transition-all active:scale-[0.98]" 
+            onClick={onClose}
+            disabled={!turmaId || !disciplinaNome}
+          >
+            Aplicar Filtros
+          </Button>
+        </div>
       </div>
     </BottomSheet>
   )

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Loader2, Save, FileText, Eye, EyeOff, LayoutPanelLeft, Download, Printer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import DOMPurify from 'dompurify'
 
 const CONTRATO_PADRAO = `
 <div class="contract-container">
@@ -243,7 +244,7 @@ export function ContratoTab() {
                 <CardContent className="p-0 overflow-y-auto max-h-[800px] bg-white">
                   <div 
                     className="contract-review-preview font-serif text-zinc-800 leading-[1.4] p-12 text-base bg-white"
-                    dangerouslySetInnerHTML={{ __html: contrato }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contrato) }}
                   />
                   <style dangerouslySetInnerHTML={{ __html: `
                     .contract-review-preview p { margin-bottom: 0.5em; }

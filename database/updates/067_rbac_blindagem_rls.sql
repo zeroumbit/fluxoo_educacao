@@ -9,13 +9,8 @@ RETURNS BOOLEAN AS $$
 DECLARE
     v_user_metadata JSONB := auth.jwt() -> 'user_metadata';
 BEGIN
-    -- 1.1 Super Admin Bypass
-    IF (v_user_metadata ->> 'email') = 'jossemar.dev@gmail.com' OR (v_user_metadata ->> 'is_super_admin')::boolean = true THEN
-        RETURN TRUE;
-    END IF;
-
-    -- 1.2 Gestor Bypass (Acesso total ao seu tenant)
-    IF (v_user_metadata ->> 'role') = 'gestor' THEN
+    -- 1.1 Super Admin Bypass (Apenas via Claim is_super_admin)
+    IF (v_user_metadata ->> 'is_super_admin')::boolean = true THEN
         RETURN TRUE;
     END IF;
 

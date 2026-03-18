@@ -3,7 +3,7 @@
  * Cache de permissões com expiração e invalidação via Supabase Realtime.
  */
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import { supabase } from '@/lib/supabase'
 import { rbacService } from '@/modules/rbac/service'
 import type { ResolvedPermission, ScopeType } from '@/modules/rbac/types'
@@ -192,6 +192,7 @@ export const useRBACStore = create<RBACState>()(
         // Reconstruir Set a partir do array
         deniedKeys: new Set(persisted?.deniedKeys || []),
       }),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 )
