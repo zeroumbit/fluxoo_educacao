@@ -126,7 +126,7 @@ const StudentActionIcon = ({ icon: Icon, label, colorName, onClick, badge }: { i
   return (
     <motion.div
       whileTap={{ scale: 0.9 }}
-      className="flex flex-col items-center gap-1.5 group cursor-pointer relative"
+      className="flex flex-col items-center gap-1.5 group cursor-pointer relative snap-center"
       onClick={() => {
         vibrate(20);
         if (onClick) onClick();
@@ -417,8 +417,11 @@ export function PortalDashboardPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto scrollbar-hide py-2 w-full h-fit">
-              <div className="flex gap-6 md:gap-10 border-t border-slate-50 pt-8 justify-start md:justify-center min-w-max">
+            <div 
+              className="overflow-x-auto scrollbar-hide py-2 w-full h-fit snap-x snap-mandatory"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="flex gap-6 md:gap-10 border-t border-slate-50 pt-8 justify-start md:justify-center min-w-max px-4">
                 <StudentActionIcon
                   icon={Calendar}
                   label="Agenda"
