@@ -24,9 +24,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useTurmaStore } from '../store'
 import { TurmaDetail } from '../components/TurmaDetail'
 import { TurmaCard } from '../components/TurmaCard'
-import { useTurmas, useCriarTurma } from '../hooks'
+import { useTurmas, useCriarTurma, useDisciplinas, useProfessoresTurma } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
-import { useFuncionarios } from '@/modules/funcionarios/hooks'
 import { useEffect } from 'react'
 
 const turmaSchema = z.object({
@@ -51,8 +50,9 @@ export function TurmasPageWeb() {
   } = useTurmaStore()
 
   const { data: dbTurmas, isLoading: loadingTurmas } = useTurmas()
-  const { data: dbAlunos, isLoading: loadingAlunos } = useAlunos()
-  const { data: dbFuncionarios } = useFuncionarios()
+  const { data: dbAlunos } = useAlunos()
+  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: dbProfessores } = useProfessoresTurma()
   const criarTurmaMutation = useCriarTurma()
 
   const [busca, setBusca] = useState('')
@@ -61,6 +61,7 @@ export function TurmasPageWeb() {
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('dados')
 
+  // Sync real data with Zustand store
   useEffect(() => {
     if (dbTurmas) setTurmas(dbTurmas as any)
   }, [dbTurmas, setTurmas])
@@ -70,28 +71,12 @@ export function TurmasPageWeb() {
   }, [dbAlunos, setAlunos])
 
   useEffect(() => {
-    if (dbFuncionarios) {
-      const professores = dbFuncionarios
-        .filter((f: any) => f.areas_acesso?.includes('Pedagógico') || f.funcao?.toLowerCase().includes('professor'))
-        .map((f: any) => ({
-          id: f.id,
-          nome: f.nome_completo,
-          especialidades: [],
-          carga_horaria_maxima: 40,
-          ativo: f.status === 'ativo',
-          avatar_url: f.foto_url
-        }))
-      setProfessores(professores)
-    }
-  }, [dbFuncionarios, setProfessores])
+    if (dbDisciplinas) setDisciplinas(dbDisciplinas)
+  }, [dbDisciplinas, setDisciplinas])
 
   useEffect(() => {
-    setDisciplinas([
-      { id: 'd1', nome: 'Matemática', codigo: 'MAT', carga_horaria_total: 80, cor: '#4f46e5', ativa: true },
-      { id: 'd2', nome: 'Português', codigo: 'POR', carga_horaria_total: 80, cor: '#ec4899', ativa: true },
-      { id: 'd3', nome: 'Ciências', codigo: 'CIE', carga_horaria_total: 40, cor: '#10b981', ativa: true },
-    ])
-  }, [setDisciplinas])
+    if (dbProfessores) setProfessores(dbProfessores)
+  }, [dbProfessores, setProfessores])
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),

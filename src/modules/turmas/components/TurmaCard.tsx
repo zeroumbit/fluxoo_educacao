@@ -71,7 +71,9 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</span>
               </div>
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                {(turma as any).horario || 'Não definido'}
+                {turma.horario_inicio && turma.horario_fim 
+                  ? `${turma.horario_inicio} - ${turma.horario_fim}` 
+                  : ((turma as any).horario || turma.sala || '—')}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100/50">
@@ -80,7 +82,7 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Alunos</span>
               </div>
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                {alunosCount}/{(turma as any).capacidade_maxima || 30} <span className="text-[10px] text-slate-400 font-medium">({((turma as any).capacidade_maxima || 30) - alunosCount} vagas)</span>
+                {alunosCount}/{turma.capacidade_maxima || 30} <span className="text-[10px] text-slate-400 font-medium">({(turma.capacidade_maxima || 30) - alunosCount} vagas)</span>
               </p>
             </div>
           </div>
@@ -89,13 +91,15 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
              <div className="flex items-center gap-1.5">
                 <DollarSign className="h-4 w-4 text-emerald-500" />
                 <span className="text-lg font-black text-slate-900 dark:text-white">
-                  R$ {turma.valor_mensalidade.toFixed(2).replace('.', ',')}
+                  {turma.valor_mensalidade 
+                    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)
+                    : 'R$ 0,00'}
                 </span>
              </div>
              <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 rounded-full"
-                  style={{ width: `${(alunosCount / ((turma as any).capacidade_maxima || 30)) * 100}%` }}
+                   className="h-full bg-indigo-500 rounded-full"
+                   style={{ width: `${Math.min(100, (alunosCount / (turma.capacidade_maxima || 30)) * 100)}%` }}
                 />
              </div>
           </div>

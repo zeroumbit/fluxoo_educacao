@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   Clock,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  Loader2
 } from 'lucide-react'
 import { useTurmaStore } from '../store'
 import { Badge } from '@/components/ui/badge'
@@ -19,45 +20,54 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { useFuncionarios } from '@/modules/funcionarios/hooks'
-import { useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useProfessoresTurma, useDisciplinas, useAtribuicoes, useAtribuirProfessor, useRemoverAtribuicao } from '../hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 
 interface TabProfessoresProps {
   turmaId: string;
 }
 
 export function TabProfessores({ turmaId }: TabProfessoresProps) {
-  const { professores, disciplinas, professor_turma, atribuirProfessor, removerAtribuicao, setProfessores } = useTurmaStore()
+  const { authUser } = useAuth()
+  const { professores, disciplinas, setProfessores, setDisciplinas } = useTurmaStore()
+  const [selectedDisciplina, setSelectedDisciplina] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [busca, setBusca] = useState('')
   
-  const { data: dbFuncionarios, isLoading: loadingProfessores } = useFuncionarios()
+  const { data: dbProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
+  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: instituicaoAtribuicoes, isLoading: loadingAtribuicoes } = useAtribuicoes(turmaId)
+  
+  const mutationAtribuir = useAtribuirProfessor()
+  const mutationRemover = useRemoverAtribuicao()
 
   useEffect(() => {
-     if (dbFuncionarios) {
-       const professoresMapped = dbFuncionarios
-         .filter((f: any) => f.areas_acesso?.includes('Pedagógico') || f.funcao?.toLowerCase().includes('professor'))
-         .map((f: any) => ({
-           id: f.id,
-           nome: f.nome_completo,
-           especialidades: [],
-           carga_horaria_maxima: 40,
-           ativo: f.status === 'ativo',
-           avatar_url: f.foto_url
-         }))
-       setProfessores(professoresMapped)
-     }
-  }, [dbFuncionarios, setProfessores])
+    if (dbProfessores) setProfessores(dbProfessores)
+  }, [dbProfessores, setProfessores])
 
-  // Atribuições desta turma
-  const atribuicoes = professor_turma.filter(at => at.turma_id === turmaId)
+  useEffect(() => {
+    if (dbDisciplinas) setDisciplinas(dbDisciplinas)
+  }, [dbDisciplinas, setDisciplinas])
+
+  // Atribuições desta turma (vêm do banco)
+  const atribuicoes = instituicaoAtribuicoes || []
+
+  // Filtragem
+  const filteredAtribuicoes = atribuicoes.filter((at: any) => {
+    const professor = professores.find((p: any) => p.id === at.professor_id)
+    const disciplina = disciplinas.find((d: any) => d.id === at.disciplina_id)
+    const searchTerm = busca.toLowerCase()
+    return professor?.nome.toLowerCase().includes(searchTerm) || 
+           disciplina?.nome.toLowerCase().includes(searchTerm)
+  })
 
   // Disciplinas que ainda não têm professor
   const disciplinasSemProfessor = disciplinas.filter(d => 
-    !atribuicoes.some(at => at.disciplina_id === d.id)
+    !atribuicoes.some((at: any) => at.disciplina_id === d.id) &&
+    d.nome.toLowerCase().includes(busca.toLowerCase())
   )
 
-  const handleAtribuir = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAtribuir = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const disciplinaId = formData.get('disciplina') as string
@@ -69,126 +79,144 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
       return
     }
 
-    atribuirProfessor({
-      turma_id: turmaId,
-      disciplina_id: disciplinaId,
-      professor_id: professorId,
-      carga_horaria_semanal: cargaHoraria,
-      data_inicio: new Date().toISOString(),
-      data_fim: null,
-      status: 'ativo'
-    })
+    try {
+      await mutationAtribuir.mutateAsync({
+        tenant_id: authUser?.tenantId,
+        turma_id: turmaId,
+        disciplina_id: disciplinaId,
+        professor_id: professorId,
+        carga_horaria_semanal: cargaHoraria,
+        status: 'ativo'
+      })
 
-    toast.success('Professor atribuído com sucesso!')
-    setIsModalOpen(false)
+      toast.success('Professor atribuído com sucesso!')
+      setIsModalOpen(false)
+    } catch (error) {
+      toast.error('Erro ao atribuir professor')
+    }
+  }
+
+  const handleRemover = async (id: string) => {
+    try {
+      await mutationRemover.mutateAsync(id)
+      toast.success('Vínculo removido!')
+    } catch (error) {
+      toast.error('Erro ao remover vínculo')
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <h3 className="text-xl font-black text-slate-900 tracking-tight">Corpo Docente</h3>
            <p className="text-slate-500 text-sm font-medium">Gestão de professores por disciplina nesta turma</p>
         </div>
         
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="h-12 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-slate-200">
-              <Plus size={18} />
-              Atribuir Professor
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[500px] p-0 overflow-hidden rounded-[2.5rem] border-0 shadow-2xl">
-            <div className="p-8">
-              <DialogHeader className="mb-6">
-                <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Atribuir Professor</DialogTitle>
-                <p className="text-slate-500 font-medium italic mt-1">Vínculo acadêmico disciplina-professor</p>
-              </DialogHeader>
+        <div className="flex items-center gap-3">
+          <div className="relative w-full md:w-64 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <Input
+              placeholder="Buscar professor ou disciplina..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-10 h-11 rounded-xl border-slate-100 bg-white shadow-sm focus:ring-2 focus:ring-indigo-50/50 font-medium text-xs"
+            />
+          </div>
 
-              <form onSubmit={handleAtribuir} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
-                  <Select name="disciplina">
-                    <SelectTrigger className="h-14 rounded-2xl border-slate-100 bg-slate-50 border-2 font-bold px-5 uppercase tracking-tighter">
-                      <SelectValue placeholder="Selecione a disciplina" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl font-bold">
-                       {disciplinas.map(d => (
-                         <SelectItem key={d.id} value={d.id} className="uppercase tracking-tighter">{d.nome}</SelectItem>
-                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Professor</label>
-                  <Select name="professor">
-                    <SelectTrigger className="h-14 rounded-2xl border-slate-100 bg-slate-50 border-2 font-bold px-5 uppercase tracking-tighter">
-                      <SelectValue placeholder="Selecione o professor" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl font-bold">
-                       {professores.map(p => (
-                         <SelectItem key={p.id} value={p.id} className="uppercase tracking-tighter">{p.nome}</SelectItem>
-                       ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-slate-400 font-medium ml-1">
-                    Professor não está na lista? <button type="button" className="text-indigo-600 font-bold hover:underline">Cadastrar novo</button>
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Carga Horária Semanal</label>
-                   <div className="flex items-center gap-4">
-                      <Input 
-                        name="carga" 
-                        type="number" 
-                        defaultValue="4" 
-                        className="w-24 h-14 rounded-2xl border-slate-100 bg-slate-50 border-2 font-black text-center"
-                      />
-                      <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aulas / Semana</span>
-                   </div>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1 h-14 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-100"
-                  >
-                    Atribuir
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <div className="hidden md:block w-px h-8 bg-slate-100 mx-2" />
+        </div>
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-[500px] p-0 overflow-hidden rounded-[2.5rem] border-0 shadow-2xl">
+          <div className="p-8">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Atribuir Professor</DialogTitle>
+              <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-indigo-50 rounded-xl border border-indigo-100 w-fit">
+                <BookOpen size={14} className="text-indigo-600" />
+                <span className="text-xs font-black text-indigo-700 uppercase tracking-widest">
+                  {selectedDisciplina?.nome || 'Disciplina'}
+                </span>
+              </div>
+            </DialogHeader>
+
+            <form onSubmit={handleAtribuir} className="space-y-5">
+              <input type="hidden" name="disciplina" value={selectedDisciplina?.id || ''} />
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Selecionar Professor</label>
+                <Select name="professor">
+                  <SelectTrigger className="h-14 rounded-2xl border-slate-100 bg-slate-50 border-2 font-bold px-5 uppercase tracking-tighter">
+                    <SelectValue placeholder="Escolha um docente" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-slate-100 shadow-xl font-bold">
+                     {professores.map(p => (
+                       <SelectItem key={p.id} value={p.id} className="uppercase tracking-tighter">
+                         {p.nome}{p.especialidades.length > 0 ? ` (${p.especialidades[0]})` : ''}
+                       </SelectItem>
+                     ))}
+                  </SelectContent>
+                </Select>
+                {professores.length === 0 && (
+                  <p className="text-[10px] text-amber-600 font-bold ml-1">
+                    ⚠️ Nenhum professor encontrado.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Carga Horária Semanal</label>
+                 <div className="flex items-center gap-4">
+                    <Input 
+                      name="carga" 
+                      type="number" 
+                      defaultValue="4" 
+                      className="w-24 h-14 rounded-2xl border-slate-100 bg-slate-50 border-2 font-black text-center"
+                    />
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Aulas / Semana</span>
+                 </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={mutationAtribuir.isPending}
+                  className="flex-1 h-14 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-100"
+                >
+                  {mutationAtribuir.isPending ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Confirmar Vínculo'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4">
         {loadingProfessores ? (
-           <div className="py-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-300" />
-              <p className="text-slate-400 font-bold mt-4">Carregando corpo docente...</p>
-           </div>
-        ) : atribuicoes.length === 0 && disciplinasSemProfessor.length === 0 ? (
-           <div className="py-12 bg-white rounded-[2rem] border border-dashed border-slate-200 text-center">
-              <GraduationCap className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-              <p className="text-slate-400 font-bold">Nenhum professor vinculado.</p>
-           </div>
+          <div className="py-12 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-300" />
+            <p className="text-slate-400 font-bold mt-4">Carregando corpo docente...</p>
+          </div>
+        ) : filteredAtribuicoes.length === 0 && disciplinasSemProfessor.length === 0 ? (
+          <div className="py-12 bg-white rounded-[2rem] border border-dashed border-slate-200 text-center">
+            <GraduationCap className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-400 font-bold">Nenhum professor ou disciplina encontrado.</p>
+          </div>
         ) : null}
 
         {/* Professores Vinculados */}
-        {atribuicoes.map((at) => {
-          const professor = professores.find(p => p.id === at.professor_id)
-          const disciplina = disciplinas.find(d => d.id === at.disciplina_id)
+        {filteredAtribuicoes.map((at: any) => {
+          const professor = professores.find((p: any) => p.id === at.professor_id)
+          const disciplina = disciplinas.find((d: any) => d.id === at.disciplina_id)
           if (!professor || !disciplina) return null
 
           return (
@@ -204,18 +232,20 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                         <h4 className="font-black text-slate-800 tracking-tight leading-none">{professor.nome}</h4>
-                         <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2 pt-0.5 rounded-full bg-slate-50 text-slate-400 border-slate-200">Professor</Badge>
+                        <h4 className="font-black text-slate-800 tracking-tight leading-none">{professor.nome}</h4>
+                        <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2 pt-0.5 rounded-full bg-slate-50 text-slate-400 border-slate-200">
+                          {professor.especialidades.length > 0 ? professor.especialidades[0] : 'Professor'}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-3">
-                         <div className="flex items-center gap-1">
-                            <BookOpen size={12} className="text-indigo-400" />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{disciplina.nome}</span>
-                         </div>
-                         <div className="flex items-center gap-1">
-                            <Clock size={12} className="text-slate-400" />
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{at.carga_horaria_semanal} aulas/unidade</span>
-                         </div>
+                        <div className="flex items-center gap-1">
+                          <BookOpen size={12} className="text-indigo-400" />
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{disciplina.nome}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock size={12} className="text-slate-400" />
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{at.carga_horaria_semanal} aulas/semana</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -227,13 +257,11 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      onClick={() => {
-                        removerAtribuicao(at.id)
-                        toast.success('Vínculo removido!')
-                      }}
+                      onClick={() => handleRemover(at.id)}
+                      disabled={mutationRemover.isPending}
                       className="h-11 w-11 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
                     >
-                      <Trash2 size={18} />
+                      {mutationRemover.isPending ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 size={18} />}
                     </Button>
                   </div>
                 </div>
@@ -250,7 +278,7 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
               Disciplinas pendentes de professor
             </h4>
             <div className="grid gap-3">
-              {disciplinasSemProfessor.map((d) => (
+              {disciplinasSemProfessor.map((d: any) => (
                 <div key={d.id} className="p-6 bg-amber-50/50 border border-amber-100 rounded-[2rem] flex items-center justify-between group hover:bg-amber-50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-amber-500 shadow-sm border border-amber-200 group-hover:scale-110 transition-transform">
@@ -263,7 +291,7 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
                   </div>
                   <Button 
                     variant="ghost" 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => { setSelectedDisciplina(d); setIsModalOpen(true); }}
                     className="h-10 px-4 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-black text-[10px] uppercase tracking-widest gap-2"
                   >
                     Atribuir Agora

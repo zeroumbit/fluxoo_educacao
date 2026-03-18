@@ -9,22 +9,12 @@ import { z } from 'zod'
 
 export function useTurmas() {
   const { authUser } = useAuth()
-  const query = useQuery({
+  return useQuery({
     queryKey: ['turmas', authUser?.tenantId],
-    queryFn: () => {
-      console.log('🔍 [useTurmas] queryFn executou, tenantId:', authUser?.tenantId)
-      return turmaService.listar(authUser!.tenantId)
-    },
+    queryFn: () => turmaService.listar(authUser!.tenantId),
     enabled: !!authUser?.tenantId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 5,
   })
-  console.log('🔍 [useTurmas] query result:', { 
-    data: query.data, 
-    isLoading: query.isLoading, 
-    error: query.error,
-    dataUpdatedAt: new Date(query.dataUpdatedAt).toISOString()
-  })
-  return query
 }
 
 export function useTurma(id: string) {
@@ -39,18 +29,10 @@ export function useTurma(id: string) {
 export function useCriarTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (turma: TurmaInsert) => {
-      console.log('🔍 [useCriarTurma] mutationFn:', turma)
-      return turmaService.criar(turma)
-    },
-    onSuccess: (data) => {
-      console.log('🔍 [useCriarTurma] onSuccess, turma criada:', data)
+    mutationFn: (turma: TurmaInsert) => turmaService.criar(turma),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.refetchQueries({ queryKey: ['turmas'] })
-    },
-    onError: (error) => {
-      console.error('🔍 [useCriarTurma] onError:', error)
     },
   })
 }
@@ -58,18 +40,11 @@ export function useCriarTurma() {
 export function useAtualizarTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) => {
-      console.log('🔍 [useAtualizarTurma] mutationFn:', { id, turma })
-      return turmaService.atualizar(id, turma)
-    },
-    onSuccess: (data) => {
-      console.log('🔍 [useAtualizarTurma] onSuccess, turma atualizada:', data)
+    mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) =>
+      turmaService.atualizar(id, turma),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.refetchQueries({ queryKey: ['turmas'] })
-    },
-    onError: (error) => {
-      console.error('🔍 [useAtualizarTurma] onError:', error)
     },
   })
 }
@@ -77,21 +52,14 @@ export function useAtualizarTurma() {
 export function useExcluirTurma() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => {
-      console.log('🔍 [useExcluirTurma] mutationFn, id:', id)
-      return turmaService.excluir(id)
-    },
-    onSuccess: (data, id) => {
-      console.log('🔍 [useExcluirTurma] onSuccess, id excluído:', id)
+    mutationFn: (id: string) => turmaService.excluir(id),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.refetchQueries({ queryKey: ['turmas'] })
-    },
-    onError: (error) => {
-      console.error('🔍 [useExcluirTurma] onError:', error)
     },
   })
 }
+
 export function useTurmaDoAluno(alunoId: string) {
   const { authUser } = useAuth()
   return useQuery({
@@ -101,37 +69,115 @@ export function useTurmaDoAluno(alunoId: string) {
   })
 }
 
-// Validação conforme Regra 2.4
+/**
+ * Busca disciplinas REAIS do banco de dados (tabela disciplinas).
+ */
+export function useDisciplinas() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['disciplinas', authUser?.tenantId],
+    queryFn: () => turmaService.listarDisciplinas(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 1000 * 60 * 10,
+  })
+}
+
+/**
+ * Busca professores REAIS — funcionários ativos com função "Professor".
+ * Os professores devem ser cadastrados via /funcionarios primeiro.
+ */
+export function useProfessoresTurma() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['professores-turma', authUser?.tenantId],
+    queryFn: () => turmaService.listarProfessores(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+// --- ACADÊMICO: ATRIBUIÇÕES E GRADE ---
+
+export function useAtribuicoes(turmaId?: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['atribuicoes', authUser?.tenantId, turmaId],
+    queryFn: () => turmaService.listarAtribuicoes(authUser!.tenantId, turmaId),
+    enabled: !!authUser?.tenantId,
+  })
+}
+
+export function useAtribuirProfessor() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (atribuicao: any) => turmaService.atribuirProfessor(atribuicao),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+    },
+  })
+}
+
+export function useRemoverAtribuicao() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => turmaService.removerAtribuicao(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+    },
+  })
+}
+
+export function useGradeTurma(turmaId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['grade_horaria', authUser?.tenantId, turmaId],
+    queryFn: () => turmaService.listarGrade(authUser!.tenantId, turmaId),
+    enabled: !!authUser?.tenantId && !!turmaId,
+  })
+}
+
+export function useSalvarGradeItem() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (item: any) => turmaService.salvarGradeItem(item),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+    },
+  })
+}
+
+export function useRemoverGradeItem() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => turmaService.removerGradeItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+    },
+  })
+}
+
 const updateMensalidadeSchema = z.object({
   turmaId: z.string().uuid(),
   tenantId: z.string().uuid(),
   valor: z.number().positive("O valor deve ser maior que zero"),
 })
 
-/**
- * Hook para gerir a atualização de mensalidades por turma
- * Segue Regras 2.3 (Invalidar Cache) e 4.1 (Toast Feedback)
- */
 export const useTurmaBilling = () => {
   const queryClient = useQueryClient()
 
   const updateMensalidadeTurma = useMutation({
     mutationFn: async ({ turmaId, tenantId, valor }: z.infer<typeof updateMensalidadeSchema>) => {
-      // Chama a RPC do banco que processa a atualização em massa (Regra 1.5)
-      // @ts-ignore - RPC a ser adicionada no schema de tipos
+      // @ts-ignore - RPC custom
       const { error } = await supabase.rpc('rpc_atualizar_mensalidade_turma_em_lote', {
         p_tenant_id: tenantId,
         p_turma_id: turmaId,
         p_novo_valor_cheio: valor
       })
-
       if (error) throw error
     },
     onSuccess: (_, variables) => {
-      // Invalida o cache para que a UI reflicta o novo valor (Regra 2.3)
       queryClient.invalidateQueries({ queryKey: ['turmas', variables.tenantId] })
       queryClient.invalidateQueries({ queryKey: ['alunos', variables.turmaId] })
-      
       toast.success('Mensalidade da turma atualizada com sucesso!')
     },
     onError: (error: any) => {

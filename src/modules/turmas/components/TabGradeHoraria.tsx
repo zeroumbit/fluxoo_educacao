@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -12,12 +12,14 @@ import {
   Download,
   Printer,
   Copy,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react'
 import { useTurmaStore } from '../store'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import type { GradeHoraria } from '../types'
+import { useGradeTurma, useSalvarGradeItem, useRemoverGradeItem, useAtribuicoes, useDisciplinas, useProfessoresTurma } from '../hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 
 interface TabGradeHorariaProps {
   turmaId: string;
@@ -41,12 +43,55 @@ const HORARIOS = [
 ]
 
 export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
-  const { disciplinas, professores, professor_turma, grade_horaria, atualizarGrade } = useTurmaStore()
+  const { authUser } = useAuth()
+  const { setProfessores, setDisciplinas } = useTurmaStore()
   const [isEditing, setIsEditing] = useState(false)
   const [selectedDisciplinaId, setSelectedDisciplinaId] = useState<string | null>(null)
 
-  // Filtrar grade desta turma
-  const gradeTurma = grade_horaria.filter(g => g.turma_id === turmaId)
+  const { data: dbProfessores } = useProfessoresTurma()
+  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: gradeTurmaDb, isLoading: loadingGrade } = useGradeTurma(turmaId)
+  const { data: atribuicoesDb } = useAtribuicoes(turmaId)
+
+  const mutationSalvar = useSalvarGradeItem()
+  const mutationRemover = useRemoverGradeItem()
+
+  useEffect(() => {
+    if (dbProfessores) setProfessores(dbProfessores)
+  }, [dbProfessores, setProfessores])
+
+  useEffect(() => {
+    if (dbDisciplinas) setDisciplinas(dbDisciplinas)
+  }, [dbDisciplinas, setDisciplinas])
+
+  // Helper values
+  const gradeTurma = (gradeTurmaDb || []) as any[]
+  const atribuicoes = (atribuicoesDb || []) as any[]
+  const disciplinas = dbDisciplinas || []
+  const professores = dbProfessores || []
+
+  const salvarHorario = async (disciplinaId: string, dia: number, horario: any) => {
+    // Achar professor vinculado a essa disciplina nesta turma nas atribuições REAIS
+    const vinculo = atribuicoes.find((at: any) => at.disciplina_id === disciplinaId)
+    const professorId = vinculo?.professor_id || null
+
+    try {
+      await mutationSalvar.mutateAsync({
+        tenant_id: authUser?.tenantId,
+        turma_id: turmaId,
+        disciplina_id: disciplinaId,
+        professor_id: professorId,
+        dia_semana: dia as any,
+        hora_inicio: horario.inicio,
+        hora_fim: horario.fim,
+        sala: '',
+        status: 'ativo'
+      })
+      toast.success('Horário atualizado')
+    } catch (error) {
+      toast.error('Erro ao salvar horário')
+    }
+  }
 
   const handleCellClick = (dia: number, horario: any) => {
     if (!isEditing) return
@@ -54,34 +99,36 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
       toast.info('Selecione uma disciplina na lista acima')
       return
     }
+    salvarHorario(selectedDisciplinaId, dia, horario)
+  }
 
-    // Achar professor vinculado a essa disciplina nesta turma
-    const vinculo = professor_turma.find(at => at.turma_id === turmaId && at.disciplina_id === selectedDisciplinaId)
-    const professorId = vinculo?.professor_id || null
+  const handleDrop = (e: React.DragEvent, dia: number, horario: any) => {
+    e.preventDefault()
+    if (!isEditing) return
+    const disciplinaId = e.dataTransfer.getData('disciplinaId')
+    if (disciplinaId) {
+      salvarHorario(disciplinaId, dia, horario)
+    }
+  }
 
-    atualizarGrade({
-      id: '', // handle in store
-      turma_id: turmaId,
-      disciplina_id: selectedDisciplinaId,
-      professor_id: professorId,
-      dia_semana: dia as any,
-      hora_inicio: horario.inicio,
-      hora_fim: horario.fim,
-      sala: 'Sala 08',
-      status: 'ativo'
-    })
-
-    toast.success('Horário atualizado')
+  const handleRemoverItem = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    try {
+      await mutationRemover.mutateAsync(id)
+      toast.success('Horário removido')
+    } catch (error) {
+      toast.error('Erro ao remover horário')
+    }
   }
 
   const getCellContent = (dia: number, horario: any) => {
-    const item = gradeTurma.find(g => g.dia_semana === dia && g.hora_inicio === horario.inicio)
+    const item = gradeTurma.find((g: any) => g.dia_semana === dia && g.hora_inicio === horario.inicio)
     if (!item) return null
 
-    const disciplina = disciplinas.find(d => d.id === item.disciplina_id)
-    const professor = professores.find(p => p.id === item.professor_id)
+    const disciplina = disciplinas.find((d: any) => d.id === item.disciplina_id)
+    const professor = professores.find((p: any) => p.id === item.professor_id)
 
-    return { disciplina, professor }
+    return { item, disciplina, professor }
   }
 
   return (
@@ -93,6 +140,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
         </div>
         
         <div className="flex items-center gap-2">
+           {loadingGrade && <Loader2 className="animate-spin text-slate-300 mr-2" size={20} />}
            {!isEditing ? (
              <>
                <Button 
@@ -124,7 +172,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
                <Button 
                 onClick={() => {
                   setIsEditing(false)
-                  toast.success('Grade salva com sucesso!')
+                  toast.success('Edição finalizada')
                 }}
                 className="h-10 px-6 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-teal-100"
                >
@@ -144,25 +192,47 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
               Disciplinas Disponíveis
             </h4>
             <div className="flex flex-wrap gap-2">
-              {disciplinas.map(d => (
-                <button
-                  key={d.id}
-                  onClick={() => setSelectedDisciplinaId(d.id)}
-                  className={cn(
-                    "px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all",
-                    selectedDisciplinaId === d.id 
-                      ? "ring-4 ring-indigo-100 text-white shadow-lg" 
-                      : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white"
-                  )}
-                  style={{ backgroundColor: selectedDisciplinaId === d.id ? d.cor : undefined }}
-                >
-                  {d.codigo}
-                </button>
-              ))}
+              {disciplinas.filter(d => atribuicoes.some(at => at.disciplina_id === d.id)).length === 0 ? (
+                <div className="w-full p-6 border-2 border-dashed border-slate-100 rounded-[2rem] text-center">
+                  <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center justify-center gap-2">
+                    <AlertTriangle size={14} />
+                    Nenhuma disciplina com professor vinculado. 
+                    <button 
+                      onClick={() => document.querySelector<HTMLButtonElement>('[value="professores"]')?.click()}
+                      className="ml-2 underline text-indigo-600 font-black"
+                    >
+                      Vincular Agora
+                    </button>
+                  </p>
+                </div>
+              ) : (
+                disciplinas
+                  .filter(d => atribuicoes.some(at => at.disciplina_id === d.id))
+                  .map((d: any) => (
+                  <button
+                    key={d.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('disciplinaId', d.id)
+                      setSelectedDisciplinaId(d.id)
+                    }}
+                    onClick={() => setSelectedDisciplinaId(d.id)}
+                    className={cn(
+                      "px-4 py-3 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all text-center min-w-[100px] cursor-grab active:cursor-grabbing",
+                      selectedDisciplinaId === d.id 
+                        ? "ring-4 ring-indigo-100 text-white shadow-lg" 
+                        : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-white"
+                    )}
+                    style={{ backgroundColor: selectedDisciplinaId === d.id ? d.cor : undefined }}
+                  >
+                    {d.nome}
+                  </button>
+                ))
+              )}
             </div>
             <p className="text-[10px] font-medium text-slate-400 italic ml-4 flex items-center gap-2">
                <Info size={12} className="text-indigo-400" />
-               Selecione uma disciplina e clique no horário desejado para preencher a grade.
+               Clique ou arraste uma disciplina para o horário desejado.
             </p>
           </div>
         </Card>
@@ -185,7 +255,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
               </tr>
             </thead>
             <tbody>
-              {HORARIOS.map((h, hIndex) => (
+              {HORARIOS.map((h: any, hIndex: number) => (
                 <tr key={hIndex} className={cn(h.isBreak ? "bg-slate-50/30" : "hover:bg-slate-50/20 transition-colors")}>
                   <td className="p-6 border-b border-r border-slate-100 sticky left-0 z-10 bg-white">
                     <div className="flex flex-col">
@@ -194,7 +264,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
                     </div>
                   </td>
                   
-                  {DIAS_SEMANA.map(dia => {
+                  {DIAS_SEMANA.map((dia: any) => {
                     const content = getCellContent(dia.id, h)
                     
                     if (h.isBreak) {
@@ -209,6 +279,8 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
                       <td 
                         key={dia.id} 
                         onClick={() => handleCellClick(dia.id, h)}
+                        onDragOver={(e) => isEditing && e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, dia.id, h)}
                         className={cn(
                           "p-4 border-b border-slate-100 text-center relative transition-all",
                           isEditing ? "cursor-pointer hover:bg-slate-100/50 group" : ""
@@ -226,7 +298,10 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
                                 {content.professor?.nome || 'Sem professor'}
                               </p>
                               {isEditing && (
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div 
+                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded-lg"
+                                  onClick={(e) => handleRemoverItem(e, content.item.id)}
+                                >
                                    <Trash2 size={12} className="text-white hover:text-red-200" />
                                 </div>
                               )}
