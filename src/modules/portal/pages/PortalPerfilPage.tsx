@@ -27,6 +27,9 @@ import { useViaCEP } from '@/hooks/use-viacep'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { BotaoVoltar } from '../components/BotaoVoltar'
+import { ModalContratoEscola } from '../components/ModalContratoEscola'
+import { supabase } from '@/lib/supabase'
+import { FileText, Eye, Download, Printer } from 'lucide-react'
 
 // Helper de vibração
 const vibrate = (pattern: number | number[] = 20) => {
@@ -54,10 +57,22 @@ type PerfilFormValues = z.infer<typeof perfilSchema>
 
 export function PortalPerfilPage() {
   const { authUser } = useAuth()
-  const { responsavel } = usePortalContext()
+  const { responsavel, alunoSelecionado } = usePortalContext()
   const updatePerfil = useUpdatePerfil()
-  
+
   const [isEditing, setIsEditing] = useState(false)
+  const [showContratoModal, setShowContratoModal] = useState(false)
+  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+
+  // Carregar informações da escola para o contrato
+  useEffect(() => {
+    async function fetchEscola() {
+      if (!alunoSelecionado?.tenant_id) return
+      const { data } = await supabase.from('escolas').select('*').eq('id', alunoSelecionado.tenant_id).maybeSingle()
+      if (data) setEscolaInfo(data)
+    }
+    fetchEscola()
+  }, [alunoSelecionado?.tenant_id])
   
   const {
     register,
@@ -132,7 +147,8 @@ export function PortalPerfilPage() {
   }
 
   return (
-    <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
+    <>
+      <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-3">
@@ -328,8 +344,69 @@ export function PortalPerfilPage() {
                </div>
             </CardContent>
           </Card>
+
+          {/* Card do Contrato */}
+          <Card className="border border-indigo-100 shadow-sm rounded-2xl bg-white overflow-hidden">
+            <div className="p-5 flex flex-col items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-inner">
+                <FileText className="h-7 w-7" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-base font-bold text-slate-800 tracking-tight">Contrato da Escola</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-1">Ano Letivo 2026</p>
+              </div>
+              <div className="flex gap-2 w-full">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    vibrate(40);
+                    setShowContratoModal(true);
+                  }}
+                  className="flex-1 h-12 rounded-xl bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white border border-slate-100 transition-all font-bold text-[10px] uppercase tracking-widest"
+                >
+                  <Eye className="mr-2 h-4 w-4" /> Ver
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    vibrate(40);
+                    setShowContratoModal(true);
+                  }}
+                  className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                  title="Baixar Contrato"
+                >
+                  <Download className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    vibrate(40);
+                    setShowContratoModal(true);
+                  }}
+                  className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                  title="Imprimir Contrato"
+                >
+                  <Printer className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
+
+      <ModalContratoEscola
+        open={showContratoModal}
+        onClose={() => setShowContratoModal(false)}
+        responsavel={responsavel}
+        tenantId={alunoSelecionado?.tenant_id || ''}
+        escolaNome={escolaInfo?.razao_social}
+        escolaCnpj={escolaInfo?.cnpj}
+        escolaEndereco={escolaInfo?.logradouro}
+        alunoNome={alunoSelecionado?.nome_social || alunoSelecionado?.nome_completo}
+      />
+    </>
   )
 }

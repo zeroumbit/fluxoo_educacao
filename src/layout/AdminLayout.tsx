@@ -49,8 +49,8 @@ const navigationGroups = [
     items: [
       { name: 'Alunos', href: '/alunos', icon: Users },
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
-      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
       { name: 'Turmas', href: '/turmas', icon: BookOpen },
+      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
       { name: 'Boletim', href: '/notas', icon: GraduationCap },
       { name: 'Livros', href: '/livros', icon: BookOpen },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },

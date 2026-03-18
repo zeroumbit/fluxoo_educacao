@@ -162,7 +162,7 @@ export function NotasPageMobile() {
               >
                 <ArrowLeft className="h-4 w-4 text-slate-500" />
               </motion.button>
-              <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Notas</h1>
+              <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Boletim</h1>
             </div>
             <motion.button 
               whileTap={{ scale: 0.9 }}
@@ -223,7 +223,7 @@ export function NotasPageMobile() {
               </motion.button>
               <div className="flex flex-col min-w-0">
                 <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none truncate">
-                  {turmaId ? turmas?.find(t => t.id === turmaId)?.nome : 'Notas'}
+                  {turmaId ? turmas?.find(t => t.id === turmaId)?.nome : 'Boletim'}
                 </h1>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
                   {disciplinaNome} • {bimestre}º Bimestre
@@ -393,26 +393,6 @@ function FilterSheet({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Disciplina</Label>
-            <div className="flex flex-wrap gap-2">
-              {disciplinas?.map((d: any) => (
-                <button
-                  key={d.id}
-                  onClick={() => setDisciplinaNome(d.nome)}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-xs font-bold transition-all border",
-                    disciplinaNome === d.nome 
-                      ? "bg-indigo-600 border-indigo-600 text-white" 
-                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                  )}
-                >
-                  {d.nome}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
             <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bimestre</Label>
             <div className="grid grid-cols-4 gap-2">
               {['1', '2', '3', '4'].map((b) => (
@@ -422,11 +402,31 @@ function FilterSheet({
                   className={cn(
                     "h-12 rounded-xl text-xs font-bold transition-all border",
                     bimestre === b 
-                      ? "bg-indigo-600 border-indigo-600 text-white" 
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
                       : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
                   )}
                 >
-                  {b}º
+                  {b}º Bim
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Disciplina</Label>
+            <div className="flex flex-wrap gap-2">
+              {disciplinas?.map((d: any) => (
+                <button
+                  key={d.id}
+                  onClick={() => setDisciplinaNome(d.nome)}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all border",
+                    disciplinaNome === d.nome 
+                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
+                      : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                  )}
+                >
+                  {d.nome}
                 </button>
               ))}
             </div>

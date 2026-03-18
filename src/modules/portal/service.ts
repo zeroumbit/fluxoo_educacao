@@ -437,12 +437,18 @@ export const portalService = {
   // ==========================================
   // EVENTOS / AGENDA
   // ==========================================
-  async buscarEventos(tenantId: string) {
-    const { data, error } = await (supabase.from('eventos' as any) as any)
+  async buscarEventos(tenantId: string, inicio?: string, fim?: string) {
+    let query = (supabase.from('eventos' as any) as any)
       .select('*')
       .eq('tenant_id', tenantId)
-      .gte('data_inicio', new Date().toISOString())
-      .order('data_inicio', { ascending: true })
+
+    if (inicio && fim) {
+      query = query.gte('data_inicio', inicio).lte('data_inicio', fim)
+    } else {
+      query = query.gte('data_inicio', new Date().toISOString())
+    }
+
+    const { data, error } = await query.order('data_inicio', { ascending: true })
 
     if (error) throw error
     return (data as any[]) || []

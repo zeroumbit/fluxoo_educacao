@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAlunos, useExcluirAluno } from '../hooks'
+import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
 import {
   Search,
@@ -9,7 +9,16 @@ import {
   ChevronRight,
   Filter,
   ArrowLeft,
-  X
+  X,
+  MoreVertical,
+  Percent,
+  Shield,
+  Eye,
+  Edit2,
+  UserMinus,
+  Trash2,
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NativeCard } from '@/components/mobile/NativeCard'
@@ -19,8 +28,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter 
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { get, set } from 'idb-keyval'
+import { cn } from '@/lib/utils'
+import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
+import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
 
 const CACHE_KEY = 'alunos_list_cache'
 
@@ -29,10 +49,22 @@ export function AlunosListPageMobile() {
   const { data: alunos, isLoading, refetch } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
   const excluirAluno = useExcluirAluno()
+  const atualizarAluno = useAtualizarAluno()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [cachedAlunos, setCachedAlunos] = useState<any[]>([])
+
+  // Estados para Ações
+  const [selectedAluno, setSelectedAluno] = useState<any | null>(null)
+  const [isActionsOpen, setIsActionsOpen] = useState(false)
+  const [isDescontoOpen, setIsDescontoOpen] = useState(false)
+  const [isAutorizacoesOpen, setIsAutorizacoesOpen] = useState(false)
+  
+  // Estados para Diálogos de Confirmação
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDesativarDialog, setShowDesativarDialog] = useState(false)
+  const [confirmacaoDesativar, setConfirmacaoDesativar] = useState(false)
 
   useEffect(() => {
     get(CACHE_KEY).then(val => { if (val) setCachedAlunos(val) })
@@ -57,12 +89,56 @@ export function AlunosListPageMobile() {
 
   const onRefresh = async () => { await refetch() }
 
-  const handleExcluir = async (aluno: any) => {
-    if (aluno.status === 'ativo') {
+  // Handlers de Ação
+  const handleOpenActions = (aluno: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedAluno(aluno)
+    setIsActionsOpen(true)
+  }
+
+  const handleDesativar = () => {
+    setIsActionsOpen(false)
+    setShowDesativarDialog(true)
+    setConfirmacaoDesativar(false)
+  }
+
+  const confirmarDesativacao = async () => {
+    if (!selectedAluno || !confirmacaoDesativar) return
+    try {
+      await atualizarAluno.mutateAsync({ 
+        id: selectedAluno.id, 
+        aluno: { status: 'inativo' } 
+      })
+      toast.success('Aluno desativado!', { position: 'top-center' })
+      setShowDesativarDialog(false)
+      setSelectedAluno(null)
+    } catch (err: any) {
+      toast.error('Erro ao desativar: ' + err.message, { position: 'top-center' })
+    }
+  }
+
+  const handleExcluir = () => {
+    setIsActionsOpen(false)
+    if (selectedAluno.status === 'ativo') {
       toast.error('Não é possível excluir um aluno ativo.', {
         description: 'Desative-o primeiro.',
         position: 'top-center'
       })
+      return
+    }
+    setShowDeleteDialog(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!selectedAluno) return
+    try {
+      await excluirAluno.mutateAsync(selectedAluno.id)
+      toast.success('Aluno removido!', { position: 'top-center' })
+      setShowDeleteDialog(false)
+      setSelectedAluno(null)
+      refetch()
+    } catch (err: any) {
+      toast.error('Erro ao excluir: ' + err.message, { position: 'top-center' })
     }
   }
 
@@ -145,7 +221,7 @@ export function AlunosListPageMobile() {
                   <NativeCard
                     swipeable
                     onClick={() => navigate(`/alunos/${aluno.id}`)}
-                    onDelete={() => handleExcluir(aluno)}
+                    onDelete={() => { setSelectedAluno(aluno); handleExcluir(); }}
                     onEdit={() => navigate(`/alunos/${aluno.id}?edit=true`)}
                   >
                     <div className="flex items-start gap-3.5">
@@ -164,29 +240,33 @@ export function AlunosListPageMobile() {
                           <h3 className="font-bold text-slate-900 dark:text-white text-[14px] truncate leading-tight">
                             {aluno.nome_completo}
                           </h3>
-                          <Badge className={`text-[8px] font-black h-[18px] px-1.5 rounded-md border-0 shrink-0 ${
-                            alunosComMatriculaIds.has(aluno.id)
-                              ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30'
-                              : 'bg-amber-50 text-amber-500 dark:bg-amber-900/30'
-                          }`}>
-                            {alunosComMatriculaIds.has(aluno.id) ? 'ATIVO' : 'PEND.'}
+                          <Badge className={cn("text-[8px] font-black h-[18px] px-1.5 rounded-md border-0 shrink-0", 
+                            aluno.status === 'ativo' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                          )}>
+                            {aluno.status?.toUpperCase() || 'ATIVO'}
                           </Badge>
                         </div>
                         
                         <div className="flex flex-wrap gap-1.5 mt-2">
                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100/50">
-                              <User className="h-2.5 w-2.5 text-indigo-500" />
-                              <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase">ESTUDANTE</span>
+                              <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase">
+                                {alunosComMatriculaIds.has(aluno.id) ? 'MATRICULADO' : 'SEM MATRÍCULA'}
+                              </span>
                            </div>
                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100">
                               <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                                 {aluno.filiais?.nome_unidade || 'Sem Unidade'}
+                                 {aluno.cpf || 'Sem CPF'}
                               </span>
                            </div>
                         </div>
                       </div>
 
-                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 mt-1" />
+                      <button 
+                        onClick={(e) => handleOpenActions(aluno, e)}
+                        className="h-9 w-9 -mr-2 rounded-xl flex items-center justify-center text-slate-300 active:bg-slate-100"
+                      >
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
                     </div>
                   </NativeCard>
                 </motion.div>
@@ -223,6 +303,70 @@ export function AlunosListPageMobile() {
         <Plus className="h-6 w-6" />
       </motion.button>
 
+      {/* Action Sheet */}
+      <BottomSheet
+        isOpen={isActionsOpen}
+        onClose={() => setIsActionsOpen(false)}
+        title={selectedAluno?.nome_completo}
+        size="peek"
+      >
+        <div className="space-y-1.5 pb-8">
+           <button 
+            onClick={() => { setIsActionsOpen(false); navigate(`/alunos/${selectedAluno.id}`); }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+           >
+              <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Eye size={20} /></div>
+              <span className="font-bold text-slate-700">Ver Detalhes do Aluno</span>
+           </button>
+
+           <button 
+            onClick={() => { setIsActionsOpen(false); navigate(`/alunos/${selectedAluno.id}?edit=true`); }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+           >
+              <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center"><Edit2 size={18} /></div>
+              <span className="font-bold text-slate-700">Editar Cadastro</span>
+           </button>
+
+           <div className="h-px bg-slate-100 mx-4 my-1" />
+
+           <button 
+            onClick={() => { setIsActionsOpen(false); setIsDescontoOpen(true); }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+           >
+              <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><Percent size={18} /></div>
+              <span className="font-bold text-slate-700">Gerenciar Descontos (Overrides)</span>
+           </button>
+
+           <button 
+            onClick={() => { setIsActionsOpen(false); setIsAutorizacoesOpen(true); }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+           >
+              <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><Shield size={18} /></div>
+              <span className="font-bold text-slate-700">Gerenciar Autorizações</span>
+           </button>
+
+           <div className="h-px bg-slate-100 mx-4 my-1" />
+
+           {selectedAluno?.status === 'ativo' && (
+             <button 
+              onClick={handleDesativar}
+              className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-amber-50 transition-colors text-amber-600"
+             >
+                <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center"><UserMinus size={18} /></div>
+                <span className="font-bold">Desativar Aluno</span>
+             </button>
+           )}
+
+           <button 
+            onClick={handleExcluir}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-rose-50 transition-colors text-rose-600"
+           >
+              <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center"><Trash2 size={18} /></div>
+              <span className="font-bold">Excluir Registro</span>
+           </button>
+        </div>
+      </BottomSheet>
+
       {/* Filter Bottom Sheet */}
       <BottomSheet
         isOpen={isFilterOpen}
@@ -246,6 +390,110 @@ export function AlunosListPageMobile() {
           </Button>
         </div>
       </BottomSheet>
+
+      {/* Modais de Negócio */}
+      <ModalDescontoAluno 
+        open={isDescontoOpen} 
+        aluno={selectedAluno} 
+        onClose={() => setIsDescontoOpen(false)} 
+      />
+
+      <ModalAutorizacoesAluno 
+        open={isAutorizacoesOpen} 
+        onClose={() => setIsAutorizacoesOpen(false)} 
+        alunoId={selectedAluno?.id} 
+        alunoNome={selectedAluno?.nome_completo}
+      />
+
+      {/* Dialog de Exclusão */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="w-[90vw] rounded-3xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
+          <DialogHeader className="p-6 pb-2">
+            <div className="h-12 w-12 rounded-xl bg-rose-50 flex items-center justify-center mb-4">
+               <AlertCircle className="h-6 w-6 text-rose-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight text-left">Confirmar Exclusão</DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm text-left">
+              Deseja excluir permanentemente <strong>{selectedAluno?.nome_completo}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 py-4">
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Esta ação é definitiva. Considere <strong>desativar</strong> o aluno para preservar o histórico financeiro e acadêmico.
+            </p>
+          </div>
+          <DialogFooter className="p-6 bg-slate-50 mt-4 flex flex-row gap-3">
+            <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setShowDeleteDialog(false)}>
+              Manter
+            </Button>
+            <Button className="flex-[2] rounded-xl bg-rose-600 h-12 font-bold" onClick={confirmarExclusao}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Desativação */}
+      <Dialog open={showDesativarDialog} onOpenChange={(open) => {
+        setShowDesativarDialog(open)
+        if (!open) { setConfirmacaoDesativar(false); }
+      }}>
+        <DialogContent className="w-[90vw] rounded-3xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
+          <DialogHeader className="p-6 pb-2">
+            <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
+               <UserMinus className="h-6 w-6 text-amber-600" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight text-left">
+              {confirmacaoDesativar ? 'Último Passo' : 'Confirmar Desativação'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm text-left">
+              {confirmacaoDesativar 
+                ? `Revise os impactos da desativação para ${selectedAluno?.nome_completo}.`
+                : `Você está prestes a desativar o cadastro do aluno.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="px-6 py-4">
+            {!confirmacaoDesativar ? (
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Alunos inativos perdem acesso ao portal, mas seus registros financeiros e acadêmicos são preservados para auditoria futura.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4">
+                <p className="text-xs text-rose-700 font-bold">
+                  Confirmar desativação imediata do estudante?
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="p-6 bg-slate-50 mt-4 flex flex-row gap-3">
+            {!confirmacaoDesativar ? (
+              <>
+                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setShowDesativarDialog(false)}>
+                  Voltar
+                </Button>
+                <Button className="flex-[2] rounded-xl bg-amber-600 h-12 font-bold text-white" onClick={() => setConfirmacaoDesativar(true)}>
+                  Continuar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setConfirmacaoDesativar(false)}>
+                  Cancelar
+                </Button>
+                <Button className="flex-[2] rounded-xl bg-rose-600 h-12 font-bold shadow-md text-white" onClick={confirmarDesativacao}>
+                  Confirmar
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

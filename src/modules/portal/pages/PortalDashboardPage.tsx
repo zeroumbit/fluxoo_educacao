@@ -494,59 +494,6 @@ export function PortalDashboardPage() {
         </div>
       </motion.div>
 
-      {/* SEÇÃO DO CONTRATO */}
-      <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 hover:border-indigo-100 hover:shadow-md transition-all duration-300">
-        <div className="flex items-center gap-5">
-          <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-inner">
-            <FileText className="h-7 w-7" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">Contrato da Escola</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] mt-0.5">Ano Letivo 2026 • Documento Oficial</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <Button 
-            variant="ghost" 
-            onClick={() => {
-              vibrate(40);
-              setShowContratoModal(true);
-            }}
-            className="flex-1 md:flex-none h-12 px-6 rounded-xl bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white border border-slate-100 transition-all font-bold text-[10px] uppercase tracking-widest"
-          >
-            <Eye className="mr-2.5 h-4 w-4" /> Ver Contrato
-          </Button>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                vibrate(40);
-                setShowContratoModal(true);
-              }}
-              className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
-              title="Baixar Contrato"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                vibrate(40);
-                setShowContratoModal(true);
-              }}
-              className="h-12 w-12 rounded-xl border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
-              title="Imprimir Contrato"
-            >
-              <Printer className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* 2. Estatísticas Rápidas */}
       {dashboard && (
         <div className="flex flex-col md:flex-row gap-3">
