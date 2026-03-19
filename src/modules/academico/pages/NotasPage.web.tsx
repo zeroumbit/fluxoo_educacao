@@ -199,7 +199,25 @@ export function NotasPageWeb() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Cards de Resumo estilo AlunosListPage */}
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Diário de Notas</h1>
+          <p className="text-muted-foreground">Lançamento de desempenho acadêmico e faltas</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+           <Button
+            onClick={salvarTodas}
+            disabled={isSaving || !turmaId || !disciplinaNome}
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 px-8 rounded-xl shadow-md font-bold transition-all gap-2"
+           >
+             {isSaving ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="h-4 w-4" />}
+             Salvar Notas do Diário
+           </Button>
+        </div>
+      </div>
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6 gap-4">
@@ -253,24 +271,6 @@ export function NotasPageWeb() {
                 </div>
              </div>
           </Card>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Diário de Notas</h1>
-          <p className="text-muted-foreground">Lançamento de desempenho acadêmico e faltas</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-           <Button 
-            onClick={salvarTodas} 
-            disabled={isSaving || !turmaId || !disciplinaNome}
-            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 h-11 px-8 rounded-xl shadow-md font-bold transition-all gap-2"
-           >
-             {isSaving ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="h-4 w-4" />}
-             Salvar Notas do Diário
-           </Button>
-        </div>
       </div>
 
       <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden rounded-xl">

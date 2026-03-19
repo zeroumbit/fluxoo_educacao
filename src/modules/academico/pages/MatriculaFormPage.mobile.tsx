@@ -68,48 +68,46 @@ export function MatriculaFormPageMobile() {
       ano_letivo: new Date().getFullYear(),
       aluno_id: '',
       serie_ano: '',
+      turma_id: '',
       turno: 'integral',
       valor_matricula: 450,
       status: 'ativa'
     }
   })
 
+  // Preencher formulário quando for edição
   useEffect(() => {
     if (mData) {
-      form.reset({
-        tipo: mData.tipo,
-        aluno_id: mData.aluno_id,
-        ano_letivo: mData.ano_letivo,
-        serie_ano: mData.serie_ano,
-        turma_id: mData.turma_id,
-        turno: mData.turno,
-        data_matricula: mData.data_matricula,
-        valor_matricula: mData.valor_matricula,
-        status: mData.status
-      })
+      // Definir valores individualmente para garantir que sejam aplicados
+      form.setValue('tipo', mData.tipo || 'nova')
+      form.setValue('aluno_id', mData.aluno_id || '')
+      form.setValue('ano_letivo', mData.ano_letivo || new Date().getFullYear())
+      form.setValue('serie_ano', mData.serie_ano || '')
+      form.setValue('turma_id', mData.turma_id || '')
+      form.setValue('turno', mData.turno || 'integral')
+      form.setValue('data_matricula', mData.data_matricula || new Date().toISOString().split('T')[0])
+      form.setValue('valor_matricula', mData.valor_matricula || 450)
+      form.setValue('status', mData.status || 'ativa')
     }
   }, [mData, form])
 
-  const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
-  const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
   const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
-  const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
 
   // Filtragem inteligente de alunos
   const alunosFiltrados = alunos?.filter((aluno: any) => {
     if (editId) return true
-    
-    const jaMatriculadoNoAno = matriculas?.some((m: any) => 
-      m.aluno_id === aluno.id && 
-      m.status === 'ativa' && 
+
+    const jaMatriculadoNoAno = matriculas?.some((m: any) =>
+      m.aluno_id === aluno.id &&
+      m.status === 'ativa' &&
       Number(m.ano_letivo) === Number(anoLetivoSelecionado)
     )
 
     if (tipoSelecionado === 'nova') {
       return !jaMatriculadoNoAno
     }
-    
+
     if (tipoSelecionado === 'rematricula') {
       return !jaMatriculadoNoAno
     }
@@ -118,17 +116,9 @@ export function MatriculaFormPageMobile() {
   })
 
   useEffect(() => {
-    if (matriculaExistente && (tipoSelecionado as string) === 'rematricula' && !editId) {
-      form.setValue('serie_ano', matriculaExistente.serie_ano)
-      form.setValue('turno', matriculaExistente.turno)
-      form.setValue('valor_matricula', matriculaExistente.valor_matricula)
-      form.setValue('ano_letivo', new Date().getFullYear() + 1)
-    }
-  }, [matriculaExistente, tipoSelecionado, form, editId])
-
-  useEffect(() => {
-    if (tipoSelecionado === 'nova' && serieSelecionada && turmas && !editId) {
-      const turma = (turmas as any[])?.find(t => t.nome === serieSelecionada)
+    const serieAtual = form.getValues('serie_ano')
+    if (tipoSelecionado === 'nova' && serieAtual && turmas && !editId) {
+      const turma = (turmas as any[])?.find(t => t.nome === serieAtual)
       if (turma) {
         const turnoMap: Record<string, string> = {
           matutino: 'manha', vespertino: 'tarde', integral: 'integral', noturno: 'noturno'
@@ -143,7 +133,7 @@ export function MatriculaFormPageMobile() {
         }
       }
     }
-  }, [serieSelecionada, tipoSelecionado, turmas, form, editId])
+  }, [tipoSelecionado, turmas, form, editId])
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
@@ -213,8 +203,9 @@ export function MatriculaFormPageMobile() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[640px] px-4 pt-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <div className="mx-auto w-full max-w-[640px] px-4 pt-6 pb-48">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {/* Tipo de Operação */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tipo de Operação</Label>
             <RadioGroup
@@ -240,10 +231,15 @@ export function MatriculaFormPageMobile() {
             </RadioGroup>
           </div>
 
+          {/* Aluno - Largura Total */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Aluno *</Label>
-            <Select disabled={!!editId} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
-              <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
+            <Select 
+              disabled={!!editId} 
+              value={form.getValues('aluno_id')} 
+              onValueChange={(v) => form.setValue('aluno_id', v)}
+            >
+              <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                 <SelectValue placeholder="Selecione o aluno" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl">
@@ -254,15 +250,24 @@ export function MatriculaFormPageMobile() {
             </Select>
           </div>
 
+          {/* Ano Letivo e Turma/Ano */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ano Letivo *</Label>
-              <Input type="number" {...form.register('ano_letivo')} inputMode="numeric" className="h-14 rounded-2xl text-base font-medium" />
+              <Input 
+                type="number" 
+                {...form.register('ano_letivo')} 
+                inputMode="numeric" 
+                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma/Ano *</Label>
-              <Select value={form.getValues('serie_ano')} onValueChange={(v) => form.setValue('serie_ano', v)}>
-                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
+              <Select 
+                value={form.getValues('serie_ano')} 
+                onValueChange={(v) => form.setValue('serie_ano', v)}
+              >
+                <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                   <SelectValue placeholder="Série" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
@@ -274,11 +279,15 @@ export function MatriculaFormPageMobile() {
             </div>
           </div>
 
+          {/* Turno e Data Matrícula */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
-              <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
-                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
+              <Select 
+                value={form.getValues('turno')} 
+                onValueChange={(v) => form.setValue('turno', v as any)}
+              >
+                <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
@@ -291,20 +300,34 @@ export function MatriculaFormPageMobile() {
             </div>
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Data Matrícula</Label>
-              <Input type="date" {...form.register('data_matricula')} className="h-14 rounded-2xl text-base font-medium" />
+              <Input 
+                type="date" 
+                {...form.register('data_matricula')} 
+                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+              />
             </div>
           </div>
 
+          {/* Valor Matrícula e Status */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor Matrícula</Label>
-              <Input type="number" step="0.01" {...form.register('valor_matricula')} inputMode="decimal" className="h-14 rounded-2xl text-base font-bold" />
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</Label>
+              <Input 
+                type="number" 
+                step="0.01" 
+                {...form.register('valor_matricula')} 
+                inputMode="decimal" 
+                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+              />
             </div>
             {editId && (
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</Label>
-                <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
-                  <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-white border-slate-100">
+                <Select 
+                  value={form.getValues('status')} 
+                  onValueChange={(v) => form.setValue('status', v)}
+                >
+                  <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -317,12 +340,12 @@ export function MatriculaFormPageMobile() {
             )}
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
             <div className="mx-auto w-full max-w-[640px] px-4 py-4 flex gap-3">
-              <Button type="button" variant="outline" onClick={() => navigate('/matriculas')} className="flex-1 h-14 rounded-2xl font-bold text-base bg-white border-slate-200">
+              <Button type="button" variant="outline" onClick={() => navigate('/matriculas')} className="flex-1 h-14 rounded-2xl font-bold text-base bg-white border-slate-200 shadow-lg">
                 Voltar
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting} className="flex-1 h-14 rounded-2xl bg-indigo-600 font-bold text-base">
+              <Button type="submit" disabled={form.formState.isSubmitting} className="flex-1 h-14 rounded-2xl bg-indigo-600 font-bold text-base shadow-lg">
                 {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Check className="mr-2 h-4 w-4" /> Salvar</>}
               </Button>
             </div>

@@ -161,6 +161,20 @@ export function AlunosListPageWeb() {
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gerenciamento de Alunos</h1>
+          <p className="text-muted-foreground">Visualize e gerencie todos os estudantes da sua escola</p>
+        </div>
+        <Button
+           onClick={() => navigate('/alunos/novo')}
+           className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
+        >
+          <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
+        </Button>
+      </div>
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6">
@@ -210,19 +224,6 @@ export function AlunosListPageWeb() {
                 </div>
              </div>
           </Card>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gerenciamento de Alunos</h1>
-          <p className="text-muted-foreground">Visualize e gerencie todos os estudantes da sua escola</p>
-        </div>
-        <Button 
-           onClick={() => navigate('/alunos/novo')}
-           className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
-        </Button>
       </div>
 
       <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">

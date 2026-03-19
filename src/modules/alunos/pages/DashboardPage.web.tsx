@@ -321,8 +321,46 @@ export function DashboardPageWeb() {
         ))}
       </div>
 
-      <div className={`grid grid-cols-1 ${radarEvasao.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2 lg:max-w-4xl mx-auto w-full'} gap-8`}>
-        {/* Lado Esquerdo: Radar e Alertas */}
+      <div className={`grid grid-cols-1 ${radarEvasao.length > 0 && avisosRecentes.length > 0 ? 'lg:grid-cols-3' : 'lg:grid-cols-2 lg:max-w-4xl mx-auto w-full'} gap-8`}>
+        {/* Lado Esquerdo: Comunicados */}
+        {avisosRecentes.length > 0 && (
+          <section className={`${radarEvasao.length > 0 ? 'lg:col-span-2' : 'lg:col-span-2'} space-y-6`}>
+            <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white">
+              <CardHeader className="p-8 flex flex-row items-center justify-between pt-[30px]">
+                <div>
+                  <CardTitle className="text-2xl font-black text-zinc-900 tracking-tight">Mural de Comunicados</CardTitle>
+                  <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-widest flex items-center gap-2">
+                     <Megaphone className="h-3 w-3" /> Últimos avisos da escola
+                  </p>
+                </div>
+                <ArrowUpRight className="h-6 w-6 text-zinc-200" />
+              </CardHeader>
+              <CardContent className="px-8 pb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {avisosRecentes.map((aviso, idx) => (
+                    <div key={idx} className="group p-6 rounded-[2rem] bg-zinc-50/50 border border-zinc-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
+                      <div className="flex justify-between items-start mb-4">
+                         <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-zinc-200 text-zinc-500 bg-white">
+                            {'AVISO'}
+                         </Badge>
+                         <span className="text-[10px] font-bold text-zinc-400">
+                           {format(new Date(aviso.created_at), "d 'de' MMM", { locale: ptBR })}
+                         </span>
+                      </div>
+                      <h4 className="font-black text-zinc-800 text-lg mb-2 tracking-tight line-clamp-1">{aviso.titulo}</h4>
+                      <p className="text-sm font-medium text-zinc-500 leading-relaxed line-clamp-3 mb-4">{aviso.conteudo}</p>
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                         Ler na íntegra <ArrowUpRight className="h-3 w-3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        {/* Lado Direito: Radar de Evasão */}
         {radarEvasao.length > 0 && (
           <section className="lg:col-span-1 space-y-6">
             <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden">
@@ -344,47 +382,6 @@ export function DashboardPageWeb() {
             </Card>
           </section>
         )}
-
-        {/* Lado Direito: Comunicados e Atividade */}
-        <section className={`${radarEvasao.length > 0 ? 'lg:col-span-2' : 'lg:col-span-2'} space-y-6`}>
-          <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white">
-            <CardHeader className="p-8 flex flex-row items-center justify-between pt-[30px]">
-              <div>
-                <CardTitle className="text-2xl font-black text-zinc-900 tracking-tight">Mural de Comunicados</CardTitle>
-                <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-widest flex items-center gap-2">
-                   <Megaphone className="h-3 w-3" /> Últimos avisos da escola
-                </p>
-              </div>
-              <ArrowUpRight className="h-6 w-6 text-zinc-200" />
-            </CardHeader>
-            <CardContent className="px-8 pb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {avisosRecentes.map((aviso, idx) => (
-                  <div key={idx} className="group p-6 rounded-[2rem] bg-zinc-50/50 border border-zinc-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
-                    <div className="flex justify-between items-start mb-4">
-                       <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-zinc-200 text-zinc-500 bg-white">
-                          {'AVISO'}
-                       </Badge>
-                       <span className="text-[10px] font-bold text-zinc-400">
-                         {format(new Date(aviso.created_at), "d 'de' MMM", { locale: ptBR })}
-                       </span>
-                    </div>
-                    <h4 className="font-black text-zinc-800 text-lg mb-2 tracking-tight line-clamp-1">{aviso.titulo}</h4>
-                    <p className="text-sm font-medium text-zinc-500 leading-relaxed line-clamp-3 mb-4">{aviso.conteudo}</p>
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                       Ler na íntegra <ArrowUpRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                ))}
-                {avisosRecentes.length === 0 && (
-                  <div className="col-span-2 py-12 text-center text-zinc-400 bg-zinc-50/50 rounded-[2rem] border border-dashed border-zinc-200">
-                    <p className="text-sm font-bold italic">Nenhum comunicado recente.</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
       </div>
     </div>
   )

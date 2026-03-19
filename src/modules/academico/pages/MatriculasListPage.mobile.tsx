@@ -1,20 +1,21 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  Plus, 
-  User, 
-  ChevronRight, 
-  Filter, 
+import {
+  Search,
+  Plus,
+  User,
+  ChevronRight,
+  Filter,
   X,
   GraduationCap,
   Layers,
   Calendar,
-  Clock,
   ArrowLeft,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  MoreVertical,
+  Pencil
 } from 'lucide-react'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
@@ -37,6 +38,8 @@ export function MatriculasListPageMobile() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [cachedData, setCachedData] = useState<any[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedMatricula, setSelectedMatricula] = useState<any | null>(null)
+  const [isActionsOpen, setIsActionsOpen] = useState(false)
 
   useEffect(() => {
     get(CACHE_KEY).then(val => { if (val) setCachedData(val) })
@@ -50,7 +53,7 @@ export function MatriculasListPageMobile() {
   const isActuallyLoading = isLoading && !cachedData.length
 
   const filteredData = useMemo(() => {
-    return displayData?.filter(m => 
+    return displayData?.filter(m =>
       m.aluno?.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.serie_ano?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -58,12 +61,24 @@ export function MatriculasListPageMobile() {
 
   const onRefresh = async () => { await refetch() }
 
+  const handleOpenActions = (matricula: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedMatricula(matricula)
+    setIsActionsOpen(true)
+  }
+
+  const handleEdit = () => {
+    setIsActionsOpen(false)
+    navigate(`/matriculas/nova?id=${selectedMatricula?.id}`)
+  }
+
   const handleDelete = async () => {
     if (!deleteId) return
     try {
       await deleteMatricula.mutateAsync(deleteId)
       toast.success('Matrícula excluída')
       setDeleteId(null)
+      setIsActionsOpen(false)
     } catch {
       toast.error('Erro ao excluir')
     }
@@ -120,10 +135,9 @@ export function MatriculasListPageMobile() {
             <AnimatePresence mode="popLayout">
               {filteredData?.map((m, idx) => (
                 <motion.div key={m.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03, duration: 0.25 }} layout>
-                  <NativeCard 
-                    swipeable 
+                  <NativeCard
+                    swipeable
                     onClick={() => navigate(`/alunos/${m.aluno_id}`)}
-                    onEdit={() => navigate(`/matriculas/nova?id=${m.id}`)}
                     onDelete={() => setDeleteId(m.id)}
                   >
                     <div className="flex items-start gap-3.5">
@@ -140,7 +154,12 @@ export function MatriculasListPageMobile() {
                           <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100"><Calendar className="h-2.5 w-2.5 text-slate-400" /><span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">{m.ano_letivo}</span></div>
                         </div>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-slate-200 shrink-0 mt-1" />
+                      <button
+                        onClick={(e) => handleOpenActions(m, e)}
+                        className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 active:bg-slate-200 shrink-0"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
                     </div>
                   </NativeCard>
                 </motion.div>
@@ -173,6 +192,52 @@ export function MatriculasListPageMobile() {
             </div>
           </div>
           <Button className="w-full h-14 rounded-2xl bg-indigo-600 font-bold" onClick={() => setIsFilterOpen(false)}>Aplicar Filtros</Button>
+        </div>
+      </BottomSheet>
+
+      {/* Action Sheet para Matrícula */}
+      <BottomSheet
+        isOpen={isActionsOpen}
+        onClose={() => setIsActionsOpen(false)}
+        title={selectedMatricula?.aluno?.nome_completo || 'Matrícula'}
+        size="peek"
+      >
+        <div className="space-y-2 pt-4 pb-8">
+          <button
+            onClick={() => {
+              setIsActionsOpen(false)
+              navigate(`/alunos/${selectedMatricula?.aluno_id}`)
+            }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+          >
+            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <User size={18} />
+            </div>
+            <span className="font-bold text-slate-700">Ver Detalhes do Aluno</span>
+          </button>
+
+          <button
+            onClick={handleEdit}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
+          >
+            <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Pencil size={18} />
+            </div>
+            <span className="font-bold text-slate-700">Editar Matrícula</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsActionsOpen(false)
+              setDeleteId(selectedMatricula?.id || null)
+            }}
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-rose-50 transition-colors text-rose-600"
+          >
+            <div className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center">
+              <Trash2 size={18} />
+            </div>
+            <span className="font-bold">Excluir Matrícula</span>
+          </button>
         </div>
       </BottomSheet>
 

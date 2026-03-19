@@ -329,12 +329,12 @@ export function AlunosListPageMobile() {
 
            <div className="h-px bg-slate-100 mx-4 my-1" />
 
-           <button 
+           <button
             onClick={() => { setIsActionsOpen(false); setIsDescontoOpen(true); }}
             className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl active:bg-slate-50 transition-colors"
            >
               <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><Percent size={18} /></div>
-              <span className="font-bold text-slate-700">Gerenciar Descontos (Overrides)</span>
+              <span className="font-bold text-slate-700">Gerenciar Descontos</span>
            </button>
 
            <button 

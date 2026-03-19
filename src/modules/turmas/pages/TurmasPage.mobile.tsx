@@ -22,13 +22,26 @@ import {
   Calendar,
   ChevronRight,
   Building2,
-  X
+  X,
+  Settings,
+  CalendarDays,
+  GraduationCap
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { get, set } from 'idb-keyval'
 
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useTurmas, useCriarTurma, useAtualizarTurma, useExcluirTurma } from '../hooks'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { cn } from '@/lib/utils'
+import { 
+  useTurmas, 
+  useCriarTurma, 
+  useAtualizarTurma, 
+  useExcluirTurma,
+  useGradeTurma, 
+  useDisciplinas, 
+  useProfessoresTurma 
+} from '../hooks'
 import { useFiliais } from '@/modules/filiais/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,17 +77,25 @@ export function TurmasPageMobile() {
   const criarTurma = useCriarTurma()
   const atualizarTurma = useAtualizarTurma()
   const excluirTurma = useExcluirTurma()
+  const { data: todosAlunos } = useAlunos()
+  const { data: todasDisciplinas } = useDisciplinas()
+  const { data: todosProfessores } = useProfessoresTurma()
 
   const [search, setSearch] = useState('')
-  // Sheet states
-  const [formOpen, setFormOpen] = useState(false)       // CRIAR / EDITAR
-  const [verOpen, setVerOpen] = useState(false)          // VER
-  const [excluirOpen, setExcluirOpen] = useState(false)  // EXCLUIR
+  const [formOpen, setFormOpen] = useState(false)
+  const [verOpen, setVerOpen] = useState(false)
+  const [excluirOpen, setExcluirOpen] = useState(false)
+  const [alunosOpen, setAlunosOpen] = useState(false)
+  const [gradeOpen, setGradeOpen] = useState(false)
 
   const [editando, setEditando] = useState<Turma | null>(null)
   const [vendo, setVendo] = useState<Turma | null>(null)
   const [turmaParaExcluir, setTurmaParaExcluir] = useState<Turma | null>(null)
   const [cached, setCached] = useState<Turma[]>([])
+  const [diaSelecionado, setDiaSelecionado] = useState(new Date().getDay() || 1) // 1 = Segunda
+
+  // Buscar grade da turma selecionada
+  const { data: gradeRecords, isLoading: loadingGrade } = useGradeTurma(vendo?.id || '')
 
   // Cache (Rule 21)
   useEffect(() => { get(CACHE_KEY).then(v => { if (v) setCached(v) }) }, [])
@@ -113,6 +134,16 @@ export function TurmasPageMobile() {
   const abrirVer = (turma: Turma) => {
     setVendo(turma)
     setVerOpen(true)
+  }
+
+  const abrirAlunos = (turma: Turma) => {
+    setVendo(turma)
+    setAlunosOpen(true)
+  }
+
+  const abrirGrade = (turma: Turma) => {
+    setVendo(turma)
+    setGradeOpen(true)
   }
 
   // ── EXCLUIR ────────────────────────────────────────
@@ -221,47 +252,87 @@ export function TurmasPageMobile() {
                     onClick={() => abrirVer(turma)}
                     onEdit={() => abrirEdicao(turma)}
                     onDelete={() => abrirExcluir(turma)}
-                    className="p-0 overflow-hidden"
+                    className="p-0 overflow-hidden rounded-[2rem] border-slate-100 dark:border-slate-800 shadow-sm"
                   >
                     <div className="p-4">
+                      {/* Header do Card */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex gap-3 min-w-0">
-                          <div className="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
-                            <BookOpen className="h-6 w-6 text-indigo-600" />
+                          <div className={cn(
+                            "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg",
+                            "bg-gradient-to-br from-indigo-500 to-violet-600"
+                          )}>
+                            <BookOpen className="h-6 w-6 text-white" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-[14px] font-bold text-slate-900 dark:text-white truncate uppercase tracking-tight">{turma.nome}</h3>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <Badge className="text-[8px] font-black uppercase rounded-lg px-2 h-5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-0">
+                            <h3 className="text-[15px] font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{turma.nome}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge className="text-[8px] font-black uppercase rounded-lg px-2 h-5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-0">
                                 {turma.turno}
                               </Badge>
                               {turma.sala && (
-                                <span className="text-[9px] font-bold text-slate-300 flex items-center gap-1">
+                                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1">
                                   <MapPin className="h-3.5 w-3.5" />{turma.sala}
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
-                          <motion.button whileTap={{ scale: 0.92 }} onClick={(e) => { e.stopPropagation(); abrirEdicao(turma) }}
-                            className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-slate-700">
-                            <Pencil className="h-4 w-4" />
-                          </motion.button>
-                          <motion.button whileTap={{ scale: 0.92 }} onClick={(e) => { e.stopPropagation(); abrirExcluir(turma) }}
-                            className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center text-rose-500 border border-rose-100">
-                            <Trash2 className="h-4 w-4" />
-                          </motion.button>
+                        
+                        <motion.button 
+                          whileTap={{ scale: 0.9 }} 
+                          onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
+                          className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-slate-700"
+                        >
+                          <Settings className="h-5 w-5" />
+                        </motion.button>
+                      </div>
+
+                      {/* Info Compacta */}
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                          <Users className="h-3.5 w-3.5 text-slate-400" />
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                            {turma.capacidade_maxima || 30} vagas
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/10">
+                          <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+                          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                             R$ {Number(turma.valor_mensalidade || 0).toFixed(2).replace('.', ',')}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800">
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5 text-slate-300" />
-                          <span className="text-[9px] font-bold text-slate-300 uppercase">{turma.capacidade_maxima || 30} vagas</span>
-                        </div>
-                        <span className="text-[14px] font-black text-emerald-600 dark:text-emerald-400">
-                          R$ {Number(turma.valor_mensalidade || 0).toFixed(2).replace('.', ',')}
-                        </span>
+
+                      {/* Ações Rápidas (Estilo Web) */}
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-50 dark:border-slate-800/60">
+                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); abrirAlunos(turma) }}
+                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-indigo-50/50 text-indigo-600 dark:text-indigo-400"
+                         >
+                            <Users size={14} />
+                            Alunos
+                         </Button>
+                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); abrirGrade(turma) }}
+                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-teal-50/50 text-teal-600 dark:text-teal-400"
+                         >
+                            <CalendarDays size={14} />
+                            Grade
+                         </Button>
+                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
+                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none"
+                         >
+                            Gerir
+                            <ChevronRight size={12} />
+                         </Button>
                       </div>
                     </div>
                   </NativeCard>
@@ -492,6 +563,129 @@ export function TurmasPageMobile() {
             </Button>
           </div>
         </form>
+      </BottomSheet>
+
+
+      {/* ═══════════════════════════════════════════════
+          BOTTOM SHEET — ALUNOS (NOVO)
+      ═══════════════════════════════════════════════ */}
+      <BottomSheet 
+        isOpen={alunosOpen} 
+        onClose={() => setAlunosOpen(false)} 
+        title="Alunos Matriculados" 
+        size="full"
+      >
+        {vendo && (
+          <div className="space-y-6 pt-4 pb-32">
+            <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/50">
+               <div>
+                  <h3 className="text-sm font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-tight">{vendo.nome}</h3>
+                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">Listagem Acadêmica</p>
+               </div>
+               <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-indigo-600 shadow-sm">
+                  <GraduationCap size={20} />
+               </div>
+            </div>
+
+            <div className="space-y-3">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Estudantes nesta turma</p>
+               
+               <div className="flex flex-col gap-3">
+                  {todosAlunos?.filter((a: any) => a.turma_id === vendo.id || a.turma_atual?.id === vendo.id).length === 0 ? (
+                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800">
+                       <Users size={32} className="mx-auto text-slate-200 mb-3" />
+                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nenhum aluno matriculado.</p>
+                    </div>
+                  ) : (
+                    todosAlunos?.filter((a: any) => a.turma_id === vendo.id || a.turma_atual?.id === vendo.id).map((aluno: any) => (
+                      <div key={aluno.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs">
+                          {aluno.nome_completo.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-black text-slate-800 dark:text-white truncate uppercase tracking-tight">{aluno.nome_completo}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Matrícula: {aluno.matricula || 'N/A'}</p>
+                        </div>
+                        <Badge className="bg-emerald-50 text-emerald-600 border-0 text-[8px] font-black uppercase">{aluno.status}</Badge>
+                      </div>
+                    ))
+                  )}
+               </div>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+
+
+      {/* ═══════════════════════════════════════════════
+          BOTTOM SHEET — GRADE HORÁRIA (NOVO)
+      ═══════════════════════════════════════════════ */}
+      <BottomSheet 
+        isOpen={gradeOpen} 
+        onClose={() => setGradeOpen(false)} 
+        title="Grade Horária" 
+        size="full"
+      >
+        {vendo && (
+          <div className="space-y-6 pt-4 pb-32">
+            {/* Seletor de Dia */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar">
+               {['SEG', 'TER', 'QUA', 'QUI', 'SEX'].map((dia, idx) => (
+                  <button
+                    key={dia}
+                    onClick={() => setDiaSelecionado(idx + 1)}
+                    className={cn(
+                      "flex-1 min-w-[65px] h-12 rounded-2xl font-black text-[10px] tracking-widest transition-all",
+                      diaSelecionado === idx + 1
+                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-400"
+                    )}
+                  >
+                    {dia}
+                  </button>
+               ))}
+            </div>
+
+            <div className="space-y-3">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Cronograma do Dia</p>
+               <div className="flex flex-col gap-3">
+                  {loadingGrade ? (
+                    <div className="p-12 text-center">
+                      <Loader2 size={24} className="animate-spin mx-auto text-slate-300" />
+                    </div>
+                  ) : gradeRecords?.filter((g: any) => g.dia_semana === diaSelecionado).length === 0 ? (
+                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/40 rounded-[2.5rem] border border-dashed border-slate-200 dark:border-slate-800">
+                       <Calendar size={32} className="mx-auto text-slate-200 mb-3" />
+                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nenhuma aula para este dia.</p>
+                    </div>
+                  ) : (
+                    gradeRecords?.filter((g: any) => g.dia_semana === diaSelecionado).map((item: any, i: number) => {
+                      const disciplina = todasDisciplinas?.find((d: any) => d.id === item.disciplina_id);
+                      const professor = todosProfessores?.find((p: any) => p.id === item.professor_id);
+                      return (
+                        <div key={i} className="p-4 rounded-[1.5rem] border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm">
+                          <div className="flex items-center justify-between">
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{item.hora_inicio} - {item.hora_fim}</span>
+                                <span className="text-sm font-black uppercase tracking-tight mt-0.5 text-slate-800 dark:text-white">
+                                  {disciplina?.nome || 'Disciplina'}
+                                </span>
+                                {professor && <span className="text-[10px] font-bold text-indigo-500/70 mt-1 uppercase tracking-widest">{professor.nome}</span>}
+                             </div>
+                             <div 
+                                className="h-8 w-8 rounded-lg" 
+                                style={{ backgroundColor: disciplina?.cor || '#e2e8f0' }} 
+                             />
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+               </div>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400 text-center italic mt-4">Edição de grade disponível na versão Desktop.</p>
+          </div>
+        )}
       </BottomSheet>
 
 
