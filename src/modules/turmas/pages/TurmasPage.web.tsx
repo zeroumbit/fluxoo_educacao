@@ -25,6 +25,7 @@ import { useTurmaStore } from '../store'
 import { TurmaDetail } from '../components/TurmaDetail'
 import { TurmaCard } from '../components/TurmaCard'
 import { useTurmas, useCriarTurma, useDisciplinas, useProfessoresTurma } from '../hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useEffect } from 'react'
 
@@ -48,6 +49,8 @@ export function TurmasPageWeb() {
     setProfessores,
     setDisciplinas
   } = useTurmaStore()
+  
+  const { authUser } = useAuth()
 
   const { data: dbTurmas, isLoading: loadingTurmas } = useTurmas()
   const { data: dbAlunos } = useAlunos()
@@ -98,13 +101,14 @@ export function TurmasPageWeb() {
         capacidade_maxima: data.capacidade,
         valor_mensalidade: data.valor_mensalidade,
         status: 'ativa',
-        tenant_id: (window as any).tenantId || 'tenant-default'
+        tenant_id: authUser?.tenantId
       } as any)
 
       toast.success('Turma criada com sucesso!')
       setIsNewModalOpen(false)
       reset()
     } catch (error) {
+      console.error('Erro na criação de turma:', error)
       toast.error('Erro ao criar turma')
     }
   }

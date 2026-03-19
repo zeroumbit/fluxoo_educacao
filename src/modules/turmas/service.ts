@@ -4,23 +4,32 @@ import type { Professor, Disciplina } from './types'
 
 export const turmaService = {
   async listar(tenantId: string) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('turmas')
       .select('*, filiais(nome_unidade)')
-      .eq('tenant_id', tenantId)
-      .order('nome')
+    
+    // Filtro de tenant opcional para Super Admin
+    if (tenantId && tenantId !== 'super_admin') {
+      query = query.eq('tenant_id', tenantId)
+    }
+
+    const { data, error } = await query.order('nome')
 
     if (error) throw error
     return data
   },
 
   async buscarPorId(id: string, tenantId: string) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('turmas')
       .select('*')
       .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .single()
+    
+    if (tenantId && tenantId !== 'super_admin') {
+      query = query.eq('tenant_id', tenantId)
+    }
+
+    const { data, error } = await query.single()
 
     if (error) throw error
     return data

@@ -63,7 +63,9 @@ export function MatriculaListPageWeb() {
   const atualizar = useAtualizarMatricula()
   const excluir = useExcluirMatricula()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(() => {
+    return localStorage.getItem('matricula_dialog_open') === 'true'
+  })
   const [isEditing, setIsEditing] = useState(false)
   const [selectedMatricula, setSelectedMatricula] = useState<any>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -90,17 +92,59 @@ export function MatriculaListPageWeb() {
       setIsEditing(false)
       form.setValue('aluno_id', state.aluno_id)
       
-      // Limpar o estado para não reabrir se der refresh
+      // Limpar o estado para não reabrir o redirecionamento
       navigate(location.pathname, { replace: true, state: {} })
     }
-  }, [location, form, navigate])
+  }, [location.state]) // Depender apenas do state
 
-  // Assistência de preenchimento automático
-  const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
-  const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
-  const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
-  const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
+  const watchAllFields = form.watch()
+  const { 
+    aluno_id: alunoIdSelecionado, 
+    tipo: tipoSelecionado, 
+    serie_ano: serieSelecionada, 
+    ano_letivo: anoLetivoSelecionado, 
+    turno: turnoSelecionado, 
+    status: statusSelecionado 
+  } = watchAllFields
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
+ 
+  // Debug logs in component body (to avoid JSX void errors)
+  useEffect(() => {
+    if (dialogOpen) {
+      console.log('[ Enrollment Modal ] Data State:', {
+        turmasLoaded: !!turmas,
+        turmasCount: turmas?.length || 0,
+        serieSelecionada,
+        alunoId: alunoIdSelecionado,
+        authUserTenant: authUser?.tenantId
+      })
+    }
+  }, [dialogOpen, turmas, serieSelecionada, alunoIdSelecionado, authUser])
+
+  // Persistência extrema do Modal e Rascunho
+  useEffect(() => {
+    localStorage.setItem('matricula_dialog_open', dialogOpen.toString())
+    if (dialogOpen) {
+      localStorage.setItem('matricula_draft', JSON.stringify(watchAllFields))
+    }
+  }, [dialogOpen, watchAllFields])
+
+  // Recuperar rascunho ao montar
+  useEffect(() => {
+    const draft = localStorage.getItem('matricula_draft')
+    if (draft && dialogOpen) {
+      try {
+        const parsed = JSON.parse(draft)
+        Object.entries(parsed).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+             form.setValue(key as any, value)
+          }
+        })
+      } catch (e) {
+        console.error('Erro ao recuperar rascunho:', e)
+      }
+    }
+  }, [])
 
   // Filtragem inteligente de alunos baseada no tipo de operação
   const alunosFiltrados = alunos?.filter((aluno: any) => {
@@ -191,6 +235,8 @@ export function MatriculaListPageWeb() {
     setDialogOpen(false)
     setIsEditing(false)
     setSelectedMatricula(null)
+    localStorage.removeItem('matricula_draft')
+    localStorage.removeItem('matricula_dialog_open')
     form.reset({
       tipo: 'nova' as const,
       data_matricula: new Date().toISOString().split('T')[0],
@@ -223,41 +269,58 @@ export function MatriculaListPageWeb() {
           <h1 className="text-2xl font-bold tracking-tight">Matrículas</h1>
           <p className="text-muted-foreground">Gerencie matrículas e rematrículas</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) handleCloseDialog(); else setDialogOpen(true) }}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => setDialogOpen(open)}>
           <DialogTrigger asChild>
-            <Button className="flex bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md">
+            <Button 
+              onClick={() => {
+                setDialogOpen(true)
+                setIsEditing(false)
+              }}
+              className="flex bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md"
+            >
               <Plus className="mr-2 h-4 w-4" /> Nova Matrícula
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[800px] border-0 flex flex-col p-0">
-            <DialogHeader className="p-6 pb-0">
+          <DialogContent className="max-w-[800px] border-0 flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-6 pb-2">
                 <DialogTitle className="text-xl font-black tracking-tight">{isEditing ? 'Editar Matrícula' : 'Nova Matrícula'}</DialogTitle>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest mt-0.5">Gestão Acadêmica</p>
+                <DialogDescription className="text-xs font-medium text-slate-400 uppercase tracking-widest mt-0.5">
+                  Preencha os dados abaixo para {isEditing ? 'atualizar' : 'realizar'} a matrícula.
+                </DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-y-auto px-6 py-4">
-              <form id="matricula-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
-                  <RadioGroup
-                    disabled={isEditing}
-                    onValueChange={(v) => form.setValue('tipo', v as any)}
-                    className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100"
-                    value={form.getValues('tipo')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="nova" id="nova" />
-                      <Label htmlFor="nova" className="cursor-pointer font-bold text-slate-700">Nova Matrícula</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="rematricula" id="rematricula" />
-                      <Label htmlFor="rematricula" className="cursor-pointer font-bold text-slate-700">Rematrícula</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+              <form 
+                id="matricula-form" 
+                onSubmit={form.handleSubmit(onSubmit)} 
+                className="space-y-6"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+                    e.preventDefault()
+                  }
+                }}
+              >
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
+                    <RadioGroup
+                      disabled={isEditing}
+                      onValueChange={(v) => form.setValue('tipo', v as any)}
+                      className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100"
+                      value={tipoSelecionado}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="nova" id="nova" />
+                        <Label htmlFor="nova" className="cursor-pointer font-bold text-slate-700">Nova Matrícula</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="rematricula" id="rematricula" />
+                        <Label htmlFor="rematricula" className="cursor-pointer font-bold text-slate-700">Rematrícula</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
               <div className="space-y-2">
                 <Label htmlFor="aluno_id">Aluno *</Label>
-                <Select disabled={isEditing} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
+                <Select disabled={isEditing} value={alunoIdSelecionado || ''} onValueChange={(v) => form.setValue('aluno_id', v)}>
                   <SelectTrigger id="aluno_id" className="w-full">
                     <SelectValue placeholder="Selecione o aluno" />
                   </SelectTrigger>
@@ -282,31 +345,33 @@ export function MatriculaListPageWeb() {
                 <div className="space-y-2">
                   <Label htmlFor="serie_ano">Turma/Ano *</Label>
                     <Select 
-                      value={form.getValues('serie_ano')} 
+                      value={serieSelecionada || ''} 
                       onValueChange={(v) => {
                         form.setValue('serie_ano', v)
                         const t = (turmas as any[])?.find(x => x.nome === v)
                         if (t) {
                           form.setValue('turma_id', t.id)
-                          // Atualiza o valor dinamicamente se a turma tiver valor definido
                           if (t.valor_mensalidade) {
                             form.setValue('valor_matricula', t.valor_mensalidade)
-                            toast.info(`Valor atualizado para R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
-                              description: `Baseado na turma ${t.nome}`
-                            })
                           }
                         }
                       }}
                     >
                      <SelectTrigger id="serie_ano" className="w-full">
-                       <SelectValue placeholder="Selecione a turma" />
+                       <SelectValue placeholder={!turmas ? "Carregando turmas..." : (turmas.length > 0 ? "Selecione a turma" : "Nenhuma turma disponível")} />
                      </SelectTrigger>
                      <SelectContent>
-                       {(turmas as any[])?.map((t: any) => (
-                         <SelectItem key={t.id} value={t.nome} className="font-bold">
-                           {t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
-                         </SelectItem>
-                       ))}
+                       {turmas && (turmas as any[]).length > 0 ? (
+                         (turmas as any[]).map((t: any) => (
+                           <SelectItem key={t.id} value={t.nome} className="font-bold">
+                             {t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                           </SelectItem>
+                         ))
+                       ) : (
+                         <div className="p-4 text-center text-xs text-muted-foreground italic">
+                           {(!turmas) ? 'Carregando turmas...' : 'Nenhuma turma cadastrada.'}
+                         </div>
+                       )}
                      </SelectContent>
                    </Select>
                 </div>
@@ -315,7 +380,7 @@ export function MatriculaListPageWeb() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="turno">Turno *</Label>
-                  <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
+                  <Select value={turnoSelecionado || ''} onValueChange={(v) => form.setValue('turno', v as any)}>
                     <SelectTrigger id="turno" className="w-full">
                       <SelectValue placeholder="Selecione o turno" />
                     </SelectTrigger>
@@ -341,7 +406,7 @@ export function MatriculaListPageWeb() {
                 {isEditing && (
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
+                    <Select value={statusSelecionado || ''} onValueChange={(v) => form.setValue('status', v)}>
                       <SelectTrigger id="status" className="w-full">
                         <SelectValue />
                       </SelectTrigger>

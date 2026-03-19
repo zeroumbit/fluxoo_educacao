@@ -405,94 +405,117 @@ export function AlunosListPageMobile() {
         alunoNome={selectedAluno?.nome_completo}
       />
 
-      {/* Dialog de Exclusão */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="w-[90vw] rounded-3xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
-          <DialogHeader className="p-6 pb-2">
-            <div className="h-12 w-12 rounded-xl bg-rose-50 flex items-center justify-center mb-4">
-               <AlertCircle className="h-6 w-6 text-rose-600" />
-            </div>
-            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight text-left">Confirmar Exclusão</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm text-left">
-              Deseja excluir permanentemente <strong>{selectedAluno?.nome_completo}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="px-6 py-4">
-            <p className="text-sm text-slate-500 leading-relaxed">
-              Esta ação é definitiva. Considere <strong>desativar</strong> o aluno para preservar o histórico financeiro e acadêmico.
+      {/* Delete Confirmation Sheet (Rule 4 - peek) */}
+      <BottomSheet 
+        isOpen={showDeleteDialog} 
+        onClose={() => setShowDeleteDialog(false)} 
+        title="Excluir Registro"
+        size="peek"
+      >
+        <div className="space-y-7 pt-4 text-center pb-32">
+          <div className="h-20 w-20 bg-rose-50 dark:bg-rose-900/40 rounded-xl flex items-center justify-center mx-auto transition-transform active:scale-95 shadow-sm border border-rose-100/50">
+            <AlertCircle className="h-10 w-10 text-rose-500" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-[14px] font-black tracking-tight text-slate-900 dark:text-white uppercase">
+              Excluir "{selectedAluno?.nome_completo}"?
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium max-w-[260px] mx-auto leading-relaxed">
+              Esta ação é <strong>definitiva</strong>. Considere apenas desativar para manter o histórico.
             </p>
           </div>
-          <DialogFooter className="p-6 bg-slate-50 mt-4 flex flex-row gap-3">
-            <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setShowDeleteDialog(false)}>
-              Manter
-            </Button>
-            <Button className="flex-[2] rounded-xl bg-rose-600 h-12 font-bold" onClick={confirmarExclusao}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Dialog de Desativação */}
-      <Dialog open={showDesativarDialog} onOpenChange={(open) => {
-        setShowDesativarDialog(open)
-        if (!open) { setConfirmacaoDesativar(false); }
-      }}>
-        <DialogContent className="w-[90vw] rounded-3xl border-0 shadow-2xl p-0 overflow-hidden bg-white">
-          <DialogHeader className="p-6 pb-2">
-            <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
-               <UserMinus className="h-6 w-6 text-amber-600" />
+          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800">
+            <div className="mx-auto w-full max-w-[640px] px-6 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-100 active:scale-92 transition-all"
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                Manter
+              </Button>
+              <Button
+                className="flex-[2] h-14 rounded-2xl bg-rose-600 font-bold text-base active:scale-92 transition-all shadow-lg shadow-rose-200 dark:shadow-none"
+                onClick={confirmarExclusao}
+              >
+                Sim, Excluir
+              </Button>
             </div>
-            <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight text-left">
-              {confirmacaoDesativar ? 'Último Passo' : 'Confirmar Desativação'}
-            </DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium pt-2 text-sm text-left">
-              {confirmacaoDesativar 
-                ? `Revise os impactos da desativação para ${selectedAluno?.nome_completo}.`
-                : `Você está prestes a desativar o cadastro do aluno.`
-              }
-            </DialogDescription>
-          </DialogHeader>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* Deactivation Confirmation Sheet (Rule 4 - peek) */}
+      <BottomSheet 
+        isOpen={showDesativarDialog} 
+        onClose={() => { setShowDesativarDialog(false); setConfirmacaoDesativar(false); }} 
+        title={confirmacaoDesativar ? 'Último Passo' : 'Confirmar Desativação'}
+        size="peek"
+      >
+        <div className="space-y-7 pt-4 text-center pb-32">
+          <div className="h-20 w-20 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center mx-auto transition-transform active:scale-95 shadow-sm border border-amber-100/50">
+            <UserMinus className="h-10 w-10 text-amber-600" />
+          </div>
           
-          <div className="px-6 py-4">
+          <div className="space-y-2">
+            <h3 className="text-[14px] font-black tracking-tight text-slate-900 dark:text-white uppercase leading-tight">
+              {confirmacaoDesativar 
+                ? `Revise os impactos da desativação` 
+                : `Desativar ${selectedAluno?.nome_completo}?`}
+            </h3>
+            
             {!confirmacaoDesativar ? (
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Alunos inativos perdem acesso ao portal, mas seus registros financeiros e acadêmicos são preservados para auditoria futura.
-                </p>
-              </div>
+              <p className="text-[11px] text-slate-500 font-medium max-w-[260px] mx-auto leading-relaxed">
+                O aluno perderá acesso ao portal, mas os registros financeiros e acadêmicos serão preservados.
+              </p>
             ) : (
-              <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4">
-                <p className="text-xs text-rose-700 font-bold">
-                  Confirmar desativação imediata do estudante?
-                </p>
+              <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 mx-2">
+                 <p className="text-[10px] text-rose-700 font-black uppercase tracking-widest leading-relaxed">
+                   Deseja confirmar a desativação imediata do acesso acadêmico?
+                 </p>
               </div>
             )}
           </div>
-          
-          <DialogFooter className="p-6 bg-slate-50 mt-4 flex flex-row gap-3">
-            {!confirmacaoDesativar ? (
-              <>
-                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setShowDesativarDialog(false)}>
-                  Voltar
-                </Button>
-                <Button className="flex-[2] rounded-xl bg-amber-600 h-12 font-bold text-white" onClick={() => setConfirmacaoDesativar(true)}>
-                  Continuar
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" className="flex-1 rounded-xl h-12 font-bold text-slate-500" onClick={() => setConfirmacaoDesativar(false)}>
-                  Cancelar
-                </Button>
-                <Button className="flex-[2] rounded-xl bg-rose-600 h-12 font-bold shadow-md text-white" onClick={confirmarDesativacao}>
-                  Confirmar
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800">
+            <div className="mx-auto w-full max-w-[640px] px-6 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex gap-3">
+              {!confirmacaoDesativar ? (
+                <>
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-100 active:scale-92 transition-all text-slate-400"
+                    onClick={() => setShowDesativarDialog(false)}
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    className="flex-[2] h-14 rounded-2xl bg-amber-600 font-bold text-base active:scale-92 transition-all shadow-lg shadow-amber-200 dark:shadow-none"
+                    onClick={() => setConfirmacaoDesativar(true)}
+                  >
+                    Continuar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-100 active:scale-92 transition-all text-slate-400"
+                    onClick={() => setConfirmacaoDesativar(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="flex-[2] h-14 rounded-2xl bg-rose-600 font-bold text-base active:scale-92 transition-all shadow-lg shadow-rose-200 dark:shadow-none"
+                    onClick={confirmarDesativacao}
+                  >
+                    Confirmar
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

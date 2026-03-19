@@ -89,7 +89,14 @@ const steps = [
 ]
 
 export function AlunoCadastroPage() {
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(() => {
+    try {
+      const savedStep = localStorage.getItem('aluno_cadastro_step')
+      return savedStep ? parseInt(savedStep, 10) || 0 : 0
+    } catch (e) {
+      return 0
+    }
+  })
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const criarAlunoComResponsavel = useCriarAlunoComResponsavel()
@@ -140,7 +147,37 @@ export function AlunoCadastroPage() {
     },
   })
 
+  // 1. Carregar rascunho do localStorage ao montar
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('aluno_cadastro_draft')
+    
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft)
+        Object.entries(parsedDraft).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) setValue(key as any, value)
+        })
+      } catch (e) {
+        console.error('Erro ao carregar rascunho:', e)
+      }
+    }
+    
+    // O passo atual já é inicializado no useState, então não precisamos de setCurrentStep aqui,
+    // garantindo que não haja "volto pro início e depois pulo" (flash).
+  }, [setValue])
+
+  // 2. Salvar rascunho e passo atual no localStorage
+  const watchAllFields = watch()
+  useEffect(() => {
+    const draftContent = { ...watchAllFields }
+    delete draftContent.responsavel_senha
+    localStorage.setItem('aluno_cadastro_draft', JSON.stringify(draftContent))
+    localStorage.setItem('aluno_cadastro_step', currentStep.toString())
+  }, [watchAllFields, currentStep])
+
   const resetForm = () => {
+    localStorage.removeItem('aluno_cadastro_draft')
+    localStorage.removeItem('aluno_cadastro_step')
     reset({
       responsavel_nome: '',
       responsavel_cpf: '',
@@ -216,6 +253,12 @@ export function AlunoCadastroPage() {
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>, campo: 'cpf' | 'responsavel_cpf') => {
     const valor = e.target.value
     setValue(campo, mascaraCPF(valor), { shouldValidate: true })
+    
+    // Resetar estado de responsável encontrado se o CPF for alterado/apagado
+    if (campo === 'responsavel_cpf' && valor.length < 14) {
+      setResponsavelEncontrado(false)
+      setIrmaosExistentes([])
+    }
   }
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,6 +430,7 @@ export function AlunoCadastroPage() {
 
       setLastCreatedAluno(result)
       toast.success('Aluno cadastrado com sucesso!')
+      localStorage.removeItem('aluno_cadastro_draft')
       setShowPostCadastroModal(true)
     } catch (err: any) {
       console.error('Erro detalhado ao cadastrar aluno:', err)
@@ -831,7 +875,14 @@ export function AlunoCadastroPage() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest px-1">Obs: Isso define quem vê boletos e faz pagamentos via portal.</p>
                 </div>
 
-                {!responsavelEncontrado && (
+                {responsavelEncontrado ? (
+                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 mb-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                    <p className="text-sm text-emerald-800 font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4 text-emerald-600" />
+                      Este usuário usará a mesma senha de acesso a qual já usa para o outro aluno.
+                    </p>
+                  </div>
+                ) : (
                   <div className="space-y-2">
                     <Label htmlFor="responsavel_senha">Senha de acesso *</Label>
                     <div className="relative">
