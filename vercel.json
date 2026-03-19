@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/((?!assets/|favicon.ico|pwa-|vite.svg).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {

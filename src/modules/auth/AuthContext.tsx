@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
     try {
-      // 1. SUPER ADMIN
+      // 1. SUPER ADMIN (Rollback: Identificação forçada por e-mail)
       if (isSuperAdminEmail(user.email || '')) {
         setAuthUser({
           user, session,
