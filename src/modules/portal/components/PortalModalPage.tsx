@@ -19,18 +19,18 @@ interface PortalModalPageProps {
   colorClass?: string
 }
 
-export function PortalModalPage({ 
-  open, 
-  onOpenChange, 
-  title, 
-  subtitle, 
-  icon: Icon, 
+export function PortalModalPage({
+  open,
+  onOpenChange,
+  title,
+  subtitle,
+  icon: Icon,
   children,
   colorClass = "bg-indigo-600"
 }: PortalModalPageProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full sm:max-w-4xl p-0 overflow-hidden bg-white h-[100dvh] sm:h-auto sm:max-h-[95vh] flex flex-col border-0 sm:border rounded-none sm:rounded-3xl">
+      <DialogContent showCloseButton={false} className="w-full sm:max-w-4xl p-0 overflow-hidden bg-white h-[100dvh] sm:h-auto sm:max-h-[95vh] flex flex-col border-0 sm:border rounded-none sm:rounded-3xl">
         <div className={cn(colorClass, "p-6 sm:p-8 text-white shrink-0 relative")}>
           <div className="mx-auto w-12 h-1.5 bg-white/20 rounded-full mb-4 sm:hidden" />
           <div className="flex justify-between items-start">
@@ -45,7 +45,7 @@ export function PortalModalPage({
                 </DialogDescription>
               )}
             </div>
-            <button 
+            <button
               onClick={() => onOpenChange(false)}
               className="p-2 hover:bg-white/10 rounded-xl transition-colors -mr-2"
             >

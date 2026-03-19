@@ -22,9 +22,7 @@ import {
   useProfessoresTurma,
   useAtribuicoes,
   useAtribuirProfessor,
-  useRemoverAtribuicao,
-  useSalvarGradeItem,
-  useRemoverGradeItem
+  useRemoverAtribuicao
 } from '../hooks'
 import { toast } from 'sonner'
 
@@ -246,6 +244,9 @@ function TabProfessores({ turma }: { turma: Turma }) {
   const [selectedProfessorId, setSelectedProfessorId] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState(4)
 
+  const [professorDetails, setProfessorDetails] = useState<any>(null)
+  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
+
   const atribuicoes = atribuicoesDb || []
   const professores = todosProfessores || []
   const disciplinas = todasDisciplinas || []
@@ -279,10 +280,12 @@ function TabProfessores({ turma }: { turma: Turma }) {
     }
   }
 
-  const handleRemover = async (id: string) => {
+  const handleRemoverConfirm = async () => {
+    if (!atribuicaoParaRemover) return
     try {
-      await mutationRemover.mutateAsync(id)
+      await mutationRemover.mutateAsync(atribuicaoParaRemover.id)
       toast.success('Vínculo removido!')
+      setAtribuicaoParaRemover(null)
     } catch {
       toast.error('Erro ao remover vínculo')
     }
@@ -310,7 +313,10 @@ function TabProfessores({ turma }: { turma: Turma }) {
           if (!professor || !disciplina) return null
 
           return (
-            <div key={at.id} className="p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+            <div 
+              key={at.id} 
+              className="p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden"
+            >
                <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12 border border-slate-100 shadow-sm">
                     <AvatarImage src={professor.avatar_url} />
@@ -331,14 +337,25 @@ function TabProfessores({ turma }: { turma: Turma }) {
                       </div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleRemover(at.id)}
-                    className="h-8 w-8 text-rose-400 hover:text-rose-600 hover:bg-rose-50"
-                  >
-                    <Trash2 size={14} />
-                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setProfessorDetails({ professor, disciplina, atribuicao: at })}
+                      className="h-10 w-10 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 shrink-0 transition-colors"
+                    >
+                      <Eye size={16} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setAtribuicaoParaRemover(at)}
+                      className="h-10 w-10 text-rose-400 hover:text-rose-600 hover:bg-rose-50 shrink-0 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                </div>
             </div>
           )
@@ -380,25 +397,20 @@ function TabProfessores({ turma }: { turma: Turma }) {
         <div className="pt-2 pb-32 space-y-4 px-1">
            <div className="space-y-2.5">
              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
-             <Select value={selectedDisciplinaId} onValueChange={setSelectedDisciplinaId}>
-               <SelectTrigger className="h-14 rounded-2xl text-[13px] font-bold bg-slate-50/70 border-0 shadow-inner">
-                 <SelectValue placeholder="Selecione..." />
-               </SelectTrigger>
-               <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
-                 {disciplinas.map((d: any) => (
-                    <SelectItem key={d.id} value={d.id} className="font-bold py-3 text-[13px]">{d.nome}</SelectItem>
-                 ))}
-               </SelectContent>
-             </Select>
+             <div className="h-14 w-full rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 shadow-inner flex items-center px-4">
+               <span className="text-[13px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">
+                 {disciplinas.find((d: any) => d.id === selectedDisciplinaId)?.nome || ''}
+               </span>
+             </div>
            </div>
            
            <div className="space-y-2.5">
              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Professor</label>
              <Select value={selectedProfessorId} onValueChange={setSelectedProfessorId}>
-               <SelectTrigger className="h-14 rounded-2xl text-[13px] font-bold bg-slate-50/70 border-0 shadow-inner">
+               <SelectTrigger className="w-full h-14 rounded-2xl text-[13px] font-bold bg-slate-50/70 border-0 shadow-inner">
                  <SelectValue placeholder="Selecione..." />
                </SelectTrigger>
-               <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
+               <SelectContent className="w-full rounded-2xl border-slate-100 shadow-xl">
                  {professores.map((p: any) => (
                     <SelectItem key={p.id} value={p.id} className="font-bold py-3 text-[13px]">{p.nome}</SelectItem>
                  ))}
@@ -408,14 +420,14 @@ function TabProfessores({ turma }: { turma: Turma }) {
 
            <div className="space-y-2.5">
              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Carga Horária (Aulas/Semana)</label>
-             <div className="relative">
+             <div className="relative w-full">
                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
                <Input 
                  type="number" 
                  inputMode="numeric"
                  value={cargaHoraria} 
                  onChange={(e) => setCargaHoraria(Number(e.target.value))}
-                 className="h-14 rounded-2xl text-base font-black pl-11 bg-slate-50/70 dark:bg-slate-800/70 border-0 shadow-inner"
+                 className="w-full h-14 rounded-2xl text-base font-black pl-11 bg-slate-50/70 dark:bg-slate-800/70 border-0 shadow-inner"
                />
              </div>
            </div>
@@ -432,6 +444,84 @@ function TabProfessores({ turma }: { turma: Turma }) {
            </div>
         </div>
       </BottomSheet>
+
+      {/* Professor Details Modal */}
+      <BottomSheet isOpen={!!professorDetails} onClose={() => setProfessorDetails(null)} title="Perfil do Professor" size="half">
+        {professorDetails && (
+          <div className="pt-4 pb-32 space-y-6">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-md">
+                <AvatarImage src={professorDetails.professor.avatar_url} />
+                <AvatarFallback className="bg-indigo-50 text-indigo-600 font-black text-2xl">
+                  {professorDetails.professor.nome[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  {professorDetails.professor.nome}
+                </h3>
+                <Badge className="bg-indigo-50 text-indigo-600 border-0 text-[10px] font-black uppercase tracking-widest mt-1">
+                  Ativo na Plataforma
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-6 px-4">
+              <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl flex flex-col items-center justify-center text-center space-y-1">
+                <BookOpen className="h-5 w-5 text-indigo-400 mb-1" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Disciplina Atual</span>
+                <p className="text-[12px] font-bold text-slate-800 dark:text-slate-200 uppercase truncate w-full">
+                  {professorDetails.disciplina.nome}
+                </p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl flex flex-col items-center justify-center text-center space-y-1">
+                <Clock className="h-5 w-5 text-slate-400 mb-1" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carga Horária</span>
+                <p className="text-[12px] font-bold text-slate-800 dark:text-slate-200 uppercase truncate w-full">
+                  {professorDetails.atribuicao.carga_horaria_semanal} aulas/sem
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Remove Assignment Modal */}
+      <BottomSheet isOpen={!!atribuicaoParaRemover} onClose={() => setAtribuicaoParaRemover(null)} title="Remover Vínculo" size="peek">
+        <div className="space-y-7 pt-4 text-center pb-32">
+          <div className="h-20 w-20 bg-rose-50 dark:bg-rose-900/40 rounded-xl flex items-center justify-center mx-auto">
+            <AlertTriangle className="h-10 w-10 text-rose-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black tracking-tight text-slate-900 dark:text-white uppercase">
+              Remover este professor?
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium mt-3 max-w-[260px] mx-auto leading-relaxed italic">
+              O professor não lecionará mais esta disciplina na turma.
+            </p>
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800">
+            <div className="mx-auto w-full px-6 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setAtribuicaoParaRemover(null)}
+                className="flex-1 h-14 rounded-xl font-bold text-[13px] uppercase tracking-widest border-slate-200"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleRemoverConfirm}
+                disabled={mutationRemover.isPending}
+                className="flex-1 h-14 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[13px] uppercase tracking-widest shadow-lg shadow-rose-200"
+              >
+                 {mutationRemover.isPending ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Confirmar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
+
     </div>
   )
 }
@@ -440,111 +530,18 @@ function TabProfessores({ turma }: { turma: Turma }) {
 // TAB: GRADE HORÁRIA
 // ─────────────────────────────────────────────────────────────────────────────
 function TabGrade({ turma }: { turma: Turma }) {
-  const [diaSelecionado, setDiaSelecionado] = useState(new Date().getDay() || 1) // 1 = Segunda
-  const [isEditing, setIsEditing] = useState(false)
-
-  const { data: gradeRecords, isLoading: loadingGrade } = useGradeTurma(turma.id)
-  const { data: todasDisciplinas } = useDisciplinas()
-  const { data: todosProfessores } = useProfessoresTurma()
-  
-  const grade = gradeRecords || []
-  const diaGrade = grade.filter((g: any) => g.dia_semana === diaSelecionado)
-
   return (
     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-      
-      {/* Ações (Editar, Imprimir) */}
-      <div className="flex items-center gap-2 mb-2">
-         {isEditing ? (
-            <Button 
-              onClick={() => setIsEditing(false)} 
-              className="flex-1 h-10 rounded-xl bg-teal-500 text-white font-black text-[10px] uppercase tracking-widest"
-            >
-              <Save size={14} className="mr-1.5" /> Concluir Edição
-            </Button>
-         ) : (
-            <>
-              <Button 
-                variant="outline"
-                className="flex-1 h-10 rounded-xl bg-white border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500"
-              >
-                <Printer size={14} className="mr-1.5" /> Imprimir
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)} 
-                className="flex-1 h-10 rounded-xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest shadow-md shadow-indigo-100 dark:shadow-none"
-              >
-                <Pencil size={14} className="mr-1.5" /> Editar
-              </Button>
-            </>
-         )}
-      </div>
-
-      {isEditing && (
-        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl mb-4">
-           <p className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400">
-             ⚠️ Para gerenciar a alocação completa e conflitos de horários, recomendamos acessar a plataforma WEB.
-           </p>
-        </div>
-      )}
-
-      {/* Seletor de Dia */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
-         {['SEG', 'TER', 'QUA', 'QUI', 'SEX'].map((dia, idx) => (
-            <button
-              key={dia}
-              onClick={() => setDiaSelecionado(idx + 1)}
-              className={cn(
-                "flex-1 min-w-[60px] h-10 rounded-xl font-black text-[10px] tracking-widest transition-all",
-                diaSelecionado === idx + 1
-                  ? "bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md"
-                  : "bg-slate-50 dark:bg-slate-800/60 text-slate-400"
-              )}
-            >
-              {dia}
-            </button>
-         ))}
-      </div>
-
-      <div className="space-y-3">
-         {loadingGrade ? (
-            <div className="p-12 text-center">
-              <Loader2 size={24} className="animate-spin mx-auto text-slate-300" />
-            </div>
-         ) : diaGrade.length === 0 ? (
-            <div className="p-12 text-center bg-slate-50 dark:bg-slate-900/40 rounded-[2rem] border border-dashed border-slate-200 dark:border-slate-800">
-               <Calendar size={32} className="mx-auto text-slate-200 mb-3" />
-               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nenhuma aula para este dia.</p>
-            </div>
-         ) : (
-            diaGrade.sort((a: any, b: any) => a.hora_inicio.localeCompare(b.hora_inicio)).map((item: any) => {
-               const disciplina = todasDisciplinas?.find((d: any) => d.id === item.disciplina_id);
-               const professor = todosProfessores?.find((p: any) => p.id === item.professor_id);
-               
-               return (
-                  <div key={item.id} className="p-4 rounded-[1.5rem] border bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                     <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{item.hora_inicio} - {item.hora_fim}</span>
-                           <span className="text-sm font-black uppercase tracking-tight mt-0.5 text-slate-800 dark:text-white">
-                             {disciplina?.nome || 'Disciplina'}
-                           </span>
-                           {professor && <span className="text-[10px] font-bold text-indigo-500/70 mt-1 uppercase tracking-widest">{professor.nome}</span>}
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <div className="h-8 w-8 rounded-lg shadow-sm" style={{ backgroundColor: disciplina?.cor || '#e2e8f0' }} />
-                           {isEditing && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-400 hover:text-rose-600 hover:bg-rose-50">
-                                <Trash2 size={14} />
-                              </Button>
-                           )}
-                        </div>
-                     </div>
-                  </div>
-               )
-            })
-         )}
+      <div className="p-8 mt-4 text-center bg-indigo-50/50 dark:bg-indigo-900/20 rounded-[2rem] border border-dashed border-indigo-200 dark:border-indigo-800">
+        <CalendarDays size={40} className="mx-auto text-indigo-400 mb-4" />
+        <h3 className="text-[15px] font-black text-indigo-900 dark:text-indigo-100 uppercase tracking-tight mb-2">
+          Gestão de Grade Escolar
+        </h3>
+        <p className="text-[11px] font-bold text-indigo-600/70 dark:text-indigo-400/80 uppercase tracking-widest leading-relaxed">
+          Para gerenciar e configurar a grade horária completa desta turma, por favor, utilize o sistema acessando a versão Web pelo seu computador.
+        </p>
       </div>
     </div>
   )
 }
+

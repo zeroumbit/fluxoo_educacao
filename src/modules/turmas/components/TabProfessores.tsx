@@ -33,6 +33,8 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const [selectedDisciplina, setSelectedDisciplina] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [busca, setBusca] = useState('')
+  const [professorDetails, setProfessorDetails] = useState<any>(null)
+  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
   
   const { data: dbProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
   const { data: dbDisciplinas } = useDisciplinas()
@@ -96,10 +98,12 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
     }
   }
 
-  const handleRemover = async (id: string) => {
+  const handleRemoverConfirm = async () => {
+    if (!atribuicaoParaRemover) return
     try {
-      await mutationRemover.mutateAsync(id)
+      await mutationRemover.mutateAsync(atribuicaoParaRemover.id)
       toast.success('Vínculo removido!')
+      setAtribuicaoParaRemover(null)
     } catch (error) {
       toast.error('Erro ao remover vínculo')
     }
@@ -251,17 +255,21 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl bg-slate-50 hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setProfessorDetails({ professor, disciplina, atribuicao: at })}
+                      className="h-11 w-11 rounded-xl bg-slate-50 hover:bg-white hover:shadow-sm text-slate-400 hover:text-indigo-600 transition-all"
+                    >
                       <Eye size={18} />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      onClick={() => handleRemover(at.id)}
-                      disabled={mutationRemover.isPending}
+                      onClick={() => setAtribuicaoParaRemover(at)}
                       className="h-11 w-11 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
                     >
-                      {mutationRemover.isPending ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 size={18} />}
+                      <Trash2 size={18} />
                     </Button>
                   </div>
                 </div>
@@ -303,6 +311,81 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
           </div>
         )}
       </div>
+
+      {/* DETALHES DO PROFESSOR (Dialog) */}
+      <Dialog open={!!professorDetails} onOpenChange={(open) => !open && setProfessorDetails(null)}>
+        <DialogContent className="max-w-[500px] p-0 overflow-hidden rounded-[2.5rem] border-0 shadow-2xl">
+          {professorDetails && (
+            <div className="p-8">
+               <DialogHeader className="mb-6 flex flex-col items-center text-center">
+                 <Avatar className="h-28 w-28 rounded-3xl border-4 border-slate-50 shadow-md">
+                   <AvatarImage src={professorDetails.professor.avatar_url} />
+                   <AvatarFallback className="bg-indigo-50 text-indigo-600 font-black text-3xl">
+                     {professorDetails.professor.nome[0].toUpperCase()}
+                   </AvatarFallback>
+                 </Avatar>
+                 <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight mt-4">{professorDetails.professor.nome}</DialogTitle>
+                 <Badge className="bg-indigo-50 text-indigo-600 border-0 text-[10px] font-black uppercase tracking-widest mt-2 px-3 py-1">
+                   Ativo na Plataforma
+                 </Badge>
+               </DialogHeader>
+
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-slate-50 p-6 rounded-[2rem] flex flex-col items-center justify-center text-center space-y-2 border border-slate-100">
+                   <BookOpen className="h-8 w-8 text-indigo-400 mb-1" />
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Disciplina Atual</span>
+                   <p className="text-sm font-bold text-slate-800 uppercase tracking-tight">
+                     {professorDetails.disciplina.nome}
+                   </p>
+                 </div>
+                 <div className="bg-slate-50 p-6 rounded-[2rem] flex flex-col items-center justify-center text-center space-y-2 border border-slate-100">
+                   <Clock className="h-8 w-8 text-slate-400 mb-1" />
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carga Horária</span>
+                   <p className="text-sm font-bold text-slate-800 uppercase tracking-tight">
+                     {professorDetails.atribuicao.carga_horaria_semanal} aulas/semana
+                   </p>
+                 </div>
+               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* REMOVER ATRIBUIÇÃO (Dialog) */}
+      <Dialog open={!!atribuicaoParaRemover} onOpenChange={(open) => !open && setAtribuicaoParaRemover(null)}>
+        <DialogContent className="max-w-[400px] p-0 overflow-hidden rounded-[2.5rem] border-0 shadow-2xl">
+          <div className="p-8 text-center space-y-6">
+            <div className="h-24 w-24 bg-rose-50 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+              <AlertTriangle className="h-12 w-12 text-rose-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+                Remover Professor?
+              </h3>
+              <p className="text-sm text-slate-500 font-medium mt-3 leading-relaxed">
+                Este professor será desvinculado desta disciplina e não lecionará mais para esta turma.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setAtribuicaoParaRemover(null)}
+                className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 border-slate-200"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleRemoverConfirm}
+                disabled={mutationRemover.isPending}
+                className="flex-1 h-14 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-200"
+              >
+                 {mutationRemover.isPending ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : 'Confirmar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
