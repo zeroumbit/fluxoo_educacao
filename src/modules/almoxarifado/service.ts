@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { validarPermissao } from '@/lib/rbac-validation'
 
 export const almoxarifadoService = {
   async listarItens(tenantId: string) {
@@ -14,7 +15,12 @@ export const almoxarifadoService = {
     return data || []
   },
 
-  async criarItem(item: any) {
+  async criarItem(item: any, userId?: string) {
+    // Validação RBAC: almoxarifado.itens.create
+    if (userId && item.tenant_id) {
+      await validarPermissao(userId, item.tenant_id, 'almoxarifado.itens.create')
+    }
+
     const { data, error } = await supabase
       .from('almoxarifado_itens')
       .insert({
@@ -31,7 +37,12 @@ export const almoxarifadoService = {
     return data
   },
 
-  async atualizarItem(id: string, updates: any) {
+  async atualizarItem(id: string, updates: any, userId?: string, tenantId?: string) {
+    // Validação RBAC: almoxarifado.itens.update
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'almoxarifado.itens.update')
+    }
+
     const { data, error } = await supabase
       .from('almoxarifado_itens')
       .update({
@@ -48,7 +59,12 @@ export const almoxarifadoService = {
     return data
   },
 
-  async deletarItem(id: string) {
+  async deletarItem(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: almoxarifado.itens.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'almoxarifado.itens.delete')
+    }
+
     const { error } = await supabase
       .from('almoxarifado_itens')
       .delete()
@@ -72,7 +88,12 @@ export const almoxarifadoService = {
     return data || []
   },
 
-  async criarMovimentacao(mov: any) {
+  async criarMovimentacao(mov: any, userId?: string) {
+    // Validação RBAC: almoxarifado.movimentacoes.create
+    if (userId && mov.tenant_id) {
+      await validarPermissao(userId, mov.tenant_id, 'almoxarifado.movimentacoes.create')
+    }
+
     // 1. Registra movimentação
     const { data, error } = await supabase
       .from('almoxarifado_movimentacoes')
@@ -142,7 +163,12 @@ export const almoxarifadoService = {
     return data
   },
 
-  async deletarMovimentacao(id: string) {
+  async deletarMovimentacao(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: almoxarifado.movimentacoes.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'almoxarifado.movimentacoes.delete')
+    }
+
     // Nota: Isso não reverte o estoque automaticamente
     // Para uma implementação completa, seria necessário registrar uma movimentação inversa
     const { error } = await supabase

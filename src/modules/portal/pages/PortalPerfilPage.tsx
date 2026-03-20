@@ -57,7 +57,7 @@ type PerfilFormValues = z.infer<typeof perfilSchema>
 
 export function PortalPerfilPage() {
   const { authUser } = useAuth()
-  const { responsavel, alunoSelecionado } = usePortalContext()
+  const { responsavel, alunoSelecionado, isLoading } = usePortalContext()
   const updatePerfil = useUpdatePerfil()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -73,7 +73,7 @@ export function PortalPerfilPage() {
     }
     fetchEscola()
   }, [alunoSelecionado?.tenant_id])
-  
+
   const {
     register,
     handleSubmit,
@@ -99,6 +99,35 @@ export function PortalPerfilPage() {
       })
     }
   }, [responsavel, reset])
+
+  // Se estiver carregando o contexto, mostra loading
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+          <p className="text-sm text-slate-500 font-medium">Carregando dados do responsável...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não houver responsável, mostra erro
+  if (!responsavel) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+            <User className="h-8 w-8 text-red-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Responsável não encontrado</h3>
+            <p className="text-sm text-slate-500 mt-1">Não foi possível carregar os dados do responsável.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const { fetchAddressByCEP } = useViaCEP()
 

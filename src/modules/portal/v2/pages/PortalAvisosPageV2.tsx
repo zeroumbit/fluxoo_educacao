@@ -144,28 +144,19 @@ function AvisoPortalCard({ aviso, expirado = false, expandedId, onToggleExpand }
   )
 }
 
+// Helper de iniciais para os cards
+const getInitials = (name: string) => {
+  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+};
+
 export function PortalAvisosPageV2() {
-  const { alunoSelecionado, isMultiAluno, isLoading: loadingCtx } = usePortalContext()
+  const { alunoSelecionado, selecionarAluno, vinculos, isMultiAluno, isLoading: loadingCtx } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id)
 
   if (loadingCtx || isLoading) return <AvisosSkeleton />
-
-  if (!alunoSelecionado) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 space-y-6">
-        <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center shadow-inner">
-            <Megaphone className="h-10 w-10 text-slate-200" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Mural de Avisos</h2>
-          <p className="text-sm font-semibold text-slate-400">Selecione um aluno para ver os comunicados.</p>
-        </div>
-      </div>
-    )
-  }
 
   const avisosAtivos = (avisos ?? []).filter((a: any) => avisoEstaAtivo(a))
   const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
@@ -182,86 +173,145 @@ export function PortalAvisosPageV2() {
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Mural da Escola</p>
           </div>
         </div>
-        {isMultiAluno && <SeletorAluno />}
       </div>
 
-      {/* Banner */}
-      <div className="bg-slate-900 rounded-[40px] p-6 text-white relative overflow-hidden shadow-2xl shadow-slate-200">
-         <div className="absolute right-0 top-0 opacity-5 -mr-12 -mt-12 pointer-events-none">
-            <Megaphone size={200} />
-         </div>
-         <div className="flex items-start gap-5 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-teal-500/20 flex items-center justify-center text-teal-400 shrink-0 border border-white/5">
-               <BellRing size={24} />
-            </div>
-            <div>
-               <h4 className="text-base font-black text-teal-400 mb-1 leading-none pt-1">Canal Direto</h4>
-               <p className="text-xs font-medium text-slate-400 leading-relaxed pr-10">
-                 Fique por dentro de eventos, feriados e comunicados importantes.
-               </p>
-            </div>
-         </div>
-      </div>
-
-      {/* Empty State */}
-      {(!avisos || avisos.length === 0) && (
-        <div className="py-20 text-center space-y-5 bg-white rounded-[40px] border-2 border-dashed border-slate-100">
-           <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-200">
-             <AlertTriangle size={32} />
-           </div>
-           <div className="space-y-1">
-              <h3 className="text-lg font-black text-slate-800 tracking-tight">Tudo calmo por aqui</h3>
-              <p className="text-sm font-semibold text-slate-400 max-w-[200px] mx-auto">Não há novos avisos no momento.</p>
-           </div>
-        </div>
-      )}
-
-      {/* Ativos */}
-      {avisosAtivos.length > 0 && (
-        <div className="flex flex-col gap-4">
-           <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse shadow-sm shadow-teal-500/50" />
-                 <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest leading-none">Novidades</h3>
+      {/* Cards de Alunos (Filtro) */}
+      {isMultiAluno && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+          {vinculos.map((v: any) => (
+            <div
+              key={v.aluno?.id}
+              onClick={() => {
+                vibrate(10);
+                selecionarAluno(v);
+              }}
+              className={cn(
+                "flex items-center gap-4 p-4 rounded-[32px] border transition-all cursor-pointer shadow-sm active:scale-[0.98]",
+                alunoSelecionado?.id === v.aluno?.id
+                  ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200"
+                  : "bg-white border-slate-100 text-slate-800 hover:border-teal-200"
+              )}
+            >
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0",
+                alunoSelecionado?.id === v.aluno?.id ? "bg-teal-500 text-white" : "bg-teal-50 text-teal-600"
+              )}>
+                {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
               </div>
-              <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase tracking-widest">
-                {avisosAtivos.length} {avisosAtivos.length === 1 ? 'Aviso' : 'Avisos'}
-              </span>
-           </div>
-           <div className="flex flex-col gap-4">
-              <AnimatePresence mode="popLayout">
-                {avisosAtivos.map(aviso => (
-                  <AvisoPortalCard
-                    key={aviso.id}
-                    aviso={aviso}
-                    expandedId={expandedId}
-                    onToggleExpand={handleToggle}
-                  />
-                ))}
-              </AnimatePresence>
-           </div>
+              <div className="flex flex-col min-w-0 pr-2">
+                <h4 className={cn(
+                  "text-sm font-black tracking-tight leading-none truncate",
+                  alunoSelecionado?.id === v.aluno?.id ? "text-white" : "text-slate-800"
+                )}>
+                  {v.aluno?.nome_completo?.split(' ')[0] || 'Aluno'}
+                </h4>
+                <p className={cn(
+                  "text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60",
+                  alunoSelecionado?.id === v.aluno?.id ? "text-teal-400" : "text-slate-400"
+                )}>
+                  {v.aluno?.turma?.nome || 'S/ Turma'}
+                </p>
+              </div>
+              {alunoSelecionado?.id === v.aluno?.id && (
+                <div className="ml-auto w-2 h-2 rounded-full bg-teal-400 animate-pulse shrink-0" />
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Histórico */}
-      {avisosExpirados.length > 0 && (
-        <div className="flex flex-col gap-4 mt-4">
-           <div className="flex items-center gap-2 border-t border-slate-100 pt-8 px-1">
-              <Clock className="h-3 w-3 text-slate-300" />
-              <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Histórico Arquivado ({avisosExpirados.length})</h3>
-           </div>
-           <div className="flex flex-col gap-4">
-              {avisosExpirados.map(aviso => (
-                <AvisoPortalCard
-                  key={aviso.id}
-                  aviso={aviso}
-                  expirado
-                  expandedId={expandedId}
-                  onToggleExpand={handleToggle}
-                />
-              ))}
-           </div>
+      {/* Renderização Condicional do Conteúdo */}
+      {!alunoSelecionado ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8 space-y-6">
+          <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center shadow-inner">
+              <Megaphone className="h-10 w-10 text-slate-200" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Mural de Avisos</h2>
+            <p className="text-sm font-semibold text-slate-400">Selecione um aluno para ver os comunicados.</p>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Banner */}
+          <div className="bg-slate-900 rounded-[40px] p-6 text-white relative overflow-hidden shadow-2xl shadow-slate-200">
+             <div className="absolute right-0 top-0 opacity-5 -mr-12 -mt-12 pointer-events-none">
+                <Megaphone size={200} />
+             </div>
+             <div className="flex items-start gap-5 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-teal-500/20 flex items-center justify-center text-teal-400 shrink-0 border border-white/5">
+                   <BellRing size={24} />
+                </div>
+                <div>
+                   <h4 className="text-base font-black text-teal-400 mb-1 leading-none pt-1">Canal Direto</h4>
+                   <p className="text-xs font-medium text-slate-400 leading-relaxed pr-10">
+                     Comunicados para <strong>{alunoSelecionado.nome_completo?.split(' ')[0]}</strong>.
+                   </p>
+                </div>
+             </div>
+          </div>
+
+          {/* Empty State */}
+          {(!avisos || avisos.length === 0) && (
+            <div className="py-20 text-center space-y-5 bg-white rounded-[40px] border-2 border-dashed border-slate-100">
+               <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-slate-200">
+                 <AlertTriangle size={32} />
+               </div>
+               <div className="space-y-1">
+                  <h3 className="text-lg font-black text-slate-800 tracking-tight">Tudo calmo por aqui</h3>
+                  <p className="text-sm font-semibold text-slate-400 max-w-[200px] mx-auto">Não há novos avisos no momento.</p>
+               </div>
+            </div>
+          )}
+
+          {/* Ativos */}
+          {avisosAtivos.length > 0 && (
+            <div className="flex flex-col gap-4">
+               <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse shadow-sm shadow-teal-500/50" />
+                     <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest leading-none">Novidades</h3>
+                  </div>
+                  <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase tracking-widest">
+                    {avisosAtivos.length} {avisosAtivos.length === 1 ? 'Aviso' : 'Avisos'}
+                  </span>
+               </div>
+               <div className="flex flex-col gap-4">
+                  <AnimatePresence mode="popLayout">
+                    {avisosAtivos.map(aviso => (
+                      <AvisoPortalCard
+                        key={aviso.id}
+                        aviso={aviso}
+                        expandedId={expandedId}
+                        onToggleExpand={handleToggle}
+                      />
+                    ))}
+                  </AnimatePresence>
+               </div>
+            </div>
+          )}
+
+          {/* Histórico */}
+          {avisosExpirados.length > 0 && (
+            <div className="flex flex-col gap-4 mt-4">
+               <div className="flex items-center gap-2 border-t border-slate-100 pt-8 px-1">
+                  <Clock className="h-3 w-3 text-slate-300" />
+                  <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Histórico Arquivado ({avisosExpirados.length})</h3>
+               </div>
+               <div className="flex flex-col gap-4">
+                  {avisosExpirados.map(aviso => (
+                    <AvisoPortalCard
+                      key={aviso.id}
+                      aviso={aviso}
+                      expirado
+                      expandedId={expandedId}
+                      onToggleExpand={handleToggle}
+                    />
+                  ))}
+               </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

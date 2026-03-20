@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { CobrancaInsert } from '@/lib/database.types'
+import { validarPermissao } from '@/lib/rbac-validation'
 
 export const financeiroService = {
   /**
@@ -57,7 +58,12 @@ export const financeiroService = {
     return data
   },
 
-  async criar(cobranca: CobrancaInsert) {
+  async criar(cobranca: CobrancaInsert, userId?: string) {
+    // Validação RBAC: financeiro.cobrancas.create
+    if (userId) {
+      await validarPermissao(userId, cobranca.tenant_id, 'financeiro.cobrancas.create')
+    }
+
     const { data, error } = await supabase
       .from('cobrancas')
       .insert(cobranca)
@@ -68,7 +74,12 @@ export const financeiroService = {
     return data
   },
 
-  async atualizar(id: string, cobranca: Partial<CobrancaInsert>) {
+  async atualizar(id: string, cobranca: Partial<CobrancaInsert>, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.cobrancas.update
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.update')
+    }
+
     const { data, error } = await supabase
       .from('cobrancas')
       .update(cobranca)
@@ -80,7 +91,12 @@ export const financeiroService = {
     return data
   },
 
-  async marcarComoPago(id: string) {
+  async marcarComoPago(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.cobrancas.pay
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    }
+
     const { error } = await supabase
       .from('cobrancas')
       .update({ status: 'pago' })
@@ -116,7 +132,12 @@ export const financeiroService = {
     return data
   },
 
-  async excluir(id: string) {
+  async excluir(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.cobrancas.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.delete')
+    }
+
     const { error } = await supabase
       .from('cobrancas')
       .delete()
@@ -125,7 +146,12 @@ export const financeiroService = {
     if (error) throw error
   },
 
-  async desfazerPagamento(id: string) {
+  async desfazerPagamento(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.cobrancas.pay (reverter pagamento)
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    }
+
     const { error } = await supabase
       .from('cobrancas')
       .update({ status: 'a_vencer' })
@@ -345,7 +371,12 @@ export const financeiroService = {
     return data
   },
 
-  async criarContaPagar(conta: any) {
+  async criarContaPagar(conta: any, userId?: string) {
+    // Validação RBAC: financeiro.contas_pagar.create
+    if (userId && conta.tenant_id) {
+      await validarPermissao(userId, conta.tenant_id, 'financeiro.contas_pagar.create')
+    }
+
     const { data, error } = await supabase
       .from('contas_pagar')
       .insert({
@@ -360,7 +391,12 @@ export const financeiroService = {
     return data
   },
 
-  async atualizarContaPagar(id: string, updates: any) {
+  async atualizarContaPagar(id: string, updates: any, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.contas_pagar.update
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.update')
+    }
+
     const { data, error } = await supabase
       .from('contas_pagar')
       .update({
@@ -375,7 +411,12 @@ export const financeiroService = {
     return data
   },
 
-  async excluirContaPagar(id: string) {
+  async excluirContaPagar(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.contas_pagar.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.delete')
+    }
+
     const { error } = await supabase
       .from('contas_pagar')
       .delete()
@@ -384,10 +425,15 @@ export const financeiroService = {
     if (error) throw error
   },
 
-  async marcarContaComoPaga(id: string) {
+  async marcarContaComoPaga(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: financeiro.contas_pagar.pay
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.pay')
+    }
+
     const { error } = await supabase
       .from('contas_pagar')
-      .update({ 
+      .update({
         status: 'pago',
         updated_at: new Date().toISOString()
       })

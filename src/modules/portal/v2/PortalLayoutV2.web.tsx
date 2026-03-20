@@ -53,7 +53,10 @@ export function PortalLayoutV2Web() {
           </nav>
 
           <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
-            <button className="flex items-center gap-2 text-slate-500 hover:text-teal-600 transition-colors font-bold text-sm">
+            <button
+              onClick={() => navigate('/portal/perfil')}
+              className="flex items-center gap-2 text-slate-500 hover:text-teal-600 transition-colors font-bold text-sm"
+            >
               <User size={18} /> Meu Perfil
             </button>
             <button onClick={handleLogout} className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors">

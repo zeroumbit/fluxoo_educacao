@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
+import { validarPermissao } from '@/lib/rbac-validation'
 
 type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
 type AlunoUpdate = Database['public']['Tables']['alunos']['Update']
@@ -107,7 +108,12 @@ export const alunoService = {
     return count || 0
   },
 
-  async criar(aluno: AlunoInsert) {
+  async criar(aluno: AlunoInsert, userId?: string) {
+    // Validação RBAC: alunos.create
+    if (userId && aluno.tenant_id) {
+      await validarPermissao(userId, aluno.tenant_id, 'alunos.create')
+    }
+
     const { data, error } = await supabase
       .from('alunos')
       .insert(aluno)
@@ -122,8 +128,14 @@ export const alunoService = {
     responsavel: ResponsavelInsert,
     alunoDados: AlunoInsert,
     grauParentesco: string | null,
-    isFinanceiro: boolean = true
+    isFinanceiro: boolean = true,
+    userId?: string
   ) {
+    // Validação RBAC: alunos.create
+    if (userId && alunoDados.tenant_id) {
+      await validarPermissao(userId, alunoDados.tenant_id, 'alunos.create')
+    }
+
     // 0. Preparar dados (limpar CPF)
     const cpfLimpo = responsavel.cpf.replace(/\D/g, '')
     const alunoCpfLimpo = alunoDados.cpf ? alunoDados.cpf.replace(/\D/g, '') : null
@@ -248,7 +260,12 @@ export const alunoService = {
     return alunoData
   },
 
-  async atualizar(id: string, aluno: AlunoUpdate) {
+  async atualizar(id: string, aluno: AlunoUpdate, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.update
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.update')
+    }
+
     const { data, error } = await supabase
       .from('alunos')
       .update(aluno)
@@ -260,7 +277,12 @@ export const alunoService = {
     return data
   },
 
-  async excluir(id: string) {
+  async excluir(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.delete')
+    }
+
     // 0. Verificar pendências financeiras (REGRA: não pode excluir com pendências)
     const { data: pendencias, error: pendenciaError } = await supabase
       .from('cobrancas')
@@ -360,7 +382,12 @@ export const alunoService = {
     return data
   },
 
-  async ativarAcessoPortal(responsavelId: string, senha: string) {
+  async ativarAcessoPortal(responsavelId: string, senha: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     // 1. Buscar dados do responsável
     const { data: resp, error: respError } = await supabase
       .from('responsaveis')
@@ -409,7 +436,12 @@ export const alunoService = {
     return authData.user
   },
 
-  async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean, alunoId?: string) {
+  async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean, alunoId?: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     if (isFinanceiro && alunoId) {
       // REGRA: Somente UM pode ser o pagador. Remove flag de todos os outros deste aluno.
       await supabase
@@ -426,7 +458,12 @@ export const alunoService = {
     if (error) throw error
   },
 
-  async atualizarResponsavel(id: string, responsavel: Partial<ResponsavelInsert>) {
+  async atualizarResponsavel(id: string, responsavel: Partial<ResponsavelInsert>, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     // Se tiver CPF, garante que está limpo
     const payload = { ...responsavel }
     if (payload.cpf) payload.cpf = payload.cpf.replace(/\D/g, '')
@@ -442,7 +479,12 @@ export const alunoService = {
     return data
   },
 
-  async vincularExistente(alunoId: string, responsavelId: string, grauParentesco: string) {
+  async vincularExistente(alunoId: string, responsavelId: string, grauParentesco: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     const { error } = await supabase
       .from('aluno_responsavel')
       .insert({
@@ -456,7 +498,12 @@ export const alunoService = {
     if (error) throw error
   },
 
-  async criarResponsavelAndVincular(alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string) {
+  async criarResponsavelAndVincular(alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     // 1. Criar responsável
     const { data: novoResp, error: respError } = await supabase
       .from('responsaveis')
@@ -475,7 +522,12 @@ export const alunoService = {
     return novoResp
   },
 
-  async desvincularResponsavel(vinculoId: string) {
+  async desvincularResponsavel(vinculoId: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: alunos.manage_responsaveis
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    }
+
     const { error } = await supabase
       .from('aluno_responsavel')
       .delete()

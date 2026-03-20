@@ -103,6 +103,8 @@ export function useAtivarAcessoPortal() {
       alunoService.ativarAcessoPortal(responsavelId, senha),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }
@@ -113,7 +115,9 @@ export function useAlternarFinanceiro() {
     mutationFn: ({ vinculoId, isFinanceiro, alunoId }: { vinculoId: string; isFinanceiro: boolean; alunoId?: string }) =>
       alunoService.alternarResponsavelFinanceiro(vinculoId, isFinanceiro, alunoId),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       toast.success('Responsável financeiro atualizado!')
     },
   })
@@ -125,7 +129,9 @@ export function useAtualizarResponsavel() {
     mutationFn: ({ id, responsavel }: { id: string; responsavel: Partial<ResponsavelInsert> }) =>
       alunoService.atualizarResponsavel(id, responsavel),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo'] })
       toast.success('Dados do responsável atualizados!')
     },
   })
@@ -137,7 +143,9 @@ export function useVincularResponsavel() {
     mutationFn: ({ alunoId, responsavelId, grauParentesco }: { alunoId: string, responsavelId: string, grauParentesco: string }) =>
       alunoService.vincularExistente(alunoId, responsavelId, grauParentesco),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       toast.success('Novo responsável vinculado!')
     },
   })
@@ -149,7 +157,9 @@ export function useCriarResponsavelAndVincular() {
     mutationFn: ({ alunoId, responsavel, grauParentesco }: { alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string }) =>
       alunoService.criarResponsavelAndVincular(alunoId, responsavel, grauParentesco),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       toast.success('Novo responsável criado e vinculado!')
     },
   })
@@ -160,7 +170,9 @@ export function useDesvincularResponsavel() {
   return useMutation({
     mutationFn: (vinculoId: string) => alunoService.desvincularResponsavel(vinculoId),
     onSuccess: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ['alunos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       toast.success('Responsável desvinculado com sucesso.')
     },
     onError: (err: any) => {

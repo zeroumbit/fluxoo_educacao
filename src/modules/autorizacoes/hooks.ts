@@ -34,6 +34,7 @@ export function useCriarModeloAutorizacao() {
     mutationFn: autorizacoesService.criarModeloEscola,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizacoes'] })
+      queryClient.invalidateQueries({ queryKey: ['autorizacoes', 'portal'] })
     },
   })
 }
@@ -45,6 +46,7 @@ export function useAtualizarModeloAutorizacao() {
       autorizacoesService.atualizarModelo(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizacoes'] })
+      queryClient.invalidateQueries({ queryKey: ['autorizacoes', 'portal'] })
     },
   })
 }

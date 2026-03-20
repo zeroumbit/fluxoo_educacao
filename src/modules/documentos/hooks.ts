@@ -24,7 +24,14 @@ export function useDocumentosEmitidos() {
 }
 export function useEmitirDocumento() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => documentosService.emitirDocumento(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['docs_emitidos'] }) })
+  return useMutation({ 
+    mutationFn: (d: any) => documentosService.emitirDocumento(d), 
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['docs_emitidos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'solicitacoes'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'documentos'] })
+    }
+  })
 }
 
 // ==========================================

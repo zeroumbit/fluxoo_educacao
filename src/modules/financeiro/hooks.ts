@@ -37,6 +37,7 @@ export function useCriarCobranca() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
 }
@@ -49,6 +50,7 @@ export function useAtualizarCobranca() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ 'cobrancas' ] })
       queryClient.invalidateQueries({ queryKey: [ 'dashboard' ] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
 }
@@ -60,6 +62,7 @@ export function useMarcarComoPago() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
 }
@@ -70,6 +73,7 @@ export function useExcluirCobranca() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
 }
@@ -80,6 +84,7 @@ export function useDesfazerPagamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
 }

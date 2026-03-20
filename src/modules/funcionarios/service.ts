@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { FuncaoEscolaInsert } from '@/lib/database.types'
+import { validarPermissao } from '@/lib/rbac-validation'
 
 export const funcionariosService = {
   async listar(tenantId: string) {
@@ -23,7 +24,12 @@ export const funcionariosService = {
     return data || []
   },
 
-  async criar(funcionario: any) {
+  async criar(funcionario: any, userId?: string) {
+    // Validação RBAC: funcionarios.create
+    if (userId && funcionario.tenant_id) {
+      await validarPermissao(userId, funcionario.tenant_id, 'funcionarios.create')
+    }
+
     // Garantir que tenant_id está sendo enviado
     if (!funcionario.tenant_id) {
       throw new Error('tenant_id é obrigatório')
@@ -50,7 +56,12 @@ export const funcionariosService = {
     return data
   },
 
-  async atualizar(id: string, updates: any) {
+  async atualizar(id: string, updates: any, userId?: string, tenantId?: string) {
+    // Validação RBAC: funcionarios.update
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'funcionarios.update')
+    }
+
     const { data, error } = await supabase
       .from('funcionarios')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -64,7 +75,12 @@ export const funcionariosService = {
     return data
   },
 
-  async excluir(id: string) {
+  async excluir(id: string, userId?: string, tenantId?: string) {
+    // Validação RBAC: funcionarios.delete
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'funcionarios.delete')
+    }
+
     // Exclusão lógica - apenas muda o status
     const { error } = await supabase
       .from('funcionarios')
@@ -79,7 +95,12 @@ export const funcionariosService = {
     }
   },
 
-  async criarUsuarioEscola(funcionarioId: string, email: string, senha: string, areasAcesso: string[]) {
+  async criarUsuarioEscola(funcionarioId: string, email: string, senha: string, areasAcesso: string[], userId?: string, tenantId?: string) {
+    // Validação RBAC: funcionarios.manage_users
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'funcionarios.manage_users')
+    }
+
     try {
       // 1. Criar autenticação no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -170,7 +191,12 @@ export const funcionariosService = {
   },
 
   /** Cria uma nova função personalizada para o tenant */
-  async criarFuncaoCustom(payload: FuncaoEscolaInsert) {
+  async criarFuncaoCustom(payload: FuncaoEscolaInsert, userId?: string) {
+    // Validação RBAC: funcionarios.funcoes.create
+    if (userId && payload.tenant_id) {
+      await validarPermissao(userId, payload.tenant_id, 'funcionarios.funcoes.create')
+    }
+
     const { data, error } = await supabase
       .from('funcoes_escola' as any)
       .insert(payload as any)
@@ -189,7 +215,12 @@ export const funcionariosService = {
    * Gera contas a pagar para todos os funcionários ativos com salário definido.
    * Evita duplicidade para o mesmo mês/ano/funcionário.
    */
-  async gerarFolhaPagamento(tenantId: string, mes: number, ano: number) {
+  async gerarFolhaPagamento(tenantId: string, mes: number, ano: number, userId?: string) {
+    // Validação RBAC: funcionarios.folha.generate
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'funcionarios.folha.generate')
+    }
+
     // 1. Buscar funcionários ativos com salário e dia de pagamento
     const { data: ativos, error: errFunc } = await supabase
       .from('funcionarios')

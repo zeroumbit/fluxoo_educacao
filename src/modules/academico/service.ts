@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { validarPermissao } from '@/lib/rbac-validation'
 
 export const academicoService = {
   // MATRÍCULAS
@@ -9,8 +10,12 @@ export const academicoService = {
     if (error) throw error
     return (data as any[]) || []
   },
-  async criarMatricula(matricula: any) {
-    
+  async criarMatricula(matricula: any, userId?: string) {
+    // Validação RBAC: academico.matriculas.create
+    if (userId && matricula.tenant_id) {
+      await validarPermissao(userId, matricula.tenant_id, 'academico.matriculas.create')
+    }
+
     // Limpeza rigorosa: Enviar apenas o que o banco espera (baseado em database.types.ts)
     const payload = {
       tenant_id: matricula.tenant_id,
@@ -64,7 +69,12 @@ export const academicoService = {
 
     return data
   },
-  async atualizarMatricula(id: string, tenantId: string, matricula: any) {
+  async atualizarMatricula(id: string, tenantId: string, matricula: any, userId?: string) {
+    // Validação RBAC: academico.matriculas.update
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.matriculas.update')
+    }
+
     // 1. Atualizar a matrícula
     const { data: updatedList, error } = await (supabase.from('matriculas' as any) as any)
       .update(matricula)
@@ -100,7 +110,12 @@ export const academicoService = {
 
     return updatedMatricula
   },
-  async excluirMatricula(id: string, tenantId: string) {
+  async excluirMatricula(id: string, tenantId: string, userId?: string) {
+    // Validação RBAC: academico.matriculas.delete
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.matriculas.delete')
+    }
+
     const { error } = await (supabase.from('matriculas' as any) as any)
       .delete()
       .eq('id', id)
@@ -154,7 +169,12 @@ export const academicoService = {
     if (error) throw error
     return (data as any[]) || []
   },
-  async criarPlanoAula(planoComTurmas: any) {
+  async criarPlanoAula(planoComTurmas: any, userId?: string) {
+    // Validação RBAC: academico.planos_aula.create
+    if (userId && planoComTurmas.tenant_id) {
+      await validarPermissao(userId, planoComTurmas.tenant_id, 'academico.planos_aula.create')
+    }
+
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
     // 1. Criar o plano de aula
@@ -185,7 +205,12 @@ export const academicoService = {
 
     return plano
   },
-  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any) {
+  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any, userId?: string) {
+    // Validação RBAC: academico.planos_aula.update
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.planos_aula.update')
+    }
+
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
     // 1. Atualizar o plano de aula
@@ -218,7 +243,12 @@ export const academicoService = {
 
     return plano
   },
-  async excluirPlanoAula(id: string, tenantId: string) {
+  async excluirPlanoAula(id: string, tenantId: string, userId?: string) {
+    // Validação RBAC: academico.planos_aula.delete
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.planos_aula.delete')
+    }
+
     const { error } = await (supabase.from('planos_aula' as any) as any)
       .delete()
       .eq('id', id)
@@ -234,7 +264,12 @@ export const academicoService = {
     if (error) throw error
     return (data as any[]) || []
   },
-  async criarAtividade(atividadeComTurmas: any) {
+  async criarAtividade(atividadeComTurmas: any, userId?: string) {
+    // Validação RBAC: academico.atividades.create
+    if (userId && atividadeComTurmas.tenant_id) {
+      await validarPermissao(userId, atividadeComTurmas.tenant_id, 'academico.atividades.create')
+    }
+
     const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
 
     // 1. Criar a atividade
@@ -263,7 +298,12 @@ export const academicoService = {
 
     return atividade
   },
-  async atualizarAtividade(id: string, tenantId: string, atividadeComTurmas: any) {
+  async atualizarAtividade(id: string, tenantId: string, atividadeComTurmas: any, userId?: string) {
+    // Validação RBAC: academico.atividades.update
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.atividades.update')
+    }
+
     const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
 
     // 1. Atualizar a atividade
@@ -296,7 +336,12 @@ export const academicoService = {
 
     return atividade
   },
-  async excluirAtividade(id: string, tenantId: string) {
+  async excluirAtividade(id: string, tenantId: string, userId?: string) {
+    // Validação RBAC: academico.atividades.delete
+    if (userId) {
+      await validarPermissao(userId, tenantId, 'academico.atividades.delete')
+    }
+
     const { error } = await (supabase.from('atividades' as any) as any)
       .delete()
       .eq('id', id)
@@ -317,7 +362,13 @@ export const academicoService = {
     return (data as any[]) || []
   },
 
-  async salvarBoletim(boletim: any) {
+  async salvarBoletim(boletim: any, userId?: string) {
+    // Validação RBAC: academico.boletim.create ou update
+    if (userId && boletim.tenant_id) {
+      const permission = boletim.id ? 'academico.boletim.update' : 'academico.boletim.create'
+      await validarPermissao(userId, boletim.tenant_id, permission)
+    }
+
     const { id, ...data } = boletim
 
     if (id) {
