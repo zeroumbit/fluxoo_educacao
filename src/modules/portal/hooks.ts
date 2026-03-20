@@ -276,3 +276,39 @@ export function useUpdateAlunoPortal() {
     },
   })
 }
+
+// ==========================================
+// SELOS / CONQUISTAS
+// ==========================================
+export function useSelosPortal() {
+  const { alunoSelecionado, tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'selos', alunoSelecionado?.id, tenantId],
+    queryFn: () => portalService.buscarSelos(alunoSelecionado!.id, tenantId!),
+    enabled: !!alunoSelecionado?.id && !!tenantId,
+  })
+}
+
+// ==========================================
+// PLANOS DE AULA
+// ==========================================
+export function usePlanosAulaPortal() {
+  const { alunoSelecionado, tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'planos-aula', alunoSelecionado?.id, tenantId],
+    queryFn: () => portalService.buscarPlanosAula(alunoSelecionado!.id, tenantId!),
+    enabled: !!alunoSelecionado?.id && !!tenantId,
+  })
+}
+
+// ==========================================
+// ATIVIDADES
+// ==========================================
+export function useAtividadesPortal() {
+  const { alunoSelecionado, tenantId } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'atividades', alunoSelecionado?.id, tenantId],
+    queryFn: () => portalService.buscarAtividades(alunoSelecionado!.id, tenantId!),
+    enabled: !!alunoSelecionado?.id && !!tenantId,
+  })
+}

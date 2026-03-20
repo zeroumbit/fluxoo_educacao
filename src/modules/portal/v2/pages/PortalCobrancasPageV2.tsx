@@ -28,11 +28,11 @@ import {
   AlertTriangle,
   Receipt,
   TrendingDown,
-  ArrowLeft
+  ArrowLeft,
+  QrCode
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { PortalCobrancasPageV2 as PortalCobrancasPageV2Mobile } from './PortalCobrancasPageV2' // Preservando referência se necessário
 import { BotaoVoltar } from '../../components/BotaoVoltar'
 import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
@@ -65,20 +65,14 @@ const CobrancasSkeleton = () => (
 
 export function PortalCobrancasPageV2() {
   const isMobile = useIsMobile()
-  const { responsavel } = usePortalContext()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
-  const { data: configPix } = useConfigPix()
 
   const [selectedAluno, setSelectedAluno] = useState<any>(null)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
   const [showCheckout, setShowCheckout] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
-  // Memoize tenantId
-  const firstTenantId = useMemo(() => vinculos && vinculos.length > 0 ? vinculos[0].aluno?.tenant_id : null, [vinculos]);
-  const { data: configRecados } = useConfigRecados(firstTenantId)
-
-  // Buscar cobranças para TODOS
+  // Buscar cobranças para TODOS os alunos vinculados em paralelo
   const cobrancasQueries = useQueries({
     queries: (vinculos || []).map((v: any) => ({
       queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
@@ -105,25 +99,6 @@ export function PortalCobrancasPageV2() {
 
   if (loadingVinculos || isLoadingCobrancas) return <CobrancasSkeleton />
 
-  const handleCopiarChave = () => {
-    vibrate(40)
-    if (configPix?.chave_pix) {
-      navigator.clipboard.writeText(configPix.chave_pix)
-      setCopiado(true)
-      toast.success('Chave PIX copiada!')
-      setTimeout(() => setCopiado(false), 3000)
-    }
-  }
-
-  const handleEnviarComprovante = (valor: number, descricao: string, alunoNome: string) => {
-    vibrate(30)
-    const numeroRaw = configRecados?.whatsapp_contato || ''
-    const numero = numeroRaw.replace(/\D/g, '')
-    if (!numero || numero.length < 8) return toast.error('WhatsApp não configurado.')
-    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(valor)} (${descricao} - ${alunoNome}).`)
-    window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
-  }
-
   return (
     <div className="flex flex-col gap-10 p-6 pt-6 pb-24 font-sans max-w-[1600px] mx-auto w-full">
       
@@ -131,7 +106,6 @@ export function PortalCobrancasPageV2() {
       <div className="flex flex-col gap-8">
         <BotaoVoltar />
         
-        {/* Header Estilo /portal/alunos */}
         <header className="flex flex-col border-b border-slate-200 pb-10 gap-4">
           <div className="flex flex-col gap-2">
             <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Financeiro</h1>
@@ -165,20 +139,18 @@ export function PortalCobrancasPageV2() {
           <DetailDrawer 
             aluno={selectedAluno} 
             onClose={() => setSelectedAluno(null)}
-            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo }); setShowCheckout(true); }}
+            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: selectedAluno.tenant_id }); setShowCheckout(true); }}
           />
         </SheetContent>
       </Sheet>
 
-      {/* Modal de Checkout (PIX) - Versão Clean */}
+      {/* Modal de Checkout (PIX) - Versão Clean com QR Code Real da Escola Específica (Isolamento de Contexto) */}
       <CheckoutModal 
          isOpen={showCheckout} 
          onClose={() => setShowCheckout(false)}
          cobranca={cobrancaAtiva}
-         configPix={configPix}
          copiado={copiado}
-         onCopy={handleCopiarChave}
-         onComprovante={handleEnviarComprovante}
+         setCopiado={setCopiado}
       />
     </div>
   )
@@ -352,8 +324,32 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
   )
 }
 
-function CheckoutModal({ isOpen, onClose, cobranca, configPix, copiado, onCopy, onComprovante }: any) {
+function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const isMobile = useIsMobile()
+  
+  // ISOLAMENTO DE CONTEXTO: Buscar configuração da escola do aluno ESPECÍFICO da cobrança
+  const { data: configPix } = useConfigPix(cobranca?.tenant_id)
+  const { data: configRecados } = useConfigRecados(cobranca?.tenant_id)
+
+  const handleCopy = () => {
+    vibrate(40)
+    if (configPix?.chave_pix) {
+      navigator.clipboard.writeText(configPix.chave_pix)
+      setCopiado(true)
+      toast.success('Chave PIX copiada!')
+      setTimeout(() => setCopiado(false), 3000)
+    }
+  }
+
+  const handleComprovante = () => {
+    vibrate(30)
+    const numeroRaw = configRecados?.whatsapp_contato || ''
+    const numero = numeroRaw.replace(/\D/g, '')
+    if (!numero || numero.length < 8) return toast.error('WhatsApp não configurado pela escola.')
+    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}).`)
+    window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
+  }
+
   const ModalContent = (
     <div className="flex flex-col gap-10">
       <div className="flex items-center justify-between">
@@ -379,33 +375,59 @@ function CheckoutModal({ isOpen, onClose, cobranca, configPix, copiado, onCopy, 
       </div>
 
       <div className="space-y-8">
-        {configPix?.chave_pix ? (
-          <div className="space-y-6">
-             <div className="p-10 rounded-[48px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-6">
-                <div className="p-5 bg-white rounded-[32px] shadow-2xl border border-slate-100">
-                   <AlertCircle size={48} className="text-teal-500" />
-                </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Use o código abaixo para pagar no seu App bancário</p>
-             </div>
+        {(configPix?.qr_code_url || configPix?.chave_pix) ? (
+          <div className="space-y-8">
+             {(configPix?.qr_code_url || configPix?.qr_code_auto) ? (
+               <div className="p-10 rounded-[48px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-8 group transition-all">
+                  <div className="p-6 bg-white rounded-[40px] shadow-2xl border border-slate-100 flex items-center justify-center">
+                    {configPix?.qr_code_url ? (
+                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-48 h-48 object-contain" />
+                    ) : (
+                      <div className="w-48 h-48 flex flex-col items-center justify-center text-slate-300 gap-3">
+                        <QrCode size={64} className="opacity-20" />
+                        <span className="text-[9px] font-black uppercase tracking-widest">Gerando Código...</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                     <div className="flex items-center gap-2 text-teal-600">
+                        <CheckCircle2 size={16} />
+                        <span className="text-[11px] font-black uppercase tracking-[2px]">QR Code Ativo</span>
+                     </div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Escaneie com o app do seu banco</p>
+                  </div>
+               </div>
+             ) : null}
 
-             <div className="space-y-3">
-                <div className="p-8 rounded-[32px] bg-white border-2 border-slate-100 font-mono text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center">
-                   {configPix.chave_pix}
-                </div>
-                <Button onClick={onCopy} className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-[28px] font-black text-xs uppercase tracking-[3px] gap-4 shadow-2xl active:scale-95 transition-all">
-                   {copiado ? <CheckCircle2 size={20} className="text-teal-400" /> : <Copy size={20} />}
-                   {copiado ? 'Código Copiado!' : 'Copiar Código PIX'}
-                </Button>
-             </div>
+             {configPix?.chave_pix && (
+               <div className="space-y-4">
+                  <div className="flex items-center gap-2 px-2">
+                    <div className="h-px bg-slate-100 flex-1" />
+                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Ou use o Copia e Cola</span>
+                    <div className="h-px bg-slate-100 flex-1" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="p-6 rounded-[32px] bg-white border-2 border-slate-100 font-mono text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center">
+                       {configPix.chave_pix}
+                    </div>
+                    <Button onClick={handleCopy} className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-[28px] font-black text-xs uppercase tracking-[3px] gap-4 shadow-2xl active:scale-95 transition-all">
+                       {copiado ? <CheckCircle2 size={20} className="text-teal-400" /> : <Copy size={20} />}
+                       {copiado ? 'Código Copiado!' : 'Copiar Código PIX'}
+                    </Button>
+                  </div>
+               </div>
+             )}
           </div>
         ) : (
           <div className="p-14 text-center space-y-4 bg-rose-50 rounded-[48px] border border-rose-100 shadow-inner">
              <AlertCircle size={56} className="text-rose-500 mx-auto" />
              <p className="text-lg font-black text-rose-900 uppercase">PIX Não Configurado</p>
+             <p className="text-xs font-semibold text-rose-700/60 leading-relaxed px-4">Esta instituição ainda não cadastrou os dados necessários para pagamento via PIX.</p>
           </div>
         )}
 
-        <Button onClick={() => onComprovante(cobranca?.valor, cobranca?.descricao, cobranca?.alunoNome)} variant="outline" className="w-full h-16 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[28px] text-[10px] font-black uppercase tracking-[3px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
+        <Button onClick={handleComprovante} variant="outline" className="w-full h-16 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[28px] text-[10px] font-black uppercase tracking-[3px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
            Confirmar Pagamento
         </Button>
       </div>

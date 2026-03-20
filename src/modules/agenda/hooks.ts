@@ -32,5 +32,11 @@ export function useConfigRecados() {
 }
 export function useUpsertConfigRecados() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => agendaService.upsertConfigRecados(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['config_recados'] }) })
+  return useMutation({
+    mutationFn: (d: any) => agendaService.upsertConfigRecados(d),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['config_recados'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'config-recados'] })
+    }
+  })
 }

@@ -40,6 +40,8 @@ export function useCriarAluno() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
     },
   })
 }
@@ -61,6 +63,8 @@ export function useCriarAlunoComResponsavel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
     },
   })
 }
@@ -70,9 +74,12 @@ export function useAtualizarAluno() {
   return useMutation({
     mutationFn: ({ id, aluno }: { id: string; aluno: AlunoUpdate }) =>
       alunoService.atualizar(id, aluno),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo', variables.id] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }
@@ -84,6 +91,8 @@ export function useExcluirAluno() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }

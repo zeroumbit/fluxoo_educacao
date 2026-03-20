@@ -14,9 +14,9 @@ Foi realizada uma varredura profunda na arquitetura de comunicação entre o mó
 
 | Categoria | Quantidade | Status |
 |-----------|-----------|--------|
-| **Gaps de Sincronização** | 14 | 🔴 Crítico |
-| **Hooks sem Invalidação Cruzada** | 8 | 🔴 Crítico |
-| **Funcionalidades sem Contraparte no Portal** | 5 | 🟡 Alto |
+| **Gaps de Sincronização** | 14 | 🟢 10 corrigidos, 4 pendentes |
+| **Hooks sem Invalidação Cruzada** | 8 | ✅ **100% CONCLUÍDO** |
+| **Funcionalidades sem Contraparte no Portal** | 5 | 🔴 Crítico |
 | **Inconsistências de Invalidação** | 3 | 🟡 Médio |
 
 ### ✅ O Que Já Funciona
@@ -31,24 +31,14 @@ Foi realizada uma varredura profunda na arquitetura de comunicação entre o mó
 
 ## 🔴 Problemas Críticos (Prioridade 1)
 
-### 1. Eventos/Agenda - Sem Invalidação para Portal
+### 1. Eventos/Agenda - Sem Invalidação para Portal ✅ CORREGIDO
 
 **Arquivo:** `src/modules/agenda/hooks.ts`  
-**Linhas:** 11, 15  
+**Linhas:** 9-27  
+**Status:** ✅ **CORRIGIDO**  
 **Impacto:** Responsáveis não veem eventos novos ou atualizados até refresh manual
 
-**Código Atual:**
-```typescript
-export function useCriarEvento() {
-  const qc = useQueryClient()
-  return useMutation({ 
-    mutationFn: (d: any) => agendaService.criarEvento(d), 
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['eventos'] }) 
-  })
-}
-```
-
-**Correção:**
+**Código Atual (Corrigido):**
 ```typescript
 export function useCriarEvento() {
   const qc = useQueryClient()
@@ -56,26 +46,37 @@ export function useCriarEvento() {
     mutationFn: (d: any) => agendaService.criarEvento(d), 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
-      qc.invalidateQueries({ queryKey: ['portal', 'eventos'] }) // ✅ Adicionar
+      qc.invalidateQueries({ queryKey: ['portal', 'eventos'] }) // ✅ Adicionado
+    }
+  })
+}
+
+export function useExcluirEvento() {
+  const qc = useQueryClient()
+  return useMutation({ 
+    mutationFn: (id: string) => agendaService.excluirEvento(id), 
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'eventos'] }) // ✅ Adicionado
     }
   })
 }
 ```
 
 **Ações Necessárias:**
-- [ ] `useCriarEvento()` - Adicionar invalidação do portal
-- [ ] `useExcluirEvento()` - Adicionar invalidação do portal
-- [ ] `useEditarEvento()` (se existir) - Adicionar invalidação do portal
+- [x] `useCriarEvento()` - Adicionar invalidação do portal ✅
+- [x] `useExcluirEvento()` - Adicionar invalidação do portal ✅
 
 ---
 
-### 2. Frequência - Sem Invalidação para Portal
+### 2. Frequência - Sem Invalidação para Portal ✅ CORREGIDO
 
 **Arquivo:** `src/modules/frequencia/hooks.ts`  
-**Linha:** 40  
+**Linha:** 35-44  
+**Status:** ✅ **CORRIGIDO**  
 **Impacto:** Responsáveis não veem faltas/presenças lançadas em tempo real
 
-**Código Atual:**
+**Código Atual (Corrigido):**
 ```typescript
 export function useSalvarFrequencias() {
   const queryClient = useQueryClient()
@@ -85,39 +86,25 @@ export function useSalvarFrequencias() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['frequencias'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
-}
-```
-
-**Correção:**
-```typescript
-export function useSalvarFrequencias() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (frequencias: FrequenciaInsert[]) =>
-      frequenciaService.salvarFrequencias(frequencias),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['frequencias'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'frequencia'] }) // ✅ Adicionar
+      queryClient.invalidateQueries({ queryKey: ['portal', 'frequencia'] }) // ✅ Adicionado
     },
   })
 }
 ```
 
 **Ações Necessárias:**
-- [ ] `useSalvarFrequencias()` - Adicionar invalidação do portal
+- [x] `useSalvarFrequencias()` - Adicionar invalidação do portal ✅
 
 ---
 
-### 3. Livros/Materiais - Sem Invalidação para Portal
+### 3. Livros/Materiais - Sem Invalidação para Portal ✅ CORREGIDO
 
 **Arquivo:** `src/modules/livros/hooks.ts`  
-**Linhas:** 30, 46, 75, 91  
+**Linhas:** 24-112  
+**Status:** ✅ **CORRIGIDO** (6 hooks)  
 **Impacto:** Lista de livros/materiais não atualiza no Portal após cadastro no Admin
 
-**Código Atual:**
+**Códigos Atuais (Corrigidos):**
 ```typescript
 export function useCriarLivro() {
   const queryClient = useQueryClient()
@@ -125,53 +112,85 @@ export function useCriarLivro() {
     mutationFn: ({ livro, turmasIds }) => livrosService.criarLivro(livro, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livros'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
     },
   })
 }
-```
 
-**Correção:**
-```typescript
-export function useCriarLivro() {
+export function useEditarLivro() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ livro, turmasIds }) => livrosService.criarLivro(livro, turmasIds),
+    mutationFn: ({ id, livro, turmasIds }) => livrosService.editarLivro(id, livro, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livros'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionar
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
+    },
+  })
+}
+
+export function useExcluirLivro() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => livrosService.excluirLivro(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['livros'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
+    },
+  })
+}
+
+export function useCriarMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ material, turmasIds }) => livrosService.criarMaterial(material, turmasIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
+    },
+  })
+}
+
+export function useEditarMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, material, turmasIds }) => livrosService.editarMaterial(id, material, turmasIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
+    },
+  })
+}
+
+export function useExcluirMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => livrosService.excluirMaterial(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] }) // ✅ Adicionado
     },
   })
 }
 ```
 
 **Ações Necessárias:**
-- [ ] `useCriarLivro()` - Adicionar invalidação do portal
-- [ ] `useEditarLivro()` - Adicionar invalidação do portal
-- [ ] `useExcluirLivro()` - Adicionar invalidação do portal
-- [ ] `useCriarMaterial()` - Adicionar invalidação do portal
-- [ ] `useEditarMaterial()` - Adicionar invalidação do portal
-- [ ] `useExcluirMaterial()` - Adicionar invalidação do portal
+- [x] `useCriarLivro()` - Adicionar invalidação do portal ✅
+- [x] `useEditarLivro()` - Adicionar invalidação do portal ✅
+- [x] `useExcluirLivro()` - Adicionar invalidação do portal ✅
+- [x] `useCriarMaterial()` - Adicionar invalidação do portal ✅
+- [x] `useEditarMaterial()` - Adicionar invalidação do portal ✅
+- [x] `useExcluirMaterial()` - Adicionar invalidação do portal ✅
 
 ---
 
-### 4. Configuração de Recados - Sem Invalidação para Portal
+### 4. Configuração de Recados - Sem Invalidação para Portal ✅ CORREGIDO
 
 **Arquivo:** `src/modules/agenda/hooks.ts`  
-**Linha:** 23  
+**Linha:** 33-42  
+**Status:** ✅ **CORRIGIDO**  
 **Impacto:** Responsáveis veem configurações desatualizadas
 
-**Código Atual:**
-```typescript
-export function useUpsertConfigRecados() {
-  const qc = useQueryClient()
-  return useMutation({ 
-    mutationFn: (d: any) => agendaService.upsertConfigRecados(d), 
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['config_recados'] }) 
-  })
-}
-```
-
-**Correção:**
+**Código Atual (Corrigido):**
 ```typescript
 export function useUpsertConfigRecados() {
   const qc = useQueryClient()
@@ -179,14 +198,14 @@ export function useUpsertConfigRecados() {
     mutationFn: (d: any) => agendaService.upsertConfigRecados(d), 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['config_recados'] })
-      qc.invalidateQueries({ queryKey: ['portal', 'config-recados'] }) // ✅ Adicionar
+      qc.invalidateQueries({ queryKey: ['portal', 'config-recados'] }) // ✅ Adicionado
     }
   })
 }
 ```
 
 **Ações Necessárias:**
-- [ ] `useUpsertConfigRecados()` - Adicionar invalidação do portal
+- [x] `useUpsertConfigRecados()` - Adicionar invalidação do portal ✅
 
 ---
 
@@ -369,16 +388,16 @@ export function useAtualizarMatricula() {
 
 | # | Módulo | Hook/Service | Status | Prioridade |
 |---|--------|--------------|--------|------------|
-| 1 | agenda | useCriarEvento | 🔴 Pendente | Crítica |
-| 2 | agenda | useExcluirEvento | 🔴 Pendente | Crítica |
-| 3 | frequencia | useSalvarFrequencias | 🔴 Pendente | Crítica |
-| 4 | livros | useCriarLivro | 🔴 Pendente | Crítica |
-| 5 | livros | useEditarLivro | 🔴 Pendente | Crítica |
-| 6 | livros | useExcluirLivro | 🔴 Pendente | Crítica |
-| 7 | livros | useCriarMaterial | 🔴 Pendente | Crítica |
-| 8 | livros | useEditarMaterial | 🔴 Pendente | Crítica |
-| 9 | livros | useExcluirMaterial | 🔴 Pendente | Crítica |
-| 10 | agenda | useUpsertConfigRecados | 🔴 Pendente | Crítica |
+| 1 | agenda | useCriarEvento | ✅ **Corrigido** | Crítica |
+| 2 | agenda | useExcluirEvento | ✅ **Corrigido** | Crítica |
+| 3 | frequencia | useSalvarFrequencias | ✅ **Corrigido** | Crítica |
+| 4 | livros | useCriarLivro | ✅ **Corrigido** | Crítica |
+| 5 | livros | useEditarLivro | ✅ **Corrigido** | Crítica |
+| 6 | livros | useExcluirLivro | ✅ **Corrigido** | Crítica |
+| 7 | livros | useCriarMaterial | ✅ **Corrigido** | Crítica |
+| 8 | livros | useEditarMaterial | ✅ **Corrigido** | Crítica |
+| 9 | livros | useExcluirMaterial | ✅ **Corrigido** | Crítica |
+| 10 | agenda | useUpsertConfigRecados | ✅ **Corrigido** | Crítica |
 | 11 | portal | buscarSelos | 🟡 Pendente | Alto |
 | 12 | portal | buscarPlanosAula | 🟡 Pendente | Alto |
 | 13 | portal | buscarAtividades | 🟡 Pendente | Alto |

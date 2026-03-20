@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, CalendarDays, LineChart, BookOpen, 
-  MapPin, ShieldCheck, Car, Settings
+  MapPin, ShieldCheck, Car, Settings, Trophy, BookMarked, LayoutList
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
+import { PortalSelosV2 } from '../components/PortalSelosV2';
+import { PortalPlanosAulaV2 } from '../components/PortalPlanosAulaV2';
+import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
 
@@ -15,6 +18,9 @@ const getInitials = (name: string) => {
 
 const MOCK_MODULES = [
   { id: 'grade', label: 'Grade Curricular', icon: CalendarDays, color: 'text-blue-500', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
+  { id: 'selos', label: 'Selos e Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50', border: 'hover:border-amber-200' },
+  { id: 'planos', label: 'Planos de Aula', icon: BookMarked, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
+  { id: 'atividades', label: 'Atividades e Provas', icon: LayoutList, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
   { id: 'boletim', label: 'Boletim Escolar', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'hover:border-indigo-200' },
   { id: 'diario', label: 'Diário de Classe / Agenda', icon: BookOpen, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
   { id: 'material', label: 'Materiais e Livros', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
@@ -97,7 +103,11 @@ export function PortalAlunoPerfilV2Web() {
         {/* Workspace do Módulo Acionado */}
         <div className="flex-1 min-h-[600px] bg-white rounded-[48px] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 p-10 overflow-hidden">
           {activeModule === 'grade' && <GradeCurricularV2 />}
-          {activeModule !== 'grade' && (
+          {activeModule === 'selos' && <PortalSelosV2 />}
+          {activeModule === 'planos' && <PortalPlanosAulaV2 />}
+          {activeModule === 'atividades' && <PortalAtividadesV2 />}
+          
+          {['boletim', 'diario', 'material', 'autorizacoes'].includes(activeModule) && (
             <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50 py-32">
               <Settings className="w-16 h-16 text-slate-300 mb-6 animate-spin-slow" />
               <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Módulo em Desenvolvimento</h2>

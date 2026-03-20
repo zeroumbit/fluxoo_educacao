@@ -552,5 +552,91 @@ export const portalService = {
       responsavel_id: responsavelId,
       detalhes: { aluno_id: alunoId, campos: Object.keys(dados) },
     })
+  },
+
+  // ==========================================
+  // SELOS / CONQUISTAS
+  // ==========================================
+  async buscarSelos(alunoId: string, tenantId: string) {
+    const { data, error } = await supabase.from('selos')
+      .select('*')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  },
+
+  // ==========================================
+  // PLANOS DE AULA
+  // ==========================================
+  async buscarPlanosAula(alunoId: string, tenantId: string) {
+    // 1. Busca a turma atual do aluno para filtrar os planos
+    const { data: matricula } = await supabase.from('matriculas')
+      .select('turma_id')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .maybeSingle()
+
+    if (!matricula?.turma_id) return []
+
+    // 2. Busca planos vinculados à turma
+    const { data, error } = await supabase.from('planos_aula_turmas')
+      .select(`
+        horario,
+        turno,
+        plano:planos_aula(
+          id,
+          titulo,
+          conteudo,
+          data_aula,
+          disciplina,
+          objetivos
+        )
+      `)
+      .eq('turma_id', matricula.turma_id)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  // ==========================================
+  // ATIVIDADES
+  // ==========================================
+  async buscarAtividades(alunoId: string, tenantId: string) {
+    // 1. Busca a turma atual do aluno
+    const { data: matricula } = await supabase.from('matriculas')
+      .select('turma_id')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .maybeSingle()
+
+    if (!matricula?.turma_id) return []
+
+    // 2. Busca atividades vinculadas à turma
+    const { data, error } = await supabase.from('atividades_turmas')
+      .select(`
+        horario,
+        turno,
+        atividade:atividades(
+          id,
+          titulo,
+          descricao,
+          tipo,
+          data_entrega,
+          pontuacao_maxima
+        )
+      `)
+      .eq('turma_id', matricula.turma_id)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
   }
 }

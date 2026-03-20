@@ -85,19 +85,39 @@ export function AlunoDetalhePageWeb() {
   const handleSave = async () => {
     if (!id) return
     try {
-      // Remover campos que não são da tabela 'alunos' (vem de matriculas/turmas)
-      const { valor_mensalidade_atual, data_ingresso, ...payloadClean } = formData;
-      
+      // 1. Criar um payload EXTREMAMENTE restrito com apenas o que existe na tabela 'alunos'
+      // Campo 'rg', 'genero' e 'valor_mensalidade_atual' NÃO existem na tabela alunos.
       const payload = {
-        ...payloadClean,
-        patologias: formData.patologias ? formData.patologias.split(',').map((p: string) => p.trim()).filter(Boolean) : [],
-        medicamentos: formData.medicamentos ? formData.medicamentos.split(',').map((m: string) => m.trim()).filter(Boolean) : [],
+        nome_completo: formData.nome_completo,
+        nome_social: formData.nome_social || null,
+        data_nascimento: formData.data_nascimento,
+        cpf: formData.cpf ? formData.cpf.replace(/\D/g, '') : null,
+        sexo: formData.genero || null, // No banco a coluna é 'sexo'
+        cep: formData.cep ? formData.cep.replace(/\D/g, '') : null,
+        logradouro: formData.logradouro || null,
+        numero: formData.numero || null,
+        complemento: formData.complemento || null,
+        bairro: formData.bairro || null,
+        cidade: formData.cidade || null,
+        estado: formData.estado || null,
+        status: formData.status || 'ativo',
+        patologias: formData.patologias 
+          ? formData.patologias.split(',').map((p: string) => p.trim()).filter(Boolean) 
+          : [],
+        medicamentos: formData.medicamentos 
+          ? formData.medicamentos.split(',').map((m: string) => m.trim()).filter(Boolean) 
+          : [],
+        observacoes_saude: formData.observacoes_saude || null,
       }
+
+      console.log('🚀 Enviando Payload WhiteList:', payload)
+      
       await atualizarAluno.mutateAsync({ id, aluno: payload as any })
       toast.success('Dados atualizados com sucesso!')
       setIsEditing(false)
-    } catch (err) {
-      toast.error('Erro ao salvar alterações')
+    } catch (err: any) {
+      console.error('❌ Erro ao salvar aluno:', err)
+      toast.error('Erro ao salvar alterações: ' + (err.message || 'Erro desconhecido'))
     }
   }
 
@@ -403,9 +423,26 @@ export function AlunoDetalhePageWeb() {
                <div className="space-y-1">
                  <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Gênero</Label>
                  {isEditing ? (
-                   <Input value={formData?.genero} onChange={(e) => setFormData({...formData, genero: e.target.value})} className="h-11 rounded-xl" />
+                   <Select 
+                     value={formData?.genero} 
+                     onValueChange={(v) => setFormData({...formData, genero: v})}
+                   >
+                     <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:ring-indigo-500">
+                       <SelectValue placeholder="Selecione" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="masculino">Masculino</SelectItem>
+                       <SelectItem value="feminino">Feminino</SelectItem>
+                       <SelectItem value="nao_binario">Não-binário</SelectItem>
+                       <SelectItem value="nao_informado">Prefiro não informar</SelectItem>
+                     </SelectContent>
+                   </Select>
                  ) : (
-                   <p className="font-bold text-slate-700 text-lg uppercase">{aluno.genero || '---'}</p>
+                   <div className="flex items-center gap-2">
+                     <p className="font-bold text-slate-700 text-lg uppercase">
+                       {aluno.genero ? (aluno.genero === 'nao_informado' ? 'Não Informado' : aluno.genero.replace('_', '-')) : '---'}
+                     </p>
+                   </div>
                  )}
                </div>
             </CardContent>

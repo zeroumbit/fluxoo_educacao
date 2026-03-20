@@ -28,6 +28,7 @@ export function useCriarLivro() {
       livrosService.criarLivro(livro, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livros'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }
@@ -39,6 +40,7 @@ export function useEditarLivro() {
       livrosService.editarLivro(id, livro, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livros'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }
@@ -49,6 +51,7 @@ export function useExcluirLivro() {
     mutationFn: (id: string) => livrosService.excluirLivro(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livros'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }
@@ -79,6 +82,7 @@ export function useCriarMaterial() {
       livrosService.criarMaterial(material, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }
@@ -90,6 +94,7 @@ export function useEditarMaterial() {
       livrosService.editarMaterial(id, material, turmasIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }
@@ -100,6 +105,7 @@ export function useExcluirMaterial() {
     mutationFn: (id: string) => livrosService.excluirMaterial(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'itens-escolares'] })
     },
   })
 }

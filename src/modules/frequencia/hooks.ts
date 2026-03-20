@@ -38,6 +38,7 @@ export function useSalvarFrequencias() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['frequencias'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'frequencia'] })
     },
   })
 }

@@ -402,6 +402,7 @@ export function AlunoCadastroPage() {
         nome_completo: data.nome_completo,
         nome_social: data.nome_social || null,
         data_nascimento: data.data_nascimento,
+        sexo: data.genero || null, // Coluna correta no banco é 'sexo'
         cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
         patologias,
         medicamentos,
