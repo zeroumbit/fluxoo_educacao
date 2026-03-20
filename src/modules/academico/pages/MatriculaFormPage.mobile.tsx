@@ -18,15 +18,16 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { 
+import {
   useMatriculas,
-  useCriarMatricula, 
+  useCriarMatricula,
   useMatriculaAtivaDoAluno,
   useMatricula,
-  useAtualizarMatricula 
+  useAtualizarMatricula
 } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -142,35 +143,23 @@ export function MatriculaFormPageMobile() {
         await atualizar.mutateAsync({ id: editId, data })
         // Atualizar o valor da mensalidade do aluno baseado na turma
         if (data.aluno_id && data.valor_matricula) {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ valor_mensalidade_atual: data.valor_matricula })
-          })
+          await supabase
+            .from('alunos')
+            .update({ valor_mensalidade_atual: data.valor_matricula })
+            .eq('id', data.aluno_id)
         }
         toast.success('Alterações salvas!')
       } else {
         await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
         // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
         if (data.aluno_id && data.valor_matricula) {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/alunos?id=eq.${data.aluno_id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ 
+          await supabase
+            .from('alunos')
+            .update({
               valor_mensalidade_atual: data.valor_matricula,
               data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
             })
-          })
+            .eq('id', data.aluno_id)
         }
         toast.success('Matrícula realizada!')
       }

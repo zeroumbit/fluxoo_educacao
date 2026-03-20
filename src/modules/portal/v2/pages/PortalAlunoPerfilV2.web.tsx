@@ -1,0 +1,111 @@
+import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { 
+  ArrowLeft, CalendarDays, LineChart, BookOpen, 
+  MapPin, ShieldCheck, Car, Settings
+} from 'lucide-react';
+import { GradeCurricularV2 } from '../components/GradeCurricularV2';
+import { usePortalContext } from '../../context';
+import { useDashboardAluno } from '../../hooks';
+
+// Helper to get initials
+const getInitials = (name: string) => {
+  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+};
+
+const MOCK_MODULES = [
+  { id: 'grade', label: 'Grade Curricular', icon: CalendarDays, color: 'text-blue-500', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
+  { id: 'boletim', label: 'Boletim Escolar', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'hover:border-indigo-200' },
+  { id: 'diario', label: 'Diário de Classe / Agenda', icon: BookOpen, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
+  { id: 'material', label: 'Materiais e Livros', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
+  { id: 'autorizacoes', label: 'Autorizações de Retirada', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50', border: 'hover:border-teal-200' },
+];
+
+export function PortalAlunoPerfilV2Web() {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { alunoSelecionado } = usePortalContext();
+  const { data: dashboard } = useDashboardAluno();
+  const [activeModule, setActiveModule] = useState<string>('grade');
+
+  const student = alunoSelecionado;
+
+  return (
+    <div className="flex flex-col gap-8 w-full">
+      {/* 1. Web Header Header and Return Array */}
+      <header className="flex items-center justify-between border-b border-slate-200 pb-8 mt-2">
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => navigate('/portal/alunos')}
+            className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          
+          <div className="flex items-center gap-6 border-l border-slate-200 pl-6">
+            <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-teal-500/20">
+              {student?.nome_completo ? getInitials(student.nome_completo) : 'A'}
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2 text-wrap pr-10">
+                {student?.nome_completo || 'Aluno'}
+              </h1>
+              <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">
+                <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{student?.turma?.nome || 'Sem Turma'}</span>
+                <span>ID: {student?.id?.slice(0, 8)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button className="flex items-center gap-3 bg-zinc-900 text-white px-6 py-4 rounded-2xl hover:bg-zinc-800 shadow-xl shadow-zinc-900/10 transition-colors group">
+          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-teal-400 border border-zinc-700">
+            <Car className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 leading-none mb-1">Fila Virtual</span>
+            <span className="text-sm font-black text-white leading-none">Avisar Chegada</span>
+          </div>
+        </button>
+      </header>
+
+      {/* 2. Conteúdo Módulos Desktop (Layout Side-by-Side) */}
+      <div className="flex gap-8 items-start">
+        {/* Menu Lateral */}
+        <div className="w-1/4 min-w-[300px] flex flex-col gap-3">
+          {MOCK_MODULES.map((mod) => (
+             <button
+              key={mod.id}
+              onClick={() => setActiveModule(mod.id)}
+              className={`flex items-center gap-4 p-5 rounded-3xl border transition-all text-left ${
+                activeModule === mod.id 
+                  ? 'bg-white border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)]' 
+                  : `bg-slate-50/50 border-transparent hover:bg-white ${mod.border}`
+              }`}
+             >
+               <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center ${mod.bg} ${mod.color} shadow-sm`}>
+                 <mod.icon className="w-6 h-6" strokeWidth={2.5} />
+               </div>
+               <span className="text-base font-black text-slate-800 tracking-tight leading-tight flex-1">
+                 {mod.label}
+               </span>
+               <div className={`w-2 h-2 rounded-full ${activeModule === mod.id ? mod.color.replace('text-', 'bg-') : 'bg-transparent'}`} />
+             </button>
+          ))}
+        </div>
+
+        {/* Workspace do Módulo Acionado */}
+        <div className="flex-1 min-h-[600px] bg-white rounded-[48px] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 p-10 overflow-hidden">
+          {activeModule === 'grade' && <GradeCurricularV2 />}
+          {activeModule !== 'grade' && (
+            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50 py-32">
+              <Settings className="w-16 h-16 text-slate-300 mb-6 animate-spin-slow" />
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Módulo em Desenvolvimento</h2>
+              <p className="font-semibold text-slate-500">Esta visão web está sendo implementada.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

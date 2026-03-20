@@ -67,6 +67,14 @@ import { PrivacidadePage } from '@/modules/portal/pages/PrivacidadePage'
 import { CookiesPage } from '@/modules/portal/pages/CookiesPage'
 import { CookieConsent } from '@/components/shared/CookieConsent'
 
+// Novas Páginas - Portal V2
+import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
+import { PortalHomeV2 } from '@/modules/portal/v2/pages/PortalHomeV2'
+import { PortalAlunosListV2 } from '@/modules/portal/v2/pages/PortalAlunosListV2'
+import { PortalAlunoPerfilV2 } from '@/modules/portal/v2/pages/PortalAlunoPerfilV2'
+import { PortalAvisosV2 } from '@/modules/portal/v2/pages/PortalAvisosV2'
+import { PortalFinanceiroV2 } from '@/modules/portal/v2/pages/PortalFinanceiroV2'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -173,25 +181,30 @@ function App() {
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
             </Route>
 
-            {/* Portal do Responsável */}
+            {/* Portal do Responsável V2 */}
             <Route
               element={
                 <ProtectedRoute allowedRoles={['responsavel']}>
-                  <PortalLayout />
+                  <PortalLayoutV2 />
                 </ProtectedRoute>
               }
             >
-              <Route path="/portal" element={<PortalDashboardPage />} />
+              <Route path="/portal" element={<PortalHomeV2 />} />
+              <Route path="/portal/v2" element={<Navigate to="/portal" replace />} />
+              <Route path="/portal/alunos" element={<PortalAlunosListV2 />} />
+              <Route path="/portal/alunos/:id" element={<PortalAlunoPerfilV2 />} />
+              <Route path="/portal/financeiro" element={<PortalFinanceiroV2 />} />
+              <Route path="/portal/avisos" element={<PortalAvisosV2 />} />
+              <Route path="/portal/loja" element={<PortalLojaPage />} />
+              <Route path="/portal/perfil" element={<PortalPerfilPage />} />
+              
+              {/* Páginas Antigas e Outras Funcionalidades que não ganharam V2 ainda */}
               <Route path="/portal/frequencia" element={<PortalFrequenciaPage />} />
-              <Route path="/portal/avisos" element={<PortalAvisosPage />} />
-              <Route path="/portal/cobrancas" element={<PortalCobrancasPage />} />
               <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
-              <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
-              <Route path="/portal/perfil" element={<PortalPerfilPage />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 

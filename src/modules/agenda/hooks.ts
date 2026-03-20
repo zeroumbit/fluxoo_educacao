@@ -8,11 +8,23 @@ export function useEventos() {
 }
 export function useCriarEvento() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => agendaService.criarEvento(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['eventos'] }) })
+  return useMutation({
+    mutationFn: (d: any) => agendaService.criarEvento(d),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'eventos'] })
+    }
+  })
 }
 export function useExcluirEvento() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (id: string) => agendaService.excluirEvento(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['eventos'] }) })
+  return useMutation({
+    mutationFn: (id: string) => agendaService.excluirEvento(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['eventos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'eventos'] })
+    }
+  })
 }
 export function useConfigRecados() {
   const { authUser } = useAuth()
