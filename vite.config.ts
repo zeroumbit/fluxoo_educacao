@@ -76,5 +76,14 @@ export default defineConfig({
         }
       }
     }
-  }
+  },
+  server: {
+    host: true,
+    hmr: {
+      overlay: false,
+    },
+    watch: {
+      usePolling: true,
+    },
+  },
 })

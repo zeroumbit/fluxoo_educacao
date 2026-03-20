@@ -21,12 +21,12 @@ const vibrate = (ms: number | number[] = 20) => {
 
 // --- SKELETON LOADING ---
 const LivrosSkeleton = () => (
-    <div className="space-y-12 animate-pulse px-1">
-        <div className="h-10 w-48 bg-slate-100 rounded-lg" />
-        <div className="h-44 bg-indigo-600 rounded-[48px]" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="space-y-8 animate-pulse px-1">
+        <div className="h-8 w-40 bg-slate-100 rounded-lg" />
+        <div className="h-32 bg-indigo-600 rounded-[40px]" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-[450px] bg-white border border-slate-50 rounded-[48px]" />
+                <div key={i} className="h-[380px] bg-white border border-slate-50 rounded-[32px]" />
             ))}
         </div>
     </div>
@@ -86,16 +86,16 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
   )
 
   return (
-    <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
+    <div className="space-y-8 pb-16 animate-in fade-in duration-700 font-sans">
 
       {/* 1. Header & Filtro */}
       {!hideHeader && (
-        <div className="flex flex-col gap-6 px-1">
+        <div className="flex flex-col gap-4 px-1">
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
               <BotaoVoltar />
-              <h2 className="text-4xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
+              <h2 className="text-3xl font-black tracking-tighter text-slate-800 italic uppercase">Biblioteca</h2>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Acervo de Materiais</p>
             </div>
           </div>
           {isMultiAluno && <SeletorAluno />}
@@ -103,29 +103,29 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
       )}
 
       {/* 2. Hero Section - Modern Search Gradient Shell */}
-      <div className="bg-indigo-600 p-12 md:p-16 rounded-[56px] shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-10 items-center justify-between text-white mx-1 border border-indigo-500 shadow-indigo-200">
-        <div className="absolute -top-24 -right-24 opacity-10 pointer-events-none rotate-12 transition-transform duration-1000 group-hover:rotate-0">
-           <BookOpen size={450} />
+      <div className="bg-indigo-600 p-8 md:p-10 rounded-[40px] shadow-xl relative overflow-hidden flex flex-col md:flex-row gap-6 items-center justify-between text-white mx-1 border border-indigo-500 shadow-indigo-200">
+        <div className="absolute -top-16 -right-16 opacity-10 pointer-events-none rotate-12 transition-transform duration-1000">
+           <BookOpen size={280} />
         </div>
-        
-        <div className="relative z-10 space-y-4 text-center md:text-left">
-           <div className="w-16 h-16 rounded-[24px] bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 mx-auto md:mx-0 border border-white/20">
-              <BookOpen size={32} />
+
+        <div className="relative z-10 space-y-3 text-center md:text-left">
+           <div className="w-12 h-12 rounded-[20px] bg-white/10 backdrop-blur-md flex items-center justify-center mb-4 mx-auto md:mx-0 border border-white/20">
+              <BookOpen size={24} />
            </div>
-           <h2 className="text-5xl font-black tracking-tighter italic leading-none uppercase">Acervo Digital</h2>
-           <p className="text-indigo-100 font-bold italic opacity-80 max-w-sm text-base leading-relaxed">
-             Centralize o acesso aos seus materiais didáticos, referências recomendadas e livros virtuais.
+           <h2 className="text-3xl md:text-4xl font-black tracking-tighter italic leading-none uppercase">Acervo Digital</h2>
+           <p className="text-indigo-100 font-bold italic opacity-80 max-w-sm text-sm leading-relaxed">
+             Centralize o acesso aos seus materiais didáticos e livros virtuais.
            </p>
         </div>
 
-        <div className="relative z-10 w-full md:w-auto min-w-[320px]">
+        <div className="relative z-10 w-full md:w-auto min-w-[280px]">
            <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-300 group-focus-within:text-white transition-colors" />
-              <Input 
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-300 group-focus-within:text-white transition-colors" />
+              <Input
                 value={busca}
                 onChange={(e) => handleBusca(e.target.value)}
                 placeholder="Buscar por título ou disciplina..."
-                className="pl-16 bg-white/10 border-white/20 text-white placeholder:text-indigo-200/50 rounded-[28px] h-16 shadow-inner focus:bg-white/20 transition-all border-2 font-bold italic focus:ring-0 focus:border-white/40"
+                className="pl-14 bg-white/10 border-white/20 text-white placeholder:text-indigo-200/50 rounded-[24px] h-12 shadow-inner focus:bg-white/20 transition-all border-2 text-sm font-bold italic focus:ring-0 focus:border-white/40"
               />
            </div>
         </div>
@@ -133,31 +133,31 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
 
       {/* 3. Grid de Livros com AnimatePresence */}
       {!itensFiltrados || itensFiltrados.length === 0 ? (
-         <div className="bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 p-24 text-center flex flex-col items-center justify-center space-y-8 shadow-sm mx-1">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-slate-100 shadow-sm transition-transform duration-700 hover:rotate-12">
-               <AlertTriangle size={48} />
+         <div className="bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 p-16 text-center flex flex-col items-center justify-center space-y-4 shadow-sm mx-1">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-100 shadow-sm transition-transform duration-700 hover:rotate-12">
+               <AlertTriangle size={32} />
             </div>
-            <div className="space-y-2">
-               <h3 className="text-2xl font-black text-slate-800 italic uppercase">Sem Correspondências</h3>
-               <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto italic leading-relaxed px-4">Não encontramos livros ou materiais vinculados para este termo de busca ou para este perfil no momento.</p>
+            <div className="space-y-1">
+               <h3 className="text-xl font-black text-slate-800 italic uppercase">Sem Correspondências</h3>
+               <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto italic leading-relaxed px-4">Não encontramos livros ou materiais vinculados para este termo de busca ou para este perfil no momento.</p>
             </div>
          </div>
       ) : (
-         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 px-1">
+         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 px-1">
             <AnimatePresence mode="popLayout">
                 {itensFiltrados.map((item: any, idx: number) => (
-                   <motion.div 
+                   <motion.div
                      layout
-                     key={item.id || idx} 
+                     key={item.id || idx}
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: idx * 0.05 }}
-                     className="bg-white rounded-[48px] border border-slate-50 shadow-sm hover:shadow-[0_40px_80px_rgba(79,70,229,0.12)] transition-all duration-700 overflow-hidden flex flex-col group cursor-pointer"
+                     className="bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-[0_20px_40px_rgba(79,70,229,0.08)] transition-all duration-500 overflow-hidden flex flex-col group cursor-pointer"
                    >
                       {/* Badge de Tipo */}
-                      <div className="absolute top-8 left-8 z-10">
+                      <div className="absolute top-4 left-4 z-10">
                         <Badge className={cn(
-                          "border-0 font-black uppercase tracking-[0.15em] text-[9px] py-1.5 px-4 shadow-xl rounded-full",
+                          "border-0 font-black uppercase tracking-[0.15em] text-[8px] py-1 px-3 shadow-lg rounded-full",
                           item.tipo === 'livro' ? "bg-indigo-600 text-white" : "bg-emerald-500 text-white"
                         )}>
                           {item.tipo === 'livro' ? 'Livro' : 'Material'}
@@ -165,90 +165,90 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                       </div>
 
                       {/* Header Visual */}
-                      <div 
-                        className="relative aspect-[16/11] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-50 group/image"
+                      <div
+                        className="relative aspect-[16/11] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100 group/image"
                         onClick={() => item.capa_url && handleVerCapa(item.capa_url)}
                       >
                         {item.capa_url ? (
                           <>
-                            <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-1000" />
-                            <div className="absolute inset-0 bg-indigo-950/0 group-hover/image:bg-indigo-950/40 transition-all duration-500 flex items-center justify-center backdrop-blur-0 group-hover/image:backdrop-blur-sm">
-                              <div className="h-16 w-16 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white scale-50 opacity-0 group-hover/image:scale-100 group-hover/image:opacity-100 transition-all duration-500">
-                                <Maximize2 size={24} />
+                            <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
+                            <div className="absolute inset-0 bg-indigo-950/0 group-hover/image:bg-indigo-950/30 transition-all duration-300 flex items-center justify-center backdrop-blur-0 group-hover/image:backdrop-blur-sm">
+                              <div className="h-12 w-12 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white scale-50 opacity-0 group-hover/image:scale-100 group-hover/image:opacity-100 transition-all duration-300">
+                                <Maximize2 size={20} />
                               </div>
                             </div>
                           </>
                         ) : (
                           <div className="flex flex-col items-center text-slate-200">
                              {item.tipo === 'livro' ? (
-                               <BookOpen size={64} className="mb-4 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700" />
+                               <BookOpen size={48} className="mb-2 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700" />
                              ) : (
-                               <div className="mb-4 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700">
-                                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                               <div className="mb-2 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700">
+                                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
                                </div>
                              )}
-                             <span className="text-[10px] font-black uppercase tracking-[0.4em] italic">Imagem Indisponível</span>
+                             <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Imagem Indisponível</span>
                           </div>
                         )}
-                        <div className="absolute top-8 right-8">
-                           <Badge className="bg-white/90 backdrop-blur-md text-slate-800 border-0 font-black uppercase tracking-[0.15em] text-[9px] py-2 px-5 shadow-2xl rounded-full">
+                        <div className="absolute top-4 right-4">
+                           <Badge className="bg-white/90 backdrop-blur-md text-slate-800 border-0 font-black uppercase tracking-[0.15em] text-[8px] py-1.5 px-4 shadow-lg rounded-full">
                                 {item.disciplina || (item.tipo === 'material' ? 'Material' : "Geral")}
                            </Badge>
                         </div>
                       </div>
 
-                      <div className="p-10 space-y-8 flex-1 flex flex-col">
-                        <div className="space-y-3">
-                           <div className="flex items-center gap-3">
-                              <div className={cn("h-1.5 w-10 rounded-full", item.tipo === 'livro' ? "bg-indigo-500" : "bg-emerald-500")} />
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">
+                      <div className="p-6 space-y-4 flex-1 flex flex-col">
+                        <div className="space-y-2">
+                           <div className="flex items-center gap-2">
+                              <div className={cn("h-1 w-8 rounded-full", item.tipo === 'livro' ? "bg-indigo-500" : "bg-emerald-500")} />
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">
                                 {item.tipo === 'livro' ? (item.editora || 'Edição Especial') : (item.editora || 'Categoria Especial')}
                               </span>
                            </div>
-                           <h3 className="text-3xl font-black text-slate-800 tracking-tighter leading-tight uppercase italic group-hover:text-indigo-600 transition-colors">{item.titulo}</h3>
-                           <p className="text-sm font-bold text-slate-400 italic">
+                           <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-tight uppercase italic group-hover:text-indigo-600 transition-colors">{item.titulo}</h3>
+                           <p className="text-xs font-bold text-slate-400 italic">
                              {item.tipo === 'livro' ? `Por ${item.autor || 'Autor Não Informado'}` : `${item.autor || 'Marca Sugerida'}`}
                            </p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-6 rounded-[32px] border border-slate-100/50 shadow-inner">
-                            <div className="space-y-1">
-                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">
-                                 {item.tipo === 'livro' ? 'Registro ISBN' : 'Código/Ref'}
+
+                        <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-4 rounded-[20px] border border-slate-100/50">
+                            <div className="space-y-0.5">
+                               <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                                 {item.tipo === 'livro' ? 'ISBN' : 'Ref'}
                                </p>
-                               <p className="text-xs font-black text-slate-600 font-mono italic">{item.isbn || '---'}</p>
+                               <p className="text-[10px] font-black text-slate-600 font-mono italic">{item.isbn || '---'}</p>
                             </div>
-                            <div className="space-y-1 text-right">
-                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Ano Letivo</p>
-                               <p className="text-xs font-black text-slate-600 italic">{item.ano_letivo || '---'}</p>
+                            <div className="space-y-0.5 text-right">
+                               <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Ano</p>
+                               <p className="text-[10px] font-black text-slate-600 italic">{item.ano_letivo || '---'}</p>
                             </div>
                         </div>
 
                         {item.descricao && (
-                            <div className="flex items-start gap-4 p-6 bg-slate-50/30 rounded-[28px] border border-slate-50">
-                              <Info size={18} className="text-indigo-400 shrink-0 mt-0.5" />
-                              <p className="text-xs leading-relaxed font-bold text-slate-500 italic line-clamp-3">{item.descricao}</p>
+                            <div className="flex items-start gap-3 p-3 bg-slate-50/30 rounded-[16px] border border-slate-100">
+                              <Info size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                              <p className="text-[10px] leading-relaxed font-bold text-slate-500 italic line-clamp-2">{item.descricao}</p>
                             </div>
                         )}
 
-                        <div className="mt-auto pt-6 flex gap-4">
+                        <div className="mt-auto pt-3 flex gap-3">
                            {item.link_referencia ? (
-                             <Button 
+                             <Button
                                 asChild
                                 className={cn(
-                                  "w-full h-16 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0",
-                                  item.tipo === 'livro' 
-                                    ? "bg-indigo-100 text-indigo-600 hover:bg-slate-900 hover:text-white" 
+                                  "w-full h-12 rounded-[20px] font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0",
+                                  item.tipo === 'livro'
+                                    ? "bg-indigo-100 text-indigo-600 hover:bg-slate-900 hover:text-white"
                                     : "bg-emerald-100 text-emerald-600 hover:bg-slate-900 hover:text-white"
                                 )}
                                 onClick={() => vibrate(10)}
                              >
                                <a href={item.link_referencia} target="_blank" rel="noreferrer">
-                                 Ver Referência <ExternalLink size={16} className="ml-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                 Ver Referência <ExternalLink size={14} className="ml-2 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                                </a>
                              </Button>
                            ) : (
-                             <div className="w-full flex items-center justify-center bg-slate-50/50 text-slate-400 h-16 rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] italic border-2 border-dashed border-slate-100">
+                             <div className="w-full flex items-center justify-center bg-slate-50/50 text-slate-400 h-12 rounded-[20px] font-black text-[9px] uppercase tracking-[0.2em] italic border-2 border-dashed border-slate-100">
                                 {item.tipo === 'livro' ? 'Disponível em Sala' : 'Consultar na Escola'}
                              </div>
                            )}

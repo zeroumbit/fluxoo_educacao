@@ -106,7 +106,8 @@ export function LivrosPage() {
     defaultValues: {
       ano_letivo: new Date().getFullYear(),
       turmasIds: [],
-      estado: 'Novo'
+      estado: 'Novo',
+      disciplina_id: ''
     }
   })
 
@@ -120,7 +121,13 @@ export function LivrosPage() {
       incluir_na_lista_oficial: true,
       is_uso_coletivo: false,
       quantidade_sugerida: 1,
-      unidade_medida: 'unidade(s)'
+      unidade_medida: 'unidade(s)',
+      categoria: '',
+      subcategoria: '',
+      disciplina_id: '',
+      periodo_uso: 'Início do ano',
+      status: 'Ativo',
+      obrigatoriedade: 'Obrigatório'
     }
   })
 
