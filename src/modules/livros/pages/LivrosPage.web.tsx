@@ -427,7 +427,7 @@ export function LivrosPage() {
                     PREENCHA OS DADOS ABAIXO PARA DISPONIBILIZAR O ITEM AOS ALUNOS.
                   </DialogDescription>
                </div>
-               <TabsList className="bg-slate-100 p-1.5 rounded-xl h-11 self-start sm:self-center">
+               <TabsList className="bg-slate-100 p-1.5 rounded-xl h-[44px] self-start sm:self-center">
                   <TabsTrigger value="livro" className="rounded-lg px-6 font-bold text-[10px] uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:shadow-sm">Livros</TabsTrigger>
                   <TabsTrigger value="material" className="rounded-lg px-6 font-bold text-[10px] uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:shadow-sm">Materiais</TabsTrigger>
                </TabsList>
@@ -440,25 +440,25 @@ export function LivrosPage() {
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Título do Livro *</Label>
-                        <Input placeholder="Título oficial do livro" {...livroForm.register('titulo')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                        <Input placeholder="Título oficial do livro" {...livroForm.register('titulo')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                         {livroForm.formState.errors.titulo && <span className="text-xs text-red-500 font-bold">{livroForm.formState.errors.titulo.message}</span>}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Autor *</Label>
-                          <Input placeholder="Nome do autor" {...livroForm.register('autor')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                          <Input placeholder="Nome do autor" {...livroForm.register('autor')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Editora *</Label>
-                          <Input placeholder="Nome da editora" {...livroForm.register('editora')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                          <Input placeholder="Nome da editora" {...livroForm.register('editora')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Disciplina *</Label>
                         <Select value={livroForm.watch('disciplina_id')} onValueChange={(v) => livroForm.setValue('disciplina_id', v)}>
-                          <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                          <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                             <SelectValue placeholder="Selecione a matéria" />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -472,12 +472,12 @@ export function LivrosPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Ano Letivo *</Label>
-                          <Input type="number" {...livroForm.register('ano_letivo')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                          <Input type="number" {...livroForm.register('ano_letivo')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Estado Conservação</Label>
                           <Select value={livroForm.watch('estado')} onValueChange={(v: any) => livroForm.setValue('estado', v)}>
-                            <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                            <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -491,7 +491,7 @@ export function LivrosPage() {
 
                       <div className="space-y-2">
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Link de Referência</Label>
-                        <Input placeholder="URL para compra ou detalhes" {...livroForm.register('link_referencia')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                        <Input placeholder="URL para compra ou detalhes" {...livroForm.register('link_referencia')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                       </div>
                     </div>
 
@@ -551,7 +551,7 @@ export function LivrosPage() {
                     <div className="space-y-6">
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Nome do Material *</Label>
-                          <Input placeholder="Ex: Caderno de 10 Matérias" {...materialForm.register('nome')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                          <Input placeholder="Ex: Caderno de 10 Matérias" {...materialForm.register('nome')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                           {materialForm.formState.errors.nome && <span className="text-xs text-red-500 font-bold">{materialForm.formState.errors.nome.message}</span>}
                         </div>
 
@@ -559,7 +559,7 @@ export function LivrosPage() {
                           <div className="space-y-2">
                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Categoria *</Label>
                             <Select value={materialForm.watch('categoria')} onValueChange={(v) => materialForm.setValue('categoria', v)}>
-                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                              <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -570,7 +570,7 @@ export function LivrosPage() {
                           <div className="space-y-2">
                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Subcategoria</Label>
                             <Select value={materialForm.watch('subcategoria')} onValueChange={(v) => materialForm.setValue('subcategoria', v)}>
-                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                              <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                                 <SelectValue placeholder="Opcional" />
                               </SelectTrigger>
                               <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -581,7 +581,7 @@ export function LivrosPage() {
                           <div className="space-y-2">
                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Und. de Medida *</Label>
                             <Select value={materialForm.watch('unidade_medida')} onValueChange={(v) => materialForm.setValue('unidade_medida', v)}>
-                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                              <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                                 <SelectValue placeholder="Ex: unid" />
                               </SelectTrigger>
                               <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -594,16 +594,16 @@ export function LivrosPage() {
                         <div className="grid grid-cols-3 gap-4">
                            <div className="space-y-2">
                              <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Qtd Sugerida *</Label>
-                             <Input type="number" {...materialForm.register('quantidade_sugerida')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                             <Input type="number" {...materialForm.register('quantidade_sugerida')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                            </div>
                            <div className="space-y-2">
                              <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Marca</Label>
-                             <Input placeholder="Ex: Bic" {...materialForm.register('marca_sugerida')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                             <Input placeholder="Ex: Bic" {...materialForm.register('marca_sugerida')} className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                            </div>
                            <div className="space-y-2">
                              <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Obrigatoriedade</Label>
                              <Select value={materialForm.watch('obrigatoriedade')} onValueChange={(v: any) => materialForm.setValue('obrigatoriedade', v)}>
-                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                              <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
@@ -785,7 +785,7 @@ export function LivrosPage() {
           <div className="py-6 space-y-4">
             <div className="space-y-4">
               <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Nome da Disciplina</Label>
-              <Input placeholder="Ex: Física, Artes..." className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" value={novaDisciplina} onChange={(e) => setNovaDisciplina(e.target.value)} />
+              <Input placeholder="Ex: Física, Artes..." className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" value={novaDisciplina} onChange={(e) => setNovaDisciplina(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
