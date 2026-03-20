@@ -506,4 +506,77 @@ Seguir padrão estabelecido:
 
 ---
 
+## ✅ VALIDAÇÃO FINAL - FASE CRÍTICA 100% CONCLUÍDA
+
+**Data da Validação:** 2026-03-20  
+**Status:** 🟢 **APROVADO**
+
+### 🔍 Verificação Realizada
+
+Foram validadas **todas as 10 correções** implementadas:
+
+| # | Módulo | Hook | Query Key Admin | Query Key Portal | Status |
+|---|--------|------|-----------------|------------------|--------|
+| 1 | agenda | useCriarEvento | `['eventos']` | `['portal', 'eventos']` | ✅ |
+| 2 | agenda | useExcluirEvento | `['eventos']` | `['portal', 'eventos']` | ✅ |
+| 3 | frequencia | useSalvarFrequencias | `['frequencias']` | `['portal', 'frequencia']` | ✅ |
+| 4 | livros | useCriarLivro | `['livros']` | `['portal', 'itens-escolares']` | ✅ |
+| 5 | livros | useEditarLivro | `['livros']` | `['portal', 'itens-escolares']` | ✅ |
+| 6 | livros | useExcluirLivro | `['livros']` | `['portal', 'itens-escolares']` | ✅ |
+| 7 | livros | useCriarMaterial | `['materiais']` | `['portal', 'itens-escolares']` | ✅ |
+| 8 | livros | useEditarMaterial | `['materiais']` | `['portal', 'itens-escolares']` | ✅ |
+| 9 | livros | useExcluirMaterial | `['materiais']` | `['portal', 'itens-escolares']` | ✅ |
+| 10 | agenda | useUpsertConfigRecados | `['config_recados']` | `['portal', 'config-recados']` | ✅ |
+
+### ✅ Validação das Query Keys do Portal
+
+As query keys invalidadas **correspondem exatamente** às usadas pelo Portal:
+
+| Entidade | Query Key do Portal | Arquivo | Invalidação |
+|----------|---------------------|---------|-------------|
+| Eventos | `['portal', 'eventos', ...]` | PortalAgendaPage.tsx:69 | ✅ |
+| Frequência | `['portal', 'frequencia', ...]` | hooks.ts:53 | ✅ |
+| Itens Escolares | `['portal', 'itens-escolares', ...]` | PortalLivrosPage.tsx:41 | ✅ |
+| Config Recados | `['portal', 'config-recados', ...]` | hooks.ts:98 | ✅ |
+
+### 🎯 Impacto Esperado
+
+Agora o **Portal da Família** será atualizado **imediatamente** quando a escola realizar:
+
+| Ação da Escola | Atualização no Portal |
+|----------------|----------------------|
+| Criar evento | ✅ Eventos atualizados |
+| Editar evento (upsert) | ✅ Eventos atualizados |
+| Excluir evento | ✅ Eventos removidos |
+| Lançar frequência | ✅ Frequência atualizada |
+| Cadastrar livro | ✅ Lista de livros atualizada |
+| Editar livro | ✅ Lista de livros atualizada |
+| Excluir livro | ✅ Lista de livros atualizada |
+| Cadastrar material | ✅ Lista de materiais atualizada |
+| Editar material | ✅ Lista de materiais atualizada |
+| Excluir material | ✅ Lista de materiais atualizada |
+| Atualizar config de recados | ✅ Configuração atualizada |
+
+### 📊 Status Geral do Projeto
+
+| Categoria | Total | Concluído | Pendente |
+|-----------|-------|-----------|----------|
+| **Hooks Críticos** | 10 | ✅ 10 (100%) | 0 |
+| **Funcionalidades sem Portal** | 5 | 0 | 🔴 5 |
+| **Hooks de Alto Impacto** | 4 | 0 | 🟡 4 |
+| **Hooks de Médio Impacto** | 4 | 0 | 🟢 4 |
+
+### ✅ Conclusão da Validação
+
+**FASE CRÍTICA: 100% CONCLUÍDA E VALIDADA** ✅
+
+Todos os hooks de sincronização crítica foram:
+- ✅ Implementados corretamente
+- ✅ Validados contra as query keys do Portal
+- ✅ Testados quanto à correspondência exata
+
+**Próxima fase recomendada:** Implementar funcionalidades inexistentes no Portal (Selos, Planos de Aula, Atividades)
+
+---
+
 **Última Atualização:** 2026-03-20
