@@ -52,7 +52,7 @@ const navigationGroups = [
       { name: 'Turmas', href: '/turmas', icon: BookOpen },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
       { name: 'Boletim', href: '/notas', icon: GraduationCap },
-      { name: 'Livros', href: '/livros', icon: BookOpen },
+      { name: 'Livros e Materiais', href: '/livros', icon: BookOpen },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
       { name: 'Atividades', href: '/atividades', icon: FileText },
       { name: 'Documentos', href: '/documentos', icon: FileText },

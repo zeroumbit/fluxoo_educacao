@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { livrosService } from './service'
 import { useAuth } from '@/modules/auth/AuthContext'
-import type { Livro } from './types'
+import type { Livro, MaterialEscolar } from './types'
 
 export function useDisciplinas() {
   const { authUser } = useAuth()
@@ -59,6 +59,47 @@ export function useCriarDisciplina() {
     mutationFn: ({ tenantId, nome }: { tenantId: string; nome: string }) => livrosService.criarDisciplina(tenantId, nome),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['disciplinas'] })
+    },
+  })
+}
+
+export function useMateriais() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['materiais', authUser?.tenantId],
+    queryFn: () => livrosService.listarMateriais(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+  })
+}
+
+export function useCriarMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ material, turmasIds }: { material: Omit<MaterialEscolar, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>; turmasIds: string[] }) =>
+      livrosService.criarMaterial(material, turmasIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
+    },
+  })
+}
+
+export function useEditarMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, material, turmasIds }: { id: string; material: Partial<MaterialEscolar>; turmasIds: string[] }) =>
+      livrosService.editarMaterial(id, material, turmasIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
+    },
+  })
+}
+
+export function useExcluirMaterial() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => livrosService.excluirMaterial(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materiais'] })
     },
   })
 }

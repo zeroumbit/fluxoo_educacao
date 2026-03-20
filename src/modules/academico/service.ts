@@ -170,14 +170,15 @@ export const academicoService = {
         plano_aula_id: plano.id,
         turma_id: t.turma_id,
         turno: t.turno,
-        horario: t.horario || null
+        horario: t.horario || null,
+        tenant_id: planoData.tenant_id
       }))
       const { error: batchError } = await (supabase.from('planos_aula_turmas' as any) as any)
         .insert(records)
 
       if (batchError) {
         console.error('❌ [academicoService] Erro ao vincular turmas:', batchError)
-        // Opcionalmente: deletar o plano de aula se falhar no vínculo? 
+        // Opcionalmente: deletar o plano de aula se falhar no vínculo?
         // Por enquanto vamos apenas logar, o plano ainda foi criado.
       }
     }
@@ -207,7 +208,8 @@ export const academicoService = {
         plano_aula_id: id,
         turma_id: t.turma_id,
         turno: t.turno,
-        horario: t.horario || null
+        horario: t.horario || null,
+        tenant_id: tenantId
       }))
       const { error: batchError } = await (supabase.from('planos_aula_turmas' as any) as any)
         .insert(records)
@@ -248,7 +250,8 @@ export const academicoService = {
         atividade_id: atividade.id,
         turma_id: t.turma_id,
         turno: t.turno || null,
-        horario: t.horario || null
+        horario: t.horario || null,
+        tenant_id: atividadeData.tenant_id
       }))
       const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
         .insert(records)
@@ -283,7 +286,8 @@ export const academicoService = {
         atividade_id: id,
         turma_id: t.turma_id,
         turno: t.turno || null,
-        horario: t.horario || null
+        horario: t.horario || null,
+        tenant_id: tenantId
       }))
       const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
         .insert(records)

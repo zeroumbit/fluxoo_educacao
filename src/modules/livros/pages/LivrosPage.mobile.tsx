@@ -435,18 +435,18 @@ export function LivrosPageMobile() {
            <div className="space-y-4">
               <div className="space-y-1.5">
                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Título do Livro *</Label>
-                 <Input placeholder="Título completo" className="h-14 rounded-2xl text-base border-slate-200" {...register('titulo')} />
+                 <Input placeholder="Título completo" className="h-11 rounded-2xl text-base border-slate-200" {...register('titulo')} />
                  {errors.titulo && <span className="text-[10px] text-rose-500 font-bold ml-1">{errors.titulo.message}</span>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Autor/Autores *</Label>
-                    <Input placeholder="Autor" className="h-14 rounded-2xl text-base border-slate-200" {...register('autor')} />
+                    <Input placeholder="Autor" className="h-11 rounded-2xl text-base border-slate-200" {...register('autor')} />
                  </div>
                  <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Editora *</Label>
-                    <Input placeholder="Editora" className="h-14 rounded-2xl text-base border-slate-200" {...register('editora')} />
+                    <Input placeholder="Editora" className="h-11 rounded-2xl text-base border-slate-200" {...register('editora')} />
                  </div>
               </div>
 
@@ -457,7 +457,7 @@ export function LivrosPageMobile() {
                       <button type="button" onClick={() => setIsDiscOpen(true)} className="text-[10px] font-black text-indigo-600">+ DISCIPLINA</button>
                     </div>
                     <Select onValueChange={(v) => setValue('disciplina_id', v)} defaultValue={watch('disciplina_id')}>
-                       <SelectTrigger className="h-14 rounded-2xl border-slate-200">
+                       <SelectTrigger className="h-11 rounded-2xl border-slate-200">
                           <SelectValue placeholder="Selecione" />
                        </SelectTrigger>
                        <SelectContent>
@@ -470,7 +470,7 @@ export function LivrosPageMobile() {
                  </div>
                  <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Ano Letivo *</Label>
-                    <Input type="number" className="h-14 rounded-2xl text-base border-slate-200" {...register('ano_letivo')} />
+                    <Input type="number" className="h-11 rounded-2xl text-base border-slate-200" {...register('ano_letivo')} />
                  </div>
               </div>
 
@@ -551,7 +551,7 @@ export function LivrosPageMobile() {
                  value={novaDisciplina} 
                  onChange={e => setNovaDisciplina(e.target.value)} 
                  placeholder="Ex: Matemática, Literatura..." 
-                 className="h-14 rounded-2xl text-base border-slate-200"
+                 className="h-11 rounded-2xl text-base border-slate-200"
                />
             </div>
             <Button onClick={handleCreateDisciplina} className="w-full h-14 rounded-2xl bg-indigo-600 font-bold shadow-lg shadow-indigo-100">Salvar Disciplina</Button>

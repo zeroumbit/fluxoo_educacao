@@ -37,11 +37,11 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
   const [busca, setBusca] = useState('')
   const [capaAberta, setCapaAberta] = useState<string | null>(null)
 
-  const { data: livros, isLoading } = useQuery({
-    queryKey: ['portal', 'livros', tenantId, alunoSelecionado?.id],
+  const { data: itens, isLoading } = useQuery({
+    queryKey: ['portal', 'itens-escolares', tenantId, alunoSelecionado?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vw_livros_disponiveis_aluno' as any)
+        .from('vw_itens_escolares_aluno' as any)
         .select('*')
         .eq('tenant_id', tenantId)
         .eq('aluno_id', alunoSelecionado!.id)
@@ -79,9 +79,10 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
     )
   }
 
-  const livrosFiltrados = livros?.filter((l: any) => 
+  const itensFiltrados = itens?.filter((l: any) => 
     l.titulo?.toLowerCase().includes(busca.toLowerCase()) || 
-    l.disciplina?.toLowerCase().includes(busca.toLowerCase())
+    l.disciplina?.toLowerCase().includes(busca.toLowerCase()) ||
+    l.tipo?.toLowerCase().includes(busca.toLowerCase())
   )
 
   return (
@@ -131,36 +132,46 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
       </div>
 
       {/* 3. Grid de Livros com AnimatePresence */}
-      {!livrosFiltrados || livrosFiltrados.length === 0 ? (
+      {!itensFiltrados || itensFiltrados.length === 0 ? (
          <div className="bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 p-24 text-center flex flex-col items-center justify-center space-y-8 shadow-sm mx-1">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-slate-100 shadow-sm transition-transform duration-700 hover:rotate-12">
                <AlertTriangle size={48} />
             </div>
             <div className="space-y-2">
                <h3 className="text-2xl font-black text-slate-800 italic uppercase">Sem Correspondências</h3>
-               <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto italic leading-relaxed px-4">Não encontramos materiais vinculados para este termo de busca ou para este perfil no momento.</p>
+               <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto italic leading-relaxed px-4">Não encontramos livros ou materiais vinculados para este termo de busca ou para este perfil no momento.</p>
             </div>
          </div>
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 px-1">
             <AnimatePresence mode="popLayout">
-                {livrosFiltrados.map((livro: any, idx: number) => (
+                {itensFiltrados.map((item: any, idx: number) => (
                    <motion.div 
                      layout
-                     key={livro.id || idx} 
+                     key={item.id || idx} 
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: idx * 0.05 }}
                      className="bg-white rounded-[48px] border border-slate-50 shadow-sm hover:shadow-[0_40px_80px_rgba(79,70,229,0.12)] transition-all duration-700 overflow-hidden flex flex-col group cursor-pointer"
                    >
-                      {/* Book Cover Visual with Immersive Effect */}
+                      {/* Badge de Tipo */}
+                      <div className="absolute top-8 left-8 z-10">
+                        <Badge className={cn(
+                          "border-0 font-black uppercase tracking-[0.15em] text-[9px] py-1.5 px-4 shadow-xl rounded-full",
+                          item.tipo === 'livro' ? "bg-indigo-600 text-white" : "bg-emerald-500 text-white"
+                        )}>
+                          {item.tipo === 'livro' ? 'Livro' : 'Material'}
+                        </Badge>
+                      </div>
+
+                      {/* Header Visual */}
                       <div 
                         className="relative aspect-[16/11] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-50 group/image"
-                        onClick={() => livro.capa_url && handleVerCapa(livro.capa_url)}
+                        onClick={() => item.capa_url && handleVerCapa(item.capa_url)}
                       >
-                        {livro.capa_url ? (
+                        {item.capa_url ? (
                           <>
-                            <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-1000" />
+                            <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-1000" />
                             <div className="absolute inset-0 bg-indigo-950/0 group-hover/image:bg-indigo-950/40 transition-all duration-500 flex items-center justify-center backdrop-blur-0 group-hover/image:backdrop-blur-sm">
                               <div className="h-16 w-16 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white scale-50 opacity-0 group-hover/image:scale-100 group-hover/image:opacity-100 transition-all duration-500">
                                 <Maximize2 size={24} />
@@ -169,13 +180,19 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                           </>
                         ) : (
                           <div className="flex flex-col items-center text-slate-200">
-                             <BookOpen size={64} className="mb-4 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700" />
-                             <span className="text-[10px] font-black uppercase tracking-[0.4em] italic">Capa Indisponível</span>
+                             {item.tipo === 'livro' ? (
+                               <BookOpen size={64} className="mb-4 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700" />
+                             ) : (
+                               <div className="mb-4 opacity-5 rotate-12 transition-transform group-hover:rotate-0 duration-700">
+                                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                               </div>
+                             )}
+                             <span className="text-[10px] font-black uppercase tracking-[0.4em] italic">Imagem Indisponível</span>
                           </div>
                         )}
                         <div className="absolute top-8 right-8">
-                           <Badge className="bg-white/90 backdrop-blur-md text-indigo-600 border-0 font-black uppercase tracking-[0.15em] text-[9px] py-2 px-5 shadow-2xl rounded-full">
-                                {livro.disciplina || "Geral"}
+                           <Badge className="bg-white/90 backdrop-blur-md text-slate-800 border-0 font-black uppercase tracking-[0.15em] text-[9px] py-2 px-5 shadow-2xl rounded-full">
+                                {item.disciplina || (item.tipo === 'material' ? 'Material' : "Geral")}
                            </Badge>
                         </div>
                       </div>
@@ -183,45 +200,56 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                       <div className="p-10 space-y-8 flex-1 flex flex-col">
                         <div className="space-y-3">
                            <div className="flex items-center gap-3">
-                              <div className="h-1.5 w-10 bg-indigo-500 rounded-full" />
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">{livro.editora || 'Edição Especial'}</span>
+                              <div className={cn("h-1.5 w-10 rounded-full", item.tipo === 'livro' ? "bg-indigo-500" : "bg-emerald-500")} />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">
+                                {item.tipo === 'livro' ? (item.editora || 'Edição Especial') : (item.editora || 'Categoria Especial')}
+                              </span>
                            </div>
-                           <h3 className="text-3xl font-black text-slate-800 tracking-tighter leading-tight uppercase italic group-hover:text-indigo-600 transition-colors">{livro.titulo}</h3>
-                           <p className="text-sm font-bold text-slate-400 italic">Por {livro.autor || 'Autor Não Informado'}</p>
+                           <h3 className="text-3xl font-black text-slate-800 tracking-tighter leading-tight uppercase italic group-hover:text-indigo-600 transition-colors">{item.titulo}</h3>
+                           <p className="text-sm font-bold text-slate-400 italic">
+                             {item.tipo === 'livro' ? `Por ${item.autor || 'Autor Não Informado'}` : `${item.autor || 'Marca Sugerida'}`}
+                           </p>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-6 rounded-[32px] border border-slate-100/50 shadow-inner">
                             <div className="space-y-1">
-                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Registro ISBN</p>
-                               <p className="text-xs font-black text-slate-600 font-mono italic">{livro.isbn || '---'}</p>
+                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                                 {item.tipo === 'livro' ? 'Registro ISBN' : 'Código/Ref'}
+                               </p>
+                               <p className="text-xs font-black text-slate-600 font-mono italic">{item.isbn || '---'}</p>
                             </div>
                             <div className="space-y-1 text-right">
-                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Extensão</p>
-                               <p className="text-xs font-black text-slate-600 italic">{livro.paginas || 'N/I'} Fls</p>
+                               <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Ano Letivo</p>
+                               <p className="text-xs font-black text-slate-600 italic">{item.ano_letivo || '---'}</p>
                             </div>
                         </div>
 
-                        {livro.descricao && (
+                        {item.descricao && (
                             <div className="flex items-start gap-4 p-6 bg-slate-50/30 rounded-[28px] border border-slate-50">
                               <Info size={18} className="text-indigo-400 shrink-0 mt-0.5" />
-                              <p className="text-xs leading-relaxed font-bold text-slate-500 italic">{livro.descricao}</p>
+                              <p className="text-xs leading-relaxed font-bold text-slate-500 italic line-clamp-3">{item.descricao}</p>
                             </div>
                         )}
 
                         <div className="mt-auto pt-6 flex gap-4">
-                           {livro.link_referencia ? (
+                           {item.link_referencia ? (
                              <Button 
-                               asChild
-                               className="w-full bg-indigo-100 hover:bg-slate-900 text-indigo-600 hover:text-white h-16 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0"
-                               onClick={() => vibrate(10)}
+                                asChild
+                                className={cn(
+                                  "w-full h-16 rounded-[24px] font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0",
+                                  item.tipo === 'livro' 
+                                    ? "bg-indigo-100 text-indigo-600 hover:bg-slate-900 hover:text-white" 
+                                    : "bg-emerald-100 text-emerald-600 hover:bg-slate-900 hover:text-white"
+                                )}
+                                onClick={() => vibrate(10)}
                              >
-                               <a href={livro.link_referencia} target="_blank" rel="noreferrer">
-                                 Acessar Recurso <ExternalLink size={16} className="ml-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                               <a href={item.link_referencia} target="_blank" rel="noreferrer">
+                                 Ver Referência <ExternalLink size={16} className="ml-3 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
                                </a>
                              </Button>
                            ) : (
                              <div className="w-full flex items-center justify-center bg-slate-50/50 text-slate-400 h-16 rounded-[24px] font-black text-[10px] uppercase tracking-[0.2em] italic border-2 border-dashed border-slate-100">
-                                Disponível em Sala
+                                {item.tipo === 'livro' ? 'Disponível em Sala' : 'Consultar na Escola'}
                              </div>
                            )}
                         </div>

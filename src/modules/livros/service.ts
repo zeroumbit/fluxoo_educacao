@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Livro, VwLivroDisponivelAluno } from './types'
+import type { Livro, MaterialEscolar, VwItemEscolar } from './types'
 
 export const livrosService = {
   // LER DISCIPLINAS
@@ -141,5 +141,103 @@ export const livrosService = {
       .eq('id', livroId)
 
     if (error) throw error
+  },
+
+  // --- MATERIAIS ESCOLARES ---
+
+  async listarMateriais(tenantId: string): Promise<MaterialEscolar[]> {
+    const { data, error } = await supabase
+      .from('materiais_escolares' as any)
+      .select(`
+        *,
+        disciplina:disciplinas(nome),
+        materiais_turmas( turma_id )
+      `)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return (data || []).map((m: any) => ({
+      ...m,
+      turmas: (m.materiais_turmas || []).map((mt: any) => ({ id: mt.turma_id }))
+    }))
+  },
+
+  async criarMaterial(material: Omit<MaterialEscolar, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>, turmasIds: string[]) {
+    const result = await supabase
+      .from('materiais_escolares' as any)
+      .insert(material as any)
+      .select()
+      .single()
+    
+    if (result.error) throw result.error
+    const novoMaterial = result.data as any
+
+    if (turmasIds && turmasIds.length > 0) {
+      const insertsTurmas = turmasIds.map((id) => ({
+        material_id: novoMaterial.id,
+        turma_id: id,
+        tenant_id: material.tenant_id
+      }))
+      const { error: errTurmas } = await supabase
+        .from('materiais_turmas' as any)
+        .insert(insertsTurmas)
+
+      if (errTurmas) throw errTurmas
+    }
+
+    return novoMaterial
+  },
+
+  async editarMaterial(materialId: string, material: Partial<MaterialEscolar>, turmasIds: string[]) {
+    const { error: errMaterial } = await supabase
+      .from('materiais_escolares' as any)
+      .update(material)
+      .eq('id', materialId)
+
+    if (errMaterial) throw errMaterial
+
+    await supabase.from('materiais_turmas' as any).delete().eq('material_id', materialId)
+
+    if (turmasIds && turmasIds.length > 0) {
+      const insertsTurmas = turmasIds.map((id) => ({
+        material_id: materialId,
+        turma_id: id,
+        tenant_id: material.tenant_id
+      }))
+      const { error: errTurmas } = await supabase
+        .from('materiais_turmas' as any)
+        .insert(insertsTurmas)
+
+      if (errTurmas) throw errTurmas
+    }
+  },
+
+  async excluirMaterial(materialId: string) {
+    const { error } = await supabase
+      .from('materiais_escolares' as any)
+      .delete()
+      .eq('id', materialId)
+
+    if (error) throw error
+  },
+
+  async uploadImagemMaterial(file: File) {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `material-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+    const filePath = `materiais/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('livros') // Reutilizando bucket de livros ou usar um novo se existir
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('livros')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
   },
 }

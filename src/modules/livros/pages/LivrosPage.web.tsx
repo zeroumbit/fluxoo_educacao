@@ -1,20 +1,21 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useLivros, useCriarLivro, useExcluirLivro, useEditarLivro, useDisciplinas, useCriarDisciplina } from '../hooks'
+import { useLivros, useCriarLivro, useExcluirLivro, useEditarLivro, useDisciplinas, useCriarDisciplina, useMateriais, useCriarMaterial, useEditarMaterial, useExcluirMaterial } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import type { Livro, Disciplina } from '../types'
+import type { Livro, Disciplina, MaterialEscolar } from '../types'
+import { CATEGORIAS_MATERIAIS, SUBCATEGORIAS_POR_CATEGORIA, UNIDADES_MEDIDA, PERIODOS_USO, STATUS_MATERIAL, OBRIGATORIEDADE_MATERIAL } from '../constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
+import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, GraduationCap, CheckCircle, Upload, X, Image as ImageIcon, FolderOpen, AlertCircle } from 'lucide-react'
+import { BookOpen, Plus, Loader2, Edit2, Trash2, Library, CheckCircle, Upload, X, Image as ImageIcon, User, Building2, ExternalLink, Package } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { livrosService } from '../service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -34,28 +35,73 @@ const livroSchema = z.object({
 
 type LivroFormValues = z.infer<typeof livroSchema>
 
+const materialSchema = z.object({
+  nome: z.string().min(2, 'Nome é obrigatório'),
+  descricao: z.string().optional(),
+  codigo_sku: z.string().optional(),
+  categoria: z.string().min(1, 'Selecione uma categoria'),
+  subcategoria: z.string().optional(),
+  quantidade_sugerida: z.coerce.number().min(1, 'Quantidade obrigatória'),
+  unidade_medida: z.string().min(1, 'Unidade obrigatória'),
+  especificacoes: z.string().optional(),
+  tamanho: z.string().optional(),
+  cor: z.string().optional(),
+  tipo: z.string().optional(),
+  marca_sugerida: z.string().optional(),
+  disciplina_id: z.string().optional(),
+  periodo_uso: z.enum(['Início do ano', 'Durante o ano', 'Específico']),
+  status: z.enum(['Ativo', 'Indiferente', 'Inativo', 'Descontinuado', 'Em breve']),
+  obrigatoriedade: z.enum(['Obrigatório', 'Recomendado', 'Opcional']),
+  onde_encontrar: z.string().optional(),
+  observacoes: z.string().optional(),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
+  preco_sugerido: z.coerce.number().optional(),
+  estoque_atual: z.coerce.number().optional(),
+  estoque_minimo: z.coerce.number().optional(),
+  fornecedor: z.string().optional(),
+  preco_unitario: z.coerce.number().optional(),
+  codigo_barras: z.string().optional(),
+  codigo_interno: z.string().optional(),
+  quantidade_por_aluno: z.coerce.number().optional(),
+  incluir_na_lista_oficial: z.boolean().default(true),
+  posicao_lista: z.coerce.number().optional(),
+  observacao_especifica_lista: z.string().optional(),
+  imagem_url: z.string().optional(),
+  is_uso_coletivo: z.boolean().default(false),
+  turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
+})
+
+type MaterialFormValues = z.infer<typeof materialSchema>
+
 export function LivrosPage() {
   const { authUser } = useAuth()
-  const { data: livros, isLoading } = useLivros()
+  const { data: livros, isLoading: loadingLivros } = useLivros()
+  const { data: materiais, isLoading: loadingMateriais } = useMateriais()
+  const isLoading = loadingLivros || loadingMateriais
   const { data: turmas } = useTurmas()
   const { data: disciplinas } = useDisciplinas()
 
   const criarLivro = useCriarLivro()
   const editarLivro = useEditarLivro()
   const excluirLivro = useExcluirLivro()
+  const criarMaterial = useCriarMaterial()
+  const editarMaterial = useEditarMaterial()
+  const excluirMaterial = useExcluirMaterial()
   const criarDisciplina = useCriarDisciplina()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogDiscOpen, setDialogDiscOpen] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [activeTab, setActiveTab] = useState<'livro' | 'material'>('livro')
   const [livroParaEditar, setLivroParaEditar] = useState<Livro | null>(null)
-  const [livroParaExcluir, setLivroParaExcluir] = useState<Livro | null>(null)
+  const [materialParaEditar, setMaterialParaEditar] = useState<MaterialEscolar | null>(null)
+  const [itemParaExcluir, setItemParaExcluir] = useState<{ id: string; titulo: string; tipo: 'livro' | 'material' } | null>(null)
   const [novaDisciplina, setNovaDisciplina] = useState('')
   const [capaFile, setCapaFile] = useState<File | null>(null)
   const [capaPreview, setCapaPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<LivroFormValues>({
+  const livroForm = useForm<LivroFormValues>({
     resolver: zodResolver(livroSchema) as any,
     defaultValues: {
       ano_letivo: new Date().getFullYear(),
@@ -64,42 +110,98 @@ export function LivrosPage() {
     }
   })
 
-  // Watch selected turmas
-  const selectedTurmas = watch('turmasIds') || []
-  
-  const handleSelectTurma = (id: string) => {
-    if (selectedTurmas.includes(id)) {
-      setValue('turmasIds', selectedTurmas.filter(t => t !== id), { shouldValidate: true })
+  const materialForm = useForm<MaterialFormValues>({
+    resolver: zodResolver(materialSchema) as any,
+    defaultValues: {
+      turmasIds: [],
+      status: 'Ativo',
+      obrigatoriedade: 'Obrigatório',
+      periodo_uso: 'Início do ano',
+      incluir_na_lista_oficial: true,
+      is_uso_coletivo: false,
+      quantidade_sugerida: 1,
+      unidade_medida: 'unidade(s)'
+    }
+  })
+
+  const handleSelectTurma = (id: string, formType: 'livro' | 'material') => {
+    if (formType === 'livro') {
+      const selected = livroForm.getValues('turmasIds') || []
+      if (selected.includes(id)) {
+        livroForm.setValue('turmasIds', selected.filter((t: string) => t !== id), { shouldValidate: true })
+      } else {
+        livroForm.setValue('turmasIds', [...selected, id], { shouldValidate: true })
+      }
     } else {
-      setValue('turmasIds', [...selectedTurmas, id], { shouldValidate: true })
+      const selected = materialForm.getValues('turmasIds') || []
+      if (selected.includes(id)) {
+        materialForm.setValue('turmasIds', selected.filter((t: string) => t !== id), { shouldValidate: true })
+      } else {
+        materialForm.setValue('turmasIds', [...selected, id], { shouldValidate: true })
+      }
     }
   }
 
   const handleEditar = (livro: Livro) => {
     setLivroParaEditar(livro)
-    setValue('titulo', livro.titulo)
-    setValue('autor', livro.autor)
-    setValue('editora', livro.editora)
-    setValue('disciplina_id', livro.disciplina_id)
-    setValue('ano_letivo', livro.ano_letivo || new Date().getFullYear())
-    setValue('isbn', livro.isbn || '')
-    setValue('estado', (livro.estado as any) || 'Novo')
-    setValue('descricao', livro.descricao || '')
-    setValue('link_referencia', livro.link_referencia || '')
-    setValue('turmasIds', livro.turmas?.map(t => t.id) || [])
+    setMaterialParaEditar(null)
+    setActiveTab('livro')
+    
+    livroForm.reset({
+      titulo: livro.titulo,
+      autor: livro.autor,
+      editora: livro.editora,
+      disciplina_id: livro.disciplina_id,
+      ano_letivo: livro.ano_letivo || new Date().getFullYear(),
+      isbn: livro.isbn || '',
+      estado: (livro.estado as any) || 'Novo',
+      descricao: livro.descricao || '',
+      link_referencia: livro.link_referencia || '',
+      turmasIds: livro.turmas?.map(t => t.id) || []
+    })
     
     setCapaPreview(livro.capa_url || null)
     setCapaFile(null)
     setDialogOpen(true)
   }
 
+  const handleEditarMaterial = (material: MaterialEscolar) => {
+    setMaterialParaEditar(material)
+    setLivroParaEditar(null)
+    setActiveTab('material')
+    
+    materialForm.reset({
+      ...material,
+      turmasIds: material.turmas?.map(t => t.id) || []
+    } as any)
+    
+    setCapaPreview(material.imagem_url || null)
+    setCapaFile(null)
+    setDialogOpen(true)
+  }
+
   const handleOpenNew = () => {
     setLivroParaEditar(null)
-    reset({
+    setMaterialParaEditar(null)
+    setActiveTab('material')
+    
+    livroForm.reset({
       ano_letivo: new Date().getFullYear(),
       turmasIds: [],
       estado: 'Novo'
     })
+    
+    materialForm.reset({
+      turmasIds: [],
+      status: 'Ativo',
+      obrigatoriedade: 'Obrigatório',
+      periodo_uso: 'Início do ano',
+      incluir_na_lista_oficial: true,
+      is_uso_coletivo: false,
+      quantidade_sugerida: 1,
+      unidade_medida: 'unidade(s)'
+    })
+    
     setCapaPreview(null)
     setCapaFile(null)
     setDialogOpen(true)
@@ -121,9 +223,8 @@ export function LivrosPage() {
     }
   }
 
-  const onSubmit = async (data: any) => {
+  const onSubmitLivro = async (data: LivroFormValues) => {
     if (!authUser) return
-    const formData = data as LivroFormValues
     try {
       setIsUploading(true)
       let finalCapaUrl = livroParaEditar?.capa_url || null
@@ -132,41 +233,31 @@ export function LivrosPage() {
         finalCapaUrl = await livrosService.uploadCapa(capaFile)
       }
 
+      const livroData = {
+        tenant_id: authUser.tenantId,
+        titulo: data.titulo,
+        autor: data.autor,
+        editora: data.editora,
+        disciplina_id: data.disciplina_id,
+        ano_letivo: data.ano_letivo,
+        isbn: data.isbn || null,
+        estado: data.estado || null,
+        descricao: data.descricao || null,
+        link_referencia: data.link_referencia || null,
+        capa_url: finalCapaUrl
+      }
+
       if (livroParaEditar) {
         await editarLivro.mutateAsync({
           id: livroParaEditar.id,
-          livro: {
-            tenant_id: authUser.tenantId,
-            titulo: formData.titulo,
-            autor: formData.autor,
-            editora: formData.editora,
-            disciplina_id: formData.disciplina_id,
-            ano_letivo: formData.ano_letivo,
-            isbn: formData.isbn || null,
-            estado: formData.estado || null,
-            descricao: formData.descricao || null,
-            link_referencia: formData.link_referencia || null,
-            capa_url: finalCapaUrl
-          },
-          turmasIds: formData.turmasIds
+          livro: livroData,
+          turmasIds: data.turmasIds
         })
         toast.success('Livro atualizado com sucesso!')
       } else {
         await criarLivro.mutateAsync({
-          livro: {
-            tenant_id: authUser.tenantId,
-            titulo: formData.titulo,
-            autor: formData.autor,
-            editora: formData.editora,
-            disciplina_id: formData.disciplina_id,
-            ano_letivo: formData.ano_letivo,
-            isbn: formData.isbn || null,
-            estado: formData.estado || null,
-            descricao: formData.descricao || null,
-            link_referencia: formData.link_referencia || null,
-            capa_url: finalCapaUrl
-          },
-          turmasIds: formData.turmasIds
+          livro: livroData,
+          turmasIds: data.turmasIds
         })
         toast.success('Livro cadastrado com sucesso!')
       }
@@ -174,6 +265,46 @@ export function LivrosPage() {
     } catch (error) {
       console.error(error)
       toast.error('Ocorreu um erro ao salvar o livro.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const onSubmitMaterial = async (data: MaterialFormValues) => {
+    if (!authUser) return
+    try {
+      setIsUploading(true)
+      let finalImagemUrl = materialParaEditar?.imagem_url || null
+
+      if (capaFile) {
+        finalImagemUrl = await livrosService.uploadImagemMaterial(capaFile)
+      }
+
+      const materialData = {
+        ...data,
+        tenant_id: authUser.tenantId,
+        imagem_url: finalImagemUrl
+      }
+      delete (materialData as any).turmasIds
+
+      if (materialParaEditar) {
+        await editarMaterial.mutateAsync({
+          id: materialParaEditar.id,
+          material: materialData as any,
+          turmasIds: data.turmasIds
+        })
+        toast.success('Material atualizado com sucesso!')
+      } else {
+        await criarMaterial.mutateAsync({
+          material: materialData as any,
+          turmasIds: data.turmasIds
+        })
+        toast.success('Material cadastrado com sucesso!')
+      }
+      setDialogOpen(false)
+    } catch (error) {
+      console.error(error)
+      toast.error('Ocorreu um erro ao salvar o material.')
     } finally {
       setIsUploading(false)
     }
@@ -191,49 +322,63 @@ export function LivrosPage() {
     }
   }
 
-  const handleExcluir = (livro: Livro) => {
-    setLivroParaExcluir(livro)
+  const handleExcluirLivro = (livro: Livro) => {
+    setItemParaExcluir({ id: livro.id, titulo: livro.titulo, tipo: 'livro' })
+    setShowDeleteDialog(true)
+  }
+
+  const handleExcluirMaterial = (material: MaterialEscolar) => {
+    setItemParaExcluir({ id: material.id, titulo: material.nome, tipo: 'material' })
     setShowDeleteDialog(true)
   }
 
   const confirmarExclusao = async () => {
-    if (!livroParaExcluir) return
+    if (!itemParaExcluir) return
     try {
-      await excluirLivro.mutateAsync(livroParaExcluir.id)
-      toast.success('Livro excluído com sucesso!')
+      if (itemParaExcluir.tipo === 'livro') {
+        await excluirLivro.mutateAsync(itemParaExcluir.id)
+        toast.success('Livro excluído com sucesso!')
+      } else {
+        await excluirMaterial.mutateAsync(itemParaExcluir.id)
+        toast.success('Material excluído com sucesso!')
+      }
       setShowDeleteDialog(false)
-      setLivroParaExcluir(null)
+      setItemParaExcluir(null)
     } catch (error) {
       console.error(error)
-      toast.error('Ocorreu um erro ao excluir o livro.')
+      toast.error('Ocorreu um erro ao excluir o item.')
     }
   }
 
-  // Agrupar livros por turmas
-  const livrosPorTurma = (() => {
-    if (!livros || !turmas) return new Map<string, any[]>()
-    
-    const mapa = new Map<string, any[]>()
-    
-    // Inicializa todas as turmas (mesmo sem livros)
-    turmas.forEach(turma => {
-      mapa.set(turma.id, [])
-    })
-    
-    // Distribui livros pelas turmas
-    ;(livros as any[]).forEach(livro => {
-      const turmasDoLivro = livro.livros_turmas || []
-      turmasDoLivro.forEach((lt: any) => {
-        const turmaId = lt.turma_id
-        if (!mapa.has(turmaId)) {
-          mapa.set(turmaId, [])
+  const itensPorTurma = useMemo(() => {
+    const map = new Map<string, any[]>()
+    if (turmas) {
+      turmas.forEach(t => map.set(t.id, []))
+    }
+    if (livros) {
+      livros.forEach(l => {
+        if (l.turmas) {
+          l.turmas.forEach((t: any) => {
+            const id = t.id || t.turma_id
+            const current = map.get(id) || []
+            map.set(id, [...current, { ...l, tipo: 'livro' }])
+          })
         }
-        mapa.get(turmaId)!.push(livro)
       })
-    })
-    
-    return mapa
-  })()
+    }
+    if (materiais) {
+      materiais.forEach(m => {
+        if (m.turmas) {
+          m.turmas.forEach((t: any) => {
+            const id = t.id || t.turma_id
+            const current = map.get(id) || []
+            map.set(id, [...current, { ...m, tipo: 'material' }])
+          })
+        }
+      })
+    }
+    return map
+  }, [livros, materiais, turmas])
 
   if (isLoading) {
     return (
@@ -244,372 +389,425 @@ export function LivrosPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Library className="h-6 w-6 text-indigo-600" /> Materiais e Livros Didáticos
-          </h1>
-          <p className="text-muted-foreground">Cadastre os livros exigidos para as turmas.</p>
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1 transform transition-all hover:translate-x-1 duration-300">
+           <div className="flex items-center gap-2 text-indigo-600 font-black uppercase tracking-[0.3em] text-[10px] mb-1">
+              <span className="w-8 h-[2px] bg-indigo-600 rounded-full" />
+              Gestão Acadêmica
+           </div>
+           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
+              Livros e Materiais
+           </h1>
+           <p className="text-muted-foreground">Controle de bibliotecas e kits escolares por turma.</p>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleOpenNew} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 shadow-md">
-                <Plus className="mr-2 h-4 w-4" /> Novo Livro
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{livroParaEditar ? 'Editar Livro' : 'Cadastro de Livro/Material'}</DialogTitle>
-                <DialogDescription>
-                  Este livro ficará visível no portal dos alunos das turmas selecionadas.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Título *</Label>
-                    <Input placeholder="Título do livro" {...register('titulo')} />
-                    {errors.titulo && <span className="text-xs text-red-500">{errors.titulo.message}</span>}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Autor/Autores *</Label>
-                    <Input placeholder="Nome do autor" {...register('autor')} />
-                    {errors.autor && <span className="text-xs text-red-500">{errors.autor.message}</span>}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Editora *</Label>
-                    <Input placeholder="Nome da editora" {...register('editora')} />
-                    {errors.editora && <span className="text-xs text-red-500">{errors.editora.message}</span>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Ano Letivo *</Label>
-                    <Input type="number" {...register('ano_letivo')} />
-                    {errors.ano_letivo && <span className="text-xs text-red-500">{errors.ano_letivo.message}</span>}
-                  </div>
-
-                  <div className="space-y-2">
-                     <div className="flex items-center justify-between">
-                        <Label>Disciplina *</Label>
-                        <button 
-                          type="button"
-                          onClick={() => setDialogDiscOpen(true)}
-                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded transition-colors"
-                        >
-                          + DISCIPLINA
-                        </button>
-                     </div>
-                     <Select onValueChange={(v) => setValue('disciplina_id', v)} defaultValue={watch('disciplina_id')}>
-                        <SelectTrigger className="w-full">
-                           <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                           <SelectItem value="paradidatico">Paradidático</SelectItem>
-                           {disciplinas && Array.isArray(disciplinas) && disciplinas.map((d: any) => (
-                              <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
-                           ))}
-                        </SelectContent>
-                     </Select>
-                     {errors.disciplina_id && <span className="text-xs text-red-500">{errors.disciplina_id.message}</span>}
-                  </div>
-
-                  <div className="space-y-2">
-                     <Label>Estado de Uso Sugerido</Label>
-                     <Select onValueChange={(v: any) => setValue('estado', v)} defaultValue={watch('estado')}>
-                        <SelectTrigger className="w-full">
-                           <SelectValue placeholder="Qual estado usar?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                           <SelectItem value="Novo">Novo</SelectItem>
-                           <SelectItem value="Usado">Permite Usado</SelectItem>
-                           <SelectItem value="Indiferente">Indiferente</SelectItem>
-                        </SelectContent>
-                     </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>ISBN (Opcional)</Label>
-                    <Input placeholder="Código ISBN..." {...register('isbn')} />
-                  </div>
-                  
-                   <div className="space-y-2">
-                    <Label>Link de Compra (Opcional)</Label>
-                    <Input placeholder="https://..." {...register('link_referencia')} />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Capa do Livro (PNG, JPG, WEBP ou PDF)</Label>
-                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-colors relative group">
-                    {capaPreview ? (
-                      <div className="relative w-full aspect-[4/3] max-h-[200px] flex items-center justify-center overflow-hidden rounded-xl">
-                        {capaPreview.includes('application/pdf') || capaPreview.endsWith('.pdf') ? (
-                          <div className="flex flex-col items-center text-slate-400">
-                             <BookOpen className="w-12 h-12 mb-2" />
-                             <span className="text-xs font-bold uppercase tracking-widest">Documento PDF</span>
-                          </div>
-                        ) : (
-                          <img src={capaPreview} alt="Preview" className="w-full h-full object-contain" />
-                        )}
-                        <Button 
-                          type="button" 
-                          variant="destructive" 
-                          size="icon" 
-                          className="absolute top-2 right-2 rounded-full h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            setCapaFile(null)
-                            setCapaPreview(null)
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center cursor-pointer w-full h-32">
-                        <div className="h-12 w-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-2 border border-slate-100">
-                          <Upload className="h-5 w-5 text-indigo-500" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-600">Clique para enviar a capa</span>
-                        <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Máximo 5MB</span>
-                        <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileChange} />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Descrição / Orientações (Opcional)</Label>
-                  <Textarea placeholder="Detalhes sobre a edição..." rows={3} {...register('descricao')} />
-                </div>
-
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <Label className="text-base text-indigo-900 font-semibold">Vincular às Turmas</Label>
-                  {errors.turmasIds && <span className="text-xs text-red-500 block mb-2">{errors.turmasIds.message}</span>}
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {turmas?.map(turma => {
-                       const isSelected = selectedTurmas.includes(turma.id)
-                       return (
-                         <div 
-                           key={turma.id}
-                           onClick={() => handleSelectTurma(turma.id)}
-                           className={`p-3 border rounded-xl cursor-pointer hover:border-indigo-300 transition-all flex items-center justify-between ${isSelected ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'bg-white border-slate-200'}`}
-                         >
-                            <span className={`text-sm font-medium ${isSelected ? 'text-indigo-800' : 'text-slate-600'}`}>{turma.nome}</span>
-                            {isSelected && <CheckCircle className="h-4 w-4 text-indigo-600" />}
-                         </div>
-                       )
-                    })}
-                  </div>
-                </div>
-                
-                 <DialogFooter className="pt-6">
-                  <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                  <Button type="submit" disabled={isSubmitting || isUploading}>
-                    {(isSubmitting || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    {isUploading ? 'Enviando Arquivo...' : 'Salvar Livro'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+        <div className="flex items-center gap-3">
+           <Button variant="outline" onClick={() => setDialogDiscOpen(true)} className="flex shadow-sm">
+              <Plus className="h-4 w-4 mr-2" /> Matéria
+           </Button>
+           <Button 
+              onClick={handleOpenNew} 
+              className="flex bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md"
+           >
+              <Plus className="h-4 w-4 mr-2" /> Novo Material
+           </Button>
         </div>
       </div>
 
-      {!livros || (livros as any[]).length === 0 ? (
-        <Card className="border-dashed bg-slate-50/50 shadow-none border-slate-200">
-           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 border border-slate-200">
-                <BookOpen className="h-10 w-10 text-slate-300" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 tracking-tight">Nenhum livro cadastrado</h3>
-              <p className="text-slate-500 mt-2 mb-6 max-w-sm">
-                 Você ainda não possui livros na sua base para este ano. Cadastre listagens de materiais para os alunos pelo painel.
-              </p>
-              <Button onClick={handleOpenNew} className="rounded-full">Adicionar Primeiro Livro</Button>
-           </CardContent>
-        </Card>
-      ) : turmas && Array.isArray(turmas) && turmas.length > 0 ? (
-        <Tabs defaultValue={(turmas[0] as any)?.id} className="space-y-4">
-          <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-slate-100/50 gap-1">
-            {turmas && Array.isArray(turmas) && turmas.map((turma: any) => {
-              const livrosCount = livrosPorTurma.get(turma.id)?.length || 0
-              return (
-                <TabsTrigger
-                  key={turma.id}
-                  value={turma.id}
-                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  <GraduationCap className="h-4 w-4" />
-                  {turma.nome}
-                  <Badge variant={livrosCount > 0 ? "default" : "secondary"} className="h-5 text-[10px]">
-                    {livrosCount}
-                  </Badge>
-                </TabsTrigger>
-              )
-            })}
-          </TabsList>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-[850px] border-0 flex flex-col p-0 overflow-hidden rounded-[32px] shadow-2xl max-h-[95vh]">
+          <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="flex flex-col h-full overflow-hidden bg-white">
+            <DialogHeader className="p-10 pb-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white shrink-0">
+               <div className="space-y-1">
+                  <DialogTitle className="text-2xl font-black text-slate-800 tracking-tight">
+                    {livroParaEditar || materialParaEditar ? 'Editar Registro' : 'Novo Registro'}
+                  </DialogTitle>
+                  <DialogDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">
+                    PREENCHA OS DADOS ABAIXO PARA DISPONIBILIZAR O ITEM AOS ALUNOS.
+                  </DialogDescription>
+               </div>
+               <TabsList className="bg-slate-100 p-1.5 rounded-xl h-11 self-start sm:self-center">
+                  <TabsTrigger value="livro" className="rounded-lg px-6 font-bold text-[10px] uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:shadow-sm">Livros</TabsTrigger>
+                  <TabsTrigger value="material" className="rounded-lg px-6 font-bold text-[10px] uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:shadow-sm">Materiais</TabsTrigger>
+               </TabsList>
+            </DialogHeader>
 
-          {turmas && Array.isArray(turmas) && turmas.map((turma: any) => (
-            <TabsContent key={turma.id} value={turma.id} className="space-y-4">
-              {!livrosPorTurma.get(turma.id)?.length ? (
-                <Card className="border-dashed bg-slate-50/50 shadow-none border-slate-200">
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 border border-slate-200">
-                      <FolderOpen className="h-8 w-8 text-slate-300" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-700">Nenhum livro para esta turma</h3>
-                    <p className="text-slate-500 mt-2 mb-4 max-w-md">
-                      Adicione livros vinculados a esta turma para que apareçam aqui.
-                    </p>
-                    <Button onClick={handleOpenNew} size="sm" className="rounded-full">Adicionar Livro</Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {livrosPorTurma.get(turma.id)?.map((livro: any) => (
-                    <Card key={livro.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
-                      <div className="relative aspect-[3/4] bg-slate-100 flex items-center justify-center overflow-hidden border-b border-slate-100">
-                        {livro.capa_url ? (
-                          <img src={livro.capa_url} alt={livro.titulo} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                        ) : (
-                          <div className="flex flex-col items-center text-slate-300">
-                            <ImageIcon className="w-12 h-12 mb-1" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Sem Capa</span>
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-                          <Badge variant="secondary" className="bg-white/90 backdrop-blur shadow-sm text-indigo-700 font-bold text-[9px] uppercase tracking-wider py-0.5 px-2 border-none">
-                            {livro.disciplina?.nome || 'Geral'}
-                          </Badge>
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+              <TabsContent value="livro" className="m-0 focus-visible:ring-0">
+                <form id="livro-form" onSubmit={livroForm.handleSubmit(onSubmitLivro)} className="space-y-10">
+                   <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Título do Livro *</Label>
+                        <Input placeholder="Título oficial do livro" {...livroForm.register('titulo')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                        {livroForm.formState.errors.titulo && <span className="text-xs text-red-500 font-bold">{livroForm.formState.errors.titulo.message}</span>}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Autor *</Label>
+                          <Input placeholder="Nome do autor" {...livroForm.register('autor')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Editora *</Label>
+                          <Input placeholder="Nome da editora" {...livroForm.register('editora')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
                         </div>
                       </div>
 
-                      <CardHeader className="p-5 pb-3">
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="leading-tight text-lg line-clamp-1" title={livro.titulo}>{livro.titulo}</CardTitle>
-                            <CardDescription className="font-medium mt-0.5 line-clamp-1">Autor: {livro.autor}</CardDescription>
-                          </div>
-                          <div className="flex gap-1 shrink-0 bg-white shadow-sm p-1 rounded-lg border border-slate-100">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => handleEditar(livro)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleExcluir(livro)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-5 pt-0">
-                        <div className="space-y-4">
-                          <div className="text-sm text-slate-600 mb-2">
-                            <p><span className="font-semibold text-slate-800">Editora:</span> {livro.editora}</p>
-                            {livro.isbn && <p><span className="font-semibold text-slate-800">ISBN:</span> {livro.isbn}</p>}
-                            <p><span className="font-semibold text-slate-800">Status exigido:</span> {livro.estado || 'Novo'}</p>
-                          </div>
+                      <div className="space-y-2">
+                        <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Disciplina *</Label>
+                        <Select value={livroForm.watch('disciplina_id')} onValueChange={(v) => livroForm.setValue('disciplina_id', v)}>
+                          <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                            <SelectValue placeholder="Selecione a matéria" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                            {(disciplinas as any[])?.map(d => (
+                              <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                          <div>
-                            <p className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2 flex items-center gap-1">
-                              <GraduationCap className="h-3 w-3" /> Outras Turmas ({livro.turmas?.length || 0})
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {livro.turmas?.filter((t: any) => t.id !== turma.id).map((t: any) => {
-                                const turmaReal = turmas.find(tr => tr.id === t.id)
-                                return (
-                                  <Badge key={t.id} variant="outline" className="text-[10px] bg-slate-50">
-                                    {turmaReal?.nome || 'Turma'}
-                                  </Badge>
-                                )
-                              })}
-                              {(!livro.turmas || livro.turmas.length <= 1) && (
-                                <span className="text-[10px] text-slate-400 italic">Apenas esta turma</span>
-                              )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Ano Letivo *</Label>
+                          <Input type="number" {...livroForm.register('ano_letivo')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Estado Conservação</Label>
+                          <Select value={livroForm.watch('estado')} onValueChange={(v: any) => livroForm.setValue('estado', v)}>
+                            <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                              <SelectItem value="Novo">Novo</SelectItem>
+                              <SelectItem value="Usado">Usado</SelectItem>
+                              <SelectItem value="Indiferente">Indiferente</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Link de Referência</Label>
+                        <Input placeholder="URL para compra ou detalhes" {...livroForm.register('link_referencia')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Capa do Livro</Label>
+                        <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
+                          {capaPreview ? (
+                            <div className="relative w-full h-full">
+                              <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                              <Button type="button" size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg" onClick={() => { setCapaFile(null); setCapaPreview(null); }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
+                              <ImageIcon className="h-10 w-10 text-slate-300" />
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Capa</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                            </label>
+                          )}
+                        </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Séries / Turmas Disponíveis *</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {turmas?.map(turma => {
+                        const isSelected = (livroForm.watch('turmasIds') || []).includes(turma.id)
+                        return (
+                          <div key={turma.id} onClick={() => handleSelectTurma(turma.id, 'livro')} className={`p-5 border border-slate-200 rounded-2xl cursor-pointer transition-all flex flex-col gap-1 active:scale-95 ${isSelected ? 'bg-indigo-600 border-indigo-600 shadow-xl shadow-indigo-100 translate-y-[-2px]' : 'bg-white hover:border-indigo-200'}`}>
+                             <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>Turma</span>
+                             <span className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-slate-600'}`}>{turma.nome}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-10 flex border-t border-slate-100 justify-end gap-3 shrink-0">
+                     <Button type="button" variant="outline" disabled={isUploading} onClick={() => setDialogOpen(false)} className="h-12 px-8 rounded-xl font-bold text-slate-500 border-slate-200 hover:bg-slate-50 transition-all px-8">Cancelar</Button>
+                     <Button 
+                        type="submit" 
+                        disabled={isUploading}
+                        className="h-12 px-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all active:scale-95 shadow-xl shadow-indigo-100"
+                     >
+                        {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {isUploading ? 'PROCESSANDO...' : (livroParaEditar ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR CADASTRO')}
+                     </Button>
+                  </div>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="material" className="m-0 focus-visible:ring-0">
+                <form id="material-form" onSubmit={materialForm.handleSubmit(onSubmitMaterial)} className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Nome do Material *</Label>
+                          <Input placeholder="Ex: Caderno de 10 Matérias" {...materialForm.register('nome')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                          {materialForm.formState.errors.nome && <span className="text-xs text-red-500 font-bold">{materialForm.formState.errors.nome.message}</span>}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Categoria *</Label>
+                            <Select value={materialForm.watch('categoria')} onValueChange={(v) => materialForm.setValue('categoria', v)}>
+                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                                {CATEGORIAS_MATERIAIS.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Subcategoria</Label>
+                            <Select value={materialForm.watch('subcategoria')} onValueChange={(v) => materialForm.setValue('subcategoria', v)}>
+                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                                <SelectValue placeholder="Opcional" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                                {SUBCATEGORIAS_POR_CATEGORIA[materialForm.watch('categoria')]?.map(sub => <SelectItem key={sub} value={sub}>{sub}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Und. de Medida *</Label>
+                            <Select value={materialForm.watch('unidade_medida')} onValueChange={(v) => materialForm.setValue('unidade_medida', v)}>
+                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                                <SelectValue placeholder="Ex: unid" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                                {UNIDADES_MEDIDA.map(un => <SelectItem key={un} value={un}>{un}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+
+                        <div className="grid grid-cols-3 gap-4">
+                           <div className="space-y-2">
+                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Qtd Sugerida *</Label>
+                             <Input type="number" {...materialForm.register('quantidade_sugerida')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                           </div>
+                           <div className="space-y-2">
+                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Marca</Label>
+                             <Input placeholder="Ex: Bic" {...materialForm.register('marca_sugerida')} className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" />
+                           </div>
+                           <div className="space-y-2">
+                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Obrigatoriedade</Label>
+                             <Select value={materialForm.watch('obrigatoriedade')} onValueChange={(v: any) => materialForm.setValue('obrigatoriedade', v)}>
+                              <SelectTrigger className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
+                                <SelectItem value="Obrigatório">⚠️ Obrigatório</SelectItem>
+                                <SelectItem value="Recomendado">✓ Recomendado</SelectItem>
+                                <SelectItem value="Opcional">○ Opcional</SelectItem>
+                              </SelectContent>
+                             </Select>
+                           </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Imagem de Referência</Label>
+                        <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
+                          {capaPreview ? (
+                            <div className="relative w-full h-full">
+                              <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                              <Button type="button" size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg" onClick={() => { setCapaFile(null); setCapaPreview(null); }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
+                              <ImageIcon className="h-8 w-8 text-slate-300" />
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Foto</span>
+                              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                            </label>
+                          )}
+                        </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Séries / Turmas Disponíveis *</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {turmas?.map(turma => {
+                        const isSelected = (materialForm.watch('turmasIds') || []).includes(turma.id)
+                        return (
+                          <div key={turma.id} onClick={() => handleSelectTurma(turma.id, 'material')} className={`p-5 border border-slate-200 rounded-2xl cursor-pointer transition-all flex flex-col gap-1 active:scale-95 ${isSelected ? 'bg-emerald-600 border-emerald-600 shadow-xl shadow-emerald-100 translate-y-[-2px]' : 'bg-white hover:border-emerald-200'}`}>
+                             <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>Turma</span>
+                             <span className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-slate-600'}`}>{turma.nome}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-10 flex border-t border-slate-100 justify-end gap-3 shrink-0">
+                     <Button type="button" variant="outline" disabled={isUploading} onClick={() => setDialogOpen(false)} className="h-12 px-8 rounded-xl font-bold text-slate-500 border-slate-200 hover:bg-slate-50 transition-all">Cancelar</Button>
+                     <Button 
+                        type="submit" 
+                        disabled={isUploading}
+                        className="h-12 px-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all active:scale-95 shadow-xl shadow-emerald-100"
+                     >
+                        {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                        {isUploading ? 'PROCESSANDO...' : (materialParaEditar ? 'SALVAR ALTERAÇÕES' : 'FINALIZAR CADASTRO')}
+                     </Button>
+                  </div>
+                </form>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+      
+      {(!livros || livros.length === 0) && (!materiais || materiais.length === 0) ? (
+        <Card className="border-4 border-dashed bg-zinc-50/50 shadow-none border-zinc-100 rounded-[48px]">
+           <CardContent className="flex flex-col items-center justify-center py-32 text-center">
+              <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center mb-8 shadow-xl text-zinc-200 group-hover:rotate-12 transition-transform duration-500">
+                <Package size={48} />
+              </div>
+              <h3 className="text-3xl font-black text-zinc-900 tracking-tighter italic uppercase leading-tight">Nenhum item <span className="text-zinc-300">Vinculado</span></h3>
+              <p className="text-zinc-500 mt-4 mb-10 max-w-sm font-medium italic">
+                 Sua grade de materiais e livros para este ano letivo está vazia. Comece adicionando o primeiro item.
+              </p>
+              <Button onClick={handleOpenNew} className="h-16 rounded-[28px] bg-indigo-600 hover:bg-zinc-900 text-white font-black uppercase tracking-widest text-[11px] px-12 shadow-2xl shadow-indigo-100 transition-all active:scale-95">Adicionar Primeiro Item</Button>
+           </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-16">
+          {Array.from(itensPorTurma.entries()).map(([turmaId, items]) => {
+            const turma = turmas?.find(t => t.id === turmaId)
+            if (!turma) return null
+            if (items.length === 0) return null
+
+            return (
+              <div key={turmaId} className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                <div className="flex items-center gap-6">
+                   <div className="bg-indigo-600 w-2 h-10 rounded-full shadow-lg shadow-indigo-200" />
+                   <div className="space-y-0.5">
+                      <h2 className="text-3xl font-black text-zinc-900 tracking-tighter italic uppercase leading-none">{turma.nome}</h2>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">{items.length} Itens Vinculados</span>
+                        <div className="h-1 w-1 rounded-full bg-zinc-300" />
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest italic">Lista Oficial Ativa</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {items.map((item: any) => (
+                    <div 
+                      key={`${item.tipo}-${item.id}`} 
+                      className="group bg-white rounded-[44px] border border-zinc-50 shadow-sm hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-700 flex flex-col relative overflow-hidden h-[540px]"
+                    >
+                      <div className="absolute top-6 left-6 z-20">
+                         <Badge className={`border-0 font-black uppercase tracking-[0.2em] text-[8px] py-1.5 px-4 rounded-full shadow-lg ${item.tipo === 'livro' ? 'bg-indigo-600' : 'bg-emerald-500'}`}>
+                            {item.tipo === 'livro' ? 'Livro' : 'Material'}
+                         </Badge>
+                      </div>
+
+                      <div className="h-64 bg-zinc-50/50 flex items-center justify-center relative overflow-hidden group/image">
+                         {(item.capa_url || item.imagem_url) ? (
+                            <img src={item.capa_url || item.imagem_url} alt="Capa" className="h-full w-full object-contain p-8 drop-shadow-2xl group-hover/image:scale-110 transition-transform duration-1000" />
+                         ) : (
+                            <div className="text-zinc-100">
+                               {item.tipo === 'livro' ? <BookOpen size={100} /> : <Package size={100} />}
+                            </div>
+                         )}
+                         <div className="absolute inset-0 bg-zinc-950/0 group-hover/image:bg-zinc-950/20 transition-all duration-700" />
+                      </div>
+
+                      <div className="p-9 flex-1 flex flex-col justify-between">
+                         <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                               <div className={`w-8 h-1 rounded-full ${item.tipo === 'livro' ? 'bg-indigo-600' : 'bg-emerald-500'}`} />
+                               <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic truncate max-w-xs">
+                                  {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
+                               </span>
+                            </div>
+                            <h3 className="text-lg font-bold text-zinc-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
+                               {item.tipo === 'livro' ? item.titulo : item.nome}
+                            </h3>
+                            
+                            <div className="space-y-2">
+                               {item.tipo === 'livro' ? (
+                                 <p className="text-xs font-bold text-zinc-400 italic">Por <span className="text-zinc-800">{item.autor}</span> • <span className="opacity-60">{item.editora}</span></p>
+                               ) : (
+                                 <div className="flex flex-col gap-1.5">
+                                   <p className="text-xs font-black text-zinc-800 italic uppercase tracking-tighter">{item.quantidade_sugerida} {item.unidade_medida}</p>
+                                   <p className="text-[10px] font-bold text-zinc-400 italic">Marca Sugerida: <span className="text-zinc-600">{item.marca_sugerida || 'Qualquer uma'}</span></p>
+                                 </div>
+                               )}
+                            </div>
+                         </div>
+
+                         <div className="flex items-center justify-between pt-6 border-t border-zinc-50">
+                            <div className="flex items-center gap-2">
+                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleEditar(item) : handleEditarMaterial(item)} className="h-12 w-12 rounded-2xl hover:bg-zinc-100 transition-all hover:scale-110 active:scale-95">
+                                  <Edit2 size={16} />
+                               </Button>
+                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleExcluirLivro(item) : handleExcluirMaterial(item)} className="h-12 w-12 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all hover:scale-110 active:scale-95">
+                                  <Trash2 size={16} />
+                               </Button>
+                            </div>
+                            {item.link_referencia && (
+                               <a href={item.link_referencia} target="_blank" rel="noreferrer" className="h-12 w-12 rounded-2xl bg-zinc-950 text-white flex items-center justify-center hover:bg-indigo-600 transition-all hover:scale-110 shadow-lg shadow-zinc-200">
+                                  <ExternalLink size={16} />
+                               </a>
+                            )}
+                         </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : (
-        <Card className="border-dashed bg-slate-50/50 shadow-none border-slate-200">
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 border border-slate-200">
-              <GraduationCap className="h-10 w-10 text-slate-300" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 tracking-tight">Nenhuma turma cadastrada</h3>
-            <p className="text-slate-500 mt-2 mb-6 max-w-sm">
-              Cadastre turmas primeiro para poder vincular os livros.
-            </p>
-          </CardContent>
-        </Card>
+              </div>
+            )
+          })}
+        </div>
       )}
 
-      {/* Modal Independente para Nova Disciplina */}
+      {/* Modal Disciplina */}
       <Dialog open={dialogDiscOpen} onOpenChange={setDialogDiscOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-[400px] rounded-[32px] p-8">
           <DialogHeader>
-            <DialogTitle>Nova Disciplina</DialogTitle>
-            <DialogDescription>Adicione as disciplinas para classificar os livros.</DialogDescription>
+            <DialogTitle className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">Nova Matéria</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col gap-2">
-              <Label>Nome da Disciplina</Label>
-              <Input
-                value={novaDisciplina}
-                onChange={e => setNovaDisciplina(e.target.value)}
-                placeholder="Ex: Matemática, Literatura..."
-              />
+          <div className="py-6 space-y-4">
+            <div className="space-y-4">
+              <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Nome da Disciplina</Label>
+              <Input placeholder="Ex: Física, Artes..." className="h-11 rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600" value={novaDisciplina} onChange={(e) => setNovaDisciplina(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogDiscOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateDisciplina}>Salvar Adição</Button>
+            <Button disabled={criarDisciplina.isPending} onClick={handleCreateDisciplina} className="h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-bold w-full uppercase tracking-widest text-[10px]">Cadastrar Matéria</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Exclusão de Livro */}
+      {/* Modal Exclusão */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="rounded-3xl border-0 shadow-2xl">
-          <DialogHeader>
-            <div className="h-14 w-14 rounded-2xl bg-rose-50 flex items-center justify-center mb-4">
-               <AlertCircle className="h-7 w-7 text-rose-600" />
+        <DialogContent className="max-w-[400px] rounded-[40px] p-10 border-none overflow-hidden">
+          <div className="flex flex-col items-center text-center">
+            <div className="h-20 w-20 bg-red-50 rounded-[30px] flex items-center justify-center mb-6">
+              <Trash2 className="h-10 w-10 text-red-600" />
             </div>
-            <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight">Confirmar Exclusão</DialogTitle>
-            <DialogDescription className="text-zinc-500 font-medium pt-2">
-              Você tem certeza que deseja excluir <strong>{livroParaExcluir?.titulo}</strong>?
-              <br/><br/>
-              Esta ação é definitiva e removerá o livro de todas as turmas vinculadas.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-8 flex gap-3">
-            <Button
-               variant="ghost"
-               className="flex-1 rounded-2xl h-12 font-bold"
-               onClick={() => setShowDeleteDialog(false)}
-            >
-               Manter Livro
-            </Button>
-            <Button
-               className="flex-1 rounded-2xl bg-rose-600 hover:bg-rose-700 h-12 font-bold shadow-xl shadow-rose-100"
-               onClick={confirmarExclusao}
-            >
-               Excluir Definitivamente
-            </Button>
-          </DialogFooter>
+            <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight leading-none mb-3 italic">Deseja Excluir?</DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 font-medium">Você está removendo "{itemParaExcluir?.titulo}" desta base acadêmica.</DialogDescription>
+            <div className="flex gap-4 w-full mt-10">
+              <Button variant="ghost" className="h-14 rounded-2xl flex-1 font-bold text-zinc-500" onClick={() => setShowDeleteDialog(false)}>Manter</Button>
+              <Button variant="destructive" className="h-14 rounded-2xl flex-1 font-bold bg-red-600 hover:bg-red-700 shadow-xl shadow-red-100" onClick={confirmarExclusao}>Excluir</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
