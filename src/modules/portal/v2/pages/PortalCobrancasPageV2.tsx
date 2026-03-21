@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useVinculosAtivos, useConfigPix, useConfigRecados } from '../../hooks'
+import { useVinculosAtivos } from '../../hooks'
 import { usePortalContext } from '../../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useQuery } from '@tanstack/react-query'
 import {
   CreditCard,
   Copy,
@@ -326,10 +327,18 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
 
 function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const isMobile = useIsMobile()
-  
+
   // ISOLAMENTO DE CONTEXTO: Buscar configuração da escola do aluno ESPECÍFICO da cobrança
-  const { data: configPix } = useConfigPix(cobranca?.tenant_id)
-  const { data: configRecados } = useConfigRecados(cobranca?.tenant_id)
+  const { data: configPix } = useQuery({
+    queryKey: ['portal', 'config-pix', cobranca?.tenant_id],
+    queryFn: () => portalService.buscarConfigPixEscola(cobranca?.tenant_id!),
+    enabled: !!cobranca?.tenant_id,
+  })
+  const { data: configRecados } = useQuery({
+    queryKey: ['portal', 'config-recados', cobranca?.tenant_id],
+    queryFn: () => portalService.buscarConfigRecados(cobranca?.tenant_id!),
+    enabled: !!cobranca?.tenant_id,
+  })
 
   const handleCopy = () => {
     vibrate(40)
@@ -351,68 +360,71 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   }
 
   const ModalContent = (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6 sm:gap-10">
+      {/* Header */}
       <div className="flex items-center justify-between">
-         <div className="flex items-center gap-4">
-           <div className="w-14 h-14 rounded-2xl bg-teal-500 text-white flex items-center justify-center shadow-2xl shadow-teal-500/20">
-             <TrendingDown size={28} />
+         <div className="flex items-center gap-3 sm:gap-4">
+           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-teal-500 text-white flex items-center justify-center shadow-2xl shadow-teal-500/20 flex-shrink-0">
+             <TrendingDown size={24} className="sm:size-28" />
            </div>
-           <div className="flex flex-col">
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none pt-1">Pagamento PIX</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">Fluxo de Segurança</p>
+           <div className="flex flex-col min-w-0">
+              <h3 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight leading-none pt-1 truncate">Pagamento PIX</h3>
+              <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[3px] sm:tracking-[4px]">Fluxo de Segurança</p>
            </div>
          </div>
-         <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm">
-           <X size={24} />
+         <button onClick={onClose} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm flex-shrink-0">
+           <X size={20} className="sm:size-24" />
          </button>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-2 py-8 bg-slate-900 rounded-[48px] text-white shadow-3xl relative overflow-hidden">
-         <div className="absolute top-0 right-0 opacity-10 -mr-8 -mt-8"><DollarSign size={150} /></div>
-         <span className="text-[10px] font-black uppercase tracking-[5px] text-teal-400 mb-2 relative z-10">Total a Pagar</span>
-         <h2 className="text-5xl font-black tracking-tighter relative z-10 leading-none">{formatCurrency(cobranca?.valor || 0)}</h2>
-         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-4 relative z-10">{cobranca?.descricao}</p>
+      {/* Card de Valor */}
+      <div className="flex flex-col items-center justify-center gap-2 py-6 sm:py-8 bg-slate-900 rounded-[32px] sm:rounded-[48px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
+         <div className="absolute top-0 right-0 opacity-10 -mr-4 sm:-mr-8 -mt-4 sm:-mt-8"><DollarSign size={100} className="sm:size-150" /></div>
+         <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[4px] sm:tracking-[5px] text-teal-400 mb-2 relative z-10 px-4 text-center">Total a Pagar</span>
+         <h2 className="text-3xl sm:text-5xl font-black tracking-tighter relative z-10 leading-none px-4 text-center break-words w-full">{formatCurrency(cobranca?.valor || 0)}</h2>
+         <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-3 sm:mt-4 relative z-10 px-4 text-center truncate max-w-full">{cobranca?.descricao || ''}</p>
       </div>
 
-      <div className="space-y-8">
+      {/* Conteúdo PIX */}
+      <div className="space-y-6 sm:space-y-8">
         {(configPix?.qr_code_url || configPix?.chave_pix) ? (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
              {(configPix?.qr_code_url || configPix?.qr_code_auto) ? (
-               <div className="p-10 rounded-[48px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-8 group transition-all">
-                  <div className="p-6 bg-white rounded-[40px] shadow-2xl border border-slate-100 flex items-center justify-center">
+               <div className="p-6 sm:p-10 rounded-[32px] sm:rounded-[48px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-6 sm:gap-8 group transition-all">
+                  <div className="p-4 sm:p-6 bg-white rounded-[24px] sm:rounded-[40px] shadow-2xl border border-slate-100 flex items-center justify-center">
                     {configPix?.qr_code_url ? (
-                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-48 h-48 object-contain" />
+                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-40 h-40 sm:w-48 sm:h-48 object-contain" />
                     ) : (
-                      <div className="w-48 h-48 flex flex-col items-center justify-center text-slate-300 gap-3">
-                        <QrCode size={64} className="opacity-20" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">Gerando Código...</span>
+                      <div className="w-40 h-40 sm:w-48 sm:h-48 flex flex-col items-center justify-center text-slate-300 gap-2 sm:gap-3">
+                        <QrCode size={48} className="sm:size-64 opacity-20" />
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-center">Gerando Código...</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                     <div className="flex items-center gap-2 text-teal-600">
-                        <CheckCircle2 size={16} />
-                        <span className="text-[11px] font-black uppercase tracking-[2px]">QR Code Ativo</span>
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 px-2">
+                     <div className="flex items-center gap-1 sm:gap-2 text-teal-600">
+                        <CheckCircle2 size={14} className="sm:size-16" />
+                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[1px] sm:tracking-[2px] text-center">QR Code Ativo</span>
                      </div>
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Escaneie com o app do seu banco</p>
+                     <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center leading-tight">Escaneie com o app do seu banco</p>
                   </div>
                </div>
              ) : null}
 
              {configPix?.chave_pix && (
-               <div className="space-y-4">
+               <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center gap-2 px-2">
                     <div className="h-px bg-slate-100 flex-1" />
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Ou use o Copia e Cola</span>
+                    <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest flex-shrink-0">Ou use o Copia e Cola</span>
                     <div className="h-px bg-slate-100 flex-1" />
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div className="p-6 rounded-[32px] bg-white border-2 border-slate-100 font-mono text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center">
+
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-white border-2 border-slate-100 font-mono text-[10px] sm:text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center max-h-32 overflow-y-auto">
                        {configPix.chave_pix}
                     </div>
-                    <Button onClick={handleCopy} className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-[28px] font-black text-xs uppercase tracking-[3px] gap-4 shadow-2xl active:scale-95 transition-all">
-                       {copiado ? <CheckCircle2 size={20} className="text-teal-400" /> : <Copy size={20} />}
+                    <Button onClick={handleCopy} className="w-full h-14 sm:h-16 bg-slate-900 hover:bg-black text-white rounded-[24px] sm:rounded-[28px] font-black text-[10px] sm:text-xs uppercase tracking-[2px] sm:tracking-[3px] gap-3 sm:gap-4 shadow-2xl active:scale-95 transition-all">
+                       {copiado ? <CheckCircle2 size={18} className="sm:size-20 text-teal-400" /> : <Copy size={18} className="sm:size-20" />}
                        {copiado ? 'Código Copiado!' : 'Copiar Código PIX'}
                     </Button>
                   </div>
@@ -420,14 +432,15 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
              )}
           </div>
         ) : (
-          <div className="p-14 text-center space-y-4 bg-rose-50 rounded-[48px] border border-rose-100 shadow-inner">
-             <AlertCircle size={56} className="text-rose-500 mx-auto" />
-             <p className="text-lg font-black text-rose-900 uppercase">PIX Não Configurado</p>
-             <p className="text-xs font-semibold text-rose-700/60 leading-relaxed px-4">Esta instituição ainda não cadastrou os dados necessários para pagamento via PIX.</p>
+          <div className="p-8 sm:p-14 text-center space-y-3 sm:space-y-4 bg-rose-50 rounded-[32px] sm:rounded-[48px] border border-rose-100 shadow-inner mx-2 sm:mx-0">
+             <AlertCircle size={40} className="sm:size-56 text-rose-500 mx-auto" />
+             <p className="text-base sm:text-lg font-black text-rose-900 uppercase">PIX Não Configurado</p>
+             <p className="text-[11px] sm:text-xs font-semibold text-rose-700/60 leading-relaxed px-4">Esta instituição ainda não cadastrou os dados necessários para pagamento via PIX.</p>
           </div>
         )}
 
-        <Button onClick={handleComprovante} variant="outline" className="w-full h-16 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[28px] text-[10px] font-black uppercase tracking-[3px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
+        {/* Botão Confirmar */}
+        <Button onClick={handleComprovante} variant="outline" className="w-full h-14 sm:h-16 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[24px] sm:rounded-[28px] text-[10px] sm:text-[10px] font-black uppercase tracking-[2px] sm:tracking-[3px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
            Confirmar Pagamento
         </Button>
       </div>
@@ -437,7 +450,8 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="bottom" className="rounded-t-[60px] p-8 pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto">
+        <SheetContent side="bottom" className="rounded-t-[48px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
+          <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
           {ModalContent}
         </SheetContent>
       </Sheet>
@@ -446,7 +460,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[550px] rounded-[60px] p-12 focus:outline-none ring-0 overflow-hidden">
+      <DialogContent className="max-w-[550px] w-[95vw] sm:w-auto rounded-[48px] sm:rounded-[60px] p-6 sm:p-12 focus:outline-none ring-0 overflow-hidden max-h-[95vh] overflow-y-auto">
         <DialogTitle className="sr-only">Checkout PIX</DialogTitle>
         {ModalContent}
       </DialogContent>

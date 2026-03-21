@@ -7,6 +7,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { supabase } from '@/lib/supabase'
 import { rbacService } from '@/modules/rbac/service'
 import type { ResolvedPermission, ScopeType } from '@/modules/rbac/types'
+import { logger } from '@/lib/logger'
 
 const CACHE_DURATION_MS = 30 * 60 * 1000 // 30 minutos
 
@@ -95,7 +96,7 @@ export const useRBACStore = create<RBACState>()(
             isInitialized: true,
           })
         } catch (error) {
-          console.error('❌ Erro ao carregar permissões RBAC:', error)
+          logger.error('Erro ao carregar permissões RBAC', error)
           set({ isLoading: false, isInitialized: true })
         }
       },
@@ -215,7 +216,7 @@ export function subscribeToRBACChanges(tenantId: string) {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'perfil_permissions' },
       () => {
-        console.log('🔄 RBAC: perfil_permissions alterado, invalidando cache...')
+        logger.debug('RBAC: perfil_permissions alterado, invalidando cache...')
         useRBACStore.getState().invalidateCache()
       }
     )
@@ -223,7 +224,7 @@ export function subscribeToRBACChanges(tenantId: string) {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'user_permission_overrides' },
       () => {
-        console.log('🔄 RBAC: overrides alterados, invalidando cache...')
+        logger.debug('RBAC: overrides alterados, invalidando cache...')
         useRBACStore.getState().invalidateCache()
       }
     )
@@ -231,7 +232,7 @@ export function subscribeToRBACChanges(tenantId: string) {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'perfis_acesso' },
       () => {
-        console.log('🔄 RBAC: perfis alterados, invalidando cache...')
+        logger.debug('RBAC: perfis alterados, invalidando cache...')
         useRBACStore.getState().invalidateCache()
       }
     )
