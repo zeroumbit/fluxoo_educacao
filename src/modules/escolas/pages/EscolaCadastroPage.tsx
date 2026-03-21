@@ -17,11 +17,12 @@ import { supabase } from '@/lib/supabase'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useEffect } from 'react'
+import { strongPasswordSchema, getPasswordStrengthTips } from '@/lib/password-validation'
 
 // ========== SCHEMA ==========
 const cadastroSchema = z.object({
   email: z.string().email('E-mail de acesso inválido'),
-  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  password: strongPasswordSchema,
   razao_social: z.string().min(3, 'Razão social é obrigatória'),
   cnpj: z.string().min(18, 'CNPJ inválido'),
   telefone: z.string().optional().or(z.literal('')),
@@ -298,12 +299,23 @@ export function EscolaCadastroPage() {
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha *</Label>
                     <div className="relative">
-                      <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" {...register('password')} />
+                      <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres e 1 maiúscula" {...register('password')} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     {errors.password && <p className="text-xs text-destructive font-medium">{errors.password.message}</p>}
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 space-y-2">
+                      <p className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">Dicas de Senha Forte:</p>
+                      <ul className="space-y-1">
+                        {getPasswordStrengthTips().slice(0, 3).map((tip, idx) => (
+                          <li key={idx} className="text-[10px] text-indigo-700 flex items-start gap-1.5">
+                            <Check className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     <div className="flex flex-col gap-3 pt-3">
                       <label className="flex items-start gap-3 cursor-pointer group">
                         <input

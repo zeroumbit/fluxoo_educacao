@@ -7,22 +7,36 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Eye, EyeOff, Lock, Check } from 'lucide-react'
+import { GraduationCap, Loader2, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react'
 import { validarEmail } from '@/lib/validacoes'
 import { useAuth } from './AuthContext'
+import { useLoginRateLimit } from '@/hooks/useLoginRateLimit'
+import { strongPasswordSchema } from '@/lib/password-validation'
 
 const loginSchema = z.object({
   email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: strongPasswordSchema,
 })
 
 type LoginForm = z.infer<typeof loginSchema>
 
+/**
+ * Formata tempo em segundos para MM:SS
+ */
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 export function LoginPage() {
   const navigate = useNavigate()
   const { authUser, loading, signIn } = useAuth()
+  const { checkAttempt, recordFailedAttempt, resetAttempts, getWaitTime, getRemainingAttempts } = useLoginRateLimit()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [isLocked, setIsLocked] = useState(false)
+  const [waitTime, setWaitTime] = useState(0)
 
   // Redireciona se já estiver logado
   useEffect(() => {
@@ -33,18 +47,64 @@ export function LoginPage() {
     }
   }, [authUser, loading, navigate])
 
+  // Verifica se está bloqueado e atualiza contador
+  useEffect(() => {
+    const checkLock = () => {
+      const remaining = getRemainingAttempts()
+      const time = getWaitTime()
+      
+      if (time > 0) {
+        setIsLocked(true)
+        setWaitTime(time)
+        setError(`Muitas tentativas falhas. Tente novamente em ${formatTime(time)}`)
+      } else {
+        setIsLocked(false)
+        setWaitTime(0)
+        if (remaining <= 2 && remaining > 0) {
+          setError(`Atenção: você tem apenas ${remaining} tentativa(s) restante(s)`)
+        } else {
+          setError(null)
+        }
+      }
+    }
+
+    checkLock()
+    
+    // Atualiza contador a cada segundo
+    const interval = setInterval(checkLock, 1000)
+    return () => clearInterval(interval)
+  }, [getRemainingAttempts, getWaitTime])
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
 
   const onSubmit = async (data: LoginForm) => {
     setError(null)
+
+    // Verifica rate limiting
+    if (!checkAttempt()) {
+      const time = getWaitTime()
+      setError(`Muitas tentativas falhas. Tente novamente em ${formatTime(time)}`)
+      return
+    }
+
     const result = await signIn(data.email, data.password)
 
     if (result.error) {
-      setError(result.error)
+      // Registra tentativa falha
+      recordFailedAttempt()
+      
+      // Mostra erro
+      const remaining = getRemainingAttempts()
+      if (remaining > 0) {
+        setError(`${result.error} (${remaining} tentativa(s) restante(s))`)
+      }
       return
     }
+
+    // Login sucesso: reseta tentativas
+    resetAttempts()
 
     // A navegação agora pode ser feita baseada no papel ou deixada para o RootRedirect
     // Mas para uma experiência mais rápida, podemos tentar inferir aqui
@@ -134,15 +194,24 @@ export function LoginPage() {
               </div>
 
               {error && (
-                <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg p-3">
-                  {error}
+                <div className={`text-sm rounded-lg p-3 flex items-start gap-2 ${
+                  isLocked 
+                    ? 'bg-amber-50 border border-amber-200 text-amber-800' 
+                    : 'bg-destructive/10 border border-destructive/20 text-destructive'
+                }`}>
+                  {isLocked && <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />}
+                  <span>{error}</span>
                 </div>
               )}
 
               <Button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-200 transition-all duration-300 rounded-xl"
+                disabled={isSubmitting || isLocked}
+                className={`w-full h-11 shadow-lg shadow-zinc-200 transition-all duration-300 rounded-xl ${
+                  isLocked
+                    ? 'bg-zinc-300 cursor-not-allowed text-zinc-500'
+                    : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+                }`}
               >
                 {isSubmitting ? (
                   <>
