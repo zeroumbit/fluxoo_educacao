@@ -60,7 +60,7 @@ export const financeiroService = {
 
   async criar(cobranca: CobrancaInsert, userId?: string) {
     // Validação RBAC: financeiro.cobrancas.create
-    if (userId) {
+    if (userId && cobranca.tenant_id) {
       await validarPermissao(userId, cobranca.tenant_id, 'financeiro.cobrancas.create')
     }
 

@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { 
-  useEscolas, 
-  useUpdateEscolaStatus 
+import {
+  useEscolas,
+  useUpdateEscolaStatus,
+  useSuspenderEscola,
+  useEscolaDetalhes
 } from '../hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,11 +17,11 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table'
-import { 
-  Search, 
-  Building2, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Search,
+  Building2,
+  CheckCircle2,
+  XCircle,
   ExternalLink,
   MoreHorizontal,
   Mail,
@@ -27,7 +29,13 @@ import {
   Calendar,
   CreditCard,
   QrCode,
-  FileText
+  FileText,
+  Eye,
+  Ban,
+  AlertTriangle,
+  Phone,
+  MapPin,
+  TrendingUp
 } from 'lucide-react'
 import { 
   DropdownMenu, 
@@ -37,6 +45,15 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -44,7 +61,14 @@ import { ptBR } from 'date-fns/locale'
 export function EscolasPageWeb() {
   const { data: escolas, isLoading } = useEscolas()
   const updateStatus = useUpdateEscolaStatus()
+  const suspenderEscola = useSuspenderEscola()
   const [searchTerm, setSearchTerm] = useState('')
+  const [escolaSelecionada, setEscolaSelecionada] = useState<string | null>(null)
+  const [dialogDetalhesAberto, setDialogDetalhesAberto] = useState(false)
+  const [dialogSuspensaoAberto, setDialogSuspensaoAberto] = useState(false)
+  const [motivoSuspensao, setMotivoSuspensao] = useState('')
+
+  const { data: detalhesEscola } = useEscolaDetalhes(escolaSelecionada)
 
   const filteredEscolas = escolas?.filter(escola =>
     escola.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,6 +81,32 @@ export function EscolasPageWeb() {
       toast.success('Escola aprovada e ativada com sucesso!')
     } catch {
       toast.error('Erro ao aprovar escola.')
+    }
+  }
+
+  const handleVerDetalhes = (id: string) => {
+    setEscolaSelecionada(id)
+    setDialogDetalhesAberto(true)
+  }
+
+  const handleSuspenderAcesso = (id: string) => {
+    setEscolaSelecionada(id)
+    setMotivoSuspensao('')
+    setDialogSuspensaoAberto(true)
+  }
+
+  const handleConfirmarSuspensao = async () => {
+    if (!motivoSuspensao.trim()) {
+      toast.error('Informe o motivo da suspensão.')
+      return
+    }
+    try {
+      await suspenderEscola.mutateAsync({ id: escolaSelecionada!, motivo: motivoSuspensao.trim() })
+      toast.success('Escola suspensa com sucesso.')
+      setDialogSuspensaoAberto(false)
+      setEscolaSelecionada(null)
+    } catch {
+      toast.error('Erro ao suspender escola.')
     }
   }
 
@@ -204,9 +254,9 @@ export function EscolasPageWeb() {
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuLabel>Opções da Escola</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        
+
                         {escola.status_assinatura === 'pendente' && (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleApprove(escola.id)}
                             className="text-emerald-600 focus:text-emerald-700 font-bold"
                           >
@@ -215,13 +265,16 @@ export function EscolasPageWeb() {
                           </DropdownMenuItem>
                         )}
 
-                        <DropdownMenuItem>
-                          <ExternalLink className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem onClick={() => handleVerDetalhes(escola.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
                           Ver Detalhes
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          <XCircle className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem 
+                          onClick={() => handleSuspenderAcesso(escola.id)}
+                          className="text-destructive focus:text-destructive font-bold"
+                        >
+                          <Ban className="mr-2 h-4 w-4" />
                           Suspender Acesso
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -233,6 +286,261 @@ export function EscolasPageWeb() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog de Detalhes da Escola */}
+      <Dialog open={dialogDetalhesAberto} onOpenChange={setDialogDetalhesAberto}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-indigo-600" />
+              Detalhes da Escola
+            </DialogTitle>
+            <DialogDescription>
+              Informações completas da instituição e dados contratuais.
+            </DialogDescription>
+          </DialogHeader>
+
+          {detalhesEscola ? (
+            <div className="space-y-6">
+              {/* Informações Básicas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Razão Social</p>
+                  <p className="font-semibold text-zinc-900">{detalhesEscola.razao_social}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">CNPJ</p>
+                  <p className="font-medium text-zinc-700">{detalhesEscola.cnpj}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Status</p>
+                  <div className="mt-1">{getStatusBadge(detalhesEscola.status_assinatura)}</div>
+                </div>
+              </div>
+
+              {/* Endereço */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-indigo-700">
+                  <MapPin className="h-5 w-5" />
+                  <h4 className="font-bold text-sm uppercase tracking-wide">Endereço</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Logradouro</p>
+                    <p className="font-medium">{detalhesEscola.logradouro}, {detalhesEscola.numero}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Bairro</p>
+                    <p className="font-medium">{detalhesEscola.bairro}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cidade/UF</p>
+                    <p className="font-medium">{detalhesEscola.cidade}/{detalhesEscola.estado}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">CEP</p>
+                    <p className="font-medium">{detalhesEscola.cep}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gestor */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-indigo-700">
+                  <User className="h-5 w-5" />
+                  <h4 className="font-bold text-sm uppercase tracking-wide">Gestor / Contato</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nome do Gestor</p>
+                    <p className="font-medium">{detalhesEscola.nome_gestor || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">E-mail</p>
+                    <p className="font-medium">{detalhesEscola.email_gestor}</p>
+                  </div>
+                  {detalhesEscola.telefone && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Telefone</p>
+                      <p className="font-medium">{detalhesEscola.telefone}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Plano e Assinatura */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-indigo-700">
+                  <CreditCard className="h-5 w-5" />
+                  <h4 className="font-bold text-sm uppercase tracking-wide">Plano e Assinatura</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Plano</p>
+                    <p className="font-bold text-indigo-700">{detalhesEscola.plano?.nome || 'Nenhum'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Valor/Aluno</p>
+                    <p className="font-medium">
+                      {detalhesEscola.plano?.valor_por_aluno 
+                        ? `R$ ${Number(detalhesEscola.plano.valor_por_aluno).toFixed(2).replace('.', ',')}`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Método Pagamento</p>
+                    <p className="font-medium capitalize">{detalhesEscola.metodo_pagamento?.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Limite Alunos</p>
+                    <p className="font-medium">{detalhesEscola.limite_alunos_contratado || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Datas Importantes */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-indigo-700">
+                  <Calendar className="h-5 w-5" />
+                  <h4 className="font-bold text-sm uppercase tracking-wide">Datas Importantes</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cadastro</p>
+                    <p className="font-medium">
+                      {format(new Date(detalhesEscola.created_at), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                  {detalhesEscola.data_inicio && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Início</p>
+                      <p className="font-medium">
+                        {format(new Date(detalhesEscola.data_inicio), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                  )}
+                  {detalhesEscola.data_suspensao && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Suspensão</p>
+                      <p className="font-medium text-destructive">
+                        {format(new Date(detalhesEscola.data_suspensao), "dd 'de' MMM, yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Motivo da Suspensão (se houver) */}
+              {detalhesEscola.motivo_suspensao && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    <h4 className="font-bold text-sm uppercase tracking-wide">Motivo da Suspensão</h4>
+                  </div>
+                  <div className="bg-destructive/5 border border-destructive/20 p-4 rounded-lg">
+                    <p className="text-sm text-destructive">{detalhesEscola.motivo_suspensao}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Filiais */}
+              {detalhesEscola.filiais && detalhesEscola.filiais.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-indigo-700">
+                    <Building2 className="h-5 w-5" />
+                    <h4 className="font-bold text-sm uppercase tracking-wide">Filiais ({detalhesEscola.filiais.length})</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {detalhesEscola.filiais.map((filial: any) => (
+                      <div key={filial.id} className="bg-zinc-50 p-3 rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{filial.nome_fantasia}</p>
+                          <p className="text-xs text-muted-foreground">{filial.cidade}/{filial.estado}</p>
+                        </div>
+                        <Badge variant={filial.status === 'ativo' ? 'default' : 'secondary'}>
+                          {filial.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <Building2 className="h-8 w-8 animate-pulse text-muted-foreground" />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogDetalhesAberto(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Suspensão */}
+      <Dialog open={dialogSuspensaoAberto} onOpenChange={setDialogSuspensaoAberto}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-destructive">
+              <Ban className="h-6 w-6" />
+              Suspender Acesso da Escola
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Esta ação irá bloquear o acesso de todos os usuários da escola.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-amber-800">Atenção - Ação Irreversível</p>
+                  <ul className="text-xs text-amber-700 space-y-1 list-disc list-inside">
+                    <li>Todos os usuários perderão o acesso imediatamente</li>
+                    <li>A escola não poderá emitir novas cobranças</li>
+                    <li>O acesso administrativo será bloqueado</li>
+                    <li>Dados permanecem armazenados para consulta</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-700">
+                Motivo da Suspensão <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                value={motivoSuspensao}
+                onChange={(e) => setMotivoSuspensao(e.target.value)}
+                placeholder="Descreva o motivo da suspensão (ex: inadimplência, solicitação do cliente, etc.)"
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDialogSuspensaoAberto(false)}
+              disabled={suspenderEscola.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmarSuspensao}
+              disabled={suspenderEscola.isPending || !motivoSuspensao.trim()}
+            >
+              {suspenderEscola.isPending && <Building2 className="h-4 w-4 animate-spin mr-2" />}
+              Confirmar Suspensão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

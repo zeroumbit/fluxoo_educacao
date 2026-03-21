@@ -309,7 +309,7 @@ export function DashboardPageWeb() {
       {/* Notificação de Alunos Sem Matrícula */}
       {(dashboardData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (
         <AlunosSemMatriculaNotification
-          count={dashboardData.alunosSemMatricula!}
+          count={dashboardData?.alunosSemMatricula ?? 0}
           onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
         />
       )}

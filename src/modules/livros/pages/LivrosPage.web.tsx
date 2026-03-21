@@ -115,9 +115,6 @@ export function LivrosPage() {
     resolver: zodResolver(materialSchema) as any,
     defaultValues: {
       turmasIds: [],
-      status: 'Ativo',
-      obrigatoriedade: 'Obrigatório',
-      periodo_uso: 'Início do ano',
       incluir_na_lista_oficial: true,
       is_uso_coletivo: false,
       quantidade_sugerida: 1,

@@ -48,8 +48,8 @@ const navigationGroups = [
     label: 'Acadêmico',
     items: [
       { name: 'Alunos', href: '/alunos', icon: Users },
-      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
       { name: 'Turmas', href: '/turmas', icon: BookOpen },
+      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
       { name: 'Boletim', href: '/notas', icon: GraduationCap },
       { name: 'Livros e Materiais', href: '/livros', icon: BookOpen },

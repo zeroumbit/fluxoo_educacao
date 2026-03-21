@@ -130,6 +130,33 @@ export const superAdminService = {
     return data
   },
 
+  async suspenderEscola(id: string, motivo: string) {
+    const { data, error } = await (supabase.from('escolas' as any) as any)
+      .update({
+        status_assinatura: 'suspensa',
+        motivo_suspensao: motivo,
+        data_suspensao: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as any)
+      .eq('id', id).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async getEscolaDetalhes(id: string) {
+    const { data, error } = await (supabase.from('escolas' as any) as any)
+      .select(`
+        *,
+        plano:planos(nome, valor_por_aluno),
+        assinatura:assinaturas(*),
+        filiais:filiais(*)
+      `)
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  },
+
   // ==========================================
   // ASSINATURAS
   // ==========================================

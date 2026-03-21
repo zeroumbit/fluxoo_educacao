@@ -98,6 +98,26 @@ export function useUpdateEscolaStatus() {
   })
 }
 
+export function useSuspenderEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
+      superAdminService.suspenderEscola(id, motivo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useEscolaDetalhes(id: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'escola-detalhes', id],
+    queryFn: () => superAdminService.getEscolaDetalhes(id!),
+    enabled: !!id,
+  })
+}
+
 // ========== ASSINATURAS ==========
 export function useAssinaturas() {
   return useQuery({
