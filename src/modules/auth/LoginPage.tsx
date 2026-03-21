@@ -11,7 +11,7 @@ import { GraduationCap, Loader2, Eye, EyeOff, Lock, Check, AlertTriangle } from 
 import { validarEmail } from '@/lib/validacoes'
 import { useAuth } from './AuthContext'
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit'
-import { strongPasswordSchema } from '@/lib/password-validation'
+import { loginPasswordSchema } from '@/lib/password-validation'
 
 const loginSchema = z.object({
   email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),

@@ -4,32 +4,53 @@
  * Regras de validação para senhas na plataforma FluxoEdu.
  * 
  * REGRAS ATUAIS:
- * - Mínimo 8 caracteres
- * - Pelo menos 1 letra maiúscula
+ * - NOVAS senhas: Mínimo 8 caracteres + Pelo menos 1 letra maiúscula
+ * - Senhas ANTIGAS: Continuam válidas (6+ caracteres, sem maiúscula)
  * 
- * RECOMENDAÇÃO (opcional, para UX):
- * - Letras maiúsculas e minúsculas
- * - Números
- * - Símbolos especiais
- * 
- * IMPORTANTE: Senhas existentes fora do padrão continuam válidas.
- * Esta validação aplica-se apenas a NOVAS senhas ou alteração de senha.
+ * IMPORTANTE: Senhas existentes fora do padrão continuam válidas para LOGIN.
+ * Esta validação forte aplica-se apenas a NOVAS senhas ou alteração de senha.
  */
 
 import { z } from 'zod'
 
 /**
- * Schema Zod para validação de senha forte
+ * Schema Zod para LOGIN - Aceita qualquer senha (retrocompatibilidade)
  * 
  * USO:
- * const schema = z.object({
+ * const loginSchema = z.object({
+ *   password: loginPasswordSchema,
+ * })
+ * 
+ * PERMITE: Senhas antigas de 6+ caracteres, mesmo sem maiúscula
+ */
+export const loginPasswordSchema = z
+  .string()
+  .min(1, 'Senha é obrigatória')
+
+/**
+ * Schema Zod para CADASTRO/TROCA DE SENHA - Exige senha forte
+ * 
+ * USO:
+ * const cadastroSchema = z.object({
  *   password: strongPasswordSchema,
  * })
+ * 
+ * EXIGE: 8+ caracteres e 1 maiúscula (apenas para novas senhas)
  */
 export const strongPasswordSchema = z
   .string()
   .min(8, 'A senha deve ter no mínimo 8 caracteres')
   .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula')
+
+/**
+ * Schema Zod para TROCA DE SENHA (Portal) - Exige senha forte
+ * 
+ * USO:
+ * const trocaSenhaSchema = z.object({
+ *   novaSenha: changePasswordSchema,
+ * })
+ */
+export const changePasswordSchema = strongPasswordSchema
 
 /**
  * Mensagens de validação para exibição ao usuário
@@ -38,6 +59,7 @@ export const passwordValidationMessages = {
   minLength: 'A senha deve ter no mínimo 8 caracteres',
   uppercase: 'A senha deve conter pelo menos uma letra maiúscula',
   recommendation: 'Para maior segurança, use também letras minúsculas, números e símbolos especiais.',
+  loginError: 'Senha inválida. Verifique se está digitando corretamente.',
 }
 
 /**
