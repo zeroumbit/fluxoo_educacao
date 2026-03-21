@@ -248,7 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     usePortalStore.getState().clearStore()
     // Limpar permissões RBAC cacheadas
     useRBACStore.getState().clearPermissions()
-    window.location.href = '/login'
+    window.location.href = '/portal/login'
   }
 
   return (

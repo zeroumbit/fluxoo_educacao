@@ -58,7 +58,7 @@ export async function validarPermissao(
   }
 
   // 2. Super Admin tem acesso total
-  if (userData?.perfil?.nome === 'Super Admin') {
+  if (userData && 'perfil' in userData && Array.isArray(userData.perfil) && userData.perfil[0]?.nome === 'Super Admin') {
     return // Acesso concedido
   }
 

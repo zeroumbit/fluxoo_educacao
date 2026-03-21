@@ -1,12 +1,23 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut, GraduationCap } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 export function PortalLayoutV2Web() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
-  const handleLogout = () => {
-    navigate('/login');
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      // signOut() já faz o redirecionamento via window.location.href
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const navItems = [
@@ -56,11 +67,21 @@ export function PortalLayoutV2Web() {
             <button
               onClick={() => navigate('/portal/perfil')}
               className="flex items-center gap-2 text-slate-500 hover:text-teal-600 transition-colors font-bold text-sm"
+              disabled={isLoggingOut}
             >
               <User size={18} /> Meu Perfil
             </button>
-            <button onClick={handleLogout} className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors">
-              <LogOut size={18} />
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isLoggingOut ? 'Saindo...' : 'Sair'}
+            >
+              {isLoggingOut ? (
+                <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <LogOut size={18} />
+              )}
             </button>
           </div>
         </div>
