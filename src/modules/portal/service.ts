@@ -5,14 +5,14 @@ export const portalService = {
   // AUTENTICAÇÃO POR CPF
   // ==========================================
   async loginPorCpf(cpf: string, senha: string) {
-    // Busca responsável pelo CPF (nunca revelar se CPF existe ou não)
+    // Busca informações de login via RPC segura (não expõe a tabela via RLS)
     const cpfLimpo = cpf.replace(/\D/g, '')
-    const { data: responsavel, error } = await supabase.from('responsaveis')
-      .select('id, cpf, nome, email, telefone, user_id, primeiro_acesso, termos_aceitos, status')
-      .or(`cpf.eq.${cpfLimpo},cpf.eq.${cpf}`)
-      .maybeSingle()
+    const { data: responsavel, error: rpcError } = await (supabase.rpc('get_portal_login_info', {
+      cpf_input: cpfLimpo
+    }) as any)
 
-    if (error || !responsavel) {
+    if (rpcError || !responsavel) {
+      console.error('Erro ao buscar responsável:', rpcError)
       throw new Error('CPF ou senha inválidos.')
     }
 

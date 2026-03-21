@@ -101,6 +101,12 @@ export function EscolaCadastroPage() {
     }
   }, [selectedEstado])
 
+  useEffect(() => {
+    if (configPix && configPix.mercado_pago_ativo === false) {
+      setValue('metodo_pagamento', 'pix_manual')
+    }
+  }, [configPix])
+
   const buscarCep = async (cep: string) => {
     const data = await fetchAddressByCEP(cep)
     if (data && !('error' in data)) {
@@ -138,17 +144,36 @@ export function EscolaCadastroPage() {
 
   // ===== Submit =====
   const onSubmit = async (data: FormValues) => {
-    console.log('Iniciando submissão:', data)
+    console.log('Iniciando submissão final do cadastro:', data)
     try {
-      // 1. Supabase Auth
+      // 1. Supabase Auth - SignUp
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email, password: data.password,
         options: { data: { full_name: data.nome_gestor, role: 'gestor' } }
       })
-      if (authError) throw authError
-      if (!authData.user) throw new Error('Erro ao criar usuário')
 
-      // 2. Escola
+      if (authError) {
+        console.warn('Alerta no SignUp:', authError.message)
+        // Se já existe ou deu erro de limite mas queremos tentar seguir se já houver ID
+        if (!authError.message.includes('already registered') && !authError.message.includes('rate limit')) {
+           throw authError
+        }
+      }
+
+      // Procura o ID do usuário de todas as formas possíveis
+      let finalUserId = authData.user?.id
+      
+      if (!finalUserId) {
+        // Tenta obter o usuário da sessão atual (caso o signUp tenha funcionado mas o rate limit travou o e-mail)
+        const { data: { user } } = await supabase.auth.getUser()
+        finalUserId = user?.id
+      }
+      
+      if (!finalUserId) throw new Error('Falha ao identificar usuário. Por favor, aguarde alguns minutos ou use outro e-mail.')
+
+      console.log('ID do Gestor identificado:', finalUserId)
+
+      // 2. Criação da Escola
       const escola = await criarEscola.mutateAsync({
         slug: generateSlug(data.razao_social),
         razao_social: data.razao_social,
@@ -167,11 +192,14 @@ export function EscolaCadastroPage() {
         limite_alunos_contratado: data.limite_alunos_contratado,
         status_assinatura: 'pendente',
         metodo_pagamento: data.metodo_pagamento,
-        gestor_user_id: authData.user.id,
+        gestor_user_id: finalUserId,
         data_inicio: null, data_fim: null,
         data_vencimento_assinatura: null,
       })
-      // 2.2. Criar Filial Matriz Automaticamente
+
+      console.log('Escola criada com sucesso:', escola.id)
+
+      // 3. Filial Matriz
       await criarFilial.mutateAsync({
         tenant_id: escola.id,
         nome_unidade: 'Matriz',
@@ -185,7 +213,7 @@ export function EscolaCadastroPage() {
         estado: data.estado,
       })
 
-      // 3. Assinatura contratual
+      // 4. Assinatura e Fatura
       const hoje = new Date().toISOString().split('T')[0]
       const assinatura = await criarAssinatura.mutateAsync({
         tenant_id: escola.id,
@@ -198,44 +226,32 @@ export function EscolaCadastroPage() {
         data_inicio: hoje,
       })
 
-      // 4. Fatura inicial
       let comprovanteUrl: string | undefined
       if (data.metodo_pagamento === 'pix_manual' && comprovante) {
         const ext = comprovante.name.split('.').pop()
         const path = `comprovantes/${escola.id}/${Date.now()}.${ext}`
-        const { error: uploadError } = await supabase.storage
-          .from('comprovantes')
-          .upload(path, comprovante)
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(path)
-          comprovanteUrl = urlData.publicUrl
-        }
+        await supabase.storage.from('comprovantes').upload(path, comprovante)
+        const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(path)
+        comprovanteUrl = urlData.publicUrl
       }
-
-      const vencimento = new Date()
-      vencimento.setDate(vencimento.getDate() + 5)
 
       await criarFatura.mutateAsync({
         tenant_id: escola.id,
         assinatura_id: assinatura.id,
         competencia: hoje,
         valor: totalMensal,
-        data_vencimento: vencimento.toISOString().split('T')[0],
+        data_vencimento: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: data.metodo_pagamento === 'mercado_pago' ? 'pendente' : 'pendente_confirmacao',
         forma_pagamento: data.metodo_pagamento,
         comprovante_url: comprovanteUrl,
       })
 
-      if (data.metodo_pagamento === 'mercado_pago') {
-        toast.success('Cadastro realizado! Redirecionando para o pagamento...')
-        setTimeout(() => navigate('/login'), 2500)
-      } else {
-        toast.success('Cadastro enviado! Aguarde a confirmação do comprovante.')
-        navigate('/login')
-      }
+      toast.success('Escola registrada com sucesso!')
+      setTimeout(() => navigate('/login'), 2000)
+
     } catch (err) {
-      console.error('Erro no checkout:', err)
-      toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar')
+      console.error('Falha crítica no onboarding:', err)
+      toast.error(err instanceof Error ? err.message : 'Erro ao processar cadastro')
     }
   }
 
@@ -479,16 +495,18 @@ export function EscolaCadastroPage() {
                       onValueChange={(val: string) => setValue('metodo_pagamento', val as any, { shouldValidate: true })} 
                       className="grid gap-2"
                     >
-                      <label className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer", metodoPgto === 'mercado_pago' ? "border-indigo-600 bg-indigo-50/30" : "border-zinc-100")}>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center"><CreditCard className="h-4 w-4 text-indigo-600" /></div>
-                          <div><p className="text-sm font-bold text-zinc-900 leading-none mb-1">Mercado Pago</p><p className="text-[10px] text-muted-foreground">Cartão ou Saldo (Ativação automática)</p></div>
-                        </div>
-                        <RadioGroupItem value="mercado_pago" className="sr-only" />
-                        {metodoPgto === 'mercado_pago' && <Check className="h-4 w-4 text-indigo-600" />}
-                      </label>
+                      {(!configPix || configPix.mercado_pago_ativo !== false) && (
+                        <label className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer", metodoPgto === 'mercado_pago' ? "border-indigo-600 bg-indigo-50/30" : "border-zinc-100")}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center"><CreditCard className="h-4 w-4 text-indigo-600" /></div>
+                            <div><p className="text-sm font-bold text-zinc-900 leading-none mb-1">Mercado Pago</p><p className="text-[10px] text-muted-foreground">Cartão ou Saldo (Ativação automática)</p></div>
+                          </div>
+                          <RadioGroupItem value="mercado_pago" className="sr-only" />
+                          {metodoPgto === 'mercado_pago' && <Check className="h-4 w-4 text-indigo-600" />}
+                        </label>
+                      )}
 
-                      {pixAtivo && (
+                      {(pixAtivo || !configPix || configPix.mercado_pago_ativo === false) && (
                         <label className={cn("flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer", metodoPgto === 'pix_manual' ? "border-emerald-600 bg-emerald-50/30" : "border-zinc-100")}>
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center"><QrCode className="h-4 w-4 text-emerald-600" /></div>
