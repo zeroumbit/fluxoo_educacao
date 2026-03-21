@@ -15,7 +15,7 @@ import { loginPasswordSchema } from '@/lib/password-validation'
 
 const loginSchema = z.object({
   email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),
-  password: strongPasswordSchema,
+  password: loginPasswordSchema,
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -172,7 +172,7 @@ export function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••"
+                    placeholder="Sua senha de acesso"
                     {...register('password')}
                     className="h-11 pr-10"
                   />
@@ -191,6 +191,9 @@ export function LoginPage() {
                 {errors.password && (
                   <p className="text-xs text-destructive font-medium">{errors.password.message}</p>
                 )}
+                <p className="text-[10px] text-muted-foreground">
+                  ℹ️ Senhas antigas (6+ caracteres) continuam válidas
+                </p>
               </div>
 
               {error && (

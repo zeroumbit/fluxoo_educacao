@@ -11,10 +11,11 @@ import { GraduationCap, Loader2, Eye, EyeOff, User, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { mascaraCPF } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { loginPasswordSchema } from '@/lib/password-validation'
 
 const portalLoginSchema = z.object({
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: loginPasswordSchema,
 })
 
 type PortalLoginForm = z.infer<typeof portalLoginSchema>
@@ -147,6 +148,9 @@ export function PortalLoginPage() {
                 {errors.password && (
                   <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider ml-1 mt-1">{errors.password.message}</p>
                 )}
+                <p className="text-[9px] text-[#64748B] font-medium ml-1 mt-1">
+                  ℹ️ Senhas antigas (6+ caracteres) continuam válidas
+                </p>
               </div>
 
               {error && (
