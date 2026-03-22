@@ -182,6 +182,7 @@ export const portalService = {
         .in('status', ['a_vencer', 'atrasado', 'pago'])
       ,
       // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
+      // Filtro no banco: data_fim null OU >= hoje
       (supabase.from('mural_avisos' as any) as any)
         .select(`
           id,
@@ -209,26 +210,49 @@ export const portalService = {
       ? Math.round(((totalPresencas + totalJustificadas) / frequencias.length) * 100) : 100
 
     const cobrancas = (cobrancasRes.data as any[]) || []
-    
+
     // Separa cobranças de matrícula das demais (mensalidades)
-    const cobrancasMatricula = cobrancas.filter((c: any) => 
+    const cobrancasMatricula = cobrancas.filter((c: any) =>
       c.descricao?.toLowerCase().includes('matrícula') || c.descricao?.toLowerCase().includes('matricula')
     )
-    const cobrancasMensalidade = cobrancas.filter((c: any) => 
+    const cobrancasMensalidade = cobrancas.filter((c: any) =>
       !c.descricao?.toLowerCase().includes('matrícula') && !c.descricao?.toLowerCase().includes('matricula')
     )
-    
-    // Total pendente considera apenas mensalidades (matrícula paga não aparece mais)
-    const totalPendente = cobrancasMensalidade
+
+    // Total pendente considera mensalidades E matrícula (se estiver pendente)
+    const totalPendenteMensalidades = cobrancasMensalidade
       .filter((c: any) => ['a_vencer', 'atrasado'].includes(c.status))
       .reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
-    const totalAtrasadas = cobrancasMensalidade.filter((c: any) => c.status === 'atrasado').length
+    
+    const totalPendenteMatricula = cobrancasMatricula
+      .filter((c: any) => ['a_vencer', 'atrasado'].includes(c.status))
+      .reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
 
+    const totalPendente = totalPendenteMensalidades + totalPendenteMatricula
+    const totalAtrasadas = cobrancasMensalidade.filter((c: any) => c.status === 'atrasado').length +
+                           cobrancasMatricula.filter((c: any) => c.status === 'atrasado').length
+
+    // Filtrar avisos: apenas do aluno/turma e COM DATA VÁLIDA
     let todosAvisos = (avisosRes.data as any[]) || []
+    
+    const hoje = new Date().toISOString().split('T')[0]
+    
     todosAvisos = todosAvisos.filter((a: any) => {
-      if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') return true
-      if (turmaId && a.turma_id === turmaId) return true
-      return false
+      // 1. Filtro por turma/público
+      if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') {
+        // Aviso global, verifica se está dentro do período válido
+      } else if (turmaId && a.turma_id === turmaId) {
+        // Aviso da turma específica
+      } else {
+        return false // Não é para este aluno
+      }
+      
+      // 2. Filtro por data: só mostra se NÃO expirou (data_fim >= hoje OU data_fim inexistente)
+      if (a.data_fim && a.data_fim < hoje) {
+        return false // Já expirou
+      }
+      
+      return true
     })
 
     return {
@@ -582,25 +606,29 @@ export const portalService = {
 
     if (!matricula?.turma_id) return []
 
-    // 2. Busca planos vinculados à turma
-    const { data, error } = await supabase.from('planos_aula_turmas')
-      .select(`
-        horario,
-        turno,
-        plano:planos_aula(
-          id,
-          titulo,
-          conteudo,
-          data_aula,
-          disciplina,
-          objetivos
-        )
-      `)
+    // 2. Busca planos vinculados à turma (sem join, pois a FK não está definida no schema)
+    const { data: planosTurmas, error } = await supabase.from('planos_aula_turmas')
+      .select('plano_aula_id, horario, turno')
       .eq('turma_id', matricula.turma_id)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data || []
+    if (!planosTurmas || planosTurmas.length === 0) return []
+
+    // 3. Busca os detalhes dos planos de aula
+    const planoIds = planosTurmas.map(pt => pt.plano_aula_id)
+    const { data: planos, error: planosError } = await supabase.from('planos_aula')
+      .select('id, titulo, conteudo, data_aula, disciplina, objetivos')
+      .in('id', planoIds)
+
+    if (planosError) throw planosError
+
+    // 4. Combina os dados
+    return planosTurmas.map(pt => ({
+      horario: pt.horario,
+      turno: pt.turno,
+      plano: planos?.find(p => p.id === pt.plano_aula_id)
+    }))
   },
 
   // ==========================================

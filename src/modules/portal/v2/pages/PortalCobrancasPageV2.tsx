@@ -91,10 +91,32 @@ export function PortalCobrancasPageV2() {
       return { ...v.aluno, is_financeiro: v.is_financeiro, faturas }
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
-    const aVencer = allFaturas.filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= new Date()).reduce((acc, f) => acc + Number(f.valor), 0)
-    const atrasado = allFaturas.filter(f => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < new Date())).reduce((acc, f) => acc + Number(f.valor), 0)
-    const materiais = allFaturas.filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item')).reduce((acc, f) => acc + Number(f.valor), 0)
-    const proximoVenc = allFaturas.filter(f => f.status === 'a_vencer' || f.status === 'atrasado').sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
+    
+    // Data atual para comparação (meia-dia para evitar problemas de fuso)
+    const hoje = new Date()
+    hoje.setHours(12, 0, 0, 0)
+    
+    // A Vencer: status 'a_vencer' E data_vencimento >= hoje
+    const aVencer = allFaturas
+      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
+      .reduce((acc, f) => acc + Number(f.valor), 0)
+    
+    // Atrasado: status 'atrasado' OU (status 'a_vencer' mas data_vencimento < hoje)
+    const atrasado = allFaturas
+      .filter(f => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje))
+      .reduce((acc, f) => acc + Number(f.valor), 0)
+    
+    // Materiais/Compras
+    const materiais = allFaturas
+      .filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item'))
+      .reduce((acc, f) => acc + Number(f.valor), 0)
+    
+    // Próximo vencimento: APENAS cobranças a vencer (NÃO incluir atrasadas)
+    // Mostrar a MENOR data de vencimento que seja >= hoje
+    const proximoVenc = allFaturas
+      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
+      .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
+    
     return { resumo: { aVencer, atrasado, materiais, proximoVenc }, alunos: alunosComFaturas }
   }, [vinculos, cobrancasQueries, isLoadingCobrancas])
 

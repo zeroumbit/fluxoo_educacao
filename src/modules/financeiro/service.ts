@@ -183,12 +183,21 @@ export const financeiroService = {
 
     // 1. Gerar Cobrança da MATRÍCULA (Taxa Única)
     if (valor_matricula && Number(valor_matricula) > 0) {
+      const descricaoMatricula = `Matrícula - ${unidade || 'Taxa de Matrícula'}`
+      console.log('[gerarCobrancasIniciaisGenerico] Criando cobrança de matrícula:', {
+        descricao: descricaoMatricula,
+        valor: Number(valor_matricula),
+        data_vencimento: data_inicio,
+        aluno_id,
+        tenant_id
+      })
+      
       await this.criar({
         tenant_id,
         aluno_id,
-        descricao: `Taxa de Matrícula${sufixo}`,
+        descricao: descricaoMatricula,
         valor: Number(valor_matricula),
-        data_vencimento: data_inicio, 
+        data_vencimento: data_inicio,
         status: 'a_vencer',
         tipo_cobranca: 'mensalidade',
         turma_id: params.turma_id || null,
@@ -263,13 +272,11 @@ export const financeiroService = {
       }
 
       const valorProporcional = (valorMensalidadeComDesconto / ultimoDiaMes) * diasRestantes
-      
-      // Data de vencimento - Baseada no dia padrão da escola
-      let dataVencimento = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth(), diaVencimento)
-      // Se a data de início (matrícula) já passou do dia de vencimento do mês atual, joga para o próximo mês
-      if (dataInicioObj.getDate() > diaVencimento) {
-        dataVencimento.setMonth(dataVencimento.getMonth() + 1)
-      }
+
+      // Data de vencimento - 30 dias após a data de início (matrícula)
+      // Regra: primeira mensalidade vence 30 dias após a matrícula
+      let dataVencimento = new Date(dataInicioObj)
+      dataVencimento.setDate(dataVencimento.getDate() + 30)
 
       const valorFormatado = Number(valorProporcional.toFixed(2))
       

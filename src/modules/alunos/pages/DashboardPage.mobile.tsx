@@ -11,7 +11,12 @@ import {
   Plus,
   Calendar,
   Zap,
-  Bell
+  Bell,
+  Info,
+  Eye,
+  Phone,
+  Mail,
+  DollarSign,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -21,15 +26,198 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { useEffect, useState } from 'react'
 import { get, set } from 'idb-keyval'
 
 const CACHE_KEY = 'dashboard_cache'
 
+// ---------------------------------------------------------------------------
+// Sub-componente: BottomSheet de Detalhes do Radar de Evasão (Mobile)
+// ---------------------------------------------------------------------------
+interface RadarEvasaoBottomSheetProps {
+  aluno: RadarAluno | null
+  isOpen: boolean
+  onClose: () => void
+}
+
+function RadarEvasaoBottomSheetMobile({ aluno, isOpen, onClose }: RadarEvasaoBottomSheetProps) {
+  const navigate = useNavigate()
+
+  if (!aluno) return null
+
+  const nivel =
+    aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 5
+      ? 'CRÍTICO'
+      : aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3
+      ? 'ALERTA'
+      : 'ATENÇÃO'
+
+  const nivelColors = {
+    CRÍTICO: 'bg-red-600 text-white',
+    ALERTA: 'bg-amber-500 text-white',
+    ATENÇÃO: 'bg-yellow-400 text-yellow-900',
+  }
+
+  const nivelBgColors = {
+    CRÍTICO: 'bg-red-50',
+    ALERTA: 'bg-amber-50',
+    ATENÇÃO: 'bg-yellow-50',
+  }
+
+  const nivelIcons = {
+    CRÍTICO: AlertTriangle,
+    ALERTA: AlertTriangle,
+    ATENÇÃO: Info,
+  }
+
+  const NivelIcon = nivelIcons[nivel]
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Radar de Evasão" size="full">
+      <div className="space-y-6">
+        {/* Cabeçalho do Aluno */}
+        <div className="flex items-center gap-4 pb-4 border-b border-zinc-100">
+          <div className="h-16 w-16 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
+            <Users className="h-8 w-8 text-rose-600" />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-black text-2xl text-zinc-900 tracking-tight">{aluno.nome_completo}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-wider ${nivelColors[nivel]}`}>
+                Risco {nivel}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Caixa de Alerta Explicativa */}
+        <div className={`rounded-[1.5rem] p-5 border-2 ${nivelBgColors[nivel]} border-current`}>
+          <div className="flex items-start gap-3">
+            <NivelIcon className={`h-6 w-6 shrink-0 ${nivel === 'CRÍTICO' ? 'text-red-600' : nivel === 'ALERTA' ? 'text-amber-600' : 'text-yellow-600'}`} />
+            <div className="flex-1">
+              <h3 className={`font-black text-lg mb-1 ${nivel === 'CRÍTICO' ? 'text-red-900' : nivel === 'ALERTA' ? 'text-amber-900' : 'text-yellow-900'}`}>
+                Por que verificar este aluno?
+              </h3>
+              <p className={`text-sm font-medium ${nivel === 'CRÍTICO' ? 'text-red-700' : nivel === 'ALERTA' ? 'text-amber-700' : 'text-yellow-700'}`}>
+                Este aluno apresenta sinais de risco de evasão. É importante entrar em contato e entender a situação para evitar o abandono escolar.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Motivos do Risco */}
+        <div>
+          <h3 className="font-black text-lg text-zinc-900 tracking-tight mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-rose-500" />
+            Motivos do Risco
+          </h3>
+          <div className="space-y-3">
+            {aluno.faltas_consecutivas > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 border border-red-100">
+                <div className="h-10 w-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                  <Calendar className="h-5 w-5 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-red-900 text-base">
+                    {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} consecutiva{aluno.faltas_consecutivas > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-sm text-red-600 font-medium mt-0.5">
+                    Registradas nos últimos 21 dias
+                  </p>
+                </div>
+              </div>
+            )}
+            {aluno.cobrancas_atrasadas > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
+                <div className="h-10 w-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
+                  <DollarSign className="h-5 w-5 text-rose-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-rose-900 text-base">
+                    {aluno.cobrancas_atrasadas} cobrança{aluno.cobrancas_atrasadas > 1 ? 's' : ''} em atraso
+                  </p>
+                  <p className="text-sm text-rose-600 font-medium mt-0.5">
+                    Pendência{aluno.cobrancas_atrasadas > 1 ? 's' : ''} financeira{aluno.cobrancas_atrasadas > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recomendações */}
+        <div className="rounded-2xl bg-sky-50 border border-sky-100 p-5">
+          <h3 className="font-black text-zinc-900 mb-3 flex items-center gap-2">
+            <Eye className="h-5 w-5 text-sky-600" />
+            O que fazer?
+          </h3>
+          <ul className="space-y-2 text-sm font-medium text-sky-800">
+            <li className="flex items-start gap-2">
+              <span className="text-sky-600 font-black">•</span>
+              Entre em contato com o aluno ou responsável
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-sky-600 font-black">•</span>
+              Verifique a situação financeira
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-sky-600 font-black">•</span>
+              Registre a ocorrência no prontuário
+            </li>
+          </ul>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-zinc-100">
+          <Button
+            onClick={() => {
+              navigate(`/alunos/${aluno.aluno_id}`)
+              onClose()
+            }}
+            className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm px-6 h-12 shadow-sm shadow-rose-200"
+          >
+            <Users className="h-5 w-5 mr-2" />
+            Ver Perfil Completo
+          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-12"
+            >
+              <Phone className="h-4 w-4 mr-2" />
+              Ligar
+            </Button>
+            <Button
+              variant="outline"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-12"
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              Mensagem
+            </Button>
+          </div>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
 export function DashboardPageMobile() {
   const navigate = useNavigate()
   const { data: dashboardData, isLoading, refetch } = useDashboard()
   const [cachedData, setCachedData] = useState<any>(null)
+  const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
+  const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
+
+  const handleOpenRadarDetails = (aluno: RadarAluno) => {
+    setSelectedRadarAluno(aluno)
+    setIsRadarSheetOpen(true)
+  }
+
+  const handleCloseRadarSheet = () => {
+    setIsRadarSheetOpen(false)
+    setTimeout(() => setSelectedRadarAluno(null), 300)
+  }
 
   useEffect(() => {
     get(CACHE_KEY).then(val => { if (val) setCachedData(val) })
@@ -205,7 +393,7 @@ export function DashboardPageMobile() {
                     <motion.div
                       key={aluno.aluno_id}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate(`/alunos/${aluno.aluno_id}`)}
+                      onClick={() => handleOpenRadarDetails(aluno)}
                       className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4 cursor-pointer"
                     >
                       <div className="h-11 w-11 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-200 font-black text-base shrink-0">
@@ -277,6 +465,13 @@ export function DashboardPageMobile() {
           </div>
         </PullToRefresh>
       </div>
+
+      {/* BottomSheet de Detalhes do Radar de Evasão */}
+      <RadarEvasaoBottomSheetMobile
+        aluno={selectedRadarAluno}
+        isOpen={isRadarSheetOpen}
+        onClose={handleCloseRadarSheet}
+      />
     </div>
   )
 }

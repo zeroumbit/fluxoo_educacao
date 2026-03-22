@@ -33,7 +33,12 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
-  ChevronLeft
+  ChevronLeft,
+  Eye,
+  Calendar,
+  Clock,
+  BookOpen,
+  DollarSign
 } from 'lucide-react'
 
 const matriculaSchema = z.object({
@@ -69,6 +74,7 @@ export function MatriculaListPageWeb() {
   const [isEditing, setIsEditing] = useState(false)
   const [selectedMatricula, setSelectedMatricula] = useState<any>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   const form = useForm<MatriculaFormData>({
     resolver: zodResolver(matriculaSchema) as any,
@@ -229,6 +235,11 @@ export function MatriculaListPageWeb() {
       status: m.status
     })
     setDialogOpen(true)
+  }
+
+  const handleViewDetails = (m: any) => {
+    setSelectedMatricula(m)
+    setShowDetailsModal(true)
   }
 
   const handleCloseDialog = () => {
@@ -473,28 +484,37 @@ export function MatriculaListPageWeb() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-indigo-600 hover:bg-indigo-50" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-emerald-600 hover:bg-emerald-50"
+                        onClick={() => handleViewDetails(m)}
+                        title="Ver Detalhes da Matrícula"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
                         onClick={() => navigate(`/alunos/${m.aluno_id}`)}
                         title="Ver Detalhes do Aluno"
                       >
                         <User className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-blue-600 hover:bg-blue-50" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                         onClick={() => handleEdit(m)}
                         title="Editar Matrícula"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-red-600 hover:bg-red-50" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-600 hover:bg-red-50"
                         onClick={() => setDeleteId(m.id)}
                         title="Excluir Matrícula"
                       >
@@ -516,6 +536,121 @@ export function MatriculaListPageWeb() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Modal de Detalhes da Matrícula */}
+      <Dialog open={showDetailsModal} onOpenChange={(open: boolean) => !open && setShowDetailsModal(false)}>
+        <DialogContent className="max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
+              <Eye className="h-5 w-5 text-emerald-600" />
+              Detalhes da Matrícula
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Informações detalhadas da matrícula de {selectedMatricula?.aluno?.nome_completo}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            {/* Status Badge */}
+            <div className="flex justify-center pb-2">
+              <Badge className={`text-[11px] font-black h-[32px] px-6 rounded-full border-0 ${
+                selectedMatricula?.status === 'ativa' 
+                  ? 'bg-emerald-500 text-white' 
+                  : selectedMatricula?.status === 'cancelada'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-amber-500 text-white'
+              }`}>
+                {selectedMatricula?.status?.toUpperCase() || 'N/A'}
+              </Badge>
+            </div>
+
+            {/* Grid de Informações */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Ano Letivo */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Calendar size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Ano Letivo</p>
+                  <p className="text-[15px] font-semibold text-slate-900">{selectedMatricula?.ano_letivo || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Data da Matrícula */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Clock size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Data da Matrícula</p>
+                  <p className="text-[15px] font-semibold text-slate-900">
+                    {selectedMatricula?.data_matricula 
+                      ? new Date(selectedMatricula.data_matricula).toLocaleDateString('pt-BR')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Turma / Série */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <BookOpen size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Turma / Ano</p>
+                  <p className="text-[15px] font-semibold text-slate-900">{selectedMatricula?.serie_ano || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Turno */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                  <GraduationCap size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Turno</p>
+                  <p className="text-[15px] font-semibold text-slate-900">{turnoLabels[selectedMatricula?.turno] || selectedMatricula?.turno || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Valor da Matrícula */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                  <DollarSign size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Valor da Matrícula</p>
+                  <p className="text-[15px] font-semibold text-slate-900">
+                    {selectedMatricula?.valor_matricula 
+                      ? `R$ ${Number(selectedMatricula.valor_matricula).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Data da Primeira Cobrança */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="h-10 w-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <Calendar size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">Primeira Cobrança</p>
+                  <p className="text-[15px] font-semibold text-slate-900">
+                    {selectedMatricula?.data_primeira_cobranca 
+                      ? new Date(selectedMatricula.data_primeira_cobranca).toLocaleDateString('pt-BR')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetailsModal(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleteId} onOpenChange={(open: boolean) => !open && setDeleteId(null)}>
         <DialogContent>

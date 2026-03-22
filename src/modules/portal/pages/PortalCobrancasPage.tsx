@@ -266,7 +266,12 @@ export default function PortalCobrancasPage() {
     )
   }
 
-  const pendentes = cobrancas?.filter(c => c.status === 'a_vencer' || (c.status === 'a_vencer' && new Date(c.data_vencimento) < new Date())) || []
+  // Separar cobranças atrasadas das a vencer
+  const hoje = new Date()
+  hoje.setHours(12, 0, 0, 0)
+  
+  const aVencer = cobrancas?.filter(c => c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') >= hoje) || []
+  const atrasados = cobrancas?.filter(c => c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)) || []
   const pagos = cobrancas?.filter(c => c.status === 'pago') || []
 
   return (
@@ -286,37 +291,92 @@ export default function PortalCobrancasPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
-          
-          {/* 2. Pendentes / Timeline Flow */}
-          {pendentes.length > 0 && (
+
+          {/* 2. ATRASADOS */}
+          {atrasados.length > 0 && (
+            <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                     <h3 className="text-xs font-bold text-red-600 uppercase tracking-wider">Atrasados</h3>
+                  </div>
+                  <Badge className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase rounded-full px-3 h-5 border-0">{atrasados.length}</Badge>
+               </div>
+
+               <div className="space-y-3">
+                  <AnimatePresence mode="popLayout">
+                    {atrasados.map((cobranca, idx) => {
+                      return (
+                        <motion.div
+                          layout
+                          key={cobranca.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="group bg-white p-4 rounded-2xl border-2 border-red-100 shadow-sm cursor-pointer overflow-hidden relative active:scale-[0.98] transition-transform"
+                          onClick={() => {
+                            vibrate(20)
+                            setCobrancaAtiva(cobranca)
+                            setShowInvoice(true)
+                          }}
+                        >
+                          <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+                            <AlertCircle size={80} className="text-red-600" />
+                          </div>
+                          
+                          <div className="flex items-start justify-between relative z-10">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                                <AlertCircle className="w-5 h-5 text-red-600" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800">{cobranca.descricao}</p>
+                                <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider">
+                                  Venceu em {formatDate(cobranca.data_vencimento)}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-black text-red-600 text-lg">{formatCurrency(cobranca.valor)}</span>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </AnimatePresence>
+               </div>
+            </div>
+          )}
+
+          {/* 3. A VENCER / Pendentes */}
+          {aVencer.length > 0 && (
             <div className="space-y-4">
                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Em Aberto</h3>
+                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">A Vencer</h3>
                   </div>
-                  <Badge className="bg-slate-900 text-white text-[8px] font-semibold tracking-wider uppercase rounded-full px-3 h-5 border-0">{pendentes.length}</Badge>
+                  <Badge className="bg-slate-900 text-white text-[8px] font-semibold tracking-wider uppercase rounded-full px-3 h-5 border-0">{aVencer.length}</Badge>
                </div>
 
                {/* Carrinho Unificado */}
-               {pendentes.length > 1 && (
-                 <motion.div 
+               {aVencer.length > 1 && (
+                 <motion.div
                    initial={{ opacity: 0, y: 10 }}
                    animate={{ opacity: 1, y: 0 }}
                    className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-100 flex items-center justify-between"
                  >
                    <div className="flex items-center gap-3">
                      <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center font-bold">
-                       {pendentes.length}
+                       {aVencer.length}
                      </div>
                      <div>
                        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">Carrinho Unificado</p>
                        <p className="text-xl font-black">
-                         {formatCurrency(pendentes.reduce((acc, c) => acc + (c.valor || 0), 0))}
+                         {formatCurrency(aVencer.reduce((acc, c) => acc + (c.valor || 0), 0))}
                        </p>
                      </div>
                    </div>
-                   <Button 
+                   <Button
                      onClick={() => { vibrate(40); setCheckoutMulti(true); }}
                      className="bg-white text-indigo-600 hover:bg-slate-50 font-bold uppercase text-[10px] tracking-wider rounded-xl h-10 px-4 active:scale-95"
                    >
@@ -327,7 +387,7 @@ export default function PortalCobrancasPage() {
 
                <div className="space-y-3">
                   <AnimatePresence mode="popLayout">
-                    {pendentes.map((cobranca, idx) => {
+                    {aVencer.map((cobranca, idx) => {
                       const carencia = configPix?.dias_carencia || 0
                       const dataVenc = new Date(cobranca.data_vencimento + 'T12:00:00')
                       const hoje = new Date()
@@ -522,12 +582,12 @@ export default function PortalCobrancasPage() {
           <SheetContent side="bottom" className="rounded-t-3xl border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh] focus:outline-none">
             <div className="px-5 pt-6 pb-8 space-y-5">
               <CheckoutHeader onClose={() => { setCobrancaAtiva(null); setCheckoutMulti(false); setShowCheckout(false); }} isMobile={true} />
-              <CheckoutBody 
-                cobrancaAtiva={cobrancaAtiva} 
+              <CheckoutBody
+                cobrancaAtiva={cobrancaAtiva}
                 checkoutMulti={checkoutMulti}
-                pendentes={pendentes}
-                configPix={configPix} 
-                copiado={copiado} 
+                pendentes={aVencer}
+                configPix={configPix}
+                copiado={copiado}
                 handleCopiarChave={handleCopiarChave}
                 configRecados={configRecados}
                 alunoNome={alunoSelecionado?.nome_completo}
@@ -544,7 +604,7 @@ export default function PortalCobrancasPage() {
               <CheckoutBody
                 cobrancaAtiva={cobrancaAtiva}
                 checkoutMulti={checkoutMulti}
-                pendentes={pendentes}
+                pendentes={aVencer}
                 configPix={configPix}
                 copiado={copiado}
                 handleCopiarChave={handleCopiarChave}
@@ -620,14 +680,14 @@ function calcularValorCobranca(c: any, configPix?: any) {
   return v + valorMulta + valorJuros
 }
 
-function CheckoutBody({ 
-  cobrancaAtiva, 
-  checkoutMulti, 
-  pendentes, 
-  configPix, 
-  copiado, 
-  handleCopiarChave, 
-  configRecados, 
+function CheckoutBody({
+  cobrancaAtiva,
+  checkoutMulti,
+  pendentes,
+  configPix,
+  copiado,
+  handleCopiarChave,
+  configRecados,
   alunoNome,
   onEnviarComprovante
 }: any) {
@@ -664,7 +724,7 @@ function CheckoutBody({
          <h2 className="text-3xl font-bold leading-none">
            {formatCurrency(valorTotalCalculado)}
          </h2>
-         
+
          {checkoutMulti ? (
            <div className="mt-3 space-y-1">
              <p className="text-[9px] text-teal-400/80 font-bold uppercase tracking-widest">Compilado de {pendentes.length} títulos</p>
