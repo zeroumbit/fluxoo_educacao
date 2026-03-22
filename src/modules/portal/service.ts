@@ -597,7 +597,6 @@ export const portalService = {
         )
       `)
       .eq('turma_id', matricula.turma_id)
-      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -633,7 +632,6 @@ export const portalService = {
         )
       `)
       .eq('turma_id', matricula.turma_id)
-      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
