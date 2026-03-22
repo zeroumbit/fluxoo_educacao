@@ -850,7 +850,8 @@ export type Database = {
       }
     }
     Functions: { 
-      funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean }
+      funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
+      get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
