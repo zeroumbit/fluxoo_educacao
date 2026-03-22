@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
 import { portalService } from './service'
 import { usePortalContext } from './context'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -42,6 +43,65 @@ export function useDashboardAluno() {
     enabled: !!alunoSelecionado?.id && !!tenantId,
     staleTime: 30 * 1000,
   })
+}
+
+// ==========================================
+// DASHBOARD DA FAMÍLIA (Consolidado)
+// ==========================================
+export function useDashboardFamilia() {
+  const { vinculos, tenantId } = usePortalContext()
+  
+  const queries = useQueries({
+    queries: (vinculos || []).map((v: any) => {
+      const aId = v.aluno_id || v.aluno?.id
+      const tId = v.tenant_id || v.aluno?.tenant_id || tenantId
+      const turmaId = v.aluno?.turma?.id || v.aluno?.turma_id || null
+      
+      return {
+        queryKey: ['portal', 'dashboard', aId, tId, turmaId],
+        queryFn: () => portalService.buscarDashboardAluno(aId, tId, turmaId),
+        enabled: !!aId && !!tId,
+        staleTime: 30 * 1000,
+      }
+    })
+  })
+
+  const isLoading = queries.some(q => q.isLoading)
+  const isError = queries.some(q => q.isError)
+
+  const dataConsolidada = useMemo(() => {
+    if (isLoading || !queries.length) return null
+
+    return queries.reduce((acc: any, q: any) => {
+      const d = q.data
+      if (!d) return acc
+
+      return {
+        frequencia: {
+          percentual: acc.frequencia.percentual + (d.frequencia?.percentual || 0),
+          count: acc.frequencia.count + 1
+        },
+        financeiro: {
+          totalPendente: acc.financeiro.totalPendente + (d.financeiro?.totalPendente || 0),
+          totalAtrasadas: acc.financeiro.totalAtrasadas + (d.financeiro?.totalAtrasadas || 0),
+        },
+        avisosRecentes: [...acc.avisosRecentes, ...(d.avisosRecentes || [])]
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 10)
+      }
+    }, {
+      frequencia: { percentual: 0, count: 0 },
+      financeiro: { totalPendente: 0, totalAtrasadas: 0 },
+      avisosRecentes: []
+    })
+  }, [queries, isLoading])
+
+  // Ajusta média de frequência
+  if (dataConsolidada && dataConsolidada.frequencia.count > 0) {
+    dataConsolidada.frequencia.media = Math.round(dataConsolidada.frequencia.percentual / dataConsolidada.frequencia.count)
+  }
+
+  return { data: dataConsolidada, isLoading, isError }
 }
 
 // ==========================================

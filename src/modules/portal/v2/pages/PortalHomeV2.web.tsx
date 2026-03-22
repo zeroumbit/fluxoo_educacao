@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { usePortalContext } from '../../context';
-import { useDashboardAluno, useAvisosPortal } from '../../hooks';
+import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -12,7 +12,7 @@ const getInitials = (name: string) => {
 export function PortalHomeV2Web() {
   const navigate = useNavigate();
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
-  const { data: dashboard } = useDashboardAluno();
+  const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
 
   // Alertas dinâmicos

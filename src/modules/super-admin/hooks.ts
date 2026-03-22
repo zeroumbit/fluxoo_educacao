@@ -194,7 +194,11 @@ export function useUpdateConfiguracaoRecebimento() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (config: any) => superAdminService.updateConfiguracaoRecebimento(config),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'config-recebimento'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'config-recebimento'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'config-pix'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'config-recados'] })
+    },
   })
 }
 
