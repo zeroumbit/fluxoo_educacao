@@ -83,18 +83,38 @@ interface MetricCardProps {
   warning?: boolean
   children?: React.ReactNode
   onClick?: () => void
+  cardBg?: string
+  cardBorder?: string
+  cardTitleColor?: string
+  cardValueColor?: string
+  cardSubColor?: string
 }
 
-function MetricCard({ label, value, sub, icon: Icon, iconBg, iconColor, warning, children, onClick }: MetricCardProps) {
+function MetricCard({ 
+  label, 
+  value, 
+  sub, 
+  icon: Icon, 
+  iconBg, 
+  iconColor, 
+  warning, 
+  children, 
+  onClick,
+  cardBg = 'bg-white',
+  cardBorder = 'border-zinc-100',
+  cardTitleColor = 'text-zinc-400',
+  cardValueColor = 'text-zinc-900',
+  cardSubColor = 'text-zinc-500',
+}: MetricCardProps) {
   return (
     <Card
       onClick={onClick}
       className={`border shadow-sm hover:shadow-md transition-all duration-300 rounded-[2rem] overflow-hidden group ${
-        warning ? 'border-amber-100 bg-amber-50/20' : 'border-zinc-100 bg-white'
+        warning ? 'border-amber-100 bg-amber-50/20' : `${cardBorder} ${cardBg}`
       } ${onClick ? 'cursor-pointer active:scale-[0.98]' : ''}`}
     >
       <CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-[30px]">
-        <CardTitle className={`text-[10px] font-black uppercase tracking-[0.2em] ${warning ? 'text-amber-600' : 'text-zinc-400'}`}>
+        <CardTitle className={`text-[10px] font-black uppercase tracking-[0.2em] ${warning ? 'text-amber-600' : cardTitleColor}`}>
           {label}
         </CardTitle>
         <div className={`h-10 w-10 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${iconBg}`}>
@@ -102,10 +122,10 @@ function MetricCard({ label, value, sub, icon: Icon, iconBg, iconColor, warning,
         </div>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className={`text-3xl font-black tracking-tight ${warning ? 'text-amber-700' : 'text-zinc-900'}`}>
+        <div className={`text-3xl font-black tracking-tight ${warning ? 'text-amber-700' : cardValueColor}`}>
           {value}
         </div>
-        <p className={`text-[11px] mt-1 font-medium ${warning ? 'text-amber-600' : 'text-zinc-500'}`}>{sub}</p>
+        <p className={`text-[11px] mt-1 font-medium ${warning ? 'text-amber-600' : cardSubColor}`}>{sub}</p>
         {children}
       </CardContent>
     </Card>
@@ -248,10 +268,14 @@ export function DashboardPageWeb() {
       value: `R$ ${recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       sub: recebimentos > 0 ? `Cobranças pendentes identificadas` : `Em dia`,
       icon: CreditCard,
-      iconBg: 'bg-rose-50',
-      iconColor: 'text-rose-600',
-      warning: recebimentos > 0,
-      path: '/financeiro'
+      iconBg: 'bg-sky-100',
+      iconColor: 'text-sky-700',
+      path: '/financeiro',
+      cardBg: 'bg-sky-50/30',
+      cardBorder: 'border-sky-100',
+      cardTitleColor: 'text-sky-400',
+      cardValueColor: 'text-sky-900',
+      cardSubColor: 'text-sky-600',
     },
     {
       label: 'Contas',

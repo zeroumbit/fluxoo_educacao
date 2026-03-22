@@ -402,7 +402,7 @@ export function AlunoCadastroPage() {
         nome_completo: data.nome_completo,
         nome_social: data.nome_social || null,
         data_nascimento: data.data_nascimento,
-        sexo: data.genero || null, // Coluna correta no banco é 'sexo'
+        genero: data.genero || null,
         cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
         patologias,
         medicamentos,
@@ -431,7 +431,23 @@ export function AlunoCadastroPage() {
 
       setLastCreatedAluno(result)
       toast.success('Aluno cadastrado com sucesso!')
+      
+      // Limpeza COMPLETA do estado do form para a nova entrada não pegar sujeira
+      reset({
+        responsavel_nome: '', responsavel_cpf: '', responsavel_email: '', responsavel_parentesco: '',
+        responsavel_financeiro: 'sim', responsavel_senha: '', nome_completo: '', nome_social: '',
+        data_nascimento: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
+        patologias: '', medicamentos: '', observacoes_saude: '', valor_mensalidade_atual: 0,
+        data_ingresso: new Date().toISOString().split('T')[0],
+        filial_id: data.filial_id // Mantém a filial que ele acabou de usar
+      })
+      setCurrentStep(0)
+      setResponsavelEncontrado(false)
+      setIrmaosExistentes([])
+
       localStorage.removeItem('aluno_cadastro_draft')
+      localStorage.removeItem('aluno_cadastro_step')
+      
       setShowPostCadastroModal(true)
     } catch (err: any) {
       console.error('Erro detalhado ao cadastrar aluno:', err)

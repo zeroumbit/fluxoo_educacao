@@ -48,16 +48,161 @@
   }
 }
 
+/* 
+  ========================================
+  MOBILE NATIVE UTILITIES
+  Padrões iOS Human Interface Guidelines 
+  e Material Design 3 (Android)
+  ========================================
+*/
+
 @layer utilities {
+  /* Safe Area Insets - iOS notch e Android gesture bar */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
   }
   .pt-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top, 16px);
   }
-  .min-h-screen-safe {
-    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 16px);
   }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 16px);
+  }
+  .p-safe {
+    padding-top: env(safe-area-inset-top, 16px);
+    padding-right: env(safe-area-inset-right, 16px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-left: env(safe-area-inset-left, 16px);
+  }
+
+  /* Touch Targets - Mínimo 48px (Android) / 44pt (iOS) */
+  .touch-target-sm {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .touch-target-md {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  .touch-target-lg {
+    min-height: 56px;
+    min-width: 56px;
+  }
+
+  /* Touch Manipulation - Previne zoom acidental no double-tap */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Hide Scrollbar mas mantém scroll - padrão nativo */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Tipografia Nativa - iOS SF Pro / Android Roboto */
+  .font-native-display {
+    font-size: clamp(28px, 5vw, 34px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  .font-native-headline {
+    font-size: clamp(22px, 4vw, 28px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .font-native-title {
+    font-size: clamp(17px, 3vw, 20px);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .font-native-body {
+    font-size: clamp(15px, 2.5vw, 17px);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  .font-native-caption {
+    font-size: clamp(11px, 2vw, 13px);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .font-native-label {
+    font-size: clamp(13px, 2.5vw, 15px);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Shadow Cards - Padrão Material Design 3 */
+  .shadow-card-sm {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  .shadow-card-md {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  }
+  .shadow-card-lg {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Bottom Sheet Handle - iOS Sheet Indicator */
+  .bottom-sheet-handle {
+    width: 40px;
+    height: 5px;
+    border-radius: 9999px;
+    background-color: rgb(203 213 225);
+  }
+
+  /* Active States - Feedback tátil visual */
+  .active-scale {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .active-scale:active {
+    transform: scale(0.97);
+  }
+
+  /* Ripple Effect Base */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+  .ripple:active::after {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* 
+  ========================================
+  MOBILE-FIRST BREAKPOINTS
+  Content-driven breakpoints (2025/2026)
+  ========================================
+*/
+
+@theme {
+  --breakpoint-xs: 20rem;    /* 320px - Very small devices */
+  --breakpoint-sm: 36rem;    /* 576px - Large phones */
+  --breakpoint-md: 48rem;    /* 768px - Tablets portrait */
+  --breakpoint-lg: 62rem;    /* 992px - Tablets landscape */
+  --breakpoint-xl: 75rem;    /* 1200px - Desktops */
+  --breakpoint-2xl: 90rem;   /* 1440px - Large desktops */
 }
 
 /* Scrollbar hidden utility for horizontal scroll areas */

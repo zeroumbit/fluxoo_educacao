@@ -38,7 +38,7 @@ export const academicoService = {
     // Tenta primeiro com plural (padrão do sistema)
     const { data: insertedData, error } = await (supabase.from('matriculas' as any) as any)
       .insert(payload)
-      .select('id')
+      .select()
       .single()
 
     if (error) {
@@ -52,7 +52,7 @@ export const academicoService = {
       throw new Error('Matrícula inserida, mas nenhum dado retornado pelo banco.')
     }
 
-    const data = insertedData as unknown as { id: string }
+    const data = insertedData
 
     console.log('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
     

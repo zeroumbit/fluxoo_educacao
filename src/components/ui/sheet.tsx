@@ -71,6 +71,10 @@ function SheetContent({
         )}
         {...props}
       >
+        {/* Título escondido para acessibilidade (screen readers) - Requerido pela Radix UI */}
+        <SheetPrimitive.Title className="sr-only">Sheet</SheetPrimitive.Title>
+        <SheetPrimitive.Description className="sr-only">Dialog content</SheetPrimitive.Description>
+        
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">

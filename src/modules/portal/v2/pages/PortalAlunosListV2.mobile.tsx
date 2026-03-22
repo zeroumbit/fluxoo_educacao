@@ -14,60 +14,85 @@ export function PortalAlunosListV2Mobile() {
   const { vinculos, selecionarAluno } = usePortalContext();
 
   return (
-    <div className="flex flex-col gap-6 p-4 pt-6">
-      <header className="flex flex-col mb-2">
-        <h1 className="text-2xl font-black text-slate-800 tracking-tight">Meus Filhos</h1>
-        <p className="text-sm font-medium text-slate-500 mt-1">
+    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-safe">
+      {/* Header - Padrão iOS Large Title / Material Top App Bar */}
+      <header className="flex flex-col gap-1 pt-4 pb-2">
+        {/* Title - iOS Large Title / Material Headline Medium */}
+        <h1 className="text-[28px] font-bold text-slate-800 tracking-tight leading-[34px]">
+          Meus Filhos
+        </h1>
+        {/* Caption - iOS Caption 1 / Material Body Small */}
+        <p className="text-[15px] font-medium text-slate-500 leading-tight">
           Acesse o perfil acadêmico de cada aluno.
         </p>
       </header>
 
-      <div className="flex flex-col gap-4">
+      {/* Lista de Cards - Touch targets otimizados */}
+      <div className="flex flex-col gap-4 pb-4">
         {vinculos.map((v) => (
-          <motion.div
+          <motion.button
             key={v.aluno?.id}
-            whileTap={{ scale: 0.98 }}
+            type="button"
+            whileTap={{ scale: 0.97 }}
             onClick={() => {
               selecionarAluno(v);
               navigate(`/portal/alunos/${v.aluno?.id}`);
             }}
-            className="flex flex-col bg-white border border-slate-100 rounded-[32px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative cursor-pointer active:scale-95 transition-transform"
+            className="flex flex-col bg-white border border-slate-100 rounded-[24px] p-4 shadow-sm active:scale-98 transition-transform touch-manipulation min-h-[48px] w-full text-left"
+            aria-label={`Ver perfil de ${v.aluno?.nome_completo || 'aluno'}`}
           >
             <div className="flex items-center gap-4">
-              {/* Avatar da Criança */}
-              <motion.div 
-                layoutId={`avatar-${v.aluno?.id}`} 
-                className="w-16 h-16 rounded-full bg-teal-500 text-white flex justify-center items-center text-2xl font-black shadow-lg shadow-teal-500/20 flex-shrink-0"
+              {/* Avatar - 64px padrão iOS Contact / Material Avatar Large */}
+              <motion.div
+                layoutId={`avatar-${v.aluno?.id}`}
+                className="w-16 h-16 rounded-[20px] bg-teal-500 text-white flex justify-center items-center text-[22px] font-bold shadow-sm flex-shrink-0"
+                aria-hidden="true"
               >
                 {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
               </motion.div>
-              
-              <div className="flex flex-col flex-1">
-                <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-1">
+
+              <div className="flex flex-col flex-1 min-w-0">
+                {/* Title 3 - iOS / Title Medium - Material */}
+                <h2 className="text-[17px] font-bold text-slate-800 tracking-tight leading-tight mb-1 truncate">
                   {v.aluno?.nome_completo || 'Aluno'}
                 </h2>
-                <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-400">
-                  <span className="text-teal-600 font-bold">{v.aluno?.turma?.nome || 'Turma não informada'}</span>
-                  <span>•</span>
-                  <span className="font-mono">STATUS: {v.aluno?.status || 'Ativo'}</span>
+                {/* Caption - iOS Caption 1 / Material Label Medium */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[13px] font-semibold">
+                  <span className="text-teal-600 font-bold">
+                    {v.aluno?.turma?.nome || 'Turma não informada'}
+                  </span>
+                  <span className="text-slate-300" aria-hidden="true">•</span>
+                  <span className="font-mono text-slate-500">
+                    {v.aluno?.status || 'Ativo'}
+                  </span>
                 </div>
               </div>
 
-              <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 ml-auto flex-shrink-0">
+              {/* Chevron - iOS/Android navigation indicator */}
+              <div
+                className="w-10 h-10 rounded-[12px] bg-slate-50 flex items-center justify-center text-slate-400 ml-auto flex-shrink-0"
+                aria-hidden="true"
+              >
                 <ChevronRight className="w-5 h-5" />
               </div>
             </div>
 
-            {/* Pendências Reais (se existirem nos metadados do aluno ou dashboard) */}
+            {/* Alertas/Pendências - iOS Banner / Material Alert */}
             {v.aluno?.status === 'inativo' && (
-              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-50">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold w-full bg-rose-50 text-rose-700 border-rose-100">
-                  <AlertCircle className="w-4 h-4" />
-                  Matrícula Inativa ou Trancada
+              <div
+                className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50"
+                role="alert"
+              >
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-[12px] bg-rose-50 text-rose-700 border border-rose-100 w-full">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  {/* Body - iOS Body / Material Body Medium */}
+                  <span className="text-[14px] font-bold leading-tight">
+                    Matrícula Inativa ou Trancada
+                  </span>
                 </div>
               </div>
             )}
-          </motion.div>
+          </motion.button>
         ))}
       </div>
     </div>

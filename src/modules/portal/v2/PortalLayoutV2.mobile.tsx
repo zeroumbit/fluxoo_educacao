@@ -7,24 +7,41 @@ export function PortalLayoutV2Mobile() {
   const location = useLocation();
 
   return (
+    // Layout base com safe areas para dispositivos com notch (iOS) e gesture bar (Android)
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 antialiased relative font-sans">
-      <main className="flex-1 w-full max-w-md mx-auto pb-24 overflow-x-hidden">
-        {/* Usamos wait para evitar a sobreposição durante o drill-down */}
+      {/* 
+        Main content area
+        - pb-24: espaço para bottom navigation (60px + safe area)
+        - max-w-md: largura máxima para simular viewport mobile em tablets/desktop
+        - overflow-x-hidden: previne scroll horizontal indesejado
+      */}
+      <main className="flex-1 w-full max-w-md mx-auto pb-[env(safe-area-inset-bottom,96px)] overflow-x-hidden">
+        {/* 
+          Page transitions - padrão nativo iOS/Android
+          - iOS: edge swipe gesture (da direita para esquerda)
+          - Android: back button gesture (de baixo para cima)
+          - Spring animation: sensação de física natural
+        */}
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 32, mass: 0.9 }}
             className="h-full"
           >
             <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
-      
-      {/* Bottom bar que cobre toda a base em mobile view */}
+
+      {/* 
+        Bottom Navigation Bar
+        - Fixed position na parte inferior
+        - Safe area bottom para home indicator (iOS) e gesture bar (Android)
+        - Rounded top corners para visual moderno
+      */}
       <BottomNavV2 />
     </div>
   );

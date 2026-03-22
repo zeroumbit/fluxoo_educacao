@@ -40,8 +40,15 @@ export const BottomNavV2 = () => {
   const navItems = [...baseItems, { label: 'Perfil', icon: Menu, path: '/portal/perfil' }];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-100 pb-safe z-50 rounded-t-[32px] shadow-[0_-4px_24px_rgba(0,0,0,0.02)]">
-      <div className="flex justify-around items-center px-2 py-4 max-w-md mx-auto relative">
+    // Safe area bottom para dispositivos com home indicator (iOS)
+    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-100 pb-[env(safe-area-inset-bottom,0px)] z-50 rounded-t-[28px] shadow-[0_-2px_20px_rgba(0,0,0,0.04)]">
+      {/* 
+        Bottom Navigation - Padrão nativo iOS/Android
+        - Touch targets: 48px mínimo (Android) / 44pt (iOS)
+        - Ícones: 24px (SF Symbols / Material Icons equivalent)
+        - Labels: 11-12px (Caption/Material Label Small)
+      */}
+      <div className="flex justify-around items-center px-1 py-2 max-w-md mx-auto relative">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== '/portal' && location.pathname.startsWith(item.path));
 
@@ -49,32 +56,41 @@ export const BottomNavV2 = () => {
             <NavLink
               key={item.label}
               to={item.path}
-              className="relative flex flex-col items-center justify-center w-16 h-12 gap-1 text-slate-500 hover:text-slate-800 transition-colors"
+              className="relative flex flex-col items-center justify-center w-[68px] h-[60px] gap-0.5 text-slate-500 hover:text-slate-800 transition-colors touch-manipulation"
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <div className="relative flex items-center justify-center z-10">
+              {/* Background ripple/press effect - padrão Material Design */}
+              {isActive && (
+                <motion.div
+                  layoutId="bottom-nav-indicator"
+                  className="absolute inset-1 bg-teal-50/70 rounded-[14px] -z-0"
+                  initial={false}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  aria-hidden="true"
+                />
+              )}
+              
+              {/* Ícone - 24px padrão SF Symbols / Material Icons */}
+              <div className="relative flex items-center justify-center z-10 w-12 h-12">
                 <item.icon
-                  size={isActive ? 24 : 22}
-                  className={`transition-all duration-300 ${isActive ? 'text-teal-500' : 'text-slate-400'}`}
+                  size={24}
+                  className={`transition-all duration-200 ${
+                    isActive ? 'text-teal-500' : 'text-slate-400'
+                  }`}
                   strokeWidth={isActive ? 2.5 : 2}
+                  aria-hidden="true"
                 />
               </div>
+              
+              {/* Label - Caption 1 iOS / Label Small Material */}
               <span
-                className={`text-[10px] font-medium transition-all duration-300 ${
-                  isActive ? 'text-teal-600' : 'text-slate-500'
+                className={`text-[11px] font-medium leading-tight transition-all duration-200 ${
+                  isActive ? 'text-teal-600 font-semibold' : 'text-slate-500'
                 }`}
               >
                 {item.label}
               </span>
-
-              {/* Animação com framer-motion para indicador ativo */}
-              {isActive && (
-                <motion.div
-                  layoutId="bottom-nav-indicator"
-                  className="absolute inset-0 bg-teal-50/80 rounded-2xl -z-0"
-                  initial={false}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
             </NavLink>
           );
         })}

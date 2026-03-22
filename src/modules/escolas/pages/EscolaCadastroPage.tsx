@@ -147,6 +147,8 @@ export function EscolaCadastroPage() {
     console.log('Iniciando submissão final do cadastro:', data)
     try {
       // 1. Supabase Auth - SignUp
+      let finalUserId: string | undefined
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email, password: data.password,
         options: { data: { full_name: data.nome_gestor, role: 'gestor' } }
@@ -154,21 +156,34 @@ export function EscolaCadastroPage() {
 
       if (authError) {
         console.warn('Alerta no SignUp:', authError.message)
-        // Se já existe ou deu erro de limite mas queremos tentar seguir se já houver ID
-        if (!authError.message.includes('already registered') && !authError.message.includes('rate limit')) {
-           throw authError
+        
+        if (authError.message.includes('already registered')) {
+          // Usuário já existe, tenta recuperar o ID via Login
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password
+          })
+          
+          if (!loginError && loginData.user) {
+            finalUserId = loginData.user.id
+            toast.info('Detectamos que você já tinha conta. Continuando a criação da escola...')
+          } else {
+            throw new Error('E-mail já registrado, mas a senha informada está incorreta.')
+          }
+        } else if (authError.message.includes('rate limit')) {
+          throw new Error('O sistema bloqueou temporariamente os cadastros por segurança (Rate Limit do Supabase). Tente novamente em 1 hora ou acesse o painel do Supabase -> Authentication -> Rate Limits e aumente o limite.')
+        } else {
+          throw authError
+        }
+      } else {
+        finalUserId = authData.user?.id
+        if (!finalUserId) {
+          // Fallback final
+          const { data: { user } } = await supabase.auth.getUser()
+          finalUserId = user?.id
         }
       }
 
-      // Procura o ID do usuário de todas as formas possíveis
-      let finalUserId = authData.user?.id
-      
-      if (!finalUserId) {
-        // Tenta obter o usuário da sessão atual (caso o signUp tenha funcionado mas o rate limit travou o e-mail)
-        const { data: { user } } = await supabase.auth.getUser()
-        finalUserId = user?.id
-      }
-      
       if (!finalUserId) throw new Error('Falha ao identificar usuário. Por favor, aguarde alguns minutos ou use outro e-mail.')
 
       console.log('ID do Gestor identificado:', finalUserId)

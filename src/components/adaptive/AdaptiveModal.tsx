@@ -71,8 +71,10 @@ export function AdaptiveModal({
             </DialogDescription>
           )}
         </DialogHeader>
-        
+
         <div className="p-6 max-h-[70vh] overflow-y-auto">
+          {/* Título escondido para acessibilidade (screen readers) */}
+          <span className="sr-only">{title}</span>
           {children}
         </div>
 
