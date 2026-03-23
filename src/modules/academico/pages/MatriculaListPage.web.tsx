@@ -215,7 +215,8 @@ export function MatriculaListPageWeb() {
         toast.success('Matrícula realizada com sucesso!')
       }
       handleCloseDialog()
-    } catch {
+    } catch (err) {
+      console.error('Erro ao salvar matrícula:', err)
       toast.error(isEditing ? 'Erro ao atualizar matrícula' : 'Erro ao criar matrícula')
     }
   }

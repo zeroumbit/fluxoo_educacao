@@ -4,24 +4,24 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { 
-  ArrowLeft, 
-  Check, 
-  Loader2, 
-  User, 
-  GraduationCap, 
-  Calendar, 
-  Clock, 
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  User,
+  GraduationCap,
+  Calendar,
+  Clock,
   CreditCard,
   Building2,
   ChevronRight
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { 
+import {
   useMatriculas,
-  useCriarMatricula, 
+  useCriarMatricula,
   useMatriculaAtivaDoAluno,
-  useAtualizarMatricula 
+  useAtualizarMatricula
 } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'

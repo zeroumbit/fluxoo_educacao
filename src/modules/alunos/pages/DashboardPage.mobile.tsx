@@ -17,6 +17,7 @@ import {
   Phone,
   Mail,
   DollarSign,
+  X,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -32,8 +33,57 @@ import { get, set } from 'idb-keyval'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { OnboardingGuide } from '../components/OnboardingGuide'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const CACHE_KEY = 'dashboard_cache'
+
+// ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Alunos Sem Matrícula
+// ---------------------------------------------------------------------------
+interface AlunosSemMatriculaNotificationProps {
+  count: number
+  onDismiss: () => void
+}
+
+function AlunosSemMatriculaNotificationMobile({ count, onDismiss }: AlunosSemMatriculaNotificationProps) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm mx-4 mt-2">
+      <button
+        onClick={onDismiss}
+        className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-amber-600"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+      
+      <div className="p-4 pr-12">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+            <img src={CorujaIcon} alt="Fluxoo" className="h-5 w-5" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-amber-900 text-sm tracking-tight mb-1">
+              Alunos sem Matrícula
+            </h3>
+            <p className="text-[11px] font-medium text-amber-700 mb-3 leading-snug">
+              Você tem <strong>{count} {count === 1 ? 'aluno' : 'alunos'}</strong> sem matrícula ativa.
+            </p>
+
+            <Button
+              onClick={() => navigate('/matriculas')}
+              className="bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[11px] px-4 h-8 shadow-sm shadow-amber-200"
+            >
+              Realizar Matrícula
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Sub-componente: BottomSheet de Detalhes do Radar de Evasão (Mobile)
@@ -211,7 +261,10 @@ export function DashboardPageMobile() {
   const [cachedData, setCachedData] = useState<any>(null)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
+  const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
+
   const { authUser } = useAuth()
+  const userRole = authUser?.role
   const { data: notifications } = useEscolaNotifications(authUser?.tenantId)
 
   const handleOpenRadarDetails = (aluno: RadarAluno) => {
@@ -237,6 +290,18 @@ export function DashboardPageMobile() {
 
   const displayData = dashboardData || cachedData
   const isActuallyLoading = isLoading && !cachedData
+  
+  const onboardingStatus = {
+    needsOnboarding: false,
+    perfilCompleto: displayData?.onboarding?.perfilCompleto,
+    possuiFilial: displayData?.onboarding?.possuiFilial,
+    possuiTurma: displayData?.onboarding?.possuiTurma,
+    possuiAluno: displayData?.onboarding?.possuiAluno,
+  }
+
+  if (userRole === 'funcionario' && displayData?.onboarding) {
+    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma
+  }
 
   const onRefresh = async () => { await refetch() }
 
@@ -274,6 +339,20 @@ export function DashboardPageMobile() {
     )
   }
 
+  // Se for funcionário e precisar de onboarding
+  if (userRole === 'funcionario' && onboardingStatus?.needsOnboarding) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 px-4 pt-6">
+        <OnboardingGuide status={{
+          perfilCompleto: !!onboardingStatus?.perfilCompleto,
+          possuiFilial: !!onboardingStatus?.possuiFilial,
+          possuiTurma: !!onboardingStatus?.possuiTurma,
+          possuiAluno: !!onboardingStatus?.possuiAluno
+        }} />
+      </div>
+    )
+  }
+
   const recebimentos = displayData?.totalReceber || 0
   const pagamentos = displayData?.totalPagar || 0
   const saldo = recebimentos - pagamentos
@@ -284,6 +363,7 @@ export function DashboardPageMobile() {
       <div className="mx-auto w-full max-w-[640px] px-4">
         <PullToRefresh onRefresh={onRefresh}>
           <div className="space-y-7 pt-6">
+
 
             {/* ── Saudação ── */}
             <section className="flex items-center justify-between">
@@ -300,6 +380,14 @@ export function DashboardPageMobile() {
                 items={notifications?.items || []}
               />
             </section>
+
+            {/* Notificação de Alunos Sem Matrícula */}
+            {(displayData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (
+              <AlunosSemMatriculaNotificationMobile
+                count={displayData?.alunosSemMatricula ?? 0}
+                onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
+              />
+            )}
 
             {/* ── Ações Rápidas ── */}
             <section>
@@ -321,67 +409,99 @@ export function DashboardPageMobile() {
               </div>
             </section>
 
-            {/* ── Card Principal: Total de Alunos ── */}
-            <motion.section
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/alunos')}
-              className="relative bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-3xl p-6 shadow-xl shadow-indigo-200/50 dark:shadow-none overflow-hidden cursor-pointer"
-            >
-              <Users className="absolute -right-4 -bottom-4 h-36 w-36 text-white/[0.07]" />
-              <div className="relative z-10 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/10">
-                    <Users className="h-5 w-5" />
-                  </div>
-                  <ArrowUpRight className="h-5 w-5 text-white/40" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-200/80 mb-1">Total de Alunos</p>
-                  <p className="text-4xl font-black tracking-tighter leading-none">{displayData?.totalAlunosAtivos || 0}</p>
-                </div>
-                <div>
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(((displayData?.totalAlunosAtivos || 0) / (displayData?.limiteAlunos || 1)) * 100, 100)}%` }}
-                      transition={{ duration: 0.8, ease: 'easeOut' }}
-                      className="h-full bg-white/90 rounded-full"
-                    />
-                  </div>
-                  <p className="text-[9px] font-semibold text-indigo-200/70 mt-2">
-                    {displayData?.totalAlunosAtivos} de {displayData?.limiteAlunos} vagas utilizadas
-                  </p>
-                </div>
-              </div>
-            </motion.section>
-
-            {/* ── Grid 2 colunas: Finanças ── */}
+            {/* ── Grid 2x2: Métricas Principais ── */}
             <section className="grid grid-cols-2 gap-4">
+              {/* Card 1: Alunos */}
               <motion.div
                 whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/financeiro')}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer"
+                onClick={() => navigate('/alunos')}
+                className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between"
               >
-                <div className="h-10 w-10 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center border border-rose-100 dark:border-rose-900/30 mb-3">
-                  <CreditCard className="h-5 w-5 text-rose-500" />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Alunos</p>
+                    <div className="h-8 w-8 rounded-[10px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
+                      <Users className="h-4 w-4 text-indigo-600" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                    {displayData?.totalAlunosAtivos || 0}
+                  </p>
                 </div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Pendentes</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                  R$ {recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                <p className="text-[10px] font-bold text-slate-500 mt-3 leading-tight">
+                  <span className="text-indigo-600 dark:text-indigo-400">{displayData?.totalAlunosAtivos > 0 ? Math.min(100, Math.round(((displayData?.totalAlunosAtivos || 0) / (displayData?.limiteAlunos || 1)) * 100)) : 0}%</span> da licença
                 </p>
               </motion.div>
 
+              {/* Card 2: Mensalidades */}
+              <motion.div
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/financeiro')}
+                className="bg-sky-50/50 dark:bg-sky-900/10 rounded-2xl p-4 shadow-sm border border-sky-100 dark:border-sky-900/30 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-sky-500">Mensalidades</p>
+                    <div className="h-8 w-8 rounded-[10px] bg-sky-100 dark:bg-sky-800 flex items-center justify-center shrink-0">
+                      <CreditCard className="h-4 w-4 text-sky-600" />
+                    </div>
+                  </div>
+                  <p className="text-xl font-black text-sky-900 dark:text-sky-100 tracking-tight leading-none truncate" title={`R$ ${recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                    R$ {recebimentos >= 10000 ? (recebimentos/1000).toFixed(1).replace('.', ',') + 'k' : recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <p className="text-[10px] font-bold text-sky-600 mt-3 leading-tight truncate">
+                  {recebimentos > 0 ? 'Cobranças pendentes' : 'Em dia'}
+                </p>
+              </motion.div>
+
+              {/* Card 3: Contas */}
               <motion.div
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate('/financeiro-relatorios')}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer"
+                className={`rounded-2xl p-4 shadow-sm border flex flex-col justify-between ${saldoPositivo ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30' : 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/30'}`}
               >
-                <div className={`h-10 w-10 rounded-2xl ${saldoPositivo ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'} flex items-center justify-center border mb-3`}>
-                  <TrendingUp className={`h-5 w-5 ${saldoPositivo ? 'text-emerald-500' : 'text-rose-500'}`} />
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${saldoPositivo ? 'text-emerald-500' : 'text-rose-500'}`}>Contas</p>
+                    <div className={`h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 ${saldoPositivo ? 'bg-emerald-100 dark:bg-emerald-800' : 'bg-rose-100 dark:bg-rose-800'}`}>
+                      <TrendingUp className={`h-4 w-4 ${saldoPositivo ? 'text-emerald-600' : 'text-rose-600'}`} />
+                    </div>
+                  </div>
+                  <p className={`text-xl font-black tracking-tight leading-none truncate ${saldoPositivo ? 'text-emerald-900 dark:text-emerald-100' : 'text-rose-900 dark:text-rose-100'}`} title={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                    R$ {Math.abs(saldo) >= 10000 ? (saldo/1000).toFixed(1).replace('.', ',') + 'k' : saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Saldo Proj.</p>
-                <p className={`text-lg font-black tracking-tight leading-none ${saldoPositivo ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                <p className={`text-[10px] font-bold mt-3 leading-tight truncate ${saldoPositivo ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {saldoPositivo ? 'Saúde positiva' : 'Atenção ao fluxo'}
+                </p>
+              </motion.div>
+
+              {/* Card 4: Alertas Ativos */}
+              <motion.div
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  if (displayData?.radarEvasao && displayData.radarEvasao.length > 0) {
+                    handleOpenRadarDetails(displayData.radarEvasao[0])
+                  } else {
+                    navigate('/frequencia')
+                  }
+                }}
+                className={`rounded-2xl p-4 shadow-sm border flex flex-col justify-between ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30' : 'bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700'}`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`}>Alertas Ativos</p>
+                    <div className={`h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-100 dark:bg-amber-800' : 'bg-slate-50 dark:bg-slate-700'}`}>
+                      <AlertTriangle className={`h-4 w-4 ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
+                    </div>
+                  </div>
+                  <p className={`text-2xl font-black tracking-tight leading-none ${displayData?.radarEvasao?.length > 0 ? 'text-amber-700 dark:text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                    {displayData?.radarEvasao?.length || 0}
+                  </p>
+                </div>
+                <p className={`text-[10px] font-bold mt-3 leading-tight truncate ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-500'}`}>
+                  {displayData?.radarEvasao?.length > 0 ? 'Toque para ver' : 'Alunos no radar'}
                 </p>
               </motion.div>
             </section>

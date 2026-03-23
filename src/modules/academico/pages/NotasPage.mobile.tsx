@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  GraduationCap, 
-  Search, 
-  Filter, 
-  Save, 
-  ChevronRight, 
-  BookOpen, 
+import {
+  GraduationCap,
+  Search,
+  Filter,
+  Save,
+  ChevronRight,
+  BookOpen,
   AlertCircle,
   CheckCircle2,
   User,
   MoreVertical,
   Edit3,
-  ArrowLeft
+  ArrowLeft,
+  LayoutGrid,
+  Loader2,
+  Copy
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -32,6 +35,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 const CACHE_KEY_NOTAS = 'mobile_notas_cache'
@@ -50,8 +55,15 @@ export function NotasPageMobile() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isBulkOpen, setIsBulkOpen] = useState(false)
+  const [isAlunoSelectorOpen, setIsAlunoSelectorOpen] = useState(false)
   const [selectedAluno, setSelectedAluno] = useState<any>(null)
   const [search, setSearch] = useState('')
+  const [selecionados, setSelecionados] = useState<string[]>([])
+  const [globalNota, setGlobalNota] = useState<string>('')
+  const [globalFaltas, setGlobalFaltas] = useState<string>('')
+  const [globalObs, setGlobalObs] = useState<string>('')
+  const [isSavingAll, setIsSavingAll] = useState(false)
+  const [alunoId, setAlunoId] = useState<string>('all')
   
   // Hooks de Dados
   const { data: turmas, isLoading: isLoadingTurmas } = useTurmas()
@@ -142,9 +154,94 @@ export function NotasPageMobile() {
     }
   }
 
-  const filteredAlunos = (todosAlunos || []).filter(a => 
-    a.nome_completo.toLowerCase().includes(search.toLowerCase())
-  )
+  const aplicarMassa = () => {
+    if (selecionados.length === 0) {
+      toast.error('Selecione ao menos um aluno', { position: 'top-center' })
+      return
+    }
+
+    setNotasLocais(prev => {
+      const novo = { ...prev }
+      selecionados.forEach(id => {
+        novo[id] = {
+          nota: globalNota || (novo[id]?.nota || ''),
+          faltas: globalFaltas || (novo[id]?.faltas || '0'),
+          observacoes: globalObs || (novo[id]?.observacoes || '')
+        }
+      })
+      return novo
+    })
+    toast.success(`Aplicado a ${selecionados.length} alunos`, { position: 'top-center' })
+    setIsBulkOpen(false)
+    setGlobalNota('')
+    setGlobalFaltas('')
+    setGlobalObs('')
+  }
+
+  const alternarSelecao = (alunoId: string) => {
+    setSelecionados(prev =>
+      prev.includes(alunoId) ? prev.filter(id => id !== alunoId) : [...prev, alunoId]
+    )
+  }
+
+  const selecionarTodosVisiveis = () => {
+    if (selecionados.length === filteredAlunos.length) {
+      setSelecionados([])
+    } else {
+      setSelecionados(filteredAlunos.map(a => a.id))
+    }
+  }
+
+  const salvarTodasNotas = async () => {
+    if (!turmaId || !disciplinaNome) {
+      toast.error('Selecione uma turma e uma disciplina', { position: 'top-center' })
+      return
+    }
+
+    if (Object.keys(notasLocais).length === 0) {
+      toast.error('Nenhuma nota para salvar', { position: 'top-center' })
+      return
+    }
+
+    setIsSavingAll(true)
+    try {
+      const promises = Object.entries(notasLocais).map(([alunoId, dados]) => {
+        if (!dados.nota || dados.nota === '') return null
+        return upsertNota({
+          boletimBase: {
+            tenant_id: authUser?.tenantId,
+            aluno_id: alunoId,
+            turma_id: turmaId,
+            ano_letivo: anoLetivo,
+            bimestre: Number(bimestre)
+          },
+          disciplina: disciplinaNome,
+          nota: parseFloat(dados.nota.replace(',', '.')),
+          faltas: parseInt(dados.faltas),
+          observacoes: dados.observacoes
+        })
+      })
+
+      await Promise.all(promises.filter(Boolean))
+      toast.success('Notas salvas com sucesso!', { position: 'top-center' })
+      refetch()
+    } catch (error: any) {
+      toast.error('Erro ao salvar notas: ' + error.message, { position: 'top-center' })
+    } finally {
+      setIsSavingAll(false)
+    }
+  }
+
+  const filteredAlunos = (todosAlunos || []).filter(a => {
+    const matchesSearch = a.nome_completo.toLowerCase().includes(search.toLowerCase())
+    const matchesSelected = alunoId === 'all' || a.id === alunoId
+    return matchesSearch && matchesSelected
+  })
+
+  // Cálculos para os cards de resumo
+  const totalAlunos = filteredAlunos.length
+  const notasLancadas = Object.values(notasLocais).filter(n => n.nota && n.nota !== '').length
+  const totalFaltas = Object.values(notasLocais).reduce((acc, n) => acc + (parseInt(n.faltas) || 0), 0)
 
   const isLoading = isLoadingTurmas || isLoadingDisciplinas || (isLoadingBoletins && !cached.length)
 
@@ -213,7 +310,7 @@ export function NotasPageMobile() {
       <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
         <div className="mx-auto w-full max-w-[640px] px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-left">
+            <div className="flex items-center gap-2 text-left flex-1 min-w-0">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => navigate('/dashboard')}
@@ -221,7 +318,7 @@ export function NotasPageMobile() {
               >
                 <ArrowLeft className="h-4 w-4 text-slate-500" />
               </motion.button>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 flex-1">
                 <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none truncate">
                   {turmaId ? turmas?.find(t => t.id === turmaId)?.nome : 'Boletim'}
                 </h1>
@@ -230,9 +327,17 @@ export function NotasPageMobile() {
                 </span>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
-               <motion.button 
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsAlunoSelectorOpen(true)}
+                className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600"
+                title="Selecionar Aluno"
+              >
+                <User className="h-4 w-4" />
+              </motion.button>
+              <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsFilterOpen(true)}
                 className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500"
@@ -242,11 +347,35 @@ export function NotasPageMobile() {
             </div>
           </div>
 
+          {/* Se houver aluno selecionado, mostra badge */}
+          {alunoId !== 'all' && (
+            <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-800">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center shrink-0">
+                  <User className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Aluno</p>
+                  <p className="text-sm font-black text-indigo-900 dark:text-indigo-100 truncate">
+                    {todosAlunos?.find(a => a.id === alunoId)?.nome_completo || 'Selecionado'}
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setAlunoId('all')}
+                className="h-8 w-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-red-500"
+              >
+                <ArrowLeft className="h-4 w-4 rotate-180" />
+              </motion.button>
+            </div>
+          )}
+
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input 
-              placeholder="Buscar aluno..." 
-              value={search} 
+            <Input
+              placeholder="Buscar aluno..."
+              value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-10 h-11 rounded-xl border-0 bg-slate-100/80 dark:bg-slate-800/80 text-base font-medium"
             />
@@ -255,7 +384,93 @@ export function NotasPageMobile() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto w-full max-w-[640px] px-4 pt-5">
+      <div className="mx-auto w-full max-w-[640px] px-4 pt-5 space-y-4">
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                <User className="h-5 w-5 text-slate-600" />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Alunos</p>
+                <p className="text-xl font-bold text-slate-900">{totalAlunos}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-600/50">Lançadas</p>
+                <p className="text-xl font-bold text-slate-900">{notasLancadas}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border border-amber-200 bg-amber-50/50 shadow-sm overflow-hidden">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-amber-600/50">Faltas</p>
+                <p className="text-xl font-bold text-slate-900">{totalFaltas}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border border-indigo-200 bg-indigo-50/50 shadow-sm overflow-hidden">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <LayoutGrid className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-600/50">Bimestre</p>
+                <p className="text-xl font-bold text-slate-900">{bimestre}º</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Botão Salvar Todas + Aplicação em Lote */}
+        <div className="flex gap-3">
+          <Button
+            onClick={salvarTodasNotas}
+            disabled={isSavingAll || Object.keys(notasLocais).length === 0}
+            className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 font-bold text-base shadow-lg shadow-indigo-200 dark:shadow-none"
+          >
+            {isSavingAll ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <Save className="h-5 w-5 mr-2" />}
+            {isSavingAll ? 'Salvando...' : 'Salvar Todas'}
+          </Button>
+          <Button
+            onClick={() => setIsBulkOpen(true)}
+            disabled={selecionados.length === 0}
+            variant="outline"
+            className="h-12 rounded-2xl border-2 font-bold text-base px-4"
+          >
+            <Copy className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {selecionados.length > 0 && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 border border-indigo-100 dark:border-indigo-800 flex items-center justify-between">
+            <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
+              {selecionados.length} aluno{selecionados.length > 1 ? 's' : ''} selecionado{selecionados.length > 1 ? 's' : ''}
+            </p>
+            <button
+              onClick={() => setSelecionados([])}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
+            >
+              Limpar
+            </button>
+          </div>
+        )}
+
+        {/* Lista de Alunos */}
         <PullToRefresh onRefresh={async () => { await refetch() }}>
           <div className="space-y-3">
             {isLoading ? (
@@ -283,20 +498,44 @@ export function NotasPageMobile() {
                       transition={{ delay: idx * 0.03 }}
                       layout
                     >
-                      <NativeCard 
+                      <NativeCard
                         onClick={() => {
                           setSelectedAluno(aluno)
                           setIsEditOpen(true)
                         }}
+                        className={cn(
+                          "relative",
+                          selecionados.includes(aluno.id) && "ring-2 ring-indigo-500"
+                        )}
                       >
                         <div className="flex items-center gap-4">
+                          {/* Checkbox de Seleção */}
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              alternarSelecao(aluno.id)
+                            }}
+                            className={cn(
+                              "h-6 w-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
+                              selecionados.includes(aluno.id)
+                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                : "bg-white border-slate-300 text-transparent"
+                            )}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </motion.button>
+
+                          {/* Avatar/Nota */}
                           <div className={cn(
                             "h-12 w-12 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 border",
-                            hasGrade ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                            hasGrade ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                      : "bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-800 dark:text-slate-600"
                           )}>
                             {hasGrade ? notaInfo.nota : aluno.nome_completo.charAt(0)}
                           </div>
+
+                          {/* Informações */}
                           <div className="flex-1 min-w-0">
                             <h3 className="text-[14px] font-bold text-slate-900 dark:text-white truncate">
                               {aluno.nome_completo}
@@ -315,6 +554,8 @@ export function NotasPageMobile() {
                               )}
                             </div>
                           </div>
+
+                          {/* Ícone de Editar */}
                           <div className="flex flex-col items-end gap-1">
                              <div className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
                                 <Edit3 className="h-4 w-4 text-slate-400" />
@@ -335,8 +576,38 @@ export function NotasPageMobile() {
       </div>
 
       {/* Sheets */}
-      <FilterSheet 
-        isOpen={isFilterOpen} 
+      <AlunoSelectorSheet
+        isOpen={isAlunoSelectorOpen}
+        onClose={() => setIsAlunoSelectorOpen(false)}
+        alunos={todosAlunos || []}
+        search={search}
+        setSearch={setSearch}
+        alunoId={alunoId}
+        setAlunoId={(id: string) => {
+          setAlunoId(id)
+          setIsAlunoSelectorOpen(false)
+          if (id !== 'all') {
+            const aluno = todosAlunos?.find(a => a.id === id)
+            if (aluno) setSelectedAluno(aluno)
+          }
+        }}
+      />
+
+      <BulkApplySheet
+        isOpen={isBulkOpen}
+        onClose={() => setIsBulkOpen(false)}
+        selecionados={selecionados}
+        globalNota={globalNota}
+        setGlobalNota={setGlobalNota}
+        globalFaltas={globalFaltas}
+        setGlobalFaltas={setGlobalFaltas}
+        globalObs={globalObs}
+        setGlobalObs={setGlobalObs}
+        onAplicar={aplicarMassa}
+      />
+
+      <FilterSheet
+        isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         turmas={turmas}
         disciplinas={disciplinas}
@@ -348,7 +619,7 @@ export function NotasPageMobile() {
         setBimestre={setBimestre}
       />
 
-      <EditSheet 
+      <EditSheet
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         aluno={selectedAluno}
@@ -361,6 +632,174 @@ export function NotasPageMobile() {
 }
 
 // --- SUBCOMPONENTES ---
+
+function AlunoSelectorSheet({
+  isOpen, onClose, alunos, search, setSearch, alunoId, setAlunoId
+}: any) {
+  const filtered = alunos.filter((a: any) =>
+    a.nome_completo.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Selecionar Aluno" size="full">
+      <div className="flex flex-col h-full min-h-0 pt-2">
+        {/* Search */}
+        <div className="px-4 pb-4">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar aluno..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-10 h-11 rounded-xl border-0 bg-slate-100 dark:bg-slate-800 text-base font-medium"
+              autoFocus
+            />
+          </div>
+        </div>
+
+        {/* Lista de Alunos */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+          {/* Opção: Todos os Alunos */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setAlunoId('all')}
+            className={cn(
+              "w-full p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4",
+              alunoId === 'all'
+                ? "bg-indigo-50 border-indigo-200"
+                : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"
+            )}
+          >
+            <div className={cn(
+              "h-12 w-12 rounded-xl flex items-center justify-center border",
+              alunoId === 'all'
+                ? "bg-indigo-100 border-indigo-200 text-indigo-600"
+                : "bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-700"
+            )}>
+              <User className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-slate-900 dark:text-white">Todos os Alunos</h4>
+              <p className="text-xs text-slate-500">Visualizar turma completa</p>
+            </div>
+            {alunoId === 'all' && (
+              <CheckCircle2 className="h-6 w-6 text-indigo-600" />
+            )}
+          </motion.button>
+
+          {/* Alunos Individuais */}
+          {filtered.map((aluno: any) => (
+            <motion.button
+              key={aluno.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setAlunoId(aluno.id)}
+              className={cn(
+                "w-full p-4 rounded-2xl border-2 transition-all text-left flex items-center gap-4",
+                alunoId === aluno.id
+                  ? "bg-indigo-50 border-indigo-200"
+                  : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700"
+              )}
+            >
+              <div className={cn(
+                "h-12 w-12 rounded-xl flex items-center justify-center border text-lg font-bold",
+                alunoId === aluno.id
+                  ? "bg-indigo-100 border-indigo-200 text-indigo-600"
+                  : "bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-700"
+              )}>
+                {aluno.nome_completo.charAt(0)}
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-900 dark:text-white truncate">{aluno.nome_completo}</h4>
+                <p className="text-xs text-slate-500">ID: {aluno.id.split('-')[0]}</p>
+              </div>
+              {alunoId === aluno.id && (
+                <CheckCircle2 className="h-6 w-6 text-indigo-600 shrink-0" />
+              )}
+            </motion.button>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="py-20 text-center">
+              <User className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <p className="font-bold text-slate-400">Nenhum aluno encontrado</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function BulkApplySheet({
+  isOpen, onClose, selecionados, globalNota, setGlobalNota,
+  globalFaltas, setGlobalFaltas, globalObs, setGlobalObs, onAplicar
+}: any) {
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Aplicar em Lote" size="half">
+      <div className="space-y-6 pt-4">
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-800 flex items-center justify-center">
+              <Copy className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="font-bold text-indigo-900 dark:text-indigo-100">Aplicar para {selecionados.length} alunos</p>
+              <p className="text-xs text-indigo-600 dark:text-indigo-300">Preencha os campos abaixo</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nota Final</Label>
+            <Input
+              inputMode="decimal"
+              placeholder="Ex: 8,5"
+              value={globalNota}
+              onChange={e => setGlobalNota(e.target.value)}
+              className="h-14 rounded-xl text-base font-bold text-center text-indigo-600"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Faltas</Label>
+            <Input
+              inputMode="numeric"
+              placeholder="0"
+              value={globalFaltas}
+              onChange={e => setGlobalFaltas(e.target.value)}
+              className="h-14 rounded-xl text-base font-bold text-center"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Observações</Label>
+            <Input
+              placeholder="Ex: Excelente participação"
+              value={globalObs}
+              onChange={e => setGlobalObs(e.target.value)}
+              className="h-14 rounded-xl text-base"
+            />
+          </div>
+        </div>
+
+        <div className="pt-2 space-y-2">
+          <Button
+            className="w-full h-14 rounded-2xl bg-indigo-600 font-bold text-base"
+            onClick={onAplicar}
+            disabled={selecionados.length === 0}
+          >
+            <Copy className="h-5 w-5 mr-2" />
+            Aplicar para {selecionados.length} Alunos
+          </Button>
+          <Button variant="ghost" className="w-full h-12 text-slate-400 font-bold" onClick={onClose}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
 
 function FilterSheet({ 
   isOpen, onClose, turmas, disciplinas, 

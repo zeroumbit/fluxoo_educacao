@@ -5,14 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  Check, 
-  Loader2, 
-  User, 
-  GraduationCap, 
-  Calendar, 
-  Clock, 
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  User,
+  GraduationCap,
+  Calendar,
+  Clock,
   CreditCard,
   Building2,
   ChevronRight

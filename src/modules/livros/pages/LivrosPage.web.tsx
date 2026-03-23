@@ -774,85 +774,79 @@ export function LivrosPage() {
            </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-16">
+        <div className="grid grid-cols-1 gap-8">
           {Array.from(itensPorTurma.entries()).map(([turmaId, items]) => {
             const turma = turmas?.find(t => t.id === turmaId)
             if (!turma) return null
             if (items.length === 0) return null
 
             return (
-              <div key={turmaId} className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+              <div key={turmaId} className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 <div className="flex items-center gap-6">
-                   <div className="bg-indigo-600 w-2 h-10 rounded-full shadow-lg shadow-indigo-200" />
+                   <div className="bg-indigo-600 w-1 h-8 rounded-full shadow-lg shadow-indigo-200" />
                    <div className="space-y-0.5">
-                      <h2 className="text-3xl font-black text-zinc-900 tracking-tighter italic uppercase leading-none">{turma.nome}</h2>
+                      <h2 className="text-xl font-black text-zinc-900 tracking-tighter uppercase leading-none">{turma.nome}</h2>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">{items.length} Itens Vinculados</span>
-                        <div className="h-1 w-1 rounded-full bg-zinc-300" />
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest italic">Lista Oficial Ativa</span>
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{items.length} Itens Vinculados</span>
                       </div>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {items.map((item: any) => (
                     <div 
                       key={`${item.tipo}-${item.id}`} 
-                      className="group bg-white rounded-[44px] border border-zinc-50 shadow-sm hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-700 flex flex-col relative overflow-hidden h-[540px]"
+                      className="group bg-white rounded-2xl border border-zinc-200 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-300 flex flex-col relative overflow-hidden"
                     >
-                      <div className="absolute top-6 left-6 z-20">
-                         <Badge className={`border-0 font-black uppercase tracking-[0.2em] text-[8px] py-1.5 px-4 rounded-full shadow-lg ${item.tipo === 'livro' ? 'bg-indigo-600' : 'bg-emerald-500'}`}>
+                      <div className="absolute top-3 left-3 z-20">
+                         <Badge className={`border-0 font-black uppercase tracking-wider text-[8px] py-1 px-2.5 rounded-md shadow-sm ${item.tipo === 'livro' ? 'bg-indigo-600' : 'bg-emerald-500'}`}>
                             {item.tipo === 'livro' ? 'Livro' : 'Material'}
                          </Badge>
                       </div>
 
-                      <div className="h-64 bg-zinc-50/50 flex items-center justify-center relative overflow-hidden group/image">
+                      <div className="h-32 bg-zinc-50 border-b border-zinc-100 flex items-center justify-center relative overflow-hidden group/image">
                          {(item.capa_url || item.imagem_url) ? (
-                            <img src={item.capa_url || item.imagem_url} alt="Capa" className="h-full w-full object-contain p-8 drop-shadow-2xl group-hover/image:scale-110 transition-transform duration-1000" />
+                            <img src={item.capa_url || item.imagem_url} alt="Capa" className="h-full w-full object-contain p-3 drop-shadow-sm group-hover/image:scale-105 transition-transform duration-500" />
                          ) : (
-                            <div className="text-zinc-100">
-                               {item.tipo === 'livro' ? <BookOpen size={100} /> : <Package size={100} />}
+                            <div className="text-zinc-200">
+                               {item.tipo === 'livro' ? <BookOpen size={48} /> : <Package size={48} />}
                             </div>
                          )}
-                         <div className="absolute inset-0 bg-zinc-950/0 group-hover/image:bg-zinc-950/20 transition-all duration-700" />
                       </div>
 
-                      <div className="p-9 flex-1 flex flex-col justify-between">
-                         <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                               <div className={`w-8 h-1 rounded-full ${item.tipo === 'livro' ? 'bg-indigo-600' : 'bg-emerald-500'}`} />
-                               <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic truncate max-w-xs">
-                                  {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
-                               </span>
-                            </div>
-                            <h3 className="text-lg font-bold text-zinc-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2">
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                         <div className="space-y-2">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest truncate block">
+                               {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
+                            </span>
+                            <h3 className="text-sm font-bold text-zinc-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
                                {item.tipo === 'livro' ? item.titulo : item.nome}
                             </h3>
                             
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                {item.tipo === 'livro' ? (
-                                 <p className="text-xs font-bold text-zinc-400 italic">Por <span className="text-zinc-800">{item.autor}</span> • <span className="opacity-60">{item.editora}</span></p>
+                                 <p className="text-[10px] text-zinc-500">Autor: <span className="font-medium text-zinc-800">{item.autor}</span></p>
                                ) : (
-                                 <div className="flex flex-col gap-1.5">
-                                   <p className="text-xs font-black text-zinc-800 italic uppercase tracking-tighter">{item.quantidade_sugerida} {item.unidade_medida}</p>
-                                   <p className="text-[10px] font-bold text-zinc-400 italic">Marca Sugerida: <span className="text-zinc-600">{item.marca_sugerida || 'Qualquer uma'}</span></p>
+                                 <div className="flex flex-col gap-0.5">
+                                   <p className="text-[10px] text-zinc-500">Qtd: <span className="font-bold text-zinc-800">{item.quantidade_sugerida} {item.unidade_medida}</span></p>
+                                   <p className="text-[10px] text-zinc-500 truncate">Marca: <span className="text-zinc-700">{item.marca_sugerida || 'Qualquer'}</span></p>
                                  </div>
                                )}
                             </div>
                          </div>
 
-                         <div className="flex items-center justify-between pt-6 border-t border-zinc-50">
-                            <div className="flex items-center gap-2">
-                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleEditar(item) : handleEditarMaterial(item)} className="h-12 w-12 rounded-2xl hover:bg-zinc-100 transition-all hover:scale-110 active:scale-95">
-                                  <Edit2 size={16} />
+                         <div className="flex items-center justify-between pt-4 mt-4 border-t border-zinc-100">
+                            <div className="flex items-center gap-1.5">
+                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleEditar(item) : handleEditarMaterial(item)} className="h-8 w-8 rounded-lg hover:bg-zinc-100 transition-all text-zinc-500">
+                                  <Edit2 size={14} />
                                </Button>
-                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleExcluirLivro(item) : handleExcluirMaterial(item)} className="h-12 w-12 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all hover:scale-110 active:scale-95">
-                                  <Trash2 size={16} />
+                               <Button variant="ghost" size="icon" onClick={() => item.tipo === 'livro' ? handleExcluirLivro(item) : handleExcluirMaterial(item)} className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all text-zinc-400">
+                                  <Trash2 size={14} />
                                </Button>
                             </div>
                             {item.link_referencia && (
-                               <a href={item.link_referencia} target="_blank" rel="noreferrer" className="h-12 w-12 rounded-2xl bg-zinc-950 text-white flex items-center justify-center hover:bg-indigo-600 transition-all hover:scale-110 shadow-lg shadow-zinc-200">
-                                  <ExternalLink size={16} />
+                               <a href={item.link_referencia} target="_blank" rel="noreferrer" className="h-8 w-8 rounded-lg bg-zinc-100 text-zinc-500 flex items-center justify-center hover:bg-zinc-200 transition-all">
+                                  <ExternalLink size={14} />
                                </a>
                             )}
                          </div>
