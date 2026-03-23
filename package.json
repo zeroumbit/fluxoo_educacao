@@ -10,7 +10,13 @@
     "url": "https://github.com/zeroumbit/fluxoo_educacao.git"
   },
   "engines": {
-    "node": ">=18.17.0"
+    "node": "20.x"
+  },
+  "overrides": {
+    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.4.15",
+    "source-map": "npm:source-map@^0.7.4",
+    "glob": "npm:glob@^10.0.0",
+    "serialize-javascript": "npm:serialize-javascript@^7.0.4"
   },
   "scripts": {
     "dev": "vite",
