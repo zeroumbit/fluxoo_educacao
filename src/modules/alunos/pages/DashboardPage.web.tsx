@@ -538,10 +538,14 @@ export function DashboardPageWeb() {
       value: `R$ ${saudeFinanceira.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       sub: saudeFinanceira >= 0 ? 'Saúde financeira positiva' : 'Atenção ao fluxo de caixa',
       icon: TrendingUp,
-      iconBg: saudeFinanceira >= 0 ? 'bg-emerald-50' : 'bg-rose-50',
-      iconColor: saudeFinanceira >= 0 ? 'text-emerald-600' : 'text-rose-600',
-      warning: saudeFinanceira < 0,
-      path: '/financeiro-relatorios'
+      iconBg: 'bg-rose-100',
+      iconColor: 'text-rose-700',
+      path: '/financeiro-relatorios',
+      cardBg: 'bg-rose-50/30',
+      cardBorder: 'border-rose-100',
+      cardTitleColor: 'text-rose-400',
+      cardValueColor: 'text-rose-900',
+      cardSubColor: 'text-rose-600',
     },
     {
       label: 'Alertas Ativos',

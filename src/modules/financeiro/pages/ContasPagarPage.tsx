@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useRBACInit, useHasPermission } from '@/hooks/usePermissions'
+import { usePermissions } from '@/providers/RBACProvider'
 import { Plus, Loader2, Wallet, Edit2, Trash2, AlertTriangle, Check } from 'lucide-react'
 
 const schema = z.object({
@@ -41,9 +41,10 @@ export function ContasPagarPage() {
   const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) as any })
 
   // Permissões
-  const canCreate = useHasPermission('financeiro.contas_pagar.create')
-  const canEdit = useHasPermission('financeiro.contas_pagar.edit')
-  const canPay = useHasPermission('financeiro.contas_pagar.pay')
+  const { hasPermission } = usePermissions()
+  const canCreate = hasPermission('financeiro.contas_pagar.create')
+  const canEdit = hasPermission('financeiro.contas_pagar.edit')
+  const canPay = hasPermission('financeiro.contas_pagar.pay')
 
   const onSubmit = async (data: any) => {
     if (!authUser) return

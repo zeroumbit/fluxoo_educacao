@@ -8,13 +8,18 @@ import {
   Star,
   Package,
   Plus,
-  X,
   Users,
   Info,
   ChevronRight,
   ArrowLeft,
   Heart,
-  ShieldCheck
+  ShieldCheck,
+  Truck,
+  MapPin,
+  ChevronDown,
+  ShoppingBag,
+  GraduationCap,
+  Shirt
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -50,12 +55,14 @@ interface Product {
   price: number
   price_promocional?: number
   price_pix?: number
-  price_credit?: number
+  price_installments?: number
   category: 'livros' | 'materiais' | 'serviços' | 'vestuario'
   subcategory?: 'escolares' | 'ficção'
   image: string
   rating: number
-  popular?: boolean
+  sponsored?: boolean
+  capa?: 'comum' | 'dura'
+  entrega_gratis?: boolean
   metadata?: { label: string, value: string }[]
   reviews?: { id: string, user: string, rating: number, comment: string, date: string }[]
 }
@@ -64,15 +71,18 @@ const PRODUCTS: Product[] = [
   {
     id: 'l1',
     name: 'Matemática Avançada Vol. 2',
-    description: 'Livro didático focado em preparação para o vestibular e concursos militares. Conteúdo atualizado com as últimas provas.',
+    description: 'Livro didático focado em preparação para o vestibular e concursos militares. Conteúdo atualizado.',
     price: 159.90,
     price_promocional: 129.90,
     price_pix: 119.90,
-    price_credit: 135.00,
+    price_installments: 135.00,
     category: 'livros',
     subcategory: 'escolares',
+    capa: 'dura',
+    entrega_gratis: true,
     image: 'https://images.unsplash.com/photo-1543004629-142a76c50c9e?q=80&w=800&auto=format&fit=crop',
     rating: 4.8,
+    sponsored: true,
     metadata: [
       { label: 'Editora', value: 'Pedagógica Pro' },
       { label: 'ISBN', value: '978-85-00-00000-0' },
@@ -91,9 +101,11 @@ const PRODUCTS: Product[] = [
     price: 59.90,
     price_promocional: 45.00,
     price_pix: 39.90,
-    price_credit: 49.90,
+    price_installments: 49.90,
     category: 'livros',
     subcategory: 'ficção',
+    capa: 'comum',
+    entrega_gratis: false,
     image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop',
     rating: 4.5,
     metadata: [
@@ -112,11 +124,12 @@ const PRODUCTS: Product[] = [
     price: 189.90,
     price_promocional: 169.90,
     price_pix: 159.90,
-    price_credit: 175.00,
+    price_installments: 175.00,
     category: 'materiais',
+    entrega_gratis: true,
+    sponsored: true,
     image: 'https://images.unsplash.com/photo-1572948852275-231cb30026e1?q=80&w=800&auto=format&fit=crop',
     rating: 4.8,
-    popular: true,
     metadata: [
       { label: 'Itens', value: '12 peças' },
       { label: 'Material', value: 'Poliéster Ultra' },
@@ -133,11 +146,11 @@ const PRODUCTS: Product[] = [
     price: 250.00,
     price_promocional: 220.00,
     price_pix: 200.00,
-    price_credit: 230.00,
+    price_installments: 230.00,
     category: 'serviços',
+    sponsored: true,
     image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=800&auto=format&fit=crop',
     rating: 5.0,
-    popular: true,
     metadata: [
       { label: 'Formato', value: 'Híbrido' },
       { label: 'Duração', value: '60 min / aula' },
@@ -153,8 +166,9 @@ const PRODUCTS: Product[] = [
     description: 'Camiseta oficial da escola, tecido dry-fit de alta qualidade, resistente a múltiplas lavagens.',
     price: 45.00,
     price_pix: 40.50,
-    price_credit: 45.00,
+    price_installments: 45.00,
     category: 'vestuario',
+    entrega_gratis: false,
     image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
     rating: 4.9,
     metadata: [
@@ -178,14 +192,25 @@ const LojaSkeleton = () => (
   </div>
 )
 
+// --- ASSETS INTERNOS (Gerados para a loja) ---
+const ASSETS = {
+  books: '/assets/store/featured_books.png',
+  supplies: '/assets/store/featured_supplies.png',
+  uniforms: '/assets/store/featured_uniforms.png',
+  pros: '/assets/store/featured_pros.png'
+}
+
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [activeCategory, setActiveCategory] = useState<'livros' | 'materiais' | 'serviços' | 'vestuario' | 'all'>('all')
   const [activeSubcategory, setActiveSubcategory] = useState<'escolares' | 'ficção' | 'all'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isLoading] = useState(false)
+
+  const isHomeView = !searchTerm && activeCategory === 'all'
 
   // Sincronizar busca e categoria da URL
   useEffect(() => {
@@ -213,6 +238,12 @@ export function PortalLojaPage() {
     return p.category === activeCategory && matchSearch
   })
 
+  const mockSections = [
+    { id: 'books', title: 'Melhores ofertas de livros', category: 'livros', image: ASSETS.books },
+    { id: 'supplies', title: 'Tudo pra seu dia a dia em materiais', category: 'materiais', image: ASSETS.supplies },
+    { id: 'fashion', title: 'Moda escolar perfeita', category: 'vestuario', image: ASSETS.uniforms },
+    { id: 'pros', title: 'Profissionais para seu filho', category: 'serviços', image: ASSETS.pros },
+  ]
 
   const handleCategoryChange = (cat: 'livros' | 'materiais' | 'serviços' | 'vestuario' | 'all') => {
     vibrate(15)
@@ -228,108 +259,139 @@ export function PortalLojaPage() {
   if (isLoading) return <LojaSkeleton />
 
   return (
-    <div className="space-y-12 pb-20 animate-in fade-in duration-700 font-sans">
-
-      {/* Header removido - Agora está no Layout */}
-      <div className="flex flex-col gap-6">
-          {/* Espaço para filtro rápido se necessário no futuro */}
-      </div>
-
-      {/* 2. Grid de Produtos - Refatorado */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        <AnimatePresence mode="popLayout">
-          {filteredProducts.map((product, idx) => (
-            <motion.div 
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: idx * 0.03 }}
-              className="group"
-            >
-              <div 
-                onClick={() => handleProductClick(product)}
-                className="bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
-              >
-                {/* Visual Area */}
-                <div className="h-44 relative overflow-hidden bg-slate-50">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  />
-                  {product.popular && (
-                    <div className="absolute top-2 left-2">
-                       <Badge className="bg-teal-600 text-white font-bold text-[8px] uppercase px-2 py-0.5 rounded-md border-0">
-                         Destaque
-                       </Badge>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info Area */}
-                <div className="p-4 flex-1 flex flex-col space-y-3">
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight">
-                      {product.name}
-                    </h4>
-                    <p className="text-[10px] font-medium text-slate-500 leading-normal line-clamp-2">
-                       {product.description}
-                    </p>
-                  </div>
-
-                  {/* Preços */}
-                  <div className="space-y-1 pt-1">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-slate-400 font-medium tracking-tight">Normal:</span>
-                      <span className="font-bold text-slate-400 line-through">R$ {product.price.toFixed(2)}</span>
-                    </div>
-                    {product.price_promocional && (
-                      <div className="flex items-center justify-between border-b border-teal-50 pb-1">
-                        <span className="text-[9px] font-bold text-teal-600 uppercase tracking-tighter">Promocional:</span>
-                        <span className="text-sm font-bold text-teal-600">R$ {product.price_promocional.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2 pt-1 mt-1">
-                       <div className="bg-emerald-50/50 p-1.5 rounded-lg border border-emerald-100/30">
-                          <p className="text-[7px] font-bold text-emerald-600 uppercase tracking-widest text-center">Pix</p>
-                          <p className="text-[11px] font-bold text-emerald-700 leading-none text-center">R$ {product.price_pix?.toFixed(2)}</p>
-                       </div>
-                       <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                          <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest text-center">Crédito</p>
-                          <p className="text-[11px] font-bold text-slate-700 leading-none text-center">R$ {product.price_credit?.toFixed(2)}</p>
-                       </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-auto pt-3">
-                    <Button 
-                      className="w-full h-9 bg-slate-100 hover:bg-teal-600 text-slate-600 hover:text-white rounded-lg transition-all border-0 shadow-none font-bold text-xs gap-2"
-                      onClick={(e) => { e.stopPropagation(); vibrate(20); }}
-                    >
-                      <Plus size={16} /> Adicionar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {filteredProducts.length === 0 && (
-          <div className="col-span-full py-32 text-center space-y-8 bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 mx-1">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-100">
-              <Search size={48} />
+    <div className="flex flex-col gap-8 pb-32 animate-in fade-in duration-700">
+      {/* 1. Header Especial da Loja (Baseado no Sketch) */}
+      <div className="flex flex-col gap-6 -mt-4">
+        {/* Top Header Row */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-100">
+          {/* Localização */}
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-teal-50 group-hover:text-teal-500 transition-colors">
+              <MapPin size={20} />
             </div>
-            <div className="space-y-3 px-8">
-              <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase leading-none">Catálogo Vazio</h3>
-              <p className="text-slate-400 text-sm font-bold italic leading-relaxed max-w-xs mx-auto">Não localizamos itens correspondentes para "{searchTerm}" neste departamento.</p>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Enviar para <span className="text-slate-900">Sérgio</span> — CEP: 62700-000</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-700 leading-none">Rua paulino Barroso de castro...</span>
+                <ChevronDown size={14} className="text-slate-400" />
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Barra de Busca Grande */}
+          <div className="flex-1 max-w-2xl relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+            <Input 
+              placeholder="Busque por livros, materiais escolares ou serviços educacionais" 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full h-15 pl-14 pr-6 rounded-[22px] bg-slate-100 border-0 text-base font-bold placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+            />
+          </div>
+
+          {/* Ícones de Interação */}
+          <div className="flex items-center gap-4">
+            <button className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:shadow-md transition-all">
+              <Heart size={22} />
+            </button>
+            <button className="h-12 px-6 rounded-2xl bg-slate-900 text-white flex items-center justify-center gap-3 hover:bg-teal-600 shadow-xl shadow-slate-200 transition-all group">
+              <ShoppingBag size={20} />
+              <span className="font-bold text-sm tracking-wide">Meus Itens</span>
+              <div className="bg-teal-500 text-white text-[10px] font-black h-5 w-5 rounded-lg flex items-center justify-center">2</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Secondary Menu (Categorias) */}
+        <nav className="flex items-center justify-center gap-8 py-2">
+          {[
+            { id: 'livros', label: 'Livros', icon: BookOpen },
+            { id: 'materiais', label: 'materiais escolares', icon: Tag },
+            { id: 'vestuario', label: 'Vestuario', icon: Shirt },
+            { id: 'serviços', label: 'Serviços educacionais', icon: GraduationCap }
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryChange(cat.id as any)}
+              className={cn(
+                "flex items-center gap-2 text-sm font-bold transition-all hover:text-teal-600 group",
+                activeCategory === cat.id ? "text-teal-600 scale-105" : "text-slate-500"
+              )}
+            >
+              <cat.icon size={16} className={cn("transition-colors", activeCategory === cat.id ? "text-teal-500" : "text-slate-400 group-hover:text-teal-500")} />
+              {cat.label}
+              <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 -translate-y-1 transition-all" />
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* 3. Banner Informativo - Estilo Pro Max */}
-      <div className="bg-slate-900 rounded-[56px] p-12 md:p-16 text-white relative overflow-hidden group shadow-2xl mx-1 border border-slate-800">
+      {isHomeView ? (
+        /* 2. Conteúdo Estilo Home (Sections) */
+        <div className="flex flex-col gap-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          {mockSections.map((section, sectionIdx) => (
+            <section key={section.id} className="flex flex-col gap-8">
+              <div className="flex items-end justify-between px-2">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">{section.title}</h2>
+                  <p className="text-sm font-bold text-slate-400 italic">Principais itens recomendados para sua família</p>
+                </div>
+                <button 
+                  onClick={() => setActiveCategory(section.category as any)}
+                  className="text-sm font-black text-teal-600 uppercase tracking-widest hover:underline decoration-2 underline-offset-8"
+                >
+                  ver todos
+                </button>
+              </div>
+
+              {/* Grid de Ofertas/Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {/* O primeiro card é um banner/promo da seção no sketch */}
+                <div className="col-span-1 border border-slate-100 rounded-[32px] overflow-hidden bg-slate-50 min-h-[320px] relative group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500">
+                   <img src={section.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
+                   <div className="absolute bottom-8 left-8 right-8">
+                      <span className="inline-block px-3 py-1 bg-teal-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-md mb-3 shadow-lg">Destaque</span>
+                      <h3 className="text-xl font-black text-white leading-tight mb-2">Coleção {section.id === 'books' ? 'Literária 2024' : 'Modern School'}</h3>
+                      <p className="text-white/60 text-xs font-bold leading-relaxed line-clamp-2 italic">Curadoria exclusiva preparada pela coordenação pedagógica para este ano letivo.</p>
+                   </div>
+                </div>
+
+                {/* Itens Reais filtrados como exemplos */}
+                {PRODUCTS.filter(p => p.category === section.category).slice(0, 4).map((product, pIdx) => (
+                  <StoreHomeCard key={product.id} product={product} onClick={() => handleProductClick(product)} index={pIdx} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        /* 3. Grid de Busca/Resultados */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product, idx) => (
+              <StoreSearchCard key={product.id} product={product} onClick={() => handleProductClick(product)} index={idx} />
+            ))}
+          </AnimatePresence>
+
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full py-32 text-center space-y-8 bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 mx-1 focus:outline-none">
+              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-100">
+                <Search size={48} />
+              </div>
+              <div className="space-y-3 px-8">
+                <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic uppercase leading-none">Resultado Vazio</h3>
+                <p className="text-slate-400 text-sm font-bold italic leading-relaxed max-w-xs mx-auto">Não localizamos itens correspondentes para "{searchTerm}".</p>
+                <Button variant="outline" onClick={() => { setSearchTerm(''); setActiveCategory('all'); }} className="rounded-xl font-bold mt-4">Limpar Filtros</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Banner Institucional */}
+      <div className="bg-slate-900 rounded-[48px] p-12 md:p-16 text-white relative overflow-hidden group shadow-2xl mt-8">
+         {/* ... rest of the code ... */}\
          <div className="absolute right-0 top-0 p-16 opacity-5 -mr-24 -mt-24 rotate-12 transition-transform group-hover:scale-110 duration-1000 pointer-events-none">
             <Package size={450} />
          </div>
@@ -353,6 +415,9 @@ export function PortalLojaPage() {
       {isMobile ? (
         <Sheet open={!!selectedProduct} onOpenChange={(open) => { if(!open) setSelectedProduct(null); vibrate(10); }}>
           <SheetContent side="bottom" className="rounded-t-[32px] border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[95vh] focus:outline-none focus:ring-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Detalhes do Produto</SheetTitle>
+            </SheetHeader>
             <div className="p-4">
               <ProductDetailsContent product={selectedProduct} onClose={() => setSelectedProduct(null)} isMobile={true} />
             </div>
@@ -361,7 +426,10 @@ export function PortalLojaPage() {
       ) : (
         <Dialog open={!!selectedProduct} onOpenChange={(open) => { if(!open) setSelectedProduct(null); }}>
           <DialogContent className="max-w-[1200px] w-[95vw] h-[90vh] p-0 rounded-2xl overflow-hidden border-0 shadow-2xl bg-slate-50">
-              <ProductDetailsContent product={selectedProduct} onClose={() => setSelectedProduct(null)} isMobile={false} />
+            <DialogHeader className="sr-only">
+              <DialogTitle>Detalhes do Produto</DialogTitle>
+            </DialogHeader>
+            <ProductDetailsContent product={selectedProduct} onClose={() => setSelectedProduct(null)} isMobile={false} />
           </DialogContent>
         </Dialog>
       )}
@@ -396,20 +464,12 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
                <Badge className="bg-teal-600 text-white border-0 font-bold text-[10px] uppercase px-3 py-1 rounded-md shadow-lg">
                  {product.category === 'livros' ? 'Livro' : product.category === 'materiais' ? 'Material' : 'Serviço'}
                </Badge>
-               {product.popular && (
+               {product.sponsored && (
                   <Badge className="bg-amber-500 text-white border-0 font-bold text-[10px] uppercase px-3 py-1 rounded-md shadow-lg">
-                    Destaque
+                    Patrocinado
                   </Badge>
                )}
             </div>
-            {!isMobile && (
-              <button 
-                onClick={onClose}
-                className="absolute top-6 right-6 h-12 w-12 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white hover:text-slate-900 transition-all border border-white/30"
-              >
-                <X size={24} />
-              </button>
-            )}
           </div>
 
           {/* Coluna 2: Conteúdo Detalhado */}
@@ -517,8 +577,8 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
               </div>
               <div className="h-8 w-px bg-slate-100" />
               <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cartão de Crédito</p>
-                 <p className="text-lg font-bold text-slate-700 leading-none">R$ {product.price_credit?.toFixed(2)}</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parcelado:</p>
+                 <p className="text-lg font-bold text-slate-700 leading-none">R$ {product.price_installments?.toFixed(2)}</p>
               </div>
            </div>
            <div className="flex items-center gap-4">
@@ -526,7 +586,7 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
                  <p className="text-[10px] font-bold text-slate-400 uppercase line-through">R$ {product.price.toFixed(2)}</p>
                  <p className="text-xl font-bold text-teal-600 leading-none">R$ {product.price_promocional?.toFixed(2)}</p>
               </div>
-              <Button 
+              <Button
                 className="h-14 px-12 bg-teal-600 hover:bg-slate-900 text-white rounded-xl shadow-lg shadow-teal-100 font-bold uppercase tracking-[0.2em] text-xs border-0 transition-all active:scale-95"
                 onClick={() => { vibrate(40); onClose(); }}
               >
@@ -539,6 +599,175 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
   )
 }
 
+// --- SUB-COMPONENTES AUXILIARES ---
+
+// --- SUB-COMPONENTES AUXILIARES ---
+
+/**
+ * 1. StoreHomeCard (View Principal/Seções)
+ * Focado em visual limpo, favoritar e botão de adicionar rápido (+)
+ */
+function StoreHomeCard({ product, onClick, index }: { product: Product, onClick: () => void, index: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      whileHover={{ y: -5 }}
+      className="group"
+      onClick={onClick}
+    >
+      <div className="bg-white rounded-[32px] border border-slate-100 p-3 h-full flex flex-col gap-3 shadow-sm hover:shadow-xl hover:border-teal-100 transition-all duration-300">
+        {/* Imagem (aspecto 4/5) */}
+        <div className="aspect-[4/5] rounded-[24px] overflow-hidden bg-slate-50 relative">
+          <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          
+          {/* Botão de Favoritar (Top Right) */}
+          <div className="absolute top-3 right-3">
+             <button 
+              className="h-9 w-9 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm transition-all active:scale-90"
+              onClick={(e) => { e.stopPropagation(); vibrate(10); }}
+             >
+                <Heart size={16} />
+             </button>
+          </div>
+
+          {/* Badge Oferta */}
+          {product.price_promocional && (
+            <div className="absolute bottom-3 left-3">
+               <Badge className="bg-rose-500 text-white border-0 font-black text-[9px] uppercase px-3 py-1 shadow-lg shadow-rose-200">Oferta</Badge>
+            </div>
+          )}
+        </div>
+        
+        <div className="px-2 flex-1 flex flex-col gap-1.5">
+          {/* Categoria */}
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.category}</p>
+          
+          {/* Nome (2 linhas) */}
+          <h4 className="text-[15px] font-black text-slate-800 line-clamp-2 leading-tight min-h-[2.5rem] tracking-tight">{product.name}</h4>
+          
+          <div className="mt-auto pt-3 flex flex-col gap-1">
+             {/* Preço original riscado */}
+             {product.price_promocional && (
+                <span className="text-[10px] font-bold text-slate-400 line-through">R$ {product.price.toFixed(2)}</span>
+             )}
+             
+             {/* Preço PIX em destaque (Teal) */}
+             <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                   <span className="text-[9px] font-black text-teal-600 uppercase tracking-wider">No PIX</span>
+                   <span className="text-lg font-black text-teal-600 leading-none">R$ {(product.price_pix || product.price_promocional || product.price).toFixed(2)}</span>
+                </div>
+                
+                {/* Botão Adicionar Rápido (+) */}
+                <button 
+                  className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white hover:bg-teal-600 transition-all shadow-lg active:scale-95"
+                  onClick={(e) => { e.stopPropagation(); vibrate(20); }}
+                >
+                  <Plus size={18} />
+                </button>
+             </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/**
+ * 2. StoreSearchCard (Grid de Resultados)
+ * Focado em detalhes comparativos, badges adicionais e botão full-width
+ */
+function StoreSearchCard({ product, onClick, index }: { product: Product, onClick: () => void, index: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.03 }}
+      className="group"
+      onClick={onClick}
+    >
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer">
+        {/* Visual Area */}
+        <div className="h-48 relative overflow-hidden bg-slate-50">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          
+          {/* Badge Patrocinado */}
+          {product.sponsored && (
+            <div className="absolute top-2 left-2">
+               <Badge className="bg-amber-400 text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-md border-0 shadow-md">
+                 Patrocinado
+               </Badge>
+            </div>
+          )}
+
+          {/* Badge Entrega Grátis */}
+          {product.entrega_gratis && (
+            <div className="absolute bottom-2 left-2">
+               <Badge className="bg-emerald-500 text-white font-bold text-[8px] uppercase px-2 py-0.5 rounded-md border-0 shadow-md flex items-center gap-1">
+                 <Truck size={10} /> Entrega Grátis
+               </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Info Area */}
+        <div className="p-3.5 flex-1 flex flex-col gap-2.5">
+          {/* Título e Descrição */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900 line-clamp-2 leading-tight min-h-[2.5rem]">
+              {product.name}
+            </h4>
+            <p className="text-[10px] text-slate-500 leading-tight line-clamp-2">
+               {product.description}
+            </p>
+          </div>
+
+          {/* Preços */}
+          <div className="space-y-2 pt-1">
+            {/* Preço Normal Riscado ("De:") */}
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">De:</span>
+              <span className="text-xs font-medium text-slate-400 line-through">R$ {product.price.toFixed(2)}</span>
+            </div>
+            
+            {/* Preço Parcelado */}
+            {product.price_installments && (
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">Parcelado:</span>
+                <span className="text-sm font-bold text-slate-700">R$ {product.price_installments.toFixed(2)}</span>
+              </div>
+            )}
+            
+            {/* Preço PIX em destaque (Card Verde) */}
+            {product.price_pix && (
+              <div className="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
+                <p className="text-[8px] font-bold text-emerald-600 uppercase tracking-widest text-center mb-0.5">À vista no Pix</p>
+                <p className="text-lg font-black text-emerald-700 leading-none text-center">R$ {product.price_pix.toFixed(2)}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Botão Adicionar (Full Width) */}
+          <div className="mt-auto pt-1">
+            <Button
+              className="w-full h-9 bg-slate-900 hover:bg-teal-600 text-white rounded-lg transition-all border-0 shadow-md shadow-slate-200 font-bold text-xs gap-2"
+              onClick={(e) => { e.stopPropagation(); vibrate(20); }}
+            >
+              <Plus size={16} /> Adicionar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 function PriceCards({ product }: { product: Product }) {
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -547,49 +776,9 @@ function PriceCards({ product }: { product: Product }) {
           <p className="text-2xl font-bold text-emerald-700 leading-none tracking-tight">R$ {product.price_pix?.toFixed(2)}</p>
        </div>
        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-          <p className="text-[9px] font-bold text-slate-500 uppercase mb-1 tracking-widest">Cartão de Crédito</p>
-          <p className="text-2xl font-bold text-slate-700 leading-none tracking-tight">R$ {product.price_credit?.toFixed(2)}</p>
+          <p className="text-[9px] font-bold text-slate-500 uppercase mb-1 tracking-widest">Parcelado</p>
+          <p className="text-2xl font-bold text-slate-700 leading-none tracking-tight">R$ {product.price_installments?.toFixed(2)}</p>
        </div>
     </div>
-  )
-}
-
-function XIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  )
-}
-
-function PlusIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   )
 }

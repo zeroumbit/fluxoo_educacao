@@ -13,7 +13,7 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useMemo } from 'react'
-import { useRBACInit, useHasPermission } from '@/hooks/usePermissions'
+import { usePermissions } from '@/providers/RBACProvider'
 
 interface FechamentoMensal {
   mes: string
@@ -37,7 +37,8 @@ interface FechamentoMensal {
 
 export function FinanceiroRelatoriosPage() {
   const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()
-  const canExport = useHasPermission('financeiro.relatorios.export')
+  const { hasPermission } = usePermissions()
+  const canExport = hasPermission('financeiro.relatorios.export')
 
   // Função para exportar CSV
   const handleExport = () => {

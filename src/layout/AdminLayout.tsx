@@ -38,7 +38,7 @@ import {
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
-import { useRBACInit, useCanAccessModule, useHasPermission } from '@/hooks/usePermissions'
+import { usePermissions } from '@/providers/RBACProvider'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const navigationGroups = [
@@ -98,24 +98,24 @@ const navigationGroups = [
   },
 ]
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ 
+  onNavigate, 
+  dashboardData, 
+  isLoadingDashboard 
+}: { 
+  onNavigate?: () => void, 
+  dashboardData?: any, 
+  isLoadingDashboard?: boolean 
+}) {
   const { authUser, signOut } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
-
-  // Inicializar RBAC para funcionários
-  useRBACInit()
-
-  // Super admin não tem dashboard com assinatura
-  const { data: dashboard, isLoading } = isSuperAdmin
-    ? { data: null, isLoading: false }
-    : useDashboard()
-
-  const status = dashboard?.statusAssinatura
-  const metodo = dashboard?.metodoPagamento
+  const { hasPermission, isLoading: rbacLoading } = usePermissions()
+  const status = dashboardData?.statusAssinatura
+  const metodo = dashboardData?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'boleto' || metodo === 'manual'
 
   // Só bloqueia se os dados foram carregados e o status atual for manual + não ativo
-  const isBlocked = !isLoading && !!dashboard && status !== 'ativa' && isManual
+  const isBlocked = !isLoadingDashboard && !!dashboardData && status !== 'ativa' && isManual
 
   const handleSignOut = async () => {
     try {
@@ -248,7 +248,7 @@ export function AdminLayout() {
     <div className="min-h-screen bg-zinc-50/50">
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r bg-white/80 backdrop-blur-sm lg:block">
-        <SidebarContent />
+        <SidebarContent dashboardData={dashboard} isLoadingDashboard={isLoadingDashboard} />
       </aside>
 
       {/* Mobile Sidebar - Agora acionado pelo BottomNav */}
@@ -256,7 +256,11 @@ export function AdminLayout() {
         <SheetContent side="left" showCloseButton={false} className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
           <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
           <SheetDescription className="sr-only">Acesse as funcionalidades do sistema através do menu lateral.</SheetDescription>
-          <SidebarContent onNavigate={() => setSidebarOpen(false)} />
+          <SidebarContent 
+            onNavigate={() => setSidebarOpen(false)} 
+            dashboardData={dashboard} 
+            isLoadingDashboard={isLoadingDashboard} 
+          />
         </SheetContent>
       </Sheet>
 

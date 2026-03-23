@@ -459,20 +459,20 @@ export function DashboardPageMobile() {
               <motion.div
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate('/financeiro-relatorios')}
-                className={`rounded-2xl p-4 shadow-sm border flex flex-col justify-between ${saldoPositivo ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/30' : 'bg-rose-50/50 border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/30'}`}
+                className="rounded-2xl p-4 shadow-sm border border-rose-100 bg-rose-50/50 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${saldoPositivo ? 'text-emerald-500' : 'text-rose-500'}`}>Contas</p>
-                    <div className={`h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 ${saldoPositivo ? 'bg-emerald-100 dark:bg-emerald-800' : 'bg-rose-100 dark:bg-rose-800'}`}>
-                      <TrendingUp className={`h-4 w-4 ${saldoPositivo ? 'text-emerald-600' : 'text-rose-600'}`} />
+                    <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Contas</p>
+                    <div className="h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 bg-rose-100">
+                      <TrendingUp className="h-4 w-4 text-rose-700" />
                     </div>
                   </div>
-                  <p className={`text-xl font-black tracking-tight leading-none truncate ${saldoPositivo ? 'text-emerald-900 dark:text-emerald-100' : 'text-rose-900 dark:text-rose-100'}`} title={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                  <p className="text-xl font-black tracking-tight leading-none text-rose-900 truncate" title={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
                     R$ {Math.abs(saldo) >= 10000 ? (saldo/1000).toFixed(1).replace('.', ',') + 'k' : saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
-                <p className={`text-[10px] font-bold mt-3 leading-tight truncate ${saldoPositivo ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p className="text-[10px] font-bold mt-3 leading-tight truncate text-rose-600">
                   {saldoPositivo ? 'Saúde positiva' : 'Atenção ao fluxo'}
                 </p>
               </motion.div>

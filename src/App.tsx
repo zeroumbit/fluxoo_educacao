@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/modules/auth/AuthContext'
 import { ProtectedRoute } from '@/modules/auth/ProtectedRoute'
+import { RBACProvider } from '@/providers/RBACProvider'
+import { persistQueryClient } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
@@ -102,17 +105,30 @@ function RootRedirect() {
   return <Navigate to="/dashboard" replace />
 }
 
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: 'fluxoo_rbac_cache',
+  throttleTime: 2000,
+})
+
+persistQueryClient({
+  queryClient,
+  persister,
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+})
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={
-            <div className="flex h-[60vh] items-center justify-center">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          }>
-          <Routes>
+          <RBACProvider>
+            <Suspense fallback={
+              <div className="flex h-[60vh] items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
+            }>
+            <Routes>
             {/* Root redirect */}
             <Route path="/" element={<RootRedirect />} />
 
@@ -220,6 +236,7 @@ function App() {
           </Suspense>
           <Toaster richColors position="top-right" />
           <CookieConsent />
+          </RBACProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

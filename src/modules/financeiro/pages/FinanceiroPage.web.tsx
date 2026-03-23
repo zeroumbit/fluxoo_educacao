@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useRBACInit, useHasPermission } from '@/hooks/usePermissions'
+import { usePermissions } from '@/providers/RBACProvider'
 import { useCobrancas, useCriarCobranca, useMarcarComoPago, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { Button } from '@/components/ui/button'
@@ -70,9 +70,10 @@ export function FinanceiroPageWeb() {
   })
 
   // Permissões
-  const canCreate = useHasPermission('financeiro.cobrancas.create')
-  const canPay = useHasPermission('financeiro.cobrancas.baixa_manual')
-  const canDelete = useHasPermission('financeiro.cobrancas.cancel')
+  const { hasPermission } = usePermissions()
+  const canCreate = hasPermission('financeiro.cobrancas.create')
+  const canPay = hasPermission('financeiro.cobrancas.baixa_manual')
+  const canDelete = hasPermission('financeiro.cobrancas.cancel')
 
   const alunoIdSelecionado = watch('aluno_id')
 

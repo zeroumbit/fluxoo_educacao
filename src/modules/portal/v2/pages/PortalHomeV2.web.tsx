@@ -46,10 +46,6 @@ export function PortalHomeV2Web() {
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">Bom dia, {responsavel?.nome?.split(' ')[0] || 'Responsável'}</h1>
         </div>
         <div className="flex items-center gap-6">
-          <NotificationBell
-            total={notifications?.total || 0}
-            items={notifications?.items || []}
-          />
           <div className="flex items-center gap-4">
             <span className="text-sm font-bold text-slate-400 tracking-wider">ACESSAR PERFIL:</span>
             <div className="flex -space-x-2">
@@ -69,6 +65,10 @@ export function PortalHomeV2Web() {
               ))}
             </div>
           </div>
+          <NotificationBell
+            total={notifications?.total || 0}
+            items={notifications?.items || []}
+          />
         </div>
       </header>
 
