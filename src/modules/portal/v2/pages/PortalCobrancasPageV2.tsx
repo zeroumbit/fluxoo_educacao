@@ -34,7 +34,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { BotaoVoltar } from '../../components/BotaoVoltar'
+import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
 import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -124,11 +124,11 @@ export function PortalCobrancasPageV2() {
 
   return (
     <div className="flex flex-col gap-10 p-6 pt-6 pb-24 font-sans max-w-[1600px] mx-auto w-full">
-      
+
       {/* Botão Voltar (Sobre o Título) */}
       <div className="flex flex-col gap-8">
-        <BotaoVoltar />
-        
+        <BotaoVoltarWeb />
+
         <header className="flex flex-col border-b border-slate-200 pb-10 gap-4">
           <div className="flex flex-col gap-2">
             <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Financeiro</h1>

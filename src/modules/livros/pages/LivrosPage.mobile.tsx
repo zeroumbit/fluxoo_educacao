@@ -52,26 +52,26 @@ const livroSchema = z.object({
   editora: z.string().min(2, 'Editora é obrigatória'),
   disciplina_id: z.string().min(1, 'Selecione uma disciplina'),
   ano_letivo: z.coerce.number().min(2020, 'Ano letivo inválido'),
-  isbn: z.string().optional(),
-  estado: z.enum(['Novo', 'Usado', 'Indiferente']).optional(),
-  descricao: z.string().optional(),
-  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
+  isbn: z.string().nullable().optional(),
+  estado: z.enum(['Novo', 'Usado', 'Indiferente']).nullable().optional(),
+  descricao: z.string().nullable().optional(),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).or(z.null()).optional(),
   turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
 })
 
 const materialSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullable().optional(),
   categoria: z.string().min(1, 'Selecione uma categoria'),
-  subcategoria: z.string().optional(),
+  subcategoria: z.string().nullable().optional(),
   quantidade_sugerida: z.coerce.number().min(1, 'Quantidade obrigatória'),
   unidade_medida: z.string().min(1, 'Unidade obrigatória'),
-  marca_sugerida: z.string().optional(),
-  disciplina_id: z.string().optional(),
+  marca_sugerida: z.string().nullable().optional(),
+  disciplina_id: z.string().nullable().optional(),
   periodo_uso: z.enum(['Início do ano', 'Durante o ano', 'Específico']).default('Início do ano'),
   status: z.enum(['Ativo', 'Indiferente', 'Inativo', 'Descontinuado', 'Em breve']).default('Ativo'),
   obrigatoriedade: z.enum(['Obrigatório', 'Recomendado', 'Opcional']).default('Obrigatório'),
-  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).or(z.null()).optional(),
   turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
 })
 
@@ -89,8 +89,11 @@ export function LivrosPageMobile() {
   const [livroParaEditar, setLivroParaEditar] = useState<Livro | null>(null)
   const [materialParaEditar, setMaterialParaEditar] = useState<MaterialEscolar | null>(null)
   const [novaDisciplina, setNovaDisciplina] = useState('')
-  const [capaFile, setCapaFile] = useState<File | null>(null)
-  const [capaPreview, setCapaPreview] = useState<string | null>(null)
+  const [livroCapaFile, setLivroCapaFile] = useState<File | null>(null)
+  const [livroCapaPreview, setLivroCapaPreview] = useState<string | null>(null)
+  const [materialCapaFile, setMaterialCapaFile] = useState<File | null>(null)
+  const [materialCapaPreview, setMaterialCapaPreview] = useState<string | null>(null)
+  
   const [isUploading, setIsUploading] = useState(false)
 
   // Hooks
@@ -211,8 +214,10 @@ export function LivrosPageMobile() {
       periodo_uso: 'Início do ano'
     })
     
-    setCapaPreview(null)
-    setCapaFile(null)
+    setLivroCapaPreview(null)
+    setLivroCapaFile(null)
+    setMaterialCapaPreview(null)
+    setMaterialCapaFile(null)
     setIsFormOpen(true)
   }
 
@@ -227,7 +232,8 @@ export function LivrosPageMobile() {
         ...item,
         turmasIds: item.turmas?.map((t: any) => t.id) || []
       })
-      setCapaPreview(item.capa_url || null)
+      setLivroCapaPreview(item.capa_url || null)
+      setLivroCapaFile(null) // Reset file when editing
     } else {
       setMaterialParaEditar(item)
       setLivroParaEditar(null)
@@ -235,10 +241,10 @@ export function LivrosPageMobile() {
         ...item,
         turmasIds: item.turmas?.map((t: any) => t.id) || []
       })
-      setCapaPreview(item.imagem_url || null)
+      setMaterialCapaPreview(item.imagem_url || null)
+      setMaterialCapaFile(null) // Reset file when editing
     }
     
-    setCapaFile(null)
     setIsFormOpen(true)
   }
 
@@ -264,9 +270,17 @@ export function LivrosPageMobile() {
         toast.error('Arquivo muito grande. Máximo 5MB.')
         return
       }
-      setCapaFile(file)
+      
       const reader = new FileReader()
-      reader.onloadend = () => setCapaPreview(reader.result as string)
+      reader.onloadend = () => {
+        if (activeTab === 'livro') {
+          setLivroCapaFile(file)
+          setLivroCapaPreview(reader.result as string)
+        } else {
+          setMaterialCapaFile(file)
+          setMaterialCapaPreview(reader.result as string)
+        }
+      }
       reader.readAsDataURL(file)
     }
   }
@@ -284,15 +298,19 @@ export function LivrosPageMobile() {
       setIsUploading(true)
       
       // Image handling logic
-      let finalImageUrl = capaPreview?.startsWith('http') ? capaPreview : (
+      const isLivro = activeTab === 'livro'
+      const currentCapaPreview = isLivro ? livroCapaPreview : materialCapaPreview
+      const currentCapaFile = isLivro ? livroCapaFile : materialCapaFile
+
+      let finalImageUrl = currentCapaPreview?.startsWith('http') ? currentCapaPreview : (
         isLivro ? (livroParaEditar?.capa_url || null) : (materialParaEditar?.imagem_url || null)
       )
 
-      if (capaFile) {
+      if (currentCapaFile) {
         finalImageUrl = isLivro 
-          ? await livrosService.uploadCapa(capaFile) 
-          : await livrosService.uploadImagemMaterial(capaFile)
-      } else if (!capaPreview) {
+          ? await livrosService.uploadCapa(currentCapaFile) 
+          : await livrosService.uploadImagemMaterial(currentCapaFile)
+      } else if (!currentCapaPreview) {
         finalImageUrl = null
       }
 
@@ -476,28 +494,46 @@ export function LivrosPageMobile() {
            <div className="flex justify-center">
               <div className="relative group">
                 <label className="block w-32 aspect-[3/4] rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden active:scale-95 transition-transform cursor-pointer">
-                  {capaPreview ? (
-                    <img src={capaPreview} alt="" className="w-full h-full object-cover" />
+                  {activeTab === 'livro' ? (
+                    livroCapaPreview ? (
+                      <img src={livroCapaPreview} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center text-slate-400">
+                        <Upload className="h-8 w-8 mb-1" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text center">Capa</span>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex flex-col items-center text-slate-400">
-                      <Upload className="h-8 w-8 mb-1" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text center">Enviar</span>
-                    </div>
+                    materialCapaPreview ? (
+                      <img src={materialCapaPreview} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center text-slate-400">
+                        <Upload className="h-8 w-8 mb-1" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text center">Foto</span>
+                      </div>
+                    )
                   )}
                   <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                 </label>
                 
-                {capaPreview && (
+                {((activeTab === 'livro' && livroCapaPreview) || (activeTab === 'material' && materialCapaPreview)) && (
                   <button 
                     type="button" 
-                    onClick={() => { setCapaFile(null); setCapaPreview(null); }}
-                    className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg border-2 border-white"
+                    onClick={() => { 
+                      if (activeTab === 'livro') {
+                        setLivroCapaFile(null); 
+                        setLivroCapaPreview(null); 
+                      } else {
+                        setMaterialCapaFile(null); 
+                        setMaterialCapaPreview(null); 
+                      }
+                    }}
+                    className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg border-2 border-white z-10"
                   >
                     <X size={14} />
                   </button>
                 )}
-                
-                {!capaPreview && (
+                               {!((activeTab === 'livro' && livroCapaPreview) || (activeTab === 'material' && materialCapaPreview)) && (
                   <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg pointer-events-none">
                     <Plus size={20} />
                   </div>

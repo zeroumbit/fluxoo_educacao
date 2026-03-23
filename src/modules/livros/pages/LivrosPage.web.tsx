@@ -26,10 +26,10 @@ const livroSchema = z.object({
   editora: z.string().min(2, 'Editora é obrigatória'),
   disciplina_id: z.string().min(1, 'Selecione uma disciplina'),
   ano_letivo: z.coerce.number().min(2020, 'Ano letivo inválido'),
-  isbn: z.string().optional(),
-  estado: z.enum(['Novo', 'Usado', 'Indiferente']).optional(),
-  descricao: z.string().optional(),
-  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
+  isbn: z.string().nullable().optional(),
+  estado: z.enum(['Novo', 'Usado', 'Indiferente']).nullable().optional(),
+  descricao: z.string().nullable().optional(),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).or(z.null()).optional(),
   turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
 })
 
@@ -37,36 +37,36 @@ type LivroFormValues = z.infer<typeof livroSchema>
 
 const materialSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
-  descricao: z.string().optional(),
-  codigo_sku: z.string().optional(),
+  descricao: z.string().nullable().optional(),
+  codigo_sku: z.string().nullable().optional(),
   categoria: z.string().min(1, 'Selecione uma categoria'),
-  subcategoria: z.string().optional(),
+  subcategoria: z.string().nullable().optional(),
   quantidade_sugerida: z.coerce.number().min(1, 'Quantidade obrigatória'),
   unidade_medida: z.string().min(1, 'Unidade obrigatória'),
-  especificacoes: z.string().optional(),
-  tamanho: z.string().optional(),
-  cor: z.string().optional(),
-  tipo: z.string().optional(),
-  marca_sugerida: z.string().optional(),
-  disciplina_id: z.string().optional(),
+  especificacoes: z.string().nullable().optional(),
+  tamanho: z.string().nullable().optional(),
+  cor: z.string().nullable().optional(),
+  tipo: z.string().nullable().optional(),
+  marca_sugerida: z.string().nullable().optional(),
+  disciplina_id: z.string().nullable().optional(),
   periodo_uso: z.enum(['Início do ano', 'Durante o ano', 'Específico']),
   status: z.enum(['Ativo', 'Indiferente', 'Inativo', 'Descontinuado', 'Em breve']),
   obrigatoriedade: z.enum(['Obrigatório', 'Recomendado', 'Opcional']),
-  onde_encontrar: z.string().optional(),
-  observacoes: z.string().optional(),
-  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
-  preco_sugerido: z.coerce.number().optional(),
-  estoque_atual: z.coerce.number().optional(),
-  estoque_minimo: z.coerce.number().optional(),
-  fornecedor: z.string().optional(),
-  preco_unitario: z.coerce.number().optional(),
-  codigo_barras: z.string().optional(),
-  codigo_interno: z.string().optional(),
-  quantidade_por_aluno: z.coerce.number().optional(),
+  onde_encontrar: z.string().nullable().optional(),
+  observacoes: z.string().nullable().optional(),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).or(z.null()).optional(),
+  preco_sugerido: z.coerce.number().nullable().optional(),
+  estoque_atual: z.coerce.number().nullable().optional(),
+  estoque_minimo: z.coerce.number().nullable().optional(),
+  fornecedor: z.string().nullable().optional(),
+  preco_unitario: z.coerce.number().nullable().optional(),
+  codigo_barras: z.string().nullable().optional(),
+  codigo_interno: z.string().nullable().optional(),
+  quantidade_por_aluno: z.coerce.number().nullable().optional(),
   incluir_na_lista_oficial: z.boolean().default(true),
-  posicao_lista: z.coerce.number().optional(),
-  observacao_especifica_lista: z.string().optional(),
-  imagem_url: z.string().optional(),
+  posicao_lista: z.coerce.number().nullable().optional(),
+  observacao_especifica_lista: z.string().nullable().optional(),
+  imagem_url: z.string().nullable().optional(),
   is_uso_coletivo: z.boolean().default(false),
   turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
 })
@@ -97,8 +97,10 @@ export function LivrosPage() {
   const [materialParaEditar, setMaterialParaEditar] = useState<MaterialEscolar | null>(null)
   const [itemParaExcluir, setItemParaExcluir] = useState<{ id: string; titulo: string; tipo: 'livro' | 'material' } | null>(null)
   const [novaDisciplina, setNovaDisciplina] = useState('')
-  const [capaFile, setCapaFile] = useState<File | null>(null)
-  const [capaPreview, setCapaPreview] = useState<string | null>(null)
+  const [livroCapaFile, setLivroCapaFile] = useState<File | null>(null)
+  const [livroCapaPreview, setLivroCapaPreview] = useState<string | null>(null)
+  const [materialCapaFile, setMaterialCapaFile] = useState<File | null>(null)
+  const [materialCapaPreview, setMaterialCapaPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
   const livroForm = useForm<LivroFormValues>({
@@ -130,19 +132,29 @@ export function LivrosPage() {
 
   const handleSelectTurma = (id: string, formType: 'livro' | 'material') => {
     if (formType === 'livro') {
-      const selected = livroForm.getValues('turmasIds') || []
+      const selected = (livroForm.getValues('turmasIds') || []) as string[]
       if (selected.includes(id)) {
         livroForm.setValue('turmasIds', selected.filter((t: string) => t !== id), { shouldValidate: true })
       } else {
         livroForm.setValue('turmasIds', [...selected, id], { shouldValidate: true })
       }
     } else {
-      const selected = materialForm.getValues('turmasIds') || []
+      const selected = (materialForm.getValues('turmasIds') || []) as string[]
       if (selected.includes(id)) {
         materialForm.setValue('turmasIds', selected.filter((t: string) => t !== id), { shouldValidate: true })
       } else {
         materialForm.setValue('turmasIds', [...selected, id], { shouldValidate: true })
       }
+    }
+  }
+
+  const onInvalid = (errors: any) => {
+    console.error('Validation Errors:', errors)
+    const firstError = Object.values(errors)[0] as any
+    if (firstError?.message) {
+      toast.error(`Erro no formulário: ${firstError.message}`)
+    } else {
+      toast.error('Por favor, preencha todos os campos obrigatórios corretamente.')
     }
   }
 
@@ -164,8 +176,8 @@ export function LivrosPage() {
       turmasIds: livro.turmas?.map(t => t.id) || []
     })
     
-    setCapaPreview(livro.capa_url || null)
-    setCapaFile(null)
+    setLivroCapaPreview(livro.capa_url || null)
+    setLivroCapaFile(null)
     setDialogOpen(true)
   }
 
@@ -179,8 +191,8 @@ export function LivrosPage() {
       turmasIds: material.turmas?.map(t => t.id) || []
     } as any)
     
-    setCapaPreview(material.imagem_url || null)
-    setCapaFile(null)
+    setMaterialCapaPreview(material.imagem_url || null)
+    setMaterialCapaFile(null)
     setDialogOpen(true)
   }
 
@@ -206,22 +218,30 @@ export function LivrosPage() {
       unidade_medida: 'unidade(s)'
     })
     
-    setCapaPreview(null)
-    setCapaFile(null)
+    setLivroCapaPreview(null)
+    setLivroCapaFile(null)
+    setMaterialCapaPreview(null)
+    setMaterialCapaFile(null)
     setDialogOpen(true)
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'livro' | 'material') => {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Arquivo muito grande. Máximo 5MB.')
         return
       }
-      setCapaFile(file)
+      
       const reader = new FileReader()
       reader.onloadend = () => {
-        setCapaPreview(reader.result as string)
+        if (type === 'livro') {
+          setLivroCapaFile(file)
+          setLivroCapaPreview(reader.result as string)
+        } else {
+          setMaterialCapaFile(file)
+          setMaterialCapaPreview(reader.result as string)
+        }
       }
       reader.readAsDataURL(file)
     }
@@ -231,11 +251,11 @@ export function LivrosPage() {
     if (!authUser) return
     try {
       setIsUploading(true)
-      let finalCapaUrl = capaPreview?.startsWith('http') ? capaPreview : (livroParaEditar?.capa_url || null)
+      let finalCapaUrl = livroCapaPreview?.startsWith('http') ? livroCapaPreview : (livroParaEditar?.capa_url || null)
 
-      if (capaFile) {
-        finalCapaUrl = await livrosService.uploadCapa(capaFile)
-      } else if (!capaPreview) {
+      if (livroCapaFile) {
+        finalCapaUrl = await livrosService.uploadCapa(livroCapaFile)
+      } else if (!livroCapaPreview) {
         finalCapaUrl = null
       }
 
@@ -287,11 +307,11 @@ export function LivrosPage() {
     if (!authUser) return
     try {
       setIsUploading(true)
-      let finalImagemUrl = capaPreview?.startsWith('http') ? capaPreview : (materialParaEditar?.imagem_url || null)
+      let finalImagemUrl = materialCapaPreview?.startsWith('http') ? materialCapaPreview : (materialParaEditar?.imagem_url || null)
 
-      if (capaFile) {
-        finalImagemUrl = await livrosService.uploadImagemMaterial(capaFile)
-      } else if (!capaPreview) {
+      if (materialCapaFile) {
+        finalImagemUrl = await livrosService.uploadImagemMaterial(materialCapaFile)
+      } else if (!materialCapaPreview) {
         finalImagemUrl = null
       }
 
@@ -457,7 +477,7 @@ export function LivrosPage() {
 
             <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
               <TabsContent value="livro" className="m-0 focus-visible:ring-0">
-                <form id="livro-form" onSubmit={livroForm.handleSubmit(onSubmitLivro)} className="space-y-10">
+                <form id="livro-form" onSubmit={livroForm.handleSubmit(onSubmitLivro, onInvalid)} className="space-y-10">
                    <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
                     <div className="space-y-6">
                       <div className="space-y-2">
@@ -521,9 +541,9 @@ export function LivrosPage() {
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Capa do Livro</Label>
                         <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
                           <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
-                            {capaPreview ? (
+                            {livroCapaPreview ? (
                               <div className="relative w-full h-full">
-                                <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                                <img src={livroCapaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                   <span className="text-white text-[10px] font-bold uppercase tracking-widest">Trocar Capa</span>
                                 </div>
@@ -534,10 +554,10 @@ export function LivrosPage() {
                                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Capa</span>
                               </>
                             )}
-                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'livro')} />
                           </label>
                           
-                          {capaPreview && (
+                          {livroCapaPreview && (
                             <Button 
                               type="button" 
                               size="icon" 
@@ -546,8 +566,8 @@ export function LivrosPage() {
                               onClick={(e) => { 
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setCapaFile(null); 
-                                setCapaPreview(null); 
+                                setLivroCapaFile(null); 
+                                setLivroCapaPreview(null); 
                               }}
                             >
                               <Trash2 className="h-3 w-3" />
@@ -592,7 +612,7 @@ export function LivrosPage() {
               </TabsContent>
 
               <TabsContent value="material" className="m-0 focus-visible:ring-0">
-                <form id="material-form" onSubmit={materialForm.handleSubmit(onSubmitMaterial)} className="space-y-10">
+                <form id="material-form" onSubmit={materialForm.handleSubmit(onSubmitMaterial, onInvalid)} className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
                     <div className="space-y-6">
                         <div className="space-y-2">
@@ -666,9 +686,9 @@ export function LivrosPage() {
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Imagem de Referência</Label>
                         <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
                           <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
-                            {capaPreview ? (
+                            {materialCapaPreview ? (
                               <div className="relative w-full h-full">
-                                <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                                <img src={materialCapaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                   <span className="text-white text-[10px] font-bold uppercase tracking-widest">Trocar Foto</span>
                                 </div>
@@ -679,10 +699,10 @@ export function LivrosPage() {
                                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Foto</span>
                               </>
                             )}
-                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'material')} />
                           </label>
 
-                          {capaPreview && (
+                          {materialCapaPreview && (
                             <Button 
                               type="button" 
                               size="icon" 
@@ -691,8 +711,8 @@ export function LivrosPage() {
                               onClick={(e) => { 
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setCapaFile(null); 
-                                setCapaPreview(null); 
+                                setMaterialCapaFile(null); 
+                                setMaterialCapaPreview(null); 
                               }}
                             >
                               <Trash2 className="h-3 w-3" />

@@ -10,7 +10,7 @@ import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SeletorAluno } from '../../components/SeletorAluno'
-import { BotaoVoltar } from '../../components/BotaoVoltar'
+import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -170,7 +170,7 @@ export function PortalAvisosPageV2() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-4">
-          <BotaoVoltar />
+          <BotaoVoltarWeb />
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight">Avisos</h1>
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Mural da Escola</p>
