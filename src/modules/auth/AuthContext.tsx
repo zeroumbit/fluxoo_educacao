@@ -114,15 +114,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // 3. Funcionário
-      const funcRes = await withTimeout(
-        supabase.from('funcionarios')
-          .select('tenant_id, nome_completo, areas_acesso, id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle() as any,
-        5000
-      ) as any
+      // 3 & 4. Paralelizando busca de Funcionário e Responsável
+      const [funcRes, respRes] = await Promise.all([
+        withTimeout(
+          supabase.from('funcionarios')
+            .select('tenant_id, nome_completo, areas_acesso, id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle() as any,
+          5000
+        ) as any,
+        withTimeout(
+          supabase.from('responsaveis')
+            .select('nome, logradouro, numero, complemento, bairro, cidade, estado, cep')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle() as any,
+          5000
+        ) as any
+      ])
 
       if (funcRes?.data) {
         setAuthUser({
@@ -135,16 +145,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         return
       }
-
-      // 4. Responsável
-      const respRes = await withTimeout(
-        supabase.from('responsaveis')
-          .select('nome, logradouro, numero, complemento, bairro, cidade, estado, cep')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle() as any,
-        5000
-      ) as any
 
       if (respRes?.data) {
         setAuthUser({

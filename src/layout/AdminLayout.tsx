@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useRBACInit, useCanAccessModule, useHasPermission } from '@/hooks/usePermissions'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const navigationGroups = [
   {
@@ -133,7 +134,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="p-6 flex items-center justify-between lg:block">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-100">
-            <GraduationCap className="h-6 w-6 text-white" />
+            <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
           </div>
           <div>
             <h2 className="font-bold text-xl leading-tight tracking-tight">Fluxoo</h2>
@@ -332,10 +333,10 @@ export function AdminLayout() {
              {/* Left empty for now, or could show page title */}
           </div>
           <div className="flex items-center gap-3">
-             <NotificationBell 
-               count={notifications?.total || 0} 
-               items={notifications?.items || []} 
-               isLoading={isLoadingNotifs} 
+             <NotificationBell
+               count={notifications?.total || 0}
+               items={notifications?.items || []}
+               isLoading={isLoadingNotifs}
              />
           </div>
         </header>

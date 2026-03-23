@@ -7,11 +7,12 @@ import { portalService } from '../service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Eye, EyeOff, User, Check } from 'lucide-react'
+import { Loader2, Eye, EyeOff, User, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { mascaraCPF } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { loginPasswordSchema } from '@/lib/password-validation'
+import CorujaIcon from '@/assets/coruja_APPLE.svg'
 
 const portalLoginSchema = z.object({
   cpf: z.string().min(11, 'CPF inválido').max(14, 'CPF inválido'),
@@ -67,11 +68,11 @@ export function PortalLoginPage() {
         {/* Sidebar - Teal Deep */}
         <div className="hidden md:flex md:w-[35%] bg-gradient-to-b from-[#134E4A] to-[#0F3937] p-10 flex-col justify-between text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5">
-             <GraduationCap className="h-40 w-40 text-white" />
+             <img src={CorujaIcon} alt="Fluxoo" className="h-40 w-40 text-white opacity-5" />
           </div>
           <div className="relative z-10">
             <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-8 shadow-xl">
-              <GraduationCap className="h-8 w-8 text-teal-400" />
+              <img src={CorujaIcon} alt="Fluxoo" className="h-8 w-8" style={{ filter: 'brightness(0) saturate(100%) invert(73%) saturate(526%) hue-rotate(131deg) brightness(96%) contrast(86%)' }} />
             </div>
             <h2 className="text-2xl font-black mb-4 tracking-tight leading-tight">Portal do Responsável</h2>
             <p className="text-teal-100/70 text-sm leading-relaxed font-medium">Sua conexão direta com a jornada acadêmica e financeira de quem você ama.</p>
@@ -94,7 +95,7 @@ export function PortalLoginPage() {
           <div className="md:hidden flex justify-between items-center mb-10">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-[#14B8A6] flex items-center justify-center shadow-lg shadow-teal-100">
-                <GraduationCap className="h-6 w-6 text-white" />
+                <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" style={{ filter: 'brightness(0) saturate(100%) invert(100%) saturate(0%) brightness(100%)' }} />
               </div>
               <h1 className="font-black text-xl text-[#134E4A]">Fluxoo</h1>
             </div>

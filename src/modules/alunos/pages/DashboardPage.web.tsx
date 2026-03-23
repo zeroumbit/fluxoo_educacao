@@ -12,9 +12,7 @@ import {
   Loader2,
   TrendingUp,
   ArrowUpRight,
-  BookOpen,
   X,
-  GraduationCap,
   Info,
   Eye,
   Phone,
@@ -29,7 +27,7 @@ import type { AvisoRecente, RadarAluno } from '../dashboard.service'
 import { useState, useEffect } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications } from '@/hooks/useGlobalNotifications'
+import { useEscolaNotifications } from '@/hooks/useNotifications'
 import {
   Dialog,
   DialogContent,
@@ -38,6 +36,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Sem Matrícula
@@ -62,18 +61,18 @@ function AlunosSemMatriculaNotification({ count, onDismiss }: AlunosSemMatricula
       <div className="p-6 pr-14">
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
-            <GraduationCap className="h-6 w-6 text-amber-600" />
+            <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
           </div>
-          
+
           <div className="flex-1">
             <h3 className="font-black text-amber-900 text-lg tracking-tight mb-1">
               Alunos sem Matrícula
             </h3>
             <p className="text-sm font-medium text-amber-700 mb-4">
-              Você tem <strong className="font-black">{count} {count === 1 ? 'aluno' : 'alunos'}</strong> cadastrado{count === 1 ? '' : 's'} sem matrícula ativa. 
+              Você tem <strong className="font-black">{count} {count === 1 ? 'aluno' : 'alunos'}</strong> cadastrado{count === 1 ? '' : 's'} sem matrícula ativa.
               Regularize a situação para garantir o acesso completo ao sistema.
             </p>
-            
+
             <Button
               onClick={() => navigate('/matriculas')}
               className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-amber-200"
@@ -581,12 +580,9 @@ export function DashboardPageWeb() {
               <p className="text-sm font-bold text-zinc-900">Minha Escola</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Escola Parceira</p>
            </div>
-           <NotificationBell
-             total={notifications?.total || 0}
-             items={notifications?.items || []}
-           />
-           <div className="h-12 w-12 rounded-2xl bg-zinc-100 flex items-center justify-center border border-zinc-200 shadow-sm overflow-hidden">
-              <BookOpen className="h-6 w-6 text-zinc-400" />
+
+           <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden">
+              <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
            </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut, GraduationCap } from 'lucide-react';
+import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
+import CorujaIcon from '@/assets/coruja_APPLE.svg';
 
 export function PortalLayoutV2Web() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export function PortalLayoutV2Web() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/portal')}>
             <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-md">
-              <GraduationCap size={24} />
+              <img src={CorujaIcon} alt="Fluxoo" className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-lg font-black tracking-tighter text-slate-800 italic uppercase">Fluxoo<span className="text-teal-500">Edu</span></h1>

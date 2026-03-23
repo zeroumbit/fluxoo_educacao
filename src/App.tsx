@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
@@ -7,73 +8,73 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
+import { CookieConsent } from '@/components/shared/CookieConsent'
+import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
 
 // Pages - Admin (Escola)
-import { DashboardPage } from '@/modules/alunos/pages/DashboardPage'
-import { AlunosListPage } from '@/modules/alunos/pages/AlunosListPage'
-import { AlunoCadastroPage } from '@/modules/alunos/pages/AlunoCadastroPage'
-import { AlunoDetalhePage } from '@/modules/alunos/pages/AlunoDetalhePage'
-import { TurmasPage } from '@/modules/turmas/pages/TurmasPage'
-import { FrequenciaPage } from '@/modules/frequencia/pages/FrequenciaPage'
-import { FilaVirtualAdminPage } from '@/modules/frequencia/pages/FilaVirtualAdminPage'
-import { MuralPage } from '@/modules/comunicacao/pages/MuralPage'
-import { FinanceiroPage } from '@/modules/financeiro/pages/FinanceiroPage'
-import { FiliaisPage } from '@/modules/filiais/pages/FiliaisPage'
-import { EscolaCadastroPage } from '@/modules/escolas/pages/EscolaCadastroPage'
+const DashboardPage = lazy(() => import('@/modules/alunos/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const AlunosListPage = lazy(() => import('@/modules/alunos/pages/AlunosListPage').then(m => ({ default: m.AlunosListPage })))
+const AlunoCadastroPage = lazy(() => import('@/modules/alunos/pages/AlunoCadastroPage').then(m => ({ default: m.AlunoCadastroPage })))
+const AlunoDetalhePage = lazy(() => import('@/modules/alunos/pages/AlunoDetalhePage').then(m => ({ default: m.AlunoDetalhePage })))
+const TurmasPage = lazy(() => import('@/modules/turmas/pages/TurmasPage').then(m => ({ default: m.TurmasPage })))
+const FrequenciaPage = lazy(() => import('@/modules/frequencia/pages/FrequenciaPage').then(m => ({ default: m.FrequenciaPage })))
+const FilaVirtualAdminPage = lazy(() => import('@/modules/frequencia/pages/FilaVirtualAdminPage').then(m => ({ default: m.FilaVirtualAdminPage })))
+const MuralPage = lazy(() => import('@/modules/comunicacao/pages/MuralPage').then(m => ({ default: m.MuralPage })))
+const FinanceiroPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroPage').then(m => ({ default: m.FinanceiroPage })))
+const FiliaisPage = lazy(() => import('@/modules/filiais/pages/FiliaisPage').then(m => ({ default: m.FiliaisPage })))
+const EscolaCadastroPage = lazy(() => import('@/modules/escolas/pages/EscolaCadastroPage').then(m => ({ default: m.EscolaCadastroPage })))
 
-import { LivrosPage } from '@/modules/livros/pages/LivrosPage'
-import { FuncionariosPage } from '@/modules/funcionarios/pages/FuncionariosPage'
-import MatriculaPage from '@/modules/academico/pages/MatriculaPage'
-import { MatriculaFormPage } from '@/modules/academico/pages/MatriculaFormPage'
-import { PlanoAulaPage } from '@/modules/academico/pages/PlanoAulaPage'
-import { AtividadesPage } from '@/modules/academico/pages/AtividadesPage'
-import { NotasPage } from '@/modules/academico/pages/NotasPage'
-import { EventosPage } from '@/modules/agenda/pages/EventosPage'
-import { ConfigFinanceiraPage } from '@/modules/financeiro/pages/ConfigFinanceiraPage'
-import { ContasPagarPage } from '@/modules/financeiro/pages/ContasPagarPage'
-import { FinanceiroRelatoriosPage } from '@/modules/financeiro/pages/FinanceiroRelatoriosPage'
-import { DocumentosPage } from '@/modules/documentos/pages/DocumentosPage'
-import { AlmoxarifadoPage } from '@/modules/almoxarifado/pages/AlmoxarifadoPage'
-import { PerfilEscolaPage } from '@/modules/escola-perfil/pages/PerfilEscolaPage'
-import { PlanoPage } from '@/modules/assinatura/pages/PlanoPage'
-import { PerfisPage } from '@/modules/rbac/pages/PerfisPage'
-import { AuditoriaPage } from '@/modules/rbac/pages/AuditoriaPage'
+const LivrosPage = lazy(() => import('@/modules/livros/pages/LivrosPage').then(m => ({ default: m.LivrosPage })))
+const FuncionariosPage = lazy(() => import('@/modules/funcionarios/pages/FuncionariosPage').then(m => ({ default: m.FuncionariosPage })))
+const MatriculaPage = lazy(() => import('@/modules/academico/pages/MatriculaPage'))
+const MatriculaFormPage = lazy(() => import('@/modules/academico/pages/MatriculaFormPage').then(m => ({ default: m.MatriculaFormPage })))
+const PlanoAulaPage = lazy(() => import('@/modules/academico/pages/PlanoAulaPage').then(m => ({ default: m.PlanoAulaPage })))
+const AtividadesPage = lazy(() => import('@/modules/academico/pages/AtividadesPage').then(m => ({ default: m.AtividadesPage })))
+const NotasPage = lazy(() => import('@/modules/academico/pages/NotasPage').then(m => ({ default: m.NotasPage })))
+const EventosPage = lazy(() => import('@/modules/agenda/pages/EventosPage').then(m => ({ default: m.EventosPage })))
+const ConfigFinanceiraPage = lazy(() => import('@/modules/financeiro/pages/ConfigFinanceiraPage').then(m => ({ default: m.ConfigFinanceiraPage })))
+const ContasPagarPage = lazy(() => import('@/modules/financeiro/pages/ContasPagarPage').then(m => ({ default: m.ContasPagarPage })))
+const FinanceiroRelatoriosPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroRelatoriosPage').then(m => ({ default: m.FinanceiroRelatoriosPage })))
+const DocumentosPage = lazy(() => import('@/modules/documentos/pages/DocumentosPage').then(m => ({ default: m.DocumentosPage })))
+const AlmoxarifadoPage = lazy(() => import('@/modules/almoxarifado/pages/AlmoxarifadoPage').then(m => ({ default: m.AlmoxarifadoPage })))
+const PerfilEscolaPage = lazy(() => import('@/modules/escola-perfil/pages/PerfilEscolaPage').then(m => ({ default: m.PerfilEscolaPage })))
+const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then(m => ({ default: m.PlanoPage })))
+const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
+const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
 
 // Pages - Super Admin
-import { SuperAdminDashboardPage } from '@/modules/super-admin/pages/SuperAdminDashboardPage'
-import { PlanosPage } from '@/modules/super-admin/pages/PlanosPage'
-import { EscolasPage } from '@/modules/super-admin/pages/EscolasPage'
-import { FaturasPage } from '@/modules/super-admin/pages/FaturasPage'
-import { UpgradesPage } from '@/modules/super-admin/pages/UpgradesPage'
-import { ConfigRecebimentoPage } from '@/modules/super-admin/pages/ConfigRecebimentoPage'
-import { MarketplaceConfigPage } from '@/modules/super-admin/pages/MarketplaceConfigPage'
+const SuperAdminDashboardPage = lazy(() => import('@/modules/super-admin/pages/SuperAdminDashboardPage').then(m => ({ default: m.SuperAdminDashboardPage })))
+const PlanosPage = lazy(() => import('@/modules/super-admin/pages/PlanosPage').then(m => ({ default: m.PlanosPage })))
+const EscolasPage = lazy(() => import('@/modules/super-admin/pages/EscolasPage').then(m => ({ default: m.EscolasPage })))
+const FaturasPage = lazy(() => import('@/modules/super-admin/pages/FaturasPage').then(m => ({ default: m.FaturasPage })))
+const UpgradesPage = lazy(() => import('@/modules/super-admin/pages/UpgradesPage').then(m => ({ default: m.UpgradesPage })))
+const ConfigRecebimentoPage = lazy(() => import('@/modules/super-admin/pages/ConfigRecebimentoPage').then(m => ({ default: m.ConfigRecebimentoPage })))
+const MarketplaceConfigPage = lazy(() => import('@/modules/super-admin/pages/MarketplaceConfigPage').then(m => ({ default: m.MarketplaceConfigPage })))
 
 // Pages - Portal
-import { PortalDashboardPage } from '@/modules/portal/pages/PortalDashboardPage'
-import { PortalFrequenciaPage } from '@/modules/portal/pages/PortalFrequenciaPage'
-import { PortalAvisosPage } from '@/modules/portal/pages/PortalAvisosPage'
-import PortalCobrancasPage from '@/modules/portal/pages/PortalCobrancasPage'
-import { PortalFilaVirtualPage } from '@/modules/portal/pages/PortalFilaVirtualPage'
-import { PortalLoginPage } from '@/modules/portal/pages/PortalLoginPage'
-import { PortalBoletimPage } from '@/modules/portal/pages/PortalBoletimPage'
-import { PortalLivrosPage } from '@/modules/portal/pages/PortalLivrosPage'
-import { PortalAgendaPage } from '@/modules/portal/pages/PortalAgendaPage'
-import { PortalLojaPage } from '@/modules/portal/pages/PortalLojaPage'
-import { PortalDocumentosPage } from '@/modules/portal/pages/PortalDocumentosPage'
-import { PortalPerfilPage } from '@/modules/portal/pages/PortalPerfilPage'
-import { PortalAutorizacoesPage } from '@/modules/portal/pages/PortalAutorizacoesPage'
-import { TermosUsoPage } from '@/modules/portal/pages/TermosUsoPage'
-import { PrivacidadePage } from '@/modules/portal/pages/PrivacidadePage'
-import { CookiesPage } from '@/modules/portal/pages/CookiesPage'
-import { CookieConsent } from '@/components/shared/CookieConsent'
+const PortalDashboardPage = lazy(() => import('@/modules/portal/pages/PortalDashboardPage').then(m => ({ default: m.PortalDashboardPage })))
+const PortalFrequenciaPage = lazy(() => import('@/modules/portal/pages/PortalFrequenciaPage').then(m => ({ default: m.PortalFrequenciaPage })))
+const PortalAvisosPage = lazy(() => import('@/modules/portal/pages/PortalAvisosPage').then(m => ({ default: m.PortalAvisosPage })))
+const PortalCobrancasPage = lazy(() => import('@/modules/portal/pages/PortalCobrancasPage'))
+const PortalFilaVirtualPage = lazy(() => import('@/modules/portal/pages/PortalFilaVirtualPage').then(m => ({ default: m.PortalFilaVirtualPage })))
+const PortalLoginPage = lazy(() => import('@/modules/portal/pages/PortalLoginPage').then(m => ({ default: m.PortalLoginPage })))
+const PortalBoletimPage = lazy(() => import('@/modules/portal/pages/PortalBoletimPage').then(m => ({ default: m.PortalBoletimPage })))
+const PortalLivrosPage = lazy(() => import('@/modules/portal/pages/PortalLivrosPage').then(m => ({ default: m.PortalLivrosPage })))
+const PortalAgendaPage = lazy(() => import('@/modules/portal/pages/PortalAgendaPage').then(m => ({ default: m.PortalAgendaPage })))
+const PortalLojaPage = lazy(() => import('@/modules/portal/pages/PortalLojaPage').then(m => ({ default: m.PortalLojaPage })))
+const PortalDocumentosPage = lazy(() => import('@/modules/portal/pages/PortalDocumentosPage').then(m => ({ default: m.PortalDocumentosPage })))
+const PortalPerfilPage = lazy(() => import('@/modules/portal/pages/PortalPerfilPage').then(m => ({ default: m.PortalPerfilPage })))
+const PortalAutorizacoesPage = lazy(() => import('@/modules/portal/pages/PortalAutorizacoesPage').then(m => ({ default: m.PortalAutorizacoesPage })))
+const TermosUsoPage = lazy(() => import('@/modules/portal/pages/TermosUsoPage').then(m => ({ default: m.TermosUsoPage })))
+const PrivacidadePage = lazy(() => import('@/modules/portal/pages/PrivacidadePage').then(m => ({ default: m.PrivacidadePage })))
+const CookiesPage = lazy(() => import('@/modules/portal/pages/CookiesPage').then(m => ({ default: m.CookiesPage })))
 
 // Novas Páginas - Portal V2
-import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
-import { PortalHomeV2 } from '@/modules/portal/v2/pages/PortalHomeV2'
-import { PortalAlunosListV2 } from '@/modules/portal/v2/pages/PortalAlunosListV2'
-import { PortalAlunoPerfilV2 } from '@/modules/portal/v2/pages/PortalAlunoPerfilV2'
-import { PortalAvisosV2 } from '@/modules/portal/v2/pages/PortalAvisosV2'
-import { PortalFinanceiroV2 } from '@/modules/portal/v2/pages/PortalFinanceiroV2'
+const PortalHomeV2 = lazy(() => import('@/modules/portal/v2/pages/PortalHomeV2').then(m => ({ default: m.PortalHomeV2 })))
+const PortalAlunosListV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAlunosListV2').then(m => ({ default: m.PortalAlunosListV2 })))
+const PortalAlunoPerfilV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAlunoPerfilV2').then(m => ({ default: m.PortalAlunoPerfilV2 })))
+const PortalAvisosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAvisosV2').then(m => ({ default: m.PortalAvisosV2 })))
+const PortalFinanceiroV2 = lazy(() => import('@/modules/portal/v2/pages/PortalFinanceiroV2').then(m => ({ default: m.PortalFinanceiroV2 })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <Suspense fallback={
+            <div className="flex h-[60vh] items-center justify-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+          }>
           <Routes>
             {/* Root redirect */}
             <Route path="/" element={<RootRedirect />} />
@@ -211,6 +217,7 @@ function App() {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
           <Toaster richColors position="top-right" />
           <CookieConsent />
         </AuthProvider>

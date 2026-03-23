@@ -15,12 +15,12 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useAdminNotifications } from '@/hooks/useGlobalNotifications'
+import { useSuperAdminNotifications } from '@/hooks/useNotifications'
 
 export function SuperAdminDashboardPageMobile() {
   const navigate = useNavigate()
   const { data: stats, isLoading } = useSuperAdminDashboard()
-  const { data: notifications } = useAdminNotifications()
+  const { data: notifications } = useSuperAdminNotifications()
 
   if (isLoading) {
     return (

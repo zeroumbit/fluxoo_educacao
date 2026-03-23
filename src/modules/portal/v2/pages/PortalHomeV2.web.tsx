@@ -4,7 +4,7 @@ import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
 import { NotificationBell } from '@/components/ui/NotificationBell';
-import { usePortalNotifications } from '@/hooks/useGlobalNotifications';
+import { usePortalNotifications } from '@/hooks/useNotifications';
 
 // Helper to get initials
 const getInitials = (name: string) => {

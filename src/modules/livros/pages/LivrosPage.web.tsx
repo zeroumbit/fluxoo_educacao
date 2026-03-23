@@ -518,7 +518,7 @@ export function LivrosPage() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Estado Conservação</Label>
-                          <Select value={livroForm.watch('estado')} onValueChange={(v: any) => livroForm.setValue('estado', v)}>
+                          <Select value={livroForm.watch('estado') ?? undefined} onValueChange={(v: any) => livroForm.setValue('estado', v)}>
                             <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
@@ -635,7 +635,7 @@ export function LivrosPage() {
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Subcategoria</Label>
-                            <Select value={materialForm.watch('subcategoria')} onValueChange={(v) => materialForm.setValue('subcategoria', v)}>
+                            <Select value={materialForm.watch('subcategoria') ?? undefined} onValueChange={(v) => materialForm.setValue('subcategoria', v)}>
                               <SelectTrigger className="h-[44px] rounded-lg bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all font-medium text-slate-600 w-full">
                                 <SelectValue placeholder="Opcional" />
                               </SelectTrigger>

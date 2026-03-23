@@ -9,12 +9,12 @@ import { useTenantHealthScores } from '../hooks'
 import { Progress } from '@/components/ui/progress'
 import { AlertCircle, TrendingDown, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useAdminNotifications } from '@/hooks/useGlobalNotifications'
+import { useSuperAdminNotifications } from '@/hooks/useNotifications'
 
 export function SuperAdminDashboardPageWeb() {
   const { data: dashboard, isLoading } = useSuperAdminDashboard()
   const { data: healthScores, isLoading: loadingHealth } = useTenantHealthScores()
-  const { data: notifications } = useAdminNotifications()
+  const { data: notifications } = useSuperAdminNotifications()
 
   if (isLoading || !dashboard) {
     return (
@@ -33,10 +33,7 @@ export function SuperAdminDashboardPageWeb() {
           <h1 className="text-2xl font-bold tracking-tight">Gestão da Empresa</h1>
           <p className="text-muted-foreground">Visão global da plataforma e unidades escolares</p>
         </div>
-        <NotificationBell
-          total={notifications?.total || 0}
-          items={notifications?.items || []}
-        />
+
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -4,15 +4,14 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { PortalProvider, usePortalContext } from '@/modules/portal/context'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  GraduationCap, 
-  Home, 
+import {
+  Home,
   Activity,
-  Megaphone, 
-  DollarSign, 
-  FileText, 
-  LogOut, 
-  ShoppingCart, 
+  Megaphone,
+  DollarSign,
+  FileText,
+  LogOut,
+  ShoppingCart,
   Calendar,
   ChevronDown,
   Menu,
@@ -40,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import CorujaIcon from '@/assets/coruja_APPLE.svg'
 
 // Helper de Vibração Tátil Subtil (Haptic Feedback)
 const vibrate = (ms: number = 30) => {
@@ -213,7 +213,7 @@ function InnerPortalLayout() {
             onClick={() => navigate('/portal')}
           >
             <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-xl shadow-teal-500/20">
-              <GraduationCap size={24} />
+              <img src={CorujaIcon} alt="Fluxoo" className="w-6 h-6" />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-lg font-black tracking-tighter text-slate-800 italic uppercase">Fluxoo<span className="text-teal-500">Edu</span></h1>
@@ -325,7 +325,7 @@ function InnerPortalLayout() {
                 <div className="mx-auto w-12 h-1.5 bg-slate-200 rounded-full mb-4" />
                 <SheetTitle className="text-left font-black italic tracking-tighter text-2xl flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white shadow-md">
-                    <GraduationCap size={18} />
+                    <img src={CorujaIcon} alt="Fluxoo" className="w-5 h-5" />
                   </div>
                   Menu<span className="text-teal-500">Fluxoo</span>
                 </SheetTitle>

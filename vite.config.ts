@@ -10,22 +10,22 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'vite.svg'],
+      includeAssets: ['coruja-pwa-192.png', 'coruja-pwa-512.png', 'coruja_APPLE.svg', 'coruja_favicon_32.svg'],
       manifest: {
         name: 'Fluxoo EDU - Portal da Família',
         short_name: 'Fluxoo EDU',
         description: 'Acompanhe a vida escolar do seu filho',
-        theme_color: '#14b8a6',
+        theme_color: '#3b82f6',
         display: 'standalone',
-        background_color: '#f8fafc',
+        background_color: '#3b82f6',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'coruja-pwa-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'coruja-pwa-512.png',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -69,8 +69,10 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('@react-pdf/renderer')) return 'pdf-renderer';
             if (id.includes('date-fns')) return 'date-utils';
-            // Mantendo bibliotecas de UI (Radix, Framer Motion, Lucide) no mesmo chunk do React
-            // para evitar problemas de dependências entre chunks no runtime
+            if (id.includes('framer-motion')) return 'animation-vendor';
+            if (id.includes('@tanstack/react-query')) return 'query-vendor';
+            if (id.includes('lucide-react')) return 'icons-vendor';
+            if (id.includes('@radix-ui')) return 'ui-vendor';
             return 'vendor';
           }
         }

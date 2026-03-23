@@ -30,7 +30,7 @@ import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { useEffect, useState } from 'react'
 import { get, set } from 'idb-keyval'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications } from '@/hooks/useGlobalNotifications'
+import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useAuth } from '@/modules/auth/AuthContext'
 
 const CACHE_KEY = 'dashboard_cache'

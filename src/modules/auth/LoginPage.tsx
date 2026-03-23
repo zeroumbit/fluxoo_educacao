@@ -7,11 +7,12 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Lock, Check, AlertTriangle } from 'lucide-react'
 import { validarEmail } from '@/lib/validacoes'
 import { useAuth } from './AuthContext'
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit'
 import { loginPasswordSchema } from '@/lib/password-validation'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const loginSchema = z.object({
   email: z.string().refine((val) => validarEmail(val), 'E-mail inválido'),
@@ -121,7 +122,7 @@ export function LoginPage() {
         <div className="hidden md:flex md:w-1/3 bg-gradient-to-b from-indigo-600 to-blue-700 p-8 flex-col justify-between text-white">
           <div>
             <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-6">
-              <GraduationCap className="h-7 w-7 text-white" />
+              <img src={CorujaIcon} alt="Fluxoo" className="h-7 w-7" />
             </div>
             <h2 className="text-xl font-bold mb-2">Bem-vindo de volta!</h2>
             <p className="text-indigo-100 text-sm leading-relaxed">Acesse sua conta para continuar.</p>
@@ -140,7 +141,9 @@ export function LoginPage() {
         <div className="flex-1 p-8 md:p-10">
           <div className="md:hidden flex justify-between items-center mb-8">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center"><GraduationCap className="h-5 w-5 text-white" /></div>
+              <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                <img src={CorujaIcon} alt="Fluxoo" className="h-5 w-5" />
+              </div>
               <h1 className="font-bold text-lg">Fluxoo Educação</h1>
             </div>
           </div>
