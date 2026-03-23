@@ -22,7 +22,7 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Detect platform
+    // 1. Detect platform
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(userAgent);
     const isAndroid = /android/.test(userAgent);
@@ -30,29 +30,39 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
     if (isIOS) setPlatform('ios');
     else if (isAndroid) setPlatform('android');
 
-    // Check if already installed
+    // 2. Check if already installed
     // @ts-ignore
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
-    if (isStandalone) {
+    // 3. Check if dismissed recently (last 7 days)
+    const dismissedAt = localStorage.getItem('pwa-prompt-dismissed');
+    let isDismissed = false;
+    if (dismissedAt) {
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - parseInt(dismissedAt) < sevenDaysInMs) {
+        isDismissed = true;
+      }
+    }
+
+    if (isStandalone || isDismissed) {
       setIsVisible(false);
       return;
     }
 
-    // Handle Android/Chrome Install Prompt
+    // 4. Handle Android/Chrome Install Prompt
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setInstallPrompt(e);
-      // Faster show for "guaranteed" first access
-      const timer = setTimeout(() => setIsVisible(true), 1000);
+      // Give some time for the page to settle
+      const timer = setTimeout(() => setIsVisible(true), 2000);
       return () => clearTimeout(timer);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // For iOS, we show manually since there's no native prompt
+    // 5. For iOS, we show manually since there's no native prompt
     if (isIOS) {
-      const timer = setTimeout(() => setIsVisible(true), 2000);
+      const timer = setTimeout(() => setIsVisible(true), 3000);
       return () => clearTimeout(timer);
     }
 
@@ -78,16 +88,6 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
-  // Check if dismissed recently (last 7 days)
-  useEffect(() => {
-    const dismissedAt = localStorage.getItem('pwa-prompt-dismissed');
-    if (dismissedAt) {
-      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
-      if (Date.now() - parseInt(dismissedAt) < sevenDaysInMs) {
-        setIsVisible(false);
-      }
-    }
-  }, [isVisible]);
 
   if (!isVisible) return null;
 

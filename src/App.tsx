@@ -13,6 +13,7 @@ import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
 import { CookieConsent } from '@/components/shared/CookieConsent'
 import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
+import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Admin (Escola)
 const DashboardPage = lazy(() => import('@/modules/alunos/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
@@ -236,6 +237,7 @@ function App() {
           </Suspense>
           <Toaster richColors position="top-right" />
           <CookieConsent />
+          <PwaInstallPrompt />
           </RBACProvider>
         </AuthProvider>
       </BrowserRouter>
