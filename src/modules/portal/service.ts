@@ -618,7 +618,7 @@ export const portalService = {
     // 3. Busca os detalhes dos planos de aula
     const planoIds = planosTurmas.map(pt => pt.plano_aula_id)
     const { data: planos, error: planosError } = await supabase.from('planos_aula')
-      .select('id, titulo, conteudo, data_aula, disciplina, objetivos')
+      .select('id, disciplina, data_aula, conteudo_previsto, conteudo_realizado, observacoes')
       .in('id', planoIds)
 
     if (planosError) throw planosError
