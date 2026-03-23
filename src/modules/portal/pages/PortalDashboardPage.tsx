@@ -9,6 +9,8 @@ import { PortalAgendaPage } from './PortalAgendaPage'
 import { PortalFrequenciaPage } from './PortalFrequenciaPage'
 import { PortalBoletimPage } from './PortalBoletimPage'
 import { PortalLivrosPage } from './PortalLivrosPage'
+import { PortalPlanosAulaPage } from './PortalPlanosAulaPage'
+import { PortalAtividadesPage } from './PortalAtividadesPage'
 import { PortalFilaVirtualPage } from './PortalFilaVirtualPage'
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -46,7 +48,9 @@ import {
   Globe,
   Lock,
   MessageSquare,
-  ShoppingBag
+  ShoppingBag,
+  LayoutList,
+  PencilLine
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -261,6 +265,8 @@ export function PortalDashboardPage() {
     frequencia: false,
     boletim: false,
     livros: false,
+    planos: false,
+    atividades: false,
     fila: false
   })
 
@@ -446,11 +452,23 @@ export function PortalDashboardPage() {
                   colorName="indigo"
                   onClick={() => openModal('livros')}
                 />
-                <StudentActionIcon
+                 <StudentActionIcon
                   icon={Clock}
                   label="Fila"
                   colorName="blue"
                   onClick={() => openModal('fila')}
+                />
+                <StudentActionIcon
+                  icon={LayoutList}
+                  label="Planos"
+                  colorName="indigo"
+                  onClick={() => openModal('planos')}
+                />
+                <StudentActionIcon
+                  icon={PencilLine}
+                  label="Tarefas"
+                  colorName="amber"
+                  onClick={() => openModal('atividades')}
                 />
                 <StudentActionIcon
                   icon={UserCircle}
@@ -782,6 +800,28 @@ export function PortalDashboardPage() {
         colorClass="bg-blue-600"
       >
         <PortalFilaVirtualPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.planos}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, planos: open }))}
+        title="Planos de Aula"
+        subtitle="Diário de Conteúdos"
+        icon={LayoutList}
+        colorClass="bg-indigo-600"
+      >
+        <PortalPlanosAulaPage hideHeader />
+      </PortalModalPage>
+
+      <PortalModalPage
+        open={modalOpen.atividades}
+        onOpenChange={(open) => setModalOpen(prev => ({ ...prev, atividades: open }))}
+        title="Atividades"
+        subtitle="Tarefas & Avaliações"
+        icon={PencilLine}
+        colorClass="bg-amber-600"
+      >
+        <PortalAtividadesPage hideHeader />
       </PortalModalPage>
 
     </div>

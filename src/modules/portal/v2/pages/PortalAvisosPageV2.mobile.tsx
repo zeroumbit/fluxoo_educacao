@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAvisosPortal } from '../../hooks'
+import { useAvisosPortal, useNotificacaoSonoraAvisos } from '../../hooks'
 import { usePortalContext } from '../../context'
 import { Badge } from '@/components/ui/badge'
 import { Megaphone, BellRing, ChevronDown, Clock, AlertTriangle, ArrowLeft } from 'lucide-react'
@@ -188,6 +188,9 @@ export function PortalAvisosPageV2Mobile() {
   const { alunoSelecionado, selecionarAluno, vinculos, isMultiAluno, isLoading: loadingCtx } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // Hook de notificação sonora quando chegarem novos avisos
+  useNotificacaoSonoraAvisos()
 
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id)
 

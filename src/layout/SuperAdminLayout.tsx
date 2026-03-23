@@ -24,8 +24,11 @@ import {
   QrCode,
   ArrowUpCircle,
   ShoppingBag,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from '@/components/NotificationBell'
+import { useSuperAdminNotifications } from '@/hooks/useNotifications'
 
 const superAdminNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -127,6 +130,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function SuperAdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { data: notifications, isLoading } = useSuperAdminNotifications()
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
@@ -135,27 +139,33 @@ export function SuperAdminLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="fixed top-4 left-4 z-40 lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
-          <SheetTitle className="sr-only">Menu Administrativo</SheetTitle>
-          <SheetDescription className="sr-only">Navegação avançada para super administradores.</SheetDescription>
-          <SidebarContent onNavigate={() => setSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      <main className="lg:pl-64 flex flex-col min-h-screen">
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-4 lg:px-8">
+          <div className="flex items-center gap-4">
+             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+               <SheetTrigger asChild>
+                 <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10">
+                   <Menu className="h-5 w-5" />
+                 </Button>
+               </SheetTrigger>
+               <SheetContent side="left" className="w-64 p-0">
+                 <SheetTitle className="sr-only">Menu Administrativo</SheetTitle>
+                 <SheetDescription className="sr-only">Navegação avançada para super administradores.</SheetDescription>
+                 <SidebarContent onNavigate={() => setSidebarOpen(false)} />
+               </SheetContent>
+             </Sheet>
+          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell 
+              count={notifications?.total || 0} 
+              items={notifications?.items || []} 
+              isLoading={isLoading} 
+            />
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <main className="lg:pl-64">
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="p-6 lg:p-8 max-w-7xl mx-auto flex-1 w-full">
           <Outlet />
         </div>
       </main>

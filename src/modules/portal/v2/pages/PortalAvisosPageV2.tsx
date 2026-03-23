@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAvisosPortal } from '../../hooks'
+import { useAvisosPortal, useNotificacaoSonoraAvisos } from '../../hooks'
 import { usePortalContext } from '../../context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -154,6 +154,9 @@ export function PortalAvisosPageV2() {
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // Hook de notificação sonora quando chegarem novos avisos
+  useNotificacaoSonoraAvisos()
+
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id)
 
   if (loadingCtx || isLoading) return <AvisosSkeleton />
@@ -177,7 +180,7 @@ export function PortalAvisosPageV2() {
 
       {/* Cards de Alunos (Filtro) */}
       {isMultiAluno && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
           {vinculos.map((v: any) => (
             <div
               key={v.aluno?.id}
@@ -186,19 +189,19 @@ export function PortalAvisosPageV2() {
                 selecionarAluno(v);
               }}
               className={cn(
-                "flex items-center gap-4 p-4 rounded-[32px] border transition-all cursor-pointer shadow-sm active:scale-[0.98]",
+                "flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer shadow-sm active:scale-[0.98]",
                 alunoSelecionado?.id === v.aluno?.id
                   ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200"
                   : "bg-white border-slate-100 text-slate-800 hover:border-teal-200"
               )}
             >
               <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0",
+                "w-10 h-10 rounded-full flex items-center justify-center text-base font-black shrink-0",
                 alunoSelecionado?.id === v.aluno?.id ? "bg-teal-500 text-white" : "bg-teal-50 text-teal-600"
               )}>
                 {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
               </div>
-              <div className="flex flex-col min-w-0 pr-2">
+              <div className="flex flex-col min-w-0 pr-2 flex-1">
                 <h4 className={cn(
                   "text-sm font-black tracking-tight leading-none truncate",
                   alunoSelecionado?.id === v.aluno?.id ? "text-white" : "text-slate-800"
@@ -206,7 +209,7 @@ export function PortalAvisosPageV2() {
                   {v.aluno?.nome_completo?.split(' ')[0] || 'Aluno'}
                 </h4>
                 <p className={cn(
-                  "text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60",
+                  "text-[9px] font-bold uppercase tracking-widest mt-1.5 opacity-60 truncate",
                   alunoSelecionado?.id === v.aluno?.id ? "text-teal-400" : "text-slate-400"
                 )}>
                   {v.aluno?.turma?.nome || 'S/ Turma'}

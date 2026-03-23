@@ -3,9 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, CalendarDays, LineChart, BookOpen,
-  MapPin, ShieldCheck, Car, Settings
+  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
+import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
+import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
+import { PortalPlanosAulaPage } from '../../pages/PortalPlanosAulaPage';
+import { PortalAtividadesPage } from '../../pages/PortalAtividadesPage';
+import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
+import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
+import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
@@ -30,20 +37,26 @@ export function PortalAlunoPerfilV2Mobile() {
   const getModuleTitle = (mod: string) => {
     switch (mod) {
       case 'grade': return 'Grade Curricular';
-      case 'boletim': return 'Boletim & Frequência';
-      case 'diario': return 'Diário de Classe';
-      case 'material': return 'Material Escolar';
-      case 'autorizacoes': return 'Autorizações de Retirada';
+      case 'boletim': return 'Boletim Escolar';
+      case 'frequencia': return 'Frequência';
+      case 'planos': return 'Planos de Aula';
+      case 'atividades': return 'Tarefas & Atividades';
+      case 'material': return 'Livros e Materiais';
+      case 'agenda': return 'Agenda de Eventos';
+      case 'autorizacoes': return 'Autorizações';
       default: return 'Módulo';
     }
   };
 
-  const MOCK_MODULES = [
-    { id: 'grade', label: 'Grade Curricular', icon: CalendarDays, color: 'text-blue-500', bg: 'bg-blue-50' },
+  const REAL_MODULES = [
     { id: 'boletim', label: 'Boletim', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { id: 'diario', label: 'Diário / Agenda', icon: BookOpen, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { id: 'material', label: 'Livros e Materiais', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50' },
+    { id: 'frequencia', label: 'Frequência', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { id: 'planos', label: 'Planos de Aula', icon: LayoutList, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { id: 'atividades', label: 'Tarefas', icon: PencilLine, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { id: 'material', label: 'Livros e Mats', icon: Library, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { id: 'agenda', label: 'Agenda', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
+    { id: 'grade', label: 'Grade', icon: CalendarDays, color: 'text-slate-500', bg: 'bg-slate-50' },
+    { id: 'autorizacoes', label: 'Logística', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50' },
   ];
 
   return (
@@ -119,7 +132,7 @@ export function PortalAlunoPerfilV2Mobile() {
 
         {/* Módulos do Aluno - Grid 2 colunas padrão iOS/Android */}
         <div className="grid grid-cols-2 gap-3">
-          {MOCK_MODULES.map((mod) => (
+          {REAL_MODULES.map((mod) => (
             <motion.button
               key={mod.id}
               type="button"
@@ -176,15 +189,20 @@ export function PortalAlunoPerfilV2Mobile() {
             </header>
 
             {/* Conteúdo do Módulo - Scrollable */}
-            <div className="flex-1 overflow-y-auto w-full">
+            <div className="flex-1 overflow-y-auto w-full px-4 py-2">
               {activeModule === 'grade' && <GradeCurricularV2 />}
-              {activeModule !== 'grade' && (
-                <div className="flex flex-col items-center justify-center h-full text-slate-500 px-4">
-                  <Settings className="w-16 h-16 text-slate-200 mb-4" aria-hidden="true" />
-                  {/* Body - iOS Body / Material Body Medium */}
-                  <p className="text-[15px] font-medium text-slate-500 text-center">
-                    Módulo em desenvolvimento
-                  </p>
+              {activeModule === 'boletim' && <PortalBoletimPage hideHeader />}
+              {activeModule === 'frequencia' && <PortalFrequenciaPage hideHeader />}
+              {activeModule === 'planos' && <PortalPlanosAulaPage hideHeader />}
+              {activeModule === 'atividades' && <PortalAtividadesPage hideHeader />}
+              {activeModule === 'material' && <PortalLivrosPage hideHeader />}
+              {activeModule === 'agenda' && <PortalAgendaPage hideHeader />}
+              {activeModule === 'autorizacoes' && <PortalAutorizacoesPage hideHeader />}
+              
+              {!['grade', 'boletim', 'frequencia', 'planos', 'atividades', 'material', 'agenda', 'autorizacoes'].includes(activeModule) && (
+                <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+                  <Settings className="w-16 h-16 text-slate-200 mb-4" />
+                  <p className="text-[15px] font-medium text-slate-500 text-center">Módulo em desenvolvimento</p>
                 </div>
               )}
             </div>

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
+import { NotificationBell } from '@/components/ui/NotificationBell';
+import { usePortalNotifications } from '@/hooks/useGlobalNotifications';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -15,6 +17,7 @@ export function PortalHomeV2Mobile() {
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
+  const { data: notifications } = usePortalNotifications(responsavel?.id);
 
   // Filtrar alertas baseados nos dados reais do dashboard
   const alerts = [];
@@ -39,34 +42,38 @@ export function PortalHomeV2Mobile() {
     <div className="flex flex-col gap-4 px-4 pb-safe">
       {/* 1. Header de Boas-Vindas */}
       {/* Safe area top para dispositivos com notch (iOS) */}
-      <header className="flex items-center justify-between pt-[env(safe-area-inset-top,12px)] mt-2 pb-2">
+      <header className="flex items-start justify-between pt-[env(safe-area-inset-top,12px)] mt-2 pb-2">
         <div className="flex flex-col gap-0.5">
-          {/* Caption 1 - iOS Caption 1 (13px Regular) / Material Label (13px Regular) */}
           <span className="text-[13px] text-slate-500 leading-tight">Bom dia,</span>
-          {/* Large Title - iOS Large Title (28px Bold) / Material Headline Small (28px Bold) */}
           <h1 className="text-[28px] font-bold text-slate-900 tracking-tight leading-[34px]">
-            {responsavel?.nome || 'Responsável'}
+            {responsavel?.nome?.split(' ')[0] || 'Responsável'}
           </h1>
         </div>
-        {/* Avatar Stack - Touch targets 48px (Android) / 44pt (iOS) */}
-        <div className="flex -space-x-2">
-          {vinculos.map((v: any) => (
-            <motion.button
-              key={v.aluno?.id}
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => {
-                selecionarAluno(v);
-                navigate(`/portal/alunos/${v.aluno?.id}`);
-              }}
-              className={`w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-semibold shadow-sm cursor-pointer active:scale-95 transition-transform touch-manipulation ${
-                alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
-              }`}
-              aria-label={`Selecionar aluno ${v.aluno?.nome_completo || 'aluno'}`}
-            >
-              {getInitials(v.aluno?.nome_completo || 'A')}
-            </motion.button>
-          ))}
+        
+        <div className="flex items-center gap-4">
+          <NotificationBell
+            total={notifications?.total || 0}
+            items={notifications?.items || []}
+          />
+          <div className="flex -space-x-2">
+            {vinculos.map((v: any) => (
+              <motion.button
+                key={v.aluno?.id}
+                type="button"
+                whileTap={{ scale: 0.92 }}
+                onClick={() => {
+                  selecionarAluno(v);
+                  navigate(`/portal/alunos/${v.aluno?.id}`);
+                }}
+                className={`w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-semibold shadow-sm cursor-pointer active:scale-95 transition-transform touch-manipulation ${
+                  alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
+                }`}
+                aria-label={`Selecionar aluno ${v.aluno?.nome_completo || 'aluno'}`}
+              >
+                {getInitials(v.aluno?.nome_completo || 'A')}
+              </motion.button>
+            ))}
+          </div>
         </div>
       </header>
 

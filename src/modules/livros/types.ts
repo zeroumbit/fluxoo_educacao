@@ -90,18 +90,19 @@ export interface VwLivroDisponivelAluno {
 }
 
 export interface VwItemEscolar {
-  tipo_item: 'livro' | 'material'
-  item_id: string
+  tipo: 'livro' | 'material'
+  id: string
   tenant_id: string
-  nome: string
-  subtitulo: string | null
-  detalhe_1: string | null
+  titulo: string
+  autor: string | null
+  editora: string | null
   disciplina: string | null
-  imagem_url: string | null
+  capa_url: string | null
   descricao: string | null
-  codigo: string | null
+  isbn: string | null
   status_estado: string | null
   link_referencia: string | null
+  ano_letivo: number
   aluno_id: string
   turma_id: string
   created_at: string

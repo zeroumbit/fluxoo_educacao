@@ -14,10 +14,13 @@ import {
   Users
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { useAdminNotifications } from '@/hooks/useGlobalNotifications'
 
 export function SuperAdminDashboardPageMobile() {
   const navigate = useNavigate()
   const { data: stats, isLoading } = useSuperAdminDashboard()
+  const { data: notifications } = useAdminNotifications()
 
   if (isLoading) {
     return (
@@ -64,9 +67,10 @@ export function SuperAdminDashboardPageMobile() {
                  Status <span className="text-indigo-600">Global</span>
               </h1>
            </div>
-           <div className="h-12 w-12 rounded-2xl bg-slate-800 flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform">
-              <ShieldCheck className="h-6 w-6" />
-           </div>
+           <NotificationBell
+              total={notifications?.total || 0}
+              items={notifications?.items || []}
+            />
         </motion.div>
 
         {/* Card Status de Alto Impacto */}

@@ -32,9 +32,12 @@ import {
   Lock,
   TrendingUp,
   CarFront,
-  Home
+  Home,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from '@/components/NotificationBell'
+import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useRBACInit, useCanAccessModule, useHasPermission } from '@/hooks/usePermissions'
 
 const navigationGroups = [
@@ -228,7 +231,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { data: dashboard, isLoading } = useDashboard()
+  const { authUser } = useAuth()
+  const { data: dashboard, isLoading: isLoadingDashboard } = useDashboard()
+  const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId)
   const navigate = useNavigate()
 
   const status = dashboard?.statusAssinatura
@@ -236,7 +241,7 @@ export function AdminLayout() {
   const isManual = metodo === 'pix' || metodo === 'boleto' || metodo === 'manual'
   
   // Consistência: só bloqueia se carregou e é manual + pendente
-  const isBlocked = !isLoading && !!dashboard && status !== 'ativa' && isManual
+  const isBlocked = !isLoadingDashboard && !!dashboard && status !== 'ativa' && isManual
 
   return (
     <div className="min-h-screen bg-zinc-50/50">
@@ -320,8 +325,22 @@ export function AdminLayout() {
       </nav>
 
       {/* Main Content */}
-      <main className="lg:pl-64">
-        <div className="lg:p-8 max-w-7xl mx-auto min-h-screen">
+      <main className="lg:pl-64 flex flex-col min-h-screen">
+        {/* Top Header - Desktop Only (Mobile uses BottomNav) */}
+        <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-8">
+          <div className="flex items-center gap-4">
+             {/* Left empty for now, or could show page title */}
+          </div>
+          <div className="flex items-center gap-3">
+             <NotificationBell 
+               count={notifications?.total || 0} 
+               items={notifications?.items || []} 
+               isLoading={isLoadingNotifs} 
+             />
+          </div>
+        </header>
+
+        <div className="lg:p-8 max-w-7xl mx-auto flex-1 w-full">
           {isBlocked && window.location.pathname !== '/dashboard' ? (
             <div className="p-6 flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
               <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">

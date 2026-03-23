@@ -38,8 +38,8 @@ type AutorizacaoModelo = {
   resposta_id: string | null
 }
 
-export function PortalAutorizacoesPage() {
-  const { alunoSelecionado, tenantId } = usePortalContext()
+export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: boolean }) {
+  const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const { data: responsavel } = useResponsavel()
   const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
   const responder = useResponderAutorizacao()
@@ -183,17 +183,19 @@ export function PortalAutorizacoesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-3">
-          <BotaoVoltar />
-          <div className="flex flex-col gap-1 items-start text-left">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800">Autorizações</h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie as autorizações de <strong>{alunoSelecionado.nome_completo}</strong>
-            </p>
+      {!hideHeader && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <BotaoVoltar />
+            <div className="flex flex-col gap-1 items-start text-left">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800">Autorizações</h1>
+              <p className="text-sm text-muted-foreground">
+                Gerencie as autorizações de <strong>{alunoSelecionado.nome_completo}</strong>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 md:gap-6">

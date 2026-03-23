@@ -18,14 +18,16 @@ import {
   GraduationCap,
   Image as ImageIcon,
   MoreVertical,
-  ArrowLeft
+  ArrowLeft,
+  Package
 } from 'lucide-react'
 import { get, set } from 'idb-keyval'
 
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useLivros, useCriarLivro, useExcluirLivro, useEditarLivro, useDisciplinas, useCriarDisciplina } from '../hooks'
+import { useLivros, useCriarLivro, useExcluirLivro, useEditarLivro, useDisciplinas, useCriarDisciplina, useMateriais, useCriarMaterial, useEditarMaterial, useExcluirMaterial } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import type { Livro } from '../types'
+import { CATEGORIAS_MATERIAIS, SUBCATEGORIAS_POR_CATEGORIA, UNIDADES_MEDIDA } from '../constants'
+import type { Livro, MaterialEscolar } from '../types'
 import { livrosService } from '../service'
 
 // Components Mobile
@@ -42,7 +44,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
-const CACHE_KEY_LIVROS = 'mobile_livros_cache'
+const CACHE_KEY_LIVROS = 'mobile_livros_cache_v2'
 
 const livroSchema = z.object({
   titulo: z.string().min(2, 'Título é obrigatório'),
@@ -57,41 +59,73 @@ const livroSchema = z.object({
   turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
 })
 
+const materialSchema = z.object({
+  nome: z.string().min(2, 'Nome é obrigatório'),
+  descricao: z.string().optional(),
+  categoria: z.string().min(1, 'Selecione uma categoria'),
+  subcategoria: z.string().optional(),
+  quantidade_sugerida: z.coerce.number().min(1, 'Quantidade obrigatória'),
+  unidade_medida: z.string().min(1, 'Unidade obrigatória'),
+  marca_sugerida: z.string().optional(),
+  disciplina_id: z.string().optional(),
+  periodo_uso: z.enum(['Início do ano', 'Durante o ano', 'Específico']).default('Início do ano'),
+  status: z.enum(['Ativo', 'Indiferente', 'Inativo', 'Descontinuado', 'Em breve']).default('Ativo'),
+  obrigatoriedade: z.enum(['Obrigatório', 'Recomendado', 'Opcional']).default('Obrigatório'),
+  link_referencia: z.string().url('URL inválida').or(z.string().length(0)).optional(),
+  turmasIds: z.array(z.string()).min(1, 'Selecione ao menos uma turma')
+})
+
 type LivroFormValues = z.infer<typeof livroSchema>
+type MaterialFormValues = z.infer<typeof materialSchema>
 
 export function LivrosPageMobile() {
   const { authUser } = useAuth()
   
   // States
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'livro' | 'material'>('livro')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isDiscOpen, setIsDiscOpen] = useState(false)
   const [livroParaEditar, setLivroParaEditar] = useState<Livro | null>(null)
+  const [materialParaEditar, setMaterialParaEditar] = useState<MaterialEscolar | null>(null)
   const [novaDisciplina, setNovaDisciplina] = useState('')
   const [capaFile, setCapaFile] = useState<File | null>(null)
   const [capaPreview, setCapaPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
   // Hooks
-  const { data: livros, isLoading, refetch } = useLivros()
+  const { data: livros, isLoading: isLoadingLivros, refetch: refetchLivros } = useLivros()
+  const { data: materiais, isLoading: isLoadingMateriais, refetch: refetchMateriais } = useMateriais()
   const { data: turmas } = useTurmas()
   const { data: disciplinas } = useDisciplinas()
+  
   const criarLivro = useCriarLivro()
   const editarLivro = useEditarLivro()
   const excluirLivro = useExcluirLivro()
+  
+  const criarMaterial = useCriarMaterial()
+  const editarMaterial = useEditarMaterial()
+  const excluirMaterial = useExcluirMaterial()
+  
   const criarDisciplina = useCriarDisciplina()
 
+  const isLoading = isLoadingLivros || isLoadingMateriais
+
   // Cache
-  const [cached, setCached] = useState<any[]>([])
+  const [cachedLivros, setCachedLivros] = useState<any[]>([])
+  const [cachedMateriais, setCachedMateriais] = useState<any[]>([])
+  
   useEffect(() => {
-    get(CACHE_KEY_LIVROS).then(v => { if (v) setCached(v) })
+    get(CACHE_KEY_LIVROS + '_livros').then(v => { if (v) setCachedLivros(v) })
+    get(CACHE_KEY_LIVROS + '_materiais').then(v => { if (v) setCachedMateriais(v) })
   }, [])
 
   useEffect(() => {
-    if (livros) set(CACHE_KEY_LIVROS, livros)
-  }, [livros])
+    if (livros) set(CACHE_KEY_LIVROS + '_livros', livros)
+    if (materiais) set(CACHE_KEY_LIVROS + '_materiais', materiais)
+  }, [livros, materiais])
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<LivroFormValues>({
+  const livroForm = useForm<LivroFormValues>({
     resolver: zodResolver(livroSchema) as any,
     defaultValues: {
       ano_letivo: new Date().getFullYear(),
@@ -100,82 +134,125 @@ export function LivrosPageMobile() {
     }
   })
 
-  // Set initial filter - replicate web logic for initial tab
+  const materialForm = useForm<MaterialFormValues>({
+    resolver: zodResolver(materialSchema) as any,
+    defaultValues: {
+      turmasIds: [],
+      quantidade_sugerida: 1,
+      unidade_medida: 'unidade(s)',
+      status: 'Ativo',
+      obrigatoriedade: 'Obrigatório',
+      periodo_uso: 'Início do ano'
+    }
+  })
+
+  // Set initial filter
   useEffect(() => {
     if (turmas?.length && !selectedTurmaId) {
       setSelectedTurmaId(turmas[0].id)
     }
   }, [turmas, selectedTurmaId])
 
-  // Replicate web logic for book counts grouping
-  const livrosPorTurma = useMemo(() => {
-    const data = (livros || cached || []) as any[]
+  // Count items per turma
+  const itensPorTurma = useMemo(() => {
+    const listLivros = (livros || cachedLivros || []) as any[]
+    const listMateriais = (materiais || cachedMateriais || []) as any[]
     const mapa = new Map<string, any[]>()
     
     if (turmas) {
       turmas.forEach(t => mapa.set(t.id, []))
     }
     
-    data.forEach(livro => {
-      const ltList = livro.livros_turmas || []
-      ltList.forEach((lt: any) => {
-        if (mapa.has(lt.turma_id)) {
-          mapa.get(lt.turma_id)!.push(livro)
-        }
+    listLivros.forEach(l => {
+      l.livros_turmas?.forEach((lt: any) => {
+        if (mapa.has(lt.turma_id)) mapa.get(lt.turma_id)!.push({ ...l, tipo: 'livro' })
       })
     })
+    
+    listMateriais.forEach(m => {
+      m.materiais_turmas?.forEach((mt: any) => {
+        if (mapa.has(mt.turma_id)) mapa.get(mt.turma_id)!.push({ ...m, tipo: 'material' })
+      })
+    })
+    
     return mapa
-  }, [livros, cached, turmas])
-
-  const totalLivrosGeral = (livros || cached || []).length
-
-  const selectedTurmasIds = watch('turmasIds') || []
+  }, [livros, materiais, cachedLivros, cachedMateriais, turmas])
 
   const handleSelectTurmaInForm = (id: string) => {
-    if (selectedTurmasIds.includes(id)) {
-      setValue('turmasIds', selectedTurmasIds.filter(t => t !== id), { shouldValidate: true })
+    const isLivro = activeTab === 'livro'
+    const form = isLivro ? (livroForm as any) : (materialForm as any)
+    const current = (form.getValues('turmasIds') || []) as string[]
+    
+    if (current.includes(id)) {
+      form.setValue('turmasIds', current.filter(t => t !== id), { shouldValidate: true })
     } else {
-      setValue('turmasIds', [...selectedTurmasIds, id], { shouldValidate: true })
+      form.setValue('turmasIds', [...current, id], { shouldValidate: true })
     }
   }
 
   const handleOpenNew = () => {
     setLivroParaEditar(null)
-    reset({
+    setMaterialParaEditar(null)
+    
+    const initialTurmas = selectedTurmaId && selectedTurmaId !== 'all' ? [selectedTurmaId] : []
+    
+    livroForm.reset({
       ano_letivo: new Date().getFullYear(),
-      turmasIds: selectedTurmaId && selectedTurmaId !== 'all' ? [selectedTurmaId] : [],
+      turmasIds: initialTurmas,
       estado: 'Novo'
     })
+    
+    materialForm.reset({
+      turmasIds: initialTurmas,
+      quantidade_sugerida: 1,
+      unidade_medida: 'unidade(s)',
+      status: 'Ativo',
+      obrigatoriedade: 'Obrigatório',
+      periodo_uso: 'Início do ano'
+    })
+    
     setCapaPreview(null)
     setCapaFile(null)
     setIsFormOpen(true)
   }
 
-  const handleEditar = (livro: any) => {
-    setLivroParaEditar(livro)
-    setValue('titulo', livro.titulo)
-    setValue('autor', livro.autor)
-    setValue('editora', livro.editora)
-    setValue('disciplina_id', livro.disciplina_id)
-    setValue('ano_letivo', livro.ano_letivo || new Date().getFullYear())
-    setValue('isbn', livro.isbn || '')
-    setValue('estado', (livro.estado as any) || 'Novo')
-    setValue('descricao', livro.descricao || '')
-    setValue('link_referencia', livro.link_referencia || '')
-    setValue('turmasIds', livro.turmas?.map((t: any) => t.id) || [])
+  const handleEditar = (item: any) => {
+    const isLivro = item.tipo === 'livro'
+    setActiveTab(isLivro ? 'livro' : 'material')
     
-    setCapaPreview(livro.capa_url || null)
+    if (isLivro) {
+      setLivroParaEditar(item)
+      setMaterialParaEditar(null)
+      livroForm.reset({
+        ...item,
+        turmasIds: item.turmas?.map((t: any) => t.id) || []
+      })
+      setCapaPreview(item.capa_url || null)
+    } else {
+      setMaterialParaEditar(item)
+      setLivroParaEditar(null)
+      materialForm.reset({
+        ...item,
+        turmasIds: item.turmas?.map((t: any) => t.id) || []
+      })
+      setCapaPreview(item.imagem_url || null)
+    }
+    
     setCapaFile(null)
     setIsFormOpen(true)
   }
 
-  const handleExcluir = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este livro?')) {
+  const handleExcluir = async (item: any) => {
+    if (window.confirm('Tem certeza que deseja excluir?')) {
       try {
-        await excluirLivro.mutateAsync(id)
-        toast.success('Livro removido com sucesso')
+        if (item.tipo === 'livro') {
+          await excluirLivro.mutateAsync(item.id)
+        } else {
+          await excluirMaterial.mutateAsync(item.id)
+        }
+        toast.success('Excluído com sucesso')
       } catch (error) {
-        toast.error('Erro ao excluir livro')
+        toast.error('Erro ao excluir')
       }
     }
   }
@@ -194,73 +271,91 @@ export function LivrosPageMobile() {
     }
   }
 
-  const onSubmit = async (data: LivroFormValues) => {
+  const onSubmit = async () => {
     if (!authUser) return
+    const isLivro = activeTab === 'livro'
+    const data = isLivro ? livroForm.getValues() : materialForm.getValues()
+    
+    // Validate manually to ensure types
+    const isValid = await (isLivro ? livroForm.trigger() : materialForm.trigger())
+    if (!isValid) return
+
     try {
       setIsUploading(true)
-      let finalCapaUrl = livroParaEditar?.capa_url || null
+      
+      // Image handling logic
+      let finalImageUrl = capaPreview?.startsWith('http') ? capaPreview : (
+        isLivro ? (livroParaEditar?.capa_url || null) : (materialParaEditar?.imagem_url || null)
+      )
 
       if (capaFile) {
-        finalCapaUrl = await livrosService.uploadCapa(capaFile)
+        finalImageUrl = isLivro 
+          ? await livrosService.uploadCapa(capaFile) 
+          : await livrosService.uploadImagemMaterial(capaFile)
+      } else if (!capaPreview) {
+        finalImageUrl = null
       }
 
-      const payload = {
-        tenant_id: authUser.tenantId,
-        ...data,
-        capa_url: finalCapaUrl
-      }
+      if (isLivro) {
+        const payload = {
+          tenant_id: authUser.tenantId,
+          ...data,
+          capa_url: finalImageUrl
+        }
+        
+        // Deep clean
+        const cleanData = Object.fromEntries(
+          Object.entries(payload).filter(([k]) => !['id', 'created_at', 'updated_at', 'disciplina', 'turmas', 'livros_turmas', 'turmasIds'].includes(k))
+        )
 
-      if (livroParaEditar) {
-        await editarLivro.mutateAsync({
-          id: livroParaEditar.id,
-          livro: payload,
-          turmasIds: data.turmasIds
-        })
-        toast.success('Livro atualizado!')
+        if (livroParaEditar) {
+          await editarLivro.mutateAsync({ id: livroParaEditar.id, livro: cleanData as any, turmasIds: (data as any).turmasIds })
+        } else {
+          await criarLivro.mutateAsync({ livro: cleanData as any, turmasIds: (data as any).turmasIds })
+        }
       } else {
-        await criarLivro.mutateAsync({
-          livro: payload,
-          turmasIds: data.turmasIds
-        })
-        toast.success('Livro cadastrado!')
+        const payload = {
+          tenant_id: authUser.tenantId,
+          ...data,
+          imagem_url: finalImageUrl
+        }
+        
+        // Deep clean
+        const cleanData = Object.fromEntries(
+          Object.entries(payload).filter(([k]) => !['id', 'created_at', 'updated_at', 'disciplina', 'turmas', 'materiais_turmas', 'turmasIds'].includes(k))
+        )
+
+        if (materialParaEditar) {
+          await editarMaterial.mutateAsync({ id: materialParaEditar.id, material: cleanData as any, turmasIds: (data as any).turmasIds })
+        } else {
+          await criarMaterial.mutateAsync({ material: cleanData as any, turmasIds: (data as any).turmasIds })
+        }
       }
+
+      toast.success('Salvo com sucesso!')
       setIsFormOpen(false)
-      refetch()
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao salvar livro.')
+      toast.error('Erro ao salvar.')
     } finally {
       setIsUploading(false)
     }
   }
 
-  const handleCreateDisciplina = async () => {
-    if (!authUser || !novaDisciplina.trim()) return
-    try {
-      await criarDisciplina.mutateAsync({ tenantId: authUser.tenantId, nome: novaDisciplina })
-      toast.success('Disciplina criada!')
-      setNovaDisciplina('')
-      setIsDiscOpen(false)
-    } catch {
-      toast.error('Erro ao adicionar disciplina.')
-    }
-  }
-
-  // Current list based on filter
-  const filteredLivros = selectedTurmaId === 'all' 
-    ? (livros || cached || []) as any[]
-    : livrosPorTurma.get(selectedTurmaId) || []
+  const filteredItems = selectedTurmaId === 'all' 
+    ? [...(livros || cachedLivros || []).map(l => ({ ...l, tipo: 'livro' })), ...(materiais || cachedMateriais || []).map(m => ({ ...m, tipo: 'material' }))]
+    : itensPorTurma.get(selectedTurmaId) || []
 
   return (
     <MobilePageLayout
-      title="Materiais e Livros Didáticos"
+      title="Livros e Materiais"
       leftAction={
         <button onClick={() => window.history.back()} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
           <ArrowLeft className="h-5 w-5 text-slate-500" />
         </button>
       }
     >
-      {/* Sticky Filters with Book Counts */}
+      {/* Sticky Filters */}
       <div className="sticky top-16 -mx-4 px-4 py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-40 border-b border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
         <div className="flex gap-2">
           <button
@@ -273,12 +368,9 @@ export function LivrosPageMobile() {
              )}
           >
             Todos
-            <Badge variant={selectedTurmaId === 'all' ? 'outline' : 'secondary'} className={cn("h-4 min-w-[18px] px-1 border-white/20 text-[9px]", selectedTurmaId === 'all' ? "text-white" : "text-slate-400")}>
-              {totalLivrosGeral}
-            </Badge>
           </button>
           {turmas?.map(t => {
-            const count = livrosPorTurma.get(t.id)?.length || 0
+            const count = itensPorTurma.get(t.id)?.length || 0
             return (
               <button
                 key={t.id}
@@ -300,90 +392,56 @@ export function LivrosPageMobile() {
         </div>
       </div>
 
-      <PullToRefresh onRefresh={async () => { await refetch() }}>
-        <div className="mt-4 space-y-4 pb-20">
-          {isLoading && !cached.length ? (
+      <PullToRefresh onRefresh={async () => { await refetchLivros(); await refetchMateriais(); }}>
+        <div className="mt-4 space-y-4 pb-24">
+          {isLoading && !cachedLivros.length ? (
             <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => (
-                 <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-32" />
-              ))}
+              {[1, 2, 3].map(i => <div key={i} className="h-32 bg-slate-50 rounded-2xl animate-pulse" />)}
             </div>
-          ) : filteredLivros.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             <div className="py-20 text-center flex flex-col items-center">
-              <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6 text-slate-300">
-                <BookOpen className="h-10 w-10" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Nenhum livro cadastrado</h3>
-              <p className="text-slate-500 text-sm max-w-[240px] mt-2">
-                Comece adicionando os materiais exigidos para esta turma.
-              </p>
-              <Button onClick={handleOpenNew} variant="outline" className="mt-8 rounded-2xl h-12 px-8 font-bold border-slate-200">
-                Adicionar Primeiro Livro
-              </Button>
+              <Package size={48} className="text-slate-200 mb-4" />
+              <h3 className="text-lg font-black text-slate-900">Nada encontrado</h3>
+              <p className="text-slate-500 text-sm max-w-[240px] mt-2">Toque no + para adicionar.</p>
             </div>
           ) : (
             <AnimatePresence mode="popLayout">
-              {filteredLivros.map((livro, idx) => (
-                <motion.div
-                  key={livro.id}
-                  layout
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03 }}
-                >
-                  <NativeCard
-                    swipeable
-                    onEdit={() => handleEditar(livro)}
-                    onDelete={() => handleExcluir(livro.id)}
-                    onClick={() => handleEditar(livro)}
-                  >
+              {filteredItems.map((item, idx) => (
+                <motion.div key={`${item.tipo}-${item.id}`} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
+                  <NativeCard onClick={() => handleEditar(item)} onEdit={() => handleEditar(item)} onDelete={() => handleExcluir(item)}>
                     <div className="flex gap-4">
                        <div className="w-20 aspect-[3/4] bg-slate-50 dark:bg-slate-900 flex items-center justify-center rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
-                          {livro.capa_url ? (
-                             <img src={livro.capa_url} alt="" className="h-full w-full object-cover" />
+                          {(item.capa_url || item.imagem_url) ? (
+                             <img src={item.capa_url || item.imagem_url} alt="" className="h-full w-full object-cover" />
                           ) : (
-                             <ImageIcon className="h-8 w-8 text-slate-200" />
+                             item.tipo === 'livro' ? <BookOpen className="h-8 w-8 text-slate-200" /> : <Package className="h-8 w-8 text-slate-200" />
                           )}
                        </div>
-
                        <div className="flex-1 py-1 min-w-0 flex flex-col justify-between">
                           <div>
-                            <div className="flex items-start justify-between gap-2">
-                               <h4 className="font-bold text-slate-900 dark:text-white leading-tight text-base line-clamp-2">
-                                 {livro.titulo}
-                               </h4>
-                            </div>
-                            <p className="text-[13px] font-medium text-slate-500 mt-1 truncate">
-                              {livro.autor} · {livro.editora}
-                            </p>
-                            <Badge variant="secondary" className="mt-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-none text-[9px] uppercase font-black px-2 py-0.5">
-                                {livro.disciplina?.nome || 'Geral'}
-                            </Badge>
+                             <div className="flex items-center gap-2 mb-1">
+                                <Badge className={cn("text-[8px] font-black tracking-widest px-2 py-0 border-0", item.tipo === 'livro' ? "bg-indigo-600" : "bg-emerald-500")}>
+                                  {item.tipo === 'livro' ? 'LIVRO' : 'MATERIAL'}
+                                </Badge>
+                                 <span className="text-[10px] font-bold text-slate-400 uppercase truncate">
+                                  {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
+                                </span>
+                             </div>
+                             <h4 className="font-bold text-slate-900 dark:text-white leading-tight text-base line-clamp-2">
+                               {item.tipo === 'livro' ? item.titulo : item.nome}
+                             </h4>
+                             <p className="text-[13px] font-medium text-slate-500 mt-1 truncate">
+                               {item.tipo === 'livro' ? `${item.autor} · ${item.editora}` : `${item.quantidade_sugerida} ${item.unidade_medida}`}
+                             </p>
                           </div>
-
                           <div className="flex items-center justify-between mt-2">
-                              <div className="flex items-center gap-3">
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider leading-none">Status</span>
-                                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">{livro.estado || 'Indiferente'}</span>
-                                </div>
-                             </div>
-                             
-                             {/* Action Buttons - Adding explicit delete after user request */}
-                             <div className="flex items-center gap-1">
-                               <button 
-                                 onClick={(e) => { e.stopPropagation(); handleExcluir(livro.id); }}
-                                 className="h-9 w-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 transition-colors active:bg-red-100"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </button>
-                               <button 
-                                 onClick={(e) => { e.stopPropagation(); handleEditar(livro); }}
-                                 className="h-9 w-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 transition-colors active:bg-slate-100"
-                               >
-                                 <Edit2 className="h-4 w-4" />
-                               </button>
-                             </div>
+                              <span className="text-[10px] font-black text-indigo-600 uppercase italic">
+                                {item.ano_letivo || 'Permanente'}
+                              </span>
+                              <div className="flex gap-2">
+                                <button onClick={(e) => { e.stopPropagation(); handleExcluir(item); }} className="h-9 w-9 rounded-xl bg-red-50 flex items-center justify-center text-red-600"><Trash2 size={16} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleEditar(item); }} className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500"><Edit2 size={16} /></button>
+                              </div>
                           </div>
                        </div>
                     </div>
@@ -399,164 +457,129 @@ export function LivrosPageMobile() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleOpenNew}
-        className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-100 dark:shadow-none flex items-center justify-center z-40 transition-transform active:scale-95"
+        className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 text-white shadow-xl flex items-center justify-center z-40"
       >
         <Plus className="h-7 w-7" />
       </motion.button>
 
       {/* Form Sheet */}
-      <BottomSheet 
-        isOpen={isFormOpen} 
-        onClose={() => setIsFormOpen(false)} 
-        title={livroParaEditar ? 'Editar Livro' : 'Cadastro de Livro'} 
-        size="full"
-      >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-2 pb-24">
+      <BottomSheet isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={itemParaEditar() ? 'Editar Registro' : 'Novo Registro'} size="full">
+        <div className="flex justify-center mb-6">
+           <div className="flex bg-slate-100 p-1 rounded-2xl w-full max-w-[300px]">
+              <button onClick={() => setActiveTab('livro')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all", activeTab === 'livro' ? "bg-white shadow-sm text-indigo-600" : "text-slate-400")}>LIVROS</button>
+              <button onClick={() => setActiveTab('material')} className={cn("flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all", activeTab === 'material' ? "bg-white shadow-sm text-emerald-600" : "text-slate-400")}>MATERIAIS</button>
+           </div>
+        </div>
+
+        <div className="space-y-6 pt-2 pb-24">
            {/* Image Picker */}
            <div className="flex justify-center">
-              <label className="relative cursor-pointer group">
-                  <div className="w-32 aspect-[3/4] rounded-3xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden transition-all active:scale-95">
-                    {capaPreview ? (
-                      <img src={capaPreview} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="flex flex-col items-center text-slate-400">
-                        <Upload className="h-8 w-8 mb-1" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Enviar Capa</span>
-                      </div>
-                    )}
+              <div className="relative group">
+                <label className="block w-32 aspect-[3/4] rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden active:scale-95 transition-transform cursor-pointer">
+                  {capaPreview ? (
+                    <img src={capaPreview} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center text-slate-400">
+                      <Upload className="h-8 w-8 mb-1" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text center">Enviar</span>
+                    </div>
+                  )}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                </label>
+                
+                {capaPreview && (
+                  <button 
+                    type="button" 
+                    onClick={() => { setCapaFile(null); setCapaPreview(null); }}
+                    className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg border-2 border-white"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                
+                {!capaPreview && (
+                  <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg pointer-events-none">
+                    <Plus size={20} />
                   </div>
-                  <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg transform transition-transform group-active:scale-90">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileChange} />
-              </label>
+                )}
+              </div>
            </div>
 
-           <div className="space-y-4">
-              <div className="space-y-1.5">
-                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Título do Livro *</Label>
-                 <Input placeholder="Título completo" className="h-11 rounded-2xl text-base border-slate-200" {...register('titulo')} />
-                 {errors.titulo && <span className="text-[10px] text-rose-500 font-bold ml-1">{errors.titulo.message}</span>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Autor/Autores *</Label>
-                    <Input placeholder="Autor" className="h-11 rounded-2xl text-base border-slate-200" {...register('autor')} />
+           {activeTab === 'livro' ? (
+              <form key="livro-form" className="space-y-4">
+                 <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Título *</Label><Input placeholder="Título oficial" {...livroForm.register('titulo')} className="h-11 rounded-2xl" /></div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Autor *</Label><Input placeholder="Autor" {...livroForm.register('autor')} className="h-11 rounded-2xl" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Editora *</Label><Input placeholder="Editora" {...livroForm.register('editora')} className="h-11 rounded-2xl" /></div>
                  </div>
-                 <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Editora *</Label>
-                    <Input placeholder="Editora" className="h-11 rounded-2xl text-base border-slate-200" {...register('editora')} />
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1.5">
-                    <div className="flex justify-between items-center pr-1">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Disciplina *</Label>
-                      <button type="button" onClick={() => setIsDiscOpen(true)} className="text-[10px] font-black text-indigo-600">+ DISCIPLINA</button>
-                    </div>
-                    <Select onValueChange={(v) => setValue('disciplina_id', v)} defaultValue={watch('disciplina_id')}>
-                       <SelectTrigger className="h-11 rounded-2xl border-slate-200">
-                          <SelectValue placeholder="Selecione" />
-                       </SelectTrigger>
-                       <SelectContent>
-                          <SelectItem value="paradidatico">Paradidático</SelectItem>
-                          {disciplinas?.map((d: any) => (
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Disciplina *</Label>
+                       <Select onValueChange={(v) => livroForm.setValue('disciplina_id', v)} value={livroForm.watch('disciplina_id')}>
+                          <SelectTrigger className="h-11 rounded-2xl"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                          {(disciplinas as any[])?.map((d: any) => (
                              <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                           ))}
-                       </SelectContent>
-                    </Select>
+                        </SelectContent>
+                       </Select>
+                    </div>
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Ano Letivo *</Label><Input type="number" {...livroForm.register('ano_letivo')} className="h-11 rounded-2xl" /></div>
                  </div>
-                 <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Ano Letivo *</Label>
-                    <Input type="number" className="h-11 rounded-2xl text-base border-slate-200" {...register('ano_letivo')} />
+              </form>
+           ) : (
+              <form key="material-form" className="space-y-4">
+                 <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nome do Material *</Label><Input placeholder="Ex: Caderno" {...materialForm.register('nome')} className="h-11 rounded-2xl" /></div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Categoria *</Label>
+                      <Select onValueChange={(v) => materialForm.setValue('categoria', v)} value={materialForm.watch('categoria')}>
+                        <SelectTrigger className="h-11 rounded-2xl"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{CATEGORIAS_MATERIAIS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Und. Medida *</Label>
+                      <Select onValueChange={(v) => materialForm.setValue('unidade_medida', v)} value={materialForm.watch('unidade_medida')}>
+                        <SelectTrigger className="h-11 rounded-2xl"><SelectValue placeholder="Ex: unid" /></SelectTrigger>
+                        <SelectContent>{UNIDADES_MEDIDA.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                  </div>
-              </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Qtd Sugerida *</Label><Input type="number" {...materialForm.register('quantidade_sugerida')} className="h-11 rounded-2xl" /></div>
+                    <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Marca Sugerida</Label><Input placeholder="Ex: Faber" {...materialForm.register('marca_sugerida')} className="h-11 rounded-2xl" /></div>
+                 </div>
+              </form>
+           )}
 
-              <div className="space-y-1.5">
-                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Estado de Uso Sugerido</Label>
-                 <div className="grid grid-cols-3 gap-2">
-                    {['Novo', 'Usado', 'Indiferente'].map((st) => {
-                       const isActive = watch('estado') === st
-                       return (
-                          <button
-                            key={st}
-                            type="button"
-                            onClick={() => setValue('estado', st as any)}
-                            className={cn(
-                               "h-12 rounded-xl text-xs font-bold border transition-all",
-                               isActive 
-                                 ? "bg-indigo-600 border-indigo-600 text-white" 
-                                 : "bg-white dark:bg-slate-800 border-slate-100 text-slate-500"
-                            )}
-                          >
-                             {st === 'Usado' ? 'Permite Usado' : st}
-                          </button>
-                       )
-                    })}
-                 </div>
-              </div>
-
-              <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Vincular às Turmas</Label>
-                 <div className="grid grid-cols-2 gap-2">
-                    {turmas?.map(t => {
-                       const isSelected = selectedTurmasIds.includes(t.id)
-                       return (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => handleSelectTurmaInForm(t.id)}
-                            className={cn(
-                               "h-12 px-3 rounded-xl text-xs font-bold flex items-center justify-between border transition-all",
-                               isSelected 
-                                 ? "bg-indigo-50 border-indigo-200 text-indigo-700" 
-                                 : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500"
-                            )}
-                          >
-                             <span className="truncate">{t.nome}</span>
-                             {isSelected && <CheckCircle className="h-4 w-4 shrink-0 text-indigo-600" />}
-                          </button>
-                       )
-                    })}
-                 </div>
+           <div className="space-y-3 pt-4 border-t border-slate-100">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Vincular às Turmas *</Label>
+              <div className="grid grid-cols-2 gap-2">
+                 {turmas?.map(t => {
+                    const currentTurmas = activeTab === 'livro' ? livroForm.watch('turmasIds') : materialForm.watch('turmasIds')
+                    const isSelected = (currentTurmas || []).includes(t.id)
+                    return (
+                       <button key={t.id} type="button" onClick={() => handleSelectTurmaInForm(t.id)} className={cn("h-12 px-3 rounded-xl text-[10px] font-bold flex items-center justify-between border transition-all", isSelected ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-slate-100 text-slate-500")}>
+                          <span className="truncate">{t.nome}</span>
+                          {isSelected && <CheckCircle size={14} className="text-indigo-600" />}
+                       </button>
+                    )
+                 })}
               </div>
            </div>
+        </div>
 
-           {/* Sticky Bottom Actions */}
-           <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 z-50">
-              <div className="mx-auto max-w-[640px] flex gap-3">
-                 <Button type="button" variant="ghost" onClick={() => setIsFormOpen(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-400">
-                    Cancelar
-                 </Button>
-                 <Button 
-                   type="submit" 
-                   disabled={isSubmitting || isUploading} 
-                   className="flex-[2] h-14 rounded-2xl font-bold bg-indigo-600 shadow-xl shadow-indigo-100"
-                 >
-                    {isSubmitting || isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Salvar Livro'}
-                 </Button>
-              </div>
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-slate-100 z-50">
+           <div className="flex gap-3">
+              <Button onClick={() => setIsFormOpen(false)} variant="ghost" className="flex-1 h-14 rounded-2xl font-bold text-slate-400">Cancelar</Button>
+              <Button onClick={onSubmit} disabled={isUploading} className="flex-[2] h-14 rounded-2xl font-bold bg-indigo-600 shadow-xl shadow-indigo-100">
+                 {isUploading ? <Loader2 size={20} className="animate-spin" /> : 'Salvar Registro'}
+              </Button>
            </div>
-        </form>
-      </BottomSheet>
-
-      {/* Disciplina Sheet */}
-      <BottomSheet isOpen={isDiscOpen} onClose={() => setIsDiscOpen(false)} title="Nova Disciplina" size="peek">
-         <div className="pt-2 space-y-4">
-            <div className="space-y-2">
-               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Nome da Disciplina</Label>
-               <Input 
-                 value={novaDisciplina} 
-                 onChange={e => setNovaDisciplina(e.target.value)} 
-                 placeholder="Ex: Matemática, Literatura..." 
-                 className="h-11 rounded-2xl text-base border-slate-200"
-               />
-            </div>
-            <Button onClick={handleCreateDisciplina} className="w-full h-14 rounded-2xl bg-indigo-600 font-bold shadow-lg shadow-indigo-100">Salvar Disciplina</Button>
-         </div>
+        </div>
       </BottomSheet>
     </MobilePageLayout>
   )
+
+  function itemParaEditar() {
+    return livroParaEditar || materialParaEditar
+  }
 }

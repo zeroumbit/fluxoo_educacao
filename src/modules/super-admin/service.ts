@@ -55,8 +55,9 @@ export const superAdminService = {
   async upsertPlano(plano: any) {
     const { data, error } = await (supabase.from('planos' as any) as any)
       .upsert({ ...plano, updated_at: new Date().toISOString() })
-      .select().single()
+      .select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível salvar o plano.')
     return data
   },
 
@@ -77,8 +78,9 @@ export const superAdminService = {
   },
 
   async upsertModulo(modulo: any) {
-    const { data, error } = await (supabase.from('modulos' as any) as any).upsert(modulo).select().single()
+    const { data, error } = await (supabase.from('modulos' as any) as any).upsert(modulo).select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível salvar o módulo.')
     return data
   },
 
@@ -125,8 +127,9 @@ export const superAdminService = {
         updated_at: new Date().toISOString(),
         data_inicio: status === 'ativa' ? new Date().toISOString() : null
       } as any)
-      .eq('id', id).select().single()
+      .eq('id', id).select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível atualizar o status da escola. Verifique as permissões de Super Admin.')
     return data
   },
 
@@ -138,8 +141,9 @@ export const superAdminService = {
         data_suspensao: new Date().toISOString(),
         updated_at: new Date().toISOString()
       } as any)
-      .eq('id', id).select().single()
+      .eq('id', id).select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível suspender a escola.')
     return data
   },
 
@@ -169,16 +173,18 @@ export const superAdminService = {
   },
 
   async createAssinatura(assinatura: any) {
-    const { data, error } = await (supabase.from('assinaturas' as any) as any).insert(assinatura as any).select().single()
+    const { data, error } = await (supabase.from('assinaturas' as any) as any).insert(assinatura as any).select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível criar a assinatura.')
     return data
   },
 
   async updateAssinatura(id: string, updates: any) {
     const { data, error } = await (supabase.from('assinaturas' as any) as any)
       .update({ ...updates, updated_at: new Date().toISOString() } as any)
-      .eq('id', id).select().single()
+      .eq('id', id).select().maybeSingle()
     if (error) throw error
+    if (!data) throw new Error('Não foi possível atualizar a assinatura.')
     return data
   },
 
@@ -204,9 +210,10 @@ export const superAdminService = {
         data_confirmacao: new Date().toISOString(),
         data_pagamento: new Date().toISOString().split('T')[0],
       } as any)
-      .eq('id', id).select('*, escola:escolas(*)').single()
+      .eq('id', id).select('*, escola:escolas(*)').maybeSingle()
 
     if (faturaError) throw faturaError
+    if (!fatura) throw new Error('Não foi possível confirmar a fatura. Verifique se o registro ainda existe.')
 
     // 2. Se a escola estiver pendente, ativa ela automaticamente (fluxo de onboarding)
     const escola = (fatura as any).escola
@@ -315,5 +322,35 @@ export const superAdminService = {
       .select('*, escolas:tenant_id(razao_social)')
     if (error) throw error
     return (data as any[]) || []
+  },
+
+  async getNotificationCounts() {
+    const [pendentesRes, faturasAtrasadasRes] = await Promise.all([
+      (supabase.from('escolas' as any) as any).select('id', { count: 'exact', head: true }).eq('status_assinatura', 'pendente'),
+      (supabase.from('faturas' as any) as any).select('id', { count: 'exact', head: true }).eq('status', 'atrasado')
+    ])
+
+    const notifications = []
+    if (pendentesRes.count && pendentesRes.count > 0) {
+      notifications.push({ 
+        id: 'pendentes', 
+        label: `${pendentesRes.count} Aprovações pendentes`, 
+        href: '/admin/escolas',
+        category: 'SUPER ADMIN'
+      })
+    }
+    if (faturasAtrasadasRes.count && faturasAtrasadasRes.count > 0) {
+      notifications.push({ 
+        id: 'faturas', 
+        label: `${faturasAtrasadasRes.count} Escolas com pagamentos em atraso`, 
+        href: '/admin/faturas',
+        category: 'SUPER ADMIN'
+      })
+    }
+
+    return {
+      total: (pendentesRes.count || 0) + (faturasAtrasadasRes.count || 0),
+      items: notifications
+    }
   },
 }

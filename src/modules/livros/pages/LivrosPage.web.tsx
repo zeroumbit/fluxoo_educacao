@@ -231,10 +231,12 @@ export function LivrosPage() {
     if (!authUser) return
     try {
       setIsUploading(true)
-      let finalCapaUrl = livroParaEditar?.capa_url || null
+      let finalCapaUrl = capaPreview?.startsWith('http') ? capaPreview : (livroParaEditar?.capa_url || null)
 
       if (capaFile) {
         finalCapaUrl = await livrosService.uploadCapa(capaFile)
+      } else if (!capaPreview) {
+        finalCapaUrl = null
       }
 
       const livroData = {
@@ -251,16 +253,23 @@ export function LivrosPage() {
         capa_url: finalCapaUrl
       }
 
+      // Limpeza profunda para evitar erros de colunas inexistentes no Supabase
+      const cleanLivroData = Object.fromEntries(
+        Object.entries(livroData).filter(([key]) => 
+          !['id', 'created_at', 'updated_at', 'disciplina', 'turmas', 'livros_turmas'].includes(key)
+        )
+      )
+
       if (livroParaEditar) {
         await editarLivro.mutateAsync({
           id: livroParaEditar.id,
-          livro: livroData,
+          livro: cleanLivroData as any,
           turmasIds: data.turmasIds
         })
         toast.success('Livro atualizado com sucesso!')
       } else {
         await criarLivro.mutateAsync({
-          livro: livroData,
+          livro: cleanLivroData as any,
           turmasIds: data.turmasIds
         })
         toast.success('Livro cadastrado com sucesso!')
@@ -278,10 +287,12 @@ export function LivrosPage() {
     if (!authUser) return
     try {
       setIsUploading(true)
-      let finalImagemUrl = materialParaEditar?.imagem_url || null
+      let finalImagemUrl = capaPreview?.startsWith('http') ? capaPreview : (materialParaEditar?.imagem_url || null)
 
       if (capaFile) {
         finalImagemUrl = await livrosService.uploadImagemMaterial(capaFile)
+      } else if (!capaPreview) {
+        finalImagemUrl = null
       }
 
       const materialData = {
@@ -289,18 +300,25 @@ export function LivrosPage() {
         tenant_id: authUser.tenantId,
         imagem_url: finalImagemUrl
       }
-      delete (materialData as any).turmasIds
+      
+      // Limpeza profunda para evitar erros de colunas inexistentes no Supabase
+      // Remove turmasIds e qualquer campo que venha do spread de 'data' que não seja coluna do banco
+      const cleanMaterialData = Object.fromEntries(
+        Object.entries(materialData).filter(([key]) => 
+          !['id', 'created_at', 'updated_at', 'disciplina', 'turmas', 'materiais_turmas', 'turmasIds'].includes(key)
+        )
+      )
 
       if (materialParaEditar) {
         await editarMaterial.mutateAsync({
           id: materialParaEditar.id,
-          material: materialData as any,
+          material: cleanMaterialData as any,
           turmasIds: data.turmasIds
         })
         toast.success('Material atualizado com sucesso!')
       } else {
         await criarMaterial.mutateAsync({
-          material: materialData as any,
+          material: cleanMaterialData as any,
           turmasIds: data.turmasIds
         })
         toast.success('Material cadastrado com sucesso!')
@@ -502,19 +520,38 @@ export function LivrosPage() {
                     <div className="space-y-2">
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Capa do Livro</Label>
                         <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
-                          {capaPreview ? (
-                            <div className="relative w-full h-full">
-                              <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
-                              <Button type="button" size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg" onClick={() => { setCapaFile(null); setCapaPreview(null); }}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
-                              <ImageIcon className="h-10 w-10 text-slate-300" />
-                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Capa</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            </label>
+                          <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
+                            {capaPreview ? (
+                              <div className="relative w-full h-full">
+                                <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span className="text-white text-[10px] font-bold uppercase tracking-widest">Trocar Capa</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <ImageIcon className="h-10 w-10 text-slate-300" />
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Capa</span>
+                              </>
+                            )}
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                          </label>
+                          
+                          {capaPreview && (
+                            <Button 
+                              type="button" 
+                              size="icon" 
+                              variant="destructive" 
+                              className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg z-10" 
+                              onClick={(e) => { 
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setCapaFile(null); 
+                                setCapaPreview(null); 
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           )}
                         </div>
                     </div>
@@ -533,6 +570,11 @@ export function LivrosPage() {
                         )
                       })}
                     </div>
+                    {livroForm.formState.errors.turmasIds && (
+                       <span className="text-xs text-red-500 font-bold mt-2 inline-block">
+                          {livroForm.formState.errors.turmasIds.message}
+                       </span>
+                    )}
                   </div>
 
                   <div className="pt-10 flex border-t border-slate-100 justify-end gap-3 shrink-0">
@@ -623,19 +665,38 @@ export function LivrosPage() {
                     <div className="space-y-2">
                         <Label className="text-[13px] font-bold text-slate-700 mb-1.5">Imagem de Referência</Label>
                         <div className="h-[280px] bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center relative overflow-hidden group hover:border-indigo-600/30 transition-all">
-                          {capaPreview ? (
-                            <div className="relative w-full h-full">
-                              <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
-                              <Button type="button" size="icon" variant="destructive" className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg" onClick={() => { setCapaFile(null); setCapaPreview(null); }}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
-                              <ImageIcon className="h-8 w-8 text-slate-300" />
-                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Foto</span>
-                              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            </label>
+                          <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full gap-2">
+                            {capaPreview ? (
+                              <div className="relative w-full h-full">
+                                <img src={capaPreview} alt="Preview" className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span className="text-white text-[10px] font-bold uppercase tracking-widest">Trocar Foto</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <ImageIcon className="h-8 w-8 text-slate-300" />
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Enviar Foto</span>
+                              </>
+                            )}
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                          </label>
+
+                          {capaPreview && (
+                            <Button 
+                              type="button" 
+                              size="icon" 
+                              variant="destructive" 
+                              className="absolute top-2 right-2 rounded-full h-8 w-8 scale-0 group-hover:scale-100 transition-transform shadow-lg z-10" 
+                              onClick={(e) => { 
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setCapaFile(null); 
+                                setCapaPreview(null); 
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           )}
                         </div>
                     </div>
@@ -654,6 +715,11 @@ export function LivrosPage() {
                         )
                       })}
                     </div>
+                    {materialForm.formState.errors.turmasIds && (
+                       <span className="text-xs text-red-500 font-bold mt-2 inline-block">
+                          {materialForm.formState.errors.turmasIds.message}
+                       </span>
+                    )}
                   </div>
 
                   <div className="pt-10 flex border-t border-slate-100 justify-end gap-3 shrink-0">

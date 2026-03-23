@@ -99,4 +99,39 @@ export const escolaService = {
     if (error) throw error
     return data as any
   },
+
+  async getNotificationCounts(tenantId: string) {
+    const [evasaoRes, documentosRes] = await Promise.all([
+      (supabase.from('vw_radar_evasao' as any) as any)
+        .select('aluno_id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+      (supabase.from('document_solicitations' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pendente')
+    ])
+
+    const notifications = []
+    if (evasaoRes.count && evasaoRes.count > 0) {
+      notifications.push({ 
+        id: 'evasao', 
+        label: `${evasaoRes.count} Perigo de evasão`, 
+        href: '/dashboard',
+        category: 'ESCOLAS'
+      })
+    }
+    if (documentosRes.count && documentosRes.count > 0) {
+      notifications.push({ 
+        id: 'documentos', 
+        label: `${documentosRes.count} Pedidos de documentação`, 
+        href: '/documentos',
+        category: 'ESCOLAS'
+      })
+    }
+
+    return {
+      total: (evasaoRes.count || 0) + (documentosRes.count || 0),
+      items: notifications
+    }
+  },
 }

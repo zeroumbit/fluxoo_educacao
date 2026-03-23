@@ -664,5 +664,49 @@ export const portalService = {
 
     if (error) throw error
     return data || []
-  }
+  },
+
+  async getNotificationCounts(responsavelId: string) {
+    // 1. Get student IDs
+    const vinculos = await portalService.buscarVinculosAtivos(responsavelId)
+    const alunoIds = vinculos.map(v => v.aluno_id)
+    const tenantIds = [...new Set(vinculos.map(v => v.aluno.tenant_id))]
+
+    if (alunoIds.length === 0) return { total: 0, items: [] }
+
+    const [cobrancasRes, avisosRes] = await Promise.all([
+      (supabase.from('cobrancas' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('aluno_id', alunoIds)
+        .in('status', ['a_vencer', 'atrasado']),
+      (supabase.from('mural_avisos' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('tenant_id', tenantIds)
+        .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
+        .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+    ])
+
+    const notifications = []
+    if (cobrancasRes.count && cobrancasRes.count > 0) {
+      notifications.push({ 
+        id: 'cobrancas', 
+        label: `${cobrancasRes.count} Nova cobranças`, 
+        href: '/portal/cobrancas',
+        category: 'PORTAL'
+      })
+    }
+    if (avisosRes.count && avisosRes.count > 0) {
+      notifications.push({ 
+        id: 'avisos', 
+        label: `${avisosRes.count} Novos avisos`, 
+        href: '/portal/avisos',
+        category: 'PORTAL'
+      })
+    }
+
+    return {
+      total: (cobrancasRes.count || 0) + (avisosRes.count || 0),
+      items: notifications
+    }
+  },
 }

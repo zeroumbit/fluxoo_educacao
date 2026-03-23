@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, CalendarDays, LineChart, BookOpen, 
-  MapPin, ShieldCheck, Car, Settings, Trophy, BookMarked, LayoutList
+  MapPin, ShieldCheck, Car, Settings, Trophy, BookMarked, LayoutList,
+  Activity, Calendar
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
 import { PortalSelosV2 } from '../components/PortalSelosV2';
 import { PortalPlanosAulaV2 } from '../components/PortalPlanosAulaV2';
 import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
+import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
+import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
+import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
+import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
+import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
 
@@ -16,15 +22,16 @@ const getInitials = (name: string) => {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 };
 
-const MOCK_MODULES = [
+const REAL_MODULES = [
   { id: 'grade', label: 'Grade Curricular', icon: CalendarDays, color: 'text-blue-500', bg: 'bg-blue-50', border: 'hover:border-blue-200' },
-  { id: 'selos', label: 'Selos e Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50', border: 'hover:border-amber-200' },
+  { id: 'boletim', label: 'Boletim Escolar', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'hover:border-indigo-200' },
+  { id: 'frequencia', label: 'Frequência', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
   { id: 'planos', label: 'Planos de Aula', icon: BookMarked, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
   { id: 'atividades', label: 'Atividades e Provas', icon: LayoutList, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
-  { id: 'boletim', label: 'Boletim Escolar', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50', border: 'hover:border-indigo-200' },
-  { id: 'diario', label: 'Diário de Classe / Agenda', icon: BookOpen, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
   { id: 'material', label: 'Materiais e Livros', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
-  { id: 'autorizacoes', label: 'Autorizações de Retirada', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50', border: 'hover:border-teal-200' },
+  { id: 'agenda', label: 'Agenda de Eventos', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50', border: 'hover:border-rose-200' },
+  { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50', border: 'hover:border-teal-200' },
+  { id: 'selos', label: 'Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50', border: 'hover:border-amber-200' },
 ];
 
 export function PortalAlunoPerfilV2Web() {
@@ -79,7 +86,7 @@ export function PortalAlunoPerfilV2Web() {
       <div className="flex gap-8 items-start">
         {/* Menu Lateral */}
         <div className="w-1/4 min-w-[300px] flex flex-col gap-3">
-          {MOCK_MODULES.map((mod) => (
+          {REAL_MODULES.map((mod) => (
              <button
               key={mod.id}
               onClick={() => setActiveModule(mod.id)}
@@ -107,11 +114,17 @@ export function PortalAlunoPerfilV2Web() {
           {activeModule === 'planos' && <PortalPlanosAulaV2 />}
           {activeModule === 'atividades' && <PortalAtividadesV2 />}
           
-          {['boletim', 'diario', 'material', 'autorizacoes'].includes(activeModule) && (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50 py-32">
-              <Settings className="w-16 h-16 text-slate-300 mb-6 animate-spin-slow" />
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Módulo em Desenvolvimento</h2>
-              <p className="font-semibold text-slate-500">Esta visão web está sendo implementada.</p>
+          {activeModule === 'boletim' && <PortalBoletimPage hideHeader />}
+          {activeModule === 'frequencia' && <PortalFrequenciaPage hideHeader />}
+          {activeModule === 'material' && <PortalLivrosPage hideHeader />}
+          {activeModule === 'agenda' && <PortalAgendaPage hideHeader />}
+          {activeModule === 'autorizacoes' && <PortalAutorizacoesPage hideHeader />}
+          
+          {!['grade', 'selos', 'planos', 'atividades', 'boletim', 'frequencia', 'material', 'agenda', 'autorizacoes'].includes(activeModule) && (
+            <div className="flex flex-col items-center justify-center h-full text-zinc-500 py-32">
+               <Settings className="w-16 h-16 text-zinc-300 mb-6 animate-spin-slow" />
+               <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Módulo em Desenvolvimento</h2>
+               <p className="font-semibold text-zinc-500">Esta visão web está sendo implementada.</p>
             </div>
           )}
         </div>

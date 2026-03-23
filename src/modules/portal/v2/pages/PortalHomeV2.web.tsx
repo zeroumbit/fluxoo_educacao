@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
+import { NotificationBell } from '@/components/ui/NotificationBell';
+import { usePortalNotifications } from '@/hooks/useGlobalNotifications';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -14,6 +16,7 @@ export function PortalHomeV2Web() {
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
+  const { data: notifications } = usePortalNotifications(responsavel?.id);
 
   // Alertas dinâmicos
   const alerts = [];
@@ -42,23 +45,29 @@ export function PortalHomeV2Web() {
           <span className="text-base font-medium text-slate-500 mb-1">Visão Geral da Família</span>
           <h1 className="text-4xl font-black text-slate-800 tracking-tight">Bom dia, {responsavel?.nome?.split(' ')[0] || 'Responsável'}</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-bold text-slate-400 tracking-wider">ACESSAR PERFIL:</span>
-          <div className="flex -space-x-2">
-            {vinculos.map((v: any) => (
-              <div
-                key={v.aluno?.id}
-                onClick={() => {
-                  selecionarAluno(v);
-                  navigate(`/portal/alunos/${v.aluno?.id}`);
-                }}
-                className={`w-14 h-14 rounded-full border-4 border-white flex items-center justify-center font-bold shadow-md cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all ${
-                  alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
-                }`}
-              >
-                {getInitials(v.aluno?.nome_completo || 'A')}
-              </div>
-            ))}
+        <div className="flex items-center gap-6">
+          <NotificationBell
+            total={notifications?.total || 0}
+            items={notifications?.items || []}
+          />
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold text-slate-400 tracking-wider">ACESSAR PERFIL:</span>
+            <div className="flex -space-x-2">
+              {vinculos.map((v: any) => (
+                <div
+                  key={v.aluno?.id}
+                  onClick={() => {
+                    selecionarAluno(v);
+                    navigate(`/portal/alunos/${v.aluno?.id}`);
+                  }}
+                  className={`w-14 h-14 rounded-full border-4 border-white flex items-center justify-center font-bold shadow-md cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all ${
+                    alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {getInitials(v.aluno?.nome_completo || 'A')}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </header>

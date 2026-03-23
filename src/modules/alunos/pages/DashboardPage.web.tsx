@@ -28,6 +28,8 @@ import { OnboardingGuide } from '../components/OnboardingGuide'
 import type { AvisoRecente, RadarAluno } from '../dashboard.service'
 import { useState, useEffect } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { useEscolaNotifications } from '@/hooks/useGlobalNotifications'
 import {
   Dialog,
   DialogContent,
@@ -451,6 +453,7 @@ export function DashboardPageWeb() {
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
+  const { data: notifications } = useEscolaNotifications(authUser?.tenantId)
 
   const handleOpenRadarDetails = (aluno: RadarAluno) => {
     setSelectedRadarAluno(aluno)
@@ -573,11 +576,15 @@ export function DashboardPageWeb() {
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-1">Visão Geral da Instituição</p>
           <h1 className="text-4xl font-black text-zinc-900 tracking-tighter">Dashboard</h1>
         </div>
-        <div className="hidden md:flex items-center gap-4">
-           <div className="text-right">
+        <div className="flex items-center gap-4">
+           <div className="text-right hidden md:block">
               <p className="text-sm font-bold text-zinc-900">Minha Escola</p>
               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Escola Parceira</p>
            </div>
+           <NotificationBell
+             total={notifications?.total || 0}
+             items={notifications?.items || []}
+           />
            <div className="h-12 w-12 rounded-2xl bg-zinc-100 flex items-center justify-center border border-zinc-200 shadow-sm overflow-hidden">
               <BookOpen className="h-6 w-6 text-zinc-400" />
            </div>

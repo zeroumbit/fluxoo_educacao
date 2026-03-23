@@ -29,6 +29,9 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { useEffect, useState } from 'react'
 import { get, set } from 'idb-keyval'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { useEscolaNotifications } from '@/hooks/useGlobalNotifications'
+import { useAuth } from '@/modules/auth/AuthContext'
 
 const CACHE_KEY = 'dashboard_cache'
 
@@ -208,6 +211,8 @@ export function DashboardPageMobile() {
   const [cachedData, setCachedData] = useState<any>(null)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
+  const { authUser } = useAuth()
+  const { data: notifications } = useEscolaNotifications(authUser?.tenantId)
 
   const handleOpenRadarDetails = (aluno: RadarAluno) => {
     setSelectedRadarAluno(aluno)
@@ -281,13 +286,19 @@ export function DashboardPageMobile() {
           <div className="space-y-7 pt-6">
 
             {/* ── Saudação ── */}
-            <section>
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
-                {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-              </p>
-              <h1 className="text-[1.625rem] font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                Fluxoo <span className="text-indigo-600">Edu</span>
-              </h1>
+            <section className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
+                  {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                </p>
+                <h1 className="text-[1.625rem] font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                  Fluxoo <span className="text-indigo-600">Edu</span>
+                </h1>
+              </div>
+              <NotificationBell
+                total={notifications?.total || 0}
+                items={notifications?.items || []}
+              />
             </section>
 
             {/* ── Ações Rápidas ── */}

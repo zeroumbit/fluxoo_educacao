@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
 import { portalService } from './service'
 import { usePortalContext } from './context'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { transferenciasService } from '@/modules/academico/transferencias.service'
+import alertaSom from '@/assets/alerta.mp3'
 
 // ==========================================
 // RESPONSÁVEL
@@ -371,4 +372,46 @@ export function useAtividadesPortal() {
     queryFn: () => portalService.buscarAtividades(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
   })
+}
+
+// ==========================================
+// NOTIFICAÇÃO SONORA - AVISOS
+// ==========================================
+export function useNotificacaoSonoraAvisos() {
+  const { data: avisos } = useAvisosPortal()
+  const prevCountRef = useRef<number>(0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { alunoSelecionado } = usePortalContext()
+
+  useEffect(() => {
+    // Inicializa o áudio
+    audioRef.current = new Audio(alertaSom)
+    audioRef.current.volume = 0.5 // 50% do volume
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!alunoSelecionado) return // Só toca se houver aluno selecionado
+
+    const currentCount = avisos?.length || 0
+
+    // Se é a primeira vez ou se aumentou o número de avisos
+    if (prevCountRef.current > 0 && currentCount > prevCountRef.current) {
+      // Toca o som de notificação
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0
+        audioRef.current.play().catch((err) => {
+          console.warn('Não foi possível tocar o som de notificação:', err)
+        })
+      }
+    }
+
+    prevCountRef.current = currentCount
+  }, [avisos, alunoSelecionado])
 }
