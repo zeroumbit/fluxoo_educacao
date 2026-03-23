@@ -72,7 +72,7 @@ export default defineConfig({
             if (id.includes('framer-motion')) return 'animation-vendor';
             if (id.includes('@tanstack/react-query')) return 'query-vendor';
             if (id.includes('lucide-react')) return 'icons-vendor';
-            if (id.includes('@radix-ui')) return 'ui-vendor';
+            // Unimos Radix ao chunk principal 'vendor' para evitar dependência circular na Vercel
             return 'vendor';
           }
         }

@@ -10,7 +10,7 @@
     "url": "https://github.com/zeroumbit/fluxoo_educacao.git"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "overrides": {
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.4.15",
