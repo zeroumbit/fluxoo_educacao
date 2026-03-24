@@ -40,6 +40,8 @@ import { NotificationBell } from '@/components/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { usePermissions } from '@/providers/RBACProvider'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { useEscola } from '@/modules/escolas/hooks'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const navigationGroups = [
   {
@@ -131,18 +133,18 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full">
       {/* Logo mobile-friendly no menu full-screen */}
-      <div className="p-6 flex items-center justify-between lg:block">
+      <div className="h-16 px-6 flex items-center justify-between lg:h-16 lg:px-6 lg:flex lg:items-center">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-100">
-            <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
+          <div className="h-10 w-10 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-100 flex-shrink-0">
+            <img src={CorujaIcon} alt="Fluxoo" className="h-5 w-5 lg:h-4.5 lg:w-4.5" />
           </div>
-          <div>
-            <h2 className="font-bold text-xl leading-tight tracking-tight">Fluxoo</h2>
-            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/50">Educacional</p>
+          <div className="min-w-0">
+            <h2 className="font-bold text-lg lg:text-base leading-tight tracking-tight truncate">Fluxoo</h2>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/50 truncate">Educacional</p>
           </div>
         </div>
         {onNavigate && (
-           <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden h-10 w-10 rounded-full bg-zinc-100">
+           <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden h-9 w-9 rounded-full bg-zinc-100">
               <X className="h-5 w-5 text-zinc-500" />
            </Button>
         )}
@@ -235,6 +237,7 @@ export function AdminLayout() {
   const { authUser } = useAuth()
   const { data: dashboard, isLoading: isLoadingDashboard } = useDashboard()
   const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId)
+  const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' ? authUser.tenantId : '')
   const navigate = useNavigate()
 
   const status = dashboard?.statusAssinatura
@@ -334,7 +337,13 @@ export function AdminLayout() {
         {/* Top Header - Desktop Only (Mobile uses BottomNav) */}
         <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-8">
           <div className="flex items-center gap-4">
-             {/* Left empty for now, or could show page title */}
+             {isLoadingEscola ? (
+               <Skeleton className="h-6 w-48" />
+             ) : (
+               <h1 className="text-base font-semibold text-zinc-900 tracking-tight">
+                 {authUser?.role === 'super_admin' ? 'Administração Fluxoo' : (escola?.nome_fantasia || escola?.razao_social || 'Minha Escola')}
+               </h1>
+             )}
           </div>
           <div className="flex items-center gap-3">
              <NotificationBell
