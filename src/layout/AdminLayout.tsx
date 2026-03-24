@@ -341,7 +341,7 @@ export function AdminLayout() {
                <Skeleton className="h-6 w-48" />
              ) : (
                <h1 className="text-base font-semibold text-zinc-900 tracking-tight">
-                 {authUser?.role === 'super_admin' ? 'Administração Fluxoo' : (escola?.nome_fantasia || escola?.razao_social || 'Minha Escola')}
+                 {authUser?.role === 'super_admin' ? 'Administração Fluxoo' : ((escola as any)?.nome_fantasia || escola?.razao_social || 'Minha Escola')}
                </h1>
              )}
           </div>

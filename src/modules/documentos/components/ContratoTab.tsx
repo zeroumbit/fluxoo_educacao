@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Loader2, Save, FileText, Eye, EyeOff, LayoutPanelLeft, Download, Printer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { useTenantSettings } from '@/modules/escolas/hooks/useTenantSettings'
 import DOMPurify from 'dompurify'
 
 const CONTRATO_PADRAO = `
@@ -102,30 +103,21 @@ const CONTRATO_PADRAO = `
 
 export function ContratoTab() {
   const { authUser } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [contrato, setContrato] = useState(CONTRATO_PADRAO)
+  const { config, updateConfig, isLoading } = useTenantSettings()
+  const [contrato, setContrato] = useState('')
   const [previewMode, setPreviewMode] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    async function loadConfig() {
-      if (!authUser?.tenantId) return
+    if (!isLoading && config && !hasInitialized) {
+      const modelo = config.config_financeira?.contrato_modelo || CONTRATO_PADRAO
       
-      try {
-        setLoading(true)
+      async function processInitialTemplate(text: string) {
+        // Busca dados da escola para processar o contrato inicial se estiver vazio
+        const { data: school } = await supabase.from('escolas').select('*').eq('id', authUser?.tenantId as string).maybeSingle()
         
-        // Busca dados da escola para processar o contrato
-        const { data: school } = await supabase.from('escolas').select('*').eq('id', authUser.tenantId).maybeSingle()
-        
-        const { data, error } = await supabase
-          .from('config_financeira' as any)
-          .select('contrato_modelo')
-          .eq('tenant_id', authUser.tenantId)
-          .maybeSingle() as any
+        let textoFinal = text
 
-        let textoFinal = data?.contrato_modelo || CONTRATO_PADRAO
-
-        // Substituição automática para usuários leigos verem os dados reais já no editor
         const replacements: Record<string, string> = {
             '{{escola_nome}}': school?.razao_social || '',
             '{{escola_cnpj}}': school?.cnpj || '',
@@ -139,37 +131,28 @@ export function ContratoTab() {
         })
 
         setContrato(textoFinal)
-      } catch (err) {
-        console.error('Erro ao carregar contrato:', err)
-      } finally {
-        setLoading(false)
+        setHasInitialized(true)
       }
-    }
 
-    loadConfig()
-  }, [authUser?.tenantId])
+      processInitialTemplate(modelo)
+    }
+  }, [config, isLoading, hasInitialized, authUser?.tenantId])
 
   const handleSave = async () => {
-    if (!authUser?.tenantId) return
-    
-    setSaving(true)
     try {
-      const { error } = await supabase
-        .from('config_financeira' as any)
-        .update({ contrato_modelo: contrato } as any)
-        .eq('tenant_id', authUser.tenantId)
-
-      if (error) throw error
-      toast.success('Contrato atualizado com sucesso!')
+      updateConfig({
+        config_financeira: {
+          ...config.config_financeira,
+          contrato_modelo: contrato
+        }
+      })
     } catch (err) {
       console.error('Erro ao salvar contrato:', err)
       toast.error('Erro ao salvar contrato.')
-    } finally {
-      setSaving(false)
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-[40vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -195,10 +178,9 @@ export function ContratoTab() {
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={saving}
             className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100/50 rounded-xl h-11 font-bold"
           >
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            <Save className="mr-2 h-4 w-4" />
             Salvar Contrato
           </Button>
         </div>

@@ -335,28 +335,31 @@ export const portalService = {
   },
 
   async buscarConfigPixEscola(tenantId: string) {
-    // Busca a config de PIX e regras financeiras da escola
-    const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .select('*')
+    // Busca a config via Motor de Configurações Tenant (Unificado)
+    const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('config_financeira')
       .eq('tenant_id', tenantId)
+      .is('vigencia_fim', null)
       .maybeSingle()
     
     if (error) throw error
-    if (!data) return null
+    if (!data?.config_financeira) return null
+    
+    const config = data.config_financeira
     
     return {
-      pix_manual_ativo: data.pix_habilitado,
-      chave_pix: data.chave_pix || data.pix_chave,
-      favorecido: data.nome_favorecido || data.pix_favorecido,
-      qr_code_url: data.pix_qr_code_url,
-      instrucoes_extras: data.instrucoes_responsavel || data.instrucoes_pagamento,
-      qr_code_auto: data.qr_code_auto,
-      dias_carencia: data.dias_carencia || 0,
+      pix_manual_ativo: config.pix_manual,
+      chave_pix: config.chave_pix,
+      favorecido: config.nome_favorecido,
+      qr_code_url: null, // Campo legado ou via API externa
+      instrucoes_extras: config.instrucoes_pix,
+      qr_code_auto: config.pix_auto,
+      dias_carencia: config.dias_carencia || 0,
       // Regras de Multa e Juros dinâmicas
-      multa_atraso_percentual: data.multa_atraso_percentual || 2,
-      multa_atraso_valor_fixo: data.multa_atraso_valor_fixo || 0,
-      juros_mora_mensal: data.juros_mora_mensal || 1,
-      desconto_pontualidade: data.desconto_pontualidade || 0
+      multa_atraso_percentual: config.multa_atraso_perc || 2,
+      multa_atraso_valor_fixo: config.multa_fixa || 0,
+      juros_mora_mensal: config.juros_mora_mensal_perc || 1,
+      desconto_pontualidade: 0 // Campo legado
     }
   },
 

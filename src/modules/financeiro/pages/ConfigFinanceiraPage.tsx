@@ -23,12 +23,13 @@ export function ConfigFinanceiraPage() {
     dia_vencimento_padrao: 10, dias_carencia: 5,
     multa_atraso_percentual: 2, multa_atraso_valor_fixo: 0,
     juros_mora_mensal: 1, desconto_irmaos: 0, desconto_pontualidade: 0,
-    pix_habilitado: false, chave_pix: '', 
+    pix_habilitado: false, chave_pix: '',
     nome_favorecido: '',
     instrucoes_responsavel: '',
     qr_code_auto: false,
     dinheiro_cartao_presencial: true,
     pix_qr_code_url: '',
+    qtd_mensalidades_automaticas: 12,
     id: undefined as string | undefined,
   })
 
@@ -49,6 +50,7 @@ export function ConfigFinanceiraPage() {
         qr_code_auto: config.qr_code_auto || false,
         dinheiro_cartao_presencial: config.dinheiro_cartao_presencial ?? true,
         pix_qr_code_url: config.pix_qr_code_url || '',
+        qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas ?? 12,
         id: config.id,
       })
     }
@@ -139,6 +141,14 @@ export function ConfigFinanceiraPage() {
               <div className="relative">
                 <Input type="number" min="1" max="28" value={form.dia_vencimento_padrao} onChange={(e) => setForm({ ...form, dia_vencimento_padrao: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
               </div>
+              <p className="text-[9px] text-slate-400 ml-1">Dia fixo para todas as mensalidades</p>
+            </div>
+            <div className="space-y-2.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Qtd. Mensalidades</Label>
+              <div className="relative">
+                <Input type="number" min="1" max="24" value={form.qtd_mensalidades_automaticas} onChange={(e) => setForm({ ...form, qtd_mensalidades_automaticas: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
+              </div>
+              <p className="text-[9px] text-slate-400 ml-1">Gerar na matrícula (padrão: 12)</p>
             </div>
             <div className="space-y-2.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Dias de Carência</Label>
@@ -148,13 +158,9 @@ export function ConfigFinanceiraPage() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Multa Atraso (%)</Label>
               <Input type="number" step="0.01" value={form.multa_atraso_percentual} onChange={(e) => setForm({ ...form, multa_atraso_percentual: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
             </div>
-            <div className="space-y-2.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Multa Fixa (R$)</Label>
-              <Input type="number" step="0.01" value={form.multa_atraso_valor_fixo} onChange={(e) => setForm({ ...form, multa_atraso_valor_fixo: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
-            </div>
           </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
             <div className="space-y-2.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Juros de Mora (%/mês)</Label>
               <Input type="number" step="0.01" value={form.juros_mora_mensal} onChange={(e) => setForm({ ...form, juros_mora_mensal: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
@@ -166,6 +172,10 @@ export function ConfigFinanceiraPage() {
             <div className="space-y-2.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Desc. Pontualidade (%)</Label>
               <Input type="number" step="0.01" value={form.desconto_pontualidade} onChange={(e) => setForm({ ...form, desconto_pontualidade: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
+            </div>
+            <div className="space-y-2.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Multa Fixa (R$)</Label>
+              <Input type="number" step="0.01" value={form.multa_atraso_valor_fixo} onChange={(e) => setForm({ ...form, multa_atraso_valor_fixo: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
             </div>
           </div>
         </CardContent>

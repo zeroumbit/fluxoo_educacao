@@ -1,23 +1,62 @@
 import { supabase } from '@/lib/supabase'
 
 export const financeiroAvancadoService = {
-  // CONFIG FINANCEIRA
+  // CONFIG FINANCEIRA (Motor de Configurações Unificado)
   async getConfig(tenantId: string) {
-    const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .select('*').eq('tenant_id', tenantId).maybeSingle()
+    const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('config_financeira')
+      .eq('tenant_id', tenantId)
+      .is('vigencia_fim', null)
+      .maybeSingle()
+    
     if (error) throw error
-    return data
+    // Mapeia o JSONB para o formato que os componentes esperam (compatibilidade)
+    return data?.config_financeira ? { 
+      ...data.config_financeira,
+      tenant_id: tenantId,
+      pix_habilitado: data.config_financeira.pix_manual, // mapeamento legado
+      pix_chave: data.config_financeira.chave_pix        // mapeamento legado
+    } : null
   },
+
   async upsertConfig(config: any) {
-    const { data, error } = await (supabase.from('config_financeira' as any) as any)
-      .upsert(
-        { ...config, updated_at: new Date().toISOString() },
-        { onConflict: 'tenant_id' }
-      )
-      .select()
-      .single()
-    if (error) throw error
-    return data
+    // Busca a config atual para preservar campos não enviados no payload 'any'
+    const { data: current } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('*')
+      .eq('tenant_id', config.tenant_id)
+      .is('vigencia_fim', null)
+      .maybeSingle()
+
+    const payload = {
+      config_financeira: {
+        ...(current?.config_financeira || {}),
+        ...config,
+        // Garante mapeamento reverso se vier do formato antigo
+        pix_manual: config.pix_habilitado !== undefined ? config.pix_habilitado : config.pix_manual,
+        chave_pix: config.pix_chave || config.chave_pix
+      }
+    }
+
+    if (current?.id) {
+      const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+        .update(payload)
+        .eq('id', current.id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } else {
+      const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+        .insert({
+          tenant_id: config.tenant_id,
+          contexto: 'escola',
+          ...payload
+        })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
   },
 
   // CONTAS A PAGAR

@@ -8,13 +8,14 @@ export const financeiroService = {
    * Isso garante que a listagem e os filtros reflitam a realidade sem depender de cron jobs.
    */
   async repararStatusAtrasados(tenantId: string) {
-    // 0. Busca configuração de carência
-    const { data: config } = await (supabase.from('config_financeira' as any) as any)
-      .select('dias_carencia')
+    // 0. Busca configuração de carência via Motor de Configurações Tenant
+    const { data: config } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('config_financeira')
       .eq('tenant_id', tenantId)
+      .is('vigencia_fim', null)
       .maybeSingle()
 
-    const carencia = config?.dias_carencia || 0
+    const carencia = config?.config_financeira?.dias_carencia || 0
     const hoje = new Date()
     
     // Data limite: vencimento < (hoje - carencia) => atrasado
@@ -181,8 +182,17 @@ export const financeiroService = {
 
     const sufixo = unidade ? ` - ${unidade}` : ''
 
+    // Buscamos a configuração via Motor de Configurações Tenant para verificar se deve cobrar matrícula
+    const { data: config } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('config_financeira')
+      .eq('tenant_id', tenant_id)
+      .is('vigencia_fim', null)
+      .maybeSingle()
+
+    const deveCobrarMatricula = config?.config_financeira?.cobrar_matricula !== false // Default true se não existir
+
     // 1. Gerar Cobrança da MATRÍCULA (Taxa Única)
-    if (valor_matricula && Number(valor_matricula) > 0) {
+    if (deveCobrarMatricula && valor_matricula && Number(valor_matricula) > 0) {
       const descricaoMatricula = `Matrícula - ${unidade || 'Taxa de Matrícula'}`
       console.log('[gerarCobrancasIniciaisGenerico] Criando cobrança de matrícula:', {
         descricao: descricaoMatricula,
@@ -207,13 +217,7 @@ export const financeiroService = {
 
     // 2. Gerar PRIMEIRA MENSALIDADE Proporcional
     if (valor_mensalidade && Number(valor_mensalidade) > 0) {
-      // Buscamos a configuração para saber o dia de vencimento
-      const { data: config } = await (supabase.from('config_financeira' as any) as any)
-        .select('dia_vencimento_padrao')
-        .eq('tenant_id', tenant_id)
-        .maybeSingle()
-
-      const diaVencimento = config?.dia_vencimento_padrao || 10
+      const diaVencimento = config?.config_financeira?.dia_vencimento_padrao || 10
       const dataInicioObj = new Date(data_inicio + 'T12:00:00')
       
       const ultimoDiaMes = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + 1, 0).getDate()
@@ -243,13 +247,9 @@ export const financeiroService = {
         }
       }
 
-      // 2.2 Buscar desconto de irmãos (Regra de Negócio)
-      const { data: configFin } = await (supabase.from('config_financeira' as any) as any)
-        .select('desconto_irmaos')
-        .eq('tenant_id', tenant_id)
-        .maybeSingle()
-
-      if (configFin?.desconto_irmaos > 0) {
+      // 2.2 Buscar desconto de irmãos (Regra de Negócio via Motor de Configurações Tenant)
+      const descontoIrmaosPerc = config?.config_financeira?.desconto_irmaos_perc || 0
+      if (descontoIrmaosPerc > 0) {
         // Busca responsáveis deste aluno
         const { data: meusResponsaveis } = await (supabase.from('aluno_responsavel' as any) as any)
           .select('responsavel_id')
@@ -266,34 +266,65 @@ export const financeiroService = {
 
           if (irmaos && irmaos.length > 0) {
             // Aplicar desconto de irmão configurado na escola (cumulativo com individual)
-            valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (configFin.desconto_irmaos / 100))
+            valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (descontoIrmaosPerc / 100))
           }
         }
       }
 
       const valorProporcional = (valorMensalidadeComDesconto / ultimoDiaMes) * diasRestantes
-
-      // Data de vencimento - 30 dias após a data de início (matrícula)
-      // Regra: primeira mensalidade vence 30 dias após a matrícula
-      let dataVencimento = new Date(dataInicioObj)
-      dataVencimento.setDate(dataVencimento.getDate() + 30)
-
       const valorFormatado = Number(valorProporcional.toFixed(2))
-      
-      // Só cria se o valor for realmente maior que zero
+
+      // ============================================================
+      // NOVA REGRA: Gerar todas as mensalidades automáticas
+      // ============================================================
+      // Busca quantidade de mensalidades para gerar (padrão: 12)
+      const qtdMensalidades = config?.config_financeira?.qtd_mensalidades_automaticas || 12
+      const diaVencimentoPadrao = config?.config_financeira?.dia_vencimento_padrao || 10
+
+      // 1. Gerar PRIMEIRA mensalidade proporcional (dias restantes do mês)
+      // Vence no dia padrão do mês seguinte
+      const dataVencimentoProporcional = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + 1, diaVencimentoPadrao)
+
       if (valorFormatado > 0) {
         await this.criar({
           tenant_id,
           aluno_id,
           descricao: `1ª Mensalidade Proporcional (${diasRestantes} dias)${sufixo}`,
           valor: valorFormatado,
-          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          data_vencimento: dataVencimentoProporcional.toISOString().split('T')[0],
           status: 'a_vencer',
           tipo_cobranca: 'mensalidade',
           turma_id: params.turma_id || null,
           ano_letivo: params.ano_letivo || null
         })
       }
+
+      // 2. Gerar mensalidades CHEIAS restantes (uma por mês)
+      // Começa do mês seguinte ao da matrícula, até completar qtdMensalidades - 1
+      for (let i = 1; i < qtdMensalidades; i++) {
+        const dataVencimentoMensalidade = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + i, diaVencimentoPadrao)
+        
+        // Ajusta para o próximo mês se o dia de vencimento for maior que o último dia do mês
+        const ultimoDiaDoMesVencimento = new Date(dataVencimentoMensalidade.getFullYear(), dataVencimentoMensalidade.getMonth() + 1, 0).getDate()
+        if (diaVencimentoPadrao > ultimoDiaDoMesVencimento) {
+          dataVencimentoMensalidade.setDate(ultimoDiaDoMesVencimento)
+        }
+
+        const mesReferencia = dataVencimentoMensalidade.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+
+        await this.criar({
+          tenant_id,
+          aluno_id,
+          descricao: `Mensalidade ${mesReferencia.charAt(0).toUpperCase() + mesReferencia.slice(1)}${sufixo}`,
+          valor: valorMensalidadeComDesconto,
+          data_vencimento: dataVencimentoMensalidade.toISOString().split('T')[0],
+          status: 'a_vencer',
+          tipo_cobranca: 'mensalidade',
+          turma_id: params.turma_id || null,
+          ano_letivo: params.ano_letivo || null
+        })
+      }
+      // ============================================================
     }
   },
 
