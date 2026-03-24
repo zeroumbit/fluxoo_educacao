@@ -670,14 +670,23 @@ export const portalService = {
   },
 
   async getNotificationCounts(responsavelId: string) {
-    // 1. Get student IDs
+    // 1. Busca vínculos ativos para obter IDs de alunos e turmas
     const vinculos = await portalService.buscarVinculosAtivos(responsavelId)
     const alunoIds = vinculos.map(v => v.aluno_id)
     const tenantIds = [...new Set(vinculos.map(v => v.aluno.tenant_id))]
 
     if (alunoIds.length === 0) return { total: 0, items: [] }
 
-    const [cobrancasRes, avisosRes] = await Promise.all([
+    // 2. Busca IDs de turmas para atividades e provas
+    const { data: matriculas } = await supabase.from('matriculas')
+      .select('turma_id')
+      .in('aluno_id', alunoIds)
+      .eq('status', 'ativa')
+
+    const turmaIds = [...new Set((matriculas || []).map(m => m.turma_id).filter(Boolean))]
+
+    // 3. Busca contagens em paralelo
+    const [cobrancasRes, avisosRes, atividadesRes, boletinsRes] = await Promise.all([
       (supabase.from('cobrancas' as any) as any)
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
@@ -686,29 +695,64 @@ export const portalService = {
         .select('id', { count: 'exact', head: true })
         .in('tenant_id', tenantIds)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
-        .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()),
+      turmaIds.length > 0 ? (supabase.from('atividades_turmas' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('turma_id', turmaIds)
+        .gte('created_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString())
+        : { count: 0 },
+      (supabase.from('boletins' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('aluno_id', alunoIds)
+        .gte('updated_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString())
     ])
 
     const notifications = []
+    
+    // Financeiro
     if (cobrancasRes.count && cobrancasRes.count > 0) {
       notifications.push({ 
         id: 'cobrancas', 
-        label: `${cobrancasRes.count} Nova cobranças`, 
-        href: '/portal/cobrancas',
-        category: 'PORTAL'
-      })
-    }
-    if (avisosRes.count && avisosRes.count > 0) {
-      notifications.push({ 
-        id: 'avisos', 
-        label: `${avisosRes.count} Novos avisos`, 
-        href: '/portal/avisos',
-        category: 'PORTAL'
+        label: `${cobrancasRes.count} ${cobrancasRes.count === 1 ? 'Nova cobrança' : 'Novas cobranças'}`, 
+        href: '/portal/financeiro',
+        category: 'FINANCEIRO'
       })
     }
 
+    // Mural
+    if (avisosRes.count && avisosRes.count > 0) {
+      notifications.push({ 
+        id: 'avisos', 
+        label: `${avisosRes.count} ${avisosRes.count === 1 ? 'Novo aviso' : 'Novos avisos'} no mural`, 
+        href: '/portal/avisos',
+        category: 'COMUNICADOS'
+      })
+    }
+
+    // Atividades
+    if (atividadesRes.count && atividadesRes.count > 0) {
+      notifications.push({ 
+        id: 'atividades', 
+        label: `${atividadesRes.count} ${atividadesRes.count === 1 ? 'Nova atividade' : 'Novas atividades'} postadas`, 
+        href: '/portal/agenda',
+        category: 'ACADÊMICO'
+      })
+    }
+
+    // Notas / Boletim
+    if (boletinsRes.count && boletinsRes.count > 0) {
+      notifications.push({ 
+        id: 'boletins', 
+        label: `${boletinsRes.count} ${boletinsRes.count === 1 ? 'Nota atualizada' : 'Notas atualizadas'} no boletim`, 
+        href: '/portal/boletim',
+        category: 'ACADÊMICO'
+      })
+    }
+
+    const total = (cobrancasRes.count || 0) + (avisosRes.count || 0) + (atividadesRes.count || 0) + (boletinsRes.count || 0)
+
     return {
-      total: (cobrancasRes.count || 0) + (avisosRes.count || 0),
+      total,
       items: notifications
     }
   },

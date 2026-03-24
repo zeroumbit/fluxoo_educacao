@@ -8,15 +8,46 @@ export const financeiroAvancadoService = {
       .eq('tenant_id', tenantId)
       .is('vigencia_fim', null)
       .maybeSingle()
-    
+
     if (error) throw error
+    
+    // Se não existir configuração, retorna null (será criada quando salvar)
+    if (!data?.config_financeira) return null
+    
+    const config = data.config_financeira
+    
     // Mapeia o JSONB para o formato que os componentes esperam (compatibilidade)
-    return data?.config_financeira ? { 
-      ...data.config_financeira,
+    // Formato esperado pela ConfigFinanceiraPage e outros componentes legados
+    return {
+      id: data.id,
       tenant_id: tenantId,
-      pix_habilitado: data.config_financeira.pix_manual, // mapeamento legado
-      pix_chave: data.config_financeira.chave_pix        // mapeamento legado
-    } : null
+      // Campos diretos do JSONB com valores padrão
+      dia_vencimento_padrao: config.dia_vencimento_padrao || 10,
+      dias_carencia: config.dias_carencia || 5,
+      multa_atraso_percentual: config.multa_atraso_perc || 2,
+      multa_atraso_valor_fixo: config.multa_fixa || 0,
+      juros_mora_mensal: config.juros_mora_mensal_perc || 1,
+      desconto_irmaos: config.desconto_irmaos_perc || 0,
+      desconto_pontualidade: config.desconto_pontualidade || 0,
+      // Mapeamento: pix_manual -> pix_habilitado (compatibilidade com legado)
+      pix_habilitado: config.pix_manual || false,
+      chave_pix: config.chave_pix || '',
+      nome_favorecido: config.nome_favorecido || '',
+      // Mapeamento: instrucoes_pix -> instrucoes_responsavel (compatibilidade)
+      instrucoes_responsavel: config.instrucoes_pix || '',
+      // Mapeamento: pix_auto -> qr_code_auto (compatibilidade)
+      qr_code_auto: config.pix_auto || false,
+      // Mapeamento: presencial -> dinheiro_cartao_presencial (compatibilidade)
+      dinheiro_cartao_presencial: config.presencial ?? true,
+      pix_qr_code_url: '',
+      qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas || 12,
+      // Campos adicionais para compatibilidade total
+      pix_chave: config.chave_pix || '', // legado
+      pix_manual: config.pix_manual, // para compatibilidade com outros serviços
+      cobrar_matricula: config.cobrar_matricula ?? true,
+      valor_matricula_padrao: config.valor_matricula_padrao || 0,
+      contrato_modelo: config.contrato_modelo || '',
+    }
   },
 
   async upsertConfig(config: any) {
@@ -27,13 +58,33 @@ export const financeiroAvancadoService = {
       .is('vigencia_fim', null)
       .maybeSingle()
 
+    // Mapeamento reverso: do formato legado/Componente para o formato JSONB interno
     const payload = {
       config_financeira: {
         ...(current?.config_financeira || {}),
-        ...config,
-        // Garante mapeamento reverso se vier do formato antigo
-        pix_manual: config.pix_habilitado !== undefined ? config.pix_habilitado : config.pix_manual,
-        chave_pix: config.pix_chave || config.chave_pix
+        // Campos diretos (mesmo nome)
+        dia_vencimento_padrao: config.dia_vencimento_padrao ?? current?.config_financeira?.dia_vencimento_padrao ?? 10,
+        dias_carencia: config.dias_carencia ?? current?.config_financeira?.dias_carencia ?? 5,
+        multa_atraso_perc: config.multa_atraso_percentual ?? current?.config_financeira?.multa_atraso_perc ?? 2,
+        multa_fixa: config.multa_atraso_valor_fixo ?? current?.config_financeira?.multa_fixa ?? 0,
+        juros_mora_mensal_perc: config.juros_mora_mensal ?? current?.config_financeira?.juros_mora_mensal_perc ?? 1,
+        desconto_irmaos_perc: config.desconto_irmaos ?? current?.config_financeira?.desconto_irmaos_perc ?? 0,
+        desconto_pontualidade: config.desconto_pontualidade ?? current?.config_financeira?.desconto_pontualidade ?? 0,
+        // Mapeamento reverso: pix_habilitado -> pix_manual
+        pix_manual: config.pix_habilitado !== undefined ? config.pix_habilitado : (current?.config_financeira?.pix_manual ?? false),
+        chave_pix: config.chave_pix ?? current?.config_financeira?.chave_pix ?? '',
+        nome_favorecido: config.nome_favorecido ?? current?.config_financeira?.nome_favorecido ?? '',
+        // Mapeamento reverso: instrucoes_responsavel -> instrucoes_pix
+        instrucoes_pix: config.instrucoes_responsavel ?? current?.config_financeira?.instrucoes_pix ?? '',
+        // Mapeamento reverso: qr_code_auto -> pix_auto
+        pix_auto: config.qr_code_auto !== undefined ? config.qr_code_auto : (current?.config_financeira?.pix_auto ?? false),
+        // Mapeamento reverso: dinheiro_cartao_presencial -> presencial
+        presencial: config.dinheiro_cartao_presencial !== undefined ? config.dinheiro_cartao_presencial : (current?.config_financeira?.presencial ?? true),
+        // Campos adicionais
+        qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas ?? current?.config_financeira?.qtd_mensalidades_automaticas ?? 12,
+        cobrar_matricula: config.cobrar_matricula !== undefined ? config.cobrar_matricula : (current?.config_financeira?.cobrar_matricula ?? true),
+        valor_matricula_padrao: config.valor_matricula_padrao ?? current?.config_financeira?.valor_matricula_padrao ?? 0,
+        contrato_modelo: config.contrato_modelo ?? current?.config_financeira?.contrato_modelo ?? '',
       }
     }
 
