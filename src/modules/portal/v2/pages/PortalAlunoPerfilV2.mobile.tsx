@@ -9,7 +9,7 @@ import { GradeCurricularV2 } from '../components/GradeCurricularV2';
 import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
 import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
 import { PortalPlanosAulaPage } from '../../pages/PortalPlanosAulaPage';
-import { PortalAtividadesPage } from '../../pages/PortalAtividadesPage';
+import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
 import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
 import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
@@ -194,7 +194,7 @@ export function PortalAlunoPerfilV2Mobile() {
               {activeModule === 'boletim' && <PortalBoletimPage hideHeader />}
               {activeModule === 'frequencia' && <PortalFrequenciaPage hideHeader />}
               {activeModule === 'planos' && <PortalPlanosAulaPage hideHeader />}
-              {activeModule === 'atividades' && <PortalAtividadesPage hideHeader />}
+              {activeModule === 'atividades' && <PortalAtividadesV2 />}
               {activeModule === 'material' && <PortalLivrosPage hideHeader />}
               {activeModule === 'agenda' && <PortalAgendaPage hideHeader />}
               {activeModule === 'autorizacoes' && <PortalAutorizacoesPage hideHeader />}

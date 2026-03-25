@@ -4,10 +4,25 @@ import { LayoutList, Clock, ChevronRight, X, Info, FileText, AlertCircle, Extern
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAtividadesPortal } from '../../hooks';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 
 export function PortalAtividadesV2() {
   const { data: atividades, isLoading } = useAtividadesPortal();
   const [selectedAtv, setSelectedAtv] = useState<any | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (isLoading) {
     return (
@@ -103,8 +118,92 @@ export function PortalAtividadesV2() {
         })}
       </div>
 
+      {/* MODAL VERSÃO WEB - DASHBOARD CENTRADO */}
       <AnimatePresence>
-        {selectedAtv && (
+        {selectedAtv && !isMobile && (
+          <Dialog open={!!selectedAtv} onOpenChange={(open) => !open && setSelectedAtv(null)}>
+            <DialogContent className="sm:max-w-[700px] border-none shadow-2xl rounded-[40px] p-0 overflow-hidden bg-white">
+              <div className="flex h-full max-h-[85vh]">
+                {/* Lateral Banner */}
+                <div className="w-1/3 bg-orange-500 p-10 flex flex-col justify-between text-white hidden md:flex">
+                   <div className="space-y-6">
+                      <div className="w-16 h-16 rounded-[24px] bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/20">
+                         <FileText className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-2xl font-black leading-tight uppercase tracking-tighter italic">Detalhes<br/>do Material</h3>
+                   </div>
+                   <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Fluxoo Edu V2</div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 p-10 overflow-y-auto">
+                   <DialogHeader className="mb-8">
+                      <div className="flex items-center gap-2 mb-3">
+                         <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                            {selectedAtv.tipo || 'ATIVIDADE'}
+                         </span>
+                         {selectedAtv.disciplina && (
+                           <span className="text-indigo-600 font-bold text-xs uppercase tracking-widest leading-none bg-indigo-50 px-2 py-1 rounded-md">
+                              {selectedAtv.disciplina}
+                           </span>
+                         )}
+                      </div>
+                      <DialogTitle className="text-3xl font-black text-slate-800 tracking-tight leading-tight mb-2">
+                         {selectedAtv.titulo}
+                      </DialogTitle>
+                      <DialogDescription className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em]">
+                         <Clock size={14} className="text-orange-400" /> 
+                         PUBLICADO EM {format(parseISO(selectedAtv.created_at || new Date().toISOString()), "dd 'DE' MMMM", { locale: ptBR })}
+                      </DialogDescription>
+                   </DialogHeader>
+
+                   <div className="space-y-8">
+                      <div className="space-y-3">
+                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Info size={14} className="text-orange-500" /> Descrição
+                         </h4>
+                         <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 text-slate-600 font-medium leading-relaxed italic whitespace-pre-line text-sm">
+                            {selectedAtv.descricao || 'Nenhuma instrução adicional informada.'}
+                         </div>
+                      </div>
+
+                      {selectedAtv.anexo_url && (
+                        <div className="space-y-3">
+                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Acesso Rápido</h4>
+                           <a 
+                             href={selectedAtv.anexo_url}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="flex items-center justify-between w-full bg-slate-900 hover:bg-zinc-800 text-white p-5 rounded-[28px] transition-all group"
+                           >
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                                   <ExternalLink className="w-5 h-5 text-orange-400" />
+                                </div>
+                                <span className="font-black text-sm uppercase tracking-tighter">Acessar Link ou Anexo</span>
+                              </div>
+                              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                           </a>
+                        </div>
+                      )}
+                      
+                      <button 
+                        onClick={() => setSelectedAtv(null)}
+                        className="w-full py-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] hover:text-slate-600 transition-colors"
+                      >
+                        [ Fechar Detalhes ]
+                      </button>
+                   </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL VERSÃO MOBILE - (DRAWER APP NATIVO) */}
+      <AnimatePresence>
+        {selectedAtv && isMobile && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -118,92 +217,85 @@ export function PortalAtividadesV2() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white rounded-t-[64px] shadow-2xl z-50 overflow-hidden"
+              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-white rounded-t-[50px] shadow-2xl z-50 overflow-hidden flex flex-col"
             >
-              <div className="h-full flex flex-col md:flex-row">
-                 {/* Sidebar Decorativa */}
-                 <div className="w-full md:w-1/3 bg-orange-500 p-12 flex flex-col justify-between text-white relative overflow-hidden">
-                    <motion.div 
-                       initial={{ opacity: 0, scale: 0.5 }}
-                       animate={{ opacity: 0.1, scale: 1.5 }}
-                       className="absolute -bottom-20 -right-20 w-80 h-80 bg-white rounded-full" 
-                    />
-                    
-                    <div>
-                       <div className="w-16 h-16 rounded-[24px] bg-white/20 backdrop-blur-xl flex items-center justify-center mb-10 border border-white/30">
-                          <FileText className="w-8 h-8" />
-                       </div>
-                       <h3 className="text-3xl font-black tracking-tight leading-tight mb-4">
+              {/* Mobile Header Handle */}
+              <div className="w-full flex justify-center pt-3 pb-1">
+                 <div className="w-12 h-1.5 bg-slate-100 rounded-full" />
+              </div>
+
+              <div className="p-8 flex-1 overflow-y-auto">
+                 <div className="flex justify-between items-start mb-8">
+                    <div className="flex flex-col gap-2">
+                       <span className="bg-orange-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest self-start">
+                          {selectedAtv.tipo || 'ATIVIDADE'}
+                       </span>
+                       <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-[1.1] pr-4">
                           {selectedAtv.titulo}
                        </h3>
-                       <span className="px-4 py-2 bg-white/20 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/20 inline-block">
-                          {selectedAtv.tipo || 'MATERIAL ESCOLAR'}
-                       </span>
                     </div>
+                    <button 
+                      onClick={() => setSelectedAtv(null)}
+                      className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                 </div>
 
-                    <div className="bg-white/10 backdrop-blur-xl rounded-[32px] p-6 border border-white/20">
-                       <div className="flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
-                          <Clock className="w-5 h-5 text-orange-200" />
-                          <div>
-                             <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Postado em</p>
-                             <p className="text-lg font-black">{format(parseISO(selectedAtv.created_at || new Date().toISOString()), "dd 'de' MMMM", { locale: ptBR })}</p>
-                          </div>
-                       </div>
-                       
-                       {selectedAtv.anexo_url && (
-                          <a 
-                            href={selectedAtv.anexo_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-4 p-4 bg-white/20 hover:bg-white/30 transition-colors rounded-[24px] border border-white/10"
-                          >
-                             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                <ExternalLink className="w-5 h-5 text-white" />
-                             </div>
-                             <div>
-                                <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Conteúdo</p>
-                                <p className="text-sm font-black truncate max-w-[150px]">Abrir Anexo / Link</p>
-                             </div>
-                          </a>
-                       )}
+                 <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-orange-500">
+                       <Clock className="w-6 h-6" />
+                    </div>
+                    <div className="flex flex-col">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Publicado em</p>
+                       <p className="text-base font-black text-slate-800">
+                          {format(parseISO(selectedAtv.created_at || new Date().toISOString()), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                       </p>
                     </div>
                  </div>
 
-                 {/* Content Area */}
-                 <div className="flex-1 p-12 md:p-20 overflow-y-auto">
-                    <div className="flex justify-end mb-12">
-                       <button 
-                         onClick={() => setSelectedAtv(null)}
-                         className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors"
-                       >
-                         <X className="w-8 h-8" />
-                       </button>
-                    </div>
-
-                    <div className="max-w-2xl">
-                       <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
-                          <Info className="w-4 h-4 text-orange-500" /> Detalhes do Conteúdo
-                       </h5>
-                       <div className="bg-slate-50/50 border border-slate-100 p-10 rounded-[48px] mb-12">
-                          <p className="text-lg font-semibold text-slate-600 leading-relaxed italic">
-                             {selectedAtv.descricao ? (
-                               <div dangerouslySetInnerHTML={{ __html: selectedAtv.descricao.replace(/\n/g, '<br/>') }} />
-                             ) : 'Nenhuma instrução adicional fornecida.'}
-                          </p>
-                       </div>
-
-                       <div className="bg-amber-50 rounded-[32px] p-8 border border-amber-100 flex gap-6 items-start">
-                          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                             <AlertCircle className="w-6 h-6 text-amber-600" />
-                          </div>
-                          <div>
-                             <h6 className="text-sm font-black text-amber-900 uppercase tracking-tight mb-1">Atenção</h6>
-                             <p className="text-sm font-medium text-amber-800 leading-relaxed">
-                                Verifique se o material requer impressão ou leitura prévia para as próximas aulas conforme orientado pelo professor.
-                             </p>
-                          </div>
+                 <div className="space-y-6">
+                    <div className="space-y-2">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">
+                          <Info size={14} className="text-orange-500" /> Descrição Completa
+                       </p>
+                       <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-[32px] text-slate-600 font-bold italic leading-relaxed text-sm whitespace-pre-line">
+                          {selectedAtv.descricao || 'Nenhuma instrução adicional fornecida.'}
                        </div>
                     </div>
+
+                    {selectedAtv.disciplina && (
+                      <div className="flex items-center justify-between p-6 bg-indigo-50/50 rounded-[32px] border border-indigo-100/50">
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white">
+                               <LayoutList className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-black uppercase tracking-widest text-indigo-700">Disciplina</span>
+                         </div>
+                         <span className="text-sm font-black text-indigo-600">{selectedAtv.disciplina}</span>
+                      </div>
+                    )}
+
+                    {selectedAtv.anexo_url && (
+                      <motion.a 
+                        whileTap={{ scale: 0.98 }}
+                        href={selectedAtv.anexo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between bg-zinc-900 text-white p-6 rounded-[32px] shadow-xl shadow-zinc-900/10"
+                      >
+                         <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                               <ExternalLink className="w-6 h-6 text-orange-400" />
+                            </div>
+                            <div className="flex flex-col">
+                               <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1.5">Material de Apoio</span>
+                               <span className="text-lg font-black leading-none">Abrir Anexo / Link</span>
+                            </div>
+                         </div>
+                         <ChevronRight className="w-6 h-6 text-zinc-600" />
+                      </motion.a>
+                    )}
                  </div>
               </div>
             </motion.div>
