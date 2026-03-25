@@ -19,10 +19,13 @@ import {
   Mail,
   DollarSign,
   Calendar,
+  Shield,
+  Clock,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { OnboardingGuide } from '../components/OnboardingGuide'
+import { cn } from '@/lib/utils'
 import type { AvisoRecente, RadarAluno } from '../dashboard.service'
 import { useState, useEffect } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
@@ -434,6 +437,39 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
   )
 }
 
+function StatusAprovacaoNotification({ status, metodo }: { status: string, metodo: string }) {
+  if (status === 'ativa') return null
+  
+  const isPix = metodo === 'pix_manual' || metodo === 'pix'
+
+  return (
+    <div className={cn(
+      "rounded-[2rem] p-6 text-white shadow-xl mb-8 relative overflow-hidden group border-0 transition-all",
+      isPix ? "bg-indigo-600 shadow-indigo-100 font-bold" : "bg-zinc-900 shadow-zinc-100 font-bold"
+    )}>
+      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform font-bold">
+        <Shield className="h-24 w-24 text-white" />
+      </div>
+      <div className="relative z-10 flex items-center gap-6 font-bold">
+        <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 font-bold">
+          {isPix ? <Clock className="h-7 w-7 text-white" /> : <CreditCard className="h-7 w-7 text-white" />}
+        </div>
+        <div>
+          <h3 className="text-xl font-black tracking-tight mb-1">
+            {isPix ? 'Cadastro em Processamento' : 'Plano Pendente'}
+          </h3>
+          <p className="text-white/80 text-sm font-medium max-w-2xl leading-relaxed">
+            {isPix 
+              ? 'Recebemos seu comprovante e estamos revisando os dados para liberar seu acesso total. Isso levará pouco tempo.'
+              : 'Seu plano ainda não foi ativado. Conclua o pagamento via Mercado Pago para liberar todas as funcionalidades.'
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Componente Principal: DashboardPageWeb
 // ---------------------------------------------------------------------------
@@ -559,17 +595,8 @@ export function DashboardPageWeb() {
     }
   ]
 
-  // Se for funcionário e precisar de onboarding
-  if (userRole === 'funcionario' && onboardingStatus?.needsOnboarding) {
-    return (
-      <OnboardingGuide status={{
-        perfilCompleto: !!onboardingStatus?.perfilCompleto,
-        possuiFilial: !!onboardingStatus?.possuiFilial,
-        possuiTurma: !!onboardingStatus?.possuiTurma,
-        possuiAluno: !!onboardingStatus?.possuiAluno
-      }} />
-    )
-  }
+  const statusAssinatura = dashboardData?.statusAssinatura || 'pendente'
+  const metodoPagamento = dashboardData?.metodoPagamento || 'mercado_pago'
 
   return (
     <div className="space-y-8 pb-12">
@@ -579,17 +606,20 @@ export function DashboardPageWeb() {
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-1">Visão Geral da Instituição</p>
           <h1 className="text-4xl font-black text-zinc-900 tracking-tighter">Dashboard</h1>
         </div>
-        <div className="flex items-center gap-4">
-           <div className="text-right hidden md:block">
-              <p className="text-sm font-bold text-zinc-900">Minha Escola</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Escola Parceira</p>
-           </div>
+        <div className="flex items-center gap-4 text-right">
+             <div className="hidden md:block">
+               <p className="text-sm font-bold text-zinc-900">Minha Escola</p>
+               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Escola Parceira</p>
+             </div>
 
-           <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden">
-              <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
-           </div>
+             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden text-right">
+               <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
+             </div>
         </div>
       </div>
+
+      {/* Alerta de Aprovação */}
+      <StatusAprovacaoNotification status={statusAssinatura} metodo={metodoPagamento} />
 
       {/* Notificação de Alunos Sem Matrícula */}
       {(dashboardData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (
@@ -597,6 +627,16 @@ export function DashboardPageWeb() {
           count={dashboardData?.alunosSemMatricula ?? 0}
           onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
         />
+      )}
+
+      {/* Guia de Onboarding (se necessário) */}
+      {(userRole === 'gestor' || userRole === 'funcionario') && onboardingStatus?.needsOnboarding && (
+        <OnboardingGuide status={{
+          perfilCompleto: !!onboardingStatus?.perfilCompleto,
+          possuiFilial: !!onboardingStatus?.possuiFilial,
+          possuiTurma: !!onboardingStatus?.possuiTurma,
+          possuiAluno: !!onboardingStatus?.possuiAluno
+        }} />
       )}
 
       {/* Grid de Métricas */}

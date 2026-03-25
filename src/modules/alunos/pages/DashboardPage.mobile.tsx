@@ -18,6 +18,8 @@ import {
   Mail,
   DollarSign,
   X,
+  Shield,
+  Clock,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -34,6 +36,7 @@ import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
+import { cn } from '@/lib/utils'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const CACHE_KEY = 'dashboard_cache'
@@ -255,6 +258,39 @@ function RadarEvasaoBottomSheetMobile({ aluno, isOpen, onClose }: RadarEvasaoBot
   )
 }
 
+function StatusAprovacaoNotificationMobile({ status, metodo }: { status: string, metodo: string }) {
+  if (status === 'ativa') return null
+  
+  const isPix = metodo === 'pix_manual' || metodo === 'pix'
+
+  return (
+    <div className={cn(
+      "rounded-3xl p-5 text-white shadow-lg mx-4 mt-2 mb-2 relative overflow-hidden group border-0 transition-all",
+      isPix ? "bg-indigo-600 shadow-indigo-100 font-bold" : "bg-zinc-900 shadow-zinc-100 font-bold"
+    )}>
+      <div className="absolute top-0 right-0 p-4 opacity-10 font-bold">
+        <Shield className="h-16 w-16 text-white" />
+      </div>
+      <div className="relative z-10 flex items-center gap-4 font-bold">
+        <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 font-bold">
+          {isPix ? <Clock className="h-6 w-6 text-white" /> : <CreditCard className="h-6 w-6 text-white" />}
+        </div>
+        <div className="flex-1">
+          <h3 className="text-base font-black tracking-tight mb-0.5">
+            {isPix ? 'Cadastro em Processamento' : 'Plano Pendente'}
+          </h3>
+          <p className="text-white/80 text-[10px] font-medium leading-tight">
+            {isPix 
+              ? 'Recebemos seu comprovante e estamos revisando os dados.'
+              : 'Conclua o pagamento via MP para liberar o acesso.'
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function DashboardPageMobile() {
   const navigate = useNavigate()
   const { data: dashboardData, isLoading, refetch } = useDashboard()
@@ -312,6 +348,9 @@ export function DashboardPageMobile() {
     { label: 'Financeiro', icon: CreditCard, path: '/financeiro', color: 'bg-rose-500' },
   ]
 
+  const statusAssinatura = displayData?.statusAssinatura || 'pendente'
+  const metodoPagamento = displayData?.metodoPagamento || 'mercado_pago'
+
   // Skeleton Loading (Rule 5: No spinners)
   if (isActuallyLoading) {
     return (
@@ -339,20 +378,6 @@ export function DashboardPageMobile() {
     )
   }
 
-  // Se for funcionário e precisar de onboarding
-  if (userRole === 'funcionario' && onboardingStatus?.needsOnboarding) {
-    return (
-      <div className="min-h-screen bg-slate-50/50 px-4 pt-6">
-        <OnboardingGuide status={{
-          perfilCompleto: !!onboardingStatus?.perfilCompleto,
-          possuiFilial: !!onboardingStatus?.possuiFilial,
-          possuiTurma: !!onboardingStatus?.possuiTurma,
-          possuiAluno: !!onboardingStatus?.possuiAluno
-        }} />
-      </div>
-    )
-  }
-
   const recebimentos = displayData?.totalReceber || 0
   const pagamentos = displayData?.totalPagar || 0
   const saldo = recebimentos - pagamentos
@@ -360,9 +385,24 @@ export function DashboardPageMobile() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
-      <div className="mx-auto w-full max-w-[640px] px-4">
+      <div className="mx-auto w-full max-w-[640px]">
         <PullToRefresh onRefresh={onRefresh}>
           <div className="space-y-7 pt-6">
+
+            {/* Alerta de Aprovação */}
+            <StatusAprovacaoNotificationMobile status={statusAssinatura} metodo={metodoPagamento} />
+
+            {/* Guia de Onboarding (se necessário) */}
+            {(userRole === 'gestor' || userRole === 'funcionario') && onboardingStatus?.needsOnboarding && (
+              <div className="px-4">
+                <OnboardingGuide status={{
+                  perfilCompleto: !!onboardingStatus?.perfilCompleto,
+                  possuiFilial: !!onboardingStatus?.possuiFilial,
+                  possuiTurma: !!onboardingStatus?.possuiTurma,
+                  possuiAluno: !!onboardingStatus?.possuiAluno
+                }} />
+              </div>
+            )}
 
 
             {/* ── Saudação ── */}
