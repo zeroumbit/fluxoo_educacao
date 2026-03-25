@@ -447,9 +447,53 @@ export const portalService = {
   },
 
   // ==========================================
-  // BOLETIM
+  // BOLETIM (V2 com fallback legado)
   // ==========================================
   async buscarBoletins(alunoId: string, tenantId: string) {
+    // 1. Tenta a view V2 (novo modelo relacional)
+    try {
+      const { data: v2Data, error: v2Error } = await (supabase.from('vw_boletim_completo' as any) as any)
+        .select('*')
+        .eq('aluno_id', alunoId)
+        .eq('tenant_id', tenantId)
+        .order('bimestre', { ascending: true })
+
+      if (!v2Error && v2Data && v2Data.length > 0) {
+        // Agrupa por bimestre para manter compatibilidade com a UI do portal
+        const anoAtual = new Date().getFullYear()
+        const porBimestre: Record<number, any> = {}
+        ;(v2Data as any[]).forEach((row: any) => {
+          const bim = row.bimestre
+          if (!porBimestre[bim]) {
+            porBimestre[bim] = {
+              id: `v2-${alunoId}-${bim}`,
+              aluno_id: alunoId,
+              tenant_id: tenantId,
+              bimestre: bim,
+              ano_letivo: anoAtual,
+              disciplinas: [],
+              _v2: true,
+            }
+          }
+          porBimestre[bim].disciplinas.push({
+            disciplina: row.nome_disciplina,
+            disciplina_id: row.disciplina_id,
+            nota: row.media_final ?? 0,
+            media_parcial: row.media_parcial,
+            nota_recuperacao: row.nota_recuperacao,
+            faltas: row.total_faltas ?? 0,
+            total_aulas: row.total_aulas_bimestre ?? 0,
+            resultado: row.resultado,
+            observacoes: null,
+          })
+        })
+        return Object.values(porBimestre).sort((a: any, b: any) => a.bimestre - b.bimestre)
+      }
+    } catch {
+      // Silencia erros (view pode não existir em ambientes antigos)
+    }
+
+    // 2. Fallback: modelo legado JSONB
     const { data, error } = await (supabase.from('boletins' as any) as any)
       .select('*')
       .eq('aluno_id', alunoId)

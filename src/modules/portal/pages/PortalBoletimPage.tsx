@@ -30,8 +30,20 @@ const BoletimSkeleton = () => (
 )
 
 const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
-  const isAprovado = disciplina.nota >= 7
-  const isRecuperacao = disciplina.nota >= 5 && disciplina.nota < 7
+  const disc = disciplina as any
+  // V2: usa resultado; legado: usa nota para calcular
+  const resultado = disc.resultado as string | undefined
+  const notaFinal = disc.nota ?? disc.media_final ?? 0
+  
+  const isAprovado = resultado === 'aprovado' || resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 7)
+  const isRecuperacao = resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 5 && notaFinal < 7)
+  const isReprovado = resultado?.startsWith('reprovado') || (!resultado && notaFinal < 5)
+
+  const badgeResultado = resultado === 'aprovado' ? 'Aprovado' :
+    resultado === 'aprovado_recuperacao' ? 'Rec.' :
+    resultado === 'reprovado_nota' ? 'Reprovado' :
+    resultado === 'reprovado_falta' ? 'Falta' :
+    resultado === 'cursando' ? 'Em curso' : null
 
   return (
     <div className="bg-white p-4 rounded-xl border border-slate-100 flex items-center justify-between group shadow-sm active:scale-[0.98] transition-transform">
@@ -45,13 +57,26 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
           <Award size={16} />
         </div>
         <div className="min-w-0">
-          <h4 className="text-sm font-bold text-slate-800 leading-tight truncate">{disciplina.disciplina}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-bold text-slate-800 leading-tight truncate">{disciplina.disciplina}</h4>
+            {badgeResultado && (
+              <span className={cn(
+                'text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0',
+                isAprovado && !isRecuperacao ? 'bg-emerald-100 text-emerald-600' :
+                isRecuperacao ? 'bg-amber-100 text-amber-600' :
+                'bg-red-100 text-red-600'
+              )}>
+                {badgeResultado}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3 mt-0.5">
             <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
-              <Activity size={10} /> {disciplina.faltas} faltas
+              <Activity size={10} /> {disc.faltas ?? disciplina.faltas} faltas
+              {disc.total_aulas ? ` / ${disc.total_aulas}` : ''}
             </span>
-            {disciplina.observacoes && (
-              <span className="text-[9px] font-semibold text-teal-600 uppercase">Obs</span>
+            {disc.nota_recuperacao != null && (
+              <span className="text-[9px] font-semibold text-amber-600">Rec: {disc.nota_recuperacao}</span>
             )}
           </div>
         </div>
@@ -61,9 +86,9 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
           "text-xl font-bold leading-none",
           isAprovado ? 'text-emerald-500' : isRecuperacao ? 'text-amber-500' : 'text-red-500'
         )}>
-          {disciplina.nota.toFixed(1)}
+          {notaFinal.toFixed ? notaFinal.toFixed(1) : notaFinal}
         </div>
-        <p className="text-[9px] font-medium text-slate-300 uppercase tracking-wider mt-0.5">nota</p>
+        <p className="text-[9px] font-medium text-slate-300 uppercase tracking-wider mt-0.5">média</p>
       </div>
     </div>
   )

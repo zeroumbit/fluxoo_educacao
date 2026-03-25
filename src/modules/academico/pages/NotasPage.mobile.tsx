@@ -1,45 +1,39 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
-  GraduationCap,
-  Search,
-  Filter,
-  Save,
-  ChevronRight,
   BookOpen,
-  AlertCircle,
+  Filter,
   CheckCircle2,
   User,
-  MoreVertical,
-  Edit3,
   ArrowLeft,
-  LayoutGrid,
-  Loader2,
-  Copy
+  Search,
+  ChevronRight,
+  Lock,
+  Plus
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
-import { useDisciplinas } from '@/modules/livros/hooks'
-import { useBoletinsPorTurma, useUpsertNota } from '../hooks'
+import {
+  useAvaliacoesByTurmaDisciplina,
+  useNotasPorAvaliacao,
+  useSalvarNotasEmLote,
+  useStatusFechamento,
+  useDisciplinasPorTurma,
+} from '../hooks/hooks.v2'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { get, set } from 'idb-keyval'
 
 // Componentes Mobile conforme MOBILE_FIRST_RULES.md
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
-const CACHE_KEY_NOTAS = 'mobile_notas_cache'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export function NotasPageMobile() {
   const navigate = useNavigate()
@@ -47,363 +41,351 @@ export function NotasPageMobile() {
   
   // Filtros
   const [turmaId, setTurmaId] = useState<string>('')
-  const [disciplinaNome, setDisciplinaNome] = useState<string>('')
+  const [disciplinaId, setDisciplinaId] = useState<string>('')
   const [bimestre, setBimestre] = useState<string>('1')
-  const [anoLetivo] = useState<number>(new Date().getFullYear())
+  const [avaliacaoId, setAvaliacaoId] = useState<string>('')
+  const [search, setSearch] = useState('')
   
   // UI States
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isBulkOpen, setIsBulkOpen] = useState(false)
   const [selectedAluno, setSelectedAluno] = useState<any>(null)
-  const [search, setSearch] = useState('')
-  const [selecionados, setSelecionados] = useState<string[]>([])
-  const [globalNota, setGlobalNota] = useState<string>('')
-  const [globalFaltas, setGlobalFaltas] = useState<string>('')
-  const [globalObs, setGlobalObs] = useState<string>('')
-  const [isSavingAll, setIsSavingAll] = useState(false)
-  const [alunoId, setAlunoId] = useState<string>('all')
   
-  // Hooks de Dados
-  const { data: turmas, isLoading: isLoadingTurmas } = useTurmas()
-  const { data: disciplinas, isLoading: isLoadingDisciplinas } = useDisciplinas()
-  const { data: boletins, isLoading: isLoadingBoletins, refetch } = useBoletinsPorTurma(
-    turmaId, 
-    anoLetivo, 
-    Number(bimestre)
-  )
-  const { mutateAsync: upsertNota, isPending: isSaving } = useUpsertNota()
+  // Hooks V2
+  const { data: turmas } = useTurmas()
+  const { data: disciplinas, isLoading: isLoadingDisciplinas } = useDisciplinasPorTurma(turmaId)
+  const { data: avaliacoes } = useAvaliacoesByTurmaDisciplina(turmaId, disciplinaId, Number(bimestre))
+  const { data: notasExistentes, refetch: refetchNotas } = useNotasPorAvaliacao(avaliacaoId)
+  const { data: fechamento } = useStatusFechamento(turmaId, Number(bimestre))
+  const { mutateAsync: salvarLote, isPending: isSaving } = useSalvarNotasEmLote()
 
-  // Estado Local
-  const [notasLocais, setNotasLocais] = useState<Record<string, { nota: string, faltas: string, observacoes: string }>>({})
-  const [cached, setCached] = useState<any[]>([])
+  // Estado Local de Notas
+  const [notasLocais, setNotasLocais] = useState<Record<string, { nota: string; ausente: boolean }>>({})
+  const isBimestreFechado = (fechamento as any)?.status === 'fechado' || (fechamento as any)?.status === 'conselho'
 
   useEffect(() => {
-    get(CACHE_KEY_NOTAS).then(v => { if (v) setCached(v) })
-  }, [])
-
-  useEffect(() => {
-    if (boletins && disciplinaNome) {
-      const novasNotas: Record<string, { nota: string, faltas: string, observacoes: string }> = {}
-      boletins.forEach((bol: any) => {
-        const disc = bol.disciplinas?.find((d: any) => d.disciplina === disciplinaNome)
-        if (disc) {
-          novasNotas[bol.aluno_id] = {
-            nota: disc.nota.toString(),
-            faltas: disc.faltas.toString(),
-            observacoes: disc.observacoes || ''
-          }
+    if (notasExistentes) {
+      const mapa: Record<string, { nota: string; ausente: boolean }> = {}
+      notasExistentes.forEach(n => {
+        mapa[n.aluno_id] = {
+          nota: n.nota?.toString() || '',
+          ausente: n.ausente
         }
       })
-      setNotasLocais(novasNotas)
-      set(CACHE_KEY_NOTAS, boletins)
+      setNotasLocais(mapa)
+    } else {
+      setNotasLocais({})
     }
-  }, [boletins, disciplinaNome])
+  }, [notasExistentes])
 
-  const { data: todosAlunos, isLoading: isLoadingAlunos } = useQuery({
+  // Alunos da Turma
+  const { data: todosAlunos } = useQuery({
     queryKey: ['alunos_turma_mobile', turmaId],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async () => {
       if (!turmaId) return []
-      const { data: turmaInfo } = await supabase.from('turmas').select('nome, tenant_id').eq('id', turmaId).single()
-      if (!turmaInfo) return []
-      const { data: matriculas } = await supabase.from('matriculas').select('aluno_id, serie_ano, turma_id').eq('tenant_id', turmaInfo.tenant_id!)
-      if (!matriculas) return []
-      const matriculasFiltradas = matriculas.filter(m => {
-        if (m.turma_id === turmaId) return true
-        const nomeTurmaNorm = (turmaInfo.nome || '').toLowerCase().trim().replace('º', '').replace('°', '')
-        const serieNorm = (m.serie_ano || '').toLowerCase().trim().replace('º', '').replace('°', '')
-        return nomeTurmaNorm === serieNorm || (m.serie_ano === turmaInfo.nome)
-      })
-      if (matriculasFiltradas.length === 0) return []
-      const ids = matriculasFiltradas.map(m => m.aluno_id)
-      const { data: alunosData } = await supabase.from('alunos').select('id, nome_completo').in('id', ids)
-      return alunosData || []
+      const { data: tInfo } = await supabase.from('turmas').select('nome, tenant_id').eq('id', turmaId).single()
+      const { data: mat } = await supabase.from('matriculas').select('aluno_id, serie_ano, turma_id').eq('tenant_id', tInfo!.tenant_id!)
+      const filtrados = (mat || []).filter(m => m.turma_id === turmaId || (m.serie_ano === tInfo!.nome))
+      const ids = filtrados.map(m => m.aluno_id)
+      const { data: al } = await supabase.from('alunos').select('id, nome_completo').in('id', ids).order('nome_completo')
+      return al || []
     },
     enabled: !!turmaId
   })
 
-  const handleSaveNota = async (activeId: string, dados: { nota: string, faltas: string, observacoes: string }) => {
-    if (!turmaId || !disciplinaNome) {
-      toast.error('Escolha Turma e Disciplina primeiro')
-      return
-    }
+  const handleSaveNota = async (id: string, nota: string, ausente: boolean) => {
+    if (isBimestreFechado) return
+    const novasNotas = { ...notasLocais, [id]: { nota, ausente } }
+    setNotasLocais(novasNotas)
+    
+    // Auto-save opcional ou botão global? Vamos usar botão global para performance em mobile
+  }
 
+  const handleSaveBatch = async () => {
+    if (!avaliacaoId || isBimestreFechado) return
     try {
-      await upsertNota({
-        boletimBase: {
-          tenant_id: authUser?.tenantId,
-          aluno_id: activeId,
-          turma_id: turmaId,
-          ano_letivo: anoLetivo,
-          bimestre: Number(bimestre)
-        },
-        disciplina: disciplinaNome,
-        nota: parseFloat(dados.nota.replace(',', '.')),
-        faltas: parseInt(dados.faltas),
-        observacoes: dados.observacoes
-      })
-      toast.success('Nota salva!', { position: 'top-center' })
-      refetch()
+      const payload = Object.entries(notasLocais).map(([aluno_id, d]) => ({
+        aluno_id,
+        nota: d.ausente ? null : parseFloat(d.nota.replace(',', '.')),
+        ausente: d.ausente
+      }))
+      await salvarLote({ tenantId: authUser!.tenantId, avaliacaoId, notas: payload })
+      toast.success('Notas salvas!')
+      refetchNotas()
       setIsEditOpen(false)
-    } catch (error: any) {
-      toast.error('Erro ao salvar: ' + error.message, { position: 'top-center' })
-    }
-  }
-
-  const aplicarMassa = () => {
-    if (selecionados.length === 0) return
-    setNotasLocais(prev => {
-      const novo = { ...prev }
-      selecionados.forEach(id => {
-        novo[id] = {
-          nota: globalNota || (novo[id]?.nota || ''),
-          faltas: globalFaltas || (novo[id]?.faltas || '0'),
-          observacoes: globalObs || (novo[id]?.observacoes || '')
-        }
-      })
-      return novo
-    })
-    toast.success(`Aplicado a ${selecionados.length} alunos`, { position: 'top-center' })
-    setIsBulkOpen(false)
-    setGlobalNota('')
-    setGlobalFaltas('')
-    setGlobalObs('')
-  }
-
-  const filteredAlunos = (todosAlunos || []).filter(a => {
-    const matchesSearch = a.nome_completo.toLowerCase().includes(search.toLowerCase())
-    const matchesSelected = alunoId === 'all' || a.id === alunoId
-    return matchesSearch && matchesSelected
-  })
-
-  async function salvarTodasNotas() {
-    if (!turmaId || !disciplinaNome) return
-    setIsSavingAll(true)
-    try {
-      for (const [id, dados] of Object.entries(notasLocais)) {
-        if (!dados.nota) continue
-        await upsertNota({
-          boletimBase: {
-            tenant_id: authUser?.tenantId,
-            aluno_id: id,
-            turma_id: turmaId,
-            ano_letivo: anoLetivo,
-            bimestre: Number(bimestre)
-          },
-          disciplina: disciplinaNome,
-          nota: parseFloat(dados.nota.replace(',', '.')),
-          faltas: parseInt(dados.faltas),
-          observacoes: dados.observacoes
-        })
-      }
-      toast.success('Todas as notas salvas devidamente!')
-      refetch()
     } catch (e: any) {
-      toast.error('Erro ao salvar lote')
-    } finally {
-      setIsSavingAll(false)
+      toast.error('Erro: ' + e.message)
     }
   }
 
-  if (!turmaId || !disciplinaNome) {
+  const filteredAlunos = (todosAlunos || []).filter(a => a.nome_completo.toLowerCase().includes(search.toLowerCase()))
+
+  // View de Seleção de Filtros (Empty State)
+  if (!turmaId || !disciplinaId) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-32">
-        <div className="mx-auto w-full max-w-[640px] px-4 pt-16 text-center">
-            <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
-                <BookOpen className="h-10 w-10 text-slate-300" />
-            </div>
-            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Diário Mobile</h3>
-            <p className="text-slate-500 text-sm mb-8 px-6">Selecione os filtros básicos para começar a lançar as notas.</p>
-            <Button onClick={() => setIsFilterOpen(true)} className="w-full h-15 rounded-2xl bg-indigo-600 font-bold">Configurar Filtros</Button>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 pt-20 text-center">
+        <div className="h-24 w-24 bg-indigo-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+          <BookOpen className="h-12 w-12 text-indigo-500" />
         </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Diário de classe</h2>
+        <p className="text-slate-500 mb-10">Selecione os filtros para começar o lançamento das notas.</p>
+        <Button onClick={() => setIsFilterOpen(true)} className="w-full h-16 rounded-2xl bg-indigo-600 font-black text-lg shadow-xl shadow-indigo-100">
+          Configurar Filtros
+        </Button>
         
         <FilterSheet 
-            isOpen={isFilterOpen} 
-            onClose={() => setIsFilterOpen(false)}
-            turmas={turmas} disciplinas={disciplinas} todosAlunos={todosAlunos}
-            turmaId={turmaId} setTurmaId={setTurmaId}
-            alunoId={alunoId} setAlunoId={setAlunoId}
-            disciplinaNome={disciplinaNome} setDisciplinaNome={setDisciplinaNome}
-            bimestre={bimestre} setBimestre={setBimestre}
-            anoLetivo={anoLetivo} isLoadingAlunos={isLoadingAlunos}
+          isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}
+          turmas={turmas} disciplinas={disciplinas}
+          turmaId={turmaId} setTurmaId={setTurmaId}
+          disciplinaId={disciplinaId} setDisciplinaId={setDisciplinaId}
+          bimestre={bimestre} setBimestre={setBimestre}
+          isLoadingDisc={isLoadingDisciplinas}
         />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-32">
-      <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-100 dark:border-slate-800">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-40">
+      {/* Header Fixo */}
+      <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-100 dark:border-slate-800 px-4 pt-4 pb-4">
         <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl bg-slate-100 dark:bg-slate-800" onClick={() => navigate('/dashboard')}><ArrowLeft className="h-5 w-5"/></Button>
-                <div>
-                    <h1 className="font-black text-base leading-none">{turmas?.find(t => t.id === turmaId)?.nome}</h1>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{disciplinaNome} • {bimestre}º Bim</p>
-                </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/dashboard')} className="p-2 bg-slate-100 rounded-xl"><ArrowLeft size={20}/></button>
+            <div className="min-w-0">
+              <h1 className="font-black text-sm truncate">{turmas?.find(t => t.id === turmaId)?.nome}</h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{bimestre}º Bimestre</p>
             </div>
-            <Button onClick={() => setIsFilterOpen(true)} className="h-10 w-10 p-0 rounded-xl bg-indigo-600"><Filter className="h-4 w-4"/></Button>
+          </div>
+          <Button onClick={() => setIsFilterOpen(true)} size="sm" variant="ghost" className="rounded-xl border border-slate-200">
+            <Filter size={16} className="text-indigo-600 mr-2" /> Filtros
+          </Button>
         </div>
-        <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input placeholder="Buscar por nome..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-0" />
+
+        {/* Seletor de Avaliação (Horizontal Scroll) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {avaliacoes?.length === 0 ? (
+            <div className="text-[10px] font-bold text-amber-500 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100 flex items-center gap-2">
+              <Lock size={12}/> Nenhuma avaliação criada para este bimestre.
+            </div>
+          ) : (
+            avaliacoes?.map(av => (
+              <button
+                key={av.id}
+                onClick={() => setAvaliacaoId(av.id)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all border",
+                  avaliacaoId === av.id 
+                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" 
+                    : "bg-white border-slate-100 text-slate-500"
+                )}
+              >
+                {av.titulo} ({av.peso}x)
+              </button>
+            ))
+          )}
         </div>
       </div>
 
-      <div className="px-4 pt-6 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-            <NativeCard className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl items-center justify-center flex"><User className="text-indigo-600 h-5 w-5"/></div>
-                <div><p className="text-[9px] font-black text-slate-400 uppercase">Alunos</p><p className="font-black text-lg">{filteredAlunos.length}</p></div>
-            </NativeCard>
-            <NativeCard className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl items-center justify-center flex"><CheckCircle2 className="text-emerald-600 h-5 w-5"/></div>
-                <div><p className="text-[9px] font-black text-slate-400 uppercase">Salvas</p><p className="font-black text-lg">{Object.keys(notasLocais).length}</p></div>
-            </NativeCard>
-        </div>
-
-        <div className="flex gap-3">
-            <Button className="flex-1 h-14 rounded-2xl bg-indigo-600 font-black shadow-lg" onClick={salvarTodasNotas} disabled={isSavingAll}>{isSavingAll ? 'Salvando...' : 'Salvar Todas'}</Button>
-            <Button variant="outline" className="h-14 w-14 rounded-2xl border-2" onClick={() => setIsBulkOpen(true)}><Copy/></Button>
-        </div>
-
-        <PullToRefresh onRefresh={async () => { await refetch() }}>
-            <div className="space-y-3 pb-20">
-                {filteredAlunos.map(aluno => (
-                    <NativeCard key={aluno.id} onClick={() => { setSelectedAluno(aluno); setIsEditOpen(true); }} className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-400 shadow-inner">
-                                {notasLocais[aluno.id]?.nota || aluno.nome_completo.charAt(0)}
-                            </div>
-                            <div className="min-w-0">
-                                <p className="font-black text-[15px] truncate">{aluno.nome_completo}</p>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{notasLocais[aluno.id]?.faltas || 0} faltas</p>
-                            </div>
-                        </div>
-                        <Edit3 className="text-slate-300 h-5 w-5"/>
-                    </NativeCard>
-                ))}
+      {/* Main Content */}
+      <div className="p-4 space-y-4">
+        {isBimestreFechado && (
+          <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-3 mb-2">
+            <Lock className="text-red-500" size={20} />
+            <div>
+              <p className="text-xs font-black text-red-600 leading-none">Bimestre Fechado</p>
+              <p className="text-[10px] text-red-400 mt-1">Lançamento bloqueado por segurança.</p>
             </div>
+          </div>
+        )}
+
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
+          <Input 
+            placeholder="Buscar aluno..." 
+            value={search} 
+            onChange={e => setSearch(e.target.value)}
+            className="h-14 pl-11 rounded-2xl bg-white border-slate-100 shadow-sm"
+          />
+        </div>
+
+        <PullToRefresh onRefresh={async () => refetchNotas()}>
+          <div className="space-y-3">
+            {filteredAlunos.map(aluno => (
+              <NativeCard 
+                key={aluno.id} 
+                onClick={() => { if (!isBimestreFechado && avaliacaoId) { setSelectedAluno(aluno); setIsEditOpen(true); } }}
+                className={cn(
+                  "p-4 flex items-center justify-between transition-opacity",
+                  !avaliacaoId && "opacity-50"
+                )}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={cn(
+                    "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner",
+                    notasLocais[aluno.id]?.ausente ? "bg-red-50 text-red-400" : "bg-slate-50 text-slate-400"
+                  )}>
+                    {notasLocais[aluno.id]?.ausente ? 'F' : (notasLocais[aluno.id]?.nota || aluno.nome_completo.charAt(0))}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-black text-sm truncate">{aluno.nome_completo}</p>
+                    {notasLocais[aluno.id]?.nota ? (
+                      <Badge variant="outline" className="mt-1 h-5 text-[9px] border-emerald-100 text-emerald-600 bg-emerald-50">Lançada</Badge>
+                    ) : (
+                      <Badge variant="outline" className="mt-1 h-5 text-[9px] border-slate-100 text-slate-300">Pendente</Badge>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-slate-300" />
+              </NativeCard>
+            ))}
+          </div>
         </PullToRefresh>
       </div>
 
-      <BulkApplySheet 
-        isOpen={isBulkOpen} onClose={() => setIsBulkOpen(false)} selecionados={selecionados.length > 0 ? selecionados : filteredAlunos.map(a => a.id)}
-        globalNota={globalNota} setGlobalNota={setGlobalNota}
-        globalFaltas={globalFaltas} setGlobalFaltas={setGlobalFaltas}
-        globalObs={globalObs} setGlobalObs={setGlobalObs} onAplicar={aplicarMassa}
-      />
+      {/* Footer Fixo: Botão Salvar */}
+      {avaliacaoId && !isBimestreFechado && (
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white dark:from-slate-900 to-transparent z-40">
+          <Button 
+            onClick={handleSaveBatch} 
+            disabled={isSaving}
+            className="w-full h-16 rounded-2xl bg-emerald-600 font-black text-lg shadow-xl shadow-emerald-100"
+          >
+            {isSaving ? 'Gravando no Banco...' : 'Finalizar Lançamento'}
+          </Button>
+        </div>
+      )}
 
+      {/* Sheets */}
       <FilterSheet 
         isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}
-        turmas={turmas} disciplinas={disciplinas} todosAlunos={todosAlunos}
+        turmas={turmas} disciplinas={disciplinas}
         turmaId={turmaId} setTurmaId={setTurmaId}
-        alunoId={alunoId} setAlunoId={setAlunoId}
-        disciplinaNome={disciplinaNome} setDisciplinaNome={setDisciplinaNome}
+        disciplinaId={disciplinaId} setDisciplinaId={setDisciplinaId}
         bimestre={bimestre} setBimestre={setBimestre}
-        anoLetivo={anoLetivo} isLoadingAlunos={isLoadingAlunos}
+        isLoadingDisc={isLoadingDisciplinas}
       />
 
       <EditSheet 
         isOpen={isEditOpen} onClose={() => setIsEditOpen(false)}
-        aluno={selectedAluno} notaInicial={selectedAluno ? notasLocais[selectedAluno.id] : null}
-        onSave={handleSaveNota} isSaving={isSaving}
+        aluno={selectedAluno}
+        valorInicial={selectedAluno ? notasLocais[selectedAluno.id] : null}
+        onSave={(nota, ausente) => handleSaveNota(selectedAluno.id, nota, ausente)}
       />
     </div>
   )
 }
 
-function BulkApplySheet({ isOpen, onClose, selecionados, globalNota, setGlobalNota, globalFaltas, setGlobalFaltas, globalObs, setGlobalObs, onAplicar }: any) {
-    return (
-        <BottomSheet isOpen={isOpen} onClose={onClose} title="Lançar em Lote" size="half">
-            <div className="p-4 space-y-6">
-                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100"><p className="font-black text-indigo-600">Alunos: {selecionados.length}</p></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label>Nota</Label><Input value={globalNota} onChange={e => setGlobalNota(e.target.value)} className="h-14 rounded-xl"/></div>
-                    <div className="space-y-1"><Label>Faltas</Label><Input value={globalFaltas} onChange={e => setGlobalFaltas(e.target.value)} className="h-14 rounded-xl"/></div>
-                </div>
-                <Button className="w-full h-14 rounded-2xl bg-indigo-600 font-black" onClick={onAplicar}>Aplicar em Lote</Button>
+// --------------------------------------------------------------------------
+// Sheets Secundários
+// --------------------------------------------------------------------------
+
+function FilterSheet({ isOpen, onClose, turmas, disciplinas, turmaId, setTurmaId, disciplinaId, setDisciplinaId, bimestre, setBimestre, isLoadingDisc }: any) {
+  const [tab, setTab] = useState<'turma'|'disciplina'|'tempo'>('turma')
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Filtros Diário" size="full">
+      <div className="p-4 flex flex-col h-full">
+        <div className="flex border-b border-slate-100 mb-6">
+          {(['turma', 'disciplina', 'tempo'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "flex-1 pb-3 text-[10px] font-black uppercase tracking-tighter transition-all",
+                tab === t ? "text-indigo-600 border-b-2 border-indigo-600" : "text-slate-300"
+              )}
+            >
+              {t === 'tempo' ? 'Bimestre' : t}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {tab === 'turma' && turmas?.map((t: any) => (
+            <button key={t.id} onClick={() => { setTurmaId(t.id); setDisciplinaId(''); setTab('disciplina') }} className={cn("w-full p-5 rounded-2xl text-left font-black transition-all", turmaId === t.id ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-500 border-2 border-transparent")}>
+              {t.nome}
+            </button>
+          ))}
+
+          {tab === 'disciplina' && (
+            <>
+              {isLoadingDisc ? <div className="p-10 text-center text-slate-400">Carregando atribuições...</div> : 
+               disciplinas?.length === 0 ? <div className="p-10 text-center font-bold text-amber-600 bg-amber-50 rounded-2xl border border-dashed border-amber-200">NÃO EXISTEM DISCIPLINAS VINCULADAS A ESTA TURMA</div> :
+               disciplinas?.map((d: any) => (
+                <button key={d.id} onClick={() => { setDisciplinaId(d.id); setTab('tempo') }} className={cn("w-full p-5 rounded-2xl text-left font-black transition-all", disciplinaId === d.id ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-500 border-2 border-transparent")}>
+                  {d.nome}
+                </button>
+              ))}
+            </>
+          )}
+
+          {tab === 'tempo' && (
+            <div className="grid grid-cols-2 gap-3">
+              {['1','2','3','4'].map(b => (
+                <button key={b} onClick={() => setBimestre(b)} className={cn("h-24 rounded-2xl text-2xl font-black transition-all", bimestre === b ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-300 border-2 border-transparent")}>
+                  {b}º
+                </button>
+              ))}
             </div>
-        </BottomSheet>
-    )
+          )}
+        </div>
+        
+        <Button onClick={onClose} className="mt-6 w-full h-15 rounded-2xl bg-slate-900 font-bold">Confirmar Filtros</Button>
+      </div>
+    </BottomSheet>
+  )
 }
 
-function FilterSheet({ isOpen, onClose, turmas, disciplinas, todosAlunos, turmaId, setTurmaId, alunoId, setAlunoId, disciplinaNome, setDisciplinaNome, bimestre, setBimestre, anoLetivo, isLoadingAlunos }: any) {
-    const [activeTab, setActiveTab] = useState<'turma'|'aluno'|'materia'|'periodo'>('turma')
-    return (
-        <BottomSheet isOpen={isOpen} onClose={onClose} title="Filtros" size="full">
-            <div className="flex flex-col h-full p-4">
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6">
-                    {['turma','aluno','materia','periodo'].map((t: any) => (
-                        <button key={t} onClick={() => setActiveTab(t)} className={cn("flex-1 h-10 rounded-lg text-[10px] font-black uppercase", activeTab === t ? "bg-white text-indigo-600 shadow" : "text-slate-400")}>
-                            {t}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex-1 overflow-y-auto space-y-3">
-                    {activeTab === 'turma' && turmas?.map((t: any) => (
-                        <button key={t.id} onClick={() => { setTurmaId(t.id); setAlunoId('all'); setActiveTab('aluno'); }} className={cn("w-full p-6 h-20 rounded-2xl border-2 text-left font-black text-base", turmaId === t.id ? "border-indigo-600 bg-indigo-50 text-indigo-600" : "border-slate-50")}>
-                            {t.nome}
-                        </button>
-                    ))}
-                    {activeTab === 'aluno' && (
-                        <>
-                            <button onClick={() => { setAlunoId('all'); setActiveTab('materia'); }} className={cn("w-full p-6 h-20 rounded-2xl border-2 text-left font-black text-base", alunoId === 'all' ? "border-indigo-600 bg-indigo-50" : "border-slate-50")}>Todos Alunos</button>
-                            {todosAlunos?.map((a: any) => (
-                                <button key={a.id} onClick={() => { setAlunoId(a.id); setActiveTab('materia'); }} className={cn("w-full p-6 h-20 rounded-2xl border-2 text-left font-black text-base", alunoId === a.id ? "border-indigo-600 bg-indigo-50" : "border-slate-50")}>
-                                    {a.nome_completo}
-                                </button>
-                            ))}
-                        </>
-                    )}
-                    {activeTab === 'materia' && disciplinas?.map((d: any) => (
-                        <button key={d.id} onClick={() => { setDisciplinaNome(d.nome); setActiveTab('periodo'); }} className={cn("w-full p-6 h-20 rounded-2xl border-2 text-left font-black text-base uppercase italic", disciplinaNome === d.nome ? "border-indigo-600 bg-indigo-50" : "border-slate-50")}>
-                            {d.nome}
-                        </button>
-                    ))}
-                    {activeTab === 'periodo' && (
-                        <div className="grid grid-cols-2 gap-3">
-                            {['1','2','3','4'].map(b => (
-                                <button key={b} onClick={() => setBimestre(b)} className={cn("h-32 rounded-3xl border-2 font-black text-4xl", bimestre === b ? "border-indigo-600 bg-indigo-50 text-indigo-600" : "border-slate-50 text-slate-300")}>
-                                    {b}º
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <Button className="w-full h-15 rounded-2xl bg-indigo-600 font-black mt-6" onClick={onClose}>Confirmar Filtros</Button>
+function EditSheet({ isOpen, onClose, aluno, valorInicial, onSave }: any) {
+  const [nota, setNota] = useState('')
+  const [ausente, setAusente] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && valorInicial) {
+      setNota(valorInicial.nota || '')
+      setAusente(valorInicial.ausente || false)
+    }
+  }, [isOpen, valorInicial])
+
+  const handleDone = () => {
+    onSave(nota, ausente)
+    onClose()
+  }
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Lançar Nota" size="half">
+      <div className="p-6 space-y-6">
+        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl">
+          <div className="h-14 w-14 bg-white rounded-xl flex items-center justify-center font-black text-xl shadow-sm">{aluno?.nome_completo.charAt(0)}</div>
+          <p className="font-black text-lg truncate">{aluno?.nome_completo}</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="uppercase text-[10px] font-black text-slate-400">Nota da Avaliação</Label>
+            <Input 
+              type="number" step="0.5"
+              disabled={ausente}
+              value={nota} onChange={e => setNota(e.target.value)}
+              className="h-16 rounded-2xl text-center text-3xl font-black text-indigo-600 bg-indigo-50/30 border-indigo-100"
+              placeholder="0.0"
+            />
+          </div>
+
+          <label className="flex items-center gap-3 p-4 bg-red-50 rounded-2xl border border-red-100 cursor-pointer">
+            <Checkbox checked={ausente} onCheckedChange={(v) => { setAusente(!!v); if(v) setNota(''); }} className="h-6 w-6 rounded-lg border-red-200 data-[state=checked]:bg-red-500" />
+            <div className="min-w-0">
+              <p className="text-sm font-black text-red-600 leading-none">Marcar como Ausente</p>
+              <p className="text-[10px] text-red-400 mt-1 uppercase">O aluno não realizou a atividade</p>
             </div>
-        </BottomSheet>
-    )
-}
+          </label>
+        </div>
 
-function EditSheet({ isOpen, onClose, aluno, notaInicial, onSave, isSaving }: any) {
-    const [nota, setNota] = useState('')
-    const [faltas, setFaltas] = useState('0')
-    const [observacoes, setObservacoes] = useState('')
-
-    useEffect(() => {
-        if (isOpen && notaInicial) {
-            setNota(notaInicial.nota || '')
-            setFaltas(notaInicial.faltas || '0')
-            setObservacoes(notaInicial.observacoes || '')
-        }
-    }, [isOpen, notaInicial])
-
-    return (
-        <BottomSheet isOpen={isOpen} onClose={onClose} title="Diário do Aluno" size="half">
-            <div className="p-4 space-y-6">
-                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                    <div className="h-14 w-14 rounded-xl bg-white flex items-center justify-center font-black text-xl shadow-sm">{aluno?.nome_completo.charAt(0)}</div>
-                    <p className="font-black text-lg truncate">{aluno?.nome_completo}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><Label>Nota</Label><Input value={nota} onChange={e => setNota(e.target.value)} className="h-16 rounded-2xl text-center font-black text-xl text-indigo-600"/></div>
-                    <div className="space-y-1"><Label>Faltas</Label><Input value={faltas} onChange={e => setFaltas(e.target.value)} className="h-16 rounded-2xl text-center font-black text-xl"/></div>
-                </div>
-                <div className="space-y-1"><Label>Obs</Label><Input value={observacoes} onChange={e => setObservacoes(e.target.value)} className="h-16 rounded-2xl"/></div>
-                <Button className="w-full h-15 rounded-2xl bg-indigo-600 font-black shadow-lg" onClick={() => onSave(aluno.id, { nota, faltas, observacoes })} disabled={isSaving}>{isSaving ? 'Salvando...' : 'Salvar Nota'}</Button>
-            </div>
-        </BottomSheet>
-    )
+        <Button onClick={handleDone} className="w-full h-16 rounded-2xl bg-indigo-600 font-black text-lg shadow-xl shadow-indigo-100">
+          Salvar Nota
+        </Button>
+      </div>
+    </BottomSheet>
+  )
 }
