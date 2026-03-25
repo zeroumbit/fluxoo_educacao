@@ -16,21 +16,22 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { 
-  Plus, 
-  Loader2, 
-  Search, 
-  MoreHorizontal, 
-  CheckCircle2, 
-  Trash2, 
-  Undo2, 
+import {
+  Plus,
+  Loader2,
+  Search,
+  MoreHorizontal,
+  CheckCircle2,
+  Trash2,
+  Undo2,
   Calendar,
   Filter,
   ArrowUpCircle,
   ArrowDownCircle,
   AlertCircle,
   Banknote,
-  FileDown
+  FileDown,
+  Eye
 } from 'lucide-react'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 
@@ -64,6 +65,9 @@ export function FinanceiroPageWeb() {
   
   const [undoDialogOpen, setUndoDialogOpen] = useState(false)
   const [cobrancaEstornando, setCobrancaEstornando] = useState<string | null>(null)
+
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+  const [cobrancaVisualizando, setCobrancaVisualizando] = useState<any>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
     resolver: zodResolver(cobrancaSchema),
@@ -115,6 +119,11 @@ export function FinanceiroPageWeb() {
   const handleEstornar = (id: string) => {
     setCobrancaEstornando(id)
     setUndoDialogOpen(true)
+  }
+
+  const handleVisualizar = (cobranca: any) => {
+    setCobrancaVisualizando(cobranca)
+    setDetailsDialogOpen(true)
   }
 
   const handleConfirmarEstorno = async () => {
@@ -496,6 +505,152 @@ export function FinanceiroPageWeb() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Detalhes da Cobrança */}
+        <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                  <Eye className="h-5 w-5 text-indigo-600" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-slate-900">Detalhes da Cobrança</DialogTitle>
+              </div>
+              <DialogDescription className="sr-only">
+                Visualize todos os detalhes desta cobrança
+              </DialogDescription>
+            </DialogHeader>
+
+            {cobrancaVisualizando && (
+              <div className="space-y-6 py-4">
+                {/* Cabeçalho com Aluno e Status */}
+                <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                      <Banknote className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base">{cobrancaVisualizando.alunos?.nome_completo}</h3>
+                      <p className="text-sm text-slate-500 font-medium">{cobrancaVisualizando.alunos?.email_acesso}</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className={cn(
+                    "rounded-md px-3 py-1.5 font-bold border-0 text-xs",
+                    cobrancaVisualizando.status === 'pago' ? "bg-emerald-50 text-emerald-600" :
+                    cobrancaVisualizando.status === 'atrasado' ? "bg-rose-50 text-rose-600" :
+                    "bg-amber-50 text-amber-600"
+                  )}>
+                    {cobrancaVisualizando.status === 'pago' ? 'RECEBIDO' :
+                     cobrancaVisualizando.status === 'atrasado' ? 'ATRASADO' : 'EM ABERTO'}
+                  </Badge>
+                </div>
+
+                {/* Informações Principais */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Descrição</p>
+                    <p className="font-bold text-slate-900 text-sm">{cobrancaVisualizando.descricao}</p>
+                  </div>
+                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Valor</p>
+                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor || 0)}</p>
+                  </div>
+                </div>
+
+                {/* Datas e Tipo */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Calendar className="h-4 w-4" />
+                      <p className="text-[10px] font-bold uppercase tracking-widest">Vencimento</p>
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">{formatDate(cobrancaVisualizando.data_vencimento)}</p>
+                  </div>
+                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tipo de Cobrança</p>
+                    <Badge variant="outline" className={cn(
+                      "w-fit px-2 py-1 text-[10px] font-bold uppercase tracking-wider border-0",
+                      cobrancaVisualizando.tipo_cobranca === 'mensalidade' ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
+                    )}>
+                      {cobrancaVisualizando.tipo_cobranca === 'mensalidade' ? 'Mensalidade' : 'Avulsa'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Criado em</p>
+                    <p className="font-bold text-slate-900 text-sm">{formatDate(cobrancaVisualizando.created_at)}</p>
+                  </div>
+                </div>
+
+                {/* Informações do Aluno */}
+                {cobrancaVisualizando.alunos && (
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-indigo-500" />
+                      Informações do Aluno
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome Completo</p>
+                        <p className="font-medium text-slate-700 text-sm">{cobrancaVisualizando.alunos?.nome_completo}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">CPF</p>
+                        <p className="font-medium text-slate-700 text-sm">{cobrancaVisualizando.alunos?.cpf || 'Não informado'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Responsável Financeiro</p>
+                        <p className="font-medium text-slate-700 text-sm">{cobrancaVisualizando.alunos?.responsavel_financeiro || 'Não informado'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Telefone</p>
+                        <p className="font-medium text-slate-700 text-sm">{cobrancaVisualizando.alunos?.telefone || 'Não informado'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ações Rápidas */}
+                <div className="flex gap-3 pt-4 border-t border-slate-100">
+                  {canPay && cobrancaVisualizando.status !== 'pago' && (
+                    <Button
+                      onClick={() => {
+                        setDetailsDialogOpen(false)
+                        handleBaixar(cobrancaVisualizando.id)
+                      }}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-11"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" /> Marcar como Pago
+                    </Button>
+                  )}
+                  {canPay && cobrancaVisualizando.status === 'pago' && (
+                    <Button
+                      onClick={() => {
+                        setDetailsDialogOpen(false)
+                        handleEstornar(cobrancaVisualizando.id)
+                      }}
+                      variant="outline"
+                      className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 rounded-xl font-bold h-11"
+                    >
+                      <Undo2 className="h-4 w-4 mr-2" /> Estornar Pagamento
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      onClick={() => {
+                        setDetailsDialogOpen(false)
+                        handleExcluir(cobrancaVisualizando.id)
+                      }}
+                      variant="outline"
+                      className="flex-1 border-rose-300 text-rose-700 hover:bg-rose-50 rounded-xl font-bold h-11"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" /> Excluir Cobrança
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
@@ -554,6 +709,9 @@ export function FinanceiroPageWeb() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600"><MoreHorizontal className="h-4 w-4" /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl p-2 border-slate-100">
+                      <DropdownMenuItem onClick={() => handleVisualizar(c)} className="text-indigo-600 font-bold focus:bg-indigo-50 rounded-lg">
+                        <Eye className="mr-2 h-4 w-4" /> Visualizar Detalhes
+                      </DropdownMenuItem>
                       {canPay && (
                         c.status !== 'pago' ? (
                           <DropdownMenuItem onClick={() => handleBaixar(c.id)} className="text-emerald-600 font-bold focus:bg-emerald-50 rounded-lg">
