@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, type ReactNode } from 'react'
 import { useResponsavel, useVinculosAtivos } from './hooks'
 import { supabase } from '@/lib/supabase'
 import { usePortalStore } from './store'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface AlunoVinculado {
   id: string
@@ -16,6 +17,18 @@ interface AlunoVinculado {
   turma: { id: string; nome: string; turno: string; horario?: string | null; valor_mensalidade?: number | null } | null
   filial: { nome_unidade: string } | null
   valor_matricula: number | null
+  // Campos Adicionais para Cadastro
+  genero?: string | null
+  cep?: string | null
+  logradouro?: string | null
+  numero?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  estado?: string | null
+  patologias?: string[] | null
+  medicamentos?: string[] | null
+  observacoes_saude?: string | null
 }
 
 interface PortalContextType {
@@ -24,6 +37,7 @@ interface PortalContextType {
   tenantId: string | null
   vinculos: any[]
   selecionarAluno: (vinculo: any) => void
+  refreshData: () => Promise<void>
   isMultiAluno: boolean
   isLoading: boolean
 }
@@ -199,6 +213,16 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const isInitializing = !!(vinculos && vinculos.length > 0 && !alunoSelecionado)
   const contextLoading = !!(loadingResp || loadingVinculos || isInitializing)
 
+  const queryClient = useQueryClient()
+  const refreshData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    ])
+  }
+
   return (
     <PortalContext.Provider
       value={{
@@ -207,6 +231,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         tenantId,
         vinculos: vinculos || [],
         selecionarAluno,
+        refreshData,
         isMultiAluno,
         isLoading: contextLoading,
       }}

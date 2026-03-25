@@ -446,7 +446,7 @@ export function AlunoCadastroPage() {
         responsavel_nome: '', responsavel_cpf: '', responsavel_email: '', responsavel_parentesco: '',
         responsavel_financeiro: 'sim', responsavel_senha: '', nome_completo: '', nome_social: '',
         data_nascimento: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
-        patologias: '', medicamentos: '', observacoes_saude: '', valor_mensalidade_atual: 0,
+        patologias: [], medicamentos: [], observacoes_saude: '', valor_mensalidade_atual: 0,
         data_ingresso: new Date().toISOString().split('T')[0],
         filial_id: data.filial_id // Mantém a filial que ele acabou de usar
       })

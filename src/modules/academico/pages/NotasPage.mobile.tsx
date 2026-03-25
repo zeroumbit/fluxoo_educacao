@@ -209,7 +209,7 @@ export function NotasPageMobile() {
           />
         </div>
 
-        <PullToRefresh onRefresh={async () => refetchNotas()}>
+        <PullToRefresh onRefresh={async () => { await refetchNotas() }}>
           <div className="space-y-3">
             {filteredAlunos.map(aluno => (
               <NativeCard 
@@ -270,7 +270,7 @@ export function NotasPageMobile() {
         isOpen={isEditOpen} onClose={() => setIsEditOpen(false)}
         aluno={selectedAluno}
         valorInicial={selectedAluno ? notasLocais[selectedAluno.id] : null}
-        onSave={(nota, ausente) => handleSaveNota(selectedAluno.id, nota, ausente)}
+        onSave={(nota: string, ausente: boolean) => handleSaveNota(selectedAluno.id, nota, ausente)}
       />
     </div>
   )
