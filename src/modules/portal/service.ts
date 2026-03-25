@@ -129,7 +129,8 @@ export const portalService = {
           nome_social, 
           data_nascimento, 
           status, 
-          tenant_id
+          tenant_id,
+          foto_url
         )
       `)
       .eq('responsavel_id', responsavelId)
@@ -693,24 +694,44 @@ export const portalService = {
     if (!matricula?.turma_id) return []
 
     // 2. Busca atividades vinculadas à turma
-    const { data, error } = await supabase.from('atividades_turmas')
+    // 2. Busca atividades vinculadas à turma do aluno
+    const { data, error } = await (supabase.from('atividades' as any) as any)
       .select(`
-        horario,
-        turno,
-        atividade:atividades(
-          id,
-          titulo,
-          descricao,
-          tipo,
-          data_entrega,
-          pontuacao_maxima
+        id,
+        titulo,
+        descricao,
+        tipo_material,
+        anexo_url,
+        disciplina,
+        created_at,
+        atividades_turmas!inner(
+          turma_id,
+          horario,
+          turno
         )
       `)
-      .eq('turma_id', matricula.turma_id)
+      .eq('tenant_id', tenantId)
+      .eq('atividades_turmas.turma_id', matricula.turma_id)
       .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data || []
+    if (error) {
+      console.error('❌ Erro ao buscar atividades no portal:', error)
+      throw error
+    }
+    
+    return (data as any[] || []).map(item => ({
+      horario: item.atividades_turmas?.[0]?.horario,
+      turno: item.atividades_turmas?.[0]?.turno,
+      atividade: {
+        id: item.id,
+        titulo: item.titulo,
+        descricao: item.descricao,
+        tipo: item.tipo_material,
+        anexo_url: item.anexo_url,
+        disciplina: item.disciplina,
+        created_at: item.created_at
+      }
+    }))
   },
 
   async getNotificationCounts(responsavelId: string) {
@@ -740,9 +761,9 @@ export const portalService = {
         .in('tenant_id', tenantIds)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()),
-      turmaIds.length > 0 ? (supabase.from('atividades_turmas' as any) as any)
-        .select('id', { count: 'exact', head: true })
-        .in('turma_id', turmaIds)
+      turmaIds.length > 0 ? (supabase.from('atividades' as any) as any)
+        .select('id, atividades_turmas!inner(turma_id)', { count: 'exact', head: true })
+        .in('atividades_turmas.turma_id', turmaIds)
         .gte('created_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString())
         : { count: 0 },
       (supabase.from('boletins' as any) as any)

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutList, Calendar, Clock, ChevronRight, X, Info, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { LayoutList, Clock, ChevronRight, X, Info, FileText, AlertCircle, ExternalLink } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAtividadesPortal } from '../../hooks';
@@ -13,7 +13,7 @@ export function PortalAtividadesV2() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 font-bold text-slate-500">Carregando atividades escolares...</p>
+        <p className="mt-4 font-bold text-slate-500">Carregando conteúdos...</p>
       </div>
     );
   }
@@ -24,8 +24,8 @@ export function PortalAtividadesV2() {
         <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-6">
           <LayoutList className="w-10 h-10 text-slate-300" />
         </div>
-        <h3 className="text-xl font-black text-slate-800 mb-2">Sem atividades pendentes</h3>
-        <p className="text-slate-500 max-w-xs font-semibold">Trabalhos, provas e lições de casa aparecerão aqui.</p>
+        <h3 className="text-xl font-black text-slate-800 mb-2">Sem conteúdos postados</h3>
+        <p className="text-slate-500 max-w-xs font-semibold">Materiais, lições e comunicados de aula aparecerão aqui.</p>
       </div>
     );
   }
@@ -33,8 +33,8 @@ export function PortalAtividadesV2() {
   return (
     <div className="space-y-10 relative">
       <div>
-        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Atividades Escolares</h2>
-        <p className="text-slate-500 font-semibold uppercase text-[10px] tracking-widest mt-1">Trabalhos, Provas & Lição de Casa</p>
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Materiais & Atividades</h2>
+        <p className="text-slate-500 font-semibold uppercase text-[10px] tracking-widest mt-1">Conteúdos Educacionais e Lições</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -42,8 +42,8 @@ export function PortalAtividadesV2() {
           const { atividade } = item;
           if (!atividade) return null;
 
-          const isVencida = new Date(atividade.data_entrega) < new Date();
-          const tipoColor = atividade.tipo === 'prova' ? 'bg-rose-50 text-rose-600' : 'bg-orange-50 text-orange-600';
+          const dataExibicao = atividade.created_at || new Date().toISOString();
+          const tipoColor = atividade.tipo === 'pdf' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600';
 
           return (
             <motion.div
@@ -58,7 +58,7 @@ export function PortalAtividadesV2() {
                  <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-2">
                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${tipoColor}`}>
-                          {atividade.tipo || 'Atividade'}
+                          {atividade.tipo || 'Material'}
                        </span>
                        <span className="px-3 py-1 bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl">
                           {item.turno || 'Integral'}
@@ -74,27 +74,27 @@ export function PortalAtividadesV2() {
                  </h4>
                  
                  <p className="text-sm font-medium text-slate-500 line-clamp-2 italic mb-6">
-                    {atividade.descricao || 'Clique para ver os detalhes e orientações desta atividade.'}
+                    {atividade.descricao || 'Clique para ver os detalhes e links deste material.'}
                  </p>
               </div>
 
               <div className="pt-6 border-t border-slate-50 flex items-center justify-between">
                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isVencida ? 'bg-rose-50 text-rose-500' : 'bg-orange-50 text-orange-500'}`}>
-                       <Calendar className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-500">
+                       <Clock className="w-5 h-5" />
                     </div>
                     <div>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Entrega</p>
-                       <p className={`text-xs font-black ${isVencida ? 'text-rose-600' : 'text-slate-800'}`}>
-                          {format(parseISO(atividade.data_entrega), "dd 'de' MMM", { locale: ptBR })}
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Postado em</p>
+                       <p className="text-xs font-black text-slate-800">
+                          {format(parseISO(dataExibicao), "dd 'de' MMM", { locale: ptBR })}
                        </p>
                     </div>
                  </div>
 
-                 {atividade.pontuacao_maxima && (
+                 {atividade.disciplina && (
                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Pontuação</span>
-                      <span className="text-xs font-black text-emerald-600">{atividade.pontuacao_maxima} Pontos</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Disciplina</span>
+                      <span className="text-xs font-black text-indigo-600">{atividade.disciplina}</span>
                    </div>
                  )}
               </div>
@@ -121,7 +121,7 @@ export function PortalAtividadesV2() {
               className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white rounded-t-[64px] shadow-2xl z-50 overflow-hidden"
             >
               <div className="h-full flex flex-col md:flex-row">
-                 {/* Sidebar Decorativa (Mobile Top / Web Left) */}
+                 {/* Sidebar Decorativa */}
                  <div className="w-full md:w-1/3 bg-orange-500 p-12 flex flex-col justify-between text-white relative overflow-hidden">
                     <motion.div 
                        initial={{ opacity: 0, scale: 0.5 }}
@@ -137,25 +137,35 @@ export function PortalAtividadesV2() {
                           {selectedAtv.titulo}
                        </h3>
                        <span className="px-4 py-2 bg-white/20 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/20 inline-block">
-                          {selectedAtv.tipo || 'ATIVIDADE ESCOLAR'}
+                          {selectedAtv.tipo || 'MATERIAL ESCOLAR'}
                        </span>
                     </div>
 
                     <div className="bg-white/10 backdrop-blur-xl rounded-[32px] p-6 border border-white/20">
                        <div className="flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
-                          <Calendar className="w-5 h-5 text-orange-200" />
+                          <Clock className="w-5 h-5 text-orange-200" />
                           <div>
-                             <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Prazo Final</p>
-                             <p className="text-lg font-black">{format(parseISO(selectedAtv.data_entrega), "dd 'de' MMMM", { locale: ptBR })}</p>
+                             <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Postado em</p>
+                             <p className="text-lg font-black">{format(parseISO(selectedAtv.created_at || new Date().toISOString()), "dd 'de' MMMM", { locale: ptBR })}</p>
                           </div>
                        </div>
-                       <div className="flex items-center gap-4">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                          <div>
-                             <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Valor Máximo</p>
-                             <p className="text-lg font-black">{selectedAtv.pontuacao_maxima || '0'} Pontos</p>
-                          </div>
-                       </div>
+                       
+                       {selectedAtv.anexo_url && (
+                          <a 
+                            href={selectedAtv.anexo_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-4 bg-white/20 hover:bg-white/30 transition-colors rounded-[24px] border border-white/10"
+                          >
+                             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                <ExternalLink className="w-5 h-5 text-white" />
+                             </div>
+                             <div>
+                                <p className="text-[10px] font-black tracking-widest uppercase opacity-60">Conteúdo</p>
+                                <p className="text-sm font-black truncate max-w-[150px]">Abrir Anexo / Link</p>
+                             </div>
+                          </a>
+                       )}
                     </div>
                  </div>
 
@@ -172,13 +182,13 @@ export function PortalAtividadesV2() {
 
                     <div className="max-w-2xl">
                        <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-3">
-                          <Info className="w-4 h-4 text-orange-500" /> Descrição da Atividade
+                          <Info className="w-4 h-4 text-orange-500" /> Detalhes do Conteúdo
                        </h5>
                        <div className="bg-slate-50/50 border border-slate-100 p-10 rounded-[48px] mb-12">
                           <p className="text-lg font-semibold text-slate-600 leading-relaxed italic">
                              {selectedAtv.descricao ? (
                                <div dangerouslySetInnerHTML={{ __html: selectedAtv.descricao.replace(/\n/g, '<br/>') }} />
-                             ) : 'Nenhuma instrução adicional fornecida para esta atividade.'}
+                             ) : 'Nenhuma instrução adicional fornecida.'}
                           </p>
                        </div>
 
@@ -187,9 +197,9 @@ export function PortalAtividadesV2() {
                              <AlertCircle className="w-6 h-6 text-amber-600" />
                           </div>
                           <div>
-                             <h6 className="text-sm font-black text-amber-900 uppercase tracking-tight mb-1">Lembrete para os Responsáveis</h6>
+                             <h6 className="text-sm font-black text-amber-900 uppercase tracking-tight mb-1">Atenção</h6>
                              <p className="text-sm font-medium text-amber-800 leading-relaxed">
-                                Garanta que todos os materiais necessários estejam organizados antecipadamente para evitar atrasos na entrega.
+                                Verifique se o material requer impressão ou leitura prévia para as próximas aulas conforme orientado pelo professor.
                              </p>
                           </div>
                        </div>

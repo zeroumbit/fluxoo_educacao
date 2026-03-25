@@ -12,6 +12,7 @@ interface AlunoVinculado {
   tenant_id: string
   filial_id: string | null
   turma_id: string | null
+  foto_url: string | null
   turma: { id: string; nome: string; turno: string; horario?: string | null; valor_mensalidade?: number | null } | null
   filial: { nome_unidade: string } | null
   valor_matricula: number | null

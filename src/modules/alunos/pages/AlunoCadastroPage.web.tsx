@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,8 @@ import {
   CreditCard,
   MapPin,
   Percent,
+  PlusCircle,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
@@ -55,9 +58,10 @@ const alunoSchema = z.object({
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   estado: z.string().optional(),
-  patologias: z.string().optional(),
-  medicamentos: z.string().optional(),
+  patologias: z.array(z.string()).optional(),
+  medicamentos: z.array(z.string()).optional(),
   observacoes_saude: z.string().optional(),
+  foto_url: z.string().optional(),
   filial_id: z.string().optional(),
   valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
   data_ingresso: z.string().optional(),
@@ -109,6 +113,11 @@ export function AlunoCadastroPage() {
   const [irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
   const [showPostCadastroModal, setShowPostCadastroModal] = useState(false)
   const [lastCreatedAluno, setLastCreatedAluno] = useState<any>(null)
+  
+  // Estados para Gestão de Foto e Tags de Saúde no Cadastro
+  const [uploadingFoto, setUploadingFoto] = useState(false)
+  const [tempPatologia, setTempPatologia] = useState('')
+  const [tempMedicamento, setTempMedicamento] = useState('')
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -121,7 +130,7 @@ export function AlunoCadastroPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<AlunoFormValues>({
-    resolver: zodResolver(alunoSchema) as any,
+    resolver: zodResolver(alunoSchema),
     defaultValues: {
       responsavel_nome: '',
       responsavel_cpf: '',
@@ -132,6 +141,7 @@ export function AlunoCadastroPage() {
       nome_completo: '',
       nome_social: '',
       data_nascimento: '',
+      genero: '',
       cep: '',
       logradouro: '',
       numero: '',
@@ -139,9 +149,10 @@ export function AlunoCadastroPage() {
       bairro: '',
       cidade: '',
       estado: '',
-      patologias: '',
-      medicamentos: '',
+      patologias: [],
+      medicamentos: [],
       observacoes_saude: '',
+      foto_url: '',
       valor_mensalidade_atual: 0,
       data_ingresso: new Date().toISOString().split('T')[0],
     },
@@ -195,9 +206,10 @@ export function AlunoCadastroPage() {
       bairro: '',
       cidade: '',
       estado: '',
-      patologias: '',
-      medicamentos: '',
+      patologias: [],
+      medicamentos: [],
       observacoes_saude: '',
+      foto_url: '',
       valor_mensalidade_atual: 0,
       data_ingresso: new Date().toISOString().split('T')[0],
       filial_id: watch('filial_id') // Mantém a filial selecionada
@@ -357,7 +369,7 @@ export function AlunoCadastroPage() {
   const onSubmit = async (data: AlunoFormValues) => {
     // Definitive Fix: Prevent auto-submission unless we are on the HEALTH step (index 3)
     if (currentStep < steps.length - 1) {
-      nextStep()
+      await nextStep()
       return
     }
 
@@ -374,12 +386,8 @@ export function AlunoCadastroPage() {
       }
 
       // Converter patologias e medicamentos em arrays
-      const patologias = data.patologias
-        ? data.patologias.split(',').map((p) => p.trim()).filter(Boolean)
-        : null
-      const medicamentos = data.medicamentos
-        ? data.medicamentos.split(',').map((m) => m.trim()).filter(Boolean)
-        : null
+      const patologias = data.patologias || []
+      const medicamentos = data.medicamentos || []
 
       const payloadResponsavel = {
         cpf: data.responsavel_cpf,
@@ -406,6 +414,7 @@ export function AlunoCadastroPage() {
         cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
         patologias,
         medicamentos,
+        foto_url: data.foto_url || null,
         observacoes_saude: data.observacoes_saude || null,
         status: 'ativo' as const,
         cep: data.cep && data.cep !== '' ? data.cep : null,
@@ -457,6 +466,36 @@ export function AlunoCadastroPage() {
       if (err?.details) errorMessage += ` (${err.details})`
 
       toast.error(errorMessage, { duration: 8000 })
+    }
+  }
+
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingFoto(true)
+    const toastId = toast.loading('Processando foto...')
+
+    try {
+      const fileName = `novo_aluno_${Date.now()}.${file.name.split('.').pop()}`
+      const filePath = `alunos/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('alunos_fotos')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('alunos_fotos')
+        .getPublicUrl(filePath)
+
+      setValue('foto_url', publicUrl)
+      toast.success('Foto processada!', { id: toastId })
+    } catch (err: any) {
+      toast.error('Erro no upload: ' + err.message, { id: toastId })
+    } finally {
+      setUploadingFoto(false)
     }
   }
 
@@ -551,6 +590,34 @@ export function AlunoCadastroPage() {
             {/* Step 2 - Dados do aluno */}
             {currentStep === 1 && (
               <>
+                <div className="flex flex-col items-center mb-8">
+                  <div className="relative group/avatar">
+                    <div className="h-28 w-28 rounded-[2rem] bg-indigo-50 flex items-center justify-center border-2 border-dashed border-indigo-200 shrink-0 overflow-hidden relative shadow-inner">
+                      {watch('foto_url') ? (
+                        <img src={watch('foto_url')} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-12 w-12 text-indigo-300" />
+                      )}
+                      
+                      <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                        <PlusCircle className="text-white w-6 h-6 mb-1" />
+                        <span className="text-[10px] text-white font-black uppercase tracking-widest">Foto 3x4</span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleFotoUpload} disabled={uploadingFoto} />
+                      </label>
+                    </div>
+                    {watch('foto_url') && (
+                      <button 
+                        type="button"
+                        onClick={() => setValue('foto_url', '')}
+                        className="absolute -top-1 -right-1 bg-white p-1.5 rounded-xl shadow-lg border border-slate-100 text-rose-500 hover:scale-110 transition-transform"
+                      >
+                        <X size={14} className="font-bold" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">Foto oficial do aluno</p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome completo *</Label>
                   <Input
@@ -760,19 +827,93 @@ export function AlunoCadastroPage() {
             {/* Step 4 - Saúde */}
             {currentStep === 3 && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="patologias">Possui alguma patologia?</Label>
-                  <Textarea id="patologias" placeholder="Separe por vírgula: asma, rinite, diabetes..." {...register('patologias')} />
-                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+                <div className="space-y-4">
+                  <Label>Possui alguma patologia / alergia?</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Ex: Alergia a Amendoim" 
+                      value={tempPatologia} 
+                      onChange={(e) => setTempPatologia(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (tempPatologia.trim()) {
+                            setValue('patologias', [...(watch('patologias') || []), tempPatologia.trim()]);
+                            setTempPatologia('');
+                          }
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        if (tempPatologia.trim()) {
+                          setValue('patologias', [...(watch('patologias') || []), tempPatologia.trim()]);
+                          setTempPatologia('');
+                        }
+                      }}
+                    >
+                      <PlusCircle size={20} className="text-indigo-500" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(watch('patologias') || []).map((p: any, i: number) => (
+                      <Badge key={i} className="bg-rose-50 text-rose-600 border-rose-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
+                        {p}
+                        <button type="button" onClick={() => setValue('patologias', watch('patologias')?.filter((_: any, idx: number) => idx !== i))} className="hover:bg-rose-200/50 rounded-full p-0.5">
+                          <X size={14} />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="medicamentos">Toma medicamento?</Label>
-                  <Textarea id="medicamentos" placeholder="Separe por vírgula..." {...register('medicamentos')} />
-                  <p className="text-xs text-muted-foreground">Separe cada item por vírgula</p>
+
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <Label>Toma algum medicamento?</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Ex: Ritalina 10mg" 
+                      value={tempMedicamento} 
+                      onChange={(e) => setTempMedicamento(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (tempMedicamento.trim()) {
+                            setValue('medicamentos', [...(watch('medicamentos') || []), tempMedicamento.trim()]);
+                            setTempMedicamento('');
+                          }
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        if (tempMedicamento.trim()) {
+                          setValue('medicamentos', [...(watch('medicamentos') || []), tempMedicamento.trim()]);
+                          setTempMedicamento('');
+                        }
+                      }}
+                    >
+                      <PlusCircle size={20} className="text-indigo-500" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(watch('medicamentos') || []).map((m: any, i: number) => (
+                      <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
+                        {m}
+                        <button type="button" onClick={() => setValue('medicamentos', watch('medicamentos')?.filter((_: any, idx: number) => idx !== i))} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                          <X size={14} />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes_saude">Observações de Saúde / Alergias</Label>
-                  <Textarea id="observacoes_saude" placeholder="Informações adicionais sobre alergias, restrições alimentares..." {...register('observacoes_saude')} />
+
+                <div className="space-y-2 pt-4 border-t border-slate-100">
+                  <Label htmlFor="observacoes_saude">Observações Adicionais de Saúde</Label>
+                  <Textarea id="observacoes_saude" placeholder="Outras informações relevantes..." {...register('observacoes_saude')} className="h-24" />
                 </div>
               </>
             )}

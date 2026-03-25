@@ -56,6 +56,12 @@ export function AlunoDetalhePageWeb() {
   const [isSearchingCpf, setIsSearchingCpf] = useState(false)
   const [existingResponsibleId, setExistingResponsibleId] = useState<string | null>(null)
   const [deletingVinculo, setDeletingVinculo] = useState<{ id: string, nome: string } | null>(null)
+  
+  // Estados para Gestão de Foto e Tags de Saúde
+  const [uploadingFoto, setUploadingFoto] = useState(false)
+  const [tempPatologia, setTempPatologia] = useState('')
+  const [tempMedicamento, setTempMedicamento] = useState('')
+  const [confirmDeleteFoto, setConfirmDeleteFoto] = useState(false)
 
   useEffect(() => {
     if (aluno && !formData) {
@@ -65,7 +71,8 @@ export function AlunoDetalhePageWeb() {
         data_nascimento: aluno.data_nascimento,
         cpf: aluno.cpf || '',
         rg: aluno.rg || '',
-        genero: aluno.genero || '',
+        genero: (aluno as any).genero || (aluno as any).sexo || '',
+        foto_url: (aluno as any).foto_url || '',
         cep: aluno.cep || '',
         logradouro: aluno.logradouro || '',
         numero: aluno.numero || '',
@@ -73,11 +80,12 @@ export function AlunoDetalhePageWeb() {
         bairro: aluno.bairro || '',
         cidade: aluno.cidade || '',
         estado: aluno.estado || '',
-        patologias: aluno.patologias?.join(', ') || '',
-        medicamentos: aluno.medicamentos?.join(', ') || '',
+        patologias: Array.isArray(aluno.patologias) ? aluno.patologias : [],
+        medicamentos: Array.isArray(aluno.medicamentos) ? aluno.medicamentos : [],
         observacoes_saude: aluno.observacoes_saude || '',
         valor_mensalidade_atual: (aluno as any).valor_mensalidade_atual || 0,
         data_ingresso: (aluno as any).data_ingresso || '',
+        status: aluno.status || 'ativo'
       })
     }
   }, [aluno, formData])
@@ -92,7 +100,9 @@ export function AlunoDetalhePageWeb() {
         nome_social: formData.nome_social || null,
         data_nascimento: formData.data_nascimento,
         cpf: formData.cpf ? formData.cpf.replace(/\D/g, '') : null,
-        sexo: formData.genero || null, // No banco a coluna é 'sexo'
+        genero: formData.genero || null,
+        sexo: formData.genero || null,
+        foto_url: formData.foto_url || null,
         cep: formData.cep ? formData.cep.replace(/\D/g, '') : null,
         logradouro: formData.logradouro || null,
         numero: formData.numero || null,
@@ -101,12 +111,8 @@ export function AlunoDetalhePageWeb() {
         cidade: formData.cidade || null,
         estado: formData.estado || null,
         status: formData.status || 'ativo',
-        patologias: formData.patologias 
-          ? formData.patologias.split(',').map((p: string) => p.trim()).filter(Boolean) 
-          : [],
-        medicamentos: formData.medicamentos 
-          ? formData.medicamentos.split(',').map((m: string) => m.trim()).filter(Boolean) 
-          : [],
+        patologias: formData.patologias,
+        medicamentos: formData.medicamentos,
         observacoes_saude: formData.observacoes_saude || null,
       }
 
@@ -118,6 +124,55 @@ export function AlunoDetalhePageWeb() {
     } catch (err: any) {
       console.error('❌ Erro ao salvar aluno:', err)
       toast.error('Erro ao salvar alterações: ' + (err.message || 'Erro desconhecido'))
+    }
+  }
+
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+
+    setUploadingFoto(true)
+    const toastId = toast.loading('Enviando foto...')
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${id}_${Date.now()}.${fileExt}`
+      const filePath = `alunos/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('alunos_fotos')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('alunos_fotos')
+        .getPublicUrl(filePath)
+
+      // Atualiza o estado local
+      setFormData({ ...formData, foto_url: publicUrl })
+      
+      // Salva imediatamente para persistir a foto
+      await atualizarAluno.mutateAsync({ id, aluno: { foto_url: publicUrl } })
+      
+      toast.success('Foto atualizada com sucesso!', { id: toastId })
+    } catch (err: any) {
+      console.error('❌ Erro no upload:', err)
+      toast.error('Erro ao subir foto: ' + err.message, { id: toastId })
+    } finally {
+      setUploadingFoto(false)
+    }
+  }
+
+  const handleDeleteFoto = async () => {
+    if (!id) return
+    try {
+      setFormData({ ...formData, foto_url: '' })
+      await atualizarAluno.mutateAsync({ id, aluno: { foto_url: null } })
+      setConfirmDeleteFoto(false)
+      toast.success('Foto removida com sucesso!')
+    } catch (err: any) {
+      toast.error('Erro ao remover foto')
     }
   }
 
@@ -321,13 +376,39 @@ export function AlunoDetalhePageWeb() {
       {/* Header Card */}
       <Card className="border-0 shadow-2xl shadow-slate-100/50 rounded-[2.5rem] overflow-hidden bg-white">
         <CardContent className="p-10 flex flex-col md:flex-row items-center md:items-start gap-8 bg-gradient-to-br from-white to-slate-50/50">
-          <div className="relative group">
-            <div className="h-32 w-32 rounded-[2rem] bg-indigo-50 flex items-center justify-center border-2 border-indigo-100 shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-300">
-              <UserCircle className="h-16 w-16 text-indigo-400 group-hover:text-indigo-500 transition-colors" />
+          <div className="relative group/avatar">
+            <div className="h-32 w-32 rounded-[2rem] bg-indigo-50 flex items-center justify-center border-2 border-indigo-100 shrink-0 shadow-inner group-hover/avatar:scale-105 transition-transform duration-300 overflow-hidden relative">
+              {formData?.foto_url ? (
+                <img src={formData.foto_url} alt="Foto Aluno" className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle className="h-16 w-16 text-indigo-400 group-hover/avatar:text-indigo-500 transition-colors" />
+              )}
+              
+              {isEditing && (
+                <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                  <PlusCircle className="text-white w-8 h-8 mb-1" />
+                  <span className="text-[10px] text-white font-black uppercase tracking-widest">Trocar 3x4</span>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFotoUpload} disabled={uploadingFoto} />
+                </label>
+              )}
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-xl border border-slate-100 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-               <Fingerprint className="h-4 w-4 text-slate-400" />
-            </div>
+            
+            {isEditing && formData?.foto_url && (
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => setConfirmDeleteFoto(true)}
+                className="absolute -top-2 -right-2 h-7 w-7 rounded-xl shadow-lg border-2 border-white scale-90 hover:scale-105 transition-all"
+              >
+                <Trash2 size={12} />
+              </Button>
+            )}
+
+            {!isEditing && (
+              <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-xl border border-slate-100 shadow-sm opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                 <Fingerprint className="h-4 w-4 text-slate-400" />
+              </div>
+            )}
           </div>
           
           <div className="space-y-4 flex-1 text-center md:text-left">
@@ -537,13 +618,54 @@ export function AlunoDetalhePageWeb() {
           </CardHeader>
           <CardContent className="p-8 space-y-6">
                <div className="space-y-3">
-                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Patologias</Label>
+                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Patologias / Alergias</Label>
                  {isEditing ? (
-                   <Textarea value={formData?.patologias} onChange={(e) => setFormData({...formData, patologias: e.target.value})} className="rounded-xl" />
+                   <div className="space-y-3">
+                     <div className="flex gap-2">
+                       <Input 
+                         placeholder="Ex: Alergia a Amendoim" 
+                         value={tempPatologia} 
+                         onChange={(e) => setTempPatologia(e.target.value)}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') {
+                             e.preventDefault();
+                             if (tempPatologia.trim()) {
+                               setFormData({ ...formData, patologias: [...(formData.patologias || []), tempPatologia.trim()] });
+                               setTempPatologia('');
+                             }
+                           }
+                         }}
+                         className="h-11 rounded-xl"
+                       />
+                       <Button 
+                         type="button" 
+                         variant="outline" 
+                         onClick={() => {
+                           if (tempPatologia.trim()) {
+                             setFormData({ ...formData, patologias: [...(formData.patologias || []), tempPatologia.trim()] });
+                             setTempPatologia('');
+                           }
+                         }} 
+                         className="h-11 w-11 p-0 rounded-xl"
+                       >
+                         <PlusCircle size={20} className="text-indigo-500" />
+                       </Button>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                       {(formData?.patologias || []).map((p: string, i: number) => (
+                         <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
+                           {p}
+                           <button onClick={() => setFormData({...formData, patologias: formData.patologias.filter((_: any, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                             <X size={14} />
+                           </button>
+                         </Badge>
+                       ))}
+                     </div>
+                   </div>
                  ) : (
                    <div className="flex flex-wrap gap-2">
-                     {aluno.patologias && aluno.patologias.length > 0 ? (
-                       aluno.patologias.map((p, i) => (
+                     {aluno.patologias && (aluno.patologias as any).length > 0 ? (
+                       (aluno.patologias as any).map((p: any, i: number) => (
                          <Badge key={i} className="bg-rose-50 text-rose-600 border-rose-100 font-bold px-3 py-1 rounded-lg">
                            {p}
                          </Badge>
@@ -554,13 +676,54 @@ export function AlunoDetalhePageWeb() {
                </div>
 
                <div className="space-y-3">
-                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Medicamentos</Label>
+                 <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Medicamentos de Uso Contínuo</Label>
                  {isEditing ? (
-                   <Textarea value={formData?.medicamentos} onChange={(e) => setFormData({...formData, medicamentos: e.target.value})} className="rounded-xl" />
+                   <div className="space-y-3">
+                     <div className="flex gap-2">
+                       <Input 
+                         placeholder="Ex: Ritalina 10mg" 
+                         value={tempMedicamento} 
+                         onChange={(e) => setTempMedicamento(e.target.value)}
+                         onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (tempMedicamento.trim()) {
+                              setFormData({ ...formData, medicamentos: [...(formData.medicamentos || []), tempMedicamento.trim()] });
+                              setTempMedicamento('');
+                            }
+                          }
+                        }}
+                         className="h-11 rounded-xl"
+                       />
+                       <Button 
+                         type="button" 
+                         variant="outline" 
+                         onClick={() => {
+                           if (tempMedicamento.trim()) {
+                             setFormData({ ...formData, medicamentos: [...(formData.medicamentos || []), tempMedicamento.trim()] });
+                             setTempMedicamento('');
+                           }
+                         }} 
+                         className="h-11 w-11 p-0 rounded-xl"
+                       >
+                         <PlusCircle size={20} className="text-indigo-500" />
+                       </Button>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                       {(formData?.medicamentos || []).map((m: string, i: number) => (
+                         <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
+                           {m}
+                           <button onClick={() => setFormData({...formData, medicamentos: formData.medicamentos.filter((_: any, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                             <X size={14} />
+                           </button>
+                         </Badge>
+                       ))}
+                     </div>
+                   </div>
                  ) : (
                    <div className="grid grid-cols-1 gap-2">
-                     {aluno.medicamentos && aluno.medicamentos.length > 0 ? (
-                        aluno.medicamentos.map((m, i) => (
+                     {aluno.medicamentos && (aluno.medicamentos as any).length > 0 ? (
+                        (aluno.medicamentos as any).map((m: any, i: number) => (
                           <div key={i} className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                              <div className="h-2 w-2 rounded-full bg-rose-400" /> {m}
                           </div>
@@ -576,7 +739,7 @@ export function AlunoDetalhePageWeb() {
                     <Textarea value={formData?.observacoes_saude} onChange={(e) => setFormData({...formData, observacoes_saude: e.target.value})} className="rounded-xl h-24" />
                  ) : (
                     <p className="text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl italic">
-                      {aluno.observacoes_saude || 'Nenhuma observação adicional de saúde foi informada no cadastro inicial do aluno.'}
+                      {aluno.observacoes_saude || 'Nenhuma observação adicional de saúde foi informada.'}
                     </p>
                  )}
                </div>
@@ -797,7 +960,23 @@ export function AlunoDetalhePageWeb() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Adicionar Novo Responsável */}
+      {/* Modal Confirmar Deleção de Foto */}
+      <Dialog open={confirmDeleteFoto} onOpenChange={setConfirmDeleteFoto}>
+        <DialogContent className="max-w-sm rounded-[2.5rem] border-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-600">
+              <Trash2 className="w-5 h-5" /> Remover Foto
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja remover a foto 3x4 deste aluno? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setConfirmDeleteFoto(false)} className="rounded-xl">Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteFoto} className="rounded-xl">Sim, Remover</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={showAddGuardian} onOpenChange={setShowAddGuardian}>
         <DialogContent className="rounded-[2.5rem] border-0 p-0 overflow-hidden bg-white shadow-2xl max-w-md">
            <div className="bg-indigo-600 p-8 text-white">

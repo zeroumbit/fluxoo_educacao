@@ -32,8 +32,12 @@ export function PortalAlunosListV2Web() {
             className="flex flex-col bg-white border border-slate-100 rounded-[40px] p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] cursor-pointer hover:border-teal-200 hover:-translate-y-2 transition-all hover:shadow-xl"
           >
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex justify-center items-center text-3xl font-black shadow-lg shadow-teal-500/20 flex-shrink-0">
-                {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
+              <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex justify-center items-center text-3xl font-black shadow-lg shadow-teal-500/20 flex-shrink-0 overflow-hidden">
+                {v.aluno?.foto_url ? (
+                  <img src={v.aluno.foto_url} alt={v.aluno.nome_completo} className="w-full h-full object-cover" />
+                ) : (
+                  v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'
+                )}
               </div>
               <div className="flex flex-col flex-1">
                 <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-2">

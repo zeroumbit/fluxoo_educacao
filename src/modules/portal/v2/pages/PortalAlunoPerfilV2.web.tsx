@@ -56,8 +56,12 @@ export function PortalAlunoPerfilV2Web() {
           </button>
           
           <div className="flex items-center gap-6 border-l border-slate-200 pl-6">
-            <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-teal-500/20">
-              {student?.nome_completo ? getInitials(student.nome_completo) : 'A'}
+            <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-teal-500/20 overflow-hidden">
+              {student?.foto_url ? (
+                <img src={student.foto_url} alt={student.nome_completo} className="w-full h-full object-cover" />
+              ) : (
+                student?.nome_completo ? getInitials(student.nome_completo) : 'A'
+              )}
             </div>
             <div className="flex flex-col">
               <h1 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2 text-wrap pr-10">
