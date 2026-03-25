@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import {
   useTenantSettings,
@@ -187,24 +188,11 @@ export function ConfiguracoesAdmin() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="space-y-6 px-4 md:px-8 animate-in fade-in duration-500">
       {/* Cabeçalho da Página */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900">Configurações Institucionais</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Regras acadêmicas, financeiras e operacionais com conformidade legal automática</p>
-        </div>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving || hasErrors}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-10"
-        >
-          {isSaving
-            ? <Loader2 size={16} className="animate-spin" />
-            : <Save size={16} />
-          }
-          Salvar Configurações
-        </Button>
+      <div className="space-y-1">
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">Configurações Institucionais</h1>
+        <p className="text-sm text-slate-500 font-medium">Regras acadêmicas, financeiras e operacionais com conformidade legal automática</p>
       </div>
 
       {hasErrors && (
@@ -214,43 +202,25 @@ export function ConfiguracoesAdmin() {
         </div>
       )}
 
-      {/* Layout Master-Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Abas Horizontais */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-slate-100/50 p-1 rounded-2xl w-full justify-start overflow-x-auto no-scrollbar gap-1">
+          {TABS.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="rounded-xl px-4 py-2 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2 min-w-fit"
+            >
+              <tab.icon size={16} className="h-4 w-4" />
+              <span className="whitespace-nowrap">{tab.label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 mb-1">Domínios</p>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-all font-medium',
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-50'
-                )}
-              >
-                <tab.icon size={15} className={isActive ? 'text-indigo-600' : 'text-slate-400'} />
-                <span>{tab.label}</span>
-                <Badge variant="outline" className={cn(
-                  'ml-auto text-[9px] px-1.5 h-4',
-                  isActive ? 'border-indigo-200 text-indigo-600 bg-indigo-50' : 'text-slate-400'
-                )}>
-                  {tab.sublabel}
-                </Badge>
-              </button>
-            )
-          })}
-        </aside>
-
-        {/* Área de Detalhes */}
-        <div className="lg:col-span-3 space-y-4">
-
+        {/* Conteúdo das Abas */}
+        <div className="mt-6">
           {/* ── ABA ACADÊMICO ─────────────────────────── */}
-          {activeTab === 'academico' && (
+          <TabsContent value="academico" className="mt-0">
             <Card className="border-slate-200 shadow-sm animate-in fade-in duration-300">
               <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
@@ -303,16 +273,15 @@ export function ConfiguracoesAdmin() {
                 </div>
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
           {/* ── ABA FINANCEIRO ────────────────────────── */}
-          {activeTab === 'financeiro' && (
-            <div className="space-y-4 animate-in fade-in duration-300">
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
-                  <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
-                    <Wallet size={16} className="text-slate-400" />
-                    Regras de Faturamento e Inadimplência
+          <TabsContent value="financeiro" className="mt-0 space-y-4 animate-in fade-in duration-300">
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
+                <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
+                  <Wallet size={16} className="text-slate-400" />
+                  Regras de Faturamento e Inadimplência
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-6">
@@ -440,12 +409,11 @@ export function ConfiguracoesAdmin() {
                   />
                 </CardContent>
               </Card>
-            </div>
-          )}
+          </TabsContent>
 
           {/* ── ABA OPERACIONAL ───────────────────────── */}
-          {activeTab === 'operacional' && (
-            <Card className="border-slate-200 shadow-sm animate-in fade-in duration-300">
+          <TabsContent value="operacional" className="mt-0 animate-in fade-in duration-300">
+            <Card className="border-slate-200 shadow-sm">
               <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
                   <ShieldAlert size={16} className="text-slate-400" />
@@ -486,11 +454,11 @@ export function ConfiguracoesAdmin() {
                 </div>
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
           {/* ── ABA CONDUTA ───────────────────────────── */}
-          {activeTab === 'conduta' && (
-            <Card className="border-slate-200 shadow-sm animate-in fade-in duration-300">
+          <TabsContent value="conduta" className="mt-0 animate-in fade-in duration-300">
+            <Card className="border-slate-200 shadow-sm">
               <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
                   <Scale size={16} className="text-slate-400" />
@@ -526,11 +494,11 @@ export function ConfiguracoesAdmin() {
                 </div>
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
           {/* ── ABA CALENDÁRIO ────────────────────────── */}
-          {activeTab === 'calendario' && (
-            <Card className="border-slate-200 shadow-sm animate-in fade-in duration-300">
+          <TabsContent value="calendario" className="mt-0 animate-in fade-in duration-300">
+            <Card className="border-slate-200 shadow-sm">
               <CardHeader className="border-b border-slate-100 pb-4 pt-[30px]">
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
                   <CalendarDays size={16} className="text-slate-400" />
@@ -562,11 +530,11 @@ export function ConfiguracoesAdmin() {
                 />
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
           {/* ── ABA AUDITORIA ─────────────────────────── */}
-          {activeTab === 'auditoria' && (
-            <Card className="border-slate-200 shadow-sm animate-in fade-in duration-300">
+          <TabsContent value="auditoria" className="mt-0 animate-in fade-in duration-300">
+            <Card className="border-slate-200 shadow-sm">
               <CardHeader className="border-b border-slate-100 pb-4 pt-[30px] flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
                   <ShieldCheck size={16} className="text-slate-400" />
@@ -612,9 +580,23 @@ export function ConfiguracoesAdmin() {
                 )}
               </CardContent>
             </Card>
-          )}
-
+          </TabsContent>
         </div>
+      </Tabs>
+
+      {/* Footer com Botão de Salvar */}
+      <div className="flex justify-end pt-6 border-t border-slate-200 mt-6">
+        <Button
+          onClick={handleSave}
+          disabled={isSaving || hasErrors}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11 px-8 rounded-xl font-bold shadow-lg shadow-indigo-100"
+        >
+          {isSaving
+            ? <Loader2 size={16} className="animate-spin" />
+            : <Save size={16} />
+          }
+          Salvar Configurações
+        </Button>
       </div>
     </div>
   )

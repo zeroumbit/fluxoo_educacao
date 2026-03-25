@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2, AlertCircle } from 'lucide-react'
+import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2, AlertCircle, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { format, isBefore, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import type { Fatura } from '@/lib/database.types'
 
 export function FaturasPage() {
   const [tab, setTab] = useState('pendente_confirmacao')
@@ -21,13 +22,15 @@ export function FaturasPage() {
   const { authUser } = useAuth()
   const [search, setSearch] = useState('')
   const [isEarlyConfirmOpen, setIsEarlyConfirmOpen] = useState(false)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [faturaEarlyConfirm, setFaturaEarlyConfirm] = useState<any | null>(null)
+  const [selectedFatura, setSelectedFatura] = useState<any | null>(null)
 
-  const filtered = faturas?.filter((f: any) =>
-    f.escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
+  const filtered = faturas?.filter((f: Fatura) =>
+    (f as any).escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleConfirmarClick = (fatura: any) => {
+  const handleConfirmarClick = (fatura: Fatura) => {
     const hoje = new Date()
     const vencimento = fatura.data_vencimento ? parseISO(fatura.data_vencimento) : null
     
@@ -38,6 +41,11 @@ export function FaturasPage() {
     } else {
       handleConfirmar(fatura.id)
     }
+  }
+
+  const handleDetailsClick = (fatura: Fatura) => {
+    setSelectedFatura(fatura)
+    setIsDetailsOpen(true)
   }
 
   const handleConfirmar = async (id: string) => {
@@ -72,7 +80,7 @@ export function FaturasPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 shadow-lg bg-amber-50 border-amber-100">
-          <CardHeader className="pb-2">
+          <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-amber-700">Aguardando Confirmação</CardTitle>
             <div className="text-2xl font-bold text-amber-900">
               {faturas?.filter((f: any) => f.status === 'pendente_confirmacao').length || 0}
@@ -80,7 +88,7 @@ export function FaturasPage() {
           </CardHeader>
         </Card>
         <Card className="border-0 shadow-lg bg-red-50 border-red-100">
-          <CardHeader className="pb-2">
+          <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-red-700">Atrasadas</CardTitle>
             <div className="text-2xl font-bold text-red-900">
               {faturas?.filter((f: any) => f.status === 'atrasado').length || 0}
@@ -90,7 +98,7 @@ export function FaturasPage() {
       </div>
 
       <Card className="border-0 shadow-xl overflow-hidden bg-white">
-        <CardHeader>
+        <CardHeader className="pt-[30px] gap-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle>Histórico de Faturas</CardTitle>
@@ -168,18 +176,20 @@ export function FaturasPage() {
                               <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {f.status === 'pendente_confirmacao' && (
-                                <DropdownMenuItem
-                                  onClick={() => handleConfirmarClick(f)}
-                                  className="text-emerald-600 font-bold"
-                                >
-                                  <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar Pagamento
+                                {f.status === 'pendente_confirmacao' && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleConfirmarClick(f)}
+                                    className="text-emerald-600 font-bold"
+                                  >
+                                    <CheckCircle2 className="mr-2 h-4 w-4" /> Confirmar Pagamento
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => handleDetailsClick(f)}>
+                                  <FileText className="mr-2 h-4 w-4" /> Detalhes
                                 </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem><FileText className="mr-2 h-4 w-4" /> Detalhes</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -223,6 +233,129 @@ export function FaturasPage() {
               <CheckCircle2 className="h-4 w-4 mr-2" />
               Confirmar Mesmo Assim
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Detalhes da Fatura */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-2xl bg-white border-0 shadow-2xl">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-zinc-900">
+              <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100/50">
+                <FileText className="h-6 w-6 text-indigo-600" />
+              </div>
+              Detalhes da Fatura
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground mt-1">
+              Confira as informações completas do pagamento e conciliação.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedFatura && (
+            <div className="py-6 space-y-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Instituição</p>
+                  <p className="text-lg font-bold text-zinc-900 leading-tight">{selectedFatura.escola?.razao_social}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</p>
+                  <div>{getStatusBadge(selectedFatura.status)}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8 p-6 bg-zinc-50 rounded-2xl border border-zinc-100">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Valor Total</p>
+                  <p className="text-2xl font-black text-indigo-600">R$ {Number(selectedFatura.valor).toFixed(2).replace('.', ',')}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Competência</p>
+                  <p className="text-lg font-bold text-zinc-900">
+                    {selectedFatura.competencia ? format(new Date(selectedFatura.competencia), 'MMMM/yyyy', { locale: ptBR }).toUpperCase() : '—'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vencimento</p>
+                  <div className="flex items-center gap-2 font-bold text-zinc-700">
+                    <Calendar className="h-4 w-4 text-zinc-400" />
+                    {selectedFatura.data_vencimento ? format(new Date(selectedFatura.data_vencimento), 'dd/MM/yyyy') : '—'}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pagamento</p>
+                  <div className="flex items-center gap-2 font-bold text-zinc-700">
+                    <Clock className="h-4 w-4 text-zinc-400" />
+                    {selectedFatura.data_pagamento ? format(new Date(selectedFatura.data_pagamento), 'dd/MM/yyyy') : '—'}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Registrada em</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {selectedFatura.created_at ? format(new Date(selectedFatura.created_at), 'dd/MM/yyyy HH:mm') : '—'}
+                  </p>
+                </div>
+              </div>
+
+              {selectedFatura.comprovante_url && (
+                <div className="space-y-3 pt-4 border-t border-zinc-100">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Comprovante de Pagamento</p>
+                  <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-emerald-700">
+                      <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">Arquivo Enviado</p>
+                        <p className="text-xs opacity-80">Enviado pela instituição para análise.</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => window.open(selectedFatura.comprovante_url, '_blank')}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white hover:bg-zinc-50 border-emerald-200 text-emerald-700 font-bold"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Abrir Comprovante
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {selectedFatura.status === 'pendente_confirmacao' && (
+                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-1" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">Aguardando Confirmação</p>
+                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                      Esta escola enviou um comprovante de pagamento. Verifique se o valor caiu na conta antes de confirmar.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setIsDetailsOpen(false)} className="font-bold border-zinc-200">
+              Fechar
+            </Button>
+            {selectedFatura?.status === 'pendente_confirmacao' && (
+              <Button 
+                onClick={() => {
+                  setIsDetailsOpen(false)
+                  handleConfirmarClick(selectedFatura)
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Confirmar Agora
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

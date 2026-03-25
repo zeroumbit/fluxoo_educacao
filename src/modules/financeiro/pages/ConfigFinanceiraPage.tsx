@@ -121,7 +121,7 @@ export function ConfigFinanceiraPage() {
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" /></div>
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto px-4 animate-in fade-in duration-500">
+    <div className="space-y-6 px-4 md:px-8 animate-in fade-in duration-500">
       <div className="text-left py-4">
         <h1 className="text-3xl font-black tracking-tight text-[#1E293B]">Configurações Financeiras</h1>
         <p className="text-[#64748B] font-medium italic text-sm">Regras de recebimento, multas, juros e métodos de pagamento</p>
@@ -135,7 +135,7 @@ export function ConfigFinanceiraPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8 p-6 md:p-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             <div className="space-y-2.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Dia Vencimento Padrão</Label>
               <div className="relative">
@@ -160,7 +160,7 @@ export function ConfigFinanceiraPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 pt-4">
             <div className="space-y-2.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Juros de Mora (%/mês)</Label>
               <Input type="number" step="0.01" value={form.juros_mora_mensal} onChange={(e) => setForm({ ...form, juros_mora_mensal: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />

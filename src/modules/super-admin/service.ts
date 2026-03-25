@@ -191,11 +191,12 @@ export const superAdminService = {
   // ==========================================
   // FATURAS
   // ==========================================
-  async getFaturas(filters?: { status?: string }) {
+  async getFaturas(filters?: { status?: string; tenant_id?: string }) {
     let query = (supabase.from('faturas' as any) as any)
       .select('*, escola:escolas(razao_social), assinatura:assinaturas(plano_id)')
       .order('created_at', { ascending: false })
     if (filters?.status) query = query.eq('status', filters.status)
+    if (filters?.tenant_id) query = query.eq('tenant_id', filters.tenant_id)
     const { data, error } = await query
     if (error) throw error
     return (data as any[]) || []

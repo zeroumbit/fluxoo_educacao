@@ -299,7 +299,7 @@ export function DashboardPageMobile() {
     possuiAluno: displayData?.onboarding?.possuiAluno,
   }
 
-  if (userRole === 'funcionario' && displayData?.onboarding) {
+  if ((userRole === 'gestor' || userRole === 'funcionario') && displayData?.onboarding) {
     onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma
   }
 

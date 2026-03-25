@@ -472,7 +472,7 @@ export function DashboardPageWeb() {
     possuiAluno: dashboardData?.onboarding?.possuiAluno,
   }
 
-  if (userRole === 'funcionario' && dashboardData?.onboarding) {
+  if ((userRole === 'gestor' || userRole === 'funcionario') && dashboardData?.onboarding) {
     onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma
   }
 

@@ -114,7 +114,7 @@ function SidebarContent({
   const { hasPermission, isLoading: rbacLoading } = usePermissions()
   const status = dashboardData?.statusAssinatura
   const metodo = dashboardData?.metodoPagamento
-  const isManual = metodo === 'pix' || metodo === 'boleto' || metodo === 'manual'
+  const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'
 
   // Só bloqueia se os dados foram carregados e o status atual for manual + não ativo
   const isBlocked = !isLoadingDashboard && !!dashboardData && status !== 'ativa' && isManual
@@ -242,7 +242,7 @@ export function AdminLayout() {
 
   const status = dashboard?.statusAssinatura
   const metodo = dashboard?.metodoPagamento
-  const isManual = metodo === 'pix' || metodo === 'boleto' || metodo === 'manual'
+  const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'
   
   // Consistência: só bloqueia se carregou e é manual + pendente
   const isBlocked = !isLoadingDashboard && !!dashboard && status !== 'ativa' && isManual

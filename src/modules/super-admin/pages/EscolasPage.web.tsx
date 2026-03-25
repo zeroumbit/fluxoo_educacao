@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import type { Fatura } from '@/lib/database.types'
 import {
   useEscolas,
   useUpdateEscolaStatus,
   useSuspenderEscola,
-  useEscolaDetalhes
+  useEscolaDetalhes,
+  useFaturas
 } from '../hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -66,6 +68,7 @@ export function EscolasPageWeb() {
   const [escolaSelecionada, setEscolaSelecionada] = useState<string | null>(null)
   const [dialogDetalhesAberto, setDialogDetalhesAberto] = useState(false)
   const [dialogSuspensaoAberto, setDialogSuspensaoAberto] = useState(false)
+  const [dialogPagamentosAberto, setDialogPagamentosAberto] = useState(false)
   const [motivoSuspensao, setMotivoSuspensao] = useState('')
 
   const { data: detalhesEscola } = useEscolaDetalhes(escolaSelecionada)
@@ -93,6 +96,11 @@ export function EscolasPageWeb() {
     setEscolaSelecionada(id)
     setMotivoSuspensao('')
     setDialogSuspensaoAberto(true)
+  }
+
+  const handleVerPagamentos = (id: string) => {
+    setEscolaSelecionada(id)
+    setDialogPagamentosAberto(true)
   }
 
   const handleConfirmarSuspensao = async () => {
@@ -164,7 +172,7 @@ export function EscolasPageWeb() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white">
-          <CardHeader className="pb-2">
+          <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Aguardando Aprovação</CardTitle>
             <div className="text-2xl font-bold text-amber-600">
               {escolas?.filter(e => e.status_assinatura === 'pendente').length}
@@ -172,7 +180,7 @@ export function EscolasPageWeb() {
           </CardHeader>
         </Card>
         <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white">
-          <CardHeader className="pb-2">
+          <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Instituições Ativas</CardTitle>
              <div className="text-2xl font-bold text-emerald-600">
               {escolas?.filter(e => e.status_assinatura === 'ativa').length}
@@ -182,7 +190,7 @@ export function EscolasPageWeb() {
       </div>
 
       <Card className="border-0 shadow-xl shadow-zinc-200/50 overflow-hidden bg-white">
-        <CardHeader>
+        <CardHeader className="pt-[30px] gap-3">
            <CardTitle>Instituições Cadastradas</CardTitle>
            <CardDescription>Lista global de tenants e status contratual.</CardDescription>
         </CardHeader>
@@ -269,6 +277,12 @@ export function EscolasPageWeb() {
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Detalhes
                         </DropdownMenuItem>
+                        
+                        <DropdownMenuItem onClick={() => handleVerPagamentos(escola.id)}>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Pagamentos
+                        </DropdownMenuItem>
+
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           onClick={() => handleSuspenderAcesso(escola.id)}
@@ -541,6 +555,121 @@ export function EscolasPageWeb() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Histórico de Pagamentos */}
+      <DialogPagamentos escolaId={escolaSelecionada} open={dialogPagamentosAberto} onOpenChange={setDialogPagamentosAberto} />
     </div>
+  )
+}
+
+function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { data: faturas, isLoading } = useFaturas(escolaId ? { tenant_id: escolaId } : undefined)
+  const { data: detalhesEscola } = useEscolaDetalhes(escolaId)
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pago': return <Badge className="bg-emerald-500 hover:bg-emerald-600">Pago</Badge>
+      case 'pendente': return <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">Pendente</Badge>
+      case 'pendente_confirmacao': return <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">Aguardando Confirmação</Badge>
+      case 'atrasado': return <Badge variant="destructive">Atrasado</Badge>
+      case 'cancelado': return <Badge variant="secondary">Cancelado</Badge>
+      default: return <Badge variant="secondary">{status}</Badge>
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-white border-0 shadow-2xl p-0">
+          <DialogHeader className="p-8 border-b bg-zinc-50/50">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center border border-indigo-200 shadow-sm">
+                <CreditCard className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black text-zinc-900 leading-tight">Histórico de Pagamentos</DialogTitle>
+                <DialogDescription className="text-zinc-600 font-medium">
+                  {detalhesEscola?.razao_social || 'Carregando...'}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-8">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="h-12 w-12 rounded-full border-4 border-zinc-100 border-t-indigo-600 animate-spin" />
+                <p className="text-sm font-bold text-zinc-400 animate-pulse uppercase tracking-widest">Buscando histórico...</p>
+              </div>
+            ) : faturas && faturas.length > 0 ? (
+              <div className="border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+                <Table>
+                  <TableHeader className="bg-zinc-50/50">
+                    <TableRow>
+                      <TableHead className="pl-6 text-[10px] font-black uppercase tracking-widest text-zinc-500 py-4">Competência</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-zinc-500 py-4">Valor</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-zinc-500 py-4">Vencimento</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-zinc-500 py-4">Status</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-zinc-500 py-4">Comprovante</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {faturas.map((f: Fatura) => (
+                      <TableRow key={f.id} className="group hover:bg-zinc-50 transition-colors border-zinc-100">
+                        <TableCell className="pl-6 py-4">
+                          <span className="font-bold text-zinc-900 uppercase text-sm">
+                            {f.competencia ? format(new Date(f.competencia), 'MMM/yyyy', { locale: ptBR }) : '—'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <span className="font-black text-indigo-600">
+                            R$ {Number(f.valor).toFixed(2).replace('.', ',')}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-4 text-xs font-bold text-zinc-500">
+                          {f.data_vencimento ? format(new Date(f.data_vencimento), 'dd/MM/yyyy') : '—'}
+                        </TableCell>
+                        <TableCell className="py-4">
+                          {getStatusBadge(f.status)}
+                        </TableCell>
+                        <TableCell className="py-4">
+                          {f.comprovante_url ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 text-[11px] font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg"
+                              onClick={() => window.open(f.comprovante_url!, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3 mr-2" />
+                              Ver Comprovante
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] font-bold text-zinc-300 uppercase italic">Não enviado</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 bg-zinc-50/50 rounded-3xl border-2 border-dashed border-zinc-200">
+                <FileText className="h-16 w-16 text-zinc-200 mb-6" />
+                <p className="text-lg font-black text-zinc-400 uppercase tracking-widest">Nenhuma fatura registrada</p>
+                <p className="text-sm text-zinc-400 mt-2 font-medium">Esta instituição ainda não possui histórico de faturamento.</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="p-6 border-t bg-zinc-50/50 flex justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="px-8 font-black uppercase tracking-widest text-xs h-11 rounded-xl border-zinc-200 hover:bg-white hover:border-zinc-300 shadow-sm transition-all"
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
   )
 }

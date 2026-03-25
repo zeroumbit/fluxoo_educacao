@@ -135,7 +135,7 @@ export function useCreateAssinatura() {
 }
 
 // ========== FATURAS ==========
-export function useFaturas(filters?: { status?: string }) {
+export function useFaturas(filters?: { status?: string; tenant_id?: string }) {
   return useQuery({
     queryKey: ['admin', 'faturas', filters],
     queryFn: () => superAdminService.getFaturas(filters),

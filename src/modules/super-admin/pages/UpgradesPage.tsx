@@ -58,7 +58,7 @@ export function UpgradesPage() {
       </div>
 
       <Card className="border-0 shadow-xl overflow-hidden bg-white">
-        <CardHeader>
+        <CardHeader className="pt-[30px]">
           <CardTitle className="flex items-center gap-2"><ArrowUpCircle className="h-5 w-5 text-indigo-600" /> Fila de Upgrades</CardTitle>
           <CardDescription>Ao aprovar, a assinatura atual é atualizada e o histórico anterior é arquivado.</CardDescription>
         </CardHeader>

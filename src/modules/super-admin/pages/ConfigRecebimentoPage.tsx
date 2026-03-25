@@ -63,7 +63,7 @@ export function ConfigRecebimentoPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-0 shadow-xl bg-white">
-            <CardHeader>
+            <CardHeader className="pt-[30px]">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export function ConfigRecebimentoPage() {
         {/* Preview */}
         <div>
           <Card className="border-0 shadow-xl bg-gradient-to-b from-emerald-50 to-white sticky top-8">
-            <CardHeader>
+            <CardHeader className="pt-[30px]">
               <CardTitle className="text-sm">Pré-visualização no Checkout</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

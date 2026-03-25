@@ -242,13 +242,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    const isResponsavel = authUser?.role === 'responsavel'
     await supabase.auth.signOut()
     setAuthUser(null)
     // Limpar estado persistido do portal para evitar vazamento de dados entre usuários no mesmo navegador
     usePortalStore.getState().clearStore()
     // Limpar permissões RBAC cacheadas
     useRBACStore.getState().clearPermissions()
-    window.location.href = '/portal/login'
+    window.location.href = isResponsavel ? '/portal/login' : '/login'
   }
 
   return (
