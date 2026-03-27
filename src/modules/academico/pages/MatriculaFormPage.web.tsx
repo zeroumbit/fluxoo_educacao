@@ -210,15 +210,35 @@ export function MatriculaFormPageWeb() {
                         description: `Valor baseado na turma ${t.nome}`
                       })
                     }
+                    
+                    // Alerta de Capacidade
+                    const matriculados = (t.alunos_ids || []).length
+                    if (t.capacidade_maxima && matriculados >= t.capacidade_maxima) {
+                      toast.warning(`A turma ${t.nome} atingiu a capacidade máxima (${t.capacidade_maxima}).`, {
+                        description: 'Você pode matricular o aluno, mas o sistema emitirá um alerta no banco.'
+                      })
+                    }
                   }
                 }}>
                   <SelectTrigger id="serie_ano">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(turmas as any[])?.map((t: any) => (
-                      <SelectItem key={t.id} value={t.nome} className="font-medium">{t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</SelectItem>
-                    ))}
+                    {(turmas as any[])?.map((t: any) => {
+                      const isFull = t.capacidade_maxima && (t.alunos_ids?.length || 0) >= t.capacidade_maxima;
+                      return (
+                        <SelectItem key={t.id} value={t.nome} className="font-medium">
+                          <div className="flex items-center justify-between w-full gap-4">
+                            <span>{t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</span>
+                            {t.capacidade_maxima && (
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${isFull ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                                {t.alunos_ids?.length || 0}/{t.capacidade_maxima}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>

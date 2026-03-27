@@ -237,25 +237,9 @@ export const alunoService = {
 
     if (vincError) throw vincError
 
-    // Tenta gerar cobranças iniciais se houver valor de mensalidade
-    const dadosExtra = alunoDados as any
-    if (dadosExtra.valor_mensalidade_atual && dadosExtra.valor_mensalidade_atual > 0) {
-      try {
-        const { financeiroService } = await import('@/modules/financeiro/service')
-        await financeiroService.gerarCobrancasIniciaisGenerico({
-          aluno_id: alunoData.id,
-          tenant_id: alunoDados.tenant_id!,
-          data_inicio: dadosExtra.data_ingresso || new Date().toISOString().split('T')[0],
-          valor_mensalidade: dadosExtra.valor_mensalidade_atual,
-        })
-      } catch (finError: any) {
-        console.error('⚠️ Erro ao gerar cobrança inicial no cadastro de aluno:', finError)
-        // Propaga erro se for algo estrutural que impeça o funcionamento financeiro
-        if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
-           throw new Error('Erro ao gerar cobrança inicial: verifique se os dados financeiros da unidade estão configurados.')
-        }
-      }
-    }
+    // REGRA DE NEGÓCIO ATUALIZADA (Março/2026): 
+    // O financeiro (cobranças) agora é gerado apenas no momento da MATRÍCULA (academicoService),
+    // respeitando o fluxo de que o aluno pode ser cadastrado antes de ser matriculado em uma turma.
 
     return alunoData
   },

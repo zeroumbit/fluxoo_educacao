@@ -35,6 +35,22 @@ export const academicoService = {
       throw new Error(errorMsg);
     }
 
+    // --- NOVA VALIDAÇÃO DE CAPACIDADE ---
+    if (payload.turma_id) {
+      const { data: turma, error: tErr } = await (supabase.from('turmas' as any) as any)
+        .select('nome, capacidade_maxima, alunos_ids')
+        .eq('id', payload.turma_id)
+        .single()
+      
+      if (!tErr && turma) {
+        const matriculados = (turma.alunos_ids || []).length
+        if (turma.capacidade_maxima && matriculados >= turma.capacidade_maxima) {
+          throw new Error(`Turma cheia! A turma "${turma.nome}" possui capacidade para ${turma.capacidade_maxima} alunos e já tem ${matriculados} matriculados.`)
+        }
+      }
+    }
+    // ------------------------------------
+
     // Tenta primeiro com plural (padrão do sistema)
     const { data: insertedData, error } = await (supabase.from('matriculas' as any) as any)
       .insert(payload)
@@ -67,6 +83,23 @@ export const academicoService = {
       }
     }
 
+    // Tenta sincronizar o valor da mensalidade no cadastro do aluno para reflexão no portal/listagem
+    try {
+      const { data: turma } = await (supabase.from('turmas' as any) as any)
+        .select('valor_mensalidade')
+        .eq('id', data.turma_id)
+        .maybeSingle()
+
+      await (supabase.from('alunos' as any) as any)
+        .update({ 
+          valor_mensalidade_atual: turma?.valor_mensalidade || data.valor_matricula,
+          status: 'ativo'
+        })
+        .eq('id', data.aluno_id)
+    } catch (syncError) {
+      console.error('⚠️ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
+    }
+
     return data
   },
   async atualizarMatricula(id: string, tenantId: string, matricula: any, userId?: string) {
@@ -74,6 +107,32 @@ export const academicoService = {
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.matriculas.update')
     }
+
+    // --- NOVA VALIDAÇÃO DE CAPACIDADE NO UPDATE ---
+    if (matricula.turma_id) {
+      const { data: currentMatricula } = await (supabase.from('matriculas' as any) as any)
+        .select('turma_id, aluno_id')
+        .eq('id', id)
+        .single();
+      
+      // Se estiver mudando de turma, ou se a turma_id está sendo atribuída agora (anteriormente null)
+      if (matricula.turma_id !== currentMatricula?.turma_id) {
+         const { data: turma, error: tErr } = await (supabase.from('turmas' as any) as any)
+          .select('nome, capacidade_maxima, alunos_ids')
+          .eq('id', matricula.turma_id)
+          .single()
+        
+        if (!tErr && turma) {
+          const matriculados = (turma.alunos_ids || []).length
+          const AlunoJaNaTurma = (turma.alunos_ids || []).includes(currentMatricula?.aluno_id);
+
+          if (!AlunoJaNaTurma && turma.capacidade_maxima && matriculados >= turma.capacidade_maxima) {
+            throw new Error(`Turma cheia! A turma "${turma.nome}" possui capacidade para ${turma.capacidade_maxima} alunos e já tem ${matriculados} matriculados.`);
+          }
+        }
+      }
+    }
+    // ----------------------------------------------
 
     // 1. Atualizar a matrícula
     const { data: updatedList, error } = await (supabase.from('matriculas' as any) as any)

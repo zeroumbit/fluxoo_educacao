@@ -360,12 +360,7 @@ export function NotasPageWeb() {
           .select('aluno_id, serie_ano, turma_id')
           .eq('tenant_id', turmaInfo.tenant_id!)
           
-        const filtradas = (matriculas || []).filter((m: any) => {
-          if (m.turma_id === turmaId) return true
-          const nomeTurmaNorm = (turmaInfo.nome || '').toLowerCase().trim().replace(/[º°]/g, '')
-          const serieNorm = (m.serie_ano || '').toLowerCase().trim().replace(/[º°]/g, '')
-          return nomeTurmaNorm === serieNorm
-        })
+        const filtradas = (matriculas || []).filter((m: any) => m.turma_id === turmaId)
 
         if (!filtradas.length) return []
         const ids = filtradas.map((m: any) => m.aluno_id)

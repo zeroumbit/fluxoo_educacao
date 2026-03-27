@@ -118,15 +118,15 @@ export function PortalHomeV2Web() {
         {/* Coluna Principal: Alertas e Mural */}
         <div className="lg:col-span-2 flex flex-col gap-8">
           {/* Alertas */}
-          <section className="flex flex-col gap-4">
+          <section className="flex flex-col gap-4 max-w-[800px]">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">Alertas e Pendências</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {alerts.length === 0 ? (
                 <p className="text-sm text-slate-400 italic">Nenhum alerta pendente.</p>
               ) : (
                 alerts.map((alert) => (
-                  <div 
-                    key={alert.id} 
+                  <div
+                    key={alert.id}
                     onClick={alert.action}
                     className={cn(
                       "flex items-start gap-4 p-5 rounded-3xl border shadow-sm transition-all cursor-pointer hover:shadow-md",
@@ -150,20 +150,20 @@ export function PortalHomeV2Web() {
                 <Info className="w-8 h-8 text-teal-500" />
                 Mural Direto
               </h2>
-              <button 
+              <button
                 onClick={() => navigate('/portal/avisos')}
                 className="text-sm font-bold text-teal-600 hover:bg-teal-50 px-4 py-2 rounded-xl transition-colors"
               >
                 Abrir Central de Notificações
               </button>
             </div>
-            <div className={`grid grid-cols-1 ${activeAvisos.length === 0 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
+            <div className="grid grid-cols-1 gap-6">
               {activeAvisos.length === 0 ? (
                 <>
-                  {[0, 1, 2, 3].map((offset) => {
+                  {[0].map((offset) => {
                     const Icon = getIcon(offset);
                     return (
-                      <motion.div 
+                      <motion.div
                         key={offset}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -173,7 +173,7 @@ export function PortalHomeV2Web() {
                         <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
                           <Icon className="w-24 h-24" />
                         </div>
-                        
+
                         <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
                           <Icon className="w-7 h-7 text-teal-500" />
                         </div>
@@ -195,7 +195,7 @@ export function PortalHomeV2Web() {
                   })}
                 </>
               ) : (
-                activeAvisos.map((news: any) => (
+                activeAvisos.slice(0, 1).map((news: any) => (
                   <div key={news.id} className="bg-slate-50 border border-slate-100 p-6 rounded-3xl hover:border-teal-200 transition-colors cursor-pointer group">
                     <span className="inline-block px-3 py-1.5 bg-white text-slate-600 rounded-lg text-[11px] font-black uppercase tracking-widest mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                       {news.turma?.nome || 'Geral'}
