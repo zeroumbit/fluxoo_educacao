@@ -204,37 +204,49 @@ export function PortalHomeV2Mobile() {
         </div>
         {/* Horizontal scroll snap - padrão iOS/Android */}
         <div
-          className="flex gap-3 overflow-x-auto pb-4 px-1 snap-x hide-scrollbar"
+          className="flex gap-3 overflow-x-auto pb-4 px-1 snap-x hide-scrollbar scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           role="region"
           aria-label="Lista horizontal de avisos"
         >
           {activeAvisos.length === 0 ? (
             <>
-              {[0, 1, 2, 3].map((offset) => {
+              {[0].map((offset) => {
                 const Icon = getIcon(offset);
                 return (
                   <motion.div
                     key={offset}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: offset * 0.1 }}
-                    className="min-w-[260px] flex-shrink-0 bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-center snap-start relative overflow-hidden"
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: offset * 0.1, type: "spring", stiffness: 100, damping: 15 }}
+                    className="min-w-[85vw] max-w-[340px] flex-shrink-0 bg-gradient-to-br from-teal-50 to-white p-6 rounded-[28px] border border-teal-100 shadow-[0_4px_20px_rgba(20,184,166,0.08)] flex flex-col items-center text-center justify-center snap-start relative overflow-hidden active:scale-[0.98] transition-transform duration-200"
                   >
-                    <Icon className="absolute -right-2 -top-2 w-16 h-16 text-slate-50 opacity-50" />
-                    
-                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center mb-4">
-                      <Icon className="w-5 h-5 text-teal-500" />
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0.3, scale: 0.8 }}
+                      animate={{ opacity: 0.5, scale: 1 }}
+                      transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                      className="absolute -right-4 -bottom-4"
+                    >
+                      <Icon className="w-32 h-32 text-teal-200 opacity-30" />
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="w-14 h-14 bg-gradient-to-br from-teal-100 to-teal-50 rounded-2xl flex items-center justify-center mb-5 shadow-inner"
+                    >
+                      <Icon className="w-7 h-7 text-teal-600" />
+                    </motion.div>
 
                     <AnimatePresence mode="wait">
                       <motion.p
                         key={getInformativeCard(offset)}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 1.05 }}
-                        transition={{ duration: 0.6 }}
-                        className="text-[14px] font-medium text-slate-700 leading-snug italic"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        className="text-[15px] font-medium text-slate-700 leading-relaxed px-2"
                       >
                         {getInformativeCard(offset)}
                       </motion.p>
@@ -244,23 +256,26 @@ export function PortalHomeV2Mobile() {
               })}
             </>
           ) : (
-            activeAvisos.map((news: any) => (
-              <div
+            activeAvisos.slice(0, 1).map((news: any, idx: number) => (
+              <motion.div
                 key={news.id}
-                className="min-w-[260px] flex-shrink-0 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm snap-start"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.1, type: "spring", stiffness: 100, damping: 15 }}
+                className="min-w-[85vw] max-w-[340px] flex-shrink-0 bg-white p-5 rounded-[28px] border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.06)] snap-start active:scale-[0.98] transition-transform duration-200"
               >
                 {/* Chip - Material Design 3 */}
-                <span className="inline-block px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-[11px] font-medium uppercase tracking-wide mb-3">
+                <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 rounded-full text-[11px] font-bold uppercase tracking-wide mb-3 border border-teal-100">
                   {news.turma?.nome || 'Geral'}
                 </span>
                 {/* Title - iOS Body (16px Regular) / Material Body Large (16px Regular) */}
-                <h3 className="text-[16px] text-slate-900 mb-2 leading-tight">{news.titulo}</h3>
+                <h3 className="text-[16px] font-bold text-slate-900 mb-3 leading-snug">{news.titulo}</h3>
                 {/* Caption - iOS Caption 1 (12px Regular) / Material Label Small (12px Regular) */}
-                <span className="text-[12px] text-slate-500 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" aria-hidden="true" />
-                  {new Date(news.created_at).toLocaleDateString('pt-BR')}
+                <span className="text-[12px] text-slate-500 font-medium flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-teal-500" aria-hidden="true" />
+                  {new Date(news.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </span>
-              </div>
+              </motion.div>
             ))
           )}
         </div>

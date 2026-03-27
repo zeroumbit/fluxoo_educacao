@@ -7,7 +7,7 @@ export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard', authUser?.tenantId],
     queryFn: () => dashboardService.buscarDados(authUser!.tenantId),
-    enabled: !!authUser?.tenantId,
+    enabled: !!authUser?.tenantId && authUser?.tenantId !== '' && authUser?.tenantId !== 'PENDING_TENANT',
     // Se estiver pendente, verifica a cada 60 segundos para não sobrecarregar
     refetchInterval: (query) => {
       const status = query.state.data?.statusAssinatura

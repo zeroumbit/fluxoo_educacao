@@ -64,28 +64,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 2. GESTOR
       if (user.user_metadata?.role === 'gestor') {
-        const resp = await withTimeout(
-          supabase
-            .from('escolas')
-            .select('id, razao_social, logradouro, numero, bairro, cidade, estado, cep')
-            .eq('gestor_user_id', user.id)
-            .limit(1)
-            .maybeSingle() as any,
-          5000
-        ) as any
+        const { data: escola, error: erro } = await supabase
+          .from('escolas')
+          .select('id, razao_social, logradouro, numero, bairro, cidade, estado, cep')
+          .eq('gestor_user_id', user.id)
+          .limit(1)
+          .maybeSingle() as any
 
-        if (!resp) {
-          setAuthUser({
-            user, session,
-            tenantId: '',
-            role: 'gestor',
-            nome: user.user_metadata?.full_name || 'Gestor',
-          })
-          return
+        if (erro) {
+          console.error('❌ Erro na busca da escola:', erro.message)
+          // Em caso de erro real de rede/banco, não definimos authUser para permitir refetch ou manter loading
+          throw erro
         }
-
-        const { data: escola, error: erro } = resp as { data: any, error: any }
-        if (erro) console.error('❌ Erro na busca da escola:', erro.message)
         
         if (escola) {
           setAuthUser({
@@ -105,9 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
+        // Se não encontrou a escola (ex: cadastro incompleto), tratamos como gestor sem tenant
+        // mas marcamos como tal para que a UI saiba que não é um erro de carregamento
         setAuthUser({
           user, session,
-          tenantId: '',
+          tenantId: 'PENDING_TENANT', // Valor distintivo em vez de string vazia
           role: 'gestor',
           nome: user.user_metadata?.full_name || 'Gestor',
         })
