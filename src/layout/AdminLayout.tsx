@@ -248,7 +248,7 @@ export function AdminLayout() {
   const isBlocked = !isLoadingDashboard && !!dashboard && status !== 'ativa' && isManual
 
   return (
-    <div className="min-h-screen bg-zinc-50/50">
+    <div className="min-h-[100dvh] bg-zinc-50/50 dark:bg-slate-950">
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r bg-white/80 backdrop-blur-sm lg:block">
         <SidebarContent dashboardData={dashboard} isLoadingDashboard={isLoadingDashboard} />
@@ -268,8 +268,8 @@ export function AdminLayout() {
       </Sheet>
 
       {/* Bottom Navigation para Mobile (App Style) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-t border-zinc-200/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-        <div className="mx-auto w-full max-w-[640px] flex items-center justify-around h-20 px-4">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto w-full max-w-[640px] flex items-center justify-around h-20 px-4 mb-[env(safe-area-inset-bottom,0)]">
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
@@ -333,7 +333,7 @@ export function AdminLayout() {
       </nav>
 
       {/* Main Content */}
-      <main className="lg:pl-64 flex flex-col min-h-screen">
+      <main className="lg:pl-64 flex flex-col min-h-[100dvh]">
         {/* Top Header - Desktop Only (Mobile uses BottomNav) */}
         <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-8">
           <div className="flex items-center gap-4">

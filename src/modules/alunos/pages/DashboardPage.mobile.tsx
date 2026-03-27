@@ -354,8 +354,8 @@ export function DashboardPageMobile() {
   // Skeleton Loading (Rule 5: No spinners)
   if (isActuallyLoading) {
     return (
-      <div className="min-h-screen bg-slate-50/50 pb-32">
-        <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-8">
+      <div className="min-h-[100dvh] bg-slate-50/50 dark:bg-slate-950 pb-32">
+        <div className="mx-auto w-full max-w-[640px] px-5 pt-6 space-y-8">
           <div className="space-y-2 pt-2">
             <Skeleton className="h-3 w-32 rounded-lg" />
             <Skeleton className="h-8 w-52 rounded-lg" />
@@ -384,10 +384,10 @@ export function DashboardPageMobile() {
   const saldoPositivo = saldo >= 0
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+    <div className="min-h-[100dvh] bg-slate-50/50 dark:bg-slate-950">
       <div className="mx-auto w-full max-w-[640px]">
         <PullToRefresh onRefresh={onRefresh}>
-          <div className="space-y-7 pt-6">
+          <div className="space-y-8 pt-6 pb-20">
 
             {/* Alerta de Aprovação */}
             <StatusAprovacaoNotificationMobile status={statusAssinatura} metodo={metodoPagamento} />
@@ -406,7 +406,7 @@ export function DashboardPageMobile() {
 
 
             {/* ── Saudação ── */}
-            <section className="flex items-center justify-between">
+            <section className="flex items-center justify-between px-5">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
                   {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
@@ -423,16 +423,18 @@ export function DashboardPageMobile() {
 
             {/* Notificação de Alunos Sem Matrícula */}
             {(displayData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (
-              <AlunosSemMatriculaNotificationMobile
-                count={displayData?.alunosSemMatricula ?? 0}
-                onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
-              />
+              <div className="px-5">
+                <AlunosSemMatriculaNotificationMobile
+                  count={displayData?.alunosSemMatricula ?? 0}
+                  onDismiss={() => setShowAlunosSemMatriculaNotification(false)}
+                />
+              </div>
             )}
 
             {/* ── Ações Rápidas ── */}
             <section>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-0.5">Ações Rápidas</h3>
-              <div className="flex gap-5 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-5">Ações Rápidas</h3>
+              <div className="flex gap-5 overflow-x-auto pb-4 px-5 no-scrollbar">
                 {quickActions.map((action, i) => (
                   <motion.button
                     key={i}
@@ -450,7 +452,7 @@ export function DashboardPageMobile() {
             </section>
 
             {/* ── Grid 2x2: Métricas Principais ── */}
-            <section className="grid grid-cols-2 gap-4">
+            <section className="grid grid-cols-2 gap-4 px-5">
               {/* Card 1: Alunos */}
               <motion.div
                 whileTap={{ scale: 0.97 }}
@@ -548,7 +550,7 @@ export function DashboardPageMobile() {
 
             {/* ── Radar de Atenção ── */}
             {displayData?.radarEvasao && displayData.radarEvasao.length > 0 && (
-              <section className="space-y-4">
+              <section className="space-y-4 px-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
@@ -560,40 +562,61 @@ export function DashboardPageMobile() {
                 </div>
 
                 <div className="space-y-3">
-                  {displayData.radarEvasao.slice(0, 3).map((aluno: RadarAluno) => (
-                    <motion.div
-                      key={aluno.aluno_id}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => handleOpenRadarDetails(aluno)}
-                      className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4 cursor-pointer"
-                    >
-                      <div className="h-11 w-11 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-200 font-black text-base shrink-0">
-                        {aluno.nome_completo.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate mb-1">{aluno.nome_completo}</h4>
-                        <div className="flex gap-2 items-center flex-wrap">
-                          {aluno.faltas_consecutivas >= 3 && (
-                            <span className="text-[9px] font-black text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded">
-                              {aluno.faltas_consecutivas} Faltas
-                            </span>
-                          )}
-                          {aluno.cobrancas_atrasadas > 0 && (
-                            <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded">
-                              {aluno.cobrancas_atrasadas} Pendência{aluno.cobrancas_atrasadas > 1 ? 's' : ''}
-                            </span>
-                          )}
+                  {displayData.radarEvasao.slice(0, 3).map((aluno: RadarAluno) => {
+                    const nivel =
+                      aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 5
+                        ? 'CRÍTICO'
+                        : aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3
+                        ? 'ALERTA'
+                        : 'ATENÇÃO'
+                  
+                    const badgeClass =
+                      nivel === 'CRÍTICO'
+                        ? 'bg-rose-600 text-white'
+                        : nivel === 'ALERTA'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-yellow-400 text-yellow-900'
+
+                    return (
+                      <motion.div
+                        key={aluno.aluno_id}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleOpenRadarDetails(aluno)}
+                        className="bg-white dark:bg-slate-800 rounded-[1.5rem] p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 group"
+                      >
+                        <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950 flex items-center justify-center text-rose-600 dark:text-rose-400 font-black text-lg shrink-0">
+                          {aluno.nome_completo.charAt(0)}
                         </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-slate-300 shrink-0" />
-                    </motion.div>
-                  ))}
+                        
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate mb-1">
+                            {aluno.nome_completo}
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            <span className={cn(
+                              "text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider",
+                              badgeClass
+                            )}>
+                              {nivel}
+                            </span>
+                            {aluno.cobrancas_atrasadas > 0 && (
+                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 font-black uppercase tracking-wider border border-amber-100 dark:border-amber-900/50">
+                                {aluno.cobrancas_atrasadas} {aluno.cobrancas_atrasadas === 1 ? 'Pendência' : 'Pendências'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <ChevronRight className="h-5 w-5 text-slate-300 group-active:translate-x-1 transition-transform" />
+                      </motion.div>
+                    )
+                  })}
                 </div>
               </section>
             )}
 
             {/* ── Mural ── */}
-            <section className="space-y-4">
+            <section className="space-y-4 px-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Megaphone className="h-4 w-4 text-indigo-500" />
@@ -610,18 +633,22 @@ export function DashboardPageMobile() {
                     key={aviso.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/mural')}
-                    className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer"
+                    className="bg-white dark:bg-slate-800 rounded-[1.5rem] p-5 shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer relative overflow-hidden group"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <Badge variant="secondary" className="text-[8px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-0 font-black uppercase px-2.5 py-1 rounded-lg">
-                        {aviso.turmas?.nome || 'Geral'}
+                    <div className="flex justify-between items-start mb-2 relative z-10">
+                      <Badge variant="secondary" className="text-[8px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border-0 font-black uppercase px-2 py-0.5 rounded-md">
+                        {aviso.turmas?.nome || 'Comunicado Geral'}
                       </Badge>
-                      <span className="text-[9px] font-bold text-slate-300">
+                      <span className="text-[10px] font-bold text-slate-300">
                         {format(new Date(aviso.created_at), "dd MMM", { locale: ptBR })}
                       </span>
                     </div>
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-1 leading-snug">{aviso.titulo}</h4>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{aviso.conteudo}</p>
+                    <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-1 leading-tight tracking-tight relative z-10">
+                      {aviso.titulo}
+                    </h4>
+                    <p className="text-[11px] text-slate-400 line-clamp-1 leading-relaxed font-medium relative z-10">
+                      {aviso.conteudo}
+                    </p>
                   </motion.div>
                 ))}
                 {(!displayData?.avisosRecentes || displayData.avisosRecentes.length === 0) && (
