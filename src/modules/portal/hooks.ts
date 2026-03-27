@@ -85,6 +85,12 @@ export function useDashboardFamilia() {
         financeiro: {
           totalPendente: acc.financeiro.totalPendente + (d.financeiro?.totalPendente || 0),
           totalAtrasadas: acc.financeiro.totalAtrasadas + (d.financeiro?.totalAtrasadas || 0),
+          proximoVencimento: [
+            acc.financeiro.proximoVencimento, 
+            d.financeiro?.proximoVencimento
+          ]
+          .filter(Boolean)
+          .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
         },
         avisosRecentes: [...acc.avisosRecentes, ...(d.avisosRecentes || [])]
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -92,7 +98,7 @@ export function useDashboardFamilia() {
       }
     }, {
       frequencia: { percentual: 0, count: 0 },
-      financeiro: { totalPendente: 0, totalAtrasadas: 0 },
+      financeiro: { totalPendente: 0, totalAtrasadas: 0, proximoVencimento: null },
       avisosRecentes: []
     })
   }, [queries, isLoading])

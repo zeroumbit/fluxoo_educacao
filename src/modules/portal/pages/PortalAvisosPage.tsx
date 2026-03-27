@@ -103,7 +103,7 @@ function AvisoPortalCard({ aviso, expirado = false, expandedId, onToggleExpand }
                 </div>
 
                 <AnimatePresence>
-                  <motion.p 
+                  <motion.p
                     layout
                     className={cn(
                       'text-xs leading-relaxed transition-all',

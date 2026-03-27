@@ -1,7 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
 import { NotificationBell } from '@/components/ui/NotificationBell';
@@ -18,23 +19,61 @@ export function PortalHomeV2Mobile() {
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
+  
+  // Helper de vigência e mensagens
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
 
-  // Filtrar alertas baseados nos dados reais do dashboard
+  const informativeMessages = [
+    "Dê aquele abraço no seu pequeno hoje! O incentivo em casa faz toda a diferença.",
+    "Um dia produtivo começa com uma boa parceria entre escola e família!",
+    "A educação é o passaporte para o futuro. Vamos juntos nessa jornada!",
+    "Dica: Mantenha os dados do aluno sempre atualizados na secretaria.",
+    "Acompanhe o desempenho do seu filho na aba de Notas e Frequência.",
+    "A escola é o lugar onde grandes sonhos começam a tomar forma.",
+    "A parceria entre família e escola é a base para o sucesso do aluno."
+  ];
+
+  const [currentMessageIdx, setCurrentMessageIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentMessageIdx((prev) => (prev + 1) % informativeMessages.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getInformativeCard = (offset: number) => {
+    const idx = (currentMessageIdx + offset) % informativeMessages.length;
+    return informativeMessages[idx];
+  };
+
+  const informativeIcons = [Info, Clock, ArrowRight, FileSignature, Receipt];
+  const getIcon = (offset: number) => {
+    const idx = (currentMessageIdx + offset) % informativeIcons.length;
+    return informativeIcons[idx];
+  };
+
+  // Alertas dinâmicos
   const alerts = [];
   if (dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {
     alerts.push({
       id: 'fin-atraso',
-      text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso.`,
-      type: 'fin',
+      text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso. Regularize para evitar suspensão de serviços.`,
+      type: 'error',
       icon: Receipt
     });
   }
-  if (dashboard?.financeiro?.totalPendente && dashboard.financeiro.totalPendente > 0 && dashboard?.financeiro?.totalAtrasadas === 0) {
+
+  // Novo alerta verde (Em Dia) solicitado pelo usuário
+  if (dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
+    const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
     alerts.push({
-      id: 'fin-pendente',
-      text: `Há cobranças aguardando pagamento. Total: R$ ${dashboard.financeiro.totalPendente.toLocaleString('pt-BR')}`,
-      type: 'fin',
-      icon: Receipt
+      id: 'fin-em-dia',
+      text: `${responsavel?.nome?.split(' ')[0] || 'Responsável'}, sua mensalidade está em dia, mas caso já queira pagar a mensalidade que vence em ${dataVenc}, clique aqui.`,
+      type: 'success',
+      icon: Receipt,
+      action: () => navigate('/portal/financeiro')
     });
   }
 
@@ -84,16 +123,16 @@ export function PortalHomeV2Mobile() {
             key={alert.id}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-start gap-3 p-4 rounded-[16px] border ${
-              alert.type === 'fin' 
-                ? 'bg-orange-50 border-orange-200' 
-                : 'bg-rose-50 border-rose-200'
-            }`}
+            onClick={alert.action}
+            className={cn(
+               "flex items-start gap-3 p-4 rounded-[16px] border active:scale-95 transition-all",
+               alert.type === 'error' && "bg-orange-50 border-orange-200 text-orange-900",
+               alert.type === 'success' && "bg-emerald-50 border-emerald-200 text-emerald-900",
+            )}
             role="alert"
           >
             <alert.icon className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-700" aria-hidden="true" />
-            {/* Body - iOS Body (15px Regular) / Material Body Medium (15px Regular) */}
-            <span className="text-[15px] text-slate-900 leading-tight">{alert.text}</span>
+            <span className="text-[14px] font-bold leading-tight">{alert.text}</span>
           </motion.div>
         ))}
       </section>
@@ -110,8 +149,12 @@ export function PortalHomeV2Mobile() {
 
         <div className="flex flex-col gap-4 pl-2 relative before:absolute before:inset-y-0.5 before:left-[14px] before:w-px before:bg-slate-200">
           {!dashboard?.avisosRecentes || dashboard.avisosRecentes.length === 0 ? (
-            // Caption - iOS Caption 1 (13px Regular) / Material Body Small (13px Regular)
-            <p className="text-[13px] text-slate-400 pl-5 italic">Nenhum evento para hoje.</p>
+            <div className="flex flex-col gap-1 pl-6">
+              <span className="text-[14px] font-semibold text-slate-500 italic">Tudo tranquilo!</span>
+              <span className="text-[12px] text-slate-400 italic leading-snug">
+                Nenhum evento ou aviso agendado para hoje.
+              </span>
+            </div>
           ) : (
             dashboard.avisosRecentes.map((item: any, idx: number) => (
               <div key={idx} className="flex gap-3 relative">
@@ -166,11 +209,42 @@ export function PortalHomeV2Mobile() {
           role="region"
           aria-label="Lista horizontal de avisos"
         >
-          {!avisos || avisos.length === 0 ? (
-            // Caption - iOS Caption 1 (13px Regular) / Material Body Small (13px Regular)
-            <p className="text-[13px] text-slate-400 italic py-2">Nenhum aviso no mural.</p>
+          {activeAvisos.length === 0 ? (
+            <>
+              {[0, 1, 2, 3].map((offset) => {
+                const Icon = getIcon(offset);
+                return (
+                  <motion.div
+                    key={offset}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: offset * 0.1 }}
+                    className="min-w-[260px] flex-shrink-0 bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-col justify-center snap-start relative overflow-hidden"
+                  >
+                    <Icon className="absolute -right-2 -top-2 w-16 h-16 text-slate-50 opacity-50" />
+                    
+                    <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center mb-4">
+                      <Icon className="w-5 h-5 text-teal-500" />
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={getInformativeCard(offset)}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
+                        transition={{ duration: 0.6 }}
+                        className="text-[14px] font-medium text-slate-700 leading-snug italic"
+                      >
+                        {getInformativeCard(offset)}
+                      </motion.p>
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </>
           ) : (
-            avisos.map((news: any) => (
+            activeAvisos.map((news: any) => (
               <div
                 key={news.id}
                 className="min-w-[260px] flex-shrink-0 bg-white p-4 rounded-[20px] border border-slate-200 shadow-sm snap-start"

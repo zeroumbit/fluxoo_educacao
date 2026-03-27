@@ -78,7 +78,7 @@ const navigationGroups = [
       { name: 'Cobranças', href: '/financeiro', icon: CreditCard },
       { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet },
       { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp },
-      { name: 'Configurações', href: '/config-financeira', icon: Settings },
+      { name: 'Configurações', href: '/configuracoes', icon: Settings },
     ],
   },
   {

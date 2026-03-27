@@ -268,6 +268,9 @@ export const portalService = {
         totalPendente,
         totalAtrasadas,
         totalCobrancas: cobrancas.length,
+        proximoVencimento: cobrancas
+          .filter((c: any) => c.status === 'a_vencer')
+          .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
         cobrancasMatricula, // Retorna cobranças de matrícula para verificação
       },
       avisosRecentes: todosAvisos.slice(0, 3)

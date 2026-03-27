@@ -223,7 +223,7 @@ const PixModal = ({ onClose, valor, configPix }: { onClose: () => void, valor: n
               )}
 
               <div className="space-y-3 pb-2">
-                <motion.button 
+                <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCopiarChave}
                   className="w-full bg-teal-500 text-white py-3.5 rounded-xl font-semibold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2"

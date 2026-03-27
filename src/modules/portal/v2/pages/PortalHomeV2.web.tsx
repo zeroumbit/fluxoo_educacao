@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
 import { NotificationBell } from '@/components/ui/NotificationBell';
@@ -17,23 +19,62 @@ export function PortalHomeV2Web() {
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
+  
+  // Helper de vigência e mensagens
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 3);
+
+  const informativeMessages = [
+    "Um dia produtivo começa com uma boa parceria entre escola e família!",
+    "A educação é o passaporte para o futuro. Vamos juntos!",
+    "Mantenha os dados do aluno sempre atualizados na secretaria.",
+    "Acompanhe o desempenho do seu filho na aba de Notas e Frequência.",
+    "A escola é o lugar onde grandes sonhos começam a tomar forma.",
+    "Parceria escola e família: o sucesso do aluno começa aqui!"
+  ];
+
+  // Escolhe uma mensagem baseada no dia (para não ser totalmente aleatório e mudar a cada render)
+  const messageIndex = new Date().getDate() % informativeMessages.length;
+  const [currentMessageIdx, setCurrentMessageIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentMessageIdx((prev) => (prev + 1) % informativeMessages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getInformativeCard = (offset: number) => {
+    const idx = (currentMessageIdx + offset) % informativeMessages.length;
+    return informativeMessages[idx];
+  };
+
+  const informativeIcons = [Info, Clock, ArrowRight, FileSignature, Receipt];
+  const getIcon = (offset: number) => {
+    const idx = (currentMessageIdx + offset) % informativeIcons.length;
+    return informativeIcons[idx];
+  };
 
   // Alertas dinâmicos
   const alerts = [];
   if (dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {
     alerts.push({
       id: 'fin-atraso',
-      text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso.`,
-      type: 'fin',
+      text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso. Regularize para evitar suspensão de serviços.`,
+      type: 'error',
       icon: Receipt
     });
   }
-  if (dashboard?.financeiro?.totalPendente && dashboard.financeiro.totalPendente > 0 && dashboard?.financeiro?.totalAtrasadas === 0) {
+
+  // Novo alerta verde (Em Dia) solicitado pelo usuário
+  if (dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
+    const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
     alerts.push({
-      id: 'fin-pendente',
-      text: `Há cobranças aguardando pagamento. Total: R$ ${dashboard.financeiro.totalPendente.toLocaleString('pt-BR')}`,
-      type: 'fin',
-      icon: Receipt
+      id: 'fin-em-dia',
+      text: `${responsavel?.nome?.split(' ')[0] || 'Responsável'}, sua mensalidade está em dia, mas caso já queira pagar a mensalidade que vence em ${dataVenc}, clique aqui.`,
+      type: 'success',
+      icon: Receipt,
+      action: () => navigate('/portal/financeiro')
     });
   }
 
@@ -84,7 +125,16 @@ export function PortalHomeV2Web() {
                 <p className="text-sm text-slate-400 italic">Nenhum alerta pendente.</p>
               ) : (
                 alerts.map((alert) => (
-                  <div key={alert.id} className={`flex items-start gap-4 p-5 rounded-3xl border shadow-sm ${alert.type === 'fin' ? 'bg-orange-50 border-orange-100 text-orange-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
+                  <div 
+                    key={alert.id} 
+                    onClick={alert.action}
+                    className={cn(
+                      "flex items-start gap-4 p-5 rounded-3xl border shadow-sm transition-all cursor-pointer hover:shadow-md",
+                      alert.type === 'error' && "bg-orange-50 border-orange-100 text-orange-800",
+                      alert.type === 'success' && "bg-emerald-50 border-emerald-100 text-emerald-800",
+                      alert.type === 'danger' && "bg-rose-50 border-rose-100 text-rose-800"
+                    )}
+                  >
                     <div className="p-2 bg-white rounded-xl shadow-sm"><alert.icon className="w-6 h-6" /></div>
                     <span className="text-base font-bold leading-snug">{alert.text}</span>
                   </div>
@@ -107,11 +157,45 @@ export function PortalHomeV2Web() {
                 Abrir Central de Notificações
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {!avisos || avisos.length === 0 ? (
-                <p className="col-span-3 text-sm text-slate-400 italic py-8 text-center">Nenhum aviso no mural.</p>
+            <div className={`grid grid-cols-1 ${activeAvisos.length === 0 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
+              {activeAvisos.length === 0 ? (
+                <>
+                  {[0, 1, 2, 3].map((offset) => {
+                    const Icon = getIcon(offset);
+                    return (
+                      <motion.div 
+                        key={offset}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: offset * 0.1 }}
+                        className="bg-white border border-slate-100 p-8 rounded-[32px] shadow-sm flex flex-col items-center text-center justify-center min-h-[220px] relative overflow-hidden group hover:border-teal-200 transition-all duration-500"
+                      >
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                          <Icon className="w-24 h-24" />
+                        </div>
+                        
+                        <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                          <Icon className="w-7 h-7 text-teal-500" />
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                          <motion.p
+                            key={getInformativeCard(offset)}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.5 }}
+                            className="text-slate-600 font-bold leading-relaxed text-base px-2"
+                          >
+                            {getInformativeCard(offset)}
+                          </motion.p>
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </>
               ) : (
-                avisos.map((news: any) => (
+                activeAvisos.map((news: any) => (
                   <div key={news.id} className="bg-slate-50 border border-slate-100 p-6 rounded-3xl hover:border-teal-200 transition-colors cursor-pointer group">
                     <span className="inline-block px-3 py-1.5 bg-white text-slate-600 rounded-lg text-[11px] font-black uppercase tracking-widest mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                       {news.turma?.nome || 'Geral'}
@@ -137,7 +221,12 @@ export function PortalHomeV2Web() {
             
             <div className="flex flex-col gap-8 relative before:absolute before:inset-y-2 before:left-[19px] before:w-[2px] before:bg-slate-100">
               {!dashboard?.avisosRecentes || dashboard.avisosRecentes.length === 0 ? (
-                <p className="text-sm text-slate-400 pl-8 italic">Nenhum evento hoje.</p>
+                <div className="flex flex-col gap-2 pl-8">
+                  <p className="text-sm font-bold text-slate-500 italic">Dia tranquilo!</p>
+                  <p className="text-xs text-slate-400 leading-relaxed italic">
+                    Não há eventos ou lembretes agendados para hoje. Aproveite o dia!
+                  </p>
+                </div>
               ) : (
                 dashboard.avisosRecentes.map((item: any, idx: number) => (
                   <div key={idx} className="flex gap-6 relative group cursor-default">
