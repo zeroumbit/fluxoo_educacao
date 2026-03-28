@@ -133,8 +133,8 @@ export function FinanceiroPageMobile() {
     if (!cobrancas) return []
     return (cobrancas as any[]).filter(c => {
       const matchTab = filtroTab === 'todos' || c.status === filtroTab
-      const matchSearch = c.descricao.toLowerCase().includes(busca.toLowerCase()) || 
-                          c.alunos?.nome_completo?.toLowerCase().includes(busca.toLowerCase())
+      const matchSearch = (c.descricao || '').toLowerCase().includes(busca.toLowerCase()) || 
+                          (c.alunos?.nome_completo || '').toLowerCase().includes(busca.toLowerCase())
       return matchTab && matchSearch
     })
   }, [cobrancas, filtroTab, busca])
@@ -154,7 +154,7 @@ export function FinanceiroPageMobile() {
 
   return (
     <PullToRefresh onRefresh={async () => { await refetch() }}>
-      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32 w-full overflow-x-hidden">
         <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-6">
           {/* Título e Subtítulo */}
           <div>
@@ -162,34 +162,38 @@ export function FinanceiroPageMobile() {
             <p className="text-sm text-slate-500 dark:text-slate-400">Controle de cobranças, recebimentos e fluxo de caixa</p>
           </div>
 
-          {/* Header de Saldo */}
-          <div className="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-200/50 dark:shadow-none relative overflow-hidden">
+          {/* Header de Saldo - Design Nativo */}
+          <div className="bg-indigo-600 p-8 rounded-[32px] text-white shadow-2xl shadow-indigo-100 dark:shadow-none relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
-              <Wallet size={120} />
+              <Wallet size={140} />
             </div>
-            <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Saldo Recebido</p>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xl font-bold opacity-60">R$</span>
-              <h2 className="text-3xl font-bold">{totals.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
+            <div className="relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Saldo Total Recebido</p>
+              <div className="flex items-baseline gap-2 mt-2">
+                <span className="text-xl font-bold opacity-60">R$</span>
+                <h2 className="text-3xl font-black tracking-tighter truncate">
+                  {totals.pagos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </h2>
+              </div>
             </div>
             
-            <div className="mt-8 flex items-center justify-between gap-4">
-              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 border border-white/10">
-                <div className="h-8 w-8 rounded-lg bg-emerald-400/20 flex items-center justify-center">
-                  <ArrowDownCircle size={16} className="text-emerald-300" />
+            <div className="mt-8 grid grid-cols-2 gap-3 relative z-10">
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 flex flex-col gap-2 border border-white/10 overflow-hidden min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-emerald-400/20 flex items-center justify-center shrink-0">
+                  <ArrowDownCircle size={18} className="text-emerald-300" />
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Recebido</p>
-                  <p className="font-bold text-sm">R$ {totals.pagos.toFixed(0)}</p>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black opacity-60 uppercase tracking-widest truncate">Recebido</p>
+                  <p className="font-black text-base truncate">R$ {totals.pagos.toFixed(0)}</p>
                 </div>
               </div>
-              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 border border-white/10">
-                <div className="h-8 w-8 rounded-lg bg-amber-400/20 flex items-center justify-center">
-                   <AlertCircle size={16} className="text-amber-300" />
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 flex flex-col gap-2 border border-white/10 overflow-hidden min-w-0">
+                <div className="h-9 w-9 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0">
+                   <AlertCircle size={18} className="text-amber-300" />
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold opacity-70 uppercase tracking-tighter">Pendente</p>
-                  <p className="font-bold text-sm">R$ {totals.pendentes.toFixed(0)}</p>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black opacity-60 uppercase tracking-widest truncate">Pendente</p>
+                  <p className="font-black text-base truncate">R$ {totals.pendentes.toFixed(0)}</p>
                 </div>
               </div>
             </div>
@@ -207,55 +211,83 @@ export function FinanceiroPageMobile() {
               />
             </div>
 
-            <Tabs value={filtroTab} onValueChange={(v: any) => setFiltroTab(v)} className="w-full">
-              <TabsList className="bg-transparent h-10 w-full justify-start p-0 overflow-x-auto no-scrollbar gap-2">
-                <TabsTrigger value="todos" className="rounded-full px-5 font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Todos</TabsTrigger>
-                <TabsTrigger value="a_vencer" className="rounded-full px-5 font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">A Vencer</TabsTrigger>
-                <TabsTrigger value="pago" className="rounded-full px-5 font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Pagos</TabsTrigger>
-                <TabsTrigger value="atrasado" className="rounded-full px-5 font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white">Atrasados</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {[
+                { id: 'todos', label: 'Todos' },
+                { id: 'a_vencer', label: 'Em Aberto' },
+                { id: 'pago', label: 'Pagos' },
+                { id: 'atrasado', label: 'Vencidos' }
+              ].map((chip) => (
+                <button
+                  key={chip.id}
+                  onClick={() => setFiltroTab(chip.id as any)}
+                  className={cn(
+                    "whitespace-nowrap px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all",
+                    filtroTab === chip.id 
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
+                      : "bg-white dark:bg-slate-900 text-slate-400 border border-slate-100 dark:border-slate-800"
+                  )}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Lista de Cobranças */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <AnimatePresence mode="popLayout">
               {filteredList.map((c: any, idx) => (
                 <motion.div
                   key={c.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03, duration: 0.25 }}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
                 >
                   <NativeCard 
+                    swipeable={true}
+                    onDelete={() => handleExcluir(c.id)}
                     onClick={() => { setSelectedCobranca(c); setDetailOpen(true); }}
+                    className="p-5"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "h-12 w-12 rounded-2xl flex items-center justify-center",
-                          c.status === 'pago' ? "bg-emerald-50 text-emerald-600" : 
-                          c.status === 'atrasado' ? "bg-rose-50 text-rose-600" : "bg-zinc-50 text-slate-400"
-                        )}>
-                          {c.status === 'pago' ? <CheckCircle2 size={24} /> : <Calendar size={24} />}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{c.descricao}</h3>
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mt-0.5">
-                            <span className="capitalize">{c.alunos?.nome_completo || 'Avulso'}</span>
-                            <span className="opacity-30">•</span>
-                            <span>{new Date(c.data_vencimento).toLocaleDateString('pt-BR')}</span>
-                          </div>
+                    <div className="flex items-start gap-4 w-full overflow-hidden">
+                      {/* Ícone - Design Destacado */}
+                      <div className={cn(
+                        "h-16 w-16 rounded-[20px] flex items-center justify-center shrink-0 shadow-sm transition-colors",
+                        c.status === 'pago' ? "bg-emerald-50 text-emerald-600" : 
+                        c.status === 'atrasado' ? "bg-rose-50 text-rose-600" : "bg-indigo-50 text-indigo-500"
+                      )}>
+                        {c.status === 'pago' ? <CheckCircle2 size={32} /> : 
+                         c.status === 'atrasado' ? <AlertCircle size={32} /> : <Calendar size={32} />}
+                      </div>
+
+                      {/* Info Centralizada Verticalmente */}
+                      <div className="flex-1 min-w-0 pt-1">
+                        <h3 className="font-black text-slate-900 dark:text-white leading-tight truncate text-base">
+                          {c.descricao}
+                        </h3>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider mt-1 truncate">
+                          {c.alunos?.nome_completo || 'Lançamento Avulso'}
+                        </p>
+                        
+                        {/* Preço em Destaque abaixo do nome */}
+                        <div className="mt-3 flex items-center gap-1.5">
+                           <span className="text-[10px] font-black text-slate-300 uppercase">Valor:</span>
+                           <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
+                            {Number(c.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-indigo-600">R$ {Number(c.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+
+                      {/* Status à Direita */}
+                      <div className="shrink-0 flex flex-col justify-start pt-1">
                         <div className={cn(
-                          "text-[9px] font-bold uppercase tracking-widest mt-0.5",
-                          c.status === 'pago' ? "text-emerald-500" : 
-                          c.status === 'atrasado' ? "text-rose-500" : "text-amber-500"
+                          "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
+                          c.status === 'pago' ? "bg-emerald-500 text-white" : 
+                          c.status === 'atrasado' ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
                         )}>
-                          {c.status === 'pago' ? 'Recebido' : c.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
+                          {c.status === 'pago' ? 'PAGO' : c.status === 'atrasado' ? 'VENCIDO' : 'ABERTO'}
                         </div>
                       </div>
                     </div>
@@ -271,13 +303,13 @@ export function FinanceiroPageMobile() {
 
         {/* FAB */}
         <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          whileTap={{ scale: 0.9 }}
+          initial={{ scale: 0, rotate: -45 }}
+          animate={{ scale: 1, rotate: 0 }}
+          whileTap={{ scale: 0.8 }}
           onClick={() => setSheetOpen(true)}
-          className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+          className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-8 w-8" strokeWidth={3} />
         </motion.button>
 
         {/* BottomSheet: Nova Cobrança */}
@@ -356,61 +388,69 @@ export function FinanceiroPageMobile() {
         </BottomSheet>
 
         {/* BottomSheet: Detalhes da Cobrança */}
-        <BottomSheet isOpen={detailOpen} onClose={() => setDetailOpen(false)} title="Detalhes da Cobrança">
+        <BottomSheet isOpen={detailOpen} onClose={() => setDetailOpen(false)} title="Detalhes do Lançamento">
           {selectedCobranca && (
-            <div className="px-1 pb-12 space-y-8">
-              <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-[2rem] space-y-2">
-                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Valor da Cobrança</p>
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                  R$ {Number(selectedCobranca.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <div className="px-1 pb-16 space-y-8">
+              <div className="flex flex-col items-center justify-center p-10 bg-indigo-50/50 dark:bg-slate-900 rounded-[32px] space-y-3 border border-indigo-100/50">
+                <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-[10px]">Valor Total</p>
+                <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                  {Number(selectedCobranca.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </h2>
                 <div className={cn(
-                  "px-4 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest mt-2",
-                  selectedCobranca.status === 'pago' ? "bg-emerald-50 text-emerald-600" : 
-                  selectedCobranca.status === 'atrasado' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"
+                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mt-2 shadow-sm",
+                  selectedCobranca.status === 'pago' ? "bg-emerald-500 text-white" : 
+                  selectedCobranca.status === 'atrasado' ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
                 )}>
-                  {selectedCobranca.status === 'pago' ? 'RECEBIDO' : selectedCobranca.status === 'atrasado' ? 'VENCIDO' : 'EM ABERTO'}
+                  {selectedCobranca.status === 'pago' ? 'RECEBIDO COMPLETAMENTE' : selectedCobranca.status === 'atrasado' ? 'VENCIDO / PENDENTE' : 'AGUARDANDO PAGAMENTO'}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <LayoutGrid size={18} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-500">Descrição</span>
+                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                      <LayoutGrid size={18} className="text-slate-400" />
+                    </div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Descrição</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedCobranca.descricao}</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.descricao}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <Calendar size={18} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-500">Vencimento</span>
+                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                      <Calendar size={18} className="text-slate-400" />
+                    </div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Vencimento</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{new Date(selectedCobranca.data_vencimento).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                    {new Date(selectedCobranca.data_vencimento).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
+                  </span>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-3">
-                    <User size={18} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-500">Aluno</span>
+                    <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                      <User size={18} className="text-slate-400" />
+                    </div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Vinculado a</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedCobranca.alunos?.nome_completo || '—'}</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.alunos?.nome_completo || 'Lançamento Avulso'}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-3">
                 {selectedCobranca.status !== 'pago' ? (
                   <Button 
                     onClick={() => handleBaixar(selectedCobranca.id)}
-                    className="w-full h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-base shadow-lg shadow-emerald-100 dark:shadow-none"
+                    className="w-full h-16 rounded-[24px] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-sm tracking-widest shadow-xl shadow-indigo-100"
                   >
-                    MARCAR COMO PAGO
+                    CONFIRMAR RECEBIMENTO
                   </Button>
                 ) : (
                   <Button 
                     onClick={() => handleEstornar(selectedCobranca.id)}
-                    className="w-full h-14 rounded-2xl bg-amber-500 text-white font-bold text-base shadow-lg shadow-amber-100 dark:shadow-none"
+                    className="w-full h-16 rounded-[24px] bg-amber-500 text-white font-black uppercase text-sm tracking-widest shadow-xl shadow-amber-100"
                   >
                     ESTORNAR PAGAMENTO
                   </Button>
@@ -419,9 +459,9 @@ export function FinanceiroPageMobile() {
                 <Button 
                   onClick={() => handleExcluir(selectedCobranca.id)}
                   variant="ghost"
-                  className="w-full h-12 text-rose-500 font-bold"
+                  className="w-full h-14 text-rose-500 font-black uppercase text-xs tracking-widest"
                 >
-                  EXCLUIR REGISTRO
+                  EXCLUIR REGISTRO PERMANENTEMENTE
                 </Button>
               </div>
             </div>

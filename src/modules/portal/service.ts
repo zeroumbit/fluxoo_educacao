@@ -754,7 +754,7 @@ export const portalService = {
     const turmaIds = [...new Set((matriculas || []).map(m => m.turma_id).filter(Boolean))]
 
     // 3. Busca contagens em paralelo
-    const [cobrancasRes, avisosRes, atividadesRes, boletinsRes] = await Promise.all([
+    const [cobrancasRes, avisosRes, atividadesRes, boletinsRes, faltasRes] = await Promise.all([
       (supabase.from('cobrancas' as any) as any)
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
@@ -772,10 +772,15 @@ export const portalService = {
       (supabase.from('boletins' as any) as any)
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
-        .gte('updated_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString())
+        .gte('updated_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()),
+      (supabase.from('frequencias' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('aluno_id', alunoIds)
+        .eq('status', 'falta')
+        .gte('data_aula', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
     ])
 
-    const notifications = []
+    const notifications: any[] = []
     
     // Financeiro
     if (cobrancasRes.count && cobrancasRes.count > 0) {
@@ -784,6 +789,16 @@ export const portalService = {
         label: `${cobrancasRes.count} ${cobrancasRes.count === 1 ? 'Nova cobrança' : 'Novas cobranças'}`, 
         href: '/portal/financeiro',
         category: 'FINANCEIRO'
+      })
+    }
+
+    // Frequência (Faltas)
+    if (faltasRes.count && faltasRes.count > 0) {
+      notifications.push({ 
+        id: 'frequencia_faltas', 
+        label: `${faltasRes.count} ${faltasRes.count === 1 ? 'Nova falta registrada' : 'Novas faltas registradas'}`, 
+        href: '/portal/frequencia',
+        category: 'ACADÊMICO'
       })
     }
 

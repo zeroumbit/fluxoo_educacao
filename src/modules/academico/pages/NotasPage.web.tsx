@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { cn } from '@/lib/utils'
@@ -13,9 +14,11 @@ import {
   useReabrirBimestre,
   useDisciplinasPorTurma,
 } from '../hooks/hooks.v2'
+import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -46,6 +49,13 @@ const TIPOS_AVALIACAO: { value: TipoAvaliacao; label: string }[] = [
   { value: 'recuperacao', label: 'Recuperação' },
   { value: 'exame_final', label: 'Exame Final' },
 ]
+
+const PERIODOS_BIMESTRE: Record<number, { inicio: string; fim: string }> = {
+  1: { inicio: '2026-02-01', fim: '2026-04-30' },
+  2: { inicio: '2026-05-01', fim: '2026-07-31' },
+  3: { inicio: '2026-08-01', fim: '2026-10-31' },
+  4: { inicio: '2026-11-01', fim: '2026-12-25' },
+}
 
 // --------------------------------------------------------------------------
 // Modal de Nova Avaliação
@@ -180,11 +190,13 @@ function PainelLancamentoNotas({
   alunos,
   tenantId,
   onDeleted,
+  faltasPorAluno,
 }: {
   avaliacao: { id: string; titulo: string; tipo: string; peso: number }
   alunos: { id: string; nome_completo: string }[]
   tenantId: string
   onDeleted: () => void
+  faltasPorAluno?: Record<string, number>
 }) {
   const { data: notasExistentes } = useNotasPorAvaliacao(avaliacao.id)
   const { mutateAsync: salvarEmLote, isPending: isSaving } = useSalvarNotasEmLote()
@@ -290,6 +302,16 @@ function PainelLancamentoNotas({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-800 text-sm truncate">{aluno.nome_completo}</p>
+                {faltasPorAluno && (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Faltas no bimestre: <span className={cn(faltasPorAluno[aluno.id] > 0 ? "text-red-500" : "text-emerald-500")}>{faltasPorAluno[aluno.id] || 0}</span>
+                    </p>
+                    <Badge variant="outline" className="h-4 text-[8px] border-emerald-100 text-emerald-600 bg-emerald-50 gap-1 px-1.5 font-black uppercase">
+                      <CheckCircle2 size={8}/> Sincronizado
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               {/* Checkbox ausente */}
@@ -335,12 +357,17 @@ function PainelLancamentoNotas({
 export function NotasPageWeb() {
   const { authUser } = useAuth()
   const { data: turmas } = useTurmas()
-  const [turmaId, setTurmaId] = useState('')
+  const location = useLocation()
+  const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
   const { data: disciplinas, isLoading: isLoadingDisc } = useDisciplinasPorTurma(turmaId)
   const [disciplinaId, setDisciplinaId] = useState('')
   const [bimestre, setBimestre] = useState('1')
   const [anoLetivo] = useState(new Date().getFullYear())
   const [showModal, setShowModal] = useState(false)
+
+  // Faltas Automáticas
+  const periodo = PERIODOS_BIMESTRE[Number(bimestre)] || PERIODOS_BIMESTRE[1]
+  const { data: faltasResumo } = useFaltasTurmaPorPeriodo(turmaId, periodo.inicio, periodo.fim)
 
   // Alunos da turma
   const { data: todosAlunos } = useQuery({
@@ -628,6 +655,7 @@ export function NotasPageWeb() {
                     alunos={todosAlunos ?? []}
                     tenantId={authUser!.tenantId}
                     onDeleted={() => refetchAvaliacoes()}
+                    faltasPorAluno={faltasResumo}
                   />
                 ))
               )}

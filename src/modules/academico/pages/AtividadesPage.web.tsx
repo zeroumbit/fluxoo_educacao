@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAtividades, useCriarAtividade, useAtualizarAtividade, useExcluirAtividade } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
+import { useItensAlmoxarifado } from '@/modules/almoxarifado/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +31,7 @@ const schema = z.object({
   tipo_material: z.string().optional(),
   anexo_url: z.string().optional(),
   descricao: z.string().optional(),
+  materiais: z.array(z.string()).optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -43,6 +45,7 @@ export function AtividadesPage() {
   const criar = useCriarAtividade()
   const atualizar = useAtualizarAtividade()
   const excluir = useExcluirAtividade()
+  const { data: itensAlmoxarifado } = useItensAlmoxarifado()
 
   const [open, setOpen] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -276,6 +279,31 @@ export function AtividadesPage() {
                   <Label htmlFor="descricao" className="text-sm font-medium">Descrição</Label>
                   <Textarea id="descricao" placeholder="Descreva a atividade ou material..." className="min-h-[80px]" {...form.register('descricao')} />
                 </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <Label className="text-sm font-bold flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    Requisição de Materiais (Almoxarifado)
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {itensAlmoxarifado?.map((item: any) => (
+                      <Badge
+                        key={item.id}
+                        variant={form.watch('materiais')?.includes(item.id) ? 'default' : 'outline'}
+                        className="cursor-pointer hover:bg-indigo-100 transition-colors"
+                        onClick={() => {
+                          const current = form.getValues('materiais') || []
+                          const updated = current.includes(item.id) 
+                            ? current.filter(id => id !== item.id) 
+                            : [...current, item.id]
+                          form.setValue('materiais', updated)
+                        }}
+                      >
+                        {item.nome} ({item.quantidade} {item.unidade})
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               </form>
             </div>
             <DialogFooter className="px-6 py-4 border-t bg-slate-50/50">
@@ -323,7 +351,10 @@ export function AtividadesPage() {
                   <TableCell className="pl-8 font-medium">
                     <div className="flex flex-col">
                       <span>{a.titulo}</span>
-                      {a.descricao && <span className="text-[11px] text-muted-foreground line-clamp-1 font-normal">{a.descricao}</span>}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {a.descricao && <span className="text-[11px] text-muted-foreground line-clamp-1 font-normal">{a.descricao}</span>}
+                        {/* Materiais logic indicator if needed */}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

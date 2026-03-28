@@ -92,7 +92,11 @@ export const frequenciaService = {
       .order('data_aula', { ascending: false })
 
     if (mes) {
-      query = query.gte('data_aula', `${mes}-01`).lt('data_aula', `${mes}-32`)
+      const [year, month] = mes.split('-').map(Number)
+      const nextMonthDate = new Date(year, month, 1)
+      const nextMonthStr = nextMonthDate.toISOString().split('T')[0]
+      
+      query = query.gte('data_aula', `${mes}-01`).lt('data_aula', nextMonthStr)
     }
 
     const { data, error } = await query
@@ -100,16 +104,53 @@ export const frequenciaService = {
     return data
   },
 
-  /** Busca alunos que tiveram frequência em uma turma (para deduzir matrícula) */
-  async listarAlunosDaTurma(turmaId: string, tenantId: string) {
-    const { data, error } = await supabase
-      .from('alunos')
-      .select('id, nome_completo')
+  async buscarResumoFaltasPorPeriodo(alunoId: string, tenantId: string, dataInicio: string, dataFim: string) {
+    const { count, error } = await supabase
+      .from('frequencias')
+      .select('id', { count: 'exact', head: true })
+      .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
-      .eq('status', 'ativo')
-      .order('nome_completo')
+      .eq('status', 'falta')
+      .gte('data_aula', dataInicio)
+      .lte('data_aula', dataFim)
 
     if (error) throw error
-    return data
+    return count || 0
+  },
+
+  async listarAlunosDaTurma(turmaId: string, tenantId: string) {
+    const { data: matriculas, error: matError } = await (supabase.from('matriculas' as any) as any)
+      .select('aluno_id, alunos(id, nome_completo)')
+      .eq('turma_id', turmaId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+
+    if (matError) throw matError
+
+    return (matriculas || [])
+      .map((m: any) => m.alunos)
+      .filter(Boolean)
+      .sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)) as { id: string, nome_completo: string }[]
+  },
+
+  async buscarFaltasTurmaPeriodo(turmaId: string, tenantId: string, dataInicio: string, dataFim: string) {
+    const { data, error } = await supabase
+      .from('frequencias')
+      .select('aluno_id, status')
+      .eq('turma_id', turmaId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'falta')
+      .gte('data_aula', dataInicio)
+      .lte('data_aula', dataFim)
+
+    if (error) throw error
+
+    const resumo: Record<string, number> = {}
+    ;(data || []).forEach((f: any) => {
+      if (f.aluno_id) {
+        resumo[f.aluno_id] = (resumo[f.aluno_id] || 0) + 1
+      }
+    })
+    return resumo
   },
 }

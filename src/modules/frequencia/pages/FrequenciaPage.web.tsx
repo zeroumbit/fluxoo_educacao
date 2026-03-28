@@ -4,6 +4,7 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useSalvarFrequencias, useFrequenciasPorTurmaData } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -29,7 +30,8 @@ import {
   Users,
   FileX,
   MessageSquare,
-  CheckCheck
+  CheckCheck,
+  FileText
 } from 'lucide-react'
 import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
@@ -60,12 +62,14 @@ const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: 
 
 export function FrequenciaPageWeb() {
   const { authUser } = useAuth()
+  const navigate = useNavigate()
   const { data: turmas } = useTurmas()
   const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
   const salvarFrequencias = useSalvarFrequencias()
+  const location = useLocation()
 
-  const [turmaId, setTurmaId] = useState('')
+  const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
 
   // Queries
@@ -206,7 +210,14 @@ export function FrequenciaPageWeb() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Frequência Escolar</h1>
-          <p className="text-muted-foreground italic">Registro oficial de presença e faltas justificadas</p>
+          <p className="text-muted-foreground italic mb-2">Registro oficial de presença e faltas justificadas</p>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/frequencia/relatorio')}
+            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold text-xs uppercase p-0 h-auto gap-1.5"
+          >
+            <FileText size={14} /> Ver Relatório Mensal
+          </Button>
         </div>
         <div className="flex gap-2">
           {turmaId && (

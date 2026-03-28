@@ -2,26 +2,25 @@ import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Clock,
-  Users,
-  DollarSign,
-  CalendarCheck,
-  Pencil,
-  TrendingUp
-} from 'lucide-react'
+import { Clock, Users, DollarSign, CalendarCheck, Pencil, TrendingUp, Calculator, Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { Turma } from '../types'
-import { useDisciplinas, useProfessoresTurma, useAtribuicoes, useGradeTurma } from '../hooks'
+import { useDisciplinas, useProfessoresTurma, useAtribuicoes, useGradeTurma, useTurmaBilling } from '../hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { toast } from 'sonner'
 
 interface TabDadosGeraisProps {
   turma: Turma;
 }
 
 export function TabDadosGerais({ turma }: TabDadosGeraisProps) {
+  const navigate = useNavigate()
+  const { authUser } = useAuth()
   const isAtiva = turma.status === 'ativa'
   const { data: disciplinas = [] } = useDisciplinas()
   const { data: dbAtribuicoes = [] } = useAtribuicoes(turma.id)
   const { data: dbGrade = [] } = useGradeTurma(turma.id)
+  const { updateMensalidadeTurma, isUpdating } = useTurmaBilling()
 
   const atribuicoes = (dbAtribuicoes || []) as any[]
   const gradeItems = (dbGrade || []) as any[]
@@ -153,17 +152,47 @@ export function TabDadosGerais({ turma }: TabDadosGeraisProps) {
           <CardContent className="p-6">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
-              <Button className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm justify-start">
+              <Button 
+                onClick={() => navigate('/frequencia', { state: { turmaId: turma.id } })}
+                className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm justify-start"
+              >
                 <CalendarCheck className="h-4 w-4" />
                 Lançar Frequência
               </Button>
-              <Button className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm justify-start">
+              <Button 
+                onClick={() => navigate('/notas', { state: { turmaId: turma.id } })}
+                className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm justify-start"
+              >
                 <TrendingUp className="h-4 w-4" />
                 Relatório de Desempenho
               </Button>
-              <Button className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm justify-start">
-                <Users className="h-4 w-4" />
-                Gerenciar Alunos
+              <Button 
+                onClick={async () => {
+                  if (!authUser?.tenantId) return
+                  const novoValor = prompt('Qual o novo valor da mensalidade para todos os alunos desta turma?', turma.valor_mensalidade?.toString())
+                  if (!novoValor) return
+                  
+                  const valorNum = parseFloat(novoValor.replace(',', '.'))
+                  if (isNaN(valorNum) || valorNum <= 0) {
+                    toast.error('Valor inválido')
+                    return
+                  }
+
+                  if (confirm(`Isso irá atualizar o valor de mensalidade para TODOS os alunos matriculados nesta turma para ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorNum)}. Deseja continuar?`)) {
+                    try {
+                      await updateMensalidadeTurma.mutateAsync({ 
+                        turmaId: turma.id, 
+                        tenantId: authUser.tenantId, 
+                        valor: valorNum 
+                      })
+                    } catch (e) {}
+                  }
+                }}
+                disabled={isUpdating}
+                className="w-full h-12 rounded-xl font-bold text-xs gap-2 bg-white hover:bg-slate-50 text-emerald-700 border border-slate-200 shadow-sm justify-start"
+              >
+                {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
+                Mensalidade em Lote
               </Button>
             </div>
           </CardContent>

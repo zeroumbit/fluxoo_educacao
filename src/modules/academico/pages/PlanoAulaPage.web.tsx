@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -34,6 +35,7 @@ type FormData = z.infer<typeof schema>
 
 export function PlanoAulaPage() {
   const { authUser } = useAuth()
+  const navigate = useNavigate()
   const { data: planos, isLoading, refetch } = usePlanosAula()
   const { data: turmas } = useTurmas()
   const criar = useCriarPlanoAula()
@@ -315,6 +317,9 @@ export function PlanoAulaPage() {
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Fazer Chamada" onClick={() => navigate('/frequencia', { state: { turmaId: p.planos_aula_turmas?.[0]?.turma_id, dataAula: p.data_aula } })}>
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleView(p)}>
                         <Eye className="h-4 w-4" />
                       </Button>

@@ -3,8 +3,10 @@ import {
   Users, CalendarDays, GraduationCap, Info,
   MapPin, DollarSign, BookOpen, AlertTriangle, ShieldCheck,
   BarChart3, FileText, UserCircle, Printer, Save, Pencil, X,
-  Plus, Calendar, Search, Loader2, Trash2, ChevronRight, Eye, Clock
+  Plus, Calendar, Search, Loader2, Trash2, ChevronRight, Eye, Clock,
+  Calculator, CalendarCheck, TrendingUp
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,7 +24,8 @@ import {
   useProfessoresTurma,
   useAtribuicoes,
   useAtribuirProfessor,
-  useRemoverAtribuicao
+  useRemoverAtribuicao,
+  useTurmaBilling
 } from '../hooks'
 import { toast } from 'sonner'
 
@@ -118,6 +121,10 @@ export function TurmaDetalhesModalMobile({
 // TAB: DADOS GERAIS
 // ─────────────────────────────────────────────────────────────────────────────
 function TabDados({ turma, onEdit, onDelete }: { turma: Turma, onEdit: () => void, onDelete: () => void }) {
+  const navigate = useNavigate()
+  const { authUser } = useAuth()
+  const { updateMensalidadeTurma, isUpdating } = useTurmaBilling()
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3">
@@ -143,11 +150,53 @@ function TabDados({ turma, onEdit, onDelete }: { turma: Turma, onEdit: () => voi
         )}
       </div>
 
-      <div className="flex gap-3">
+      <div className="space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ações Rápidas</p>
+        <div className="grid grid-cols-1 gap-2">
+          <Button 
+            onClick={() => navigate('/frequencia', { state: { turmaId: turma.id } })}
+            className="w-full h-14 rounded-[1.5rem] bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest gap-2"
+          >
+            <CalendarCheck className="h-4 w-4" />
+            Lançar Frequência
+          </Button>
+          <Button 
+            onClick={() => navigate('/notas', { state: { turmaId: turma.id } })}
+            variant="outline"
+            className="w-full h-14 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest gap-2 bg-white dark:bg-slate-900"
+          >
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+            Boletim da Turma
+          </Button>
+          <Button 
+            onClick={async () => {
+              if (!authUser?.tenantId) return
+              const nValor = prompt('Novo valor da mensalidade?', turma.valor_mensalidade?.toString())
+              if (!nValor) return
+              const vNum = parseFloat(nValor.replace(',', '.'))
+              if (isNaN(vNum) || vNum <= 0) { toast.error('Valor inválido'); return }
+
+              if (confirm(`Atualizar todos os alunos para R$ ${vNum.toFixed(2)}?`)) {
+                try {
+                  await updateMensalidadeTurma.mutateAsync({ turmaId: turma.id, tenantId: authUser.tenantId, valor: vNum })
+                } catch {}
+              }
+            }}
+            disabled={isUpdating}
+            variant="outline"
+            className="w-full h-14 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest gap-2 bg-white dark:bg-slate-900 text-emerald-600 border-emerald-100"
+          >
+            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
+            Mensalidade em Lote
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex gap-3 pt-4">
         <Button variant="outline" onClick={onDelete} className="flex-1 h-12 rounded-xl font-bold text-sm text-rose-500 border-rose-100">
           Excluir
         </Button>
-        <Button onClick={onEdit} className="flex-1 h-12 rounded-xl bg-indigo-600 font-bold text-sm text-white shadow-lg shadow-indigo-100 dark:shadow-none">
+        <Button onClick={onEdit} className="flex-1 h-12 rounded-xl bg-slate-900 font-bold text-sm text-white shadow-lg">
           Editar Dados
         </Button>
       </div>
@@ -159,6 +208,7 @@ function TabDados({ turma, onEdit, onDelete }: { turma: Turma, onEdit: () => voi
 // TAB: ALUNOS
 // ─────────────────────────────────────────────────────────────────────────────
 function TabAlunos({ turma }: { turma: Turma }) {
+  const navigate = useNavigate()
   const { data: todosAlunos } = useAlunos()
   const [busca, setBusca] = useState('')
 
@@ -209,7 +259,12 @@ function TabAlunos({ turma }: { turma: Turma }) {
               </div>
               
               <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-50 dark:border-slate-800">
-                <Button variant="ghost" size="sm" className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 hover:bg-indigo-100/50">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/notas', { state: { alunoId: aluno.id, turmaId: turma.id } })}
+                  className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 hover:bg-indigo-100/50"
+                >
                   <BarChart3 size={12} className="mr-1.5" /> Desemp.
                 </Button>
                 <Button variant="ghost" size="sm" className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest text-teal-600 dark:text-teal-400 bg-teal-50/50 hover:bg-teal-100/50">

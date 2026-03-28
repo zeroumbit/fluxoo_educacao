@@ -23,6 +23,14 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
+
+const PERIODOS_BIMESTRE: Record<string, { inicio: string, fim: string }> = {
+  '1': { inicio: '2024-02-01', fim: '2024-04-30' },
+  '2': { inicio: '2024-05-01', fim: '2024-06-30' },
+  '3': { inicio: '2024-08-01', fim: '2024-09-30' },
+  '4': { inicio: '2024-10-01', fim: '2024-12-20' },
+}
 
 // Componentes Mobile conforme MOBILE_FIRST_RULES.md
 import { NativeCard } from '@/components/mobile/NativeCard'
@@ -58,6 +66,14 @@ export function NotasPageMobile() {
   const { data: notasExistentes, refetch: refetchNotas } = useNotasPorAvaliacao(avaliacaoId)
   const { data: fechamento } = useStatusFechamento(turmaId, Number(bimestre))
   const { mutateAsync: salvarLote, isPending: isSaving } = useSalvarNotasEmLote()
+
+  // Faltas Automáticas
+  const periodoAtual = PERIODOS_BIMESTRE[bimestre] || PERIODOS_BIMESTRE['1']
+  const { data: faltasAgrupadas } = useFaltasTurmaPorPeriodo(
+    turmaId, 
+    periodoAtual.inicio, 
+    periodoAtual.fim
+  )
 
   // Estado Local de Notas
   const [notasLocais, setNotasLocais] = useState<Record<string, { nota: string; ausente: boolean }>>({})
@@ -229,11 +245,19 @@ export function NotasPageMobile() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-black text-sm truncate">{aluno.nome_completo}</p>
-                    {notasLocais[aluno.id]?.nota ? (
-                      <Badge variant="outline" className="mt-1 h-5 text-[9px] border-emerald-100 text-emerald-600 bg-emerald-50">Lançada</Badge>
-                    ) : (
-                      <Badge variant="outline" className="mt-1 h-5 text-[9px] border-slate-100 text-slate-300">Pendente</Badge>
-                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {notasLocais[aluno.id]?.nota ? (
+                        <Badge variant="outline" className="h-5 text-[9px] border-emerald-100 text-emerald-600 bg-emerald-50">Nota Lançada</Badge>
+                      ) : (
+                        <Badge variant="outline" className="h-5 text-[9px] border-slate-100 text-slate-300">Pendente</Badge>
+                      )}
+
+                      {faltasAgrupadas && (faltasAgrupadas as any)[aluno.id] > 0 && (
+                        <Badge variant="secondary" className="h-5 text-[9px] bg-red-50 text-red-600 border-red-100 font-black">
+                          {(faltasAgrupadas as any)[aluno.id]} {(faltasAgrupadas as any)[aluno.id] === 1 ? 'Falta' : 'Faltas'}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <ChevronRight size={18} className="text-slate-300" />

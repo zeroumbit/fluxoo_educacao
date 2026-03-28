@@ -15,12 +15,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle, Megaphone } from 'lucide-react'
+import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle, Megaphone, Clock, MapPin } from 'lucide-react'
+import { muralService } from '@/modules/comunicacao/service'
 
 const eventoSchema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
-  data_inicio: z.string().min(1),
+  data_inicio: z.string().refine(
+    date => {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return new Date(date + 'T00:00:00') >= today
+    },
+    { message: "Data não pode ser retroativa" }
+  ),
   data_termino: z.string().optional(),
+  hora_inicio: z.string().optional(),
+  hora_fim: z.string().optional(),
+  local: z.string().optional(),
   publico_alvo: z.string().optional(),
   descricao: z.string().optional(),
   publicar_no_mural: z.boolean().default(false),
@@ -79,6 +90,20 @@ export function EventosPage() {
     if (!authUser) return
     try {
       await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+      
+      if (data.publicar_no_mural && !editando) {
+        await muralService.criar({
+          tenant_id: authUser.tenantId,
+          titulo: `AGENDA: ${data.nome}`,
+          conteudo: `${data.descricao || ''}\n\n📍 Local: ${data.local || 'Não informado'}\n🕒 Início: ${data.data_inicio} ${data.hora_inicio || ''}`,
+          publico_alvo: data.publico_alvo || 'toda_escola',
+          data_fim: data.data_termino || data.data_inicio,
+          data_inicio: data.data_inicio,
+          turma_id: null,
+          data_agendamento: null
+        })
+      }
+
       toast.success(editando ? 'Evento atualizado!' : 'Evento criado!')
       setOpen(false)
     } catch { 
@@ -139,6 +164,32 @@ export function EventosPage() {
                   <Input id="data_termino" type="date" {...form.register('data_termino')} />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hora_inicio">Hora de Início</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input id="hora_inicio" type="time" className="pl-8" {...form.register('hora_inicio')} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hora_fim">Hora de Término</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input id="hora_fim" type="time" className="pl-8" {...form.register('hora_fim')} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="local">Local do Evento</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="local" placeholder="Ex: Quadra Coberta, Refeitório..." className="pl-9" {...form.register('local')} />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="publico_alvo">Público-Alvo</Label>
                 <Select defaultValue={form.watch('publico_alvo')} onValueChange={(v) => form.setValue('publico_alvo', v)}>

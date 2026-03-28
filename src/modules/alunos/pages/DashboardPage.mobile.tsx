@@ -355,7 +355,7 @@ export function DashboardPageMobile() {
   if (isActuallyLoading) {
     return (
       <div className="min-h-[100dvh] bg-slate-50/50 dark:bg-slate-950 pb-32">
-        <div className="mx-auto w-full max-w-[640px] px-5 pt-6 space-y-8">
+        <div className="w-full px-5 pt-6 space-y-8">
           <div className="space-y-2 pt-2">
             <Skeleton className="h-3 w-32 rounded-lg" />
             <Skeleton className="h-8 w-52 rounded-lg" />
@@ -384,10 +384,10 @@ export function DashboardPageMobile() {
   const saldoPositivo = saldo >= 0
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/50 dark:bg-slate-950">
-      <div className="mx-auto w-full max-w-[640px]">
+    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
+      <div className="w-full">
         <PullToRefresh onRefresh={onRefresh}>
-          <div className="space-y-8 pt-6 pb-20">
+          <div className="space-y-8 pt-6 pb-12">
 
             {/* Alerta de Aprovação */}
             <StatusAprovacaoNotificationMobile status={statusAssinatura} metodo={metodoPagamento} />
@@ -431,10 +431,10 @@ export function DashboardPageMobile() {
               </div>
             )}
 
-            {/* ── Ações Rápidas ── */}
             <section>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-5">Ações Rápidas</h3>
-              <div className="flex gap-5 overflow-x-auto pb-4 px-5 no-scrollbar">
+              <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar">
+                <div className="w-5 shrink-0" />
                 {quickActions.map((action, i) => (
                   <motion.button
                     key={i}
@@ -448,6 +448,7 @@ export function DashboardPageMobile() {
                     <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 tracking-tight whitespace-nowrap">{action.label}</span>
                   </motion.button>
                 ))}
+                <div className="w-5 shrink-0" />
               </div>
             </section>
 

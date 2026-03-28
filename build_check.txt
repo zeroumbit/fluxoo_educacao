@@ -1,0 +1,9 @@
+
+> fluxoo-educacao@0.1.0 build
+> tsc -b && vite build
+
+src/modules/financeiro/pages/FinanceiroRelatoriosPage.mobile.tsx(52,68): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(locales?: LocalesArgument, options?: DateTimeFormatOptions | undefined): string', gave the following error.
+    Type '"2y"' is not assignable to type '"numeric" | "2-digit" | undefined'.
+  Overload 2 of 3, '(locales?: string | string[] | undefined, options?: DateTimeFormatOptions | undefined): string', gave the following error.
+    Type '"2y"' is not assignable to type '"numeric" | "2-digit" | undefined'.

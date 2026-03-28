@@ -18,8 +18,11 @@ import {
   Sparkles,
   Timer,
   X,
-  Save
+  Save,
+  Megaphone,
+  MapPin
 } from 'lucide-react'
+import { muralService } from '@/modules/comunicacao/service'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -45,10 +48,21 @@ import { cn } from '@/lib/utils'
 
 const eventoSchema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
-  data_inicio: z.string().min(1),
+  data_inicio: z.string().refine(
+    date => {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return new Date(date + 'T00:00:00') >= today
+    },
+    { message: "Data não pode ser retroativa" }
+  ),
   data_termino: z.string().optional(),
+  hora_inicio: z.string().optional(),
+  hora_fim: z.string().optional(),
+  local: z.string().optional(),
   publico_alvo: z.string().optional(),
   descricao: z.string().optional(),
+  publicar_no_mural: z.boolean().default(false),
 })
 
 type EventoFormValues = z.infer<typeof eventoSchema>
@@ -93,6 +107,10 @@ export function EventosPageMobile() {
       data_termino: '',
       publico_alvo: 'toda_escola',
       descricao: '',
+      publicar_no_mural: false,
+      hora_inicio: '',
+      hora_fim: '',
+      local: '',
     })
     setFormOpen(true)
   }
@@ -105,6 +123,10 @@ export function EventosPageMobile() {
       data_termino: evento.data_termino || '',
       publico_alvo: evento.publico_alvo || 'toda_escola',
       descricao: evento.descricao || '',
+      publicar_no_mural: evento.publicar_no_mural || false,
+      hora_inicio: evento.hora_inicio || '',
+      hora_fim: evento.hora_fim || '',
+      local: evento.local || '',
     })
     setFormOpen(true)
   }
@@ -114,9 +136,23 @@ export function EventosPageMobile() {
     try {
       await criar.mutateAsync({ 
         ...data, 
-        id: editando?.id, // Hook assume upsert se ID presente ou injetado via payload
+        id: editando?.id,
         tenant_id: authUser.tenantId 
       })
+
+      if (data.publicar_no_mural && !editando) {
+        await muralService.criar({
+          tenant_id: authUser.tenantId,
+          titulo: `AGENDA: ${data.nome}`,
+          conteudo: `${data.descricao || ''}\n\n📍 Local: ${data.local || 'Não informado'}\n🕒 Início: ${data.data_inicio} ${data.hora_inicio || ''}`,
+          publico_alvo: data.publico_alvo || 'toda_escola',
+          data_fim: data.data_termino || data.data_inicio,
+          data_inicio: data.data_inicio,
+          turma_id: null,
+          data_agendamento: null
+        })
+      }
+
       toast.success(editando ? 'Evento atualizado!' : 'Evento criado!')
       setFormOpen(false)
       refetch()
@@ -418,19 +454,51 @@ export function EventosPageMobile() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Inicia em</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data Início</Label>
                 <Input 
                   type="date"
                   {...register('data_inicio')}
                   className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none px-5 font-bold shadow-sm"
                 />
+                {errors.data_inicio && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.data_inicio.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Termina em (Opcional)</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data Término</Label>
                 <Input 
                   type="date"
                   {...register('data_termino')}
                   className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none px-5 font-bold shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Hora Início</Label>
+                <Input 
+                  type="time"
+                  {...register('hora_inicio')}
+                  className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none px-5 font-bold shadow-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Hora Término</Label>
+                <Input 
+                  type="time"
+                  {...register('hora_fim')}
+                  className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border-none px-5 font-bold shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Local do Evento</Label>
+              <div className="flex items-center bg-slate-50 dark:bg-slate-900 rounded-2xl px-4 shadow-sm">
+                <MapPin className="h-5 w-5 text-slate-400" />
+                <Input 
+                  {...register('local')}
+                  placeholder="Ex: Sala de Reunião, Quadra..."
+                  className="h-14 bg-transparent border-none font-bold"
                 />
               </div>
             </div>
@@ -457,6 +525,40 @@ export function EventosPageMobile() {
                 className="rounded-3xl bg-slate-50 dark:bg-slate-900 border-none px-5 py-4 text-base font-medium shadow-sm min-h-[100px]"
                 placeholder="Detalhes sobre o evento..."
               />
+            </div>
+
+            <div 
+              className={cn(
+                "p-5 rounded-3xl border transition-all flex items-center justify-between cursor-pointer",
+                watch('publicar_no_mural') 
+                  ? "bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/20" 
+                  : "bg-slate-50 border-slate-100 dark:bg-slate-800/50 dark:border-slate-800"
+              )}
+              onClick={() => setValue('publicar_no_mural', !watch('publicar_no_mural'))}
+            >
+              <div className="flex items-center gap-4">
+                <div className={cn(
+                  "h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm",
+                  watch('publicar_no_mural') ? "bg-amber-100 text-amber-600" : "bg-white text-slate-400"
+                )}>
+                  <Megaphone className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className={cn("text-xs font-black uppercase tracking-widest", watch('publicar_no_mural') ? "text-amber-900" : "text-slate-500")}>
+                    Mural de Avisos
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Publicar automaticamente?</p>
+                </div>
+              </div>
+              <div className={cn(
+                "w-12 h-6 rounded-full relative transition-all",
+                watch('publicar_no_mural') ? "bg-amber-500" : "bg-slate-200"
+              )}>
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                  watch('publicar_no_mural') ? "left-7" : "left-1"
+                )} />
+              </div>
             </div>
           </div>
 

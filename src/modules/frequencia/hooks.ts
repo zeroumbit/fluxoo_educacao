@@ -42,3 +42,39 @@ export function useSalvarFrequencias() {
     },
   })
 }
+
+export function useResumoFaltasPorPeriodo(alunoId: string, dataInicio: string, dataFim: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['frequencias', 'resumo', alunoId, dataInicio, dataFim, authUser?.tenantId],
+    queryFn: () => frequenciaService.buscarResumoFaltasPorPeriodo(alunoId, authUser!.tenantId, dataInicio, dataFim),
+    enabled: !!authUser?.tenantId && !!alunoId && !!dataInicio && !!dataFim,
+  })
+}
+
+export function useRelatorioMensalFrequencia(turmaId: string, mes: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['frequencias', 'relatorio_mensal', turmaId, mes, authUser?.tenantId],
+    queryFn: () => frequenciaService.listarHistoricoPorTurma(turmaId, authUser!.tenantId, mes),
+    enabled: !!authUser?.tenantId && !!turmaId && !!mes,
+  })
+}
+
+export function useFaltasTurmaPorPeriodo(turmaId: string, dataInicio: string, dataFim: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['frequencias', 'resumo_turma', turmaId, dataInicio, dataFim, authUser?.tenantId],
+    queryFn: () => frequenciaService.buscarFaltasTurmaPeriodo(turmaId, authUser!.tenantId, dataInicio, dataFim),
+    enabled: !!authUser?.tenantId && !!turmaId && !!dataInicio && !!dataFim,
+  })
+}
+
+export function useAlunosDaTurma(turmaId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['frequencias', 'alunos_turma', turmaId, authUser?.tenantId],
+    queryFn: () => frequenciaService.listarAlunosDaTurma(turmaId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!turmaId,
+  })
+}

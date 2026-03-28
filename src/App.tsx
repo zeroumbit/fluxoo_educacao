@@ -22,6 +22,7 @@ const AlunoCadastroPage = lazy(() => import('@/modules/alunos/pages/AlunoCadastr
 const AlunoDetalhePage = lazy(() => import('@/modules/alunos/pages/AlunoDetalhePage').then(m => ({ default: m.AlunoDetalhePage })))
 const TurmasPage = lazy(() => import('@/modules/turmas/pages/TurmasPage').then(m => ({ default: m.TurmasPage })))
 const FrequenciaPage = lazy(() => import('@/modules/frequencia/pages/FrequenciaPage').then(m => ({ default: m.FrequenciaPage })))
+const RelatorioMensalFrequenciaPage = lazy(() => import('@/modules/frequencia/pages/RelatorioMensalFrequenciaPage.web').then(m => ({ default: m.RelatorioMensalFrequenciaPage })))
 const FilaVirtualAdminPage = lazy(() => import('@/modules/frequencia/pages/FilaVirtualAdminPage').then(m => ({ default: m.FilaVirtualAdminPage })))
 const MuralPage = lazy(() => import('@/modules/comunicacao/pages/MuralPage').then(m => ({ default: m.MuralPage })))
 const FinanceiroPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroPage').then(m => ({ default: m.FinanceiroPage })))
@@ -179,6 +180,7 @@ function App() {
               <Route path="/alunos/:id" element={<AlunoDetalhePage />} />
               <Route path="/turmas" element={<TurmasPage />} />
               <Route path="/frequencia" element={<FrequenciaPage />} />
+              <Route path="/frequencia/relatorio" element={<RelatorioMensalFrequenciaPage />} />
               <Route path="/mural" element={<MuralPage />} />
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
