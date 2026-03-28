@@ -152,10 +152,10 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ delay: idx * 0.05 }}
-                     className="bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-[0_20px_40px_rgba(79,70,229,0.08)] transition-all duration-500 overflow-hidden flex flex-col group cursor-pointer"
+                     className="bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-[0_20px_40px_rgba(79,70,229,0.08)] transition-all duration-500 overflow-hidden flex flex-col group cursor-pointer h-[380px]"
                    >
-                      {/* Badge de Tipo */}
-                      <div className="absolute top-4 left-4 z-10">
+                      {/* Badge de Tipo - 24px height + 12px top */}
+                      <div className="absolute top-3 left-3 z-10">
                         <Badge className={cn(
                           "border-0 font-black uppercase tracking-[0.15em] text-[8px] py-1 px-3 shadow-lg rounded-full",
                           item.tipo === 'livro' ? "bg-indigo-600 text-white" : "bg-emerald-500 text-white"
@@ -164,9 +164,9 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                         </Badge>
                       </div>
 
-                      {/* Header Visual */}
+                      {/* Header Visual - 128px height */}
                       <div
-                        className="relative aspect-[16/11] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100 group/image"
+                        className="relative h-[128px] bg-slate-50 flex items-center justify-center overflow-hidden border-b border-slate-100 group/image"
                         onClick={() => item.capa_url && handleVerCapa(item.capa_url)}
                       >
                         {item.capa_url ? (
@@ -190,53 +190,60 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                              <span className="text-[9px] font-black uppercase tracking-[0.4em] italic">Imagem Indisponível</span>
                           </div>
                         )}
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-3 right-3">
                            <Badge className="bg-white/90 backdrop-blur-md text-slate-800 border-0 font-black uppercase tracking-[0.15em] text-[8px] py-1.5 px-4 shadow-lg rounded-full">
                                 {item.disciplina || (item.tipo === 'material' ? 'Material' : "Geral")}
                            </Badge>
                         </div>
                       </div>
 
-                      <div className="p-6 space-y-4 flex-1 flex flex-col">
-                        <div className="space-y-2">
-                           <div className="flex items-center gap-2">
-                              <div className={cn("h-1 w-8 rounded-full", item.tipo === 'livro' ? "bg-indigo-500" : "bg-emerald-500")} />
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">
-                                {item.tipo === 'livro' ? (item.editora || 'Edição Especial') : (item.editora || 'Categoria Especial')}
-                              </span>
-                           </div>
-                           <h3 className="text-2xl font-black text-slate-800 tracking-tighter leading-tight uppercase italic group-hover:text-indigo-600 transition-colors">{item.titulo}</h3>
-                           <p className="text-xs font-bold text-slate-400 italic">
-                             {item.tipo === 'livro' ? `Por ${item.autor || 'Autor Não Informado'}` : `${item.autor || 'Marca Sugerida'}`}
-                           </p>
+                      {/* Conteúdo - Padding 16px + Conteúdo Flexível */}
+                      <div className="p-4 space-y-2 flex-1 flex flex-col overflow-hidden">
+                        {/* Categoria - ~14px */}
+                        <div className="flex items-center gap-2">
+                           <div className={cn("h-1 w-8 rounded-full", item.tipo === 'livro' ? "bg-indigo-500" : "bg-emerald-500")} />
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] italic truncate">
+                             {item.tipo === 'livro' ? (item.editora || 'Edição Especial') : (item.categoria || 'Categoria Especial')}
+                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-4 rounded-[20px] border border-slate-100/50">
+                        {/* Título (2 linhas) - ~36px */}
+                        <h3 className="text-base font-black text-slate-800 tracking-tight leading-tight uppercase italic group-hover:text-indigo-600 transition-colors line-clamp-2 min-h-[40px]">{item.titulo}</h3>
+
+                        {/* Autor/Marca - ~20px */}
+                        <p className="text-[10px] font-bold text-slate-400 italic truncate">
+                          {item.tipo === 'livro' ? `Por ${item.autor || 'Autor Não Informado'}` : `${item.autor || 'Marca Sugerida'}`}
+                        </p>
+
+                        {/* Metadados Grid - ~48px */}
+                        <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-3 rounded-[16px] border border-slate-100">
                             <div className="space-y-0.5">
-                               <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">
+                               <p className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">
                                  {item.tipo === 'livro' ? 'ISBN' : 'Ref'}
                                </p>
-                               <p className="text-[10px] font-black text-slate-600 font-mono italic">{item.isbn || '---'}</p>
+                               <p className="text-[9px] font-black text-slate-600 font-mono italic truncate">{item.isbn || '---'}</p>
                             </div>
                             <div className="space-y-0.5 text-right">
-                               <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em]">Ano</p>
-                               <p className="text-[10px] font-black text-slate-600 italic">{item.ano_letivo || '---'}</p>
+                               <p className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">Ano</p>
+                               <p className="text-[9px] font-black text-slate-600 italic">{item.ano_letivo || '---'}</p>
                             </div>
                         </div>
 
+                        {/* Descrição (opcional, line-clamp) - ~32px */}
                         {item.descricao && (
-                            <div className="flex items-start gap-3 p-3 bg-slate-50/30 rounded-[16px] border border-slate-100">
-                              <Info size={14} className="text-indigo-400 shrink-0 mt-0.5" />
-                              <p className="text-[10px] leading-relaxed font-bold text-slate-500 italic line-clamp-2">{item.descricao}</p>
+                            <div className="flex items-start gap-2 p-2 bg-slate-50/30 rounded-[12px] border border-slate-100 overflow-hidden">
+                              <Info size={12} className="text-indigo-400 shrink-0 mt-0.5" />
+                              <p className="text-[9px] leading-tight font-bold text-slate-500 italic line-clamp-2">{item.descricao}</p>
                             </div>
                         )}
 
-                        <div className="mt-auto pt-3 flex gap-3">
+                        {/* Ações - 32px height */}
+                        <div className="mt-auto pt-2 flex gap-2">
                            {item.link_referencia ? (
                              <Button
                                 asChild
                                 className={cn(
-                                  "w-full h-12 rounded-[20px] font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0",
+                                  "w-full h-8 rounded-[16px] font-black text-[8px] uppercase tracking-widest transition-all active:scale-95 group/btn shadow-none border-0",
                                   item.tipo === 'livro'
                                     ? "bg-indigo-100 text-indigo-600 hover:bg-slate-900 hover:text-white"
                                     : "bg-emerald-100 text-emerald-600 hover:bg-slate-900 hover:text-white"
@@ -244,11 +251,11 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
                                 onClick={() => vibrate(10)}
                              >
                                <a href={item.link_referencia} target="_blank" rel="noreferrer">
-                                 Ver Referência <ExternalLink size={14} className="ml-2 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                                 Ver Referência <ExternalLink size={12} className="ml-1.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                                </a>
                              </Button>
                            ) : (
-                             <div className="w-full flex items-center justify-center bg-slate-50/50 text-slate-400 h-12 rounded-[20px] font-black text-[9px] uppercase tracking-[0.2em] italic border-2 border-dashed border-slate-100">
+                             <div className="w-full flex items-center justify-center bg-slate-50/50 text-slate-400 h-8 rounded-[16px] font-black text-[7px] uppercase tracking-[0.2em] italic border-2 border-dashed border-slate-100">
                                 {item.tipo === 'livro' ? 'Disponível em Sala' : 'Consultar na Escola'}
                              </div>
                            )}

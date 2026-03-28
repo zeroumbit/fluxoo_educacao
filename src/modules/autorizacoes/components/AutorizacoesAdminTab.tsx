@@ -29,6 +29,8 @@ const CATEGORIAS = [
   'transporte', 'alimentacao', 'inclusao', 'religiosidade', 'projetos', 'eventos',
 ]
 
+import { MODELOS_SISTEMA_PADRAO } from '@/modules/autorizacoes/constants'
+
 type Modelo = {
   id: string
   tenant_id: string | null
@@ -39,6 +41,7 @@ type Modelo = {
   obrigatoria: boolean
   ativa: boolean
   ordem: number
+  isDefault?: boolean // Flag para identificar modelos virtuais do sistema
 }
 
 export function AutorizacoesAdminTab() {
@@ -62,7 +65,8 @@ export function AutorizacoesAdminTab() {
     obrigatoria: false,
   })
 
-  const isGlobal = (m: Modelo) => !m.tenant_id
+  const isGlobal = (m: Modelo) => !m.tenant_id && !m.isDefault
+  const isDefault = (m: Modelo) => !!m.isDefault
 
   const abrirCriar = () => {
     setEditando(null)
@@ -71,7 +75,7 @@ export function AutorizacoesAdminTab() {
   }
 
   const abrirEditar = (m: Modelo) => {
-    if (isGlobal(m)) {
+    if (isDefault(m) || isGlobal(m)) {
       handleDuplicar(m)
       return
     }
@@ -110,7 +114,7 @@ export function AutorizacoesAdminTab() {
     setEditando(null)
     setForm({
       categoria: m.categoria,
-      titulo: `${m.titulo} (Cópia)`,
+      titulo: m.titulo.includes('(Cópia)') ? m.titulo : `${m.titulo} (Personalizada)`,
       descricao_curta: m.descricao_curta,
       texto_completo: m.texto_completo,
       obrigatoria: m.obrigatoria,
@@ -120,10 +124,31 @@ export function AutorizacoesAdminTab() {
   }
 
   const handleToggle = async (m: Modelo) => {
+    // Se for um modelo virtual do sistema, ao ativar, nós geramos uma cópia no banco para a escola
+    if (isDefault(m)) {
+      try {
+        await criar.mutateAsync({
+          tenant_id: authUser!.tenantId,
+          categoria: m.categoria,
+          titulo: m.titulo,
+          descricao_curta: m.descricao_curta,
+          texto_completo: m.texto_completo,
+          obrigatoria: m.obrigatoria,
+          ordem: m.ordem
+        })
+        toast.success('Modelo do sistema ativado para sua escola!')
+      } catch (err) {
+        console.error('Erro ao ativar modelo padrão:', err)
+        toast.error('Erro ao ativar modelo do sistema.')
+      }
+      return
+    }
+
     if (isGlobal(m) && m.ativa) {
       toast.info('Para desativar uma autorização global, edite-a como personalizada.')
       return
     }
+    
     try {
       await toggleAtivo.mutateAsync({ id: m.id, ativa: !m.ativa })
       toast.success(m.ativa ? 'Autorização desativada.' : 'Autorização ativada.')
@@ -133,7 +158,21 @@ export function AutorizacoesAdminTab() {
   }
 
   const modelosTratados = useMemo(() => {
-    return (modelos as Modelo[]) || []
+    const dbModelos = (modelos as Modelo[]) || []
+    
+    // Mesclar padrões do sistema que ainda não foram "reivindicados" pela escola no banco
+    const virtuais = MODELOS_SISTEMA_PADRAO.filter(padrao => {
+      // Verifica se já existe um modelo na mesma categoria e com o mesmo título no banco desta escola
+      return !dbModelos.some(db => db.categoria === padrao.categoria && db.titulo === padrao.titulo)
+    }).map(padrao => ({
+      ...padrao,
+      id: `virtual-${padrao.categoria}-${padrao.ordem}`,
+      tenant_id: null,
+      ativa: false, // Inativos por padrão como solicitado
+      isDefault: true
+    }))
+
+    return [...virtuais, ...dbModelos]
   }, [modelos])
 
   const modelosFiltrados = modelosTratados.filter((m) => {
@@ -259,27 +298,38 @@ export function AutorizacoesAdminTab() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-slate-800 text-sm">{m.titulo}</p>
-                        {isGlobal(m) ? (
+                        
+                        {isDefault(m) ? (
+                          <Badge className="text-[9px] bg-amber-50 text-amber-600 border border-amber-100 font-black gap-1 uppercase tracking-wider">
+                            <Shield className="h-2.5 w-2.5" /> Sugestão do Sistema
+                          </Badge>
+                        ) : isGlobal(m) ? (
                           <Badge className="text-[9px] bg-slate-100 text-slate-500 border border-slate-200 font-bold gap-1">
                             <Globe className="h-2.5 w-2.5" /> Sistema
                           </Badge>
                         ) : (
-                          <Badge className="text-[9px] bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold gap-1">
-                            <Building2 className="h-2.5 w-2.5" /> Escola
+                          <Badge className="text-[9px] bg-teal-50 text-teal-600 border border-teal-100 font-bold gap-1">
+                            <Building2 className="h-2.5 w-2.5" /> Ativa na Escola
                           </Badge>
                         )}
+
                         {m.obrigatoria && (
                           <Badge className="text-[9px] bg-red-50 text-red-600 border border-red-100 font-bold">
                             Obrigatório
                           </Badge>
                         )}
-                        {!m.ativa && (
+                        {!m.ativa && !isDefault(m) && (
                           <Badge className="text-[9px] bg-slate-100 text-slate-500 border border-slate-200">
                             Inativa
                           </Badge>
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{m.descricao_curta}</p>
+                      {isDefault(m) && (
+                        <p className="text-[10px] text-amber-500 font-medium mt-1 italic">
+                          * Clique em ativar para disponibilizar este modelo padrão para sua escola.
+                        </p>
+                      )}
                     </div>
 
                     {/* Ações */}
@@ -297,7 +347,7 @@ export function AutorizacoesAdminTab() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                        title="Duplicar para personalizar"
+                        title={isDefault(m) ? "Ativar e Personalizar" : "Duplicar para personalizar"}
                         onClick={() => handleDuplicar(m)}
                       >
                         <Copy className="h-4 w-4" />
@@ -307,21 +357,26 @@ export function AutorizacoesAdminTab() {
                         size="icon"
                         className={cn(
                           "h-8 w-8 rounded-lg",
-                          isGlobal(m)
+                          (isGlobal(m) || isDefault(m))
                             ? 'text-slate-200 cursor-not-allowed'
                             : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
                         )}
-                        title={isGlobal(m) ? 'Não editável' : 'Editar'}
+                        title={(isGlobal(m) || isDefault(m)) ? 'Ative primeiro para editar' : 'Editar'}
                         onClick={() => abrirEditar(m)}
-                        disabled={isGlobal(m)}
+                        disabled={isGlobal(m) || isDefault(m)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Switch
-                        checked={m.ativa}
-                        onCheckedChange={() => handleToggle(m)}
-                        className="data-[state=checked]:bg-teal-500"
-                      />
+                      <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-100">
+                        <span className={cn("text-[10px] font-bold uppercase tracking-widest", m.ativa ? "text-teal-600" : "text-slate-300")}>
+                          {m.ativa ? "Ativo" : "Off"}
+                        </span>
+                        <Switch
+                          checked={m.ativa}
+                          onCheckedChange={() => handleToggle(m)}
+                          className="data-[state=checked]:bg-teal-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
