@@ -46,7 +46,7 @@ export const financeiroService = {
 
     let query = supabase
       .from('cobrancas')
-      .select('*, alunos(nome_completo)')
+      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, turma_id, ano_letivo, created_at, alunos(nome_completo)')
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
 
@@ -111,7 +111,7 @@ export const financeiroService = {
 
     const { count, error } = await supabase
       .from('cobrancas')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .in('status', ['a_vencer', 'atrasado'])
 
@@ -124,7 +124,7 @@ export const financeiroService = {
 
     const { data, error } = await supabase
       .from('cobrancas')
-      .select('*')
+      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, turma_id, ano_letivo, created_at')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
@@ -401,7 +401,7 @@ export const financeiroService = {
   async listarContasPagar(tenantId: string) {
     const { data, error } = await supabase
       .from('contas_pagar')
-      .select('*')
+      .select('id, tenant_id, descricao, valor, status, data_vencimento, fornecedor, categoria, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: true })
 

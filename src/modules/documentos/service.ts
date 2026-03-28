@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabase'
 export const documentosService = {
   async listarTemplates(tenantId: string) {
     const { data, error } = await (supabase.from('documento_templates' as any) as any)
-      .select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
+      .select('id, tenant_id, titulo, tipo, corpo_html, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
@@ -29,7 +31,7 @@ export const documentosService = {
   },
   async listarEmitidos(tenantId: string) {
     const { data, error } = await (supabase.from('documentos_emitidos' as any) as any)
-      .select('*, template:documento_templates(titulo, tipo), aluno:alunos(nome_completo)')
+      .select('id, tenant_id, aluno_id, template_id, created_at, template:documento_templates(titulo, tipo), aluno:alunos(nome_completo)')
       .eq('tenant_id', tenantId).order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
@@ -87,7 +89,7 @@ export const documentosService = {
   async listarSolicitacoes(tenantId: string) {
     const { data, error } = await (supabase.from('document_solicitations' as any) as any)
       .select(`
-        *,
+        id, tenant_id, aluno_id, responsavel_id, documento_tipo, status, observacoes, created_at,
         aluno:alunos(nome_completo, nome_social),
         responsavel:responsaveis(nome, cpf, telefone),
         documento_emitido:documentos_emitidos(id, titulo, created_at)

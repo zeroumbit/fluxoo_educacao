@@ -31,11 +31,6 @@ export const portalService = {
     })
 
     if (authError) {
-      console.error('DEBUG: Erro detalhado do Supabase Auth:', {
-        message: authError.message,
-        status: authError.status,
-        name: authError.name
-      })
       
       // Log de tentativa falha na auditoria
       await portalService.registrarAuditoria({
@@ -119,7 +114,6 @@ export const portalService = {
   // VÍNCULO ALUNOS (Multi-aluno, Multi-escola)
   // ==========================================
   async buscarVinculosAtivos(responsavelId: string) {
-    console.log('DEBUG: Buscando vínculos para responsável:', responsavelId)
     const { data, error } = await supabase.from('aluno_responsavel')
       .select(`
         id, responsavel_id, aluno_id, is_financeiro, is_academico, status, grau_parentesco,
@@ -141,7 +135,6 @@ export const portalService = {
       throw error
     }
 
-    console.log('DEBUG: Vínculos encontrados:', data)
     return (data as any[]) || []
   },
 

@@ -6,7 +6,7 @@ export const turmaService = {
   async listar(tenantId: string) {
     let query = supabase
       .from('turmas')
-      .select('*, filiais(nome_unidade)')
+      .select('id, tenant_id, nome, filial_id, max_alunos, status, turno, ano_letivo, valor_mensalidade, created_at, filiais(nome_unidade)')
     
     // Filtro de tenant opcional para Super Admin
     if (tenantId && tenantId !== 'super_admin') {
@@ -22,7 +22,7 @@ export const turmaService = {
   async buscarPorId(id: string, tenantId: string) {
     let query = supabase
       .from('turmas')
-      .select('*')
+      .select('id, tenant_id, nome, filial_id, max_alunos, status, turno, ano_letivo, valor_mensalidade, created_at, updated_at')
       .eq('id', id)
     
     if (tenantId && tenantId !== 'super_admin') {
@@ -171,7 +171,7 @@ export const turmaService = {
   async listarAtribuicoes(tenantId: string, turmaId?: string) {
     let query = supabase
       .from('turma_professores' as any)
-      .select('*')
+      .select('id, tenant_id, turma_id, professor_id, disciplina_id, dia_semana, hora_inicio, hora_fim')
       .eq('tenant_id', tenantId)
 
     if (turmaId) query = query.eq('turma_id', turmaId)
@@ -204,7 +204,7 @@ export const turmaService = {
   async listarGrade(tenantId: string, turmaId?: string) {
     let query = supabase
       .from('turma_grade_horaria' as any)
-      .select('*')
+      .select('id, tenant_id, turma_id, disciplina_id, professor_id, dia_semana, hora_inicio, hora_fim, cor_hex')
       .eq('tenant_id', tenantId)
 
     if (turmaId) query = query.eq('turma_id', turmaId)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookMarked, Calendar, ChevronRight, Clock, MapPin, X, Info } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -145,11 +146,11 @@ export function PortalPlanosAulaV2() {
 
                  <section>
                     <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Conteúdo Programático</h5>
-                    <div className="text-base font-semibold text-slate-500 leading-relaxed prose prose-slate max-w-none">
-                       {selectedPlano.conteudo ? (
-                         <div dangerouslySetInnerHTML={{ __html: selectedPlano.conteudo.replace(/\n/g, '<br/>') }} />
-                       ) : 'Nenhum conteúdo adicional cadastrado.'}
-                    </div>
+                      <div className="text-base font-semibold text-slate-500 leading-relaxed prose prose-slate max-w-none">
+                        {selectedPlano.conteudo ? (
+                          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPlano.conteudo) }} />
+                        ) : 'Nenhum conteúdo adicional cadastrado.'}
+                      </div>
                  </section>
 
                  <div className="grid grid-cols-2 gap-4 pt-10 border-t border-slate-100">

@@ -5,7 +5,7 @@ export const escolaService = {
   async listar() {
     const { data, error } = await supabase
       .from('escolas')
-      .select('*, planos(nome, valor_por_aluno)')
+      .select('id, razao_social, cnpj, email_gestor, nome_gestor, telefone, status_assinatura, plano_id, created_at, planos(nome, valor_por_aluno)')
       .order('razao_social')
     if (error) throw error
     return data
@@ -14,7 +14,7 @@ export const escolaService = {
   async buscarPorId(id: string) {
     const { data, error } = await supabase
       .from('escolas')
-      .select('*, planos(nome, valor_por_aluno), filiais(*)')
+      .select('id, razao_social, cnpj, email_gestor, nome_gestor, cpf_gestor, telefone, cep, logradouro, numero, bairro, cidade, estado, status_assinatura, plano_id, planos(nome, valor_por_aluno), filiais(id, nome_unidade, cidade, estado, is_matriz)')
       .eq('id', id)
       .single()
     if (error) throw error

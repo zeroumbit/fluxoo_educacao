@@ -12,8 +12,8 @@ export const alunoService = {
     const { data, error } = await supabase
       .from('alunos')
       .select(`
-        *,
-        filiais(nome_unidade),
+        id, nome_completo, nome_social, data_nascimento, cpf, rg, status, tenant_id, filial_id, foto_url, created_at,
+        filiais(*),
         aluno_responsavel(*, responsaveis(id, cpf, nome))
       `)
       .eq('tenant_id', tenantId)
@@ -22,6 +22,9 @@ export const alunoService = {
     if (error) throw error
 
     // Buscar matrículas ativas e turmas para cada aluno
+    const ids = (data as any[])?.map(a => a.id) || []
+    if (ids.length === 0) return (data as any[]) || []
+
     const { data: matriculas } = await (supabase.from('matriculas' as any) as any)
       .select(`
         aluno_id,
@@ -29,7 +32,7 @@ export const alunoService = {
         data_matricula,
         turmas(id, nome, valor_mensalidade)
       `)
-      .in('aluno_id', (data as any[])?.map(a => a.id) || [])
+      .in('aluno_id', ids)
       .eq('status', 'ativa')
 
     // Extrair valor da mensalidade e data de ingresso da turma atual para cada aluno
@@ -49,7 +52,7 @@ export const alunoService = {
       .from('alunos')
       .select(`
         *,
-        filiais(nome_unidade),
+        filiais(*),
         aluno_responsavel(*, responsaveis(*))
       `)
       .eq('id', id)
