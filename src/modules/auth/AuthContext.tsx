@@ -99,27 +99,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 3. FUNCIONÁRIO / RESPONSÁVEL
       try {
+        // Step 1: Busca o funcionário sem joins aninhados para evitar erro 400 por RLS
         const { data: funcionarioData } = await (supabase.from('funcionarios') as any)
-          .select('*, usuarios_sistema(perfil_id, perfil:perfis(nome))')
+          .select('id, nome_completo, tenant_id, email, user_id')
           .eq('user_id', user.id)
           .maybeSingle()
 
         if (funcionarioData) {
           const finalTenantId = funcionarioData.tenant_id
-          const rbac = funcionarioData.usuarios_sistema?.[0]
-          const perfilNome = rbac?.perfil?.nome?.toLowerCase() || ''
+
+          // Step 2: Busca dados RBAC separado (query independente, não afeta funcionario)
+          let perfilNome = ''
+          let perfilId: string | undefined
+          try {
+            const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
+              .select('perfil_id, perfis(nome)')
+              .eq('id', user.id)
+              .maybeSingle()
+            perfilNome = (rbacData?.perfis as any)?.nome?.toLowerCase() || ''
+            perfilId = rbacData?.perfil_id
+          } catch {
+            // RBAC não crítico — não bloqueia o login
+          }
           
           const isGestor = user.user_metadata?.role === 'gestor' || perfilNome.includes('gestor') || perfilNome.includes('admin')
           const isSuperAdmin = user.app_metadata?.role === 'super_admin'
-          const isProfessor = !isGestor && !isSuperAdmin && (user.user_metadata?.role === 'funcionario' || !!funcionarioData.id)
+          const isProfessor = !isGestor && !isSuperAdmin
 
           setAuthUser({
             user, session,
             tenantId: finalTenantId,
             role: 'funcionario',
             funcionarioId: funcionarioData.id,
-            perfilId: rbac?.perfil_id,
-            perfilNome: rbac?.perfil?.nome,
+            perfilId,
+            perfilNome,
             nome: funcionarioData.nome_completo || user.user_metadata?.full_name || 'Funcionário',
             email: user.email || '',
             isProfessor,
@@ -146,14 +159,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (user.email) {
+            // Fallback por email — também sem join aninhado
             const { data: funcByEmail } = await (supabase.from('funcionarios') as any)
-              .select('*, usuarios_sistema(perfil_id, perfil:perfis(nome))')
+              .select('id, nome_completo, tenant_id, email')
               .ilike('email', user.email)
               .maybeSingle()
               
             if (funcByEmail) {
-                const rbac = funcByEmail.usuarios_sistema?.[0]
-                const perfilNome = rbac?.perfil?.nome?.toLowerCase() || ''
+                let perfilNome = ''
+                let perfilId: string | undefined
+                try {
+                  const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
+                    .select('perfil_id, perfis(nome)')
+                    .eq('id', user.id)
+                    .maybeSingle()
+                  perfilNome = (rbacData?.perfis as any)?.nome?.toLowerCase() || ''
+                  perfilId = rbacData?.perfil_id
+                } catch { /* não bloqueia */ }
+
                 const isGestor = perfilNome.includes('gestor') || perfilNome.includes('admin')
                 const isProfessor = !isGestor
 
@@ -162,8 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   tenantId: funcByEmail.tenant_id,
                   role: 'funcionario',
                   funcionarioId: funcByEmail.id,
-                  perfilId: rbac?.perfil_id,
-                  perfilNome: rbac?.perfil?.nome,
+                  perfilId,
+                  perfilNome,
                   nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
                   email: user.email || '',
                   isProfessor,
