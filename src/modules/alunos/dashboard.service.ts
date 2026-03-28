@@ -88,9 +88,9 @@ export const dashboardService = {
               .select('*, turmas(nome)')
               .eq('tenant_id', tenantId)
               .is('turma_id', null)
-              .order('created_at', { ascending: false })
+              .order('created_at' as any, { ascending: false } as any)
               .limit(6)
-            return { data, error }
+            return { data: data as any[], error }
          }
 
          // Faz duas queries separadas e combina os resultados (global + turmas do professor)
@@ -110,10 +110,10 @@ export const dashboardService = {
          ])
 
          // Combina e ordena os resultados
-         const combined = [...(globais.data || []), ...(dasTurmas.data || [])]
-         combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+         const combined = [...(globais.data as any[] || []), ...(dasTurmas.data as any[] || [])]
+         combined.sort((a, b) => new Date((b as any).created_at).getTime() - new Date((a as any).created_at).getTime())
 
-         return { data: combined.slice(0, 6), error: globais.error || dasTurmas.error }
+         return { data: combined.slice(0, 6) as any[], error: (globais as any).error || (dasTurmas as any).error }
       })(),
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),

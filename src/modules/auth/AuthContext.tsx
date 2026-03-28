@@ -30,6 +30,8 @@ export interface AuthUser {
   isProfessor: boolean
   isGestor: boolean
   isSuperAdmin: boolean
+  areasAcesso?: string[]
+  endereco?: Endereco
 }
 
 interface AuthContextType {
@@ -75,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user.user_metadata?.role === 'gestor') {
         const { data: escola, error: erro } = await supabase
           .from('escolas')
-          .select('id, razao_social')
+          .select('id, razao_social, logradouro, numero, complemento, bairro, cidade, estado, cep')
           .eq('gestor_user_id', user.id)
           .limit(1)
           .maybeSingle() as any
@@ -83,6 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (erro) {
            console.error('❌ Erro na busca da escola:', erro.message)
         }
+
+        const endereco = escola?.logradouro ? {
+          logradouro: escola.logradouro,
+          numero: escola.numero,
+          complemento: escola.complemento,
+          bairro: escola.bairro,
+          cidade: escola.cidade,
+          estado: escola.estado,
+          cep: escola.cep
+        } : undefined
 
         setAuthUser({
           user, session,
@@ -92,7 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: user.email || '',
           isProfessor: false,
           isGestor: true,
-          isSuperAdmin: false
+          isSuperAdmin: false,
+          endereco
         })
         return
       }
@@ -111,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Step 2: Busca dados RBAC separado (query independente, não afeta funcionario)
           let perfilNome = ''
           let perfilId: string | undefined
+          let areasAcesso: string[] | undefined
           try {
             const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
               .select('perfil_id')
@@ -121,10 +135,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
               perfilNome = pData?.nome?.toLowerCase() || ''
             }
+            // Busca áreas de acesso do funcionário
+            const { data: areasData } = await (supabase as any)
+              .from('funcionario_areas_acesso')
+              .select('area')
+              .eq('funcionario_id', funcionarioData.id)
+            areasAcesso = areasData?.map((a: any) => a.area) || []
           } catch {
             // RBAC não crítico — não bloqueia o login
           }
-          
+
           const isGestor = user.user_metadata?.role === 'gestor' // Apenas o fundador/dono recebe bypass global
           const isSuperAdmin = user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin'
           const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
@@ -136,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             funcionarioId: funcionarioData.id,
             perfilId,
             perfilNome,
+            areasAcesso,
             nome: funcionarioData.nome_completo || user.user_metadata?.full_name || 'Funcionário',
             email: user.email || '',
             isProfessor,
@@ -171,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (funcByEmail) {
                 let perfilNome = ''
                 let perfilId: string | undefined
+                let areasAcesso: string[] | undefined
                 try {
                   const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
                     .select('perfil_id')
@@ -181,6 +203,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
                     perfilNome = pData?.nome?.toLowerCase() || ''
                   }
+                  // Busca áreas de acesso do funcionário
+                  const { data: areasData } = await (supabase as any)
+                    .from('funcionario_areas_acesso')
+                    .select('area')
+                    .eq('funcionario_id', funcByEmail.id)
+                  areasAcesso = areasData?.map((a: any) => a.area) || []
                 } catch { /* não bloqueia */ }
 
                 const isGestor = user.user_metadata?.role === 'gestor' // Apenas dono da escola
@@ -193,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   funcionarioId: funcByEmail.id,
                   perfilId,
                   perfilNome,
+                  areasAcesso,
                   nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
                   email: user.email || '',
                   isProfessor,

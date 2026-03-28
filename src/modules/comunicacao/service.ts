@@ -18,13 +18,13 @@ export const muralService = {
   async listar(tenantId: string, professorId?: string) {
     // Se for professor, busca as turmas dele primeiro
     if (professorId) {
-      const { data: vincs } = await supabase
+      const { data: vincs } = await (supabase as any)
         .from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
-      
+
       const idsT = vincs?.map((v: any) => v.turma_id) || []
-      
+
       // Se não tem turmas, retorna apenas avisos globais
       if (idsT.length === 0) {
         const { data, error } = await supabase
@@ -32,30 +32,30 @@ export const muralService = {
           .select('*, turmas(nome)')
           .eq('tenant_id', tenantId)
           .is('turma_id', null)
-          .order('created_at', { ascending: false })
-        
+          .order('created_at' as any, { ascending: false } as any)
+
         if (error) throw error
         return data ?? []
       }
-      
+
       // Filtra avisos globais OU das turmas do professor
       const { data, error } = await supabase
         .from('mural_avisos')
         .select('*, turmas(nome)')
         .eq('tenant_id', tenantId)
         .or(`turma_id.is.null,turma_id.in.(${idsT.join(',')})`)
-        .order('created_at', { ascending: false })
-      
+        .order('created_at' as any, { ascending: false } as any)
+
       if (error) throw error
       return data ?? []
     }
-    
+
     // Não é professor: retorna todos os avisos
     const { data, error } = await supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
+      .order('created_at' as any, { ascending: false } as any)
 
     if (error) throw error
     return data ?? []
@@ -70,7 +70,7 @@ export const muralService = {
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
+      .order('created_at' as any, { ascending: false } as any)
 
     if (turmaId) {
       query = query.or(`turma_id.is.null,turma_id.eq.${turmaId}`)
@@ -90,13 +90,13 @@ export const muralService = {
 
     // Se for professor, busca as turmas dele primeiro
     if (professorId) {
-      const { data: vincs } = await supabase
+      const { data: vincs } = await (supabase as any)
         .from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
-      
+
       const idsT = vincs?.map((v: any) => v.turma_id) || []
-      
+
       // Se não tem turmas, retorna apenas avisos globais ativos
       if (idsT.length === 0) {
         const { data, error } = await supabase
@@ -105,13 +105,13 @@ export const muralService = {
           .eq('tenant_id', tenantId)
           .is('turma_id', null)
           .or(`data_fim.is.null,data_fim.gte.${hoje}`)
-          .order('created_at', { ascending: false })
+          .order('created_at' as any, { ascending: false } as any)
           .limit(limite)
-        
+
         if (error) throw error
         return data ?? []
       }
-      
+
       // Filtra avisos globais OU das turmas do professor, apenas ativos
       const { data, error } = await supabase
         .from('mural_avisos')
@@ -119,20 +119,20 @@ export const muralService = {
         .eq('tenant_id', tenantId)
         .or(`turma_id.is.null,turma_id.in.(${idsT.join(',')})`)
         .or(`data_fim.is.null,data_fim.gte.${hoje}`)
-        .order('created_at', { ascending: false })
+        .order('created_at' as any, { ascending: false } as any)
         .limit(limite)
-      
+
       if (error) throw error
       return data ?? []
     }
-    
+
     // Não é professor: retorna todos os avisos ativos
     const { data, error } = await supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
       .or(`data_fim.is.null,data_fim.gte.${hoje}`)
-      .order('created_at', { ascending: false })
+      .order('created_at' as any, { ascending: false } as any)
       .limit(limite)
 
     if (error) throw error
@@ -150,7 +150,7 @@ export const muralService = {
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
       .or(`data_fim.is.null,data_fim.gte.${hoje}`)
-      .order('created_at', { ascending: false })
+      .order('created_at' as any, { ascending: false } as any)
       .limit(5)
 
     if (turmaId) {
