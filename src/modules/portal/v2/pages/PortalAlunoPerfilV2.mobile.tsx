@@ -13,6 +13,7 @@ import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
 import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
 import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
+import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
@@ -31,6 +32,7 @@ export function PortalAlunoPerfilV2Mobile() {
 
   // Estado para controlar qual módulo está aberto dentro do drill-down
   const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [showFilaVirtual, setShowFilaVirtual] = useState(false);
 
   // Sincroniza o aluno selecionado se acessar via URL direta
   React.useEffect(() => {
@@ -115,6 +117,7 @@ export function PortalAlunoPerfilV2Mobile() {
         {/* Fila Virtual Action - Padrão iOS Card / Material Elevated Button */}
         <motion.button
           whileTap={{ scale: 0.97 }}
+          onClick={() => setShowFilaVirtual(true)}
           className="w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-[24px] p-4 shadow-sm touch-manipulation min-h-[48px]"
           aria-label="Avisar chegada na fila virtual"
         >
@@ -209,13 +212,47 @@ export function PortalAlunoPerfilV2Mobile() {
               {activeModule === 'material' && <PortalLivrosPage hideHeader />}
               {activeModule === 'agenda' && <PortalAgendaPage hideHeader />}
               {activeModule === 'autorizacoes' && <PortalAutorizacoesPage hideHeader />}
-              
+
               {!['grade', 'boletim', 'frequencia', 'planos', 'atividades', 'material', 'agenda', 'autorizacoes'].includes(activeModule) && (
                 <div className="flex flex-col items-center justify-center p-12 text-slate-500">
                   <Settings className="w-16 h-16 text-slate-200 mb-4" />
                   <p className="text-[15px] font-medium text-slate-500 text-center">Módulo em desenvolvimento</p>
                 </div>
               )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Fila Virtual - Bottom Sheet Dedicado */}
+        {showFilaVirtual && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: '0%' }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            className="fixed inset-0 z-50 flex flex-col bg-white"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="fila-virtual-title"
+          >
+            {/* Header Fixo */}
+            <header className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white z-20 pt-[env(safe-area-inset-top,12px)]">
+              <button
+                onClick={() => setShowFilaVirtual(false)}
+                className="w-12 h-12 flex items-center justify-center rounded-[16px] bg-slate-50 text-slate-500 active:bg-slate-100 transition-colors touch-manipulation min-h-[48px] min-w-[48px]"
+                aria-label="Fechar fila virtual"
+              >
+                <ArrowLeft className="w-6 h-6" aria-hidden="true" />
+              </button>
+              <h2 id="fila-virtual-title" className="text-[17px] font-bold text-slate-800 tracking-tight">
+                Fila Virtual
+              </h2>
+              <div className="w-12" aria-hidden="true" />
+            </header>
+
+            {/* Conteúdo */}
+            <div className="flex-1 overflow-y-auto w-full px-4 py-2">
+              <PortalFilaVirtualPage hideHeader />
             </div>
           </motion.div>
         )}

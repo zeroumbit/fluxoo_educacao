@@ -270,23 +270,32 @@ export function PlanoAulaPageMobile() {
                                  {plano.disciplina}
                                </h4>
                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                                 {new Date(plano.data_aula).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                 {(() => {
+                                   const [ano, mes, dia] = plano.data_aula.split('-')
+                                   const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+                                   return `${dia} ${meses[parseInt(mes) - 1]}`
+                                 })()}
                                </p>
                             </div>
                          </div>
                          <div className="flex items-center gap-1">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleDelete(plano.id); }}
-                              className="h-9 w-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleEdit(plano); }}
-                              className="h-9 w-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
+                            {/* Professor só vê editar/excluir se for o autor do plano */}
+                            {(!authUser?.isProfessor || plano.professor_id === authUser.funcionarioId) && (
+                              <>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(plano.id); }}
+                                  className="h-9 w-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(plano); }}
+                                  className="h-9 w-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
                          </div>
                       </div>
 
@@ -334,7 +343,10 @@ export function PlanoAulaPageMobile() {
                   <h2 className="text-xl font-black text-slate-900 dark:text-white leading-tight">{viewingPlano.disciplina}</h2>
                   <div className="flex items-center gap-2 mt-2 text-indigo-600 font-bold text-sm">
                      <Calendar className="h-4 w-4" />
-                     {new Date(viewingPlano.data_aula).toLocaleDateString()}
+                     {(() => {
+                       const [ano, mes, dia] = viewingPlano.data_aula.split('-')
+                       return `${dia}/${mes}/${ano}`
+                     })()}
                   </div>
                </div>
 
@@ -358,14 +370,24 @@ export function PlanoAulaPageMobile() {
                      </div>
                   </div>
 
-                  {viewingPlano.conteudo_realizado && (
-                    <div className="space-y-2">
-                       <h3 className="text-[10px] font-black uppercase text-teal-600 tracking-widest ml-1">Conteúdo Realizado</h3>
-                       <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-2xl border border-teal-100 dark:border-teal-900/50">
-                          <p className="text-sm font-bold text-teal-800 dark:text-teal-400 leading-relaxed whitespace-pre-wrap">{viewingPlano.conteudo_realizado}</p>
-                       </div>
-                    </div>
-                  )}
+                  {viewingPlano.conteudo_realizado && (() => {
+                    // Só mostra "Conteúdo Realizado" se a data da aula já passou
+                    const dataAula = new Date(viewingPlano.data_aula + 'T00:00:00')
+                    const hoje = new Date()
+                    hoje.setHours(0, 0, 0, 0)
+                    const dataJaPassou = dataAula <= hoje
+                    
+                    if (!dataJaPassou) return null
+                    
+                    return (
+                      <div className="space-y-2">
+                         <h3 className="text-[10px] font-black uppercase text-teal-600 tracking-widest ml-1">Conteúdo Realizado</h3>
+                         <div className="p-4 bg-teal-50 dark:bg-teal-500/10 rounded-2xl border border-teal-100 dark:border-teal-900/50">
+                            <p className="text-sm font-bold text-teal-800 dark:text-teal-400 leading-relaxed whitespace-pre-wrap">{viewingPlano.conteudo_realizado}</p>
+                         </div>
+                      </div>
+                    )
+                  })()}
 
                   {viewingPlano.observacoes && (
                     <div className="space-y-2">
@@ -377,9 +399,12 @@ export function PlanoAulaPageMobile() {
                   )}
                </div>
 
-               <Button onClick={() => handleEdit(viewingPlano)} className="w-full h-14 rounded-2xl bg-indigo-600 font-bold shadow-lg shadow-indigo-100">
-                  Editar este Plano
-               </Button>
+               {/* Professor só vê botão de editar se for o autor do plano */}
+               {(!authUser?.isProfessor || viewingPlano.professor_id === authUser.funcionarioId) && (
+                 <Button onClick={() => handleEdit(viewingPlano)} className="w-full h-14 rounded-2xl bg-indigo-600 font-bold shadow-lg shadow-indigo-100">
+                    Editar este Plano
+                 </Button>
+               )}
             </div>
          )}
       </BottomSheet>

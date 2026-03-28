@@ -57,6 +57,9 @@ export function TurmaDetalhesModalMobile({
     }
   }, [isOpen, initialTab])
 
+  const { authUser } = useAuth()
+  const visibleTabs = authUser?.isProfessor ? TABS.filter(t => t.id === 'dados') : TABS
+
   if (!turma) return null
 
   return (
@@ -84,7 +87,7 @@ export function TurmaDetalhesModalMobile({
 
         {/* Scrollable Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2 px-1 no-scrollbar">
-          {TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
             return (
@@ -108,9 +111,9 @@ export function TurmaDetalhesModalMobile({
         {/* Tab Contents */}
         <div className="px-1">
           {activeTab === 'dados' && <TabDados turma={turma} onEdit={() => onEditTurma?.(turma)} onDelete={() => onDeleteTurma?.(turma)} />}
-          {activeTab === 'alunos' && <TabAlunos turma={turma} />}
-          {activeTab === 'professores' && <TabProfessores turma={turma} />}
-          {activeTab === 'grade' && <TabGrade turma={turma} />}
+          {!authUser?.isProfessor && activeTab === 'alunos' && <TabAlunos turma={turma} />}
+          {!authUser?.isProfessor && activeTab === 'professores' && <TabProfessores turma={turma} />}
+          {!authUser?.isProfessor && activeTab === 'grade' && <TabGrade turma={turma} />}
         </div>
       </div>
     </BottomSheet>
@@ -168,38 +171,42 @@ function TabDados({ turma, onEdit, onDelete }: { turma: Turma, onEdit: () => voi
             <TrendingUp className="h-4 w-4 text-slate-400" />
             Boletim da Turma
           </Button>
-          <Button 
-            onClick={async () => {
-              if (!authUser?.tenantId) return
-              const nValor = prompt('Novo valor da mensalidade?', turma.valor_mensalidade?.toString())
-              if (!nValor) return
-              const vNum = parseFloat(nValor.replace(',', '.'))
-              if (isNaN(vNum) || vNum <= 0) { toast.error('Valor inválido'); return }
+          {!authUser?.isProfessor && (
+            <Button 
+              onClick={async () => {
+                if (!authUser?.tenantId) return
+                const nValor = prompt('Novo valor da mensalidade?', turma.valor_mensalidade?.toString())
+                if (!nValor) return
+                const vNum = parseFloat(nValor.replace(',', '.'))
+                if (isNaN(vNum) || vNum <= 0) { toast.error('Valor inválido'); return }
 
-              if (confirm(`Atualizar todos os alunos para R$ ${vNum.toFixed(2)}?`)) {
-                try {
-                  await updateMensalidadeTurma.mutateAsync({ turmaId: turma.id, tenantId: authUser.tenantId, valor: vNum })
-                } catch {}
-              }
-            }}
-            disabled={isUpdating}
-            variant="outline"
-            className="w-full h-14 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest gap-2 bg-white dark:bg-slate-900 text-emerald-600 border-emerald-100"
-          >
-            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
-            Mensalidade em Lote
-          </Button>
+                if (confirm(`Atualizar todos os alunos para R$ ${vNum.toFixed(2)}?`)) {
+                  try {
+                    await updateMensalidadeTurma.mutateAsync({ turmaId: turma.id, tenantId: authUser.tenantId, valor: vNum })
+                  } catch {}
+                }
+              }}
+              disabled={isUpdating}
+              variant="outline"
+              className="w-full h-14 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest gap-2 bg-white dark:bg-slate-900 text-emerald-600 border-emerald-100"
+            >
+              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calculator className="h-4 w-4" />}
+              Mensalidade em Lote
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={onDelete} className="flex-1 h-12 rounded-xl font-bold text-sm text-rose-500 border-rose-100">
-          Excluir
-        </Button>
-        <Button onClick={onEdit} className="flex-1 h-12 rounded-xl bg-slate-900 font-bold text-sm text-white shadow-lg">
-          Editar Dados
-        </Button>
-      </div>
+      {!authUser?.isProfessor && (
+        <div className="flex gap-3 pt-4">
+          <Button variant="outline" onClick={onDelete} className="flex-1 h-12 rounded-xl font-bold text-sm text-rose-500 border-rose-100">
+            Excluir
+          </Button>
+          <Button onClick={onEdit} className="flex-1 h-12 rounded-xl bg-slate-900 font-bold text-sm text-white shadow-lg">
+            Editar Dados
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

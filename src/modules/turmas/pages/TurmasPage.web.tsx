@@ -165,17 +165,19 @@ export function TurmasPageWeb() {
           </div>
         </div>
 
-        <Button
-          disabled={loadingTurmas}
-          onClick={() => {
-            reset()
-            setIsNewModalOpen(true)
-          }}
-          className="h-11 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Nova Turma
-        </Button>
+        {!authUser?.isProfessor && (
+          <Button
+            disabled={loadingTurmas}
+            onClick={() => {
+              reset()
+              setIsNewModalOpen(true)
+            }}
+            className="h-11 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Nova Turma
+          </Button>
+        )}
       </div>
 
       {/* Busca */}

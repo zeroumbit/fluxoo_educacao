@@ -72,40 +72,75 @@ export const dashboardService = {
       matriculasRes,
     ] = await Promise.all([
       (() => {
-        let q = supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo')
-        if (professorId) q = q.in('id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
-        return q
+        // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
+        if (professorId && idsAlunosProfessor.length === 0) {
+          return { count: 0, data: null, error: null }
+        }
+        return supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo')
       })(),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
-      (() => {
+      (async () => {
          // Filtra mural: Global OU das turmas do professor
-         let q = supabase.from('mural' as any).select('*, turmas(nome)').eq('tenant_id', tenantId).eq('status', 'ativo')
-         if (professorId) {
-            q = q.or(`turma_id.is.null,turma_id.in.(${idsTurmasProfessor.join(',') || 'none'})`)
+         // Se professor não tem turmas, retorna apenas avisos globais
+         if (professorId && idsTurmasProfessor.length === 0) {
+            const { data, error } = await supabase.from('mural_avisos' as any)
+              .select('*, turmas(nome)')
+              .eq('tenant_id', tenantId)
+              .is('turma_id', null)
+              .order('created_at', { ascending: false })
+              .limit(6)
+            return { data, error }
          }
-         return q.order('created_at', { ascending: false }).limit(6)
+
+         // Faz duas queries separadas e combina os resultados (global + turmas do professor)
+         const [globais, dasTurmas] = await Promise.all([
+           supabase.from('mural_avisos' as any)
+             .select('*, turmas(nome)')
+             .eq('tenant_id', tenantId)
+             .is('turma_id', null)
+             .limit(6),
+           idsTurmasProfessor.length > 0
+             ? supabase.from('mural_avisos' as any)
+                 .select('*, turmas(nome)')
+                 .eq('tenant_id', tenantId)
+                 .in('turma_id', idsTurmasProfessor)
+                 .limit(6)
+             : Promise.resolve({ data: [] })
+         ])
+
+         // Combina e ordena os resultados
+         const combined = [...(globais.data || []), ...(dasTurmas.data || [])]
+         combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+         return { data: combined.slice(0, 6), error: globais.error || dasTurmas.error }
       })(),
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       (() => {
-        let q = supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId)
-        if (professorId) q = q.in('id', idsTurmasProfessor.length > 0 ? idsTurmasProfessor : ['none'])
-        return q
+        // Se professor não tem turmas vinculadas, retorna count 0 sem fazer query (evita erro 400)
+        if (professorId && idsTurmasProfessor.length === 0) {
+          return { count: 0, data: null, error: null }
+        }
+        return supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId)
       })(),
       (async () => {
         try {
+          // Se professor não tem alunos vinculados, retorna array vazio sem fazer query (evita erro 400)
+          if (professorId && idsAlunosProfessor.length === 0) return { data: [] }
           let q = (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false })
-          if (professorId) q = q.in('aluno_id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
+          if (professorId) q = q.in('aluno_id', idsAlunosProfessor)
           return await q
         } catch { return { data: [] } }
       })(),
       (professorId ? Promise.resolve({ data: [] }) : (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago')) as any,
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0)),
       (() => {
-        let q = supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa')
-        if (professorId) q = q.in('aluno_id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
-        return q
+        // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
+        if (professorId && idsAlunosProfessor.length === 0) {
+          return { count: 0, data: null, error: null }
+        }
+        return supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa')
       })(),
     ])
 

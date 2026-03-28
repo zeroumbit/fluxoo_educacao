@@ -279,13 +279,15 @@ export function TurmasPageMobile() {
                           </div>
                         </div>
                         
-                        <motion.button 
-                          whileTap={{ scale: 0.9 }} 
-                          onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
-                          className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-slate-700"
-                        >
-                          <Settings className="h-5 w-5" />
-                        </motion.button>
+                        {!authUser?.isProfessor && (
+                          <motion.button 
+                            whileTap={{ scale: 0.9 }} 
+                            onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
+                            className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-100 dark:border-slate-700"
+                          >
+                            <Settings className="h-5 w-5" />
+                          </motion.button>
+                        )}
                       </div>
 
                       {/* Info Compacta */}
@@ -306,33 +308,48 @@ export function TurmasPageMobile() {
 
                       {/* Ações Rápidas (Estilo Web) */}
                       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-50 dark:border-slate-800/60">
-                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); abrirAlunos(turma) }}
-                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-indigo-50/50 text-indigo-600 dark:text-indigo-400"
-                         >
-                            <Users size={14} />
-                            Alunos
-                         </Button>
-                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); abrirGrade(turma) }}
-                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-teal-50/50 text-teal-600 dark:text-teal-400"
-                         >
-                            <CalendarDays size={14} />
-                            Grade
-                         </Button>
-                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
-                          className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none"
-                         >
-                            Gerir
-                            <ChevronRight size={12} />
-                         </Button>
+                        {!authUser?.isProfessor ? (
+                          <>
+                             <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); abrirAlunos(turma) }}
+                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-indigo-50/50 text-indigo-600 dark:text-indigo-400"
+                             >
+                                <Users size={14} />
+                                Alunos
+                             </Button>
+                             <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); abrirGrade(turma) }}
+                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-teal-50/50 text-teal-600 dark:text-teal-400"
+                             >
+                                <CalendarDays size={14} />
+                                Grade
+                             </Button>
+                             <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
+                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none"
+                             >
+                                Gerir
+                                <ChevronRight size={12} />
+                             </Button>
+                          </>
+                        ) : (
+                             <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
+                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm col-span-3"
+                             >
+                                <BookOpen size={14} />
+                                Visualizar Disciplina
+                                <ChevronRight size={12} />
+                             </Button>
+                        )}
                       </div>
                     </div>
                   </NativeCard>
@@ -354,13 +371,15 @@ export function TurmasPageMobile() {
       </div>
 
       {/* ── FAB (Rule 23) ─────────────────────────── */}
-      <motion.button
-        initial={{ scale: 0 }} animate={{ scale: 1 }} whileTap={{ scale: 0.9 }}
-        onClick={abrirNovo}
-        className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
-      >
-        <Plus className="h-7 w-7" />
-      </motion.button>
+      {!authUser?.isProfessor && (
+        <motion.button
+          initial={{ scale: 0 }} animate={{ scale: 1 }} whileTap={{ scale: 0.9 }}
+          onClick={abrirNovo}
+          className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+        >
+          <Plus className="h-7 w-7" />
+        </motion.button>
+      )}
 
 
       {/* ═══════════════════════════════════════════════

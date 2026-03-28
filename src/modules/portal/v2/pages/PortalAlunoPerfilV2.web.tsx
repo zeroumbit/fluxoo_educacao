@@ -14,6 +14,7 @@ import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
 import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
 import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
+import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
 
@@ -41,6 +42,7 @@ export function PortalAlunoPerfilV2Web() {
   const { alunoSelecionado } = context;
   const { data: dashboard } = useDashboardAluno();
   const [activeModule, setActiveModule] = useState<string>('grade');
+  const [showFilaVirtual, setShowFilaVirtual] = useState(false);
 
   // Sincroniza o aluno selecionado se acessar via URL direta
   React.useEffect(() => {
@@ -86,7 +88,10 @@ export function PortalAlunoPerfilV2Web() {
           </div>
         </div>
 
-        <button className="flex items-center gap-3 bg-zinc-900 text-white px-6 py-4 rounded-2xl hover:bg-zinc-800 shadow-xl shadow-zinc-900/10 transition-colors group">
+        <button
+          onClick={() => setShowFilaVirtual(true)}
+          className="flex items-center gap-3 bg-zinc-900 text-white px-6 py-4 rounded-2xl hover:bg-zinc-800 shadow-xl shadow-zinc-900/10 transition-colors group"
+        >
           <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-teal-400 border border-zinc-700">
             <Car className="w-5 h-5" />
           </div>
@@ -144,6 +149,31 @@ export function PortalAlunoPerfilV2Web() {
           )}
         </div>
       </div>
+
+      {/* Fila Virtual Dialog - Web */}
+      {showFilaVirtual && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+              <button
+                onClick={() => setShowFilaVirtual(false)}
+                className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="Fechar fila virtual"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-slate-800">Fila Virtual</h2>
+              <div className="w-12" aria-hidden="true" />
+            </header>
+
+            {/* Conteúdo */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <PortalFilaVirtualPage hideHeader />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

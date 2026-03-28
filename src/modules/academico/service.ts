@@ -245,8 +245,9 @@ export const academicoService = {
 
   // PLANOS DE AULA
   async listarPlanosAula(tenantId: string, professorId?: string) {
+    // Select explícito para garantir que professor_id seja retornado
     let query = supabase.from('planos_aula' as any)
-      .select('*, planos_aula_turmas(*, turma:turmas(nome))')
+      .select('id, tenant_id, filial_id, disciplina, data_aula, conteudo_previsto, conteudo_realizado, observacoes, professor_id, created_at, updated_at, planos_aula_turmas(*, turma:turmas(nome))')
       .eq('tenant_id', tenantId)
 
     if (professorId) {
@@ -255,13 +256,13 @@ export const academicoService = {
         .select('turma_id')
         .eq('professor_id', professorId)
        const idsT = vincs?.map((v: any) => v.turma_id) || []
-       
+
        if (idsT.length === 0) return []
-       
+
        const { data: planosIds } = await (supabase.from('planos_aula_turmas' as any) as any)
          .select('plano_aula_id')
          .in('turma_id', idsT)
-       
+
        const idsP = planosIds?.map((p: any) => p.plano_aula_id) || []
        if (idsP.length === 0) return []
        query = query.in('id', idsP)
@@ -269,15 +270,21 @@ export const academicoService = {
 
     const { data, error } = await query.order('data_aula', { ascending: false })
     if (error) throw error
+    
     return (data as any[]) || []
   },
-  async criarPlanoAula(planoComTurmas: any, userId?: string) {
+  async criarPlanoAula(planoComTurmas: any, userId?: string, professorId?: string) {
     // Validação RBAC: academico.planos_aula.create
     if (userId && planoComTurmas.tenant_id) {
       await validarPermissao(userId, planoComTurmas.tenant_id, 'academico.planos_aula.create')
     }
 
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
+
+    // Adiciona professor_id se for professor
+    if (professorId) {
+      planoData.professor_id = professorId
+    }
 
     // 1. Criar o plano de aula
     const { data: plano, error: planoError } = await (supabase.from('planos_aula' as any) as any)
@@ -307,11 +314,14 @@ export const academicoService = {
 
     return plano
   },
-  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any, userId?: string) {
+  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any, userId?: string, professorId?: string) {
     // Validação RBAC: academico.planos_aula.update
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.update')
     }
+
+    // Nota: A validação de propriedade (professor só edita seus próprios planos)
+    // é feita via RLS no banco de dados e na UI
 
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
@@ -345,12 +355,15 @@ export const academicoService = {
 
     return plano
   },
-  async excluirPlanoAula(id: string, tenantId: string, userId?: string) {
+  async excluirPlanoAula(id: string, tenantId: string, userId?: string, professorId?: string) {
     // Validação RBAC: academico.planos_aula.delete
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.delete')
     }
 
+    // Nota: A validação de propriedade (professor só exclui seus próprios planos) 
+    // é feita via RLS no banco de dados e na UI
+    
     const { error } = await (supabase.from('planos_aula' as any) as any)
       .delete()
       .eq('id', id)

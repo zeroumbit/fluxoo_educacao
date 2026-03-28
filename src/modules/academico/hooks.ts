@@ -80,8 +80,9 @@ export function usePlanosAula() {
 }
 export function useCriarPlanoAula() {
   const qc = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (d: any) => academicoService.criarPlanoAula(d),
+    mutationFn: (d: any) => academicoService.criarPlanoAula(d, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['planos_aula'] })
       qc.invalidateQueries({ queryKey: ['portal', 'planos-aula'] })
@@ -92,7 +93,7 @@ export function useAtualizarPlanoAula() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, authUser!.tenantId, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, authUser!.tenantId, data, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['planos_aula'] })
       qc.invalidateQueries({ queryKey: ['portal', 'planos-aula'] })
@@ -103,7 +104,7 @@ export function useExcluirPlanoAula() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => academicoService.excluirPlanoAula(id, authUser!.tenantId),
+    mutationFn: (id: string) => academicoService.excluirPlanoAula(id, authUser!.tenantId, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['planos_aula'] })
       qc.invalidateQueries({ queryKey: ['portal', 'planos-aula'] })

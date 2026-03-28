@@ -24,9 +24,8 @@ SELECT
     -- Verifica se já existe registro de frequência hoje para esta aula
     EXISTS (
         SELECT 1
-        FROM public.frequencia_registros fr
+        FROM public.frequencias fr
         WHERE fr.turma_id      = gh.turma_id
-          AND fr.disciplina_id = gh.disciplina_id
           AND fr.data_aula     = CURRENT_DATE
         LIMIT 1
     ) AS chamada_realizada,
@@ -34,7 +33,7 @@ SELECT
     EXISTS (
         SELECT 1
         FROM public.planos_aula pa
-        WHERE (pa.turma_id = gh.turma_id OR gh.turma_id = ANY(pa.turmas_ids))
+        WHERE pa.turma_id = gh.turma_id
           AND pa.disciplina_id    = gh.disciplina_id
           AND pa.data_aula        = CURRENT_DATE
           AND pa.conteudo_realizado IS NOT NULL
@@ -59,7 +58,7 @@ SELECT
     'Conteúdo não registrado'::text AS descricao,
     pa.data_aula                    AS data_referencia,
     COALESCE(
-        (SELECT t.nome FROM public.turmas t WHERE t.id = ANY(pa.turmas_ids) LIMIT 1),
+        (SELECT t.nome FROM public.turmas t WHERE t.id = pa.turma_id),
         'Turma não especificada'
     )                               AS contexto
 FROM public.planos_aula pa
@@ -69,22 +68,32 @@ WHERE pa.data_aula  < CURRENT_DATE
 
 UNION ALL
 
--- 2. Atividades com prazo vencido ainda sem resultados registrados
+-- 2. Avaliações com prazo vencido ainda sem notas registradas para todos os alunos
 SELECT
-    at.tenant_id,
-    at.professor_id,
+    ac.tenant_id,
+    tp.professor_id,
     'notas'::text                                 AS tipo_pendencia,
-    'Resultados de atividade pendentes'::text      AS descricao,
-    at.data_entrega                               AS data_referencia,
-    at.titulo                                     AS contexto
-FROM public.academico_atividades at
-WHERE at.data_entrega  < CURRENT_DATE
-  AND at.data_entrega >= CURRENT_DATE - INTERVAL '15 days'
-  AND NOT EXISTS (
+    'Avaliação aguardando correção/notas'::text   AS descricao,
+    ac.data_aplicacao                             AS data_referencia,
+    ac.titulo                                     AS contexto
+FROM public.avaliacoes_config ac
+JOIN public.turma_professores tp ON tp.turma_id = ac.turma_id AND tp.disciplina_id = ac.disciplina_id
+WHERE ac.data_aplicacao  < CURRENT_DATE
+  AND ac.data_aplicacao >= CURRENT_DATE - INTERVAL '15 days'
+  AND ac.deleted_at IS NULL
+  AND EXISTS (
+      -- Se a turma tem alunos ativos que AINDA NÃO TEM nota lançada para a avaliação
       SELECT 1
-      FROM public.academico_atividade_resultados ar
-      WHERE ar.atividade_id = at.id
-      LIMIT 1
+      FROM public.matriculas m
+      WHERE m.turma_id = ac.turma_id
+        AND m.status = 'ativa'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM public.avaliacoes_notas an
+            WHERE an.avaliacao_id = ac.id
+              AND an.aluno_id = m.aluno_id
+              AND an.deleted_at IS NULL
+        )
   );
 
 
@@ -107,19 +116,19 @@ SELECT
     -- Percentual de presença no mês atual
     COALESCE((
         SELECT ROUND(
-            (COUNT(*) FILTER (WHERE fr.presente = true))::numeric
+            (COUNT(*) FILTER (WHERE fr.status = 'presente'))::numeric
             / NULLIF(COUNT(*), 0) * 100
         , 1)
-        FROM public.frequencia_registros fr
+        FROM public.frequencias fr
         WHERE fr.turma_id = tp.turma_id
           AND EXTRACT(MONTH FROM fr.data_aula) = EXTRACT(MONTH FROM CURRENT_DATE)
           AND EXTRACT(YEAR  FROM fr.data_aula) = EXTRACT(YEAR  FROM CURRENT_DATE)
     ), 100)::numeric AS percentual_presenca,
     -- Média geral de notas das avaliações da turma
     COALESCE((
-        SELECT ROUND(AVG(nb.nota), 1)
-        FROM public.notas_boletim nb
-        WHERE nb.turma_id = tp.turma_id
+        SELECT ROUND(AVG(bc.media_final), 1)
+        FROM public.vw_boletim_completo bc
+        WHERE bc.turma_id = tp.turma_id
     ), 0)::numeric AS media_geral
 FROM public.turma_professores tp
 JOIN public.turmas t ON t.id = tp.turma_id

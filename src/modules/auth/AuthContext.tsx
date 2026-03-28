@@ -113,18 +113,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           let perfilId: string | undefined
           try {
             const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
-              .select('perfil_id, perfis(nome)')
+              .select('perfil_id')
               .eq('id', user.id)
               .maybeSingle()
-            perfilNome = (rbacData?.perfis as any)?.nome?.toLowerCase() || ''
             perfilId = rbacData?.perfil_id
+            if (perfilId) {
+              const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
+              perfilNome = pData?.nome?.toLowerCase() || ''
+            }
           } catch {
             // RBAC não crítico — não bloqueia o login
           }
           
-          const isGestor = user.user_metadata?.role === 'gestor' || perfilNome.includes('gestor') || perfilNome.includes('admin')
-          const isSuperAdmin = user.app_metadata?.role === 'super_admin'
-          const isProfessor = !isGestor && !isSuperAdmin
+          const isGestor = user.user_metadata?.role === 'gestor' // Apenas o fundador/dono recebe bypass global
+          const isSuperAdmin = user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin'
+          const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
           setAuthUser({
             user, session,
@@ -170,15 +173,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 let perfilId: string | undefined
                 try {
                   const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
-                    .select('perfil_id, perfis(nome)')
+                    .select('perfil_id')
                     .eq('id', user.id)
                     .maybeSingle()
-                  perfilNome = (rbacData?.perfis as any)?.nome?.toLowerCase() || ''
                   perfilId = rbacData?.perfil_id
+                  if (perfilId) {
+                    const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
+                    perfilNome = pData?.nome?.toLowerCase() || ''
+                  }
                 } catch { /* não bloqueia */ }
 
-                const isGestor = perfilNome.includes('gestor') || perfilNome.includes('admin')
-                const isProfessor = !isGestor
+                const isGestor = user.user_metadata?.role === 'gestor' // Apenas dono da escola
+                const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
                 setAuthUser({
                   user, session,

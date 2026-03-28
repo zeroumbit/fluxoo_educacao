@@ -16,17 +16,46 @@ export const muralService = {
    * Usado na página /mural (escola). Ordena: ativos primeiro, depois expirados.
    */
   async listar(tenantId: string, professorId?: string) {
-    let query = supabase
+    // Se for professor, busca as turmas dele primeiro
+    if (professorId) {
+      const { data: vincs } = await supabase
+        .from('turma_professores')
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      
+      const idsT = vincs?.map((v: any) => v.turma_id) || []
+      
+      // Se não tem turmas, retorna apenas avisos globais
+      if (idsT.length === 0) {
+        const { data, error } = await supabase
+          .from('mural_avisos')
+          .select('*, turmas(nome)')
+          .eq('tenant_id', tenantId)
+          .is('turma_id', null)
+          .order('created_at', { ascending: false })
+        
+        if (error) throw error
+        return data ?? []
+      }
+      
+      // Filtra avisos globais OU das turmas do professor
+      const { data, error } = await supabase
+        .from('mural_avisos')
+        .select('*, turmas(nome)')
+        .eq('tenant_id', tenantId)
+        .or(`turma_id.is.null,turma_id.in.(${idsT.join(',')})`)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data ?? []
+    }
+    
+    // Não é professor: retorna todos os avisos
+    const { data, error } = await supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-
-    if (professorId) {
-      // Filtra avisos que são públicos (turma_id nulo) OU que pertencem às turmas do professor
-      query = query.or(`turma_id.is.null,turma_id.in.(select turma_id from turma_professores where funcionario_id.eq.${professorId})`)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     return data ?? []
@@ -59,18 +88,50 @@ export const muralService = {
   async listarAtivos(tenantId: string, limite = 6, professorId?: string) {
     const hoje = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
-    let query = supabase
+    // Se for professor, busca as turmas dele primeiro
+    if (professorId) {
+      const { data: vincs } = await supabase
+        .from('turma_professores')
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      
+      const idsT = vincs?.map((v: any) => v.turma_id) || []
+      
+      // Se não tem turmas, retorna apenas avisos globais ativos
+      if (idsT.length === 0) {
+        const { data, error } = await supabase
+          .from('mural_avisos')
+          .select('*, turmas(nome)')
+          .eq('tenant_id', tenantId)
+          .is('turma_id', null)
+          .or(`data_fim.is.null,data_fim.gte.${hoje}`)
+          .order('created_at', { ascending: false })
+          .limit(limite)
+        
+        if (error) throw error
+        return data ?? []
+      }
+      
+      // Filtra avisos globais OU das turmas do professor, apenas ativos
+      const { data, error } = await supabase
+        .from('mural_avisos')
+        .select('*, turmas(nome)')
+        .eq('tenant_id', tenantId)
+        .or(`turma_id.is.null,turma_id.in.(${idsT.join(',')})`)
+        .or(`data_fim.is.null,data_fim.gte.${hoje}`)
+        .order('created_at', { ascending: false })
+        .limit(limite)
+      
+      if (error) throw error
+      return data ?? []
+    }
+    
+    // Não é professor: retorna todos os avisos ativos
+    const { data, error } = await supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      // Ativo = sem data_fim OU data_fim >= hoje
       .or(`data_fim.is.null,data_fim.gte.${hoje}`)
-
-    if (professorId) {
-      query = query.or(`turma_id.is.null,turma_id.in.(select turma_id from turma_professores where funcionario_id.eq.${professorId})`)
-    }
-
-    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(limite)
 

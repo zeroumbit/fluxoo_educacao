@@ -89,7 +89,6 @@ export function PlanoAulaPage() {
   }
 
   const handleEdit = (plano: any) => {
-    console.log('✏️ [PlanoAula] Editando plano:', plano)
     setEditingId(plano.id)
     form.reset({
       disciplina: plano.disciplina,
@@ -119,7 +118,6 @@ export function PlanoAulaPage() {
     if (!confirm('Deseja realmente excluir este plano de aula?')) return
 
     try {
-      console.log('🗑️ [PlanoAula] Excluindo plano:', id)
       await excluir.mutateAsync(id)
       toast.success('Plano de aula excluído com sucesso!')
       refetch()
@@ -291,7 +289,11 @@ export function PlanoAulaPage() {
                   <TableCell className="pl-8 font-medium text-slate-600">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-indigo-500" />
-                      {new Date(p.data_aula).toLocaleDateString()}
+                      {(() => {
+                        // Usa a data diretamente sem conversão de fuso horário
+                        const [ano, mes, dia] = (p.data_aula as string).split('-')
+                        return `${dia}/${mes}/${ano}`
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell className="pl-8">
@@ -323,12 +325,17 @@ export function PlanoAulaPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={() => handleView(p)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50" onClick={() => handleEdit(p)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(p.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {/* Professor só vê editar/excluir se for o autor do plano */}
+                      {(!authUser?.isProfessor || p.professor_id === authUser.funcionarioId) && (
+                        <>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50" onClick={() => handleEdit(p)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(p.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -355,11 +362,11 @@ export function PlanoAulaPage() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent id="plano-aula-print" className="max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-indigo-600" />
-                Detalhes do Plano de Aula
-              </div>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-indigo-600" />
+              Detalhes do Plano de Aula
+            </DialogTitle>
+            <div className="flex justify-end mt-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -369,7 +376,7 @@ export function PlanoAulaPage() {
                 <Printer className="h-4 w-4" />
                 Imprimir
               </Button>
-            </DialogTitle>
+            </div>
           </DialogHeader>
           {viewingPlano && (
             <div className="space-y-6 py-4">
@@ -384,7 +391,10 @@ export function PlanoAulaPage() {
                   <p className="text-sm font-medium text-muted-foreground">Data da Aula</p>
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Calendar className="h-4 w-4 text-indigo-500" />
-                    {new Date(viewingPlano.data_aula).toLocaleDateString('pt-BR')}
+                    {(() => {
+                      const [ano, mes, dia] = viewingPlano.data_aula.split('-')
+                      return `${dia}/${mes}/${ano}`
+                    })()}
                   </div>
                 </div>
               </div>
@@ -417,17 +427,27 @@ export function PlanoAulaPage() {
                 </div>
               )}
 
-              {viewingPlano.conteudo_realizado && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <span className="h-2 w-2 bg-emerald-500 rounded-full" />
-                    Conteúdo Realizado
-                  </p>
-                  <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                    <p className="text-sm text-emerald-800 whitespace-pre-wrap">{viewingPlano.conteudo_realizado}</p>
+              {viewingPlano.conteudo_realizado && (() => {
+                // Só mostra "Conteúdo Realizado" se a data da aula já passou
+                const dataAula = new Date(viewingPlano.data_aula + 'T00:00:00')
+                const hoje = new Date()
+                hoje.setHours(0, 0, 0, 0)
+                const dataJaPassou = dataAula <= hoje
+                
+                if (!dataJaPassou) return null
+                
+                return (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <span className="h-2 w-2 bg-emerald-500 rounded-full" />
+                      Conteúdo Realizado
+                    </p>
+                    <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                      <p className="text-sm text-emerald-800 whitespace-pre-wrap">{viewingPlano.conteudo_realizado}</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {viewingPlano.observacoes && (
                 <div className="space-y-2">

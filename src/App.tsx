@@ -17,6 +17,7 @@ import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Admin (Escola)
 const DashboardPage = lazy(() => import('@/modules/alunos/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const ProfessorDashboardPage = lazy(() => import('@/modules/professor/pages/ProfessorDashboardPage').then(m => ({ default: m.ProfessorDashboardPage })))
 const AlunosListPage = lazy(() => import('@/modules/alunos/pages/AlunosListPage').then(m => ({ default: m.AlunosListPage })))
 const AlunoCadastroPage = lazy(() => import('@/modules/alunos/pages/AlunoCadastroPage').then(m => ({ default: m.AlunoCadastroPage })))
 const AlunoDetalhePage = lazy(() => import('@/modules/alunos/pages/AlunoDetalhePage').then(m => ({ default: m.AlunoDetalhePage })))
@@ -107,6 +108,13 @@ function RootRedirect() {
   return <Navigate to="/dashboard" replace />
 }
 
+/** Renderiza a dashboard correta de acordo com o perfil do usuário */
+function DashboardRouter() {
+  const { authUser } = useAuth()
+  if (authUser?.isProfessor) return <ProfessorDashboardPage />
+  return <DashboardPage />
+}
+
 const persister = createSyncStoragePersister({
   storage: window.localStorage,
   key: 'fluxoo_rbac_cache',
@@ -174,7 +182,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/alunos" element={<AlunosListPage />} />
               <Route path="/alunos/novo" element={<AlunoCadastroPage />} />
               <Route path="/alunos/:id" element={<AlunoDetalhePage />} />

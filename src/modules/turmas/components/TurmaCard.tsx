@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { Turma } from '../types'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 
 interface TurmaCardProps {
   turma: Turma;
@@ -24,6 +25,7 @@ interface TurmaCardProps {
 
 export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onManage }: TurmaCardProps) {
   const isAtiva = turma.status === 'ativa'
+  const { authUser } = useAuth()
 
   return (
     <Card className="group border-0 shadow-sm hover:shadow-xl transition-all duration-300 rounded-[2rem] overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
@@ -56,12 +58,14 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 </div>
               </div>
             </div>
-            <button
-              onClick={onManage}
-              className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
+            {!authUser?.isProfessor && (
+              <button
+                onClick={onManage}
+                className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-6">
@@ -87,11 +91,12 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
             </div>
           </div>
 
+          {!authUser?.isProfessor && (
           <div className="flex items-center justify-between px-1">
              <div className="flex items-center gap-1.5">
                 <DollarSign className="h-4 w-4 text-emerald-500" />
                 <span className="text-lg font-black text-slate-900 dark:text-white">
-                  {turma.valor_mensalidade 
+                  {turma.valor_mensalidade
                     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(turma.valor_mensalidade)
                     : 'R$ 0,00'}
                 </span>
@@ -103,36 +108,52 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                 />
              </div>
           </div>
+          )}
         </div>
 
         <div className="p-3 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2">
-           <Button
-            variant="ghost"
-            size="sm"
-            onClick={onViewAlunos}
-            className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
-           >
-              <Users size={16} className="text-indigo-500" />
-              Alunos
-           </Button>
-           <Button
-            variant="ghost"
-            size="sm"
-            onClick={onViewGrade}
-            className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
-           >
-              <Calendar size={16} className="text-teal-500" />
-              Grade
-           </Button>
-           <Button
-            variant="ghost"
-            size="sm"
-            onClick={onManage}
-            className="rounded-xl h-11 font-bold text-xs gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
-           >
-              Gerir
-              <ChevronRight size={14} />
-           </Button>
+           {!authUser?.isProfessor ? (
+             <>
+               <Button
+                variant="ghost"
+                size="sm"
+                onClick={onViewAlunos}
+                className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
+               >
+                  <Users size={16} className="text-indigo-500" />
+                  Alunos
+               </Button>
+               <Button
+                variant="ghost"
+                size="sm"
+                onClick={onViewGrade}
+                className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
+               >
+                  <Calendar size={16} className="text-teal-500" />
+                  Grade
+               </Button>
+               <Button
+                variant="ghost"
+                size="sm"
+                onClick={onManage}
+                className="rounded-xl h-11 font-bold text-xs gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
+               >
+                  Gerir
+                  <ChevronRight size={14} />
+               </Button>
+             </>
+           ) : (
+             <Button
+              variant="ghost"
+              size="sm"
+              onClick={onManage}
+              className="rounded-xl h-11 font-bold text-xs gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm col-span-3"
+             >
+                <BookOpen size={16} />
+                Visualizar Disciplina
+                <ChevronRight size={14} />
+             </Button>
+           )}
         </div>
       </CardContent>
     </Card>
