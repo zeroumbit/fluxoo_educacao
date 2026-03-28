@@ -25,11 +25,22 @@ const getInitials = (name: string) => {
 export function PortalAlunoPerfilV2Mobile() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { alunoSelecionado } = usePortalContext();
+  const context = usePortalContext();
+  const { alunoSelecionado } = context;
   const { data: dashboard } = useDashboardAluno();
 
   // Estado para controlar qual módulo está aberto dentro do drill-down
   const [activeModule, setActiveModule] = useState<string | null>(null);
+
+  // Sincroniza o aluno selecionado se acessar via URL direta
+  React.useEffect(() => {
+    if (id && (!alunoSelecionado || alunoSelecionado.id !== id)) {
+      const vinculo = (context.vinculos || []).find((v: any) => (v.aluno_id || v.aluno?.id) === id);
+      if (vinculo) {
+        context.selecionarAluno(vinculo);
+      }
+    }
+  }, [id, context.vinculos, alunoSelecionado?.id]);
 
   const student = alunoSelecionado;
 

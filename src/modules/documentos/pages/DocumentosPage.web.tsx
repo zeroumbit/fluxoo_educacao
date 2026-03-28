@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { logger } from '@/lib/logger'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -237,7 +238,7 @@ export function DocumentosPage() {
       setOpenEmitir(false)
       setActiveTab('emitidos')
     } catch (error) {
-      console.error('Erro Supabase:', error);
+      logger.error('Erro Supabase:', error);
       toast.error('Erro ao salvar no banco de dados')
     }
   }
@@ -360,7 +361,7 @@ export function DocumentosPage() {
         openPrintWindow()
       }
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error)
+      logger.error('Erro ao gerar PDF:', error)
       toast.error('Erro ao gerar PDF')
     }
   }
@@ -404,7 +405,7 @@ export function DocumentosPage() {
       });
       setOpenVisualizar(true);
     } catch (e) {
-      console.error('Erro ao ver documento:', e);
+      logger.error('Erro ao ver documento:', e);
       toast.error('Erro ao abrir documento. Os dados podem estar corrompidos.');
     }
   }
@@ -492,24 +493,24 @@ export function DocumentosPage() {
           <p className="text-slate-500 text-sm font-medium">Emissão inteligente e automação de documentos oficiais.</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-slate-100/50 p-1 rounded-2xl w-fit">
-          <TabsList className="bg-transparent h-12 gap-1 border-0">
-            <TabsTrigger value="contrato" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="bg-slate-100/50 p-1 rounded-2xl h-12 gap-1 border-0 w-fit">
+            <TabsTrigger value="contrato" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5 transition-all">
               <FileText className="h-3.5 w-3.5" /> Contrato
             </TabsTrigger>
-            <TabsTrigger value="autorizacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5">
+            <TabsTrigger value="autorizacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-1.5 transition-all">
               <ShieldCheck className="h-3.5 w-3.5" /> Autorizações
             </TabsTrigger>
-            <TabsTrigger value="central" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="central" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">
               Emissão
             </TabsTrigger>
-            <TabsTrigger value="templates" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="templates" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">
               Modelos
             </TabsTrigger>
-            <TabsTrigger value="emitidos" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="emitidos" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all">
               Histórico
             </TabsTrigger>
-            <TabsTrigger value="solicitacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm relative">
+            <TabsTrigger value="solicitacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm relative transition-all">
               Solicitações
               {solicitacoes && solicitacoes.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-teal-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
@@ -518,19 +519,17 @@ export function DocumentosPage() {
               )}
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-      </div>
 
-      <Tabs value={activeTab} className="mt-8">
-        <TabsContent value="contrato" className="mt-0">
-          <ContratoTab />
-        </TabsContent>
+          <div className="mt-8">
+            <TabsContent value="contrato" className="mt-0 focus-visible:outline-none">
+              <ContratoTab />
+            </TabsContent>
 
-        <TabsContent value="autorizacoes" className="mt-0">
-          <AutorizacoesAdminTab />
-        </TabsContent>
+            <TabsContent value="autorizacoes" className="mt-0 focus-visible:outline-none">
+              <AutorizacoesAdminTab />
+            </TabsContent>
 
-        <TabsContent value="central" className="mt-0 space-y-8">
+            <TabsContent value="central" className="mt-0 space-y-8 focus-visible:outline-none">
           {/* Documentos Padrão */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -835,8 +834,10 @@ export function DocumentosPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
 
       <Dialog open={openEmitir} onOpenChange={setOpenEmitir}>
         <DialogContent className="max-w-[1200px] w-[95vw] h-[90vh] p-0 overflow-hidden border-none rounded-[32px] flex flex-col printing-dialog">

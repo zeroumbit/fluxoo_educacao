@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { logger } from '@/lib/logger';
 import {
   User, MapPin, Activity, Save, Camera,
   Loader2, Plus, X, Trash2, RefreshCw, AlertTriangle
@@ -56,7 +57,7 @@ export function PortalAlunoCadastroV2() {
   // 1. SINCRONIZAÇÃO ROBUSTA (Garante que Saúde apareça mesmo se o banco vir estranho)
   useEffect(() => {
     if (alunoSelecionado) {
-      console.log('DEBUG PORTAL: Carregando aluno:', alunoSelecionado);
+      logger.debug('DEBUG PORTAL: Carregando aluno:', alunoSelecionado);
       reset({
         nome_social: alunoSelecionado.nome_social || '',
         genero: alunoSelecionado.genero || '',

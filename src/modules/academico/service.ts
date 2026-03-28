@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 
 export const academicoService = {
@@ -31,7 +32,7 @@ export const academicoService = {
 
     if (!payload.tenant_id || !payload.aluno_id) {
       const errorMsg = 'Dados obrigatórios ausentes: tenant_id ou aluno_id.';
-      console.error('❌ [academicoService.criarMatricula]', errorMsg, payload);
+      logger.error('❌ [academicoService.criarMatricula]', errorMsg, payload);
       throw new Error(errorMsg);
     }
 
@@ -70,14 +71,14 @@ export const academicoService = {
 
     const data = insertedData
 
-    console.log('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
+    logger.info('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
     
     // Tenta gerar cobranças iniciais (proporcional, etc)
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.gerarCobrancasIniciaisMatricula(data)
     } catch (finError: any) {
-      console.error('⚠️ [academicoService.criarMatricula] Erro ao gerar cobranças automáticas:', finError)
+      logger.error('⚠️ [academicoService.criarMatricula] Erro ao gerar cobranças automáticas:', finError)
       if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
         throw new Error('Erro de integridade ao gerar cobranças. Verifique as configurações da turma.')
       }
@@ -97,7 +98,7 @@ export const academicoService = {
         })
         .eq('id', data.aluno_id)
     } catch (syncError) {
-      console.error('⚠️ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
+      logger.error('⚠️ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
     }
 
     return data

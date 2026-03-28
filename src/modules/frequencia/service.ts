@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { FrequenciaInsert } from '@/lib/database.types'
+import { logger } from '@/lib/logger'
 
 export const frequenciaService = {
   async listarPorTurmaData(turmaId: string, dataAula: string, tenantId: string) {
@@ -45,7 +46,7 @@ export const frequenciaService = {
     // Delete existing para a turma/data e reinsere
     const { tenant_id, turma_id, data_aula } = frequencias[0]
     if (tenant_id && turma_id && data_aula) {
-      console.log('🔄 [frequenciaService] Limpando registros antigos:', { tenant_id, turma_id, data_aula })
+      logger.debug('🔄 [frequenciaService] Limpando registros antigos:', { tenant_id, turma_id, data_aula })
       const { error: delError } = await supabase
         .from('frequencias')
         .delete()
@@ -54,18 +55,18 @@ export const frequenciaService = {
         .eq('data_aula', data_aula)
       
       if (delError) {
-        console.error('❌ [frequenciaService] Erro ao deletar antigos:', delError)
+        logger.error('❌ [frequenciaService] Erro ao deletar antigos:', delError)
         throw new Error(`Erro ao limpar registros antigos: ${delError.message}`)
       }
     }
 
-    console.log('📤 [frequenciaService] Inserindo novas frequências:', frequencias.length, 'registros')
+    logger.info('📤 [frequenciaService] Inserindo novas frequências:', frequencias.length, 'registros')
     const { error } = await supabase
       .from('frequencias')
       .insert(frequencias)
 
     if (error) {
-      console.error('❌ [frequenciaService] Erro no INSERT:', error)
+      logger.error('❌ [frequenciaService] Erro no INSERT:', error)
       throw error
     }
   },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -116,13 +117,13 @@ export function AlunoDetalhePageWeb() {
         observacoes_saude: formData.observacoes_saude || null,
       }
 
-      console.log('🚀 Enviando Payload WhiteList:', payload)
+      logger.info('🚀 Enviando Payload WhiteList:', payload)
       
       await atualizarAluno.mutateAsync({ id, aluno: payload as any })
       toast.success('Dados atualizados com sucesso!')
       setIsEditing(false)
     } catch (err: any) {
-      console.error('❌ Erro ao salvar aluno:', err)
+      logger.error('❌ Erro ao salvar aluno:', err)
       toast.error('Erro ao salvar alterações: ' + (err.message || 'Erro desconhecido'))
     }
   }
@@ -157,7 +158,7 @@ export function AlunoDetalhePageWeb() {
       
       toast.success('Foto atualizada com sucesso!', { id: toastId })
     } catch (err: any) {
-      console.error('❌ Erro no upload:', err)
+      logger.error('❌ Erro no upload:', err)
       toast.error('Erro ao subir foto: ' + err.message, { id: toastId })
     } finally {
       setUploadingFoto(false)
@@ -248,7 +249,7 @@ export function AlunoDetalhePageWeb() {
         setExistingResponsibleId(null)
       }
     } catch (err) {
-      console.error(err)
+      logger.error(err)
     } finally {
       setIsSearchingCpf(false)
     }

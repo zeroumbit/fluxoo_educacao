@@ -179,9 +179,26 @@ export function SuperAdminDashboardPageWeb() {
                       // Aqui usaremos a cor padrão por enquanto.
                     />
                     <p className="text-[10px] text-muted-foreground flex justify-between">
-                      <span>Uso de Alunos: {Math.round(score.percentual_uso)}%</span>
-                      <span>{score.possui_atraso ? '⚠️ Faturas em Atraso' : '✅ Financeiro em Dia'}</span>
+                      <span>Uso: {Math.round(score.percentual_uso)}% ({score.alunos_ativos}/{score.limite_alunos_contratado})</span>
+                      <span>{score.possui_atraso ? '⚠️ Atraso' : '✅ Em Dia'}</span>
                     </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={cn(
+                        "text-[9px] font-bold uppercase tracking-wider",
+                        score.health_score < 25 ? "text-red-600" : score.health_score < 50 ? "text-amber-600" : score.health_score < 75 ? "text-yellow-600" : "text-emerald-600"
+                      )}>
+                        {score.health_score < 25 ? 'Crítico' : score.health_score < 50 ? 'Atenção' : score.health_score < 75 ? 'Estável' : 'Saudável'}
+                      </span>
+                      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            score.health_score < 25 ? "bg-red-500" : score.health_score < 50 ? "bg-amber-500" : score.health_score < 75 ? "bg-yellow-500" : "bg-emerald-500"
+                          )}
+                          style={{ width: `${score.health_score}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : (

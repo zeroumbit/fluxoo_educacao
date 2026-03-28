@@ -91,9 +91,12 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
     catch { return '' }
   }
 
-  const getDia = (dataStr: string) => dataStr.split('-')[2]
+  const getDia = (dataStr: string) => (dataStr || new Date().toISOString()).split('-')[2] || '01'
   const getMes = (dataStr: string) => {
-    try { return format(parseISO(dataStr), "MMM", { locale: ptBR }) }
+    try { 
+      const date = dataStr ? parseISO(dataStr) : new Date()
+      return format(date, "MMM", { locale: ptBR }) 
+    }
     catch { return '' }
   }
 
@@ -105,10 +108,19 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
       'evento': 'bg-teal-50 text-teal-600 border-teal-100',
       'reuniao': 'bg-slate-50 text-slate-600 border-slate-100'
     }
-    return styles[tipo.toLowerCase()] || 'bg-slate-50 text-slate-600 border-slate-100'
+    const safeTipo = (tipo || 'evento').toLowerCase()
+    return styles[safeTipo] || 'bg-slate-50 text-slate-600 border-slate-100'
   }
 
-  const getDotColor = (tipo: string) => {
+  const isPassado = (dataStr: string) => {
+    try {
+      const dataEvento = parseISO(dataStr)
+      return dataEvento < startOfDay(new Date())
+    } catch { return false }
+  }
+
+  const getDotColor = (tipo: string, passado?: boolean) => {
+    if (passado) return 'bg-slate-300'
     const colors: Record<string, string> = {
       'feriado': 'bg-red-500',
       'aula': 'bg-blue-500',
@@ -116,7 +128,8 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
       'evento': 'bg-teal-500',
       'reuniao': 'bg-slate-500'
     }
-    return colors[tipo.toLowerCase()] || 'bg-slate-400'
+    const safeTipo = (tipo || 'evento').toLowerCase()
+    return colors[safeTipo] || 'bg-slate-400'
   }
 
   if (isLoading) return <AgendaSkeleton />
@@ -150,6 +163,11 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                 onSelect={(date) => {
                   vibrate(10)
                   setSelectedDate(date)
+                  // Scroll suave para a lista no mobile ao selecionar data
+                  if (window.innerWidth < 1024) {
+                    const listElement = document.getElementById('lista-eventos-agenda')
+                    if (listElement) listElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }
                 }}
                 month={currentMonth}
                 onMonthChange={setCurrentMonth}
@@ -212,7 +230,7 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
         </div>
 
         {/* Lado Direito: Listagem e Filtro */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-6" id="lista-eventos-agenda">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-1 w-5 bg-teal-600 rounded-full" />
@@ -251,49 +269,75 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                     }}
                     className="group cursor-pointer"
                   >
-                    <Card className="border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col sm:flex-row hover:shadow-lg transition-all hover:border-teal-100 group">
+                    <Card className={cn(
+                      "border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden flex flex-row hover:shadow-lg transition-all hover:border-teal-100 group min-h-[120px]",
+                      isPassado(evento.data_inicio) && "opacity-80 grayscale-[0.2]"
+                    )}>
                       
-                      {/* Data Visual */}
+                      {/* Data Visual - Design Nativo 100% altura horizontal */}
                       <div className={cn(
-                        "sm:w-20 flex sm:flex-col items-center justify-center p-4 text-white shrink-0 gap-2 sm:gap-0 transition-colors",
-                        getDotColor(evento.tipo)
+                        "w-20 sm:w-24 flex flex-col items-center justify-center p-4 sm:p-6 text-white shrink-0 gap-0 transition-colors relative",
+                        getDotColor(evento.tipo, isPassado(evento.data_inicio))
                       )}>
-                         <span className="text-2xl font-bold leading-none">{getDia(evento.data_inicio)}</span>
-                         <span className="text-[10px] font-medium uppercase tracking-wider opacity-80">{getMes(evento.data_inicio)}</span>
+                         <span className="text-2xl sm:text-3xl font-black leading-none">{getDia(evento.data_inicio)}</span>
+                         <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.2em] opacity-90">{getMes(evento.data_inicio)}</span>
                       </div>
-
-                      <CardContent className="p-5 flex-1 relative">
-                        <div className="space-y-2">
+ 
+                      <CardContent className="p-4 sm:p-6 flex-1 relative flex flex-col justify-between overflow-hidden">
+                        <div className="space-y-3">
                           <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1">
-                              <Badge className={cn("px-2 py-0 h-4 text-[9px] font-bold border-none shadow-none uppercase tracking-wider", getEventStyle(evento.tipo))}>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge className={cn(
+                                "px-2 py-0.5 h-auto text-[9px] font-bold border-none shadow-none uppercase tracking-wider rounded-full", 
+                                getEventStyle(evento.tipo)
+                              )}>
                                 {evento.tipo || 'Evento'}
                               </Badge>
-                              <h3 className="text-base font-bold text-slate-800 leading-tight group-hover:text-teal-600 transition-colors">
-                                {evento.titulo || evento.nome}
-                              </h3>
+                              
+                              {isPassado(evento.data_inicio) && (
+                                <Badge className="bg-slate-100 text-slate-500 px-2 py-0.5 h-auto text-[9px] font-bold border-none shadow-none uppercase tracking-wider rounded-full flex items-center gap-1">
+                                  <Clock size={8} /> Finalizado
+                                </Badge>
+                              )}
                             </div>
+
                             {evento.publico_alvo === 'toda_escola' && (
-                              <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-teal-500">
+                              <div className="w-8 h-8 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 shadow-sm">
                                 <Heart size={14} className="fill-current" />
                               </div>
                             )}
                           </div>
                           
-                          <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
-                            {evento.description || evento.descricao || 'Atividade escolar programada para esta data.'}
-                          </p>
-                          
-                          <div className="flex flex-wrap gap-4 pt-2">
-                            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
-                              <div className={cn("w-1.5 h-1.5 rounded-full", getDotColor(evento.tipo))} />
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-black text-slate-800 leading-tight group-hover:text-teal-600 transition-colors">
+                              {evento.titulo || evento.nome}
+                            </h3>
+                            <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 font-medium">
+                              {evento.description || evento.descricao || 'Atividade escolar programada para esta data.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                              <CalendarDays size={12} className="text-slate-400" />
                               {formatarDiaSemana(evento.data_inicio)}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                              <Clock size={12} className="text-slate-300" />
+                            <div className="h-1 w-1 bg-slate-300 rounded-full" />
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+                              <Clock size={12} className="text-slate-400" />
                               {format(parseISO(evento.data_inicio), "HH:mm")}
                             </div>
                           </div>
+
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 rounded-full hover:bg-teal-50 hover:text-teal-600 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Info size={16} />
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -313,22 +357,6 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
             )}
           </AnimatePresence>
         </div>
-      </div>
-
-      {/* Informativo */}
-      <div className="bg-slate-900 rounded-[32px] p-6 text-white flex flex-col md:flex-row items-center gap-6 shadow-xl">
-        <div className="w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-teal-500/20">
-          <Info size={24} />
-        </div>
-        <div className="flex-1 text-center md:text-left space-y-1">
-          <h5 className="text-sm font-bold text-teal-400">Sincronização Ativa</h5>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Mantenha-se atualizado com as atividades escolares. Clique em um evento para ver detalhes e opções de compartilhamento.
-          </p>
-        </div>
-        <Button className="bg-white text-slate-900 hover:bg-slate-100 rounded-full px-6 font-bold text-xs shrink-0">
-          Como funciona?
-        </Button>
       </div>
 
       {/* Modal de Detalhes do Evento */}
@@ -355,8 +383,8 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                     </div>
                     <div>
                       <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Quando</p>
-                      <p className="text-sm font-bold">{format(parseISO(selectedEvent.data_inicio), "dd 'de' MMMM", { locale: ptBR })}</p>
-                      <p className="text-xs text-slate-500">{formatarDiaSemana(selectedEvent.data_inicio)}, às {format(parseISO(selectedEvent.data_inicio), "HH:mm")}</p>
+                      <p className="text-sm font-bold">{selectedEvent.data_inicio ? format(parseISO(selectedEvent.data_inicio), "dd 'de' MMMM", { locale: ptBR }) : 'Data não informada'}</p>
+                      <p className="text-xs text-slate-500">{selectedEvent.data_inicio ? `${formatarDiaSemana(selectedEvent.data_inicio)}, às ${format(parseISO(selectedEvent.data_inicio), "HH:mm")}` : 'Horário não disponível'}</p>
                     </div>
                   </div>
 

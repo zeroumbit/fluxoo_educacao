@@ -37,9 +37,20 @@ const REAL_MODULES = [
 export function PortalAlunoPerfilV2Web() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { alunoSelecionado } = usePortalContext();
+  const context = usePortalContext();
+  const { alunoSelecionado } = context;
   const { data: dashboard } = useDashboardAluno();
   const [activeModule, setActiveModule] = useState<string>('grade');
+
+  // Sincroniza o aluno selecionado se acessar via URL direta
+  React.useEffect(() => {
+    if (id && (!alunoSelecionado || alunoSelecionado.id !== id)) {
+      const vinculo = (context.vinculos || []).find((v: any) => (v.aluno_id || v.aluno?.id) === id);
+      if (vinculo) {
+        context.selecionarAluno(vinculo);
+      }
+    }
+  }, [id, context.vinculos, alunoSelecionado?.id]);
 
   const student = alunoSelecionado;
 

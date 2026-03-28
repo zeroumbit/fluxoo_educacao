@@ -49,7 +49,7 @@ export function FinanceiroRelatoriosPageMobile() {
     if (!fechamento || fechamento.length === 0) return
     const headers = ['Mês', 'Receitas Previsto', 'Receitas Recebido', 'Despesas Previsto', 'Despesas Pago', 'Saldo Atual']
     const rows = (fechamento as any[]).map(item => [
-      new Date(item.mes).toLocaleString('pt-BR', { month: 'short', year: '2y' }),
+      new Date(item.mes).toLocaleString('pt-BR', { month: 'short', year: '2-digit' }),
       item.total_receitas_previsto,
       item.total_receitas_recebido,
       item.total_despesas_previsto,

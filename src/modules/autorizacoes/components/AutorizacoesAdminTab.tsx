@@ -72,7 +72,7 @@ export function AutorizacoesAdminTab() {
 
   const abrirEditar = (m: Modelo) => {
     if (isGlobal(m)) {
-      toast.info('Autorizações globais do sistema não podem ser editadas. Crie uma cópia personalizada.')
+      handleDuplicar(m)
       return
     }
     setEditando(m)
@@ -132,20 +132,11 @@ export function AutorizacoesAdminTab() {
     }
   }
 
-  const dedupedModelos = useMemo(() => {
-    if (!modelos) return []
-    const seen = new Set()
-    // Ordenamos por ID descendente (se for UUID v4 ou similar pode não ser temporal, mas assumindo que o retorno do hook já vem ordenado ou queremos apenas um)
-    // Na verdade, filtramos mantendo o primeiro que encontrarmos com a mesma chave
-    return (modelos as Modelo[]).filter((m) => {
-      const key = `${m.titulo}-${m.categoria}-${m.tenant_id}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
+  const modelosTratados = useMemo(() => {
+    return (modelos as Modelo[]) || []
   }, [modelos])
 
-  const modelosFiltrados = dedupedModelos.filter((m) => {
+  const modelosFiltrados = modelosTratados.filter((m) => {
     const matchBusca = m.titulo.toLowerCase().includes(busca.toLowerCase())
     const matchCategoria = filtroCategoria === 'todas' || m.categoria === filtroCategoria
     return matchBusca && matchCategoria
@@ -157,9 +148,9 @@ export function AutorizacoesAdminTab() {
     return acc
   }, {})
 
-  const totalAtivas = (modelos as Modelo[]).filter(m => m.ativa).length
-  const totalGlobais = (modelos as Modelo[]).filter(m => isGlobal(m)).length
-  const totalCustom = (modelos as Modelo[]).filter(m => !isGlobal(m)).length
+  const totalAtivas = modelosTratados.filter(m => m.ativa).length
+  const totalGlobais = modelosTratados.filter(m => isGlobal(m)).length
+  const totalCustom = modelosTratados.filter(m => !isGlobal(m)).length
 
   if (isLoading) {
     return (

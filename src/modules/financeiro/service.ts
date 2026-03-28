@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { CobrancaInsert } from '@/lib/database.types'
+import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 
 export const financeiroService = {
@@ -194,7 +195,7 @@ export const financeiroService = {
     // 1. Gerar Cobrança da MATRÍCULA (Taxa Única)
     if (deveCobrarMatricula && valor_matricula && Number(valor_matricula) > 0) {
       const descricaoMatricula = `Matrícula - ${unidade || 'Taxa de Matrícula'}`
-      console.log('[gerarCobrancasIniciaisGenerico] Criando cobrança de matrícula:', {
+      logger.debug('[gerarCobrancasIniciaisGenerico] Criando cobrança de matrícula:', {
         descricao: descricaoMatricula,
         valor: Number(valor_matricula),
         data_vencimento: data_inicio,

@@ -227,7 +227,20 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
       </Card>
 
       {/* Lista por categoria */}
-      {categoriasOrdenadas.map((categoria) => {
+      {categoriasOrdenadas.length === 0 ? (
+        <Card className="border-0 shadow-sm md:rounded-[3rem] bg-white p-16 flex flex-col items-center justify-center text-center space-y-4">
+          <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+            <Shield className="w-10 h-10" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">Tudo pronto!</h3>
+            <p className="font-semibold text-slate-500 max-w-sm">
+              Nenhuma autorização pendente ou cadastrada para <strong>{alunoSelecionado.nome_completo}</strong> neste momento.
+            </p>
+          </div>
+        </Card>
+      ) : (
+        categoriasOrdenadas.map((categoria) => {
         const itens = agrupadas[categoria]
         const cores = CATEGORIA_CORES[categoria] || { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' }
         return (
@@ -312,7 +325,8 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
             </CardContent>
           </Card>
         )
-      })}
+      })
+    )}
 
       {/* Modal de Leitura e Confirmação */}
       <Dialog open={!!modalItem} onOpenChange={(open) => !open && setModalItem(null)}>

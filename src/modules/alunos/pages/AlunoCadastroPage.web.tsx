@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -169,7 +170,7 @@ export function AlunoCadastroPage() {
           if (value !== undefined && value !== null) setValue(key as any, value)
         })
       } catch (e) {
-        console.error('Erro ao carregar rascunho:', e)
+        logger.error('Erro ao carregar rascunho:', e)
       }
     }
     
@@ -329,7 +330,7 @@ export function AlunoCadastroPage() {
         setIrmaosExistentes([])
       }
     } catch (err) {
-      console.error('Erro ao buscar responsável:', err)
+      logger.error('Erro ao buscar responsável:', err)
     } finally {
       setBuscandoCpf(false)
     }
@@ -428,8 +429,8 @@ export function AlunoCadastroPage() {
         data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
       }
 
-      console.log('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
-      console.log('📝 Payload Aluno:', JSON.stringify(payloadAluno, null, 2))
+      logger.debug('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
+      logger.debug('📝 Payload Aluno:', JSON.stringify(payloadAluno, null, 2))
 
       const result = await criarAlunoComResponsavel.mutateAsync({
         responsavel: payloadResponsavel,
@@ -459,7 +460,7 @@ export function AlunoCadastroPage() {
       
       setShowPostCadastroModal(true)
     } catch (err: any) {
-      console.error('Erro detalhado ao cadastrar aluno:', err)
+      logger.error('Erro detalhado ao cadastrar aluno:', err)
 
       let errorMessage = 'Erro ao cadastrar aluno. '
       if (err?.message) errorMessage += err.message

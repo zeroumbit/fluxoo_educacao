@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -151,7 +152,7 @@ export function FrequenciaPageWeb() {
 
     if (!authUser.tenantId) {
       toast.error('O seu usuário não possui uma escola (tenant) vinculada. Entre em contato com o suporte.')
-      console.error('❌ [FrequenciaPage] Tentativa de salvar sem tenant_id:', authUser)
+      logger.error('❌ [FrequenciaPage] Tentativa de salvar sem tenant_id:', authUser)
       return
     }
 
@@ -174,13 +175,13 @@ export function FrequenciaPageWeb() {
       justificativa: statusMap[a.id] === 'justificada' ? (justificativaMap[a.id]?.trim() || null) : null,
     }))
 
-    console.log('🚀 [FrequenciaPage] Salvando dados:', dados)
+    logger.info('🚀 [FrequenciaPage] Salvando dados:', dados)
 
     try {
       await salvarFrequencias.mutateAsync(dados)
       toast.success('Frequência salva com sucesso!')
     } catch (err: any) {
-      console.error('❌ [FrequenciaPage] Erro ao salvar:', err)
+      logger.error('❌ [FrequenciaPage] Erro ao salvar:', err)
       toast.error(err.message || 'Erro ao salvar frequência')
     }
   }

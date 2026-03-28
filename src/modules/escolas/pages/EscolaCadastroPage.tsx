@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { logger } from '@/lib/logger'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -144,7 +145,7 @@ export function EscolaCadastroPage() {
 
   // ===== Submit =====
   const onSubmit = async (data: FormValues) => {
-    console.log('Iniciando submissão final do cadastro:', data)
+    logger.info('Iniciando submissão final do cadastro:', data)
     try {
       // 1. Supabase Auth - SignUp
       let finalUserId: string | undefined
@@ -155,7 +156,7 @@ export function EscolaCadastroPage() {
       })
 
       if (authError) {
-        console.warn('Alerta no SignUp:', authError.message)
+        logger.warn('Alerta no SignUp:', authError.message)
         
         if (authError.message.includes('already registered')) {
           // Usuário já existe, tenta recuperar o ID via Login
@@ -186,7 +187,7 @@ export function EscolaCadastroPage() {
 
       if (!finalUserId) throw new Error('Falha ao identificar usuário. Por favor, aguarde alguns minutos ou use outro e-mail.')
 
-      console.log('ID do Gestor identificado:', finalUserId)
+      logger.debug('ID do Gestor identificado:', finalUserId)
 
       // 2. Criação da Escola
       const escola = await criarEscola.mutateAsync({
@@ -212,7 +213,7 @@ export function EscolaCadastroPage() {
         data_vencimento_assinatura: null,
       })
 
-      console.log('Escola criada com sucesso:', escola.id)
+      logger.info('Escola criada com sucesso:', escola.id)
 
       // 3. Filial Matriz
       await criarFilial.mutateAsync({
@@ -265,13 +266,13 @@ export function EscolaCadastroPage() {
       setTimeout(() => navigate('/login'), 2000)
 
     } catch (err) {
-      console.error('Falha crítica no onboarding:', err)
+      logger.error('Falha crítica no onboarding:', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao processar cadastro')
     }
   }
 
   const onInvalid = (errors: any) => {
-    console.warn('Erros de validação:', errors)
+    logger.warn('Erros de validação:', errors)
     toast.error('Por favor, revise os campos do formulário. Alguma informação está inválida ou incompleta.')
   }
 

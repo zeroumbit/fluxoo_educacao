@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
+import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 
 type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
@@ -176,17 +177,17 @@ export const alunoService = {
         if (authError) {
           // Se o erro for que o usuário já existe, não paramos o fluxo, mas logamos
           if (authError.message.includes('already registered')) {
-            console.warn('Usuário já existe no Auth, seguindo para vínculo manual se possível.')
+            logger.warn('Usuário já existe no Auth, seguindo para vínculo manual se possível.')
             // Idealmente buscaríamos o ID do usuário existente, mas o signUp por anon não permite.
             // O ideal para esses casos é o dashboard do Supabase ter o "Confirm Email" desativado.
           } else {
-            console.error('Erro ao criar usuário auth para responsável:', authError)
+            logger.error('Erro ao criar usuário auth para responsável:', authError)
           }
         } else {
           authUserId = authData.user?.id || null
         }
       } catch (authErr) {
-        console.error('Falha crítica no SignUp do responsável:', authErr)
+        logger.error('Falha crítica no SignUp do responsável:', authErr)
       }
     }
 
