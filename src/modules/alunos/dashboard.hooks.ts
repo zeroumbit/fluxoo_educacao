@@ -5,8 +5,11 @@ import { dashboardService } from './dashboard.service'
 export function useDashboard() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['dashboard', authUser?.tenantId],
-    queryFn: () => dashboardService.buscarDados(authUser!.tenantId),
+    queryKey: ['dashboard', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => dashboardService.buscarDados(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId && authUser?.tenantId !== '' && authUser?.tenantId !== 'PENDING_TENANT',
     // Se estiver pendente, verifica a cada 60 segundos para não sobrecarregar
     refetchInterval: (query) => {

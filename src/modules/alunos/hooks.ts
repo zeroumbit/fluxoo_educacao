@@ -8,8 +8,11 @@ import { toast } from 'sonner'
 export function useAlunos() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['alunos', authUser?.tenantId],
-    queryFn: () => alunoService.listar(authUser!.tenantId),
+    queryKey: ['alunos', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => alunoService.listar(
+      authUser!.tenantId, 
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
   })
 }
@@ -27,8 +30,11 @@ export function useAluno(id: string) {
 export function useAlunosAtivos() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['alunos', 'ativos', authUser?.tenantId],
-    queryFn: () => alunoService.contarAtivos(authUser!.tenantId),
+    queryKey: ['alunos', 'ativos', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => alunoService.contarAtivos(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
   })
 }

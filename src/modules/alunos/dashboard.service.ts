@@ -36,8 +36,28 @@ export interface DashboardData {
 }
 
 export const dashboardService = {
-  async buscarDados(tenantId: string): Promise<DashboardData> {
+  async buscarDados(tenantId: string, professorId?: string): Promise<DashboardData> {
     if (!tenantId) throw new Error('Tenant ID não fornecido.')
+
+    // IDs autorizados para o professor
+    let idsTurmasProfessor: string[] = []
+    let idsAlunosProfessor: string[] = []
+
+    if (professorId) {
+      const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+
+      if (idsTurmasProfessor.length > 0) {
+        const { data: mats } = await (supabase.from('matriculas' as any) as any)
+          .select('aluno_id')
+          .in('turma_id', idsTurmasProfessor)
+          .eq('status', 'ativa')
+        idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+      }
+    }
+
     const [
       alunosRes,
       escolaRes,
@@ -51,25 +71,42 @@ export const dashboardService = {
       salariosRes,
       matriculasRes,
     ] = await Promise.all([
-      supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo'),
+      (() => {
+        let q = supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo')
+        if (professorId) q = q.in('id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
+        return q
+      })(),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
-      supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
-      muralService.listarAtivos(tenantId, 6),
+      (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
+      (() => {
+         // Filtra mural: Global OU das turmas do professor
+         let q = supabase.from('mural' as any).select('*, turmas(nome)').eq('tenant_id', tenantId).eq('status', 'ativo')
+         if (professorId) {
+            q = q.or(`turma_id.is.null,turma_id.in.(${idsTurmasProfessor.join(',') || 'none'})`)
+         }
+         return q.order('created_at', { ascending: false }).limit(6)
+      })(),
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      (() => {
+        let q = supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId)
+        if (professorId) q = q.in('id', idsTurmasProfessor.length > 0 ? idsTurmasProfessor : ['none'])
+        return q
+      })(),
       (async () => {
         try {
-          return await (supabase.from('vw_radar_evasao' as any) as any)
-            .select('*')
-            .eq('tenant_id', tenantId)
-            .limit(10)
-            .order('cobrancas_atrasadas', { ascending: false })
+          let q = (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false })
+          if (professorId) q = q.in('aluno_id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
+          return await q
         } catch { return { data: [] } }
       })(),
-      (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago'),
-      supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0),
-      supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa'),
+      (professorId ? Promise.resolve({ data: [] }) : (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago')) as any,
+      (professorId ? Promise.resolve({ data: [] }) : supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0)),
+      (() => {
+        let q = supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa')
+        if (professorId) q = q.in('aluno_id', idsAlunosProfessor.length > 0 ? idsAlunosProfessor : ['none'])
+        return q
+      })(),
     ])
 
     if (!escolaRes.data) {
@@ -84,7 +121,6 @@ export const dashboardService = {
     const contasPagarList = (contasPagarRes.data as any[]) || []
     const totalContasPagar = contasPagarList.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
     
-    // Verifica se já existe folha para o mês atual nos registros de Contas a Pagar
     const hoje = new Date()
     const prefixoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
     const temFolhaGerada = contasPagarList.some(c => 
@@ -94,10 +130,12 @@ export const dashboardService = {
 
     let totalPagar = totalContasPagar
     if (!temFolhaGerada) {
-      // Se não há folha física, somamos o custo dos salários ativos para a dashboard refletir a realidade
       const somaSalarios = (salariosRes.data as any[])?.reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0) || 0
       totalPagar += somaSalarios
     }
+
+    // Se for professor, zeramos os campos financeiros para garantir que nada apareça na UI
+    const financeiroRestrito = professorId ? 0 : 0
 
     const radarData: RadarAluno[] = ((radarRes as any)?.data || []).sort(
       (a: RadarAluno, b: RadarAluno) =>
@@ -107,17 +145,17 @@ export const dashboardService = {
 
     return {
       totalAlunosAtivos: alunosRes.count || 0,
-      limiteAlunos: escola.limite_alunos_contratado || 0,
+      limiteAlunos: professorId ? (alunosRes.count || 0) : escola.limite_alunos_contratado || 0,
       statusAssinatura: escola.status_assinatura || 'pendente',
       metodoPagamento: escola.metodo_pagamento || 'pix',
-      totalReceber,
-      totalPagar,
-      avisosRecentes: (avisosRes || []) as unknown as AvisoRecente[],
+      totalReceber: professorId ? 0 : totalReceber,
+      totalPagar: professorId ? 0 : totalPagar,
+      avisosRecentes: (avisosRes.data || []) as unknown as AvisoRecente[],
       onboarding: {
-        perfilCompleto: !!(escolaInfoRes.data as any)?.logradouro,
-        possuiFilial: (filiaisRes.count || 0) > 0,
-        possuiTurma: (turmasRes.count || 0) > 0,
-        possuiAluno: (alunosRes.count || 0) > 0,
+        perfilCompleto: professorId ? true : !!(escolaInfoRes.data as any)?.logradouro,
+        possuiFilial: professorId ? true : (filiaisRes.count || 0) > 0,
+        possuiTurma: professorId ? true : (turmasRes.count || 0) > 0,
+        possuiAluno: professorId ? true : (alunosRes.count || 0) > 0,
       },
       radarEvasao: radarData,
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),

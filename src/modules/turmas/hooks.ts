@@ -10,8 +10,11 @@ import { z } from 'zod'
 export function useTurmas() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['turmas', authUser?.tenantId],
-    queryFn: () => turmaService.listar(authUser!.tenantId),
+    queryKey: ['turmas', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => turmaService.listar(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
     staleTime: 1000 * 60 * 5,
   })

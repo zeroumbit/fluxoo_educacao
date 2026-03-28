@@ -6,8 +6,11 @@ import type { MuralAvisoInsert } from '@/lib/database.types'
 export function useAvisos() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['mural', authUser?.tenantId],
-    queryFn: () => muralService.listar(authUser!.tenantId),
+    queryKey: ['mural', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => muralService.listar(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
   })
 }
@@ -24,8 +27,12 @@ export function useAvisosPorTurma(turmaId: string | null) {
 export function useAvisosRecentes(limite?: number) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['mural', 'recentes', authUser?.tenantId],
-    queryFn: () => muralService.listarAtivos(authUser!.tenantId, limite),
+    queryKey: ['mural', 'recentes', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => muralService.listarAtivos(
+      authUser!.tenantId,
+      limite,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
   })
 }

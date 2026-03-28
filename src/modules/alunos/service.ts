@@ -9,12 +9,37 @@ type ResponsavelInsert = Database['public']['Tables']['responsaveis']['Insert']
 type AlunoResponsavelInsert = Database['public']['Tables']['aluno_responsavel']['Insert']
 
 export const alunoService = {
-  async listar(tenantId: string) {
-    const { data, error } = await supabase
+  async listar(tenantId: string, professorId?: string) {
+    let query = supabase
       .from('alunos')
       .select('*, filiais(*), aluno_responsavel(*, responsaveis(*))')
       .eq('tenant_id', tenantId)
-      .order('nome_completo')
+
+    // Se for professor, filtrar alunos que estão em turmas onde ele leciona
+    if (professorId) {
+       // Buscar turmas deste professor
+       const { data: turmasIds } = await (supabase.from('turma_professores' as any) as any)
+         .select('turma_id')
+         .eq('professor_id', professorId)
+       
+       const idsT = turmasIds?.map((t: any) => t.turma_id) || []
+       
+       if (idsT.length === 0) return []
+
+       // Buscar alunos vinculados a essas turmas via matriculas ativas
+       const { data: matriculasAlunos } = await (supabase.from('matriculas' as any) as any)
+         .select('aluno_id')
+         .in('turma_id', idsT)
+         .eq('status', 'ativa')
+       
+       const idsA = matriculasAlunos?.map((m: any) => m.aluno_id) || []
+       
+       if (idsA.length === 0) return []
+       
+       query = query.in('id', idsA)
+    }
+
+    const { data, error } = await query.order('nome_completo')
 
     if (error) throw error
 
@@ -97,12 +122,35 @@ export const alunoService = {
     return aluno
   },
 
-  async contarAtivos(tenantId: string) {
-    const { count, error } = await supabase
+  async contarAtivos(tenantId: string, professorId?: string) {
+    let query = supabase
       .from('alunos')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('status', 'ativo')
+
+    if (professorId) {
+       const { data: turmasIds } = await (supabase.from('turma_professores' as any) as any)
+         .select('turma_id')
+         .eq('professor_id', professorId)
+       
+       const idsT = turmasIds?.map((t: any) => t.turma_id) || []
+       
+       if (idsT.length === 0) return 0
+
+       const { data: matriculasAlunos } = await (supabase.from('matriculas' as any) as any)
+         .select('aluno_id')
+         .in('turma_id', idsT)
+         .eq('status', 'ativa')
+       
+       const idsA = matriculasAlunos?.map((m: any) => m.aluno_id) || []
+       
+       if (idsA.length === 0) return 0
+       
+       query = query.in('id', idsA)
+    }
+
+    const { count, error } = await query
 
     if (error) throw error
     return count || 0

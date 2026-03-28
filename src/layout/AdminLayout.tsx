@@ -47,55 +47,55 @@ const navigationGroups = [
   {
     label: 'Principal',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
     ],
   },
   {
     label: 'Acadêmico',
     items: [
-      { name: 'Alunos', href: '/alunos', icon: Users },
-      { name: 'Turmas', href: '/turmas', icon: BookOpen },
-      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap },
-      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck },
-      { name: 'Boletim', href: '/notas', icon: GraduationCap },
-      { name: 'Livros e Materiais', href: '/livros', icon: BookOpen },
-      { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList },
-      { name: 'Atividades', href: '/atividades', icon: FileText },
-      { name: 'Documentos', href: '/documentos', icon: FileText },
-      { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront },
+      { name: 'Alunos', href: '/alunos', icon: Users, permission: 'academico.alunos.view' },
+      { name: 'Turmas', href: '/turmas', icon: BookOpen, permission: 'academico.turmas.view' },
+      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
+      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
+      { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
+      { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
+      { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
+      { name: 'Atividades', href: '/atividades', icon: FileText, permission: 'academico.atividades.view' },
+      { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'academico.documentos.view' },
+      { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront, permission: 'academico.portaria.view' },
     ],
   },
   {
     label: 'Comunicação',
     items: [
-      { name: 'Mural', href: '/mural', icon: Megaphone },
-      { name: 'Agenda', href: '/agenda', icon: Calendar },
+      { name: 'Mural', href: '/mural', icon: Megaphone, permission: 'comunicacao.mural.view' },
+      { name: 'Agenda', href: '/agenda', icon: Calendar, permission: 'comunicacao.agenda.view' },
     ],
   },
   {
     label: 'Financeiro',
     items: [
-      { name: 'Cobranças', href: '/financeiro', icon: CreditCard },
-      { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet },
-      { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp },
-      { name: 'Configurações', href: '/configuracoes', icon: Settings },
+      { name: 'Cobranças', href: '/financeiro', icon: CreditCard, permission: 'financeiro.cobrancas.view' },
+      { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet, permission: 'financeiro.contas_pagar.view' },
+      { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp, permission: 'financeiro.relatorios.view' },
+      { name: 'Configurações', href: '/configuracoes', icon: Settings, permission: 'financeiro.config.view' },
     ],
   },
   {
     label: 'Gestão',
     items: [
-      { name: 'Plano', href: '/plano', icon: CreditCard },
-      { name: 'Funcionários', href: '/funcionarios', icon: Briefcase },
-      { name: 'Unidades', href: '/filiais', icon: Building2 },
-      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package },
-      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog },
+      { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
+      { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
+      { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
+      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
+      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
     ],
   },
   {
     label: 'Configurações',
     items: [
-      { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield },
-      { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList },
+      { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
+      { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
     ],
   },
 ]
@@ -116,13 +116,28 @@ function SidebarContent({
   const metodo = dashboardData?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'
 
+  const isGestor = authUser?.isGestor || isSuperAdmin
+  const isProfessor = authUser?.isProfessor
+
+  // Filtrar grupos que possuem pelo menos um item permitido
+  const visibleGroups = navigationGroups
+    .map(group => {
+      // Regras de negócio restritivas: Professores NUNCA veem Financeiro ou Gestão
+      if (isProfessor && (group.label === 'Financeiro' || group.label === 'Gestão' || group.label === 'Configurações')) {
+        return { ...group, items: [] }
+      }
+
+      const items = group.items.filter(item => isGestor || hasPermission(item.permission))
+      return { ...group, items }
+    })
+    .filter(group => group.items.length > 0)
+
   // Só bloqueia se os dados foram carregados e o status atual for manual + não ativo
   const isBlocked = !isLoadingDashboard && !!dashboardData && status !== 'ativa' && isManual
 
   const handleSignOut = async () => {
     try {
       await signOut()
-      // Uso de window.location.href garante que o estado da aplicação seja limpo
       window.location.href = '/login'
     } catch (error) {
       console.error('Erro ao sair:', error)
@@ -155,7 +170,7 @@ function SidebarContent({
       {/* Navigation - Ampliado para mobile */}
       <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto scrollbar-hide">
 
-        {navigationGroups.map((group) => {
+        {visibleGroups.map((group) => {
           const isGroupBlocked = isBlocked && group.label !== 'Principal'
 
           return (
@@ -215,7 +230,7 @@ function SidebarContent({
               {isSuperAdmin && <Shield className="h-3.5 w-3.5 text-indigo-600" />}
             </div>
             <p className="text-xs text-muted-foreground capitalize truncate">
-              {isSuperAdmin ? 'Super Admin' : authUser?.role?.replace('_', ' ')}
+              {isSuperAdmin ? 'Super Admin' : isProfessor ? 'Professor' : authUser?.role?.replace('_', ' ')}
             </p>
           </div>
         </div>
@@ -235,11 +250,15 @@ function SidebarContent({
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { authUser } = useAuth()
+  const isSuperAdmin = useIsSuperAdmin()
+  const { hasPermission } = usePermissions()
   const { data: dashboard, isLoading: isLoadingDashboard } = useDashboard()
   const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId)
   const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' ? authUser.tenantId : '')
   const navigate = useNavigate()
 
+  const isGestor = authUser?.isGestor || isSuperAdmin
+  const isProfessor = authUser?.isProfessor
   const status = dashboard?.statusAssinatura
   const metodo = dashboard?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'
@@ -283,18 +302,20 @@ export function AdminLayout() {
             <span className="text-[10px] font-bold tracking-tight">Home</span>
           </NavLink>
 
-          <NavLink
-            to="/alunos"
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300",
-                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-              )
-            }
-          >
-            <Users className="h-6 w-6" />
-            <span className="text-[10px] font-bold tracking-tight">Alunos</span>
-          </NavLink>
+          {(isGestor || hasPermission('academico.alunos.view')) && (
+            <NavLink
+              to="/alunos"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <Users className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Alunos</span>
+            </NavLink>
+          )}
 
           {/* Botão Central de Menu */}
           <button
@@ -304,31 +325,35 @@ export function AdminLayout() {
             <Menu className="h-7 w-7 text-white" />
           </button>
 
-          <NavLink
-            to="/financeiro"
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300",
-                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-              )
-            }
-          >
-            <CreditCard className="h-6 w-6" />
-            <span className="text-[10px] font-bold tracking-tight">Cobranças</span>
-          </NavLink>
+          {(!isProfessor && (isGestor || hasPermission('financeiro.cobrancas.view'))) && (
+            <NavLink
+              to="/financeiro"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <CreditCard className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Cobranças</span>
+            </NavLink>
+          )}
 
-          <NavLink
-            to="/perfil-escola"
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center gap-1.5 transition-all duration-300",
-                isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-              )
-            }
-          >
-            <UserCog className="h-6 w-6" />
-            <span className="text-[10px] font-bold tracking-tight">Perfil</span>
-          </NavLink>
+          {(!isProfessor && (isGestor || hasPermission('gestao.perfil_escola.view'))) && (
+            <NavLink
+              to="/perfil-escola"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <UserCog className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Perfil</span>
+            </NavLink>
+          )}
         </div>
       </nav>
 

@@ -38,8 +38,8 @@ export function useExcluirFuncionario() {
 export function useCriarUsuarioEscola() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ funcionarioId, email, senha, areasAcesso }: { funcionarioId: string; email: string; senha: string; areasAcesso: string[] }) =>
-      funcionariosService.criarUsuarioEscola(funcionarioId, email, senha, areasAcesso),
+    mutationFn: ({ funcionarioId, email, senha, perfilId }: { funcionarioId: string; email: string; senha: string; perfilId: string }) =>
+      funcionariosService.criarUsuarioEscola(funcionarioId, email, senha, perfilId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['funcionarios'] }),
   })
 }

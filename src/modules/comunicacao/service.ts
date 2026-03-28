@@ -15,12 +15,18 @@ export const muralService = {
    * Lista TODOS os avisos do tenant — ativos + expirados.
    * Usado na página /mural (escola). Ordena: ativos primeiro, depois expirados.
    */
-  async listar(tenantId: string) {
-    const { data, error } = await supabase
+  async listar(tenantId: string, professorId?: string) {
+    let query = supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
+
+    if (professorId) {
+      // Filtra avisos que são públicos (turma_id nulo) OU que pertencem às turmas do professor
+      query = query.or(`turma_id.is.null,turma_id.in.(select turma_id from turma_professores where funcionario_id.eq.${professorId})`)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) throw error
     return data ?? []
@@ -50,15 +56,21 @@ export const muralService = {
    * Lista apenas avisos ATIVOS (dentro da vigência).
    * Usado nas dashboards para não mostrar avisos expirados.
    */
-  async listarAtivos(tenantId: string, limite = 6) {
+  async listarAtivos(tenantId: string, limite = 6, professorId?: string) {
     const hoje = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('mural_avisos')
       .select('*, turmas(nome)')
       .eq('tenant_id', tenantId)
       // Ativo = sem data_fim OU data_fim >= hoje
       .or(`data_fim.is.null,data_fim.gte.${hoje}`)
+
+    if (professorId) {
+      query = query.or(`turma_id.is.null,turma_id.in.(select turma_id from turma_professores where funcionario_id.eq.${professorId})`)
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(limite)
 

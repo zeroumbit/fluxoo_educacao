@@ -4,7 +4,14 @@ import { academicoService } from './service'
 
 export function useMatriculas() {
   const { authUser } = useAuth()
-  return useQuery({ queryKey: ['matriculas', authUser?.tenantId], queryFn: () => academicoService.listarMatriculas(authUser!.tenantId), enabled: !!authUser?.tenantId })
+  return useQuery({
+    queryKey: ['matriculas', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => academicoService.listarMatriculas(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
+    enabled: !!authUser?.tenantId
+  })
 }
 export function useMatricula(id: string | null) {
   const { authUser } = useAuth()
@@ -42,8 +49,11 @@ export function useExcluirMatricula() {
 export function useMatriculasAtivas() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['matriculas_ativas', authUser?.tenantId],
-    queryFn: () => academicoService.listarMatriculasAtivasPorAluno(authUser!.tenantId),
+    queryKey: ['matriculas_ativas', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => academicoService.listarMatriculasAtivasPorAluno(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId
   })
 }
@@ -59,7 +69,14 @@ export function useVerificarMatricula(alunoId: string) {
 
 export function usePlanosAula() {
   const { authUser } = useAuth()
-  return useQuery({ queryKey: ['planos_aula', authUser?.tenantId], queryFn: () => academicoService.listarPlanosAula(authUser!.tenantId), enabled: !!authUser?.tenantId })
+  return useQuery({
+    queryKey: ['planos_aula', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => academicoService.listarPlanosAula(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
+    enabled: !!authUser?.tenantId
+  })
 }
 export function useCriarPlanoAula() {
   const qc = useQueryClient()
@@ -96,7 +113,14 @@ export function useExcluirPlanoAula() {
 
 export function useAtividades() {
   const { authUser } = useAuth()
-  return useQuery({ queryKey: ['atividades', authUser?.tenantId], queryFn: () => academicoService.listarAtividades(authUser!.tenantId), enabled: !!authUser?.tenantId })
+  return useQuery({
+    queryKey: ['atividades', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => academicoService.listarAtividades(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
+    enabled: !!authUser?.tenantId
+  })
 }
 export function useCriarAtividade() {
   const qc = useQueryClient()
@@ -133,7 +157,14 @@ export function useExcluirAtividade() {
 
 export function useSelos() {
   const { authUser } = useAuth()
-  return useQuery({ queryKey: ['selos', authUser?.tenantId], queryFn: () => academicoService.listarSelos(authUser!.tenantId), enabled: !!authUser?.tenantId })
+  return useQuery({
+    queryKey: ['selos', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => academicoService.listarSelos(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
+    enabled: !!authUser?.tenantId
+  })
 }
 export function useAtribuirSelo() {
   const qc = useQueryClient()

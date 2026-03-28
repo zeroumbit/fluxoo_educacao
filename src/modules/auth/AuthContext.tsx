@@ -20,11 +20,16 @@ export interface AuthUser {
   user: User
   session: Session
   tenantId: string
-  role: UserRole
-  nome: string
-  endereco?: Endereco
-  areasAcesso?: string[]
+  role: 'gestor' | 'responsavel' | 'super_admin' | 'funcionario'
   funcionarioId?: string
+  responsavelId?: string
+  perfilId?: string
+  perfilNome?: string
+  nome: string
+  email: string
+  isProfessor: boolean
+  isGestor: boolean
+  isSuperAdmin: boolean
 }
 
 interface AuthContextType {
@@ -58,6 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           tenantId: 'super_admin',
           role: 'super_admin',
           nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Super Admin',
+          email: user.email || '',
+          isProfessor: false,
+          isGestor: true,
+          isSuperAdmin: true
         })
         return
       }
@@ -66,111 +75,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user.user_metadata?.role === 'gestor') {
         const { data: escola, error: erro } = await supabase
           .from('escolas')
-          .select('id, razao_social, logradouro, numero, bairro, cidade, estado, cep')
+          .select('id, razao_social')
           .eq('gestor_user_id', user.id)
           .limit(1)
           .maybeSingle() as any
 
         if (erro) {
-          console.error('❌ Erro na busca da escola:', erro.message)
-          // Em caso de erro real de rede/banco, não definimos authUser para permitir refetch ou manter loading
-          throw erro
+           console.error('❌ Erro na busca da escola:', erro.message)
         }
-        
-        if (escola) {
+
+        setAuthUser({
+          user, session,
+          tenantId: (escola as any)?.id || 'PENDING_TENANT',
+          role: 'gestor',
+          nome: user.user_metadata?.full_name || 'Gestor',
+          email: user.email || '',
+          isProfessor: false,
+          isGestor: true,
+          isSuperAdmin: false
+        })
+        return
+      }
+
+      // 3. FUNCIONÁRIO / RESPONSÁVEL
+      try {
+        const { data: funcionarioData } = await (supabase.from('funcionarios') as any)
+          .select('*, usuarios_sistema(perfil_id, perfil:perfis(nome))')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (funcionarioData) {
+          const finalTenantId = funcionarioData.tenant_id
+          const rbac = funcionarioData.usuarios_sistema?.[0]
+          const perfilNome = rbac?.perfil?.nome?.toLowerCase() || ''
+          
+          const isGestor = user.user_metadata?.role === 'gestor' || perfilNome.includes('gestor') || perfilNome.includes('admin')
+          const isSuperAdmin = user.app_metadata?.role === 'super_admin'
+          const isProfessor = !isGestor && !isSuperAdmin && (user.user_metadata?.role === 'funcionario' || !!funcionarioData.id)
+
           setAuthUser({
             user, session,
-            tenantId: (escola as any).id,
-            role: 'gestor',
-            nome: user.user_metadata?.full_name || 'Gestor',
-            endereco: {
-              logradouro: escola.logradouro,
-              numero: escola.numero,
-              bairro: escola.bairro,
-              cidade: escola.cidade,
-              estado: escola.estado,
-              cep: escola.cep
-            }
+            tenantId: finalTenantId,
+            role: 'funcionario',
+            funcionarioId: funcionarioData.id,
+            perfilId: rbac?.perfil_id,
+            perfilNome: rbac?.perfil?.nome,
+            nome: funcionarioData.nome_completo || user.user_metadata?.full_name || 'Funcionário',
+            email: user.email || '',
+            isProfessor,
+            isGestor,
+            isSuperAdmin
           })
           return
         }
 
-        // Se não encontrou a escola (ex: cadastro incompleto), tratamos como gestor sem tenant
-        // mas marcamos como tal para que a UI saiba que não é um erro de carregamento
-        setAuthUser({
-          user, session,
-          tenantId: 'PENDING_TENANT', // Valor distintivo em vez de string vazia
-          role: 'gestor',
-          nome: user.user_metadata?.full_name || 'Gestor',
-        })
-        return
+        const { data: responsavelData } = await supabase.from('responsaveis').select('*').eq('user_id', user.id).maybeSingle()
+        if (responsavelData) {
+          setAuthUser({
+            user, session,
+            tenantId: (responsavelData as any).tenant_id || 'PENDING_TENANT',
+            role: 'responsavel',
+            responsavelId: responsavelData.id,
+            nome: (responsavelData as any).nome || user.user_metadata?.full_name || 'Responsável',
+            email: user.email || '',
+            isProfessor: false,
+            isGestor: false,
+            isSuperAdmin: false
+          })
+          return
+        }
+
+        if (user.email) {
+            const { data: funcByEmail } = await (supabase.from('funcionarios') as any)
+              .select('*, usuarios_sistema(perfil_id, perfil:perfis(nome))')
+              .ilike('email', user.email)
+              .maybeSingle()
+              
+            if (funcByEmail) {
+                const rbac = funcByEmail.usuarios_sistema?.[0]
+                const perfilNome = rbac?.perfil?.nome?.toLowerCase() || ''
+                const isGestor = perfilNome.includes('gestor') || perfilNome.includes('admin')
+                const isProfessor = !isGestor
+
+                setAuthUser({
+                  user, session,
+                  tenantId: funcByEmail.tenant_id,
+                  role: 'funcionario',
+                  funcionarioId: funcByEmail.id,
+                  perfilId: rbac?.perfil_id,
+                  perfilNome: rbac?.perfil?.nome,
+                  nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
+                  email: user.email || '',
+                  isProfessor,
+                  isGestor,
+                  isSuperAdmin: false
+                })
+                return
+            }
+        }
+      } catch (err) {
+        console.error('Erro no fallback do AuthContext:', err)
       }
 
-      // 3 & 4. Paralelizando busca de Funcionário e Responsável
-      const [funcRes, respRes] = await Promise.all([
-        withTimeout(
-          supabase.from('funcionarios')
-            .select('tenant_id, nome_completo, areas_acesso, id')
-            .eq('user_id', user.id)
-            .limit(1)
-            .maybeSingle() as any,
-          5000
-        ) as any,
-        withTimeout(
-          supabase.from('responsaveis')
-            .select('nome, logradouro, numero, complemento, bairro, cidade, estado, cep')
-            .eq('user_id', user.id)
-            .limit(1)
-            .maybeSingle() as any,
-          5000
-        ) as any
-      ])
-
-      if (funcRes?.data) {
-        setAuthUser({
-          user, session,
-          tenantId: funcRes.data.tenant_id || '',
-          role: 'funcionario',
-          nome: funcRes.data.nome_completo,
-          areasAcesso: funcRes.data.areas_acesso || [],
-          funcionarioId: funcRes.data.id,
-        })
-        return
-      }
-
-      if (respRes?.data) {
-        setAuthUser({
-          user, session,
-          tenantId: '',
-          role: 'responsavel',
-          nome: respRes.data.nome,
-          endereco: {
-            logradouro: respRes.data.logradouro,
-            numero: respRes.data.numero,
-            complemento: respRes.data.complemento,
-            bairro: respRes.data.bairro,
-            cidade: respRes.data.cidade,
-            estado: respRes.data.estado,
-            cep: respRes.data.cep
-          }
-        })
-        return
-      }
-
-      // Sem perfil
-      setAuthUser(null)
+      // 4. Caso padrão
+      setAuthUser({
+        user, session,
+        tenantId: user.user_metadata?.tenant_id || 'PENDING_TENANT',
+        role: (user.user_metadata?.role as any) || 'gestor',
+        nome: user.user_metadata?.full_name || 'Usuário',
+        email: user.email || '',
+        isProfessor: false,
+        isGestor: true,
+        isSuperAdmin: false
+      })
     } catch (err) {
       console.error('Erro no carregamento de perfil:', err)
-      if (user.user_metadata?.role === 'gestor') {
-        setAuthUser({
-          user, session,
-          tenantId: '',
-          role: 'gestor',
-          nome: user.user_metadata?.full_name || 'Gestor',
-        })
-      } else {
-        setAuthUser(null)
-      }
+      setAuthUser(null)
     }
   }, [])
 

@@ -14,6 +14,7 @@ import {
   useCriarFuncaoCustom,
   useGerarFolhaPagamento,
 } from '../hooks'
+import { usePerfis } from '@/modules/rbac/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,7 +42,7 @@ const funcSchema = z.object({
 const userSchema = z.object({
   email: z.string().email('E-mail inválido'),
   senha: z.string().min(6, 'Mínimo 6 caracteres'),
-  areas_acesso: z.array(z.string()).default([]),
+  perfil_id: z.string().min(1, 'Selecione um perfil de acesso'),
 })
 
 type FuncFormData = z.infer<typeof funcSchema>
@@ -55,25 +56,7 @@ const novaFuncaoSchema = z.object({
 // ---------------------------------------------------------------------------
 // Áreas de acesso da plataforma
 // ---------------------------------------------------------------------------
-const PLATFORM_FUNCTIONS = [
-  { value: 'dashboard', label: 'Dashboard' },
-  { value: 'alunos', label: 'Alunos' },
-  { value: 'turmas', label: 'Turmas' },
-  { value: 'frequencia', label: 'Frequência/Chamada' },
-  { value: 'mural', label: 'Mural de Avisos' },
-  { value: 'financeiro', label: 'Financeiro (Geral)' },
-  { value: 'financeiro_view', label: 'Financeiro (Somente Leitura)' },
-  { value: 'contas_pagar', label: 'Contas a Pagar' },
-  { value: 'config_financeira', label: 'Configuração Financeira' },
-  { value: 'funcionarios', label: 'Funcionários' },
-  { value: 'matriculas', label: 'Matrículas' },
-  { value: 'planos_aula', label: 'Planos de Aula' },
-  { value: 'atividades', label: 'Atividades' },
-  { value: 'agenda', label: 'Agenda/Eventos' },
-  { value: 'documentos', label: 'Documentos' },
-  { value: 'almoxarifado', label: 'Almoxarifado' },
-  { value: 'perfil_escola', label: 'Perfil da Escola' },
-]
+// PLATFORM_FUNCTIONS removido — agora gerenciado via Perfis de Acesso (RBAC)
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -201,6 +184,8 @@ export function FuncionariosPage() {
   const [editFunc, setEditFunc] = useState<any>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [salarioInput, setSalarioInput] = useState('')
+  
+  const { data: perfis = [] } = usePerfis()
 
   // Estados para geração de folha
   const [mesFolha, setMesFolha] = useState(new Date().getMonth() + 1)
@@ -345,7 +330,7 @@ export function FuncionariosPage() {
         funcionarioId: selectedFunc.id,
         email: data.email,
         senha: data.senha,
-        areasAcesso: data.areas_acesso || [],
+        perfilId: data.perfil_id,
       })
       toast.success('Usuário criado com sucesso!')
       userForm.reset()
@@ -587,20 +572,27 @@ export function FuncionariosPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Áreas de Acesso</Label>
+              <Label>Perfil de Acesso *</Label>
               <Controller
                 control={userForm.control}
-                name="areas_acesso"
+                name="perfil_id"
                 render={({ field }) => (
-                  <MultiSelect
-                    options={PLATFORM_FUNCTIONS}
-                    selected={field.value || []}
-                    onChange={field.onChange}
-                    placeholder="Selecione as funcionalidades..."
-                  />
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um perfil de acesso..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {perfis.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               />
-              <p className="text-xs text-muted-foreground">Selecione as áreas que este funcionário poderá acessar no sistema.</p>
+              <p className="text-xs text-muted-foreground">O perfil define quais telas e ações o funcionário poderá acessar.</p>
+              {userForm.formState.errors.perfil_id && (
+                <p className="text-sm text-destructive font-medium">{userForm.formState.errors.perfil_id.message}</p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setUserDialogOpen(false)}>Cancelar</Button>

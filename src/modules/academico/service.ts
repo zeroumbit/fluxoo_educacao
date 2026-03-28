@@ -4,10 +4,21 @@ import { validarPermissao } from '@/lib/rbac-validation'
 
 export const academicoService = {
   // MATRÍCULAS
-  async listarMatriculas(tenantId: string) {
-    const { data, error } = await supabase.from('matriculas' as any)
+  async listarMatriculas(tenantId: string, professorId?: string) {
+    let query = supabase.from('matriculas' as any)
       .select('*, aluno:alunos(nome_completo, cpf)')
-      .eq('tenant_id', tenantId).order('created_at', { ascending: false })
+      .eq('tenant_id', tenantId)
+
+    if (professorId) {
+      const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      const idsT = vincs?.map((v: any) => v.turma_id) || []
+      if (idsT.length === 0) return []
+      query = query.in('turma_id', idsT)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
@@ -212,20 +223,51 @@ export const academicoService = {
       return null
     }
   },
-  async listarMatriculasAtivasPorAluno(tenantId: string) {
-    const { data, error } = await (supabase.from('matriculas' as any) as any)
+  async listarMatriculasAtivasPorAluno(tenantId: string, professorId?: string) {
+    let query = supabase.from('matriculas' as any)
       .select('aluno_id, id, status, ano_letivo, serie_ano, turno')
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
+
+    if (professorId) {
+      const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      const idsT = vincs?.map((v: any) => v.turma_id) || []
+      if (idsT.length === 0) return []
+      query = query.in('turma_id', idsT)
+    }
+
+    const { data, error } = await query
     if (error) throw error
     return (data as any[]) || []
   },
 
   // PLANOS DE AULA
-  async listarPlanosAula(tenantId: string) {
-    const { data, error } = await (supabase.from('planos_aula' as any) as any)
+  async listarPlanosAula(tenantId: string, professorId?: string) {
+    let query = supabase.from('planos_aula' as any)
       .select('*, planos_aula_turmas(*, turma:turmas(nome))')
-      .eq('tenant_id', tenantId).order('data_aula', { ascending: false })
+      .eq('tenant_id', tenantId)
+
+    if (professorId) {
+       // Filtra planos via tabela de relacionamento com turmas autorizadas
+       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+       const idsT = vincs?.map((v: any) => v.turma_id) || []
+       
+       if (idsT.length === 0) return []
+       
+       const { data: planosIds } = await (supabase.from('planos_aula_turmas' as any) as any)
+         .select('plano_aula_id')
+         .in('turma_id', idsT)
+       
+       const idsP = planosIds?.map((p: any) => p.plano_aula_id) || []
+       if (idsP.length === 0) return []
+       query = query.in('id', idsP)
+    }
+
+    const { data, error } = await query.order('data_aula', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
@@ -317,10 +359,29 @@ export const academicoService = {
   },
 
   // ATIVIDADES
-  async listarAtividades(tenantId: string) {
-    const { data, error } = await (supabase.from('atividades' as any) as any)
+  async listarAtividades(tenantId: string, professorId?: string) {
+    let query = supabase.from('atividades' as any)
       .select('*, atividades_turmas(*, turma:turmas(nome))')
-      .eq('tenant_id', tenantId).order('created_at', { ascending: false })
+      .eq('tenant_id', tenantId)
+
+    if (professorId) {
+       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+       const idsT = vincs?.map((v: any) => v.turma_id) || []
+       
+       if (idsT.length === 0) return []
+       
+       const { data: ativIds } = await (supabase.from('atividades_turmas' as any) as any)
+         .select('atividade_id')
+         .in('turma_id', idsT)
+       
+       const idsA = ativIds?.map((a: any) => a.atividade_id) || []
+       if (idsA.length === 0) return []
+       query = query.in('id', idsA)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },
@@ -515,10 +576,28 @@ export const academicoService = {
   },
 
   // SELOS
-  async listarSelos(tenantId: string) {
-    const { data, error } = await (supabase.from('selos' as any) as any)
+  async listarSelos(tenantId: string, professorId?: string) {
+    let query = supabase.from('selos' as any)
       .select('*, aluno:alunos(nome_completo)')
-      .eq('tenant_id', tenantId).order('created_at', { ascending: false })
+      .eq('tenant_id', tenantId)
+
+    if (professorId) {
+       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+         .select('turma_id')
+         .eq('professor_id', professorId)
+       const idsT = vincs?.map((v: any) => v.turma_id) || []
+       if (idsT.length === 0) return []
+
+       const { data: matrs } = await (supabase.from('matriculas' as any) as any)
+         .select('aluno_id')
+         .in('turma_id', idsT)
+         .eq('status', 'ativa')
+       const idsAlunos = matrs?.map((m: any) => m.aluno_id) || []
+       if (idsAlunos.length === 0) return []
+       query = query.in('aluno_id', idsAlunos)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []
   },

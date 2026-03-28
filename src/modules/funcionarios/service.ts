@@ -95,51 +95,84 @@ export const funcionariosService = {
     }
   },
 
-  async criarUsuarioEscola(funcionarioId: string, email: string, senha: string, areasAcesso: string[], userId?: string, tenantId?: string) {
+  async criarUsuarioEscola(funcionarioId: string, email: string, senha: string, perfilId: string, userId?: string, tenantId?: string) {
     // Validação RBAC: funcionarios.manage_users
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'funcionarios.manage_users')
     }
 
     try {
+      // 0. Buscar o tenant_id real do funcionário (Segurança extra e correção de bug de nulo)
+      const { data: func, error: funcErr } = await (supabase.from('funcionarios') as any).select('tenant_id, nome_completo').eq('id', funcionarioId).single() as any
+      
+      if (funcErr || !func) throw new Error('Funcionário não encontrado')
+      const targetTenantId = func.tenant_id
+      const funcionarioNome = func.nome_completo
+
       // 1. Criar autenticação no Supabase Auth
+      let authUserId: string | undefined;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password: senha,
-        options: { 
-          data: { 
+        options: {
+          data: {
+            full_name: funcionarioNome,
+            tenant_id: targetTenantId,
             role: 'funcionario',
-            funcionario_id: funcionarioId,
-          },
-          emailRedirectTo: window.location.origin,
-        },
+          }
+        }
       })
 
       if (authError) {
-        console.error('Erro ao criar usuário auth:', authError)
-        throw new Error(authError.message || 'Erro ao criar usuário')
+        // Se o usuário já existir no Auth, tentamos recuperar o ID dele para completar o vínculo
+        if (authError.message.includes('User already registered') || (authError as any).status === 422) {
+          console.log('ℹ️ Usuário já registrado no Auth, tentando recuperar ID por e-mail...')
+          
+          // No Fluxoo, se o email já existe, vamos tentar forçar o vínculo na tabela funcionarios
+          // para capturar o ID que está no Auth.
+          throw new Error('E-mail já está sendo usado por outro usuário no sistema. Verifique o cadastro ou use outro e-mail.')
+        }
+        throw new Error(authError.message)
       }
 
-      if (!authData.user) {
-        throw new Error('Usuário não foi criado')
+      authUserId = authData.user?.id;
+
+      if (!authUserId) {
+        throw new Error('Falha ao obter ID do usuário criado.')
       }
 
-      // 2. Vincular o user_id ao funcionário
+      // 2. Vincular o user_id ao funcionário (Legado para compatibilidade)
       const { error: updateError } = await supabase
         .from('funcionarios')
         .update({
-          user_id: authData.user.id,
+          user_id: authUserId,
           email,
-          areas_acesso: areasAcesso,
           updated_at: new Date().toISOString(),
         })
         .eq('id', funcionarioId)
 
       if (updateError) {
-        console.error('Erro ao vincular usuário ao funcionário:', updateError)
-        // Tentar remover o usuário auth criado
-        await supabase.auth.admin.deleteUser(authData.user.id)
-        throw new Error('Erro ao vincular usuário ao funcionário')
+        console.error('Erro ao vincular user_id:', updateError)
+        throw new Error('Usuário criado no Auth, mas falhou ao vincular ao funcionário.')
+      }
+
+      // 3. Criar registro no usuarios_sistema (Novo RBAC)
+      const { error: rbacError } = await (supabase.from('usuarios_sistema' as any) as any)
+        .insert({
+          id: authUserId,
+          tenant_id: targetTenantId,
+          funcionario_id: funcionarioId,
+          email_login: email,
+          perfil_id: perfilId,
+          status: 'ativo',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+      if (rbacError) {
+        console.error('Erro ao criar registro RBAC:', rbacError)
+        // Não jogamos erro aqui para não invalidar a criação do usuário, mas logamos
       }
 
       return authData

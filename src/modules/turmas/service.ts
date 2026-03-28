@@ -3,7 +3,7 @@ import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 import type { Professor, Disciplina } from './types'
 
 export const turmaService = {
-  async listar(tenantId: string) {
+  async listar(tenantId: string, professorId?: string) {
     let query = supabase
       .from('turmas')
       .select('*, filiais(nome_unidade)')
@@ -11,6 +11,17 @@ export const turmaService = {
     // Filtro de tenant opcional para Super Admin
     if (tenantId && tenantId !== 'super_admin') {
       query = query.eq('tenant_id', tenantId)
+    }
+
+    if (professorId) {
+      const { data: turmasVinc } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      
+      const idsT = turmasVinc?.map((t: any) => t.turma_id) || []
+      
+      if (idsT.length === 0) return []
+      query = query.in('id', idsT)
     }
 
     const { data, error } = await query.order('nome')
