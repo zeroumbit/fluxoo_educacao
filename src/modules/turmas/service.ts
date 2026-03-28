@@ -6,7 +6,7 @@ export const turmaService = {
   async listar(tenantId: string) {
     let query = supabase
       .from('turmas')
-      .select('id, tenant_id, nome, filial_id, max_alunos, status, turno, ano_letivo, valor_mensalidade, created_at, filiais(nome_unidade)')
+      .select('*, filiais(nome_unidade)')
     
     // Filtro de tenant opcional para Super Admin
     if (tenantId && tenantId !== 'super_admin') {

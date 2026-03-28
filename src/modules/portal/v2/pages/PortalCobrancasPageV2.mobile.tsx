@@ -149,31 +149,33 @@ export function PortalCobrancasPageV2Mobile() {
 
       {/* 2. Dashboard Cards - Scroll Horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar" role="region" aria-label="Resumo financeiro">
-        <ResumoCardMobile 
-          label="A Vencer" 
-          value={familyData?.resumo.aVencer} 
-          icon={Calendar} 
-          color="teal" 
+        <ResumoCardMobile
+          label="A Vencer"
+          value={familyData?.resumo.aVencer}
+          icon={Calendar}
+          color="teal"
         />
-        <ResumoCardMobile 
-          label="Atrasado" 
-          value={familyData?.resumo.atrasado} 
-          icon={AlertTriangle} 
-          color="rose" 
-          isCritical 
+        <ResumoCardMobile
+          label="Atrasado"
+          value={familyData?.resumo.atrasado}
+          icon={AlertTriangle}
+          color="rose"
+          isCritical
         />
-        <ResumoCardMobile 
-          label="Materiais" 
-          value={familyData?.resumo.materiais} 
-          icon={ShoppingBag} 
-          color="indigo" 
-        />
-        <ResumoCardMobile 
-          label="Próximo Venc." 
-          value={familyData?.resumo.proximoVenc} 
-          icon={CreditCard} 
-          color="amber" 
-          isDate 
+        {familyData?.resumo.materiais > 0 && (
+          <ResumoCardMobile
+            label="Materiais"
+            value={familyData?.resumo.materiais}
+            icon={ShoppingBag}
+            color="indigo"
+          />
+        )}
+        <ResumoCardMobile
+          label="Próximo Venc."
+          value={familyData?.resumo.proximoVenc}
+          icon={CreditCard}
+          color="amber"
+          isDate
         />
       </div>
 

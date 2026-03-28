@@ -70,7 +70,8 @@ export function PortalHomeV2Mobile() {
     const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
     alerts.push({
       id: 'fin-em-dia',
-      text: `${responsavel?.nome?.split(' ')[0] || 'Responsável'}, sua mensalidade está em dia, mas caso já queira pagar a mensalidade que vence em ${dataVenc}, clique aqui.`,
+      text: `${responsavel?.nome?.split(' ')[0] || 'Responsável'}, sua mensalidade está em dia, mas caso já queira pagar a mensalidade que vence em ${dataVenc}, `,
+      highlight: 'clique aqui',
       type: 'success',
       icon: Receipt,
       action: () => navigate('/portal/financeiro')
@@ -132,7 +133,14 @@ export function PortalHomeV2Mobile() {
             role="alert"
           >
             <alert.icon className="w-5 h-5 flex-shrink-0 mt-0.5 text-slate-700" aria-hidden="true" />
-            <span className="text-[14px] font-bold leading-tight">{alert.text}</span>
+            <span className="text-[14px] font-bold leading-tight">
+              {alert.text}
+              {alert.highlight && (
+                <span className="text-teal-600 font-black underline decoration-2 underline-offset-2">
+                  {alert.highlight}
+                </span>
+              )}
+            </span>
           </motion.div>
         ))}
       </section>

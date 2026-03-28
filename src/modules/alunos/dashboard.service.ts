@@ -37,6 +37,7 @@ export interface DashboardData {
 
 export const dashboardService = {
   async buscarDados(tenantId: string): Promise<DashboardData> {
+    if (!tenantId) throw new Error('Tenant ID não fornecido.')
     const [
       alunosRes,
       escolaRes,
@@ -57,7 +58,15 @@ export const dashboardService = {
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase.from('turmas').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false }),
+      (async () => {
+        try {
+          return await (supabase.from('vw_radar_evasao' as any) as any)
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .limit(10)
+            .order('cobrancas_atrasadas', { ascending: false })
+        } catch { return { data: [] } }
+      })(),
       (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago'),
       supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0),
       supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa'),

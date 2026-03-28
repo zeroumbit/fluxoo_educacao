@@ -389,8 +389,9 @@ export function NotasPageWeb() {
           
         const filtradas = (matriculas || []).filter((m: any) => m.turma_id === turmaId)
 
-        if (!filtradas.length) return []
-        const ids = filtradas.map((m: any) => m.aluno_id)
+        const ids = filtradas.map((m: any) => m.aluno_id).filter((id): id is string => !!id)
+        if (ids.length === 0) return []
+
         const { data: alunosData } = await supabase
           .from('alunos')
           .select('id, nome_completo')

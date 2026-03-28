@@ -102,7 +102,7 @@ export function NotasPageMobile() {
       const { data: tInfo } = await supabase.from('turmas').select('nome, tenant_id').eq('id', turmaId).single()
       const { data: mat } = await supabase.from('matriculas').select('aluno_id, serie_ano, turma_id').eq('tenant_id', tInfo!.tenant_id!)
       const filtrados = (mat || []).filter(m => m.turma_id === turmaId || (m.serie_ano === tInfo!.nome))
-      const ids = filtrados.map(m => m.aluno_id)
+      const ids = filtrados.map(m => m.aluno_id).filter((id): id is string => !!id)
       if (ids.length === 0) return []
       const { data: al } = await supabase.from('alunos').select('id, nome_completo').in('id', ids).order('nome_completo')
       return al || []
