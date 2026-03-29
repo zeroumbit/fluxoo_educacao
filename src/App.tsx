@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react"
+import { Package, Wallet, FileUser, Search } from 'lucide-react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/sonner'
@@ -30,6 +31,8 @@ const FinanceiroPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroP
 const FiliaisPage = lazy(() => import('@/modules/filiais/pages/FiliaisPage').then(m => ({ default: m.FiliaisPage })))
 const EscolaCadastroPage = lazy(() => import('@/modules/escolas/pages/EscolaCadastroPage').then(m => ({ default: m.EscolaCadastroPage })))
 const MarketplaceCadastroPage = lazy(() => import('@/modules/marketplace/pages/MarketplaceCadastroPage').then(m => ({ default: m.MarketplaceCadastroPage })))
+const LojistaDashboardPage = lazy(() => import('@/modules/marketplace/pages/LojistaDashboardPage').then(m => ({ default: m.LojistaDashboardPage })))
+const ProfissionalDashboardPage = lazy(() => import('@/modules/marketplace/pages/ProfissionalDashboardPage').then(m => ({ default: m.ProfissionalDashboardPage })))
 
 const LivrosPage = lazy(() => import('@/modules/livros/pages/LivrosPage').then(m => ({ default: m.LivrosPage })))
 const FuncionariosPage = lazy(() => import('@/modules/funcionarios/pages/FuncionariosPage').then(m => ({ default: m.FuncionariosPage })))
@@ -117,6 +120,8 @@ function RootRedirect() {
 function DashboardRouter() {
   const { authUser } = useAuth()
   if (authUser?.isProfessor) return <ProfessorDashboardPage />
+  if (authUser?.role === 'lojista') return <LojistaDashboardPage />
+  if (authUser?.role === 'profissional') return <ProfissionalDashboardPage />
   return <DashboardPage />
 }
 
@@ -220,6 +225,17 @@ function App() {
               {/* Currículos */}
               <Route path="/curriculos" element={<CurriculosListPage />} />
               <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
+              <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
+
+              {/* Marketplace Partners - Dashboards e Páginas Específicas */}
+              <Route path="/loja/dashboard" element={<LojistaDashboardPage />} />
+              <Route path="/loja/produtos" element={<div className="p-8 text-center py-20"><Package className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meus Produtos</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/loja/vendas" element={<div className="p-8 text-center py-20"><Wallet className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Minhas Vendas</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              
+              <Route path="/profissional/dashboard" element={<ProfissionalDashboardPage />} />
+              <Route path="/profissional/curriculo" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meu Currículo</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/profissional/vagas" element={<div className="p-8 text-center py-20"><Search className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Vagas Disponíveis</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />

@@ -310,8 +310,8 @@ export function AdminLayout() {
   const isSuperAdmin = useIsSuperAdmin()
   const { hasPermission } = usePermissions()
   const { data: dashboard, isLoading: isLoadingDashboard } = useDashboard()
-  const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId)
-  const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' ? authUser.tenantId : '')
+  const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
+  const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
   const navigate = useNavigate()
 
   const isGestor = authUser?.isGestor || isSuperAdmin

@@ -10,9 +10,45 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Loader2, Search, CheckCircle2, XCircle, Puzzle } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Plus, Pencil, Trash2, Loader2, Search, CheckCircle2, XCircle, Puzzle, Building2, Store, UserCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
+
+const TIPOS_EMPRESA = [
+  { value: 'escolas', label: 'Escolas', icon: Building2 },
+  { value: 'lojistas', label: 'Lojistas', icon: Store },
+  { value: 'profissionais', label: 'Profissionais', icon: UserCircle },
+] as const
+
+const VALIDADE_PLANOS = [
+  { value: '1', label: '1 mês' },
+  { value: '2', label: '2 meses' },
+  { value: '3', label: '3 meses' },
+  { value: '4', label: '4 meses' },
+  { value: '5', label: '5 meses' },
+  { value: '6', label: '6 meses' },
+  { value: '7', label: '7 meses' },
+  { value: '8', label: '8 meses' },
+  { value: '9', label: '9 meses' },
+  { value: '10', label: '10 meses' },
+  { value: '11', label: '11 meses' },
+  { value: '12', label: '12 meses' },
+  { value: 'indefinido', label: 'Indefinido' },
+] as const
+
+const TIPOS_PAGAMENTO = [
+  { value: 'gratuito', label: 'Gratuito', description: 'Sem cobrança' },
+  { value: 'pix', label: 'PIX', description: 'Pagamento automático via PIX' },
+  { value: 'mercado_pago', label: 'Mercado Pago', description: 'Pagamento via Mercado Pago' },
+  { value: 'pix_manual', label: 'PIX Manual', description: 'Chave PIX cadastrada pelo admin' },
+] as const
 
 export function PlanosPage() {
   const { data: planos, isLoading } = usePlanos()
@@ -32,7 +68,10 @@ export function PlanosPage() {
     nome: '',
     descricao_curta: '',
     valor_por_aluno: 0,
-    status: true
+    status: true,
+    tipo_empresa: 'escolas' as 'escolas' | 'lojistas' | 'profissionais',
+    tipo_pagamento: 'gratuito' as 'gratuito' | 'pix' | 'mercado_pago' | 'pix_manual',
+    validade_meses: null as number | null
   })
 
   const filteredPlanos = planos?.filter((p: any) =>
@@ -47,11 +86,22 @@ export function PlanosPage() {
         nome: plano.nome,
         descricao_curta: plano.descricao_curta || '',
         valor_por_aluno: Number(plano.valor_por_aluno),
-        status: plano.status
+        status: plano.status,
+        tipo_empresa: plano.tipo_empresa || 'escolas',
+        tipo_pagamento: plano.tipo_pagamento || 'gratuito',
+        validade_meses: plano.validade_meses ?? null
       })
     } else {
       setEditingPlano(null)
-      setFormData({ nome: '', descricao_curta: '', valor_por_aluno: 0, status: true })
+      setFormData({ 
+        nome: '', 
+        descricao_curta: '', 
+        valor_por_aluno: 0, 
+        status: true, 
+        tipo_empresa: 'escolas', 
+        tipo_pagamento: 'gratuito',
+        validade_meses: null 
+      })
     }
     setIsModalOpen(true)
   }
@@ -65,8 +115,13 @@ export function PlanosPage() {
       })
       toast.success(editingPlano ? 'Plano atualizado!' : 'Plano criado!')
       setIsModalOpen(false)
-    } catch {
-      toast.error('Erro ao salvar plano')
+    } catch (error: any) {
+      // Mostra mensagem específica para conflito de plano único
+      if (error.message?.includes('Já existe um plano ativo')) {
+        toast.error(error.message)
+      } else {
+        toast.error('Erro ao salvar plano')
+      }
     }
   }
 
@@ -169,6 +224,89 @@ export function PlanosPage() {
                     required
                     className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Empresa</Label>
+                  <Select
+                    value={formData.tipo_empresa}
+                    onValueChange={(value: 'escolas' | 'lojistas' | 'profissionais') =>
+                      setFormData({ ...formData, tipo_empresa: value })
+                    }
+                  >
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                      <SelectValue placeholder="Selecione o tipo de empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_EMPRESA.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          <div className="flex items-center gap-2">
+                            <tipo.icon className="h-4 w-4" />
+                            {tipo.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Define quais tipos de empresas verão este plano ao pagar.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Validade do Plano</Label>
+                  <Select
+                    value={formData.validade_meses?.toString() || 'indefinido'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        validade_meses: value === 'indefinido' ? null : parseInt(value)
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                      <SelectValue placeholder="Selecione a validade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VALIDADE_PLANOS.map((validade) => (
+                        <SelectItem key={validade.value} value={validade.value}>
+                          {validade.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Tempo de duração do plano. "Indefinido" = sem expiração.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Pagamento</Label>
+                  <Select
+                    value={formData.tipo_pagamento}
+                    onValueChange={(value: 'gratuito' | 'pix' | 'mercado_pago' | 'pix_manual') =>
+                      setFormData({ ...formData, tipo_pagamento: value })
+                    }
+                  >
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                      <SelectValue placeholder="Selecione o tipo de pagamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_PAGAMENTO.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{tipo.label}</span>
+                            <span className="text-xs text-muted-foreground">{tipo.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-xs text-amber-800 font-medium">
+                      <strong>Regra:</strong> Apenas 1 plano ativo por combinação (tipo de empresa + tipo de pagamento).
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -283,6 +421,9 @@ export function PlanosPage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest pl-8">Nome</TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Descrição</TableHead>
+                    <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Tipo de Empresa</TableHead>
+                    <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Tipo de Pagamento</TableHead>
+                    <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Validade</TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">Valor p/ Aluno</TableHead>
                     <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">Status</TableHead>
                     <TableHead className="text-right font-bold text-slate-400 uppercase text-[10px] tracking-widest pr-8">Ações</TableHead>
@@ -291,7 +432,7 @@ export function PlanosPage() {
                 <TableBody>
                   {filteredPlanos?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-48 text-center bg-slate-50/20">
+                      <TableCell colSpan={8} className="h-48 text-center bg-slate-50/20">
                         <div className="flex flex-col items-center justify-center space-y-3">
                           <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                             <Puzzle className="h-6 w-6" />
@@ -304,55 +445,88 @@ export function PlanosPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredPlanos?.map((plano: any) => (
-                      <TableRow key={plano.id} className="group hover:bg-slate-50/50 transition-colors">
-                        <TableCell className="pl-8 font-bold text-slate-900">{plano.nome}</TableCell>
-                        <TableCell className="text-sm text-slate-500 font-medium max-w-[300px] truncate">{plano.descricao_curta || 'Nenhuma descrição informada.'}</TableCell>
-                        <TableCell className="font-bold text-indigo-700">R$ {Number(plano.valor_por_aluno).toFixed(2)}</TableCell>
-                        <TableCell className="text-center">
-                          {plano.status ? (
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> ATIVA
+                    filteredPlanos?.map((plano: any) => {
+                      const tipoEmpresaConfig = TIPOS_EMPRESA.find(t => t.value === plano.tipo_empresa) || TIPOS_EMPRESA[0]
+                      const TipoIcon = tipoEmpresaConfig.icon
+
+                      return (
+                        <TableRow key={plano.id} className="group hover:bg-slate-50/50 transition-colors">
+                          <TableCell className="pl-8 font-bold text-slate-900">{plano.nome}</TableCell>
+                          <TableCell className="text-sm text-slate-500 font-medium max-w-[300px] truncate">{plano.descricao_curta || 'Nenhuma descrição informada.'}</TableCell>
+                          <TableCell>
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">
+                              <TipoIcon className="h-4 w-4" />
+                              {tipoEmpresaConfig.label}
                             </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-xs font-bold border border-slate-100">
-                              <XCircle className="h-3.5 w-3.5" /> INATIVA
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const pagamentoConfig = TIPOS_PAGAMENTO.find(t => t.value === plano.tipo_pagamento) || TIPOS_PAGAMENTO[0]
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-xs font-bold text-slate-700">{pagamentoConfig.label}</span>
+                                  <span className="text-[10px] text-slate-500">{pagamentoConfig.description}</span>
+                                </div>
+                              )
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            {plano.validade_meses ? (
+                              <Badge className="bg-amber-50 text-amber-700 border-amber-100 font-bold text-xs">
+                                {plano.validade_meses} {plano.validade_meses === 1 ? 'mês' : 'meses'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-bold text-xs">
+                                Indefinido
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-bold text-indigo-700">R$ {Number(plano.valor_por_aluno).toFixed(2)}</TableCell>
+                          <TableCell className="text-center">
+                            {plano.status ? (
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100">
+                                <CheckCircle2 className="h-3.5 w-3.5" /> ATIVA
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 text-slate-400 text-xs font-bold border border-slate-100">
+                                <XCircle className="h-3.5 w-3.5" /> INATIVA
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right pr-8">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  handleOpenModulos(plano.id)
+                                  setSelectedModuloIds(moduloIdsVinculados)
+                                }}
+                                className="h-9 w-9 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 border border-transparent hover:border-indigo-100"
+                              >
+                                <Puzzle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenModal(plano)}
+                                className="h-9 w-9 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 border border-transparent hover:border-indigo-100"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100"
+                                onClick={() => handleDelete(plano.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right pr-8">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                handleOpenModulos(plano.id)
-                                setSelectedModuloIds(moduloIdsVinculados)
-                              }}
-                              className="h-9 w-9 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 border border-transparent hover:border-indigo-100"
-                            >
-                              <Puzzle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenModal(plano)}
-                              className="h-9 w-9 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 border border-transparent hover:border-indigo-100"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100"
-                              onClick={() => handleDelete(plano.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                   )}
                 </TableBody>
               </Table>

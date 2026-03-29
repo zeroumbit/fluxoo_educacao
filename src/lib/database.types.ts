@@ -565,6 +565,9 @@ export type Plano = {
   descricao_curta: string | null
   valor_por_aluno: number
   status: boolean
+  tipo_empresa: 'escolas' | 'lojistas' | 'profissionais'
+  tipo_pagamento: 'gratuito' | 'pix' | 'mercado_pago' | 'pix_manual'
+  validade_meses: number | null
   created_at: string
   updated_at: string
 }

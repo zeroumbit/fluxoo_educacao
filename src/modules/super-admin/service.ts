@@ -53,6 +53,24 @@ export const superAdminService = {
   },
 
   async upsertPlano(plano: any) {
+    // Regra de negócio: Apenas 1 plano ativo por combinação (tipo_empresa + tipo_pagamento)
+    if (plano.status === true) {
+      const { data: planosConflitantes } = await (supabase.from('planos' as any) as any)
+        .select('id, nome')
+        .eq('tipo_empresa', plano.tipo_empresa)
+        .eq('tipo_pagamento', plano.tipo_pagamento)
+        .eq('status', true)
+        .neq('id', plano.id || '') // Exclui o próprio plano se for edição
+        
+      if (planosConflitantes && planosConflitantes.length > 0) {
+        throw new Error(
+          `Já existe um plano ativo para "${plano.tipo_empresa}" com pagamento "${plano.tipo_pagamento}". ` +
+          `Plano existente: ${planosConflitantes[0].nome}. ` +
+          `Desative-o antes de criar um novo.`
+        )
+      }
+    }
+
     const { data, error } = await (supabase.from('planos' as any) as any)
       .upsert({ ...plano, updated_at: new Date().toISOString() })
       .select().maybeSingle()

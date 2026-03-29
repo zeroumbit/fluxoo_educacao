@@ -9,12 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   User,
   ShoppingBag,
   Briefcase,
@@ -30,14 +27,23 @@ import {
   FileText,
   MapPin,
   CreditCard,
-  Upload
+  Calendar,
+  Target,
+  History,
+  Palette,
+  Eye,
+  EyeOff,
+  Check,
+  Upload,
+  Gift
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { DISPONIBILIDADE_TIPOS, AREAS_INTERESSE } from '@/modules/curriculos/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useViaCEP } from '@/hooks/use-viacep'
-import { mascaraCNPJ, mascaraTelefone, mascaraCEP, validarCNPJ } from '@/lib/validacoes'
-import { strongPasswordSchema } from '@/lib/password-validation'
+import { mascaraCNPJ, mascaraTelefone, mascaraCEP, validarCNPJ, mascaraCPF, validarCPF } from '@/lib/validacoes'
+import { strongPasswordSchema, getPasswordStrengthTips } from '@/lib/password-validation'
 
 // Categorias pré-definidas para Lojistas
 const CATEGORIAS_LOJISTA = [
@@ -51,7 +57,10 @@ const CATEGORIAS_LOJISTA = [
 const acessoSchema = z.object({
   email: z.string().email('E-mail inválido'),
   password: strongPasswordSchema,
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  termos: z.boolean().refine(val => val === true, {
+    message: 'Você deve aceitar os termos'
+  })
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -69,35 +78,32 @@ const profissionalSchema = z.object({
   // Step 4
   areas_interesse: z.array(z.string()).min(1, 'Selecione pelo menos uma área'),
   // Step 5
-  pretensao_salarial: z.string().optional(),
-  resumo_profissional: z.string().max(2000, 'Máximo 2000 caracteres'),
-  // Step 6
+  pretensao_salarial: z.string().optional().default(''),
+  resumo_profissional: z.string().max(2000, 'Máximo 2000 caracteres').optional().default(''),
+  // Step 6 - Opcional
   formacao: z.array(z.object({
     nivel: z.string(),
     instituicao: z.string(),
     ano_conclusao: z.string(),
     area: z.string()
-  })),
-  // Step 7
+  })).optional().default([]),
+  // Step 7 - Opcional
   experiencia: z.array(z.object({
     empresa: z.string(),
     cargo: z.string(),
     periodo: z.string(),
     atividades: z.string()
-  })),
-  // Step 8
-  habilidades: z.array(z.string()),
+  })).optional().default([]),
+  // Step 8 - Opcional
+  habilidades: z.array(z.string()).optional().default([]),
   certificacoes: z.array(z.object({
     nome: z.string(),
     instituicao: z.string(),
     ano: z.string()
-  })),
+  })).optional().default([]),
   // Step 9
-  busca_vaga: z.boolean(),
-  presta_servico: z.boolean(),
-  termos: z.literal(true, {
-    errorMap: () => ({ message: 'Você deve aceitar os termos' })
-  })
+  busca_vaga: z.boolean().default(true),
+  presta_servico: z.boolean().default(false),
 })
 
 // Schema para Lojista (com endereço e pagamento)
@@ -119,26 +125,52 @@ const lojistaSchema = z.object({
   email_contato: z.string().email('E-mail inválido'),
   telefone_contato: z.string().min(10, 'Telefone inválido'),
   descricao: z.string().optional(),
-  // Step 5 - Termos
-  termos: z.literal(true, {
-    errorMap: () => ({ message: 'Você deve aceitar os termos' })
-  }),
-  // Step 6 - Pagamento
-  metodo_pagamento: z.enum(['mercado_pago', 'pix_manual']).default('mercado_pago'),
+  // Step 6 - Pagamento (Gratuito por enquanto)
+  metodo_pagamento: z.enum(['gratuito']).default('gratuito'),
 })
 
-const registrationSchema = z.object({
+const baseSchema = z.object({
   acesso: acessoSchema,
-  tipo: z.enum(['profissional', 'lojista']),
-  profissional: profissionalSchema.optional(),
-  lojista: lojistaSchema.optional()
 })
+
+const registrationSchema = z.discriminatedUnion('tipo', [
+  baseSchema.extend({
+    tipo: z.literal('profissional'),
+    profissional: profissionalSchema,
+    lojista: z.any().optional()
+  }),
+  baseSchema.extend({
+    tipo: z.literal('lojista'),
+    lojista: lojistaSchema,
+    profissional: z.any().optional()
+  })
+])
 
 type RegistrationForm = z.infer<typeof registrationSchema>
 
+const stepsProfissional = [
+  { title: 'Acesso', icon: Lock },
+  { title: 'Dados Básicos', icon: User },
+  { title: 'Disponibilidade', icon: Calendar },
+  { title: 'Áreas de Interesse', icon: Target },
+  { title: 'Pretensão e Resumo', icon: FileText },
+  { title: 'Formação', icon: GraduationCap },
+  { title: 'Experiência', icon: History },
+  { title: 'Habilidades', icon: Palette },
+  { title: 'Finalização', icon: CheckCircle2 }
+]
+
+const stepsLojista = [
+  { title: 'Acesso', icon: Lock },
+  { title: 'Dados da Empresa', icon: Building2 },
+  { title: 'Endereço', icon: MapPin },
+  { title: 'Contato', icon: Phone },
+  { title: 'Pagamento', icon: CreditCard }
+]
+
 export function MarketplaceCadastroPage() {
   const navigate = useNavigate()
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState<number>(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [tipoAtivo, setTipoAtivo] = useState<'profissional' | 'lojista'>('profissional')
   const [showPassword, setShowPassword] = useState(false)
@@ -146,18 +178,25 @@ export function MarketplaceCadastroPage() {
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
+    shouldUnregister: false,
     defaultValues: {
       tipo: 'profissional',
-      acesso: { email: '', password: '', confirmPassword: '' },
+      acesso: { email: '', password: '', confirmPassword: '', termos: false },
       profissional: {
+        nome: '',
+        contato_email: '',
+        telefone: '',
+        cpf: '',
         disponibilidade_tipo: [],
         areas_interesse: [],
+        pretensao_salarial: '',
+        resumo_profissional: '',
         formacao: [],
         experiencia: [],
         habilidades: [],
         certificacoes: [],
         busca_vaga: true,
-        presta_servico: false
+        presta_servico: false,
       },
       lojista: {
         razao_social: '',
@@ -173,8 +212,7 @@ export function MarketplaceCadastroPage() {
         email_contato: '',
         telefone_contato: '',
         descricao: '',
-        termos: true,
-        metodo_pagamento: 'mercado_pago'
+        metodo_pagamento: 'gratuito'
       }
     }
   })
@@ -196,29 +234,7 @@ export function MarketplaceCadastroPage() {
 
   const { fetchAddressByCEP, estados, cities, fetchCitiesByUF, loading: buscandoCep, loadingCities } = useViaCEP()
 
-  const stepsProfissional = [
-    'Acesso',
-    'Dados Básicos',
-    'Disponibilidade',
-    'Áreas de Interesse',
-    'Pretensão e Resumo',
-    'Formação',
-    'Experiência',
-    'Habilidades',
-    'Finalização'
-  ]
-
-  const stepsLojista = [
-    'Acesso',
-    'Dados da Empresa',
-    'Endereço',
-    'Contato',
-    'Termos',
-    'Pagamento'
-  ]
-
-  const steps = tipoAtivo === 'profissional' ? stepsProfissional : stepsLojista
-
+  const stepsSet = tipoAtivo === 'profissional' ? stepsProfissional : stepsLojista
   const selectedEstado = form.watch('lojista.estado')
   const selectedCategoria = form.watch('lojista.categoria')
 
@@ -231,6 +247,10 @@ export function MarketplaceCadastroPage() {
   // Máscaras
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     form.setValue('lojista.cnpj', mascaraCNPJ(e.target.value), { shouldValidate: true })
+  }
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue('profissional.cpf', mascaraCPF(e.target.value), { shouldValidate: true })
   }
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,34 +277,49 @@ export function MarketplaceCadastroPage() {
     }
   }
 
-  const nextStep = async () => {
-    let fieldsToValidate: any[] = []
+  // Validação por step
+  const fieldsPerStep = [
+    ['acesso.email', 'acesso.password', 'acesso.confirmPassword'],
+    ...(tipoAtivo === 'profissional' ? [
+      ['profissional.nome', 'profissional.contato_email', 'profissional.telefone', 'profissional.cpf'],
+      ['profissional.disponibilidade_tipo'],
+      ['profissional.areas_interesse'],
+      [], // Resumo opcional
+      [], // Formação opcional
+      [], // Experiência opcional
+      [], // Habilidades opcional
+      []  // Finalização
+    ] : [
+      ['lojista.razao_social', 'lojista.cnpj', 'lojista.categoria'],
+      ['lojista.cep', 'lojista.logradouro', 'lojista.numero', 'lojista.bairro', 'lojista.cidade', 'lojista.estado'],
+      ['lojista.email_contato', 'lojista.telefone_contato'],
+      []  // Pagamento (gratuito)
+    ])
+  ]
 
-    if (currentStep === 1) {
-      fieldsToValidate = ['acesso.email', 'acesso.password', 'acesso.confirmPassword']
-    } else if (tipoAtivo === 'profissional') {
-      if (currentStep === 2) fieldsToValidate = ['profissional.nome', 'profissional.contato_email', 'profissional.telefone', 'profissional.cpf']
-      if (currentStep === 3) fieldsToValidate = ['profissional.disponibilidade_tipo']
-      if (currentStep === 4) fieldsToValidate = ['profissional.areas_interesse']
-      if (currentStep === 5) fieldsToValidate = ['profissional.resumo_profissional']
-      // Steps 6, 7, 8 são opcionais (formação, experiência, certificações)
-      if (currentStep === 9) fieldsToValidate = ['profissional.termos']
-    } else {
-      if (currentStep === 2) fieldsToValidate = ['lojista.razao_social', 'lojista.cnpj', 'lojista.categoria']
-      if (currentStep === 3) fieldsToValidate = ['lojista.cep', 'lojista.logradouro', 'lojista.numero', 'lojista.bairro', 'lojista.cidade', 'lojista.estado']
-      if (currentStep === 4) fieldsToValidate = ['lojista.email_contato', 'lojista.telefone_contato']
-      if (currentStep === 5) fieldsToValidate = ['lojista.termos']
-      if (currentStep === 6) fieldsToValidate = ['lojista.metodo_pagamento']
+  const nextStep = async () => {
+    const fieldsToValidate = fieldsPerStep[currentStep]
+    const isValid = await form.trigger(fieldsToValidate as any)
+
+    // Se for o último step, não avança, apenas submete
+    if (currentStep === stepsSet.length - 1) {
+      // Força validação de TODOS os campos obrigatórios do lojista/profissional
+      const allValid = await form.trigger()
+      if (!allValid) {
+        toast.error('Preencha todos os campos obrigatórios corretamente')
+        return
+      }
+      // Se válido, o form será submetido pelo botão
+      return
     }
 
-    const isValid = await form.trigger(fieldsToValidate)
     if (isValid) {
       setCurrentStep(prev => prev + 1)
     }
   }
 
   const prevStep = () => {
-    if (currentStep === 1) {
+    if (currentStep === 0) {
       navigate('/login')
     } else {
       setCurrentStep(prev => prev - 1)
@@ -312,7 +347,7 @@ export function MarketplaceCadastroPage() {
       const userId = authData.user.id
 
       // 2. Criar Perfil Específico
-      if (tipoAtivo === 'profissional') {
+      if (data.tipo === 'profissional') {
         const { error: profError } = await supabase.from('curriculos').insert({
           user_id: userId,
           busca_vaga: data.profissional?.busca_vaga,
@@ -335,7 +370,7 @@ export function MarketplaceCadastroPage() {
           observacoes: null
         } as any)
         if (profError) throw profError
-      } else {
+      } else if (data.tipo === 'lojista') {
         const { error: lojError } = await supabase.from('lojistas').insert({
           user_id: userId,
           razao_social: data.lojista?.razao_social,
@@ -346,159 +381,279 @@ export function MarketplaceCadastroPage() {
           categoria: data.lojista?.categoria,
           descricao: data.lojista?.descricao,
           status: 'ativo',
-          plano_id: 'free'
+          plano_id: 'free',
+          metodo_pagamento: 'gratuito'
         } as any)
         if (lojError) throw lojError
       }
 
       toast.success('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.')
-      navigate('/login')
-    } catch (error: any) {
-      console.error(error)
-      toast.error(error.message || 'Erro ao realizar cadastro')
+      
+      // Delay para navegação
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1500)
+    } catch (err: any) {
+      console.error('Erro no cadastro:', err)
+      
+      let message = err.message || 'Erro ao processar cadastro'
+      
+      if (message.includes('User already registered') || message.includes('already registered')) {
+        message = 'Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.'
+      } else if (message.includes('password is too short')) {
+        message = 'A senha deve ter pelo menos 8 caracteres.'
+      }
+
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  // Handler para quando o form não é válido
+  const handleInvalidSubmit = (errors: any) => {
+    console.error('=== ERROS DE VALIDAÇÃO ===')
+    console.error('Errors completos:', JSON.stringify(errors, null, 2))
+    
+    // Extrai erros aninhados (profissional, lojista, acesso)
+    let errorMessage = 'Preencha todos os campos obrigatórios'
+    
+    if (errors.profissional) {
+      console.error('Erros em profissional:', errors.profissional)
+      const profErrors = errors.profissional
+      const fieldNames = Object.keys(profErrors)
+      if (fieldNames.length > 0) {
+        const firstField = fieldNames[0]
+        console.error(`Campo com erro: ${firstField}`, profErrors[firstField])
+        errorMessage = profErrors[firstField]?.message || `Campo obrigatório: ${firstField}`
+      }
+    } else if (errors.lojista) {
+      console.error('Erros em lojista:', errors.lojista)
+      const lojErrors = errors.lojista
+      const fieldNames = Object.keys(lojErrors)
+      if (fieldNames.length > 0) {
+        const firstField = fieldNames[0]
+        console.error(`Campo com erro: ${firstField}`, lojErrors[firstField])
+        errorMessage = lojErrors[firstField]?.message || `Campo obrigatório: ${firstField}`
+      }
+    } else if (errors.acesso) {
+      console.error('Erros em acesso:', errors.acesso)
+      const acessoErrors = errors.acesso
+      const fieldNames = Object.keys(acessoErrors)
+      if (fieldNames.length > 0) {
+        const firstField = fieldNames[0]
+        console.error(`Campo com erro: ${firstField}`, acessoErrors[firstField])
+        errorMessage = acessoErrors[firstField]?.message || `Campo obrigatório: ${firstField}`
+      }
+    }
+    
+    console.error('=== FIM ERROS ===')
+    toast.error(errorMessage)
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-zinc-200 overflow-hidden">
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12">
+      <div className="w-full max-w-[900px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-zinc-100 flex flex-col md:flex-row">
 
-        {/* Header */}
-        <div className="bg-zinc-900 p-8 text-white relative overflow-hidden">
+        {/* Sidebar - Tema Preto/Zinc-900 */}
+        <div className="hidden md:flex md:w-1/3 bg-gradient-to-b from-zinc-900 to-zinc-800 p-8 flex-col justify-between text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h1 className="text-3xl font-bold mb-2">Seja um Parceiro Fluxoo</h1>
-            <p className="text-zinc-400">Venda seus produtos ou ofereça seus serviços para nossa comunidade escolar.</p>
+            <div className="h-12 w-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6">
+              <ShoppingBag className="h-7 w-7 text-white" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Seja Parceiro!</h2>
+            <p className="text-zinc-400 text-sm leading-relaxed">Venda produtos ou ofereça seus serviços na Fluxoo.</p>
           </div>
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <ShoppingBag size={120} />
-          </div>
-        </div>
 
-        {/* Steps Progress */}
-        <div className="px-8 pt-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {steps.map((_, i) => (
+          <div className="space-y-3 relative z-10 mt-8">
+            {stepsSet.map((step, i) => (
               <div
                 key={i}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  currentStep > i ? 'bg-indigo-600 w-8' :
-                  currentStep === i + 1 ? 'bg-indigo-400 w-12' : 'bg-zinc-200 w-4'
-                }`}
-              />
+                className={cn(
+                  "flex items-center gap-3 transition-opacity duration-300",
+                  i === currentStep ? "opacity-100" : "opacity-40"
+                )}
+              >
+                <div
+                  className={cn(
+                    "h-8 w-8 rounded-full border flex items-center justify-center text-xs font-bold transition-colors",
+                    i <= currentStep ? "bg-white text-zinc-900 border-white" : "border-white/30"
+                  )}
+                >
+                  {i < currentStep ? <Check className="h-4 w-4" /> : i + 1}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{step.title}</span>
+              </div>
             ))}
           </div>
-          <span className="text-sm font-medium text-zinc-500">
-            Passo {currentStep} de {steps.length}: <span className="text-zinc-900">{steps[currentStep-1]}</span>
-          </span>
+
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <ShoppingBag size={180} />
+          </div>
         </div>
 
-        <Tabs
-          value={tipoAtivo}
-          onValueChange={(v: any) => {
-            setTipoAtivo(v)
-            setCurrentStep(1)
-            form.setValue('tipo', v)
-          }}
-          className="mt-4"
-        >
-          <div className="px-8">
-            <TabsList className="grid w-full grid-cols-2 h-12">
-              <TabsTrigger value="profissional" className="gap-2">
-                <Briefcase size={18} /> Sou Profissional
-              </TabsTrigger>
-              <TabsTrigger value="lojista" className="gap-2">
-                <Building2 size={18} /> Sou Lojista
-              </TabsTrigger>
-            </TabsList>
+        {/* Content Area */}
+        <div className="flex-1 p-8 md:p-10">
+          {/* Mobile Header */}
+          <div className="md:hidden flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center">
+                <ShoppingBag className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="font-bold text-lg">Fluxoo Parceiro</h1>
+            </div>
+            <span className="text-xs font-semibold text-zinc-500 uppercase">
+              Passo {currentStep + 1} de {stepsSet.length}
+            </span>
           </div>
 
-          <ScrollArea className="h-[60vh] px-8 py-6">
-            <form id="registration-form" onSubmit={form.handleSubmit(handleFinalSubmit)}>
+          {/* Step Header */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-zinc-900 mb-1">{stepsSet[currentStep].title}</h3>
+            <p className="text-sm text-muted-foreground">Preencha as informações necessárias</p>
+          </div>
 
-              {/* Passo 1: Acesso (Comum) */}
-              {currentStep === 1 && (
+          <form 
+            onSubmit={form.handleSubmit(handleFinalSubmit, handleInvalidSubmit)} 
+            className="space-y-6"
+          >
+            <div className="min-h-[350px] flex flex-col justify-center animate-in fade-in slide-in-from-right-4 duration-500">
+
+              {/* STEP 1: Acesso + Escolha do Tipo */}
+              {currentStep === 0 && (
                 <div className="space-y-6">
-                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-bold mb-1">E-mail válido é obrigatório</p>
+                  {/* Tabs para escolha do tipo */}
+                  <Tabs
+                    value={tipoAtivo}
+                    onValueChange={(v: any) => {
+                      setTipoAtivo(v)
+                      form.setValue('tipo', v)
+                    }}
+                  >
+                    <TabsList className="grid w-full grid-cols-2 h-11 bg-zinc-100 p-1">
+                      <TabsTrigger value="profissional" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <Briefcase size={16} /> Profissional
+                      </TabsTrigger>
+                      <TabsTrigger value="lojista" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <Building2 size={16} /> Lojista
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  <div className="bg-zinc-50 border border-zinc-200 p-4 rounded-2xl flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-zinc-500 shrink-0 mt-0.5" />
+                    <div className="text-sm text-zinc-600">
+                      <p className="font-bold mb-1">E-mail de acesso</p>
                       <p>Usaremos este e-mail para acesso e comunicação. Você receberá um link de confirmação.</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2"><Mail size={16} /> E-mail de Acesso</Label>
-                      <Input 
-                        placeholder="seu@email.com" 
+                      <Label className="text-zinc-700">E-mail de Acesso *</Label>
+                      <Input
+                        placeholder="seu@email.com"
                         {...form.register('acesso.email')}
-                        className={form.formState.errors.acesso?.email ? 'border-red-500' : ''}
+                        className={cn("h-11 rounded-xl", form.formState.errors.acesso?.email ? 'border-red-500 bg-red-50/10' : 'border-zinc-200')}
                       />
                       {form.formState.errors.acesso?.email && (
-                        <p className="text-xs text-red-500 flex items-center gap-1">
-                          <AlertCircle size={12} /> {form.formState.errors.acesso.email.message}
+                        <p className="text-xs text-red-500 flex items-center gap-1 font-medium mt-1">
+                          {form.formState.errors.acesso.email.message}
                         </p>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Lock size={16} /> Senha</Label>
+                        <Label className="text-zinc-700">Senha *</Label>
                         <div className="relative">
-                          <Input 
-                            type={showPassword ? 'text' : 'password'} 
-                            placeholder="Mínimo 8 caracteres" 
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="8+ caracteres"
                             {...form.register('acesso.password')}
-                            className={form.formState.errors.acesso?.password ? 'border-red-500' : ''}
+                            className={cn("h-11 rounded-xl pr-10", form.formState.errors.acesso?.password ? 'border-red-500' : 'border-zinc-200')}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                           >
-                            {showPassword ? <Lock size={16} className="rotate-180" /> : <Lock size={16} />}
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
                         {form.formState.errors.acesso?.password && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle size={12} /> {form.formState.errors.acesso.password.message}
+                          <p className="text-xs text-red-500 font-medium mt-1">
+                            {form.formState.errors.acesso.password.message}
                           </p>
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Lock size={16} /> Confirmar Senha</Label>
+                        <Label className="text-zinc-700">Confirmar Senha *</Label>
                         <div className="relative">
-                          <Input 
-                            type={showConfirmPassword ? 'text' : 'password'} 
-                            placeholder="Repita a senha" 
+                          <Input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            placeholder="Repita a senha"
                             {...form.register('acesso.confirmPassword')}
-                            className={form.formState.errors.acesso?.confirmPassword ? 'border-red-500' : ''}
+                            className={cn("h-11 rounded-xl pr-10", form.formState.errors.acesso?.confirmPassword ? 'border-red-500' : 'border-zinc-200')}
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                           >
-                            {showConfirmPassword ? <Lock size={16} className="rotate-180" /> : <Lock size={16} />}
+                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
                         {form.formState.errors.acesso?.confirmPassword && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle size={12} /> {form.formState.errors.acesso.confirmPassword.message}
+                          <p className="text-xs text-red-500 font-medium mt-1">
+                            {form.formState.errors.acesso.confirmPassword.message}
                           </p>
                         )}
                       </div>
+                    </div>
+
+                    {/* Dicas de senha forte */}
+                    <div className="bg-zinc-50 border border-zinc-100 rounded-lg p-3 space-y-2">
+                      <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-wider">Dicas de Senha Forte:</p>
+                      <ul className="space-y-1">
+                        {getPasswordStrengthTips().slice(0, 3).map((tip, idx) => (
+                          <li key={idx} className="text-[10px] text-zinc-600 flex items-start gap-1.5">
+                            <Check className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Termos e Privacidade no Passo 1 */}
+                    <div className="space-y-4 pt-2">
+                      <div className="flex items-start space-x-2">
+                        <Checkbox
+                          id="termos-cadastro"
+                          checked={form.watch('acesso.termos')}
+                          onCheckedChange={(checked) => form.setValue('acesso.termos', checked === true)}
+                          className={form.formState.errors.acesso?.termos ? 'border-red-500' : ''}
+                        />
+                        <Label htmlFor="termos-cadastro" className="text-sm font-medium cursor-pointer leading-tight text-zinc-600">
+                          Li e concordo com os{' '}
+                          <a href="/termos-de-uso" target="_blank" className="text-indigo-600 hover:underline">Termos de Uso</a> e{' '}
+                          <a href="/politica-privacidade" target="_blank" className="text-indigo-600 hover:underline">Política de Privacidade</a>.
+                        </Label>
+                      </div>
+                      {form.formState.errors.acesso?.termos && (
+                        <p className="text-xs text-red-500 flex items-center gap-1 font-medium">
+                          <AlertCircle size={12} /> {form.formState.errors.acesso.termos.message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Profissional Steps */}
-              {tipoAtivo === 'profissional' && (
+              {tipoAtivo === 'profissional' && currentStep >= 1 && (
                 <>
                   {/* Passo 2: Dados Básicos */}
-                  {currentStep === 2 && (
+                  {currentStep === 1 && (
                     <div className="space-y-6">
                       <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
@@ -511,47 +666,48 @@ export function MarketplaceCadastroPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Nome Completo</Label>
-                          <Input 
-                            placeholder="Seu nome" 
+                          <Input
+                            placeholder="Seu nome"
                             {...form.register('profissional.nome')}
-                            className={form.formState.errors.profissional?.nome ? 'border-red-500' : ''}
+                            className={(form.formState.errors.profissional as any)?.nome ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.profissional?.nome && (
-                            <p className="text-xs text-red-500">{form.formState.errors.profissional.nome.message}</p>
+                          {(form.formState.errors.profissional as any)?.nome && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).nome.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>CPF</Label>
-                          <Input 
-                            placeholder="000.000.000-00" 
+                          <Input
+                            placeholder="000.000.000-00"
                             {...form.register('profissional.cpf')}
-                            className={form.formState.errors.profissional?.cpf ? 'border-red-500' : ''}
+                            onChange={handleCpfChange}
+                            className={(form.formState.errors.profissional as any)?.cpf ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.profissional?.cpf && (
-                            <p className="text-xs text-red-500">{form.formState.errors.profissional.cpf.message}</p>
+                          {(form.formState.errors.profissional as any)?.cpf && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).cpf.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Telefone / WhatsApp</Label>
-                          <Input 
-                            placeholder="(11) 99999-9999" 
+                          <Input
+                            placeholder="(11) 99999-9999"
                             {...form.register('profissional.telefone')}
                             onChange={handleTelefoneChange}
-                            className={form.formState.errors.profissional?.telefone ? 'border-red-500' : ''}
+                            className={(form.formState.errors.profissional as any)?.telefone ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.profissional?.telefone && (
-                            <p className="text-xs text-red-500">{form.formState.errors.profissional.telefone.message}</p>
+                          {(form.formState.errors.profissional as any)?.telefone && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).telefone.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>E-mail de Contato</Label>
-                          <Input 
-                            placeholder="email@contato.com" 
+                          <Input
+                            placeholder="email@contato.com"
                             {...form.register('profissional.contato_email')}
-                            className={form.formState.errors.profissional?.contato_email ? 'border-red-500' : ''}
+                            className={(form.formState.errors.profissional as any)?.contato_email ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.profissional?.contato_email && (
-                            <p className="text-xs text-red-500">{form.formState.errors.profissional.contato_email.message}</p>
+                          {(form.formState.errors.profissional as any)?.contato_email && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).contato_email.message}</p>
                           )}
                         </div>
                       </div>
@@ -559,7 +715,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 3: Disponibilidade */}
-                  {currentStep === 3 && (
+                  {currentStep === 2 && (
                     <div className="space-y-6">
                       <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
                         <GraduationCap className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
@@ -576,10 +732,10 @@ export function MarketplaceCadastroPage() {
                             <Checkbox
                               id={tipo.value}
                               checked={form.watch('profissional.disponibilidade_tipo')?.includes(tipo.value)}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={(checked: boolean) => {
                                 const current = form.getValues('profissional.disponibilidade_tipo') || []
                                 if (checked) form.setValue('profissional.disponibilidade_tipo', [...current, tipo.value])
-                                else form.setValue('profissional.disponibilidade_tipo', current.filter(v => v !== tipo.value))
+                                else form.setValue('profissional.disponibilidade_tipo', current.filter((v: string) => v !== tipo.value))
                               }}
                             />
                             <Label htmlFor={tipo.value} className="flex-1 cursor-pointer font-medium">{tipo.label}</Label>
@@ -590,7 +746,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 4: Áreas de Interesse */}
-                  {currentStep === 4 && (
+                  {currentStep === 3 && (
                     <div className="space-y-6">
                       <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
                         <Briefcase className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
@@ -607,10 +763,10 @@ export function MarketplaceCadastroPage() {
                             <Checkbox
                               id={area.value}
                               checked={form.watch('profissional.areas_interesse')?.includes(area.value)}
-                              onCheckedChange={(checked) => {
+                              onCheckedChange={(checked: boolean) => {
                                 const current = form.getValues('profissional.areas_interesse') || []
                                 if (checked) form.setValue('profissional.areas_interesse', [...current, area.value])
-                                else form.setValue('profissional.areas_interesse', current.filter(v => v !== area.value))
+                                else form.setValue('profissional.areas_interesse', current.filter((v: string) => v !== area.value))
                               }}
                             />
                             <Label htmlFor={area.value} className="text-xs cursor-pointer">{area.label}</Label>
@@ -621,7 +777,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 5: Pretensão e Resumo */}
-                  {currentStep === 5 && (
+                  {currentStep === 4 && (
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <Label>Pretensão Salarial (Opcional)</Label>
@@ -640,7 +796,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 6: Formação Acadêmica */}
-                  {currentStep === 6 && (
+                  {currentStep === 5 && (
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
                         <Label className="text-lg font-bold">Formação Acadêmica</Label>
@@ -671,7 +827,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 7: Experiência Profissional */}
-                  {currentStep === 7 && (
+                  {currentStep === 6 && (
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
                         <Label className="text-lg font-bold">Experiência Profissional</Label>
@@ -702,7 +858,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 8: Habilidades e Certificações */}
-                  {currentStep === 8 && (
+                  {currentStep === 7 && (
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <Label className="text-lg font-bold">Habilidades e Competências</Label>
@@ -747,7 +903,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 9: Finalização */}
-                  {currentStep === 9 && (
+                  {currentStep === 8 && (
                     <div className="space-y-8">
                       <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl space-y-6">
                         <h4 className="font-bold text-indigo-900 flex items-center gap-2">
@@ -780,59 +936,16 @@ export function MarketplaceCadastroPage() {
                           </div>
                         </div>
                       </div>
-
-                      <div className="space-y-4">
-                        <div className="p-4 border rounded-xl space-y-3">
-                          <div className="flex items-center gap-2">
-                            <FileText size={18} className="text-zinc-400" />
-                            <h4 className="font-bold text-zinc-700">Documentos Legais</h4>
-                          </div>
-                          <div className="flex flex-col gap-2 pl-10">
-                            <a 
-                              href="/termos-de-uso" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
-                            >
-                              <FileText size={14} /> Termos de Uso
-                            </a>
-                            <a 
-                              href="/politica-privacidade" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
-                            >
-                              <FileText size={14} /> Política de Privacidade
-                            </a>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-3 p-4 bg-zinc-50 rounded-xl">
-                          <Checkbox
-                            id="termos-prof"
-                            {...form.register('profissional.termos')}
-                            className={form.formState.errors.profissional?.termos ? 'border-red-500' : ''}
-                          />
-                          <Label htmlFor="termos-prof" className="text-sm font-medium cursor-pointer">
-                            Li e concordo com os termos de uso e política de privacidade.
-                          </Label>
-                        </div>
-                        {form.formState.errors.profissional?.termos && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle size={12} /> {form.formState.errors.profissional.termos.message}
-                          </p>
-                        )}
-                      </div>
                     </div>
                   )}
                 </>
               )}
 
               {/* Lojista Steps */}
-              {tipoAtivo === 'lojista' && (
+              {tipoAtivo === 'lojista' && currentStep >= 1 && (
                 <>
                   {/* Passo 2: Dados da Empresa */}
-                  {currentStep === 2 && (
+                  {currentStep === 1 && (
                     <div className="space-y-6">
                       <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
@@ -845,41 +958,41 @@ export function MarketplaceCadastroPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Razão Social</Label>
-                          <Input 
-                            placeholder="Nome da Empresa" 
+                          <Input
+                            placeholder="Nome da Empresa"
                             {...form.register('lojista.razao_social')}
-                            className={form.formState.errors.lojista?.razao_social ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.razao_social ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.razao_social && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.razao_social.message}</p>
+                          {(form.formState.errors.lojista as any)?.razao_social && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).razao_social.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>CNPJ</Label>
-                          <Input 
-                            placeholder="00.000.000/0001-00" 
+                          <Input
+                            placeholder="00.000.000/0001-00"
                             {...form.register('lojista.cnpj')}
                             onChange={handleCnpjChange}
-                            className={form.formState.errors.lojista?.cnpj ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.cnpj ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.cnpj && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cnpj.message}</p>
+                          {(form.formState.errors.lojista as any)?.cnpj && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cnpj.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Nome Fantasia</Label>
-                          <Input 
-                            placeholder="Como sua loja é conhecida" 
+                          <Input
+                            placeholder="Como sua loja é conhecida"
                             {...form.register('lojista.nome_fantasia')}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Categoria</Label>
-                          <Select 
+                          <Select
                             onValueChange={(v) => form.setValue('lojista.categoria', v)}
                             value={selectedCategoria}
                           >
-                            <SelectTrigger className={form.formState.errors.lojista?.categoria ? 'border-red-500' : ''}>
+                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.categoria ? 'border-red-500' : '')}>
                               <SelectValue placeholder="Selecione uma categoria" />
                             </SelectTrigger>
                             <SelectContent>
@@ -890,8 +1003,8 @@ export function MarketplaceCadastroPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {form.formState.errors.lojista?.categoria && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.categoria.message}</p>
+                          {(form.formState.errors.lojista as any)?.categoria && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).categoria.message}</p>
                           )}
                         </div>
                       </div>
@@ -899,7 +1012,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 3: Endereço */}
-                  {currentStep === 3 && (
+                  {currentStep === 2 && (
                     <div className="space-y-6">
                       <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
                         <MapPin className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
@@ -912,29 +1025,29 @@ export function MarketplaceCadastroPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>CEP</Label>
-                          <Input 
-                            placeholder="00000-000" 
+                          <Input
+                            placeholder="00000-000"
                             {...form.register('lojista.cep')}
                             onChange={handleCepChange}
                             disabled={buscandoCep}
-                            className={form.formState.errors.lojista?.cep ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.cep ? 'border-red-500' : ''}
                           />
                           {buscandoCep && (
                             <p className="text-xs text-zinc-500 flex items-center gap-1">
                               <Loader2 size={12} className="animate-spin" /> Buscando endereço...
                             </p>
                           )}
-                          {form.formState.errors.lojista?.cep && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cep.message}</p>
+                          {(form.formState.errors.lojista as any)?.cep && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cep.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Estado (UF)</Label>
-                          <Select 
+                          <Select
                             onValueChange={(v) => form.setValue('lojista.estado', v)}
                             value={form.watch('lojista.estado')}
                           >
-                            <SelectTrigger className={form.formState.errors.lojista?.estado ? 'border-red-500' : ''}>
+                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.estado ? 'border-red-500' : '')}>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent>
@@ -945,69 +1058,71 @@ export function MarketplaceCadastroPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {form.formState.errors.lojista?.estado && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.estado.message}</p>
+                          {(form.formState.errors.lojista as any)?.estado && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).estado.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Cidade</Label>
-                          <Select 
-                            onValueChange={(v) => form.setValue('lojista.cidade', v)}
+                          <Select
+                            onValueChange={(v) => {
+                              form.setValue('lojista.cidade', v, { shouldValidate: true })
+                            }}
                             value={form.watch('lojista.cidade')}
                             disabled={loadingCities || !form.watch('lojista.estado')}
                           >
-                            <SelectTrigger className={form.formState.errors.lojista?.cidade ? 'border-red-500' : ''}>
-                              <SelectValue placeholder={loadingCities ? 'Carregando...' : 'Selecione'} />
+                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.cidade ? 'border-red-500' : '')}>
+                              <SelectValue placeholder={loadingCities ? "Carregando cidades..." : "Selecione a cidade"} />
                             </SelectTrigger>
                             <SelectContent>
                               {cities.map((cid: any) => (
-                                <SelectItem key={cid.nome} value={cid.nome}>
-                                  {cid.nome}
+                                <SelectItem key={cid.value} value={cid.value}>
+                                  {cid.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {form.formState.errors.lojista?.cidade && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cidade.message}</p>
+                          {(form.formState.errors.lojista as any)?.cidade && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cidade.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Bairro</Label>
-                          <Input 
-                            placeholder="Bairro" 
+                          <Input
+                            placeholder="Bairro"
                             {...form.register('lojista.bairro')}
-                            className={form.formState.errors.lojista?.bairro ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.bairro ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.bairro && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.bairro.message}</p>
+                          {(form.formState.errors.lojista as any)?.bairro && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).bairro.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Logradouro</Label>
-                          <Input 
-                            placeholder="Rua, Avenida, etc." 
+                          <Input
+                            placeholder="Rua, Avenida, etc."
                             {...form.register('lojista.logradouro')}
-                            className={form.formState.errors.lojista?.logradouro ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.logradouro ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.logradouro && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.logradouro.message}</p>
+                          {(form.formState.errors.lojista as any)?.logradouro && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).logradouro.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label>Número</Label>
-                          <Input 
-                            placeholder="123" 
+                          <Input
+                            placeholder="123"
                             {...form.register('lojista.numero')}
-                            className={form.formState.errors.lojista?.numero ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.numero ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.numero && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.numero.message}</p>
+                          {(form.formState.errors.lojista as any)?.numero && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).numero.message}</p>
                           )}
                         </div>
                         <div className="space-y-2 md:col-span-2">
                           <Label>Complemento (Opcional)</Label>
-                          <Input 
-                            placeholder="Sala, conjunto, bloco, etc." 
+                          <Input
+                            placeholder="Sala, conjunto, bloco, etc."
                             {...form.register('lojista.complemento')}
                           />
                         </div>
@@ -1016,7 +1131,7 @@ export function MarketplaceCadastroPage() {
                   )}
 
                   {/* Passo 4: Contato */}
-                  {currentStep === 4 && (
+                  {currentStep === 3 && (
                     <div className="space-y-6">
                       <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
@@ -1029,172 +1144,69 @@ export function MarketplaceCadastroPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2"><Mail size={16} /> E-mail Comercial</Label>
-                          <Input 
-                            placeholder="vendas@empresa.com" 
+                          <Input
+                            placeholder="vendas@empresa.com"
                             {...form.register('lojista.email_contato')}
-                            className={form.formState.errors.lojista?.email_contato ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.email_contato ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.email_contato && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.email_contato.message}</p>
+                          {(form.formState.errors.lojista as any)?.email_contato && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).email_contato.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2"><Phone size={16} /> Telefone / WhatsApp</Label>
-                          <Input 
-                            placeholder="(11) 99999-9999" 
+                          <Input
+                            placeholder="(11) 99999-9999"
                             {...form.register('lojista.telefone_contato')}
                             onChange={handleTelefoneChange}
-                            className={form.formState.errors.lojista?.telefone_contato ? 'border-red-500' : ''}
+                            className={(form.formState.errors.lojista as any)?.telefone_contato ? 'border-red-500' : ''}
                           />
-                          {form.formState.errors.lojista?.telefone_contato && (
-                            <p className="text-xs text-red-500">{form.formState.errors.lojista.telefone_contato.message}</p>
+                          {(form.formState.errors.lojista as any)?.telefone_contato && (
+                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).telefone_contato.message}</p>
                           )}
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label>Descrição da Loja (Opcional)</Label>
-                        <Textarea 
-                          placeholder="Fale um pouco sobre seus produtos..." 
-                          className="h-32" 
+                        <Textarea
+                          placeholder="Fale um pouco sobre seus produtos..."
+                          className="h-32"
                           {...form.register('lojista.descricao')}
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* Passo 5: Termos */}
-                  {currentStep === 5 && (
+
+                  {/* Passo 5: Pagamento (Gratuito) */}
+                  {currentStep === 4 && (
                     <div className="space-y-8">
-                      <div className="p-8 border-2 border-dashed rounded-2xl text-center space-y-4">
-                        <CheckCircle2 size={48} className="mx-auto text-indigo-300" />
-                        <h3 className="text-xl font-bold">Quase lá!</h3>
-                        <p className="text-sm text-zinc-500">Leia e aceite os termos para finalizar seu cadastro.</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="p-4 border rounded-xl space-y-3">
-                          <div className="flex items-center gap-2">
-                            <FileText size={18} className="text-zinc-400" />
-                            <h4 className="font-bold text-zinc-700">Documentos Legais</h4>
-                          </div>
-                          <div className="flex flex-col gap-2 pl-10">
-                            <a 
-                              href="/termos-de-uso" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
-                            >
-                              <FileText size={14} /> Termos de Uso
-                            </a>
-                            <a 
-                              href="/politica-privacidade" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
-                            >
-                              <FileText size={14} /> Política de Privacidade
-                            </a>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-3 p-4 bg-zinc-50 rounded-xl">
-                          <Checkbox
-                            id="termos-loj"
-                            {...form.register('lojista.termos')}
-                            className={form.formState.errors.lojista?.termos ? 'border-red-500' : ''}
-                          />
-                          <Label htmlFor="termos-loj" className="text-sm font-medium cursor-pointer">
-                            Li e concordo com os termos de uso e política de privacidade para lojistas.
-                          </Label>
-                        </div>
-                        {form.formState.errors.lojista?.termos && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle size={12} /> {form.formState.errors.lojista.termos.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Passo 6: Pagamento */}
-                  {currentStep === 6 && (
-                    <div className="space-y-8">
-                      <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-2xl text-white space-y-4">
+                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-8 rounded-2xl text-white space-y-4">
                         <div className="flex items-center gap-3">
-                          <CreditCard size={32} className="text-indigo-200" />
-                          <h3 className="text-2xl font-bold">Plano Free</h3>
+                          <Gift size={32} className="text-emerald-200" />
+                          <h3 className="text-2xl font-bold">Plano Gratuito</h3>
                         </div>
-                        <p className="text-indigo-100">
-                          Você está se cadastrando no plano <strong className="text-white">Free</strong> por tempo limitado.
+                        <p className="text-emerald-100">
+                          Por tempo limitado, você está se cadastrando no plano <strong className="text-white">Free</strong> sem custos.
                         </p>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-2">
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <CheckCircle2 size={16} className="text-white" />
                             <span className="text-sm">Cadastro de produtos ilimitado</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <CheckCircle2 size={16} className="text-white" />
                             <span className="text-sm">Visibilidade no marketplace</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <CheckCircle2 size={16} className="text-white" />
                             <span className="text-sm">Painel de vendas básico</span>
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <Label className="text-lg font-bold">Forma de Pagamento</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div 
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                              form.watch('lojista.metodo_pagamento') === 'mercado_pago' 
-                                ? 'border-indigo-600 bg-indigo-50' 
-                                : 'border-zinc-200 hover:border-zinc-300'
-                            }`}
-                            onClick={() => form.setValue('lojista.metodo_pagamento', 'mercado_pago')}
-                          >
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                                <CreditCard className="h-5 w-5 text-white" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-zinc-900">Mercado Pago</p>
-                                <p className="text-xs text-zinc-500">Cartão de crédito e boleto</p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-zinc-600">
-                              Pagamento automático mensal. Você receberá um link de pagamento por e-mail.
-                            </p>
-                          </div>
-
-                          <div 
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                              form.watch('lojista.metodo_pagamento') === 'pix_manual' 
-                                ? 'border-indigo-600 bg-indigo-50' 
-                                : 'border-zinc-200 hover:border-zinc-300'
-                            }`}
-                            onClick={() => form.setValue('lojista.metodo_pagamento', 'pix_manual')}
-                          >
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="h-10 w-10 rounded-lg bg-emerald-600 flex items-center justify-center">
-                                <Upload className="h-5 w-5 text-white" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-zinc-900">PIX Manual</p>
-                                <p className="text-xs text-zinc-500">Envio de comprovante</p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-zinc-600">
-                              Você receberá a chave PIX e deverá enviar o comprovante de pagamento mensalmente.
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={16} className="text-white" />
+                            <span className="text-sm">Sem taxa de comissão</span>
                           </div>
                         </div>
-                        {form.formState.errors.lojista?.metodo_pagamento && (
-                          <p className="text-xs text-red-500 flex items-center gap-1">
-                            <AlertCircle size={12} /> {form.formState.errors.lojista.metodo_pagamento.message}
-                          </p>
-                        )}
                       </div>
 
                       <div className="p-6 border-2 border-dashed rounded-2xl text-center space-y-3">
@@ -1205,54 +1217,77 @@ export function MarketplaceCadastroPage() {
                         </p>
                         <ul className="text-sm text-zinc-600 space-y-1">
                           <li>• Cadastrar seus produtos</li>
-                          <li>• Configurar formas de pagamento</li>
-                          <li>• Gerenciar pedidos e entregas</li>
+                          <li>• Configurar sua loja</li>
+                          <li>• Gerenciar pedidos e vendas</li>
                         </ul>
                       </div>
                     </div>
                   )}
                 </>
               )}
+            </div>
 
-            </form>
-          </ScrollArea>
-
-          {/* Footer Navigation */}
-          <div className="p-8 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              className="px-6"
-              disabled={isSubmitting}
-            >
-              <ChevronLeft size={20} className="mr-1" />
-              {currentStep === 1 ? 'Cancelar' : 'Anterior'}
-            </Button>
-
-            {currentStep < steps.length ? (
+            {/* Navigation Footer */}
+            <div className="pt-6 border-t border-zinc-100 flex items-center justify-between gap-4">
               <Button
-                onClick={nextStep}
-                className="bg-zinc-900 hover:bg-zinc-800 text-white px-8"
-                disabled={isSubmitting}
+                type="button"
+                variant="ghost"
+                onClick={prevStep}
+                disabled={currentStep === 0}
+                className="text-zinc-500 hover:bg-zinc-100"
               >
-                Próximo <ChevronRight size={20} className="ml-1" />
+                {currentStep === 0 ? 'Cancelar' : 'Anterior'}
               </Button>
-            ) : (
-              <Button
-                type="submit"
-                form="registration-form"
-                disabled={isSubmitting}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 shadow-lg shadow-indigo-100"
-              >
-                {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando Conta...</>
-                ) : (
-                  <><CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Cadastro</>
-                )}
-              </Button>
-            )}
+
+              {currentStep < stepsSet.length - 1 ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl px-8"
+                >
+                  Continuar
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    // Valida todos os campos antes de submeter
+                    const allValid = await form.trigger()
+                    if (!allValid) {
+                      toast.error('Preencha todos os campos obrigatórios corretamente')
+                      return
+                    }
+                    // Submete o form manualmente
+                    form.handleSubmit(handleFinalSubmit, handleInvalidSubmit)()
+                  }}
+                  disabled={isSubmitting}
+                  className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl px-10 shadow-lg"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando Conta...</>
+                  ) : (
+                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Cadastro</>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* Links */}
+            <div className="pt-4 flex items-center justify-center gap-6 text-xs">
+              <a href="/login" className="text-muted-foreground hover:text-zinc-900 transition-colors">
+                Já tenho conta
+              </a>
+              <span className="text-zinc-200">•</span>
+              <a href="/portal/login" className="text-muted-foreground hover:text-zinc-900 transition-colors">
+                Portal do aluno
+              </a>
+            </div>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">Powered by Fluxoo Marketplace &copy; 2026</p>
           </div>
-        </Tabs>
+        </div>
       </div>
     </div>
   )
