@@ -182,7 +182,7 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-32">
       {!hideHeader && (
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-3">

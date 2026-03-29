@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { MODELOS_SISTEMA_PADRAO } from './constants'
 
 export type CategoriaAutorizacao = 
   | 'matricula' | 'saude' | 'imagem' | 'conduta' | 'tecnologia' 
@@ -38,7 +39,7 @@ export const autorizacoesService = {
   // MODELOS (Admin)
   // ==========================================
   async buscarModelos(tenantId: string) {
-    // Busca modelos globais (tenant_id IS NULL) + modelos da escola
+    // Busca modelos da escola no banco
     const { data, error } = await (supabase.from('autorizacoes_modelos' as any) as any)
       .select('*')
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
@@ -47,7 +48,41 @@ export const autorizacoesService = {
       .order('ordem')
 
     if (error) throw error
-    return (data as any[]) || []
+    const dbModelos = (data as any[]) || []
+    
+    // Mescla com padrões do sistema (Code-First)
+    return this.mesclarComPadroesSistema(dbModelos)
+  },
+
+  /**
+   * Helper para mesclar modelos do banco com padrões definidos no código (constants.ts)
+   */
+  mesclarComPadroesSistema(dbModelos: any[], incluirInativos = false) {
+    // Filtra modelos do sistema que já existem no banco (pelo título e categoria)
+    const virtuais = MODELOS_SISTEMA_PADRAO.filter(padrao => {
+      return !dbModelos.some(db => db.categoria === padrao.categoria && db.titulo === padrao.titulo)
+    }).map(padrao => ({
+      ...padrao,
+      id: `virtual-${padrao.categoria}-${padrao.ordem}`,
+      tenant_id: null,
+      ativa: true, // No portal/serviço as sugestões são visíveis por padrão se não sobrescritas
+      isDefault: true
+    }))
+
+    // Se estivermos no admin, talvez queiramos manter a lógica de 'ativa: false' para virtuais
+    // Mas no portal, se elas são "Padrão do Sistema", elas devem aparecer.
+    
+    const todos = [...dbModelos, ...virtuais]
+    
+    // Filtra os inativos se solicitado (no Admin queremos todos, no Portal só ativos)
+    if (!incluirInativos) {
+      return todos.filter(m => m.ativa)
+    }
+
+    return todos.sort((a, b) => {
+      if (a.categoria !== b.categoria) return a.categoria.localeCompare(b.categoria)
+      return (a.ordem || 0) - (b.ordem || 0)
+    })
   },
 
   // ==========================================
@@ -70,9 +105,8 @@ export const autorizacoesService = {
   async buscarResumoAutorizacoesPorAluno(alunoId: string, tenantId: string) {
     const [modelosRes, respostasRes] = await Promise.all([
       (supabase.from('autorizacoes_modelos' as any) as any)
-        .select('id, titulo, categoria, descricao_curta, obrigatoria, ordem')
+        .select('id, titulo, categoria, descricao_curta, obrigatoria, ordem, ativa, tenant_id')
         .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
-        .eq('ativa', true)
         .order('categoria').order('ordem'),
       (supabase.from('autorizacoes_respostas' as any) as any)
         .select('modelo_id, aceita, data_resposta, responsavel:responsaveis(nome)')
@@ -81,7 +115,9 @@ export const autorizacoesService = {
 
     if (modelosRes.error) throw modelosRes.error
 
-    const modelos = (modelosRes.data as any[]) || []
+    const dbModelos = (modelosRes.data as any[]) || []
+    const modelos = this.mesclarComPadroesSistema(dbModelos, true) // Inclui inativos para o admin ver o que falta
+    
     const respostas = (respostasRes.data as any[]) || []
 
     // Agrupa models com suas respostas
@@ -104,7 +140,6 @@ export const autorizacoesService = {
       (supabase.from('autorizacoes_modelos' as any) as any)
         .select('*')
         .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
-        .eq('ativa', true)
         .order('categoria').order('ordem'),
       (supabase.from('autorizacoes_respostas' as any) as any)
         .select('*')
@@ -114,7 +149,9 @@ export const autorizacoesService = {
 
     if (modelosRes.error) throw modelosRes.error
 
-    const modelos = (modelosRes.data as any[]) || []
+    const dbModelos = (modelosRes.data as any[]) || []
+    const modelos = this.mesclarComPadroesSistema(dbModelos) // Padrão: só os ativos
+    
     const respostas = (respostasRes.data as any[]) || []
 
     return modelos.map((modelo: any) => {
@@ -137,10 +174,32 @@ export const autorizacoesService = {
     aceita: boolean
     texto_lido: boolean
   }) {
+    let modeloIdReal = dados.modelo_id
+
+    // Se for um modelo VIRTUAL, precisamos criar no banco antes de responder
+    if (dados.modelo_id.startsWith('virtual-')) {
+      const padrao = MODELOS_SISTEMA_PADRAO.find(p => 
+        `virtual-${p.categoria}-${p.ordem}` === dados.modelo_id
+      )
+      
+      if (padrao) {
+        const novoModelo = await this.criarModeloEscola({
+          tenant_id: dados.tenant_id,
+          categoria: padrao.categoria,
+          titulo: padrao.titulo,
+          descricao_curta: padrao.descricao_curta,
+          texto_completo: padrao.texto_completo,
+          obrigatoria: padrao.obrigatoria,
+          ordem: padrao.ordem
+        })
+        modeloIdReal = novoModelo.id
+      }
+    }
+
     // Verifica se já existe
     const { data: existente } = await (supabase.from('autorizacoes_respostas' as any) as any)
       .select('id')
-      .eq('modelo_id', dados.modelo_id)
+      .eq('modelo_id', modeloIdReal)
       .eq('aluno_id', dados.aluno_id)
       .eq('responsavel_id', dados.responsavel_id)
       .maybeSingle()
@@ -174,7 +233,7 @@ export const autorizacoesService = {
     // Log de auditoria
     await autorizacoesService.registrarAuditoria({
       tenant_id: dados.tenant_id,
-      modelo_id: dados.modelo_id,
+      modelo_id: modeloIdReal,
       aluno_id: dados.aluno_id,
       responsavel_id: dados.responsavel_id,
       acao: dados.aceita ? 'autorizou' : 'revogou',
@@ -209,7 +268,10 @@ export const autorizacoesService = {
       .order('ordem')
 
     if (error) throw error
-    return (data as any[]) || []
+    const dbModelos = (data as any[]) || []
+    
+    // Mescla com padrões do sistema para o admin poder ativar
+    return this.mesclarComPadroesSistema(dbModelos, true)
   },
 
   async criarModeloEscola(dados: {

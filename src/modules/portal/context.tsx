@@ -56,6 +56,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Se não há responsável logado (sessão expirou ou limpou), garante que o store está limpo
     if (!loadingResp && !responsavel) {
+      console.log('PortalContext: Nenhum responsável encontrado, limpando store.');
       clearStore()
       return
     }
@@ -67,44 +68,51 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       const alunoNoCacheInvalido = alunoSelecionado && !idsVinculos.includes(alunoSelecionado.id)
       
       if (!alunoSelecionado || alunoNoCacheInvalido) {
+        console.log('PortalContext: Aluno cache inválido ou inexistente. Selecionando primeiro vínculo.');
         carregarDadosCompletos(vinculos[0])
       } else if (!alunoSelecionado.turma) {
         // Se já está selecionado mas faltam dados (turma), reidrata
         const v = vinculos.find(v => (v.aluno_id || v.aluno?.id) === alunoSelecionado.id)
-        if (v) carregarDadosCompletos(v)
+        if (v) {
+          console.log('PortalContext: Reidratando dados do aluno:', v.aluno?.nome_completo);
+          carregarDadosCompletos(v)
+        }
       }
     }
 
     async function carregarDadosCompletos(vinculo: any) {
-      if (!vinculo?.aluno) return
+      if (!vinculo?.aluno || !vinculo?.aluno?.id) {
+        console.warn('PortalContext: Vínculo ou aluno inválido fornecido para carga completa.');
+        return;
+      }
 
+      console.log('PortalContext: Carregando dados completos para:', vinculo.aluno.nome_completo);
+      
       try {
-        // Tentar pegar matrícula ativa COM TURMA_VINCULO
-        const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-           .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
-           .eq('aluno_id', vinculo.aluno.id)
-           .eq('status', 'ativa')
-           .maybeSingle()
+        // Buscar matrícula e turmas (fallback 1) em paralelo
+        const [resMatricula, resTurmaFallback] = await Promise.all([
+          (supabase.from('matriculas' as any) as any)
+            .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
+            .eq('aluno_id', vinculo.aluno.id)
+            .eq('status', 'ativa')
+            .maybeSingle(),
+          (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .contains('alunos_ids', [vinculo.aluno.id])
+            .maybeSingle()
+        ])
 
-        let turma = null
+        const matricula = resMatricula.data
+        let turma = resTurmaFallback.data
 
-        // PRIORIDADE 1: Buscar turma pelo turma_id da matrícula (migration 046)
+        // Se encontrou matricula com turma_id, e não temos turma ainda (ou queremos a prioritária)
         if (matricula?.turma_id) {
           const { data: turmaData } = await (supabase.from('turmas' as any) as any)
             .select('id, nome, turno, valor_mensalidade')
             .eq('id', matricula.turma_id)
             .maybeSingle()
-          turma = turmaData
-        }
-
-        // PRIORIDADE 2: Fallback - buscar turma que contém o aluno no alunos_ids
-        if (!turma) {
-          const { data: turmaFallback } = await (supabase.from('turmas' as any) as any)
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .contains('alunos_ids', [vinculo.aluno.id])
-            .maybeSingle()
-          turma = turmaFallback
+          if (turmaData) turma = turmaData
         }
 
         // PRIORIDADE 3: Fallback final - buscar turma por nome/turno
@@ -130,17 +138,19 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           } : null),
           valor_matricula: matricula?.valor_matricula || null
         }
+        
+        console.log('PortalContext: Dados carregados com sucesso para:', alunoCompleto.nome_completo);
         setAlunoSelecionado(alunoCompleto)
       } catch (err) {
-        console.error('Erro ao carregar dados do aluno:', err)
-        // Em caso de erro, pelo menos define o básico
+        console.error('PortalContext: Erro crítico ao carregar dados do aluno:', err)
         setAlunoSelecionado(vinculo.aluno)
       }
     }
-  }, [vinculos, responsavel, loadingResp, alunoSelecionado?.id, setAlunoSelecionado, clearStore])
+  }, [vinculos, responsavel, loadingResp, setAlunoSelecionado, clearStore])
 
   const selecionarAluno = async (vinculo: any) => {
     if (vinculo.aluno) {
+      console.log('PortalContext: Usuário selecionou manualmente aluno:', vinculo.aluno.nome_completo);
       // Optimistic Update
       setAlunoSelecionado({
         ...vinculo.aluno,
@@ -149,34 +159,30 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       })
 
       try {
-        const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-           .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
-           .eq('aluno_id', vinculo.aluno.id)
-           .eq('status', 'ativa')
-           .maybeSingle()
+        const [resMatricula, resTurmaFallback] = await Promise.all([
+          (supabase.from('matriculas' as any) as any)
+            .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
+            .eq('aluno_id', vinculo.aluno.id)
+            .eq('status', 'ativa')
+            .maybeSingle(),
+          (supabase.from('turmas' as any) as any)
+            .select('id, nome, turno, valor_mensalidade')
+            .eq('tenant_id', vinculo.aluno.tenant_id)
+            .contains('alunos_ids', [vinculo.aluno.id])
+            .maybeSingle()
+        ])
 
-        let turma = null
+        const matricula = resMatricula.data
+        let turma = resTurmaFallback.data
 
-        // PRIORIDADE 1: Buscar turma pelo turma_id da matrícula (migration 046)
         if (matricula?.turma_id) {
           const { data: turmaData } = await (supabase.from('turmas' as any) as any)
             .select('id, nome, turno, valor_mensalidade')
             .eq('id', matricula.turma_id)
             .maybeSingle()
-          turma = turmaData
+          if (turmaData) turma = turmaData
         }
 
-        // PRIORIDADE 2: Fallback - buscar turma que contém o aluno no alunos_ids
-        if (!turma) {
-          const { data: turmaFallback } = await (supabase.from('turmas' as any) as any)
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .contains('alunos_ids', [vinculo.aluno.id])
-            .maybeSingle()
-          turma = turmaFallback
-        }
-
-        // PRIORIDADE 3: Fallback final - buscar turma por nome/turno
         if (!turma && matricula) {
           const { data: turmaNome } = await (supabase.from('turmas' as any) as any)
             .select('id, nome, turno, valor_mensalidade')
@@ -202,24 +208,25 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
         setAlunoSelecionado(alunoCompleto)
       } catch (err) {
-        console.error('Erro ao selecionar aluno:', err)
+        console.error('PortalContext: Erro ao selecionar aluno:', err)
       }
     }
   }
 
   const isMultiAluno = (vinculos?.length || 0) > 1
   
-  // Loading estado: verdadeiro se estamos carregando o básico ou se temos vínculos mas ainda não selecionamos nada
-  const isInitializing = !!(vinculos && vinculos.length > 0 && !alunoSelecionado)
+  // Loading estado: verdadeiro se estamos carregando o básico ou se temos vínculos mas ainda não definimos o aluno selecionado no store
+  const isInitializing = !!(vinculos && vinculos.length > 0 && Array.isArray(vinculos) && !alunoSelecionado)
   const contextLoading = !!(loadingResp || loadingVinculos || isInitializing)
 
   const queryClient = useQueryClient()
   const refreshData = async () => {
+    console.log('PortalContext: Invalidando caches (Refresh Data)...');
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] }),
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] }),
       queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo'] }),
-      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
     ])
   }
 

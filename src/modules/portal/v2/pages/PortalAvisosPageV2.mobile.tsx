@@ -25,15 +25,15 @@ function avisoEstaAtivo(aviso: { data_fim?: string | null }): boolean {
 
 // --- SKELETON LOADING (Padrão iOS/Android) ---
 const AvisosSkeleton = () => (
-  <div className="space-y-4 animate-pulse p-4 pt-[env(safe-area-inset-top,16px)]">
+  <div className="space-y-4 animate-pulse p-4 pt-[env(safe-area-inset-top,24px)]">
     {/* Header Skeleton */}
-    <div className="h-8 w-32 bg-slate-100 rounded-lg mb-4" />
+    <div className="h-8 w-32 bg-slate-200/60 rounded-lg mb-4" />
     {/* Banner Skeleton */}
-    <div className="h-32 bg-slate-900 rounded-[28px]" />
+    <div className="h-32 bg-slate-900/40 rounded-[28px]" />
     {/* Cards Skeleton */}
     <div className="space-y-3">
       {[1, 2, 3].map(i => (
-        <div key={i} className="h-32 bg-white border border-slate-100 rounded-[24px]" />
+        <div key={i} className="h-32 bg-slate-50 border border-slate-100 rounded-[24px]" />
       ))}
     </div>
   </div>
@@ -200,7 +200,7 @@ export function PortalAvisosPageV2Mobile() {
   const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-safe">
+    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,20px)] pb-32 mt-4">
       
       {/* 1. Header - Padrão iOS Large Title / Material Top App Bar */}
       <header className="flex items-center gap-4 pt-4 pb-2">

@@ -11,11 +11,11 @@ export function PortalLayoutV2Mobile() {
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 antialiased relative font-sans">
       {/* 
         Main content area
-        - pb-24: espaço para bottom navigation (60px + safe area)
+        - pb-32: Amplo espaço na parte inferior para garantir que o conteúdo nunca fique atrás do BottomNavV2 (~68px)
         - max-w-md: largura máxima para simular viewport mobile em tablets/desktop
         - overflow-x-hidden: previne scroll horizontal indesejado
       */}
-      <main className="flex-1 w-full max-w-md mx-auto pb-[env(safe-area-inset-bottom,96px)] overflow-x-hidden">
+      <main className="flex-1 w-full max-w-md mx-auto pb-[env(safe-area-inset-bottom,120px)] overflow-x-hidden overflow-y-auto">
         {/* 
           Page transitions - padrão nativo iOS/Android
           - iOS: edge swipe gesture (da direita para esquerda)
@@ -29,7 +29,6 @@ export function PortalLayoutV2Mobile() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ type: 'spring', stiffness: 350, damping: 32, mass: 0.9 }}
-            className="h-full"
           >
             <Outlet />
           </motion.div>

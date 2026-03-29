@@ -42,7 +42,7 @@ export function useDashboardAluno() {
     queryKey: ['portal', 'dashboard', alunoSelecionado?.id, tenantId, turmaId],
     queryFn: () => portalService.buscarDashboardAluno(alunoSelecionado!.id, tenantId!, turmaId),
     enabled: !!alunoSelecionado?.id && !!tenantId,
-    staleTime: 30 * 1000,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -62,7 +62,7 @@ export function useDashboardFamilia() {
         queryKey: ['portal', 'dashboard', aId, tId, turmaId],
         queryFn: () => portalService.buscarDashboardAluno(aId, tId, turmaId),
         enabled: !!aId && !!tId,
-        staleTime: 30 * 1000,
+        staleTime: 60 * 1000,
       }
     })
   })
@@ -120,6 +120,7 @@ export function useFrequenciaAluno(mes?: string) {
     queryKey: ['portal', 'frequencia', alunoSelecionado?.id, tenantId, mes],
     queryFn: () => portalService.buscarFrequenciaPorAluno(alunoSelecionado!.id, tenantId!, mes),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -146,6 +147,7 @@ export function useCobrancasAluno() {
     queryKey: ['portal', 'cobrancas', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarCobrancasPorAluno(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 export function useConfigPix() {
@@ -154,6 +156,7 @@ export function useConfigPix() {
     queryKey: ['portal', 'config-pix', tenantId],
     queryFn: () => portalService.buscarConfigPixEscola(tenantId!),
     enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
@@ -318,7 +321,7 @@ export function useBoletins() {
     queryKey: ['portal', 'boletins', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarBoletins(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -328,6 +331,7 @@ export function useAlunoCompleto() {
     queryKey: ['portal', 'aluno-completo', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarAlunoCompleto(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -353,6 +357,7 @@ export function useSelosPortal() {
     queryKey: ['portal', 'selos', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarSelos(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -377,6 +382,7 @@ export function useAtividadesPortal() {
     queryKey: ['portal', 'atividades', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarAtividades(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 

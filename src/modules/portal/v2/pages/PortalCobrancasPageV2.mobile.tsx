@@ -46,19 +46,19 @@ const getInitials = (name: string) => {
 
 // --- SKELETON LOADING (Padrão iOS/Android) ---
 const CobrancasSkeleton = () => (
-  <div className="space-y-6 animate-pulse p-4 pt-[env(safe-area-inset-top,16px)]">
+  <div className="space-y-6 animate-pulse p-4 pt-[env(safe-area-inset-top,24px)]">
     {/* Header Skeleton */}
-    <div className="h-8 w-32 bg-slate-100 rounded-lg mb-4" />
+    <div className="h-10 w-48 bg-slate-200/60 rounded-lg mb-4" />
     {/* Dashboard Cards Skeleton */}
-    <div className="grid grid-cols-2 gap-3">
-      {[1, 2, 3, 4].map(i => (
-        <div key={i} className="h-24 bg-white border border-slate-100 rounded-[24px]" />
+    <div className="flex gap-3 overflow-hidden">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="h-24 w-40 bg-slate-100/80 rounded-[24px] shrink-0" />
       ))}
     </div>
     {/* Alunos Cards Skeleton */}
     <div className="space-y-4">
-      {[1, 2].map(i => (
-        <div key={i} className="h-32 bg-white border border-slate-100 rounded-[24px]" />
+      {[1, 2, 3].map(i => (
+        <div key={i} className="h-28 bg-white border border-slate-100 rounded-[24px]" />
       ))}
     </div>
   </div>
@@ -66,6 +66,7 @@ const CobrancasSkeleton = () => (
 
 export function PortalCobrancasPageV2Mobile() {
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
+  const { isLoading: isLoadingCtx } = usePortalContext()
 
   const [selectedAluno, setSelectedAluno] = useState<any>(null)
   const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
@@ -119,10 +120,10 @@ export function PortalCobrancasPageV2Mobile() {
     return { resumo: { aVencer, atrasado, materiais, proximoVenc }, alunos: alunosComFaturas }
   }, [vinculos, cobrancasQueries, isLoadingCobrancas])
 
-  if (loadingVinculos || isLoadingCobrancas) return <CobrancasSkeleton />
+  if (loadingVinculos || isLoadingCobrancas || isLoadingCtx) return <CobrancasSkeleton />
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-safe">
+    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-32">
       
       {/* 1. Header - Padrão iOS Large Title / Material Top App Bar */}
       <header className="flex items-center gap-4 pt-4 pb-2">

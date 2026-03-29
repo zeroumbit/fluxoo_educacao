@@ -48,6 +48,10 @@ const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
 const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
 
+// Currículos
+const CurriculosListPage = lazy(() => import('@/modules/curriculos/pages/CurriculosListPage').then(m => ({ default: m.CurriculosListPage })))
+const CurriculoDetalhePage = lazy(() => import('@/modules/curriculos/pages/CurriculoDetalhePage').then(m => ({ default: m.CurriculoDetalhePage })))
+
 // Pages - Super Admin
 const SuperAdminDashboardPage = lazy(() => import('@/modules/super-admin/pages/SuperAdminDashboardPage').then(m => ({ default: m.SuperAdminDashboardPage })))
 const PlanosPage = lazy(() => import('@/modules/super-admin/pages/PlanosPage').then(m => ({ default: m.PlanosPage })))
@@ -209,6 +213,9 @@ function App() {
               <Route path="/portaria-expresso" element={<FilaVirtualAdminPage />} />
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
               <Route path="/plano" element={<PlanoPage />} />
+              {/* Currículos */}
+              <Route path="/curriculos" element={<CurriculosListPage />} />
+              <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />

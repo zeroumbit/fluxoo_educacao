@@ -15,11 +15,16 @@ const getInitials = (name: string) => {
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
-  const { data: dashboard } = useDashboardFamilia();
-  const { data: avisos } = useAvisosPortal();
+  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, isLoading } = usePortalContext();
+  const { data: dashboard, isLoading: loadingDash } = useDashboardFamilia();
+  const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   
+  // Skeleton Loader (Padrão iOS/Android)
+  if (isLoading || loadingDash || loadingAvisos) {
+    return <HomeSkeleton />
+  }
+
   // Helper de vigência e mensagens
   const hojeStr = new Date().toISOString().split('T')[0];
   const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
@@ -79,7 +84,7 @@ export function PortalHomeV2Mobile() {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-safe">
+    <div className="flex flex-col gap-4 px-4 pb-12">
       {/* 1. Header de Boas-Vindas */}
       {/* Safe area top para dispositivos com notch (iOS) */}
       <header className="flex items-start justify-between pt-[env(safe-area-inset-top,12px)] mt-2 pb-2">
@@ -126,7 +131,7 @@ export function PortalHomeV2Mobile() {
             animate={{ opacity: 1, scale: 1 }}
             onClick={alert.action}
             className={cn(
-               "flex items-start gap-3 p-4 rounded-[16px] border active:scale-95 transition-all",
+               "flex items-start gap-3 p-4 rounded-[16px] border active:scale-95 transition-all cursor-pointer",
                alert.type === 'error' && "bg-orange-50 border-orange-200 text-orange-900",
                alert.type === 'success' && "bg-emerald-50 border-emerald-200 text-emerald-900",
             )}
@@ -136,7 +141,7 @@ export function PortalHomeV2Mobile() {
             <span className="text-[14px] font-bold leading-tight">
               {alert.text}
               {alert.highlight && (
-                <span className="text-teal-600 font-black underline decoration-2 underline-offset-2">
+                <span className="text-teal-600 font-black underline decoration-2 underline-offset-2 ml-1">
                   {alert.highlight}
                 </span>
               )}
@@ -290,4 +295,25 @@ export function PortalHomeV2Mobile() {
       </section>
     </div>
   );
+}
+
+// --- SKELETON HOME ---
+function HomeSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 px-4 animate-pulse pt-[env(safe-area-inset-top,12px)] mt-2">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <div className="h-4 w-20 bg-slate-100 rounded" />
+          <div className="h-8 w-40 bg-slate-200 rounded-lg" />
+        </div>
+        <div className="flex gap-2">
+          <div className="w-12 h-12 rounded-full bg-slate-100" />
+          <div className="w-12 h-12 rounded-full bg-slate-100" />
+        </div>
+      </div>
+      <div className="h-24 bg-slate-100 rounded-[24px]" />
+      <div className="h-48 bg-slate-100 rounded-[24px]" />
+      <div className="h-40 bg-slate-100 rounded-[24px]" />
+    </div>
+  )
 }

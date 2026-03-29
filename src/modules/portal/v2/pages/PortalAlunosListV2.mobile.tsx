@@ -11,10 +11,15 @@ const getInitials = (name: string) => {
 
 export function PortalAlunosListV2Mobile() {
   const navigate = useNavigate();
-  const { vinculos, selecionarAluno } = usePortalContext();
+  const { vinculos, selecionarAluno, isLoading } = usePortalContext();
+
+  // Skeleton Loader (Padrão iOS/Android)
+  if (isLoading) {
+    return <AlunosSkeleton />
+  }
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-[env(safe-area-inset-top,12px)] pb-safe">
+    <div className="flex flex-col gap-4 px-4 pt-[env(safe-area-inset-top,12px)] pb-12">
       {/* Header - Padrão iOS Large Title / Material Top App Bar */}
       <header className="flex flex-col gap-1 pt-4 pb-2">
         {/* Title - iOS Large Title (28px Bold) / Material Headline Medium (28px Bold) */}
@@ -97,4 +102,21 @@ export function PortalAlunosListV2Mobile() {
       </div>
     </div>
   );
+}
+
+// --- SKELETON ALUNOS ---
+function AlunosSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,24px)] mt-2 animate-pulse">
+      <div className="space-y-4 pt-4">
+        <div className="h-10 w-56 bg-slate-200/60 rounded-xl" />
+        <div className="h-4 w-72 bg-slate-100/80 rounded" />
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-32 bg-slate-50 border border-slate-100 rounded-[28px]" />
+        ))}
+      </div>
+    </div>
+  )
 }

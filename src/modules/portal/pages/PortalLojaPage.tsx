@@ -1,5 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { usePortalContext } from '../context'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   ShoppingCart,
   Search,
@@ -39,7 +41,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { motion, AnimatePresence } from 'framer-motion'
-import { useIsMobile } from '@/hooks/use-mobile'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -200,15 +201,22 @@ const ASSETS = {
   pros: '/assets/store/featured_pros.png'
 }
 
+
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
+  const { isLoading: loadingCtx } = usePortalContext()
   const [searchParams] = useSearchParams()
   const [activeCategory, setActiveCategory] = useState<'livros' | 'materiais' | 'serviços' | 'vestuario' | 'all'>('all')
   const [activeSubcategory, setActiveSubcategory] = useState<'escolares' | 'ficção' | 'all'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [isLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Efeito para simular carregamento inicial da loja e melhorar UX
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
 
   const isHomeView = !searchTerm && activeCategory === 'all'
 
@@ -256,12 +264,16 @@ export function PortalLojaPage() {
     setSelectedProduct(product)
   }
 
-  if (isLoading) return <LojaSkeleton />
+  if (isLoading || loadingCtx) return (
+    <div className="pt-[env(safe-area-inset-top,24px)] px-4">
+      <LojaSkeleton />
+    </div>
+  )
 
   return (
-    <div className="flex flex-col gap-8 pb-32 animate-in fade-in duration-700">
+    <div className="flex flex-col gap-8 pb-32 animate-in fade-in duration-700 pt-[env(safe-area-inset-top,20px)] mt-4">
       {/* 1. Header Especial da Loja (Baseado no Sketch) */}
-      <div className="flex flex-col gap-6 -mt-4">
+      <div className="flex flex-col gap-6">
         {/* Top Header Row */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 pb-6 border-b border-slate-100">
           {/* Localização */}

@@ -33,7 +33,8 @@ import {
   TrendingUp,
   CarFront,
   Home,
-  Bell
+  Bell,
+  FileUser
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -84,6 +85,7 @@ const navigationGroups = [
   {
     label: 'Gestão',
     items: [
+      { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
       { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
       { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
       { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },

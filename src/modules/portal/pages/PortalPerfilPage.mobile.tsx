@@ -188,7 +188,7 @@ export function PortalPerfilPageMobile() {
 
   return (
     <>
-      <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-safe">
+      <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,24px)] pb-32 mt-4">
         
         {/* 1. Header - Padrão iOS Large Title / Material Top App Bar */}
         <header className="flex items-center gap-4 pt-4 pb-2">

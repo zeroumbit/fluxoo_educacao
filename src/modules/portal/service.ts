@@ -143,13 +143,16 @@ export const portalService = {
   async buscarDashboardAluno(alunoId: string, tenantId: string, turmaId?: string | null) {
     if (!alunoId || !tenantId) return null
 
-    // Garante que o status de atraso esteja correto antes de calcular as estatísticas
+    // Removido reparo automático no portal para priorizar performance. 
+    // O status é garantido pelo Admin ou processos em background.
+    /*
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.repararStatusAtrasados(tenantId)
     } catch (e) {
       console.warn('Falha ao reparar atrasos no dashboard:', e)
     }
+    */
 
     const [frequenciaRes, cobrancasRes, avisosRes] = await Promise.all([
       // Frequência recente (últimos 30 dias)
@@ -305,12 +308,14 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
+    /*
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.repararStatusAtrasados(tenantId)
     } catch (e) {
       console.warn('Falha ao reparar atrasos na listagem do portal:', e)
     }
+    */
 
     const { data, error } = await (supabase.from('cobrancas' as any) as any)
       .select('*')

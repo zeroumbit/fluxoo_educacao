@@ -157,23 +157,7 @@ export function AutorizacoesAdminTab() {
     }
   }
 
-  const modelosTratados = useMemo(() => {
-    const dbModelos = (modelos as Modelo[]) || []
-    
-    // Mesclar padrões do sistema que ainda não foram "reivindicados" pela escola no banco
-    const virtuais = MODELOS_SISTEMA_PADRAO.filter(padrao => {
-      // Verifica se já existe um modelo na mesma categoria e com o mesmo título no banco desta escola
-      return !dbModelos.some(db => db.categoria === padrao.categoria && db.titulo === padrao.titulo)
-    }).map(padrao => ({
-      ...padrao,
-      id: `virtual-${padrao.categoria}-${padrao.ordem}`,
-      tenant_id: null,
-      ativa: false, // Inativos por padrão como solicitado
-      isDefault: true
-    }))
-
-    return [...virtuais, ...dbModelos]
-  }, [modelos])
+  const modelosTratados = modelos as Modelo[]
 
   const modelosFiltrados = modelosTratados.filter((m) => {
     const matchBusca = m.titulo.toLowerCase().includes(busca.toLowerCase())
@@ -305,10 +289,10 @@ export function AutorizacoesAdminTab() {
                           </Badge>
                         ) : isGlobal(m) ? (
                           <Badge className="text-[9px] bg-slate-100 text-slate-500 border border-slate-200 font-bold gap-1">
-                            <Globe className="h-2.5 w-2.5" /> Sistema
+                            <ShieldCheck className="h-2.5 w-2.5" /> Padrão Global
                           </Badge>
                         ) : (
-                          <Badge className="text-[9px] bg-teal-50 text-teal-600 border border-teal-100 font-bold gap-1">
+                          <Badge className="text-[9px] bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold gap-1">
                             <Building2 className="h-2.5 w-2.5" /> Ativa na Escola
                           </Badge>
                         )}

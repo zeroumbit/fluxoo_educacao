@@ -783,6 +783,56 @@ export type AlertaFinanceiroIgnoradoInsert = Omit<AlertaFinanceiroIgnorado, 'id'
   id?: string; created_at?: string;
 }
 
+// ========== CURRÍCULOS ==========
+export type FormacaoAcademica = {
+  nivel: 'fundamental' | 'medio' | 'tecnico' | 'superior' | 'pos_graduacao' | 'mestrado' | 'doutorado'
+  instituicao: string
+  ano_conclusao: number
+  area: string
+}
+
+export type ExperienciaProfissional = {
+  empresa: string
+  cargo: string
+  periodo: string
+  atividades: string
+}
+
+export type Certificacao = {
+  nome: string
+  instituicao: string
+  ano: number
+  carga_horaria?: number
+}
+
+export type Curriculo = {
+  id: string
+  user_id: string
+  tenant_id: string | null
+  funcionario_id: string | null
+  disponibilidade_emprego: boolean
+  disponibilidade_tipo: string[]
+  areas_interesse: string[]
+  pretensao_salarial: number | null
+  formacao: FormacaoAcademica[]
+  experiencia: ExperienciaProfissional[]
+  habilidades: string[]
+  certificacoes: Certificacao[]
+  resumo_profissional: string | null
+  observacoes: string | null
+  is_publico: boolean
+  is_ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type CurriculoInsert = Omit<Curriculo, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type CurriculoUpdate = Partial<CurriculoInsert>
 
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'
@@ -830,6 +880,7 @@ export type Database = {
       almoxarifado_movimentacoes: { Row: AlmoxarifadoMovimentacao; Insert: AlmoxarifadoMovimentacaoInsert; Update: any; Relationships: any[] }
       overrides_financeiros: { Row: OverrideFinanceiro; Insert: OverrideFinanceiroInsert; Update: OverrideFinanceiroUpdate; Relationships: any[] }
       alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: any; Relationships: any[] }
+      curriculos: { Row: Curriculo; Insert: CurriculoInsert; Update: CurriculoUpdate; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
