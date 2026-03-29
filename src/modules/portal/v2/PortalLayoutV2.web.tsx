@@ -1,12 +1,15 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut } from 'lucide-react';
+import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut, WifiOff } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import CorujaIcon from '@/assets/coruja_APPLE.svg';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export function PortalLayoutV2Web() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const isOnline = useOnlineStatus();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const handleLogout = async () => {
@@ -31,6 +34,19 @@ export function PortalLayoutV2Web() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-rose-500 text-white py-4 px-8 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 z-[9999] shadow-xl sticky top-0 overflow-hidden"
+          >
+            <WifiOff size={18} className="animate-pulse" /> Você está offline — Verifique sua conexão para continuar navegando
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

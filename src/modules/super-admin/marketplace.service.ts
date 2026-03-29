@@ -64,13 +64,21 @@ export const marketplaceService = {
   },
 
   async listarProfissionais() {
-    const { data, error } = await (supabase
-      .from('curriculos' as any) as any)
-      .select('*, usuarios_sistema(email_login)')
-      .or('busca_vaga.eq.true,presta_servico.eq.true')
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return data || []
+    try {
+      const { data, error } = await (supabase
+        .from('curriculos' as any) as any)
+        .select('*')
+        .or('busca_vaga.eq.true,presta_servico.eq.true')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.warn('Erro ao listar profissionais (RLS/403):', error.message)
+        return []
+      }
+      return data || []
+    } catch (err) {
+      console.warn('Erro na query de profissionais:', err)
+      return []
+    }
   }
 }

@@ -3,27 +3,40 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Users, Receipt, Bell, ShoppingBag, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
-// Mock function for TanStack Query - Checking if any store items exist for the tenant
-const fetchLojaStatus = async () => {
-  // Simulating an API call that returns the view vw_marketplace_global for the tenant
-  return new Promise<{ length: number }>((resolve) => {
-    setTimeout(() => {
-      resolve({ length: 1 }); // Change to 0 to test hiding the tab
-    }, 500);
-  });
+// Verifica se existem lojistas ou profissionais cadastrados no marketplace
+const fetchLojaStatus = async (): Promise<number> => {
+  try {
+    const { data: lojistas, error: errorLojistas } = await supabase
+      .from('lojistas' as any)
+      .select('id', { count: 'exact', head: true });
+
+    if (errorLojistas) return 0;
+
+    const { data: profissionais, error: errorProf } = await supabase
+      .from('curriculos' as any)
+      .select('id', { count: 'exact', head: true })
+      .or('busca_vaga.eq.true,presta_servico.eq.true');
+
+    if (errorProf) return lojistas?.length || 0;
+
+    return (lojistas?.length || 0) + (profissionais?.length || 0);
+  } catch {
+    return 0;
+  }
 };
 
 export const BottomNavV2 = () => {
   const location = useLocation();
 
-  // "Se retornar length > 0, a aba LOJA é renderizada na navegação. Se retornar 0, a aba não existe."
-  const { data: lojaRequest } = useQuery({
+  // "Se retornar count > 0, a aba LOJA é renderizada na navegação. Se retornar 0, a aba não existe."
+  const { data: lojaCount } = useQuery({
     queryKey: ['portal-loja-status'],
     queryFn: fetchLojaStatus,
   });
 
-  const showLoja = lojaRequest ? lojaRequest.length > 0 : false;
+  const showLoja = (lojaCount || 0) > 0;
 
   const baseItems = [
     { label: 'Home', icon: Home, path: '/portal' },

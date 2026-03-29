@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,36 +11,53 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Loader2, 
-  ChevronLeft, 
-  ChevronRight, 
-  User, 
-  ShoppingBag, 
-  Briefcase, 
-  GraduationCap, 
+import {
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  ShoppingBag,
+  Briefcase,
+  GraduationCap,
   Building2,
   Phone,
   Mail,
   Lock,
   Plus,
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle,
+  FileText,
+  MapPin,
+  CreditCard,
+  Upload
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { DISPONIBILIDADE_TIPOS, AREAS_INTERESSE } from '@/modules/curriculos/types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { mascaraCNPJ, mascaraTelefone, mascaraCEP, validarCNPJ } from '@/lib/validacoes'
+import { strongPasswordSchema } from '@/lib/password-validation'
 
-// Schema Schema para Acesso (Geral)
+// Categorias pré-definidas para Lojistas
+const CATEGORIAS_LOJISTA = [
+  { value: 'livraria', label: 'Livraria' },
+  { value: 'papelaria', label: 'Papelaria' },
+  { value: 'vestuario', label: 'Vestuário' },
+  { value: 'decoracao', label: 'Decoração' },
+]
+
+// Schema para Acesso (Geral)
 const acessoSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+  password: strongPasswordSchema,
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
 })
 
-// Schema para Profissional
+// Schema para Profissional (todos os campos originais)
 const profissionalSchema = z.object({
   // Step 2
   nome: z.string().min(3, 'Nome muito curto'),
@@ -83,18 +100,31 @@ const profissionalSchema = z.object({
   })
 })
 
-// Schema para Lojista
+// Schema para Lojista (com endereço e pagamento)
 const lojistaSchema = z.object({
+  // Step 2
   razao_social: z.string().min(3, 'Razão Social obrigatória'),
   nome_fantasia: z.string().optional(),
   cnpj: z.string().min(14, 'CNPJ inválido'),
   categoria: z.string().min(1, 'Selecione uma categoria'),
+  // Step 3 - Endereço
+  cep: z.string().min(9, 'CEP inválido'),
+  logradouro: z.string().min(3, 'Logradouro obrigatório'),
+  numero: z.string().min(1, 'Número obrigatório'),
+  complemento: z.string().optional(),
+  bairro: z.string().min(2, 'Bairro obrigatório'),
+  cidade: z.string().min(2, 'Cidade obrigatória'),
+  estado: z.string().length(2, 'UF obrigatória'),
+  // Step 4 - Contato
   email_contato: z.string().email('E-mail inválido'),
   telefone_contato: z.string().min(10, 'Telefone inválido'),
   descricao: z.string().optional(),
+  // Step 5 - Termos
   termos: z.literal(true, {
     errorMap: () => ({ message: 'Você deve aceitar os termos' })
-  })
+  }),
+  // Step 6 - Pagamento
+  metodo_pagamento: z.enum(['mercado_pago', 'pix_manual']).default('mercado_pago'),
 })
 
 const registrationSchema = z.object({
@@ -111,6 +141,8 @@ export function MarketplaceCadastroPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [tipoAtivo, setTipoAtivo] = useState<'profissional' | 'lojista'>('profissional')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
@@ -131,8 +163,18 @@ export function MarketplaceCadastroPage() {
         razao_social: '',
         cnpj: '',
         categoria: '',
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
         email_contato: '',
-        telefone_contato: ''
+        telefone_contato: '',
+        descricao: '',
+        termos: true,
+        metodo_pagamento: 'mercado_pago'
       }
     }
   })
@@ -152,6 +194,8 @@ export function MarketplaceCadastroPage() {
     name: "profissional.certificacoes"
   })
 
+  const { fetchAddressByCEP, estados, cities, fetchCitiesByUF, loading: buscandoCep, loadingCities } = useViaCEP()
+
   const stepsProfissional = [
     'Acesso',
     'Dados Básicos',
@@ -167,33 +211,85 @@ export function MarketplaceCadastroPage() {
   const stepsLojista = [
     'Acesso',
     'Dados da Empresa',
+    'Endereço',
     'Contato',
-    'Finalização'
+    'Termos',
+    'Pagamento'
   ]
 
   const steps = tipoAtivo === 'profissional' ? stepsProfissional : stepsLojista
 
+  const selectedEstado = form.watch('lojista.estado')
+  const selectedCategoria = form.watch('lojista.categoria')
+
+  useEffect(() => {
+    if (selectedEstado) {
+      fetchCitiesByUF(selectedEstado)
+    }
+  }, [selectedEstado])
+
+  // Máscaras
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue('lojista.cnpj', mascaraCNPJ(e.target.value), { shouldValidate: true })
+  }
+
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const field = tipoAtivo === 'profissional' ? 'profissional.telefone' : 'lojista.telefone_contato'
+    form.setValue(field as any, mascaraTelefone(e.target.value), { shouldValidate: true })
+  }
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = mascaraCEP(e.target.value)
+    form.setValue('lojista.cep', valor, { shouldValidate: true })
+    if (valor.length === 9) buscarCep(valor)
+  }
+
+  const buscarCep = async (cep: string) => {
+    const data = await fetchAddressByCEP(cep)
+    if (data && !('error' in data)) {
+      form.setValue('lojista.logradouro', data.logradouro || '', { shouldValidate: true })
+      form.setValue('lojista.bairro', data.bairro || '', { shouldValidate: true })
+      form.setValue('lojista.estado', data.estado || '', { shouldValidate: true })
+      form.setValue('lojista.cidade', data.cidade || '', { shouldValidate: true })
+      toast.success('Endereço preenchido automaticamente!')
+    } else if (data && 'error' in data) {
+      toast.error(data.error)
+    }
+  }
+
   const nextStep = async () => {
-    // Validação parcial por step
     let fieldsToValidate: any[] = []
-    
+
     if (currentStep === 1) {
       fieldsToValidate = ['acesso.email', 'acesso.password', 'acesso.confirmPassword']
     } else if (tipoAtivo === 'profissional') {
       if (currentStep === 2) fieldsToValidate = ['profissional.nome', 'profissional.contato_email', 'profissional.telefone', 'profissional.cpf']
       if (currentStep === 3) fieldsToValidate = ['profissional.disponibilidade_tipo']
       if (currentStep === 4) fieldsToValidate = ['profissional.areas_interesse']
-      // ... steps sem validação obrigatória rígida podem passar
+      if (currentStep === 5) fieldsToValidate = ['profissional.resumo_profissional']
+      // Steps 6, 7, 8 são opcionais (formação, experiência, certificações)
+      if (currentStep === 9) fieldsToValidate = ['profissional.termos']
     } else {
       if (currentStep === 2) fieldsToValidate = ['lojista.razao_social', 'lojista.cnpj', 'lojista.categoria']
-      if (currentStep === 3) fieldsToValidate = ['lojista.email_contato', 'lojista.telefone_contato']
+      if (currentStep === 3) fieldsToValidate = ['lojista.cep', 'lojista.logradouro', 'lojista.numero', 'lojista.bairro', 'lojista.cidade', 'lojista.estado']
+      if (currentStep === 4) fieldsToValidate = ['lojista.email_contato', 'lojista.telefone_contato']
+      if (currentStep === 5) fieldsToValidate = ['lojista.termos']
+      if (currentStep === 6) fieldsToValidate = ['lojista.metodo_pagamento']
     }
 
     const isValid = await form.trigger(fieldsToValidate)
-    if (isValid) setCurrentStep(prev => prev + 1)
+    if (isValid) {
+      setCurrentStep(prev => prev + 1)
+    }
   }
 
-  const prevStep = () => setCurrentStep(prev => prev - 1)
+  const prevStep = () => {
+    if (currentStep === 1) {
+      navigate('/login')
+    } else {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
 
   const handleFinalSubmit = async (data: RegistrationForm) => {
     setIsSubmitting(true)
@@ -232,8 +328,12 @@ export function MarketplaceCadastroPage() {
           certificacoes: data.profissional?.certificacoes,
           habilidades: data.profissional?.habilidades,
           is_publico: true,
-          is_ativo: true
-        })
+          is_ativo: true,
+          tenant_id: null,
+          funcionario_id: null,
+          disponibilidade_emprego: false,
+          observacoes: null
+        } as any)
         if (profError) throw profError
       } else {
         const { error: lojError } = await supabase.from('lojistas').insert({
@@ -247,7 +347,7 @@ export function MarketplaceCadastroPage() {
           descricao: data.lojista?.descricao,
           status: 'ativo',
           plano_id: 'free'
-        })
+        } as any)
         if (lojError) throw lojError
       }
 
@@ -263,8 +363,8 @@ export function MarketplaceCadastroPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-zinc-200 overflow-hidden">
-        
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl border border-zinc-200 overflow-hidden">
+
         {/* Header */}
         <div className="bg-zinc-900 p-8 text-white relative overflow-hidden">
           <div className="relative z-10">
@@ -280,12 +380,12 @@ export function MarketplaceCadastroPage() {
         <div className="px-8 pt-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {steps.map((_, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  currentStep > i ? 'bg-indigo-600 w-8' : 
+                  currentStep > i ? 'bg-indigo-600 w-8' :
                   currentStep === i + 1 ? 'bg-indigo-400 w-12' : 'bg-zinc-200 w-4'
-                }`} 
+                }`}
               />
             ))}
           </div>
@@ -294,13 +394,13 @@ export function MarketplaceCadastroPage() {
           </span>
         </div>
 
-        <Tabs 
-          value={tipoAtivo} 
+        <Tabs
+          value={tipoAtivo}
           onValueChange={(v: any) => {
             setTipoAtivo(v)
             setCurrentStep(1)
             form.setValue('tipo', v)
-          }} 
+          }}
           className="mt-4"
         >
           <div className="px-8">
@@ -316,31 +416,77 @@ export function MarketplaceCadastroPage() {
 
           <ScrollArea className="h-[60vh] px-8 py-6">
             <form id="registration-form" onSubmit={form.handleSubmit(handleFinalSubmit)}>
-              
+
               {/* Passo 1: Acesso (Comum) */}
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-bold mb-1">E-mail válido é obrigatório</p>
+                      <p>Usaremos este e-mail para acesso e comunicação. Você receberá um link de confirmação.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2"><Mail size={16} /> E-mail de Acesso</Label>
-                      <Input placeholder="seu@email.com" {...form.register('acesso.email')} />
+                      <Input 
+                        placeholder="seu@email.com" 
+                        {...form.register('acesso.email')}
+                        className={form.formState.errors.acesso?.email ? 'border-red-500' : ''}
+                      />
                       {form.formState.errors.acesso?.email && (
-                        <p className="text-xs text-red-500">{form.formState.errors.acesso.email.message}</p>
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                          <AlertCircle size={12} /> {form.formState.errors.acesso.email.message}
+                        </p>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Lock size={16} /> Senha</Label>
-                        <Input type="password" placeholder="******" {...form.register('acesso.password')} />
+                        <div className="relative">
+                          <Input 
+                            type={showPassword ? 'text' : 'password'} 
+                            placeholder="Mínimo 8 caracteres" 
+                            {...form.register('acesso.password')}
+                            className={form.formState.errors.acesso?.password ? 'border-red-500' : ''}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                          >
+                            {showPassword ? <Lock size={16} className="rotate-180" /> : <Lock size={16} />}
+                          </button>
+                        </div>
                         {form.formState.errors.acesso?.password && (
-                          <p className="text-xs text-red-500">{form.formState.errors.acesso.password.message}</p>
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {form.formState.errors.acesso.password.message}
+                          </p>
                         )}
                       </div>
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Lock size={16} /> Confirmar Senha</Label>
-                        <Input type="password" placeholder="******" {...form.register('acesso.confirmPassword')} />
+                        <div className="relative">
+                          <Input 
+                            type={showConfirmPassword ? 'text' : 'password'} 
+                            placeholder="Repita a senha" 
+                            {...form.register('acesso.confirmPassword')}
+                            className={form.formState.errors.acesso?.confirmPassword ? 'border-red-500' : ''}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                          >
+                            {showConfirmPassword ? <Lock size={16} className="rotate-180" /> : <Lock size={16} />}
+                          </button>
+                        </div>
                         {form.formState.errors.acesso?.confirmPassword && (
-                          <p className="text-xs text-red-500">{form.formState.errors.acesso.confirmPassword.message}</p>
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {form.formState.errors.acesso.confirmPassword.message}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -348,41 +494,87 @@ export function MarketplaceCadastroPage() {
                 </div>
               )}
 
-              {/* Profissional Specific Steps */}
+              {/* Profissional Steps */}
               {tipoAtivo === 'profissional' && (
                 <>
+                  {/* Passo 2: Dados Básicos */}
                   {currentStep === 2 && (
                     <div className="space-y-6">
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-bold mb-1">Dados válidos são obrigatórios</p>
+                          <p>Seu CPF e telefone serão verificados. Use apenas números.</p>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Nome Completo</Label>
-                          <Input placeholder="Seu nome" {...form.register('profissional.nome')} />
+                          <Input 
+                            placeholder="Seu nome" 
+                            {...form.register('profissional.nome')}
+                            className={form.formState.errors.profissional?.nome ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.profissional?.nome && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.nome.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>CPF</Label>
-                          <Input placeholder="000.000.000-00" {...form.register('profissional.cpf')} />
+                          <Input 
+                            placeholder="000.000.000-00" 
+                            {...form.register('profissional.cpf')}
+                            className={form.formState.errors.profissional?.cpf ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.profissional?.cpf && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.cpf.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Telefone / WhatsApp</Label>
-                          <Input placeholder="(11) 99999-9999" {...form.register('profissional.telefone')} />
+                          <Input 
+                            placeholder="(11) 99999-9999" 
+                            {...form.register('profissional.telefone')}
+                            onChange={handleTelefoneChange}
+                            className={form.formState.errors.profissional?.telefone ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.profissional?.telefone && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.telefone.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>E-mail de Contato</Label>
-                          <Input placeholder="email@contato.com" {...form.register('profissional.contato_email')} />
+                          <Input 
+                            placeholder="email@contato.com" 
+                            {...form.register('profissional.contato_email')}
+                            className={form.formState.errors.profissional?.contato_email ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.profissional?.contato_email && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.contato_email.message}</p>
+                          )}
                         </div>
                       </div>
                     </div>
                   )}
 
+                  {/* Passo 3: Disponibilidade */}
                   {currentStep === 3 && (
                     <div className="space-y-6">
+                      <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+                        <GraduationCap className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-indigo-800">
+                          <p className="font-bold mb-1">Selecione sua disponibilidade</p>
+                          <p>Informe quando você está disponível para trabalhar.</p>
+                        </div>
+                      </div>
+
                       <Label className="text-lg font-bold">Qual sua disponibilidade?</Label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {DISPONIBILIDADE_TIPOS.map(tipo => (
-                          <div key={tipo.value} className="flex items-center space-x-3 p-4 border rounded-xl hover:bg-zinc-50 transition-colors">
-                            <Checkbox 
-                              title={tipo.label}
-                              id={tipo.value} 
+                          <div key={tipo.value} className="flex items-center space-x-3 p-4 border rounded-xl hover:bg-indigo-50/50 transition-colors">
+                            <Checkbox
+                              id={tipo.value}
                               checked={form.watch('profissional.disponibilidade_tipo')?.includes(tipo.value)}
                               onCheckedChange={(checked) => {
                                 const current = form.getValues('profissional.disponibilidade_tipo') || []
@@ -397,14 +589,22 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 4: Áreas de Interesse */}
                   {currentStep === 4 && (
                     <div className="space-y-6">
+                      <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex items-start gap-3">
+                        <Briefcase className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-indigo-800">
+                          <p className="font-bold mb-1">Selecione suas áreas de interesse</p>
+                          <p>Escolha as áreas que você tem experiência ou interesse em atuar.</p>
+                        </div>
+                      </div>
+
                       <Label className="text-lg font-bold">Quais áreas de interesse?</Label>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {AREAS_INTERESSE.map(area => (
                           <div key={area.value} className="flex items-center space-x-2 p-3 border rounded-lg hover:border-indigo-200 transition-colors">
-                            <Checkbox 
-                              title={area.label}
+                            <Checkbox
                               id={area.value}
                               checked={form.watch('profissional.areas_interesse')?.includes(area.value)}
                               onCheckedChange={(checked) => {
@@ -420,6 +620,7 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 5: Pretensão e Resumo */}
                   {currentStep === 5 && (
                     <div className="space-y-6">
                       <div className="space-y-2">
@@ -428,9 +629,9 @@ export function MarketplaceCadastroPage() {
                       </div>
                       <div className="space-y-2">
                         <Label>Resumo Profissional</Label>
-                        <Textarea 
-                          placeholder="Conte-nos um pouco sobre sua trajetória..." 
-                          className="h-40" 
+                        <Textarea
+                          placeholder="Conte-nos um pouco sobre sua trajetória..."
+                          className="h-40"
                           {...form.register('profissional.resumo_profissional')}
                         />
                         <p className="text-xs text-zinc-400 text-right">{form.watch('profissional.resumo_profissional')?.length || 0}/2000 caracteres</p>
@@ -438,6 +639,7 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 6: Formação Acadêmica */}
                   {currentStep === 6 && (
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
@@ -446,6 +648,9 @@ export function MarketplaceCadastroPage() {
                           <Plus size={16} className="mr-1" /> Adicionar
                         </Button>
                       </div>
+                      {fieldsFormacao.length === 0 && (
+                        <p className="text-sm text-zinc-500 italic">Nenhuma formação cadastrada. Adicione sua formação acadêmica.</p>
+                      )}
                       {fieldsFormacao.map((field, index) => (
                         <div key={field.id} className="p-4 border rounded-xl space-y-4 bg-zinc-50/50">
                           <div className="flex justify-between items-center">
@@ -465,6 +670,7 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 7: Experiência Profissional */}
                   {currentStep === 7 && (
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
@@ -473,6 +679,9 @@ export function MarketplaceCadastroPage() {
                           <Plus size={16} className="mr-1" /> Adicionar
                         </Button>
                       </div>
+                      {fieldsExperiencia.length === 0 && (
+                        <p className="text-sm text-zinc-500 italic">Nenhuma experiência cadastrada. Adicione sua experiência profissional.</p>
+                      )}
                       {fieldsExperiencia.map((field, index) => (
                         <div key={field.id} className="p-4 border rounded-xl space-y-4 bg-zinc-50/50">
                           <div className="flex justify-between items-center">
@@ -492,19 +701,22 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 8: Habilidades e Certificações */}
                   {currentStep === 8 && (
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <Label className="text-lg font-bold">Habilidades e Competências</Label>
-                        <Input 
-                          placeholder="Digite habilidades separadas por vírgula" 
+                        <Input
+                          placeholder="Digite habilidades separadas por vírgula (Ex: Matemática, Física, Química)"
                           onBlur={(e) => {
                             const val = e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                             form.setValue('profissional.habilidades', val)
                           }}
+                          defaultValue={form.watch('profissional.habilidades')?.join(', ')}
                         />
+                        <p className="text-xs text-zinc-500">Digite suas habilidades separadas por vírgula e clique fora do campo.</p>
                       </div>
-                      
+
                       <div className="space-y-6 pt-4 border-t">
                         <div className="flex justify-between items-center">
                           <Label className="text-lg font-bold">Certificações</Label>
@@ -512,8 +724,17 @@ export function MarketplaceCadastroPage() {
                             <Plus size={16} className="mr-1" /> Adicionar
                           </Button>
                         </div>
+                        {fieldsCertificacao.length === 0 && (
+                          <p className="text-sm text-zinc-500 italic">Nenhuma certificação cadastrada.</p>
+                        )}
                         {fieldsCertificacao.map((field, index) => (
                           <div key={field.id} className="p-4 border rounded-xl space-y-4 bg-zinc-50/50">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-bold text-zinc-400 uppercase">Certificação #{index + 1}</span>
+                              <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => removeCertificacao(index)}>
+                                <Trash2 size={16} />
+                              </Button>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <Input placeholder="Nome do Curso" {...form.register(`profissional.certificacoes.${index}.nome`)} />
                               <Input placeholder="Instituição" {...form.register(`profissional.certificacoes.${index}.instituicao`)} />
@@ -525,115 +746,468 @@ export function MarketplaceCadastroPage() {
                     </div>
                   )}
 
+                  {/* Passo 9: Finalização */}
                   {currentStep === 9 && (
                     <div className="space-y-8">
                       <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl space-y-6">
                         <h4 className="font-bold text-indigo-900 flex items-center gap-2">
                           <CheckCircle2 className="text-indigo-600" /> Preferências de Visibilidade
                         </h4>
-                        
+
                         <div className="space-y-4">
                           <div className="flex items-start space-x-3">
-                            <Checkbox 
-                              title="Configuração de visibilidade para vagas"
-                              id="busca-vaga" 
+                            <Checkbox
+                              id="busca-vaga"
                               checked={form.watch('profissional.busca_vaga')}
                               onCheckedChange={(c) => form.setValue('profissional.busca_vaga', !!c)}
                             />
                             <div className="space-y-1">
-                              <Label htmlFor="busca-vaga" className="font-bold">Buscar Vaga em Escolas</Label>
-                              <p className="text-sm text-zinc-500">Seu currículo ficará visível para escolas buscarem candidatos.</p>
+                              <Label htmlFor="busca-vaga" className="font-bold cursor-pointer">Buscar Vaga em Escolas</Label>
+                              <p className="text-sm text-zinc-500">Seu currículo aparecerá para escolas parceiras.</p>
                             </div>
                           </div>
 
                           <div className="flex items-start space-x-3 pt-4 border-t border-indigo-100">
-                            <Checkbox 
-                              title="Configuração de visibilidade para serviços"
-                              id="presta-servico" 
+                            <Checkbox
+                              id="presta-servico"
                               checked={form.watch('profissional.presta_servico')}
                               onCheckedChange={(c) => form.setValue('profissional.presta_servico', !!c)}
                             />
                             <div className="space-y-1">
-                              <Label htmlFor="presta-servico" className="font-bold">Prestar Serviços para Famílias</Label>
+                              <Label htmlFor="presta-servico" className="font-bold cursor-pointer">Prestar Serviços para Famílias</Label>
                               <p className="text-sm text-zinc-500">Seu perfil aparecerá no Portal da Família como prestador de serviços.</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-3 p-4">
-                        <Checkbox 
-                          title="Aceite de termos e condições"
-                          id="termos-prof" 
-                          {...form.register('profissional.termos')}
-                        />
-                        <Label htmlFor="termos-prof" className="text-sm">Concordo com os termos de uso e política de privacidade.</Label>
+                      <div className="space-y-4">
+                        <div className="p-4 border rounded-xl space-y-3">
+                          <div className="flex items-center gap-2">
+                            <FileText size={18} className="text-zinc-400" />
+                            <h4 className="font-bold text-zinc-700">Documentos Legais</h4>
+                          </div>
+                          <div className="flex flex-col gap-2 pl-10">
+                            <a 
+                              href="/termos-de-uso" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
+                            >
+                              <FileText size={14} /> Termos de Uso
+                            </a>
+                            <a 
+                              href="/politica-privacidade" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
+                            >
+                              <FileText size={14} /> Política de Privacidade
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-zinc-50 rounded-xl">
+                          <Checkbox
+                            id="termos-prof"
+                            {...form.register('profissional.termos')}
+                            className={form.formState.errors.profissional?.termos ? 'border-red-500' : ''}
+                          />
+                          <Label htmlFor="termos-prof" className="text-sm font-medium cursor-pointer">
+                            Li e concordo com os termos de uso e política de privacidade.
+                          </Label>
+                        </div>
+                        {form.formState.errors.profissional?.termos && (
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {form.formState.errors.profissional.termos.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
                 </>
               )}
 
-              {/* Lojista Specific Steps */}
+              {/* Lojista Steps */}
               {tipoAtivo === 'lojista' && (
                 <>
+                  {/* Passo 2: Dados da Empresa */}
                   {currentStep === 2 && (
                     <div className="space-y-6">
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-bold mb-1">CNPJ válido é obrigatório</p>
+                          <p>O CNPJ será verificado automaticamente. Preencha apenas números.</p>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Razão Social</Label>
-                          <Input placeholder="Nome da Empresa" {...form.register('lojista.razao_social')} />
+                          <Input 
+                            placeholder="Nome da Empresa" 
+                            {...form.register('lojista.razao_social')}
+                            className={form.formState.errors.lojista?.razao_social ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.razao_social && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.razao_social.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>CNPJ</Label>
-                          <Input placeholder="00.000.000/0001-00" {...form.register('lojista.cnpj')} />
+                          <Input 
+                            placeholder="00.000.000/0001-00" 
+                            {...form.register('lojista.cnpj')}
+                            onChange={handleCnpjChange}
+                            className={form.formState.errors.lojista?.cnpj ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.cnpj && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cnpj.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Nome Fantasia</Label>
-                          <Input placeholder="Como sua loja é conhecida" {...form.register('lojista.nome_fantasia')} />
+                          <Input 
+                            placeholder="Como sua loja é conhecida" 
+                            {...form.register('lojista.nome_fantasia')}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label>Categoria</Label>
-                          <Input placeholder="Ex: Uniformes, Papelaria, etc." {...form.register('lojista.categoria')} />
+                          <Select 
+                            onValueChange={(v) => form.setValue('lojista.categoria', v)}
+                            value={selectedCategoria}
+                          >
+                            <SelectTrigger className={form.formState.errors.lojista?.categoria ? 'border-red-500' : ''}>
+                              <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIAS_LOJISTA.map((cat) => (
+                                <SelectItem key={cat.value} value={cat.value}>
+                                  {cat.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {form.formState.errors.lojista?.categoria && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.categoria.message}</p>
+                          )}
                         </div>
                       </div>
                     </div>
                   )}
 
+                  {/* Passo 3: Endereço */}
                   {currentStep === 3 && (
                     <div className="space-y-6">
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-bold mb-1">Endereço comercial válido</p>
+                          <p>Digite o CEP para preenchimento automático via Correios.</p>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>E-mail Comercial</Label>
-                          <Input placeholder="vendas@empresa.com" {...form.register('lojista.email_contato')} />
+                          <Label>CEP</Label>
+                          <Input 
+                            placeholder="00000-000" 
+                            {...form.register('lojista.cep')}
+                            onChange={handleCepChange}
+                            disabled={buscandoCep}
+                            className={form.formState.errors.lojista?.cep ? 'border-red-500' : ''}
+                          />
+                          {buscandoCep && (
+                            <p className="text-xs text-zinc-500 flex items-center gap-1">
+                              <Loader2 size={12} className="animate-spin" /> Buscando endereço...
+                            </p>
+                          )}
+                          {form.formState.errors.lojista?.cep && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cep.message}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          <Label>Telefone / WhatsApp</Label>
-                          <Input placeholder="(11) 99999-9999" {...form.register('lojista.telefone_contato')} />
+                          <Label>Estado (UF)</Label>
+                          <Select 
+                            onValueChange={(v) => form.setValue('lojista.estado', v)}
+                            value={form.watch('lojista.estado')}
+                          >
+                            <SelectTrigger className={form.formState.errors.lojista?.estado ? 'border-red-500' : ''}>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {estados.map((uf) => (
+                                <SelectItem key={uf.value} value={uf.value}>
+                                  {uf.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {form.formState.errors.lojista?.estado && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.estado.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Cidade</Label>
+                          <Select 
+                            onValueChange={(v) => form.setValue('lojista.cidade', v)}
+                            value={form.watch('lojista.cidade')}
+                            disabled={loadingCities || !form.watch('lojista.estado')}
+                          >
+                            <SelectTrigger className={form.formState.errors.lojista?.cidade ? 'border-red-500' : ''}>
+                              <SelectValue placeholder={loadingCities ? 'Carregando...' : 'Selecione'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cities.map((cid: any) => (
+                                <SelectItem key={cid.nome} value={cid.nome}>
+                                  {cid.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {form.formState.errors.lojista?.cidade && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cidade.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Bairro</Label>
+                          <Input 
+                            placeholder="Bairro" 
+                            {...form.register('lojista.bairro')}
+                            className={form.formState.errors.lojista?.bairro ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.bairro && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.bairro.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Logradouro</Label>
+                          <Input 
+                            placeholder="Rua, Avenida, etc." 
+                            {...form.register('lojista.logradouro')}
+                            className={form.formState.errors.lojista?.logradouro ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.logradouro && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.logradouro.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Número</Label>
+                          <Input 
+                            placeholder="123" 
+                            {...form.register('lojista.numero')}
+                            className={form.formState.errors.lojista?.numero ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.numero && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.numero.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label>Complemento (Opcional)</Label>
+                          <Input 
+                            placeholder="Sala, conjunto, bloco, etc." 
+                            {...form.register('lojista.complemento')}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Passo 4: Contato */}
+                  {currentStep === 4 && (
+                    <div className="space-y-6">
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-800">
+                          <p className="font-bold mb-1">Dados de contato válidos</p>
+                          <p>E-mail e telefone serão verificados. Use dados reais para contato.</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2"><Mail size={16} /> E-mail Comercial</Label>
+                          <Input 
+                            placeholder="vendas@empresa.com" 
+                            {...form.register('lojista.email_contato')}
+                            className={form.formState.errors.lojista?.email_contato ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.email_contato && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.email_contato.message}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2"><Phone size={16} /> Telefone / WhatsApp</Label>
+                          <Input 
+                            placeholder="(11) 99999-9999" 
+                            {...form.register('lojista.telefone_contato')}
+                            onChange={handleTelefoneChange}
+                            className={form.formState.errors.lojista?.telefone_contato ? 'border-red-500' : ''}
+                          />
+                          {form.formState.errors.lojista?.telefone_contato && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.telefone_contato.message}</p>
+                          )}
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label>Descrição da Loja (Opcional)</Label>
-                        <Textarea placeholder="Fale um pouco sobre seus produtos..." className="h-32" {...form.register('lojista.descricao')} />
+                        <Textarea 
+                          placeholder="Fale um pouco sobre seus produtos..." 
+                          className="h-32" 
+                          {...form.register('lojista.descricao')}
+                        />
                       </div>
                     </div>
                   )}
 
-                  {currentStep === 4 && (
+                  {/* Passo 5: Termos */}
+                  {currentStep === 5 && (
                     <div className="space-y-8">
                       <div className="p-8 border-2 border-dashed rounded-2xl text-center space-y-4">
-                        <ShoppingBag size={48} className="mx-auto text-zinc-300" />
+                        <CheckCircle2 size={48} className="mx-auto text-indigo-300" />
                         <h3 className="text-xl font-bold">Quase lá!</h3>
-                        <p className="text-sm text-zinc-500">Ao finalizar seu cadastro, você entrará no plano Free por tempo limitado.</p>
+                        <p className="text-sm text-zinc-500">Leia e aceite os termos para finalizar seu cadastro.</p>
                       </div>
 
-                      <div className="flex items-center space-x-3 p-4">
-                        <Checkbox 
-                          title="Aceite de termos para lojistas"
-                          id="termos-loj" 
-                          {...form.register('lojista.termos')}
-                        />
-                        <Label htmlFor="termos-loj" className="text-sm">Concordo com os termos de uso e política de privacidade para lojistas.</Label>
+                      <div className="space-y-4">
+                        <div className="p-4 border rounded-xl space-y-3">
+                          <div className="flex items-center gap-2">
+                            <FileText size={18} className="text-zinc-400" />
+                            <h4 className="font-bold text-zinc-700">Documentos Legais</h4>
+                          </div>
+                          <div className="flex flex-col gap-2 pl-10">
+                            <a 
+                              href="/termos-de-uso" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
+                            >
+                              <FileText size={14} /> Termos de Uso
+                            </a>
+                            <a 
+                              href="/politica-privacidade" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
+                            >
+                              <FileText size={14} /> Política de Privacidade
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-zinc-50 rounded-xl">
+                          <Checkbox
+                            id="termos-loj"
+                            {...form.register('lojista.termos')}
+                            className={form.formState.errors.lojista?.termos ? 'border-red-500' : ''}
+                          />
+                          <Label htmlFor="termos-loj" className="text-sm font-medium cursor-pointer">
+                            Li e concordo com os termos de uso e política de privacidade para lojistas.
+                          </Label>
+                        </div>
+                        {form.formState.errors.lojista?.termos && (
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {form.formState.errors.lojista.termos.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Passo 6: Pagamento */}
+                  {currentStep === 6 && (
+                    <div className="space-y-8">
+                      <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-2xl text-white space-y-4">
+                        <div className="flex items-center gap-3">
+                          <CreditCard size={32} className="text-indigo-200" />
+                          <h3 className="text-2xl font-bold">Plano Free</h3>
+                        </div>
+                        <p className="text-indigo-100">
+                          Você está se cadastrando no plano <strong className="text-white">Free</strong> por tempo limitado.
+                        </p>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <span className="text-sm">Cadastro de produtos ilimitado</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <span className="text-sm">Visibilidade no marketplace</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={16} className="text-emerald-300" />
+                            <span className="text-sm">Painel de vendas básico</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label className="text-lg font-bold">Forma de Pagamento</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div 
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                              form.watch('lojista.metodo_pagamento') === 'mercado_pago' 
+                                ? 'border-indigo-600 bg-indigo-50' 
+                                : 'border-zinc-200 hover:border-zinc-300'
+                            }`}
+                            onClick={() => form.setValue('lojista.metodo_pagamento', 'mercado_pago')}
+                          >
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center">
+                                <CreditCard className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-zinc-900">Mercado Pago</p>
+                                <p className="text-xs text-zinc-500">Cartão de crédito e boleto</p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-zinc-600">
+                              Pagamento automático mensal. Você receberá um link de pagamento por e-mail.
+                            </p>
+                          </div>
+
+                          <div 
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                              form.watch('lojista.metodo_pagamento') === 'pix_manual' 
+                                ? 'border-indigo-600 bg-indigo-50' 
+                                : 'border-zinc-200 hover:border-zinc-300'
+                            }`}
+                            onClick={() => form.setValue('lojista.metodo_pagamento', 'pix_manual')}
+                          >
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="h-10 w-10 rounded-lg bg-emerald-600 flex items-center justify-center">
+                                <Upload className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-zinc-900">PIX Manual</p>
+                                <p className="text-xs text-zinc-500">Envio de comprovante</p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-zinc-600">
+                              Você receberá a chave PIX e deverá enviar o comprovante de pagamento mensalmente.
+                            </p>
+                          </div>
+                        </div>
+                        {form.formState.errors.lojista?.metodo_pagamento && (
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <AlertCircle size={12} /> {form.formState.errors.lojista.metodo_pagamento.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="p-6 border-2 border-dashed rounded-2xl text-center space-y-3">
+                        <ShoppingBag size={48} className="mx-auto text-zinc-300" />
+                        <h3 className="text-xl font-bold">Próximos Passos</h3>
+                        <p className="text-sm text-zinc-500">
+                          Após confirmar seu e-mail, você poderá:
+                        </p>
+                        <ul className="text-sm text-zinc-600 space-y-1">
+                          <li>• Cadastrar seus produtos</li>
+                          <li>• Configurar formas de pagamento</li>
+                          <li>• Gerenciar pedidos e entregas</li>
+                        </ul>
                       </div>
                     </div>
                   )}
@@ -645,33 +1219,36 @@ export function MarketplaceCadastroPage() {
 
           {/* Footer Navigation */}
           <div className="p-8 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between">
-            <Button 
-              title="Voltar para o passo anterior"
-              variant="outline" 
-              onClick={currentStep === 1 ? () => navigate('/login') : prevStep}
+            <Button
+              variant="outline"
+              onClick={prevStep}
               className="px-6"
+              disabled={isSubmitting}
             >
-              <ChevronLeft size={20} className="mr-1" /> 
+              <ChevronLeft size={20} className="mr-1" />
               {currentStep === 1 ? 'Cancelar' : 'Anterior'}
             </Button>
 
             {currentStep < steps.length ? (
-              <Button 
-                title="Ir para o próximo passo"
-                onClick={nextStep} 
+              <Button
+                onClick={nextStep}
                 className="bg-zinc-900 hover:bg-zinc-800 text-white px-8"
+                disabled={isSubmitting}
               >
                 Próximo <ChevronRight size={20} className="ml-1" />
               </Button>
             ) : (
-              <Button 
-                title="Finalizar e criar conta"
-                type="submit" 
+              <Button
+                type="submit"
                 form="registration-form"
                 disabled={isSubmitting}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 shadow-lg shadow-indigo-100"
               >
-                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando Conta...</> : 'Finalizar Cadastro'}
+                {isSubmitting ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando Conta...</>
+                ) : (
+                  <><CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Cadastro</>
+                )}
               </Button>
             )}
           </div>
