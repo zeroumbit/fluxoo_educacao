@@ -506,10 +506,12 @@ export function DashboardPageWeb() {
     possuiFilial: dashboardData?.onboarding?.possuiFilial,
     possuiTurma: dashboardData?.onboarding?.possuiTurma,
     possuiAluno: dashboardData?.onboarding?.possuiAluno,
+    configFinanceira: dashboardData?.onboarding?.configFinanceira,
+    autorizacoes: dashboardData?.onboarding?.autorizacoes,
   }
 
   if ((userRole === 'gestor' || userRole === 'funcionario') && dashboardData?.onboarding) {
-    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma
+    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma || !onboardingStatus.possuiAluno || !onboardingStatus.configFinanceira || !onboardingStatus.autorizacoes
   }
 
   if (isLoading) {
@@ -635,7 +637,9 @@ export function DashboardPageWeb() {
           perfilCompleto: !!onboardingStatus?.perfilCompleto,
           possuiFilial: !!onboardingStatus?.possuiFilial,
           possuiTurma: !!onboardingStatus?.possuiTurma,
-          possuiAluno: !!onboardingStatus?.possuiAluno
+          possuiAluno: !!onboardingStatus?.possuiAluno,
+          configFinanceira: !!onboardingStatus?.configFinanceira,
+          autorizacoes: !!onboardingStatus?.autorizacoes
         }} />
       )}
 

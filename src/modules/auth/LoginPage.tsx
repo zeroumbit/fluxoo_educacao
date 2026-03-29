@@ -255,6 +255,16 @@ export function LoginPage() {
                   Clique aqui e crie uma conta
                 </Link>
               </p>
+
+              <p className="text-sm text-muted-foreground text-center pt-2">
+                Venda produtos ou preste serviços{' '}
+                <Link
+                  to="/marketplace/cadastro"
+                  className="text-indigo-600 hover:text-indigo-500 font-medium transition-colors"
+                >
+                  Clique aqui e crie uma conta
+                </Link>
+              </p>
             </div>
           </form>
 

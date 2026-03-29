@@ -34,10 +34,10 @@ const superAdminNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Escolas', href: '/admin/escolas', icon: Building2 },
   { name: 'Marketplace', href: '/admin/marketplace', icon: ShoppingBag },
-  { name: 'Planos & Módulos', href: '/admin/planos', icon: ClipboardList },
+  { name: 'Planos', href: '/admin/planos', icon: ClipboardList },
   { name: 'Faturas', href: '/admin/faturas', icon: FileText },
   { name: 'Upgrades', href: '/admin/upgrades', icon: ArrowUpCircle },
-  { name: 'Config. Recebimento', href: '/admin/config-recebimento', icon: QrCode },
+  { name: 'Configurações gerais', href: '/admin/config-recebimento', icon: QrCode },
   { name: 'Logs', href: '/admin/logs', icon: History },
 ]
 

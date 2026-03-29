@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, ArrowRight, X, Building2, BookOpen, Users, UserCog } from 'lucide-react'
+import { CheckCircle2, ArrowRight, X, Building2, BookOpen, Users, UserCog, Wallet, FileCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +12,8 @@ interface OnboardingGuideProps {
     possuiFilial: boolean
     possuiTurma: boolean
     possuiAluno: boolean
+    configFinanceira: boolean
+    autorizacoes: boolean
   }
 }
 
@@ -50,6 +52,22 @@ export function OnboardingGuide({ status }: OnboardingGuideProps) {
       href: '/alunos/novo',
       done: status.possuiAluno,
       icon: Users,
+    },
+    {
+      id: 'financeiro',
+      title: 'Configurar Financeiro',
+      description: 'Ative cobranças automáticas e configure dados de pagamento.',
+      href: '/configuracoes',
+      done: status.configFinanceira,
+      icon: Wallet,
+    },
+    {
+      id: 'autorizacoes',
+      title: 'Configurar Autorizações',
+      description: 'Defina modelos de autorizações para saída e atividades.',
+      href: '/autorizacoes',
+      done: status.autorizacoes,
+      icon: FileCheck,
     },
   ]
 

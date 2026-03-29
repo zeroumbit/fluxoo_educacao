@@ -805,6 +805,33 @@ export type Certificacao = {
   carga_horaria?: number
 }
 
+// ========== LOJISTAS ==========
+export type Lojista = {
+  id: string
+  user_id: string
+  razao_social: string
+  nome_fantasia: string | null
+  cnpj: string
+  email: string | null
+  telefone: string | null
+  categoria: string | null
+  descricao: string | null
+  plano_id: string
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export type LojistaInsert = Omit<Lojista, 'id' | 'created_at' | 'updated_at' | 'plano_id' | 'status'> & {
+  id?: string
+  plano_id?: string
+  status?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type LojistaUpdate = Partial<LojistaInsert>
+
 export type Curriculo = {
   id: string
   user_id: string
@@ -822,6 +849,10 @@ export type Curriculo = {
   observacoes: string | null
   is_publico: boolean
   is_ativo: boolean
+  busca_vaga: boolean
+  presta_servico: boolean
+  telefone: string | null
+  cpf: string | null
   created_at: string
   updated_at: string
 }
@@ -835,7 +866,7 @@ export type CurriculoInsert = Omit<Curriculo, 'id' | 'created_at' | 'updated_at'
 export type CurriculoUpdate = Partial<CurriculoInsert>
 
 // ========== AUTH TYPES ==========
-export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel'
+export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
 
 export type Database = {
   public: {
@@ -881,6 +912,7 @@ export type Database = {
       overrides_financeiros: { Row: OverrideFinanceiro; Insert: OverrideFinanceiroInsert; Update: OverrideFinanceiroUpdate; Relationships: any[] }
       alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: any; Relationships: any[] }
       curriculos: { Row: Curriculo; Insert: CurriculoInsert; Update: CurriculoUpdate; Relationships: any[] }
+      lojistas: { Row: Lojista; Insert: LojistaInsert; Update: LojistaUpdate; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }

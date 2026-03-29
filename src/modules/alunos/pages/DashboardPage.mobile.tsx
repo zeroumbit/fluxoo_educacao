@@ -333,10 +333,12 @@ export function DashboardPageMobile() {
     possuiFilial: displayData?.onboarding?.possuiFilial,
     possuiTurma: displayData?.onboarding?.possuiTurma,
     possuiAluno: displayData?.onboarding?.possuiAluno,
+    configFinanceira: displayData?.onboarding?.configFinanceira,
+    autorizacoes: displayData?.onboarding?.autorizacoes,
   }
 
   if ((userRole === 'gestor' || userRole === 'funcionario') && displayData?.onboarding) {
-    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma
+    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma || !onboardingStatus.possuiAluno || !onboardingStatus.configFinanceira || !onboardingStatus.autorizacoes
   }
 
   const onRefresh = async () => { await refetch() }
@@ -399,7 +401,9 @@ export function DashboardPageMobile() {
                   perfilCompleto: !!onboardingStatus?.perfilCompleto,
                   possuiFilial: !!onboardingStatus?.possuiFilial,
                   possuiTurma: !!onboardingStatus?.possuiTurma,
-                  possuiAluno: !!onboardingStatus?.possuiAluno
+                  possuiAluno: !!onboardingStatus?.possuiAluno,
+                  configFinanceira: !!onboardingStatus?.configFinanceira,
+                  autorizacoes: !!onboardingStatus?.autorizacoes
                 }} />
               </div>
             )}

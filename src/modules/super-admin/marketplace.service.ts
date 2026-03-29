@@ -6,6 +6,7 @@ export interface MarketplaceCategory {
     descricao: string | null
     icone: string
     ativo: boolean
+    subcategorias?: string[]
     created_at: string
 }
 
@@ -20,10 +21,10 @@ export const marketplaceService = {
         return data || []
     },
 
-    async cadastrarCategoria(nome: string, descricao: string, icone: string): Promise<MarketplaceCategory> {
+    async cadastrarCategoria(nome: string, descricao: string, icone: string, subcategorias: string[] = [], ativo: boolean = true): Promise<MarketplaceCategory> {
         const { data, error } = await (supabase
             .from('marketplace_categorias' as any) as any)
-            .insert([{ nome, descricao, icone }])
+            .insert([{ nome, descricao, icone, subcategorias, ativo }])
             .select()
             .single()
         
@@ -43,12 +44,33 @@ export const marketplaceService = {
         return data
     },
 
-    async removerCategoria(id: string): Promise<void> {
-        const { error } = await (supabase
-            .from('marketplace_categorias' as any) as any)
-            .delete()
-            .eq('id', id)
-        
-        if (error) throw error
-    }
+  async removerCategoria(id: string): Promise<void> {
+    const { error } = await (supabase
+      .from('marketplace_categorias' as any) as any)
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
+  },
+
+  async listarLojistas() {
+    const { data, error } = await (supabase
+      .from('lojistas' as any) as any)
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  },
+
+  async listarProfissionais() {
+    const { data, error } = await (supabase
+      .from('curriculos' as any) as any)
+      .select('*, usuarios_sistema(email_login)')
+      .or('busca_vaga.eq.true,presta_servico.eq.true')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  }
 }

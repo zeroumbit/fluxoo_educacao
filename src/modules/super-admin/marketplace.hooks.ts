@@ -12,8 +12,8 @@ export function useMarketplaceCategorias() {
 export function useCriarCategoria() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: ({ nome, descricao, icone }: { nome: string; descricao: string; icone: string }) => 
-            marketplaceService.cadastrarCategoria(nome, descricao, icone),
+        mutationFn: (data: { nome: string; descricao: string; icone: string; subcategorias?: string[]; ativo?: boolean }) => 
+            marketplaceService.cadastrarCategoria(data.nome, data.descricao, data.icone, data.subcategorias, data.ativo),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['marketplace_categorias'] })
             toast.success('Categoria criada com sucesso!')
@@ -48,7 +48,21 @@ export function useExcluirCategoria() {
             toast.success('Categoria removida!')
         },
         onError: (error: any) => {
-            toast.error(`Erro ao remover: ${error.message}`)
-        }
-    })
+      toast.error(`Erro ao remover: ${error.message}`)
+    }
+  })
+}
+
+export function useLojistas() {
+  return useQuery({
+    queryKey: ['marketplace_lojistas'],
+    queryFn: () => marketplaceService.listarLojistas()
+  })
+}
+
+export function useProfissionais() {
+  return useQuery({
+    queryKey: ['marketplace_profissionais'],
+    queryFn: () => marketplaceService.listarProfissionais()
+  })
 }

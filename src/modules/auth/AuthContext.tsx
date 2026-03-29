@@ -20,7 +20,7 @@ export interface AuthUser {
   user: User
   session: Session
   tenantId: string
-  role: 'gestor' | 'responsavel' | 'super_admin' | 'funcionario'
+  role: 'gestor' | 'responsavel' | 'super_admin' | 'funcionario' | 'lojista' | 'profissional'
   funcionarioId?: string
   responsavelId?: string
   perfilId?: string

@@ -56,7 +56,7 @@ export function ConfigRecebimentoPage() {
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Configuração de Recebimento</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Configurações gerais</h1>
         <p className="text-muted-foreground mt-1">Configure os dados de PIX Manual para recebimentos offline.</p>
       </div>
 

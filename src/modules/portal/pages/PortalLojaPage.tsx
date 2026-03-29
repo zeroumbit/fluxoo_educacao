@@ -212,6 +212,7 @@ export function PortalLojaPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCartOpen, setIsCartOpen] = useState(false)
 
   // Efeito para simular carregamento inicial da loja e melhorar UX
   useEffect(() => {
@@ -306,7 +307,10 @@ export function PortalLojaPage() {
             <button className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:shadow-md transition-all">
               <Heart size={22} />
             </button>
-            <button className="h-12 px-6 rounded-2xl bg-slate-900 text-white flex items-center justify-center gap-3 hover:bg-teal-600 shadow-xl shadow-slate-200 transition-all group">
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="h-12 px-6 rounded-2xl bg-slate-900 text-white flex items-center justify-center gap-3 hover:bg-teal-600 shadow-xl shadow-slate-200 transition-all group active:scale-95"
+            >
               <ShoppingBag size={20} />
               <span className="font-bold text-sm tracking-wide">Meus Itens</span>
               <div className="bg-teal-500 text-white text-[10px] font-black h-5 w-5 rounded-lg flex items-center justify-center">2</div>
@@ -314,25 +318,25 @@ export function PortalLojaPage() {
           </div>
         </div>
 
-        {/* Secondary Menu (Categorias) */}
-        <nav className="flex items-center justify-center gap-8 py-2">
+        {/* Secondary Menu (Categorias) - Alinhado à esquerda na WEB */}
+        <nav className="flex items-center justify-start gap-8 py-2 overflow-x-auto scrollbar-hide scroll-smooth">
           {[
             { id: 'livros', label: 'Livros', icon: BookOpen },
-            { id: 'materiais', label: 'materiais escolares', icon: Tag },
-            { id: 'vestuario', label: 'Vestuario', icon: Shirt },
+            { id: 'materiais', label: 'Materiais escolares', icon: Tag },
+            { id: 'vestuario', label: 'Vestuário', icon: Shirt },
             { id: 'serviços', label: 'Serviços educacionais', icon: GraduationCap }
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id as any)}
               className={cn(
-                "flex items-center gap-2 text-sm font-bold transition-all hover:text-teal-600 group",
+                "flex items-center gap-2 text-sm font-bold transition-all hover:text-teal-600 group shrink-0",
                 activeCategory === cat.id ? "text-teal-600 scale-105" : "text-slate-500"
               )}
             >
               <cat.icon size={16} className={cn("transition-colors", activeCategory === cat.id ? "text-teal-500" : "text-slate-400 group-hover:text-teal-500")} />
-              {cat.label}
-              <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 -translate-y-1 transition-all" />
+              <span className="whitespace-nowrap italic">{cat.label}</span>
+              <ChevronDown size={14} className={cn("transition-all text-slate-300", activeCategory === cat.id ? "text-teal-500 rotate-180" : "group-hover:text-teal-500")} />
             </button>
           ))}
         </nav>
@@ -345,7 +349,7 @@ export function PortalLojaPage() {
             <section key={section.id} className="flex flex-col gap-8">
               <div className="flex items-end justify-between px-2">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">{section.title}</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none italic uppercase">{section.title}</h2>
                   <p className="text-sm font-bold text-slate-400 italic">Principais itens recomendados para sua família</p>
                 </div>
                 <button 
@@ -356,10 +360,10 @@ export function PortalLojaPage() {
                 </button>
               </div>
 
-              {/* Grid de Ofertas/Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {/* Grid de Ofertas/Cards - 5 CAIXAS POR COLUNA HORIZONTAL NO DESKTOP */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                 {/* O primeiro card é um banner/promo da seção no sketch */}
-                <div className="col-span-1 border border-slate-100 rounded-[32px] overflow-hidden bg-slate-50 min-h-[320px] relative group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500">
+                <div className="col-span-1 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50 min-h-[320px] relative group cursor-pointer shadow-sm hover:shadow-xl transition-all duration-500">
                    <img src={section.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
                    <div className="absolute bottom-8 left-8 right-8">
@@ -378,8 +382,8 @@ export function PortalLojaPage() {
           ))}
         </div>
       ) : (
-        /* 3. Grid de Busca/Resultados */
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        /* 3. Grid de Busca/Resultados - 5 COLUNAS NO DESKTOP */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((product, idx) => (
               <StoreSearchCard key={product.id} product={product} onClick={() => handleProductClick(product)} index={idx} />
@@ -387,7 +391,7 @@ export function PortalLojaPage() {
           </AnimatePresence>
 
           {filteredProducts.length === 0 && (
-            <div className="col-span-full py-32 text-center space-y-8 bg-slate-50/50 rounded-[56px] border-4 border-dashed border-slate-100 mx-1 focus:outline-none">
+            <div className="col-span-full py-32 text-center space-y-8 bg-slate-50/50 rounded-3xl border-4 border-dashed border-slate-100 mx-1 focus:outline-none">
               <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-100">
                 <Search size={48} />
               </div>
@@ -401,14 +405,13 @@ export function PortalLojaPage() {
         </div>
       )}
 
-      {/* 4. Banner Institucional */}
-      <div className="bg-slate-900 rounded-[48px] p-12 md:p-16 text-white relative overflow-hidden group shadow-2xl mt-8">
-         {/* ... rest of the code ... */}\
+      {/* 4. Banner Institucional - Menos Arredondado */}
+      <div className="bg-slate-900 rounded-3xl p-12 md:p-16 text-white relative overflow-hidden group shadow-2xl mt-8">
          <div className="absolute right-0 top-0 p-16 opacity-5 -mr-24 -mt-24 rotate-12 transition-transform group-hover:scale-110 duration-1000 pointer-events-none">
             <Package size={450} />
          </div>
          <div className="flex flex-col md:flex-row items-center gap-12 relative z-10 text-center md:text-left">
-            <div className="w-20 h-20 rounded-[32px] bg-teal-500/20 backdrop-blur-md flex items-center justify-center text-teal-400 shrink-0 border border-teal-500/30 shadow-2xl">
+            <div className="w-20 h-20 rounded-2xl bg-teal-500/20 backdrop-blur-md flex items-center justify-center text-teal-400 shrink-0 border border-teal-500/30 shadow-2xl">
                <ShieldCheck size={40} />
             </div>
             <div className="space-y-4 grow">
@@ -417,11 +420,75 @@ export function PortalLojaPage() {
                  Todos os itens e serviços listados possuem curadoria pedagógica e validação direta da rede de ensino para sua segurança total.
                </p>
             </div>
-            <Button className="h-16 px-12 rounded-[24px] bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-teal-500 hover:text-white transition-all active:scale-95 shadow-2xl border-0 shrink-0">
+            <Button className="h-16 px-12 rounded-xl bg-white text-slate-900 font-black text-xs uppercase tracking-widest hover:bg-teal-500 hover:text-white transition-all active:scale-95 shadow-2xl border-0 shrink-0">
               Histórico de Pedidos
             </Button>
          </div>
       </div>
+
+      {/* 5. Carrinho / Meus Itens Drawer */}
+      <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-hidden bg-slate-50 border-0 flex flex-col">
+          <SheetHeader className="p-6 bg-white border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                <ShoppingBag size={24} className="text-teal-500" /> Meus Itens
+              </SheetTitle>
+              <Badge className="bg-teal-100 text-teal-600 border-0 font-bold px-3 py-1 uppercase">2 Itens</Badge>
+            </div>
+            <SheetDescription className="text-slate-400 font-bold italic">Gerencie seu carrinho e finalize sua compra com segurança institucional.</SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+            {/* Simulando Itens no Carrinho */}
+            {[PRODUCTS[0], PRODUCTS[2]].map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md animate-in slide-in-from-right duration-500">
+                <div className="h-20 w-20 rounded-xl overflow-hidden shrink-0 border border-slate-50">
+                  <img src={item.image} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h4 className="text-sm font-bold text-slate-800 line-clamp-1 italic">{item.name}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{item.category}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-black text-teal-600">R$ {item.price_promocional?.toFixed(2) || item.price.toFixed(2)}</p>
+                    <div className="flex items-center gap-2">
+                       <button className="h-6 w-6 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center font-bold hover:bg-slate-200 transition-colors">-</button>
+                       <span className="text-xs font-black">1</span>
+                       <button className="h-6 w-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold hover:bg-teal-600 transition-colors">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-6 bg-white border-t border-slate-100 space-y-6 mt-auto">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-slate-400 italic">Subtotal</span>
+                <span className="font-black text-slate-800">R$ 299,80</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-slate-400 italic">Frete</span>
+                <span className="font-black text-emerald-500 uppercase tracking-widest text-[10px]">Entrega Institucional Grátis</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <span className="text-lg font-black italic uppercase tracking-tighter">Total Geral</span>
+                <span className="text-2xl font-black text-teal-600 tracking-tight">R$ 299,80</span>
+              </div>
+            </div>
+            
+            <Button className="w-full h-16 bg-slate-900 hover:bg-teal-600 text-white rounded-2xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 transition-all active:scale-95 border-0">
+              Ir para o Checkout
+            </Button>
+            
+            <p className="text-[10px] text-center text-slate-400 font-bold leading-relaxed italic">
+              Seus itens estão reservados por tempo limitado. <br/>
+              Finalize para garantir os estoques institucionais.
+            </p>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* 4. Detalhes do Produto - Versão Híbrida (Dialog Web / Sheet Mobile) */}
       {isMobile ? (
@@ -629,9 +696,9 @@ function StoreHomeCard({ product, onClick, index }: { product: Product, onClick:
       className="group"
       onClick={onClick}
     >
-      <div className="bg-white rounded-[32px] border border-slate-100 p-3 h-full flex flex-col gap-3 shadow-sm hover:shadow-xl hover:border-teal-100 transition-all duration-300">
+      <div className="bg-white rounded-2xl border border-slate-100 p-3 h-full flex flex-col gap-3 shadow-sm hover:shadow-xl hover:border-teal-100 transition-all duration-300">
         {/* Imagem (aspecto 4/5) */}
-        <div className="aspect-[4/5] rounded-[24px] overflow-hidden bg-slate-50 relative">
+        <div className="aspect-[4/5] rounded-xl overflow-hidden bg-slate-50 relative">
           <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           
           {/* Botão de Favoritar (Top Right) */}
@@ -700,7 +767,7 @@ function StoreSearchCard({ product, onClick, index }: { product: Product, onClic
       className="group"
       onClick={onClick}
     >
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer">
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer">
         {/* Visual Area */}
         <div className="h-48 relative overflow-hidden bg-slate-50">
           <img

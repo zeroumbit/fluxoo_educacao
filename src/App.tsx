@@ -29,6 +29,7 @@ const MuralPage = lazy(() => import('@/modules/comunicacao/pages/MuralPage').the
 const FinanceiroPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroPage').then(m => ({ default: m.FinanceiroPage })))
 const FiliaisPage = lazy(() => import('@/modules/filiais/pages/FiliaisPage').then(m => ({ default: m.FiliaisPage })))
 const EscolaCadastroPage = lazy(() => import('@/modules/escolas/pages/EscolaCadastroPage').then(m => ({ default: m.EscolaCadastroPage })))
+const MarketplaceCadastroPage = lazy(() => import('@/modules/marketplace/pages/MarketplaceCadastroPage').then(m => ({ default: m.MarketplaceCadastroPage })))
 
 const LivrosPage = lazy(() => import('@/modules/livros/pages/LivrosPage').then(m => ({ default: m.LivrosPage })))
 const FuncionariosPage = lazy(() => import('@/modules/funcionarios/pages/FuncionariosPage').then(m => ({ default: m.FuncionariosPage })))
@@ -155,6 +156,9 @@ function App() {
             {/* Cadastro de Escola - Público */}
             <Route path="/cadastro" element={<EscolaCadastroPage />} />
 
+            {/* Cadastro de Lojistas e Profissionais - Público */}
+            <Route path="/marketplace/cadastro" element={<MarketplaceCadastroPage />} />
+
             {/* Termos de Uso - Público */}
             <Route path="/termos-de-uso" element={<TermosUsoPage />} />
             <Route path="/politica-privacidade" element={<PrivacidadePage />} />
@@ -181,7 +185,7 @@ function App() {
             {/* Admin Routes (School) */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={['gestor', 'admin', 'funcionario']}>
+                <ProtectedRoute allowedRoles={['gestor', 'admin', 'funcionario', 'lojista', 'profissional']}>
                   <AdminLayout />
                 </ProtectedRoute>
               }

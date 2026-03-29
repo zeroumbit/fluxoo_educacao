@@ -34,7 +34,8 @@ import {
   CarFront,
   Home,
   Bell,
-  FileUser
+  FileUser,
+  Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -43,6 +44,7 @@ import { usePermissions } from '@/providers/RBACProvider'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { useEscola } from '@/modules/escolas/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMarketplaceCategorias } from '@/modules/super-admin/marketplace.hooks'
 
 const navigationGroups = [
   {
@@ -118,11 +120,15 @@ function SidebarContent({
   const metodo = dashboardData?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'
 
+  const { data: mCategorias } = useMarketplaceCategorias()
+
   const isGestor = authUser?.isGestor || isSuperAdmin
   const isProfessor = authUser?.isProfessor
+  const isLojista = authUser?.role === 'lojista'
+  const isProfissional = authUser?.role === 'profissional'
 
   // Filtrar grupos que possuem pelo menos um item permitido
-  const visibleGroups = navigationGroups
+  let visibleGroups = navigationGroups
     .map(group => {
       // Regras de negócio restritivas: Professores NUNCA veem Financeiro ou Gestão
       if (isProfessor && (group.label === 'Financeiro' || group.label === 'Gestão' || group.label === 'Configurações')) {
@@ -133,6 +139,55 @@ function SidebarContent({
       return { ...group, items }
     })
     .filter(group => group.items.length > 0)
+
+  // Adicionar Grupos Específicos para Marketplace Partners
+  if (isLojista) {
+    visibleGroups = [
+      {
+        label: 'Minha Loja',
+        items: [
+          { name: 'Dashboard', href: '/loja/dashboard', icon: LayoutDashboard, permission: 'all' },
+          { name: 'Meus Produtos', href: '/loja/produtos', icon: Package, permission: 'all' },
+          { name: 'Minhas Vendas', href: '/loja/vendas', icon: Wallet, permission: 'all' },
+        ]
+      },
+      {
+        label: 'Categorias Permitidas',
+        items: (mCategorias || [])
+          .filter(c => c.ativo)
+          .map(c => ({
+            name: c.nome,
+            href: `/loja/produtos?categoria=${c.id}`,
+            icon: Package,
+            permission: 'all'
+          }))
+      }
+    ]
+  }
+
+  if (isProfissional) {
+    visibleGroups = [
+      {
+        label: 'Meu Perfil',
+        items: [
+          { name: 'Meu Currículo', href: '/profissional/curriculo', icon: FileUser, permission: 'all' },
+          { name: 'Buscar Vagas', href: '/profissional/vagas', icon: Search, permission: 'all' },
+          { name: 'Meus Serviços', href: '/profissional/servicos', icon: Settings, permission: 'all' },
+        ]
+      },
+      {
+        label: 'Categorias de Atuação',
+        items: (mCategorias || [])
+          .filter(c => c.ativo)
+          .map(c => ({
+            name: c.nome,
+            href: `/profissional/servicos?categoria=${c.id}`,
+            icon: Briefcase,
+            permission: 'all'
+          }))
+      }
+    ]
+  }
 
   // Só bloqueia se os dados foram carregados e o status atual for manual + não ativo
   const isBlocked = !isLoadingDashboard && !!dashboardData && status !== 'ativa' && isManual

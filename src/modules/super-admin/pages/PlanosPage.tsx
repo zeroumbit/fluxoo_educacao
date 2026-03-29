@@ -113,7 +113,7 @@ export function PlanosPage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <Puzzle className="h-8 w-8 text-indigo-600" />
-            Planos & Módulos
+            Planos
           </h1>
           <p className="text-slate-500 font-medium">Catálogo comercial com funcionalidades atreladas a cada plano.</p>
         </div>

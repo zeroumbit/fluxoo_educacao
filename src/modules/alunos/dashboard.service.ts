@@ -30,6 +30,8 @@ export interface DashboardData {
     possuiFilial: boolean
     possuiTurma: boolean
     possuiAluno: boolean
+    configFinanceira: boolean
+    autorizacoes: boolean
   }
   radarEvasao: RadarAluno[]
   alunosSemMatricula: number
@@ -178,6 +180,19 @@ export const dashboardService = {
         (a.cobrancas_atrasadas + a.faltas_consecutivas)
     )
 
+    // Buscar configurações financeiras e de autorizações
+    const configFinanceiraRes = await supabase
+      .from('config_financeira')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
+    const autorizacoesRes = await supabase
+      .from('autorizacoes_modelos')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
     return {
       totalAlunosAtivos: alunosRes.count || 0,
       limiteAlunos: professorId ? (alunosRes.count || 0) : escola.limite_alunos_contratado || 0,
@@ -191,6 +206,8 @@ export const dashboardService = {
         possuiFilial: professorId ? true : (filiaisRes.count || 0) > 0,
         possuiTurma: professorId ? true : (turmasRes.count || 0) > 0,
         possuiAluno: professorId ? true : (alunosRes.count || 0) > 0,
+        configFinanceira: professorId ? true : !!(configFinanceiraRes.data),
+        autorizacoes: professorId ? true : !!(autorizacoesRes.data),
       },
       radarEvasao: radarData,
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),
