@@ -19,3 +19,12 @@ export function useDashboard() {
     staleTime: 30000, // Aumentado para 30s
   })
 }
+export function useRadarCompleto() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['radar-completo', authUser?.tenantId],
+    queryFn: () => dashboardService.buscarRadarCompleto(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 60000,
+  })
+}

@@ -6,6 +6,7 @@ export interface RadarAluno {
   nome_completo: string
   faltas_consecutivas: number
   cobrancas_atrasadas: number
+  motivo_principal?: string
 }
 
 export interface AvisoRecente {
@@ -83,13 +84,22 @@ export const dashboardService = {
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
       (async () => {
+         // Data atual para filtro de vigência (YYYY-MM-DD)
+         const hoje = new Date()
+         hoje.setHours(0, 0, 0, 0)
+         const hojeStr = hoje.toISOString().split('T')[0]
+
          // Filtra mural: Global OU das turmas do professor
+         // Apenas avisos ATIVOS: dentro do período de vigência (data_inicio <= hoje <= data_fim)
          // Se professor não tem turmas, retorna apenas avisos globais
          if (professorId && idsTurmasProfessor.length === 0) {
             const { data, error } = await supabase.from('mural_avisos' as any)
               .select('*, turmas(nome)')
               .eq('tenant_id', tenantId)
               .is('turma_id', null)
+              // Vigência: data_inicio <= hoje (ou null) E (data_fim >= hoje OU data_fim é null)
+              .or(`data_inicio.is.null,data_inicio.lte.${hojeStr}`)
+              .or(`data_fim.is.null,data_fim.gte.${hojeStr}`)
               .order('created_at' as any, { ascending: false } as any)
               .limit(6)
             return { data: data as any[], error }
@@ -101,12 +111,18 @@ export const dashboardService = {
              .select('*, turmas(nome)')
              .eq('tenant_id', tenantId)
              .is('turma_id', null)
+             // Vigência: data_inicio <= hoje (ou null) E (data_fim >= hoje OU data_fim é null)
+             .or(`data_inicio.is.null,data_inicio.lte.${hojeStr}`)
+             .or(`data_fim.is.null,data_fim.gte.${hojeStr}`)
              .limit(6),
            idsTurmasProfessor.length > 0
              ? supabase.from('mural_avisos' as any)
                  .select('*, turmas(nome)')
                  .eq('tenant_id', tenantId)
                  .in('turma_id', idsTurmasProfessor)
+                 // Vigência: data_inicio <= hoje (ou null) E (data_fim >= hoje OU data_fim é null)
+                 .or(`data_inicio.is.null,data_inicio.lte.${hojeStr}`)
+                 .or(`data_fim.is.null,data_fim.gte.${hojeStr}`)
                  .limit(6)
              : Promise.resolve({ data: [] })
          ])
@@ -212,5 +228,14 @@ export const dashboardService = {
       radarEvasao: radarData,
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),
     }
+  },
+
+  async buscarRadarCompleto(tenantId: string): Promise<RadarAluno[]> {
+    if (!tenantId) throw new Error('Tenant ID não fornecido.')
+    const { data } = await (supabase.from('vw_radar_evasao' as any) as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('cobrancas_atrasadas', { ascending: false })
+    return data || []
   },
 }

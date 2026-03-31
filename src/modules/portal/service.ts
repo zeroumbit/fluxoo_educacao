@@ -170,7 +170,7 @@ export const portalService = {
         .in('status', ['a_vencer', 'atrasado', 'pago'])
       ,
       // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
-      // Filtro no banco: data_fim null OU >= hoje
+      // Filtro no banco: (data_inicio null OU <= hoje) E (data_fim null OU >= hoje)
       (supabase.from('mural_avisos' as any) as any)
         .select(`
           id,
@@ -180,9 +180,11 @@ export const portalService = {
           turma_id,
           publico_alvo,
           data_fim,
+          data_inicio,
           turma:turmas(nome)
         `)
         .eq('tenant_id', tenantId)
+        .or(`data_inicio.is.null,data_inicio.lte.${new Date().toISOString().split('T')[0]}`)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .order('created_at', { ascending: false })
         .limit(20),
@@ -235,7 +237,11 @@ export const portalService = {
         return false // Não é para este aluno
       }
       
-      // 2. Filtro por data: só mostra se NÃO expirou (data_fim >= hoje OU data_fim inexistente)
+      // 2. Filtro por data: só mostra se DENTRO DO PERÍODO VÁLIDO
+      // data_inicio <= hoje (ou inexistente) E data_fim >= hoje (ou inexistente)
+      if (a.data_inicio && a.data_inicio > hoje) {
+        return false // Ainda não começou (agendado)
+      }
       if (a.data_fim && a.data_fim < hoje) {
         return false // Já expirou
       }
@@ -751,6 +757,8 @@ export const portalService = {
       (supabase.from('mural_avisos' as any) as any)
         .select('id', { count: 'exact', head: true })
         .in('tenant_id', tenantIds)
+        // Apenas avisos ativos: dentro do período de vigência
+        .or(`data_inicio.is.null,data_inicio.lte.${new Date().toISOString().split('T')[0]}`)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()),
       turmaIds.length > 0 ? (supabase.from('atividades' as any) as any)
