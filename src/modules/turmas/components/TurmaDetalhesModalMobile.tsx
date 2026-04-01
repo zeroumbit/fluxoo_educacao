@@ -295,7 +295,7 @@ function TabAlunos({ turma }: { turma: Turma }) {
 function TabProfessores({ turma }: { turma: Turma }) {
   const { authUser } = useAuth()
   const { data: todosProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
-  const { data: todasDisciplinas } = useDisciplinas()
+  const { data: todasDisciplinas } = useDisciplinas(authUser?.tenantId || '', (turma as any).etapa)
   const { data: atribuicoesDb } = useAtribuicoes(turma.id)
   
   const mutationAtribuir = useAtribuirProfessor()
@@ -311,10 +311,12 @@ function TabProfessores({ turma }: { turma: Turma }) {
 
   const atribuicoes = atribuicoesDb || []
   const professores = todosProfessores || []
-  const disciplinas = todasDisciplinas || []
+  // FILTRO DEFINITIVO: apenas disciplinas ativas
+  const disciplinasAtivas = (todasDisciplinas || []).filter(d => d.ativa !== false)
+  const idsAtivas = new Set(disciplinasAtivas.map(d => d.id))
 
-  // Disciplinas sem professor atribuído
-  const disciplinasSemProfessor = disciplinas.filter(d => 
+  // Disciplinas ativas sem professor atribuído
+  const disciplinasSemProfessor = disciplinasAtivas.filter(d => 
     !atribuicoes.some((at: any) => at.disciplina_id === d.id)
   )
 
@@ -369,9 +371,9 @@ function TabProfessores({ turma }: { turma: Turma }) {
           </div>
         ) : null}
 
-        {atribuicoes.map((at: any) => {
+        {atribuicoes.filter((at: any) => idsAtivas.has(at.disciplina_id)).map((at: any) => {
           const professor = professores.find((p: any) => p.id === at.professor_id)
-          const disciplina = disciplinas.find((d: any) => d.id === at.disciplina_id)
+          const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
           if (!professor || !disciplina) return null
 
           return (
@@ -461,7 +463,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
              <div className="h-14 w-full rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 shadow-inner flex items-center px-4">
                <span className="text-[13px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">
-                 {disciplinas.find((d: any) => d.id === selectedDisciplinaId)?.nome || ''}
+                 {disciplinasAtivas.find((d: any) => d.id === selectedDisciplinaId)?.nome || ''}
                </span>
              </div>
            </div>

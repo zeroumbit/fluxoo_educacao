@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -15,7 +15,7 @@ import {
   Plus,
   Loader2
 } from 'lucide-react'
-import { useTurmaStore } from '../store'
+
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useGradeTurma, useSalvarGradeItem, useRemoverGradeItem, useAtribuicoes, useDisciplinas, useProfessoresTurma, useTurma } from '../hooks'
@@ -44,7 +44,6 @@ const HORARIOS = [
 
 export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
   const { authUser } = useAuth()
-  const { setProfessores, setDisciplinas } = useTurmaStore()
   const [isEditing, setIsEditing] = useState(false)
   const [selectedDisciplinaId, setSelectedDisciplinaId] = useState<string | null>(null)
 
@@ -56,14 +55,6 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
 
   const mutationSalvar = useSalvarGradeItem()
   const mutationRemover = useRemoverGradeItem()
-
-  useEffect(() => {
-    if (dbProfessores) setProfessores(dbProfessores)
-  }, [dbProfessores, setProfessores])
-
-  useEffect(() => {
-    if (dbDisciplinas) setDisciplinas(dbDisciplinas)
-  }, [dbDisciplinas, setDisciplinas])
 
   // Helper values
   const gradeTurma = (gradeTurmaDb || []) as any[]

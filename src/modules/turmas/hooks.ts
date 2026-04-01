@@ -117,8 +117,12 @@ export function useToggleDisciplinaAtiva() {
     mutationFn: ({ disciplinaId, tenantId, isGlobal, ocultar }: { disciplinaId: string, tenantId: string, isGlobal: boolean, ocultar: boolean }) => 
       turmaService.toggleDisciplinaAtiva(disciplinaId, tenantId, isGlobal, ocultar),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['disciplinas', variables.tenantId] })
-      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo', variables.tenantId] })
+      // Invalida TODAS as queries que dependem de disciplinas
+      queryClient.invalidateQueries({ queryKey: ['disciplinas'] })
+      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo'] })
+      // Força refetch das atribuições e grade horária que exibem disciplinas
+      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+      queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
     }
   })
 }

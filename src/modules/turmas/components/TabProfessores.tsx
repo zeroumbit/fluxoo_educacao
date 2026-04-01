@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,7 +14,7 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react'
-import { useTurmaStore } from '../store'
+
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -30,7 +30,6 @@ interface TabProfessoresProps {
 
 export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const { authUser } = useAuth()
-  const { professores, disciplinas, setProfessores, setDisciplinas } = useTurmaStore()
   const [selectedDisciplina, setSelectedDisciplina] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [busca, setBusca] = useState('')
@@ -46,13 +45,9 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const mutationAtribuir = useAtribuirProfessor()
   const mutationRemover = useRemoverAtribuicao()
 
-  useEffect(() => {
-    if (dbProfessores) setProfessores(dbProfessores)
-  }, [dbProfessores, setProfessores])
-
-  useEffect(() => {
-    if (dbDisciplinas) setDisciplinas(dbDisciplinas)
-  }, [dbDisciplinas, setDisciplinas])
+  // Fonte de verdade: React Query (NÃO Zustand store que mantém dados stale)
+  const professores = dbProfessores || []
+  const disciplinas = dbDisciplinas || []
 
   // Atribuições desta turma (vêm do banco)
   const atribuicoes = instituicaoAtribuicoes || []
@@ -60,16 +55,21 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   // FILTRO DE SEGURANÇA: Garantir que apenas disciplinas ativas sejam usadas
   const disciplinasAtivas = disciplinas.filter(d => d.ativa !== false)
 
-  // Filtragem
+  // Mapa de IDs de disciplinas ativas para lookup O(1)
+  const idsAtivas = new Set(disciplinasAtivas.map(d => d.id))
+
+  // Filtragem: EXCLUI atribuições cuja disciplina foi desativada
   const filteredAtribuicoes = atribuicoes.filter((at: any) => {
+    if (!idsAtivas.has(at.disciplina_id)) return false
     const professor = professores.find((p: any) => p.id === at.professor_id)
     const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
+    if (!professor || !disciplina) return false
     const searchTerm = busca.toLowerCase()
-    return professor?.nome.toLowerCase().includes(searchTerm) || 
-           disciplina?.nome.toLowerCase().includes(searchTerm)
+    return professor.nome.toLowerCase().includes(searchTerm) || 
+           disciplina.nome.toLowerCase().includes(searchTerm)
   })
 
-  // Disciplinas que ainda não têm professor (apenas ativas)
+  // Disciplinas ativas que ainda não têm professor
   const disciplinasSemProfessor = disciplinasAtivas.filter(d => 
     !atribuicoes.some((at: any) => at.disciplina_id === d.id) &&
     d.nome.toLowerCase().includes(busca.toLowerCase())
@@ -226,7 +226,7 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
         {/* Professores Vinculados */}
         {filteredAtribuicoes.map((at: any) => {
           const professor = professores.find((p: any) => p.id === at.professor_id)
-          const disciplina = disciplinas.find((d: any) => d.id === at.disciplina_id)
+          const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
           if (!professor || !disciplina) return null
 
           return (
