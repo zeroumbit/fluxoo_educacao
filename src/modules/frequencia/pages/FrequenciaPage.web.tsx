@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useSalvarFrequencias, useFrequenciasPorTurmaData } from '../hooks'
-import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -64,14 +64,15 @@ const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: 
 export function FrequenciaPageWeb() {
   const { authUser } = useAuth()
   const navigate = useNavigate()
-  const { data: turmas } = useTurmas()
-  const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
-  const { data: matriculasAtivas } = useMatriculasAtivas()
-  const salvarFrequencias = useSalvarFrequencias()
   const location = useLocation()
-
+  
   const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
+
+  const { data: turmas } = useTurmas()
+  const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
+  const { data: matriculasAtivas } = useMatriculasAtivasPorTurma(turmaId)
+  const salvarFrequencias = useSalvarFrequencias()
 
   // Queries
   const { data: frequenciasExistentes, isLoading: isLoadingFreq } = useFrequenciasPorTurmaData(turmaId, dataAula)
@@ -104,10 +105,18 @@ export function FrequenciaPageWeb() {
     }
   }, [frequenciasExistentes])
 
-  // Cria um Set com IDs de alunos com matrícula ativa
-  const alunosComMatriculaIds = useMemo(() => {
-    return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
-  }, [matriculasAtivas])
+  // Busca apenas alunos COM VÍNCULO REAL na turma selecionada
+  const alunosDaTurma = useMemo(() => {
+    if (!matriculasAtivas || !alunos) return []
+    
+    // Pega os IDs dos alunos com matrícula ativa nesta turma
+    const alunosIds = new Set(matriculasAtivas.map(m => m.aluno_id))
+    
+    // Filtra apenas os alunos que estão na lista de alunos E têm matrícula na turma
+    return alunos
+      .filter(a => alunosIds.has(a.id) && a.status === 'ativo')
+      .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+  }, [matriculasAtivas, alunos])
 
   const setStatus = (alunoId: string, status: FrequenciaStatus) => {
     setStatusMap((prev) => ({ ...prev, [alunoId]: status }))
@@ -139,7 +148,7 @@ export function FrequenciaPageWeb() {
 
   const marcarTodosPresentes = () => {
     const newMap: Record<string, FrequenciaStatus> = { ...statusMap }
-    alunosComMatricula.forEach(a => {
+    alunosDaTurma.forEach(a => {
       newMap[a.id] = 'presente'
     })
     setStatusMap(newMap)
@@ -156,17 +165,12 @@ export function FrequenciaPageWeb() {
       return
     }
 
-    // Filtra apenas alunos com matrícula ativa
-    const alunosParaSalvar = alunos?.filter(a =>
-      a.status === 'ativo' && alunosComMatriculaIds.has(a.id)
-    ) || []
-
-    if (alunosParaSalvar.length === 0) {
-      toast.error('Nenhum aluno com matrícula ativa encontrado')
+    if (alunosDaTurma.length === 0) {
+      toast.error('Nenhum aluno com matrícula ativa encontrado nesta turma')
       return
     }
 
-    const dados = alunosParaSalvar.map((a) => ({
+    const dados = alunosDaTurma.map((a) => ({
       tenant_id: authUser.tenantId,
       turma_id: turmaId,
       aluno_id: a.id,
@@ -186,20 +190,10 @@ export function FrequenciaPageWeb() {
     }
   }
 
-  const alunosAtivos = useMemo(() => {
-    return (alunos?.filter(a => a.status === 'ativo') || []).map(aluno => ({
-      ...aluno,
-      temMatricula: alunosComMatriculaIds.has(aluno.id),
-    }))
-  }, [alunos, alunosComMatriculaIds])
-
-  const alunosComMatricula = alunosAtivos.filter(a => a.temMatricula)
-  const alunosSemMatricula = alunosAtivos.filter(a => !a.temMatricula)
-
   const contagens = {
-    presente: alunosComMatricula.filter(a => (statusMap[a.id] || 'presente') === 'presente').length,
-    falta: alunosComMatricula.filter(a => statusMap[a.id] === 'falta').length,
-    justificada: alunosComMatricula.filter(a => statusMap[a.id] === 'justificada').length,
+    presente: alunosDaTurma.filter(a => (statusMap[a.id] || 'presente') === 'presente').length,
+    falta: alunosDaTurma.filter(a => statusMap[a.id] === 'falta').length,
+    justificada: alunosDaTurma.filter(a => statusMap[a.id] === 'justificada').length,
   }
 
   if (isLoadingAlunos) {
@@ -294,17 +288,17 @@ export function FrequenciaPageWeb() {
         </div>
       </div>
 
-      {turmaId && alunosSemMatricula.length > 0 && (
-        <Card className="border-0 shadow-lg bg-red-50 ring-1 ring-red-200">
+      {turmaId && alunosDaTurma.length === 0 && (
+        <Card className="border-0 shadow-lg bg-amber-50 ring-1 ring-amber-200">
           <CardContent className="py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-red-800">
-              <FileX className="h-6 w-6 shrink-0" />
+            <div className="flex items-center gap-3 text-amber-800">
+              <AlertCircle className="h-6 w-6 shrink-0" />
               <div>
-                <p className="text-sm font-black uppercase tracking-tight">Alunos sem matrícula ativa ({alunosSemMatricula.length})</p>
-                <p className="text-xs font-medium font-serif italic">Estes alunos não estão disponíveis para registro de frequência.</p>
+                <p className="text-sm font-black uppercase tracking-tight">Nenhum aluno com matrícula ativa nesta turma</p>
+                <p className="text-xs font-medium font-serif italic">Cadastre matrículas ativas para os alunos desta turma.</p>
               </div>
             </div>
-            <Button variant="ghost" className="text-red-700 hover:bg-red-100 font-bold text-xs uppercase underline" onClick={() => (window.location.href = '/matriculas')}>Regularizar Todos</Button>
+            <Button variant="ghost" className="text-amber-700 hover:bg-amber-100 font-bold text-xs uppercase underline" onClick={() => (window.location.href = '/matriculas')}>Gerenciar Matrículas</Button>
           </CardContent>
         </Card>
       )}
@@ -317,7 +311,7 @@ export function FrequenciaPageWeb() {
                 <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
                 <p className="text-slate-500 font-medium font-serif italic">Sincronizando registros existentes...</p>
               </div>
-            ) : alunosComMatricula.length > 0 ? (
+            ) : alunosDaTurma.length > 0 ? (
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-b border-slate-200">
@@ -327,7 +321,7 @@ export function FrequenciaPageWeb() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {alunosComMatricula.map((aluno, index) => {
+                  {alunosDaTurma.map((aluno, index) => {
                     const status = statusMap[aluno.id] || 'presente'
                     const hasJustificativa = !!justificativaMap[aluno.id]
 
@@ -398,8 +392,8 @@ export function FrequenciaPageWeb() {
             ) : (
               <div className="py-24 text-center">
                 <Users className="h-20 w-20 mx-auto mb-6 text-slate-200" />
-                <h3 className="text-xl font-bold text-slate-600">Nenhum aluno ativo nesta turma</h3>
-                <p className="text-slate-400 mt-2">Certifique-se de que os alunos possuem matrículas ativas para o ano letivo.</p>
+                <h3 className="text-xl font-bold text-slate-600">Nenhum aluno com matrícula ativa nesta turma</h3>
+                <p className="text-slate-400 mt-2">Certifique-se de que existem matrículas ativas vinculadas a esta turma.</p>
               </div>
             )}
           </CardContent>

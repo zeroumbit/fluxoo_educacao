@@ -542,29 +542,29 @@ export function MatriculaListPageWeb() {
       <Dialog open={showDetailsModal} onOpenChange={(open: boolean) => !open && setShowDetailsModal(false)}>
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-emerald-600" />
-              Detalhes da Matrícula
-            </DialogTitle>
+              <DialogTitle className="text-xl font-bold tracking-tight">
+                Detalhes da Matrícula
+              </DialogTitle>
+            </div>
+            {selectedMatricula?.status && (
+              <Badge className={`text-[10px] font-black h-7 px-4 rounded-full border-0 w-fit ${
+                selectedMatricula.status === 'ativa'
+                  ? 'bg-emerald-500 text-white'
+                  : selectedMatricula.status === 'cancelada'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-amber-500 text-white'
+              }`}>
+                {selectedMatricula.status.toUpperCase()}
+              </Badge>
+            )}
             <DialogDescription className="sr-only">
               Informações detalhadas da matrícula de {selectedMatricula?.aluno?.nome_completo}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 py-4">
-            {/* Status Badge */}
-            <div className="flex justify-center pb-2">
-              <Badge className={`text-[11px] font-black h-[32px] px-6 rounded-full border-0 ${
-                selectedMatricula?.status === 'ativa' 
-                  ? 'bg-emerald-500 text-white' 
-                  : selectedMatricula?.status === 'cancelada'
-                    ? 'bg-red-500 text-white'
-                    : 'bg-amber-500 text-white'
-              }`}>
-                {selectedMatricula?.status?.toUpperCase() || 'N/A'}
-              </Badge>
-            </div>
-
             {/* Grid de Informações */}
             <div className="grid grid-cols-2 gap-4">
               {/* Ano Letivo */}
@@ -646,10 +646,6 @@ export function MatriculaListPageWeb() {
               </div>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDetailsModal(false)}>Fechar</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

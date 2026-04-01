@@ -20,6 +20,10 @@ import {
   X,
   Shield,
   Clock,
+  CheckCircle2,
+  Archive,
+  RefreshCcw,
+  UserCircle,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -30,7 +34,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { get, set } from 'idb-keyval'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
@@ -38,6 +42,8 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { cn } from '@/lib/utils'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { AlertasProvider, useAlertas, type RadarAlunoComStatus } from '../AlertasContext'
+import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
 
 const CACHE_KEY = 'dashboard_cache'
 
@@ -92,33 +98,35 @@ function AlunosSemMatriculaNotificationMobile({ count, onDismiss }: AlunosSemMat
 // Sub-componente: BottomSheet de Detalhes do Radar de Evasão (Mobile)
 // ---------------------------------------------------------------------------
 interface RadarEvasaoBottomSheetProps {
-  aluno: RadarAluno | null
+  aluno: RadarAlunoComStatus | null
   isOpen: boolean
   onClose: () => void
 }
 
 function RadarEvasaoBottomSheetMobile({ aluno, isOpen, onClose }: RadarEvasaoBottomSheetProps) {
   const navigate = useNavigate()
+  const { mudarStatusAlerta } = useAlertas()
 
   if (!aluno) return null
 
-  const nivel =
-    aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 5
-      ? 'CRÍTICO'
-      : aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3
-      ? 'ALERTA'
-      : 'ATENÇÃO'
-
-  const nivelColors = {
-    CRÍTICO: 'bg-red-600 text-white',
-    ALERTA: 'bg-amber-500 text-white',
-    ATENÇÃO: 'bg-yellow-400 text-yellow-900',
-  }
+  const nivel = aluno.gravidade === 'alta' ? 'CRÍTICO' : aluno.gravidade === 'media' ? 'ALERTA' : 'ATENÇÃO'
 
   const nivelBgColors = {
-    CRÍTICO: 'bg-red-50',
-    ALERTA: 'bg-amber-50',
-    ATENÇÃO: 'bg-yellow-50',
+    CRÍTICO: 'bg-red-50 border-red-200',
+    ALERTA: 'bg-amber-50 border-amber-200',
+    ATENÇÃO: 'bg-yellow-50 border-yellow-200',
+  }
+
+  const nivelTitleColor = {
+    CRÍTICO: 'text-red-900',
+    ALERTA: 'text-amber-900',
+    ATENÇÃO: 'text-yellow-900',
+  }
+
+  const nivelTextColor = {
+    CRÍTICO: 'text-red-700',
+    ALERTA: 'text-amber-700',
+    ATENÇÃO: 'text-yellow-700',
   }
 
   const nivelIcons = {
@@ -140,22 +148,20 @@ function RadarEvasaoBottomSheetMobile({ aluno, isOpen, onClose }: RadarEvasaoBot
           <div className="flex-1">
             <h2 className="font-black text-2xl text-zinc-900 tracking-tight">{aluno.nome_completo}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-wider ${nivelColors[nivel]}`}>
-                Risco {nivel}
-              </span>
+              <BadgeGravidade gravidade={aluno.gravidade} />
             </div>
           </div>
         </div>
 
         {/* Caixa de Alerta Explicativa */}
-        <div className={`rounded-[1.5rem] p-5 border-2 ${nivelBgColors[nivel]} border-current`}>
+        <div className={`rounded-[1.5rem] p-5 border-2 ${nivelBgColors[nivel]}`}>
           <div className="flex items-start gap-3">
             <NivelIcon className={`h-6 w-6 shrink-0 ${nivel === 'CRÍTICO' ? 'text-red-600' : nivel === 'ALERTA' ? 'text-amber-600' : 'text-yellow-600'}`} />
             <div className="flex-1">
-              <h3 className={`font-black text-lg mb-1 ${nivel === 'CRÍTICO' ? 'text-red-900' : nivel === 'ALERTA' ? 'text-amber-900' : 'text-yellow-900'}`}>
+              <h3 className={`font-black text-lg mb-1 ${nivelTitleColor[nivel]}`}>
                 Por que verificar este aluno?
               </h3>
-              <p className={`text-sm font-medium ${nivel === 'CRÍTICO' ? 'text-red-700' : nivel === 'ALERTA' ? 'text-amber-700' : 'text-yellow-700'}`}>
+              <p className={`text-sm font-medium ${nivelTextColor[nivel]}`}>
                 Este aluno apresenta sinais de risco de evasão. É importante entrar em contato e entender a situação para evitar o abandono escolar.
               </p>
             </div>
@@ -236,20 +242,64 @@ function RadarEvasaoBottomSheetMobile({ aluno, isOpen, onClose }: RadarEvasaoBot
             <Users className="h-5 w-5 mr-2" />
             Ver Perfil Completo
           </Button>
-          <div className="grid grid-cols-2 gap-3">
+          
+          <div className="flex items-center justify-between gap-3">
             <Button
               variant="outline"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-12"
+              className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600 shrink-0"
+              title="Ligar"
             >
-              <Phone className="h-4 w-4 mr-2" />
-              Ligar
+              <Phone className="h-5 w-5" />
             </Button>
             <Button
               variant="outline"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-12"
+              className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
+              title="Enviar E-mail"
             >
-              <Mail className="h-4 w-4 mr-2" />
-              Mensagem
+              <Mail className="h-5 w-5" />
+            </Button>
+            
+            {aluno.status === 'ativo' ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  mudarStatusAlerta(aluno, 'tratado')
+                  onClose()
+                }}
+                className="h-12 w-12 rounded-xl border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                title="Marcar como Tratado"
+              >
+                <CheckCircle2 className="h-6 w-6" />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  mudarStatusAlerta(aluno, 'ativo')
+                  onClose()
+                }}
+                className="h-12 w-12 rounded-xl border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                title="Reverter para Ativo"
+              >
+                <RefreshCcw className="h-5 w-5" />
+              </Button>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                mudarStatusAlerta(aluno, aluno.status === 'arquivado' ? 'ativo' : 'arquivado')
+                onClose()
+              }}
+              className={cn(
+                "h-12 w-12 rounded-xl",
+                aluno.status === 'arquivado'
+                  ? "border-amber-100 bg-amber-50 text-amber-600 hover:bg-amber-100"
+                  : "border-zinc-200 text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600"
+              )}
+              title={aluno.status === 'arquivado' ? "Desarquivar" : "Arquivar Alerta"}
+            >
+              <Archive className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -291,11 +341,91 @@ function StatusAprovacaoNotificationMobile({ status, metodo }: { status: string,
   )
 }
 
+// ---------------------------------------------------------------------------
+// Sub-componente: Seção Radar de Atenção (usa contexto AlertasContext)
+// ---------------------------------------------------------------------------
+interface RadarDeAtencaoSectionProps {
+  onOpenDetails: (aluno: RadarAlunoComStatus) => void
+}
+
+function RadarDeAtencaoSection({ onOpenDetails }: RadarDeAtencaoSectionProps) {
+  const { alertas } = useAlertas()
+  
+  // Filtra apenas alertas ativos e limita a 3
+  const alertasAtivos = useMemo(() => 
+    alertas.filter(a => a.status === 'ativo').slice(0, 3),
+    [alertas]
+  )
+
+  if (alertasAtivos.length === 0) return null
+
+  return (
+    <section className="space-y-4 px-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+          <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Radar de Atenção</h3>
+        </div>
+        <Badge className="bg-rose-500 text-white border-0 text-[9px] font-black h-5 px-2.5 rounded-full">
+          {alertasAtivos.length}
+        </Badge>
+      </div>
+
+      <div className="space-y-3">
+        {alertasAtivos.map((aluno) => {
+          const nivel = aluno.gravidade === 'alta' ? 'CRÍTICO' : aluno.gravidade === 'media' ? 'ALERTA' : 'ATENÇÃO'
+
+          const badgeClass =
+            aluno.gravidade === 'alta'
+              ? 'bg-rose-600 text-white'
+              : aluno.gravidade === 'media'
+              ? 'bg-amber-500 text-white'
+              : 'bg-yellow-400 text-yellow-900'
+
+          return (
+            <motion.div
+              key={aluno.aluno_id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onOpenDetails(aluno)}
+              className="bg-white dark:bg-slate-800 rounded-[1.5rem] p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 group"
+            >
+              <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950 flex items-center justify-center text-rose-600 dark:text-rose-400 font-black text-lg shrink-0">
+                {aluno.nome_completo.charAt(0)}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate mb-1">
+                  {aluno.nome_completo}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <span className={cn(
+                    "text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider",
+                    badgeClass
+                  )}>
+                    {nivel}
+                  </span>
+                  {aluno.cobrancas_atrasadas > 0 && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 font-black uppercase tracking-wider border border-amber-100 dark:border-amber-900/50">
+                      {aluno.cobrancas_atrasadas} {aluno.cobrancas_atrasadas === 1 ? 'Pendência' : 'Pendências'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <ChevronRight className="h-5 w-5 text-slate-300 group-active:translate-x-1 transition-transform" />
+            </motion.div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 export function DashboardPageMobile() {
   const navigate = useNavigate()
   const { data: dashboardData, isLoading, refetch } = useDashboard()
   const [cachedData, setCachedData] = useState<any>(null)
-  const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
+  const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAlunoComStatus | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
 
@@ -303,7 +433,7 @@ export function DashboardPageMobile() {
   const userRole = authUser?.role
   const { data: notifications } = useEscolaNotifications(authUser?.tenantId)
 
-  const handleOpenRadarDetails = (aluno: RadarAluno) => {
+  const handleOpenRadarDetails = (aluno: RadarAlunoComStatus) => {
     setSelectedRadarAluno(aluno)
     setIsRadarSheetOpen(true)
   }
@@ -385,7 +515,11 @@ export function DashboardPageMobile() {
   const saldo = recebimentos - pagamentos
   const saldoPositivo = saldo >= 0
 
+  // Radar de Evasão com contexto de alertas
+  const radarData = displayData?.radarEvasao || []
+
   return (
+    <AlertasProvider radarData={radarData}>
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950">
       <div className="w-full">
         <PullToRefresh onRefresh={onRefresh}>
@@ -554,71 +688,9 @@ export function DashboardPageMobile() {
             </section>
 
             {/* ── Radar de Atenção ── */}
-            {displayData?.radarEvasao && displayData.radarEvasao.length > 0 && (
-              <section className="space-y-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Radar de Atenção</h3>
-                  </div>
-                  <Badge className="bg-rose-500 text-white border-0 text-[9px] font-black h-5 px-2.5 rounded-full">
-                    {displayData.radarEvasao.length}
-                  </Badge>
-                </div>
-
-                <div className="space-y-3">
-                  {displayData.radarEvasao.slice(0, 3).map((aluno: RadarAluno) => {
-                    const nivel =
-                      aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 5
-                        ? 'CRÍTICO'
-                        : aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3
-                        ? 'ALERTA'
-                        : 'ATENÇÃO'
-                  
-                    const badgeClass =
-                      nivel === 'CRÍTICO'
-                        ? 'bg-rose-600 text-white'
-                        : nivel === 'ALERTA'
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-yellow-400 text-yellow-900'
-
-                    return (
-                      <motion.div
-                        key={aluno.aluno_id}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleOpenRadarDetails(aluno)}
-                        className="bg-white dark:bg-slate-800 rounded-[1.5rem] p-4 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 group"
-                      >
-                        <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950 flex items-center justify-center text-rose-600 dark:text-rose-400 font-black text-lg shrink-0">
-                          {aluno.nome_completo.charAt(0)}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate mb-1">
-                            {aluno.nome_completo}
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            <span className={cn(
-                              "text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider",
-                              badgeClass
-                            )}>
-                              {nivel}
-                            </span>
-                            {aluno.cobrancas_atrasadas > 0 && (
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 font-black uppercase tracking-wider border border-amber-100 dark:border-amber-900/50">
-                                {aluno.cobrancas_atrasadas} {aluno.cobrancas_atrasadas === 1 ? 'Pendência' : 'Pendências'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <ChevronRight className="h-5 w-5 text-slate-300 group-active:translate-x-1 transition-transform" />
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
+            <RadarDeAtencaoSection 
+              onOpenDetails={handleOpenRadarDetails} 
+            />
 
             {/* ── Mural ── */}
             <section className="space-y-4 px-5">
@@ -676,5 +748,6 @@ export function DashboardPageMobile() {
         onClose={handleCloseRadarSheet}
       />
     </div>
+    </AlertasProvider>
   )
 }

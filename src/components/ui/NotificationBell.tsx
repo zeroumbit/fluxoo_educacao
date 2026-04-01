@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, ExternalLink, X, ChevronDown, BellRing } from 'lucide-react';
+import { Bell, ExternalLink, X, Check, Trash2, BellRing } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useNotificacoesActions } from '@/hooks/useNotifications';
 
-interface NotificationItem {
+export interface NotificationItem {
   id: string;
   label: string;
   href: string;
   category?: 'SUPER ADMIN' | 'ESCOLAS' | 'PORTAL' | string;
+  notifications?: any[]; // Notificações individuais do banco
 }
 
-interface NotificationBellProps {
+export interface NotificationBellProps {
   total: number;
   items: NotificationItem[];
   className?: string;
   onItemClick?: () => void;
+  tenantId?: string;
 }
 
 // Helper de vibração nativa
@@ -25,10 +28,11 @@ const vibrate = (ms: number | number[] = 15) => {
   }
 }
 
-export function NotificationBell({ total, items, className, onItemClick }: NotificationBellProps) {
+export function NotificationBell({ total, items, className, onItemClick, tenantId }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
+  const { marcarComoLida, marcarComoResolvida } = useNotificacoesActions();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -42,11 +46,27 @@ export function NotificationBell({ total, items, className, onItemClick }: Notif
     setIsOpen(!isOpen);
   };
 
-  const handleItemClick = (href: string) => {
+  const handleItemClick = (href: string, notificacoes?: any[]) => {
     vibrate(10);
     setIsOpen(false);
     navigate(href);
+    
+    // Marca todas as notificações deste grupo como lidas
+    if (notificacoes && notificacoes.length > 0) {
+      const ids = notificacoes.map(n => n.id).filter(Boolean);
+      if (ids.length > 0) {
+        // Marca como lidas em background (não bloqueia navegação)
+        ids.forEach(id => marcarComoLida.mutateAsync(id));
+      }
+    }
+    
     if (onItemClick) onItemClick();
+  };
+
+  const handleMarcarResolvida = (e: React.MouseEvent, notificacaoId: string) => {
+    e.stopPropagation();
+    vibrate(30);
+    marcarComoResolvida.mutate(notificacaoId);
   };
 
   // Agrupa notificações por categoria
@@ -90,28 +110,67 @@ export function NotificationBell({ total, items, className, onItemClick }: Notif
               <div className="px-2">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">{category}</p>
               </div>
-              
+
               <div className="grid gap-2">
-                {itemsByCategory[category].map((item, idx) => (
-                  <motion.button
-                    key={item.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    onClick={() => handleItemClick(item.href)}
-                    className="w-full flex items-center gap-4 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98]"
-                  >
-                    <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 transition-all border border-slate-100 group-hover:border-teal-500/20 shrink-0">
-                      <BellRing size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight truncate">{item.label}</p>
-                      <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
-                        Ver Detalhes <ExternalLink size={10} />
+                {itemsByCategory[category].map((item, idx) => {
+                  // Se tiver notificações individuais, renderiza cada uma
+                  if (item.notifications && item.notifications.length > 0) {
+                    return item.notifications.map((notif, notifIdx) => (
+                      <motion.button
+                        key={notif.id || `${item.id}-${notifIdx}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: (idx + notifIdx * 0.1) * 0.05 }}
+                        onClick={() => handleItemClick(item.href, [notif])}
+                        className="w-full flex items-center gap-3 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98] relative"
+                      >
+                        <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 transition-all border border-slate-100 group-hover:border-teal-500/20 shrink-0">
+                          <BellRing size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight truncate">
+                            {notif.titulo || item.label}
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1">
+                            {notif.mensagem || 'Clique para ver detalhes'}
+                          </p>
+                        </div>
+                        {/* Ações */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => handleMarcarResolvida(e, notif.id)}
+                            className="p-2 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                            title="Marcar como resolvida (remove)"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </motion.button>
+                    ))
+                  }
+                  
+                  // Renderização padrão (sem notificações individuais)
+                  return (
+                    <motion.button
+                      key={item.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => handleItemClick(item.href, [])}
+                      className="w-full flex items-center gap-4 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98]"
+                    >
+                      <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 transition-all border border-slate-100 group-hover:border-teal-500/20 shrink-0">
+                        <BellRing size={20} />
                       </div>
-                    </div>
-                  </motion.button>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight truncate">{item.label}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
+                          Ver Detalhes <ExternalLink size={10} />
+                        </div>
+                      </div>
+                    </motion.button>
+                  )
+                })}
               </div>
             </div>
           ))

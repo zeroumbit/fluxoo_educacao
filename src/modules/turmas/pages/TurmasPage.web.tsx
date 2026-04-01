@@ -24,7 +24,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useTurmaStore } from '../store'
 import { TurmaDetail } from '../components/TurmaDetail'
 import { TurmaCard } from '../components/TurmaCard'
-import { useTurmas, useCriarTurma, useDisciplinas, useProfessoresTurma } from '../hooks'
+import { useTurmas, useCriarTurma, useDisciplinas, useProfessoresTurma, useAlunosCountByTurmas } from '../hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useEffect } from 'react'
@@ -57,6 +57,10 @@ export function TurmasPageWeb() {
   const { data: dbDisciplinas } = useDisciplinas()
   const { data: dbProfessores } = useProfessoresTurma()
   const criarTurmaMutation = useCriarTurma()
+
+  // Busca contagem dinâmica de alunos por turma
+  const turmaIds = dbTurmas?.map((t: any) => t.id) || []
+  const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [busca, setBusca] = useState('')
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
@@ -209,7 +213,7 @@ export function TurmasPageWeb() {
             <TurmaCard
               key={turma.id}
               turma={turma}
-              alunosCount={storeAlunos.filter((a: any) => (a as any).turma_atual?.id === turma.id || a.turma_id === turma.id).length}
+              alunosCount={alunosCountMap?.[turma.id] || 0}
               onViewAlunos={() => handleGerir(turma.id, 'alunos')}
               onViewGrade={() => handleGerir(turma.id, 'grade')}
               onManage={() => handleGerir(turma.id, 'dados')}

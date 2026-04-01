@@ -159,6 +159,14 @@ export function useRemoverGradeItem() {
   })
 }
 
+export function useContarAlunosTurma(turmaId: string) {
+  return useQuery({
+    queryKey: ['turma_alunos_count', turmaId],
+    queryFn: () => turmaService.contarAlunos(turmaId),
+    enabled: !!turmaId,
+  })
+}
+
 const updateMensalidadeSchema = z.object({
   turmaId: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -192,4 +200,67 @@ export const useTurmaBilling = () => {
     updateMensalidadeTurma,
     isUpdating: updateMensalidadeTurma.isPending
   }
+}
+
+/**
+ * Hook para buscar a contagem de alunos matriculados em uma turma específica.
+ * Usa a tabela matriculas para contar alunos com status ativo.
+ */
+export function useAlunosCountByTurma(turmaId: string) {
+  const { authUser } = useAuth()
+  
+  return useQuery({
+    queryKey: ['turmas', 'alunos-count', turmaId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('matriculas')
+        .select('id', { count: 'exact', head: true })
+        .eq('turma_id', turmaId)
+        .eq('status', 'ativa')
+        .eq('tenant_id', authUser!.tenantId)
+
+      if (error) throw error
+      return count || 0
+    },
+    enabled: !!authUser?.tenantId && !!turmaId,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  })
+}
+
+/**
+ * Hook para buscar a contagem de alunos de múltiplas turmas de uma vez.
+ * Retorna um mapa de turma_id -> count.
+ */
+export function useAlunosCountByTurmas(turmaIds: string[]) {
+  const { authUser } = useAuth()
+  
+  return useQuery({
+    queryKey: ['turmas', 'alunos-count', turmaIds.sort()],
+    queryFn: async () => {
+      if (turmaIds.length === 0) return {}
+
+      const { data, error } = await supabase
+        .from('matriculas')
+        .select('turma_id, id')
+        .in('turma_id', turmaIds)
+        .eq('status', 'ativa')
+        .eq('tenant_id', authUser!.tenantId)
+
+      if (error) throw error
+
+      // Agrupa por turma_id e conta
+      const counts: Record<string, number> = {}
+      turmaIds.forEach(id => { counts[id] = 0 })
+      
+      data?.forEach((matricula: any) => {
+        if (matricula.turma_id) {
+          counts[matricula.turma_id] = (counts[matricula.turma_id] || 0) + 1
+        }
+      })
+
+      return counts
+    },
+    enabled: !!authUser?.tenantId && turmaIds.length > 0,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  })
 }

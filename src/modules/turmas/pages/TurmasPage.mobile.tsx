@@ -33,14 +33,15 @@ import { get, set } from 'idb-keyval'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { cn } from '@/lib/utils'
-import { 
-  useTurmas, 
-  useCriarTurma, 
-  useAtualizarTurma, 
+import {
+  useTurmas,
+  useCriarTurma,
+  useAtualizarTurma,
   useExcluirTurma,
-  useGradeTurma, 
-  useDisciplinas, 
-  useProfessoresTurma 
+  useGradeTurma,
+  useDisciplinas,
+  useProfessoresTurma,
+  useAlunosCountByTurmas
 } from '../hooks'
 import { useFiliais } from '@/modules/filiais/hooks'
 import { Button } from '@/components/ui/button'
@@ -81,6 +82,10 @@ export function TurmasPageMobile() {
   const { data: todosAlunos } = useAlunos()
   const { data: todasDisciplinas } = useDisciplinas()
   const { data: todosProfessores } = useProfessoresTurma()
+
+  // Busca contagem dinâmica de alunos por turma
+  const turmaIds = turmas?.map((t: any) => t.id) || []
+  const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
@@ -295,7 +300,7 @@ export function TurmasPageMobile() {
                         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
                           <Users className="h-3.5 w-3.5 text-slate-400" />
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                            {turma.capacidade_maxima || 30} vagas
+                            {alunosCountMap?.[turma.id] || 0}/{turma.capacidade_maxima || 30} alunos
                           </span>
                         </div>
                         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/10">

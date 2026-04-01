@@ -243,6 +243,17 @@ export const academicoService = {
     return (data as any[]) || []
   },
 
+  async listarMatriculasAtivasPorTurma(tenantId: string, turmaId: string) {
+    const { data, error } = await supabase.from('matriculas' as any)
+      .select('aluno_id, id, status, ano_letivo, serie_ano, turno, turma_id')
+      .eq('tenant_id', tenantId)
+      .eq('turma_id', turmaId)
+      .eq('status', 'ativa')
+
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
   // PLANOS DE AULA
   async listarPlanosAula(tenantId: string, professorId?: string) {
     // Select explícito para garantir que professor_id seja retornado

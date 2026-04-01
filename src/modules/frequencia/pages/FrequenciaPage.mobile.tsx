@@ -23,7 +23,7 @@ import {
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useSalvarFrequencias, useFrequenciasPorTurmaData } from '../hooks'
-import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,14 +42,15 @@ import type { FrequenciaStatus } from '@/lib/database.types'
 export function FrequenciaPageMobile() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
-  const { data: turmas } = useTurmas()
-  const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
-  const { data: matriculasAtivas } = useMatriculasAtivas()
-  const salvarFrequencias = useSalvarFrequencias()
-
+  
   const [turmaId, setTurmaId] = useState('')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
   const [searchTerm, setSearchTerm] = useState('')
+
+  const { data: turmas } = useTurmas()
+  const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
+  const { data: matriculasAtivas } = useMatriculasAtivasPorTurma(turmaId)
+  const salvarFrequencias = useSalvarFrequencias()
 
   const { data: frequenciasExistentes, isLoading: isLoadingFreq, refetch } = useFrequenciasPorTurmaData(turmaId, dataAula)
 
@@ -76,9 +77,20 @@ export function FrequenciaPageMobile() {
     }
   }, [frequenciasExistentes])
 
-  const alunosComMatriculaIds = useMemo(() => {
-    return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])
-  }, [matriculasAtivas])
+  // Busca apenas alunos COM VÍNCULO REAL na turma selecionada
+  const alunosDaTurma = useMemo(() => {
+    if (!matriculasAtivas || !alunos) return []
+    
+    const alunosIds = new Set(matriculasAtivas.map(m => m.aluno_id))
+    
+    return alunos
+      .filter(a => alunosIds.has(a.id) && a.status === 'ativo')
+      .sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+  }, [matriculasAtivas, alunos])
+
+  const filteredAlunos = useMemo(() => {
+    return alunosDaTurma.filter(a => a.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()))
+  }, [alunosDaTurma, searchTerm])
 
   const setStatus = (alunoId: string, status: FrequenciaStatus) => {
     setStatusMap((prev) => ({ ...prev, [alunoId]: status }))
@@ -108,7 +120,7 @@ export function FrequenciaPageMobile() {
 
   const marcarTodosPresentes = () => {
     const newMap: Record<string, FrequenciaStatus> = { ...statusMap }
-    alunosComMatricula.forEach(a => { newMap[a.id] = 'presente' })
+    alunosDaTurma.forEach(a => { newMap[a.id] = 'presente' })
     setStatusMap(newMap)
     setJustificativaMap({})
     toast.success('Todos marcados como presente!')
@@ -116,8 +128,11 @@ export function FrequenciaPageMobile() {
 
   const handleSalvar = async () => {
     if (!authUser || !turmaId) return
-    const alunosParaSalvar = alunos?.filter(a => a.status === 'ativo' && alunosComMatriculaIds.has(a.id)) || []
-    const dados = alunosParaSalvar.map((a) => ({
+    if (alunosDaTurma.length === 0) {
+      toast.error('Nenhum aluno com matrícula ativa nesta turma')
+      return
+    }
+    const dados = alunosDaTurma.map((a) => ({
       tenant_id: authUser.tenantId,
       turma_id: turmaId,
       aluno_id: a.id,
@@ -129,27 +144,14 @@ export function FrequenciaPageMobile() {
       await salvarFrequencias.mutateAsync(dados)
       toast.success('Frequência salva com sucesso!')
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar frequency')
+      toast.error(err.message || 'Erro ao salvar frequência')
     }
   }
 
-  const filteredAlunos = useMemo(() => {
-    const ativos = (alunos?.filter(a => a.status === 'ativo') || []).map(aluno => ({
-      ...aluno,
-      temMatricula: alunosComMatriculaIds.has(aluno.id),
-    }))
-    const comMatricula = ativos.filter(a => a.temMatricula)
-    return comMatricula.filter(a => a.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()))
-  }, [alunos, alunosComMatriculaIds, searchTerm])
-
-  const alunosComMatricula = useMemo(() => {
-    return (alunos?.filter(a => a.status === 'ativo' && alunosComMatriculaIds.has(a.id)) || [])
-  }, [alunos, alunosComMatriculaIds])
-
   const contagens = {
-    presente: alunosComMatricula.filter(a => (statusMap[a.id] || 'presente') === 'presente').length,
-    falta: alunosComMatricula.filter(a => statusMap[a.id] === 'falta').length,
-    justificada: alunosComMatricula.filter(a => statusMap[a.id] === 'justificada').length,
+    presente: alunosDaTurma.filter(a => (statusMap[a.id] || 'presente') === 'presente').length,
+    falta: alunosDaTurma.filter(a => statusMap[a.id] === 'falta').length,
+    justificada: alunosDaTurma.filter(a => statusMap[a.id] === 'justificada').length,
   }
 
   const isLoading = isLoadingAlunos || (turmaId && isLoadingFreq)

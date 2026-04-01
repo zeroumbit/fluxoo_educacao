@@ -10,13 +10,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle, Megaphone, Clock, MapPin } from 'lucide-react'
+import { Plus, Loader2, Calendar, MessageSquare, Pencil, Trash2, AlertTriangle, Megaphone, Clock, MapPin, Users, Globe, GraduationCap, User, X, Eye } from 'lucide-react'
 import { muralService } from '@/modules/comunicacao/service'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const eventoSchema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),
@@ -47,6 +49,7 @@ export function EventosPage() {
   const [open, setOpen] = useState(false)
   const [editando, setEditando] = useState<any | null>(null)
   const [eventoDeletar, setEventoDeletar] = useState<any | null>(null)
+  const [eventoDetalhes, setEventoDetalhes] = useState<any | null>(null)
   const [horarioInicio, setHorarioInicio] = useState(configRecados?.horario_inicio || '08:00')
   const [horarioTermino, setHorarioTermino] = useState(configRecados?.horario_termino || '17:00')
   const [msgFora, setMsgFora] = useState(configRecados?.mensagem_fora_expediente || '')
@@ -69,6 +72,10 @@ export function EventosPage() {
       publicar_no_mural: evento.publicar_no_mural || false,
     })
     setOpen(true)
+  }
+
+  const abrirDetalhes = (evento: any) => {
+    setEventoDetalhes(evento)
   }
 
   const confirmarExclusao = (evento: any) => {
@@ -266,6 +273,15 @@ export function EventosPage() {
                     </TableCell>
                     <TableCell className="text-right pr-8">
                       <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-indigo-600 hover:text-indigo-700" 
+                          onClick={() => abrirDetalhes(e)}
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => abrirEdicao(e)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -355,6 +371,129 @@ export function EventosPage() {
             >
               {excluir.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de Detalhes do Evento */}
+      <Dialog open={!!eventoDetalhes} onOpenChange={() => setEventoDetalhes(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">
+              {eventoDetalhes?.nome}
+            </DialogTitle>
+            <DialogDescription className="text-sm mt-1">
+              Detalhes completos do evento
+            </DialogDescription>
+          </DialogHeader>
+
+          {eventoDetalhes && (
+            <div className="space-y-6 mt-4">
+              {/* Datas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Data de Início</span>
+                  </div>
+                  <p className="text-lg font-black text-slate-900">
+                    {format(parseISO(eventoDetalhes.data_inicio), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                  </p>
+                  {eventoDetalhes.hora_inicio && (
+                    <p className="text-sm font-medium text-slate-600 mt-1">
+                      <Clock className="h-3 w-3 inline mr-1" />
+                      {eventoDetalhes.hora_inicio}
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Data de Término</span>
+                  </div>
+                  {eventoDetalhes.data_termino ? (
+                    <>
+                      <p className="text-lg font-black text-slate-900">
+                        {format(parseISO(eventoDetalhes.data_termino), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                      </p>
+                      {eventoDetalhes.hora_fim && (
+                        <p className="text-sm font-medium text-slate-600 mt-1">
+                          <Clock className="h-3 w-3 inline mr-1" />
+                          {eventoDetalhes.hora_fim}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-500">Evento de 1 dia</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Local */}
+              {eventoDetalhes.local && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-4 w-4 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Local</span>
+                  </div>
+                  <p className="text-base font-bold text-slate-900">{eventoDetalhes.local}</p>
+                </div>
+              )}
+
+              {/* Público */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center gap-2 mb-2">
+                  {eventoDetalhes.publico_alvo === 'toda_escola' && <Globe className="h-4 w-4 text-slate-600" />}
+                  {eventoDetalhes.publico_alvo === 'professores' && <Users className="h-4 w-4 text-slate-600" />}
+                  {eventoDetalhes.publico_alvo === 'responsaveis' && <Users className="h-4 w-4 text-slate-600" />}
+                  {eventoDetalhes.publico_alvo === 'alunos' && <GraduationCap className="h-4 w-4 text-slate-600" />}
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Público-Alvo</span>
+                </div>
+                <p className="text-base font-bold text-slate-900">
+                  {publicoLabel(eventoDetalhes.publico_alvo) || 'Não especificado'}
+                </p>
+              </div>
+
+              {/* Descrição */}
+              {eventoDetalhes.descricao && (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-4 w-4 text-amber-600" />
+                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Descrição</span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
+                    {eventoDetalhes.descricao}
+                  </p>
+                </div>
+              )}
+
+              {/* Informações adicionais */}
+              <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+                <Badge variant={eventoDetalhes.publicar_no_mural ? 'default' : 'secondary'}>
+                  {eventoDetalhes.publicar_no_mural ? 'Publicado no Mural' : 'Não publicado'}
+                </Badge>
+                <span className="text-xs text-slate-400">
+                  Criado em {format(parseISO(eventoDetalhes.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEventoDetalhes(null)}>
+              Fechar
+            </Button>
+            <Button 
+              onClick={() => {
+                setEventoDetalhes(null)
+                abrirEdicao(eventoDetalhes)
+              }}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar Evento
             </Button>
           </DialogFooter>
         </DialogContent>

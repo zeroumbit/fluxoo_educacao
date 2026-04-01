@@ -5,6 +5,7 @@ export interface Turma {
   nome: string;
   sala: string | null;
   capacidade_maxima: number | null;
+  max_alunos?: number | null;
   capacidade?: number; // compatibilidade
   turno: 'matutino' | 'vespertino' | 'noturno' | 'integral' | string | null;
   valor_mensalidade: number | null;

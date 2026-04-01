@@ -186,6 +186,18 @@ export function useMatriculaAtivaDoAluno(alunoId: string) {
   })
 }
 
+export function useMatriculasAtivasPorTurma(turmaId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['matriculas_ativas_turma', turmaId, authUser?.tenantId],
+    queryFn: () => academicoService.listarMatriculasAtivasPorTurma(
+      authUser!.tenantId,
+      turmaId
+    ),
+    enabled: !!authUser?.tenantId && !!turmaId,
+  })
+}
+
 export function useBoletinsPorTurma(turmaId: string, anoLetivo: number, bimestre: number) {
   const { authUser } = useAuth()
   return useQuery({

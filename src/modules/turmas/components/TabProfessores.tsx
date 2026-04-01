@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  Plus, 
-  Search, 
-  GraduationCap, 
-  Trash2, 
-  Eye, 
+import {
+  Plus,
+  Search,
+  GraduationCap,
+  Trash2,
+  Eye,
   AlertTriangle,
   Clock,
   ChevronRight,
   BookOpen,
-  Loader2
+  Loader2,
+  CheckCircle2
 } from 'lucide-react'
 import { useTurmaStore } from '../store'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +36,8 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const [busca, setBusca] = useState('')
   const [professorDetails, setProfessorDetails] = useState<any>(null)
   const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
-  
+  const [showAllDisciplinas, setShowAllDisciplinas] = useState(false)
+
   const { data: dbProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
   const { data: dbDisciplinas } = useDisciplinas()
   const { data: instituicaoAtribuicoes, isLoading: loadingAtribuicoes } = useAtribuicoes(turmaId)

@@ -182,7 +182,7 @@ export const turmaService = {
   async listarAtribuicoes(tenantId: string, turmaId?: string) {
     let query = supabase
       .from('turma_professores' as any)
-      .select('id, tenant_id, turma_id, professor_id, disciplina_id, dia_semana, hora_inicio, hora_fim')
+      .select('id, tenant_id, turma_id, professor_id, disciplina_id, carga_horaria_semanal, data_inicio, data_fim, status')
       .eq('tenant_id', tenantId)
 
     if (turmaId) query = query.eq('turma_id', turmaId)
@@ -215,7 +215,7 @@ export const turmaService = {
   async listarGrade(tenantId: string, turmaId?: string) {
     let query = supabase
       .from('turma_grade_horaria' as any)
-      .select('id, tenant_id, turma_id, disciplina_id, professor_id, dia_semana, hora_inicio, hora_fim, cor_hex')
+      .select('id, tenant_id, turma_id, disciplina_id, professor_id, dia_semana, hora_inicio, hora_fim, sala, status')
       .eq('tenant_id', tenantId)
 
     if (turmaId) query = query.eq('turma_id', turmaId)
@@ -244,6 +244,16 @@ export const turmaService = {
       .eq('id', id)
 
     if (error) throw error
+  },
+
+  async contarAlunos(turmaId: string) {
+    const { count, error } = await (supabase.from('matriculas' as any) as any)
+      .select('*', { count: 'exact', head: true })
+      .eq('turma_id', turmaId)
+      .eq('status', 'ativa')
+
+    if (error) throw error
+    return count || 0
   }
 }
 

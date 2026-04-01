@@ -835,6 +835,34 @@ export type LojistaInsert = Omit<Lojista, 'id' | 'created_at' | 'updated_at' | '
 
 export type LojistaUpdate = Partial<LojistaInsert>
 
+// ========== NOTIFICACOES ==========
+export type Notificacao = {
+  id: string
+  tenant_id: string
+  user_id: string | null
+  tipo: string
+  titulo: string
+  mensagem: string
+  href: string
+  categoria: string
+  prioridade: number
+  lida: boolean
+  resolvida: boolean
+  metadata: Record<string, any> | null
+  created_at: string
+  updated_at: string
+  lida_em: string | null
+  resolvida_em: string | null
+}
+export type NotificacaoInsert = Omit<Notificacao, 'id' | 'created_at' | 'updated_at' | 'lida_em' | 'resolvida_em'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+  lida_em?: string | null
+  resolvida_em?: string | null
+}
+export type NotificacaoUpdate = Partial<NotificacaoInsert>
+
 export type Curriculo = {
   id: string
   user_id: string
@@ -916,6 +944,7 @@ export type Database = {
       alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: any; Relationships: any[] }
       curriculos: { Row: Curriculo; Insert: CurriculoInsert; Update: CurriculoUpdate; Relationships: any[] }
       lojistas: { Row: Lojista; Insert: LojistaInsert; Update: LojistaUpdate; Relationships: any[] }
+      notificacoes: { Row: Notificacao; Insert: NotificacaoInsert; Update: NotificacaoUpdate; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
@@ -935,9 +964,11 @@ export type Database = {
         Relationships: any[]
       }
     }
-    Functions: { 
+    Functions: {
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
       get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
+      marcar_notificacao_lida: { Args: { notificacao_id: string }; Returns: void };
+      marcar_notificacao_resolvida: { Args: { notificacao_id: string }; Returns: void };
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }

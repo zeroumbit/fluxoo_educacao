@@ -20,7 +20,8 @@ import {
   X,
   Save,
   Megaphone,
-  MapPin
+  MapPin,
+  Eye
 } from 'lucide-react'
 import { muralService } from '@/modules/comunicacao/service'
 import { format, parseISO } from 'date-fns'
@@ -79,6 +80,7 @@ export function EventosPageMobile() {
   const [formOpen, setFormOpen] = useState(false)
   const [editando, setEditando] = useState<any | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [eventoDetalhes, setEventoDetalhes] = useState<any | null>(null)
 
   // Config Recados State
   const [horarioInicio, setHorarioInicio] = useState('08:00')
@@ -129,6 +131,10 @@ export function EventosPageMobile() {
       local: evento.local || '',
     })
     setFormOpen(true)
+  }
+
+  const abrirDetalhes = (evento: any) => {
+    setEventoDetalhes(evento)
   }
 
   const onSubmit = async (data: EventoFormValues) => {
@@ -311,14 +317,22 @@ export function EventosPageMobile() {
                             </span>
                          </div>
                          <div className="flex gap-2">
-                            <motion.button 
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => abrirDetalhes(evento)}
+                              className="h-9 w-9 bg-white dark:bg-slate-800 text-indigo-600 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-700"
+                              title="Ver detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </motion.button>
+                            <motion.button
                               whileTap={{ scale: 0.9 }}
                               onClick={() => abrirEdicao(evento)}
                               className="h-9 w-9 bg-white dark:bg-slate-800 text-blue-600 rounded-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-700"
                             >
                               <Pencil className="h-4 w-4" />
                             </motion.button>
-                            <motion.button 
+                            <motion.button
                               whileTap={{ scale: 0.9 }}
                               onClick={() => handleExcluir(evento.id)}
                               disabled={isDeleting === evento.id}
@@ -580,6 +594,130 @@ export function EventosPageMobile() {
             </Button>
           </div>
         </form>
+      </BottomSheet>
+
+      {/* BottomSheet de Detalhes do Evento */}
+      <BottomSheet
+        isOpen={!!eventoDetalhes}
+        onClose={() => setEventoDetalhes(null)}
+        title="Detalhes do Evento"
+        size="full"
+      >
+        {eventoDetalhes && (
+          <div className="space-y-6 pt-2 pb-12">
+            {/* Cabeçalho */}
+            <div className="bg-indigo-600 p-6 rounded-[32px] text-white shadow-xl shadow-indigo-100 dark:shadow-none overflow-hidden relative">
+              <div className="relative z-10">
+                <h2 className="text-2xl font-black tracking-tight mb-2">{eventoDetalhes.nome}</h2>
+                <div className="flex items-center gap-2 text-indigo-100 text-xs font-medium">
+                  <Calendar className="h-4 w-4" />
+                  {format(parseISO(eventoDetalhes.data_inicio), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                </div>
+              </div>
+              <Sparkles className="absolute -right-4 -bottom-4 h-24 w-24 text-white/10 rotate-12" />
+            </div>
+
+            {/* Datas */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950 border border-indigo-100 dark:border-indigo-900">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Início</span>
+                </div>
+                <p className="text-sm font-black text-slate-900 dark:text-white">
+                  {format(parseISO(eventoDetalhes.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+                {eventoDetalhes.hora_inicio && (
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {eventoDetalhes.hora_inicio}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Término</span>
+                </div>
+                {eventoDetalhes.data_termino ? (
+                  <>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">
+                      {format(parseISO(eventoDetalhes.data_termino), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                    {eventoDetalhes.hora_fim && (
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {eventoDetalhes.hora_fim}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs font-bold text-slate-400">Evento de 1 dia</p>
+                )}
+              </div>
+            </div>
+
+            {/* Local */}
+            {eventoDetalhes.local && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Local</span>
+                </div>
+                <p className="text-base font-bold text-slate-900 dark:text-white">{eventoDetalhes.local}</p>
+              </div>
+            )}
+
+            {/* Público */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-2">
+                {eventoDetalhes.publico_alvo === 'toda_escola' && <Globe className="h-4 w-4 text-slate-600 dark:text-slate-400" />}
+                {eventoDetalhes.publico_alvo === 'professores' && <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />}
+                {eventoDetalhes.publico_alvo === 'responsaveis' && <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />}
+                {eventoDetalhes.publico_alvo === 'alunos' && <GraduationCap className="h-4 w-4 text-slate-600 dark:text-slate-400" />}
+                <span className="text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Público-Alvo</span>
+              </div>
+              <p className="text-base font-bold text-slate-900 dark:text-white">
+                {publicoLabel(eventoDetalhes.publico_alvo) || 'Não especificado'}
+              </p>
+            </div>
+
+            {/* Descrição */}
+            {eventoDetalhes.descricao && (
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">Descrição</span>
+                </div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  {eventoDetalhes.descricao}
+                </p>
+              </div>
+            )}
+
+            {/* Ações */}
+            <div className="flex flex-col gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                onClick={() => {
+                  setEventoDetalhes(null)
+                  abrirEdicao(eventoDetalhes)
+                }}
+                className="w-full h-16 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-sm tracking-widest shadow-xl shadow-indigo-100 dark:shadow-none"
+              >
+                <Pencil className="h-5 w-5 mr-2" />
+                EDITAR EVENTO
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEventoDetalhes(null)}
+                className="w-full h-14 rounded-2xl border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold"
+              >
+                FECHAR
+              </Button>
+            </div>
+          </div>
+        )}
       </BottomSheet>
     </MobilePageLayout>
   )
