@@ -90,6 +90,7 @@ const PortalAlunosListV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAl
 const PortalAlunoPerfilV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAlunoPerfilV2').then(m => ({ default: m.PortalAlunoPerfilV2 })))
 const PortalAvisosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAvisosV2').then(m => ({ default: m.PortalAvisosV2 })))
 const PortalFinanceiroV2 = lazy(() => import('@/modules/portal/v2/pages/PortalFinanceiroV2').then(m => ({ default: m.PortalFinanceiroV2 })))
+const PortalDocumentosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalDocumentosPageV2').then(m => ({ default: m.default })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -266,7 +267,7 @@ function App() {
               <Route path="/portal/boletim" element={<PortalBoletimPage />} />
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
-              <Route path="/portal/documentos" element={<PortalDocumentosPage />} />
+              <Route path="/portal/documentos" element={<PortalDocumentosV2 />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 
