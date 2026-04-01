@@ -19,6 +19,9 @@ export interface Turma {
   horario_fim?: string;
 }
 
+export type DisciplinaEtapa = 'EI' | 'EF1' | 'EF2' | 'EM' | 'LEGADO' | 'TODAS'
+export type DisciplinaCategoria = 'Campos de Experiência' | 'Linguagens' | 'Matemática' | 'Ciências da Natureza' | 'Ciências Humanas' | 'Artes' | 'Educação Física' | 'Ensino Religioso' | 'Itinerários' | 'Legado Superior' | 'Outros'
+
 export interface Disciplina {
   id: string;
   nome: string;
@@ -26,6 +29,12 @@ export interface Disciplina {
   carga_horaria_total: number;
   cor: string;
   ativa: boolean;
+  etapa: DisciplinaEtapa;
+  categoria: DisciplinaCategoria;
+  ordem: number;
+  tenant_id: string | null;
+  is_default: boolean;
+  is_global: boolean;
 }
 
 export interface Professor {

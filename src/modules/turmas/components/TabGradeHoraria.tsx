@@ -18,7 +18,7 @@ import {
 import { useTurmaStore } from '../store'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { useGradeTurma, useSalvarGradeItem, useRemoverGradeItem, useAtribuicoes, useDisciplinas, useProfessoresTurma } from '../hooks'
+import { useGradeTurma, useSalvarGradeItem, useRemoverGradeItem, useAtribuicoes, useDisciplinas, useProfessoresTurma, useTurma } from '../hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 
 interface TabGradeHorariaProps {
@@ -48,8 +48,9 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [selectedDisciplinaId, setSelectedDisciplinaId] = useState<string | null>(null)
 
+  const { data: turma } = useTurma(turmaId)
   const { data: dbProfessores } = useProfessoresTurma()
-  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: dbDisciplinas } = useDisciplinas(authUser?.tenantId || '', turma?.etapa)
   const { data: gradeTurmaDb, isLoading: loadingGrade } = useGradeTurma(turmaId)
   const { data: atribuicoesDb } = useAtribuicoes(turmaId)
 
@@ -67,7 +68,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
   // Helper values
   const gradeTurma = (gradeTurmaDb || []) as any[]
   const atribuicoes = (atribuicoesDb || []) as any[]
-  const disciplinas = dbDisciplinas || []
+  const disciplinas = (dbDisciplinas || []).filter(d => d.ativa !== false)
   const professores = dbProfessores || []
 
   const salvarHorario = async (disciplinaId: string, dia: number, horario: any) => {

@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { useProfessoresTurma, useDisciplinas, useAtribuicoes, useAtribuirProfessor, useRemoverAtribuicao } from '../hooks'
+import { useProfessoresTurma, useDisciplinas, useAtribuicoes, useAtribuirProfessor, useRemoverAtribuicao, useTurma } from '../hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 
 interface TabProfessoresProps {
@@ -38,8 +38,9 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
   const [showAllDisciplinas, setShowAllDisciplinas] = useState(false)
 
+  const { data: turma } = useTurma(turmaId)
   const { data: dbProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
-  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: dbDisciplinas } = useDisciplinas(authUser?.tenantId || '', turma?.etapa)
   const { data: instituicaoAtribuicoes, isLoading: loadingAtribuicoes } = useAtribuicoes(turmaId)
   
   const mutationAtribuir = useAtribuirProfessor()
@@ -56,17 +57,20 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   // Atribuições desta turma (vêm do banco)
   const atribuicoes = instituicaoAtribuicoes || []
 
+  // FILTRO DE SEGURANÇA: Garantir que apenas disciplinas ativas sejam usadas
+  const disciplinasAtivas = disciplinas.filter(d => d.ativa !== false)
+
   // Filtragem
   const filteredAtribuicoes = atribuicoes.filter((at: any) => {
     const professor = professores.find((p: any) => p.id === at.professor_id)
-    const disciplina = disciplinas.find((d: any) => d.id === at.disciplina_id)
+    const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
     const searchTerm = busca.toLowerCase()
     return professor?.nome.toLowerCase().includes(searchTerm) || 
            disciplina?.nome.toLowerCase().includes(searchTerm)
   })
 
-  // Disciplinas que ainda não têm professor
-  const disciplinasSemProfessor = disciplinas.filter(d => 
+  // Disciplinas que ainda não têm professor (apenas ativas)
+  const disciplinasSemProfessor = disciplinasAtivas.filter(d => 
     !atribuicoes.some((at: any) => at.disciplina_id === d.id) &&
     d.nome.toLowerCase().includes(busca.toLowerCase())
   )

@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { turmaService } from './service'
 import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
-
-import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
-import { z } from 'zod'
 
 export function useTurmas() {
   const { authUser } = useAuth()
@@ -74,14 +73,53 @@ export function useTurmaDoAluno(alunoId: string) {
 
 /**
  * Busca disciplinas REAIS do banco de dados (tabela disciplinas).
+ * Retorna globais ativas (não ocultas) + criadas pela escola.
+ * @param etapa - Filtro opcional por etapa (EI, EF1, EF2, EM)
  */
-export function useDisciplinas() {
-  const { authUser } = useAuth()
+export function useDisciplinas(tenantId: string, etapa?: string) {
   return useQuery({
-    queryKey: ['disciplinas', authUser?.tenantId],
-    queryFn: () => turmaService.listarDisciplinas(authUser!.tenantId),
-    enabled: !!authUser?.tenantId,
-    staleTime: 1000 * 60 * 10,
+    queryKey: ['disciplinas', tenantId, etapa],
+    queryFn: () => turmaService.listarDisciplinas(tenantId, etapa),
+    enabled: !!tenantId
+  })
+}
+
+export function useCatalogoDisciplinas(tenantId: string) {
+  return useQuery({
+    queryKey: ['disciplinas-catalogo', tenantId],
+    queryFn: () => turmaService.listarCatalogoDisciplinas(tenantId),
+    enabled: !!tenantId
+  })
+}
+
+export function useCriarDisciplina() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ nome, tenantId, etapa, categoria }: { nome: string, tenantId: string, etapa?: string, categoria?: string }) => 
+      turmaService.criarDisciplinaCustomizada(nome, tenantId, etapa, categoria),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['disciplinas', variables.tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo', variables.tenantId] })
+      toast.success('Disciplina criada com sucesso!')
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao criar disciplina: ' + error.message)
+    }
+  })
+}
+
+/**
+ * Mutation para ativar/ocultar disciplina (transparente: global vs local).
+ */
+export function useToggleDisciplinaAtiva() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ disciplinaId, tenantId, isGlobal, ocultar }: { disciplinaId: string, tenantId: string, isGlobal: boolean, ocultar: boolean }) => 
+      turmaService.toggleDisciplinaAtiva(disciplinaId, tenantId, isGlobal, ocultar),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['disciplinas', variables.tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo', variables.tenantId] })
+    }
   })
 }
 

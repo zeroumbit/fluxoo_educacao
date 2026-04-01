@@ -896,6 +896,37 @@ export type CurriculoInsert = Omit<Curriculo, 'id' | 'created_at' | 'updated_at'
 
 export type CurriculoUpdate = Partial<CurriculoInsert>
 
+// ========== DISCIPLINAS ==========
+export type DisciplinaEtapa = 'EI' | 'EF1' | 'EF2' | 'EM' | 'LEGADO' | 'TODAS'
+export type DisciplinaCategoria = 'Campos de Experiência' | 'Linguagens' | 'Matemática' | 'Ciências da Natureza' | 'Ciências Humanas' | 'Artes' | 'Educação Física' | 'Ensino Religioso' | 'Itinerários' | 'Legado Superior' | 'Outros'
+
+export type DisciplinaDb = {
+  id: string
+  tenant_id: string | null
+  nome: string
+  etapa: DisciplinaEtapa
+  categoria: DisciplinaCategoria
+  ordem: number
+  is_default: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+export type DisciplinaDbInsert = Omit<DisciplinaDb, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type DisciplinaDbUpdate = Partial<DisciplinaDbInsert>
+
+// ========== TENANT_DISCIPLINAS_OCULTAS ==========
+export type TenantDisciplinaOculta = {
+  tenant_id: string
+  disciplina_id: string
+  created_at: string
+}
+export type TenantDisciplinaOcultaInsert = Omit<TenantDisciplinaOculta, 'created_at'> & {
+  created_at?: string
+}
+
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
 
@@ -945,6 +976,8 @@ export type Database = {
       curriculos: { Row: Curriculo; Insert: CurriculoInsert; Update: CurriculoUpdate; Relationships: any[] }
       lojistas: { Row: Lojista; Insert: LojistaInsert; Update: LojistaUpdate; Relationships: any[] }
       notificacoes: { Row: Notificacao; Insert: NotificacaoInsert; Update: NotificacaoUpdate; Relationships: any[] }
+      disciplinas: { Row: DisciplinaDb; Insert: DisciplinaDbInsert; Update: DisciplinaDbUpdate; Relationships: any[] }
+      tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: any; Relationships: any[] }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }

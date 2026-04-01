@@ -61,6 +61,7 @@ const navigationGroups = [
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
       { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
+      { name: 'Disciplinas', href: '/disciplinas', icon: ClipboardList, permission: 'academico.disciplinas.view' },
       { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
       { name: 'Atividades', href: '/atividades', icon: FileText, permission: 'academico.atividades.view' },

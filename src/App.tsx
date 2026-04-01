@@ -41,6 +41,7 @@ const MatriculaFormPage = lazy(() => import('@/modules/academico/pages/Matricula
 const PlanoAulaPage = lazy(() => import('@/modules/academico/pages/PlanoAulaPage').then(m => ({ default: m.PlanoAulaPage })))
 const AtividadesPage = lazy(() => import('@/modules/academico/pages/AtividadesPage').then(m => ({ default: m.AtividadesPage })))
 const NotasPage = lazy(() => import('@/modules/academico/pages/NotasPage').then(m => ({ default: m.NotasPage })))
+const DisciplinasPage = lazy(() => import('@/modules/academico/pages/DisciplinasPage').then(m => ({ default: m.DisciplinasPage })))
 const EventosPage = lazy(() => import('@/modules/agenda/pages/EventosPage').then(m => ({ default: m.EventosPage })))
 const ConfiguracoesPage = lazy(() => import('@/modules/configuracoes/pages/ConfiguracoesPage').then(m => ({ default: m.ConfiguracoesPage })))
 const ContasPagarPage = lazy(() => import('@/modules/financeiro/pages/ContasPagarPage').then(m => ({ default: m.ContasPagarPage })))
@@ -213,6 +214,7 @@ function App() {
               <Route path="/planos-aula" element={<PlanoAulaPage />} />
               <Route path="/atividades" element={<AtividadesPage />} />
               <Route path="/notas" element={<NotasPage />} />
+              <Route path="/disciplinas" element={<DisciplinasPage />} />
               <Route path="/agenda" element={<EventosPage />} />
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />
               <Route path="/contas-pagar" element={<ContasPagarPage />} />

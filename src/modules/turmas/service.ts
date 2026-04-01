@@ -31,19 +31,15 @@ export const turmaService = {
   },
 
   async buscarPorId(id: string, tenantId: string) {
-    let query = supabase
+    const { data, error } = await supabase
       .from('turmas')
-      .select('id, tenant_id, nome, filial_id, max_alunos, status, turno, ano_letivo, valor_mensalidade, created_at, updated_at')
+      .select('*')
       .eq('id', id)
-    
-    if (tenantId && tenantId !== 'super_admin') {
-      query = query.eq('tenant_id', tenantId)
-    }
-
-    const { data, error } = await query.single()
+      .eq('tenant_id', tenantId)
+      .single()
 
     if (error) throw error
-    return data
+    return data as any
   },
 
   async criar(turma: TurmaInsert) {
@@ -91,55 +87,181 @@ export const turmaService = {
   },
 
   /**
-   * Lista disciplinas reais cadastradas no banco para o tenant.
+   * Auxiliar para formatar o objeto Disciplina a partir do retorno do banco.
    */
-  async listarDisciplinas(tenantId: string): Promise<Disciplina[]> {
-    const { data, error } = await supabase
-      .from('disciplinas' as any)
-      .select('id, nome, tenant_id, created_at')
-      .eq('tenant_id', tenantId)
-      .order('nome')
-
-    if (error) throw error
-
-    // Map to our Disciplina interface
+  _formatarDisciplina(d: any, idsOcultos: string[] = []): Disciplina {
     const DISCIPLINE_COLORS: Record<string, string> = {
       'Matemática': '#4f46e5', 'Português': '#ec4899', 'Ciências': '#10b981',
       'História': '#f59e0b', 'Geografia': '#06b6d4', 'Física': '#8b5cf6',
       'Química': '#ef4444', 'Biologia': '#22c55e', 'Inglês': '#3b82f6',
       'Educação Física': '#f97316', 'Artes': '#a855f7', 'Filosofia': '#64748b',
       'Sociologia': '#0ea5e9', 'Espanhol': '#e11d48', 'Música': '#d946ef',
+      'Língua Portuguesa': '#ec4899', 'Ensino Religioso': '#78716c',
+      'Redação': '#f472b6', 'Robótica': '#14b8a6', 'Informática': '#6366f1',
     }
 
-    return (data || []).map((d: any) => {
-      const code = d.nome
-        .replace(/[^A-ZÀ-Ú]/gi, ' ')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 3)
-        .map((w: string) => w[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 3)
+    const code = d.nome
+      .replace(/[^A-ZÀ-Ú]/gi, ' ')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 3)
+      .map((w: string) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 3)
 
-      // Find a matching color key
-      const colorKey = Object.keys(DISCIPLINE_COLORS).find(k =>
-        d.nome.toLowerCase().includes(k.toLowerCase())
-      )
+    const colorKey = Object.keys(DISCIPLINE_COLORS).find(k =>
+      d.nome.toLowerCase().includes(k.toLowerCase())
+    )
 
-      return {
-        id: d.id,
-        nome: d.nome,
-        codigo: code || 'DIS',
-        carga_horaria_total: 0,
-        cor: colorKey ? DISCIPLINE_COLORS[colorKey] : '#6366f1',
-        ativa: true,
-      }
-    })
+    const isGlobal = d.tenant_id === null
+    const ativa = (d.ativa !== false) && (isGlobal ? !idsOcultos.includes(d.id) : true)
+
+    return {
+      id: d.id,
+      nome: d.nome,
+      codigo: code || 'DIS',
+      carga_horaria_total: 0,
+      cor: colorKey ? DISCIPLINE_COLORS[colorKey] : '#6366f1',
+      ativa,
+      etapa: d.etapa || 'TODAS',
+      categoria: d.categoria || 'Outros',
+      ordem: d.ordem || 999,
+      tenant_id: d.tenant_id,
+      is_default: d.is_default || false,
+      is_global: isGlobal,
+    }
   },
 
   /**
-   * Lista professores reais — funcionários ativos cujas funções contêm "Professor".
+   * Lista disciplinas visíveis para o tenant atual (filtradas por ativos).
+   */
+  async listarDisciplinas(tenantId: string, etapa?: string): Promise<Disciplina[]> {
+    const { data: ocultas, error: errOcultas } = await supabase
+      .from('tenant_disciplinas_ocultas' as any)
+      .select('disciplina_id')
+      .eq('tenant_id', tenantId)
+
+    if (errOcultas) {
+      console.error('[listarDisciplinas] Erro ao buscar ocultas:', errOcultas)
+    }
+
+    const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
+    console.log('[listarDisciplinas] IDs ocultos:', idsOcultos.length, idsOcultos)
+
+    let query = supabase
+      .from('disciplinas')
+      .select('*')
+      .eq('ativa', true)
+      .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
+
+    const { data, error } = await query
+      .order('ordem', { ascending: true })
+      .order('nome', { ascending: true })
+
+    if (error) throw error
+
+    const total = (data || []).length
+    const filtered = (data || [])
+      .filter((d: any) => {
+        if (d.tenant_id === null && idsOcultos.includes(d.id)) return false;
+        if (etapa && etapa !== 'TODAS') {
+           return d.etapa === etapa || d.etapa === 'TODAS';
+        }
+        return true;
+      })
+    
+    console.log(`[listarDisciplinas] Total do banco: ${total}, Após filtro: ${filtered.length}, Removidas: ${total - filtered.length}`)
+    
+    return filtered.map((d: any) => this._formatarDisciplina(d, idsOcultos))
+  },
+
+  /**
+   * Lista o catálogo completo (globais + locais) para gestão, sem filtrar por 'ativa'.
+   */
+  async listarCatalogoDisciplinas(tenantId: string): Promise<Disciplina[]> {
+    const { data: ocultas } = await supabase
+      .from('tenant_disciplinas_ocultas' as any)
+      .select('disciplina_id')
+      .eq('tenant_id', tenantId)
+
+    const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
+
+    const { data, error } = await supabase
+      .from('disciplinas' as any)
+      .select('*')
+      .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
+      .order('is_default', { ascending: false }) // Prioriza BNCC
+      .order('nome', { ascending: true })
+
+    if (error) throw error
+
+    return (data || []).map((d: any) => this._formatarDisciplina(d, idsOcultos))
+  },
+
+  async criarDisciplinaCustomizada(nome: string, tenantId: string, etapa: string = 'TODAS', categoria: string = 'Outros') {
+     const { data, error } = await supabase
+       .from('disciplinas' as any)
+        .insert({
+          nome,
+          tenant_id: tenantId,
+          etapa,
+          categoria,
+          is_default: false,
+          ativa: true
+        })
+       .select()
+       .single()
+     
+     if (error) throw error
+     return data
+  },
+
+  /**
+   * Ativa/oculta uma disciplina para o tenant.
+   */
+   async toggleDisciplinaAtiva(disciplinaId: string, tenantId: string, isGlobal: boolean, ocultar: boolean) {
+     if (!tenantId || tenantId === 'PENDING_TENANT') return;
+     
+     if (isGlobal) {
+       // Disciplina BNCC global: usa tabela pivot de ocultação
+       if (ocultar) {
+         const { error } = await (supabase.from('tenant_disciplinas_ocultas') as any)
+           .upsert(
+             { tenant_id: tenantId, disciplina_id: disciplinaId }, 
+             { onConflict: 'tenant_id,disciplina_id' }
+           )
+         if (error) {
+           console.error('[toggleDisciplinaAtiva] Erro ao ocultar:', error)
+           throw error
+         }
+       } else {
+         const { error } = await supabase
+           .from('tenant_disciplinas_ocultas' as any)
+           .delete()
+           .eq('tenant_id', tenantId)
+           .eq('disciplina_id', disciplinaId)
+         if (error) {
+           console.error('[toggleDisciplinaAtiva] Erro ao reativar:', error)
+           throw error
+         }
+       }
+     } else {
+       // Disciplina local da escola: atualiza diretamente
+       const { error } = await supabase
+         .from('disciplinas' as any)
+         .update({ ativa: !ocultar })
+         .eq('id', disciplinaId)
+         .eq('tenant_id', tenantId)
+       if (error) {
+         console.error('[toggleDisciplinaAtiva] Erro ao alterar local:', error)
+         throw error
+       }
+     }
+   },
+
+  /**
+   * Lista professores reais.
    */
   async listarProfessores(tenantId: string): Promise<Professor[]> {
     const { data, error } = await supabase
@@ -160,21 +282,15 @@ export const turmaService = {
           fn.toLowerCase().includes('professor')
         )
       })
-      .map((f: any) => {
-        const funcs: string[] = Array.isArray(f.funcoes) && f.funcoes.length > 0
-          ? f.funcoes
-          : f.funcao ? [f.funcao] : []
-
-        return {
-          id: f.id,
-          nome: f.nome_completo,
-          especialidades: funcs.filter((fn: string) =>
-            fn.toLowerCase().includes('professor')
-          ),
-          carga_horaria_maxima: 40,
-          ativo: f.status === 'ativo'
-        }
-      })
+      .map((f: any) => ({
+        id: f.id,
+        nome: f.nome_completo,
+        especialidades: (Array.isArray(f.funcoes) ? f.funcoes : [f.funcao]).filter((fn: any) =>
+          String(fn || '').toLowerCase().includes('professor')
+        ),
+        carga_horaria_maxima: 40,
+        ativo: f.status === 'ativo'
+      }))
   },
 
   // --- ACADÊMICO: ATRIBUIÇÕES E GRADE ---
