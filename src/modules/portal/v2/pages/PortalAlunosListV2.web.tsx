@@ -44,7 +44,7 @@ export function PortalAlunosListV2Web() {
                   {v.aluno?.nome_completo || 'Aluno'}
                 </h2>
                 <div className="flex flex-col gap-1 text-sm font-semibold text-slate-400">
-                  <span className="text-teal-600 font-bold">{v.aluno?.turma?.nome || 'Turma não informada'}</span>
+                  <span className="text-teal-600 font-bold">{v.aluno?.turma?.nome || 'Sem turma'}</span>
                   <span className="font-mono tracking-widest text-[11px] uppercase">STATUS: {v.aluno?.status || 'Ativo'}</span>
                 </div>
               </div>

@@ -301,11 +301,13 @@ export const financeiroService = {
       }
 
       // 2. Gerar mensalidades CHEIAS restantes (uma por mês)
-      // Começa do mês seguinte ao da matrícula, até completar qtdMensalidades - 1
-      for (let i = 1; i < qtdMensalidades; i++) {
+      // A proporcional cobre o primeiro mês parcial e vence no mês seguinte (mês+1).
+      // As mensalidades cheias começam no mês SEGUINTE ao da proporcional (mês+2).
+      // Total gerado: 1 proporcional + (qtdMensalidades - 1) mensalidades cheias.
+      for (let i = 2; i <= qtdMensalidades; i++) {
         const dataVencimentoMensalidade = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + i, diaVencimentoPadrao)
         
-        // Ajusta para o próximo mês se o dia de vencimento for maior que o último dia do mês
+        // Ajusta para o último dia do mês se o dia de vencimento for maior
         const ultimoDiaDoMesVencimento = new Date(dataVencimentoMensalidade.getFullYear(), dataVencimentoMensalidade.getMonth() + 1, 0).getDate()
         if (diaVencimentoPadrao > ultimoDiaDoMesVencimento) {
           dataVencimentoMensalidade.setDate(ultimoDiaDoMesVencimento)
@@ -317,7 +319,7 @@ export const financeiroService = {
           tenant_id,
           aluno_id,
           descricao: `Mensalidade ${mesReferencia.charAt(0).toUpperCase() + mesReferencia.slice(1)}${sufixo}`,
-          valor: valorMensalidadeComDesconto,
+          valor: Number(valorMensalidadeComDesconto.toFixed(2)),
           data_vencimento: dataVencimentoMensalidade.toISOString().split('T')[0],
           status: 'a_vencer',
           tipo_cobranca: 'mensalidade',

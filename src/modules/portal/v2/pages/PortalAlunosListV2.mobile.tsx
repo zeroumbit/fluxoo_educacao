@@ -43,10 +43,22 @@ export function PortalAlunosListV2Mobile() {
               {/* Avatar - 64px padrão iOS Contact / Material Avatar Large */}
               <motion.div
                 layoutId={`avatar-${v.aluno?.id}`}
-                className="w-16 h-16 rounded-[20px] bg-teal-500 text-white flex justify-center items-center text-[22px] font-semibold shadow-sm flex-shrink-0"
+                className="w-16 h-16 rounded-[20px] bg-teal-500 text-white flex justify-center items-center text-[22px] font-semibold shadow-sm flex-shrink-0 overflow-hidden"
                 aria-hidden="true"
               >
-                {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
+                {v.aluno?.foto_url ? (
+                  <img
+                    src={v.aluno.foto_url}
+                    alt={v.aluno.nome_completo}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).parentElement!.textContent = getInitials(v.aluno?.nome_completo || 'A');
+                    }}
+                  />
+                ) : (
+                  v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'
+                )}
               </motion.div>
 
               <div className="flex flex-col flex-1 min-w-0">
@@ -57,7 +69,7 @@ export function PortalAlunosListV2Mobile() {
                 {/* Caption - iOS Caption 1 (13px Regular) / Material Label Medium (13px Medium) */}
                 <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
                   <span className="text-teal-600 font-medium">
-                    {v.aluno?.turma?.nome || 'Turma não informada'}
+                    {v.aluno?.turma?.nome || 'Sem turma'}
                   </span>
                   <span className="text-slate-300" aria-hidden="true">•</span>
                   <span className="font-mono text-slate-500">

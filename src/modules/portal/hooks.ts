@@ -393,21 +393,7 @@ export function useAtividadesPortal() {
 export function useNotificacaoSonoraAvisos() {
   const { data: avisos } = useAvisosPortal()
   const prevCountRef = useRef<number>(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const { alunoSelecionado } = usePortalContext()
-
-  useEffect(() => {
-    // Inicializa o áudio
-    audioRef.current = new Audio(alertaSom)
-    audioRef.current.volume = 0.5 // 50% do volume
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [])
 
   useEffect(() => {
     if (!alunoSelecionado) return // Só toca se houver aluno selecionado
@@ -416,12 +402,15 @@ export function useNotificacaoSonoraAvisos() {
 
     // Se é a primeira vez ou se aumentou o número de avisos
     if (prevCountRef.current > 0 && currentCount > prevCountRef.current) {
-      // Toca o som de notificação
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0
-        audioRef.current.play().catch((err) => {
-          console.warn('Não foi possível tocar o som de notificação:', err)
+      // Cria o áudio sob demanda (evita ERR_CACHE_READ_FAILURE do Service Worker)
+      try {
+        const audio = new Audio(`${alertaSom}?t=${Date.now()}`)
+        audio.volume = 0.5
+        audio.play().catch(() => {
+          // Autoplay bloqueado pelo navegador — ignora silenciosamente
         })
+      } catch {
+        // Falha ao criar Audio — ignora
       }
     }
 

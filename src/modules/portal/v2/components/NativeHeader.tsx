@@ -83,8 +83,12 @@ export function NativeHeader({
                 className="btn-premium-select"
                 aria-label="Selecionar aluno"
               >
-                <div className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-white">
-                   {alunoSelecionado ? getInitials(alunoSelecionado.nome_completo) : <Users size={14} />}
+                <div className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-white overflow-hidden">
+                   {alunoSelecionado?.foto_url ? (
+                     <img src={alunoSelecionado.foto_url} alt="" className="w-full h-full object-cover" />
+                   ) : (
+                     alunoSelecionado ? getInitials(alunoSelecionado.nome_completo) : <Users size={14} />
+                   )}
                 </div>
                 {isMultiAluno && <ChevronDown size={14} className="text-slate-400" />}
               </button>
@@ -116,10 +120,14 @@ export function NativeHeader({
                       )}
                     >
                       <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shadow-sm",
+                        "w-12 h-12 rounded-full flex items-center justify-center text-[16px] font-bold shadow-sm overflow-hidden",
                         alunoSelecionado?.id === v.aluno?.id ? "bg-teal-500 text-white" : "bg-slate-100 text-slate-500"
                       )}>
-                        {getInitials(v.aluno?.nome_completo || 'A')}
+                        {v.aluno?.foto_url ? (
+                          <img src={v.aluno.foto_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          getInitials(v.aluno?.nome_completo || 'A')
+                        )}
                       </div>
                       
                       <div className="flex flex-col text-left flex-1 min-w-0">
@@ -130,7 +138,7 @@ export function NativeHeader({
                             {v.aluno?.nome_completo}
                          </span>
                          <span className="text-[12px] font-medium text-slate-400">
-                            {v.aluno?.turma?.nome || 'Turma não informada'}
+                            {v.aluno?.turma?.nome || 'Sem turma'}
                          </span>
                       </div>
                       

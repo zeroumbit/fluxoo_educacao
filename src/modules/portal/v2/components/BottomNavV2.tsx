@@ -31,25 +31,31 @@ import { usePortalContext } from '@/modules/portal/context';
 import { cn } from '@/lib/utils';
 
 // Verifica se existem lojistas ou profissionais cadastrados no marketplace
+// NOTA: Tabelas 'lojistas' e 'curriculos' podem ter RLS restritivo para role 'responsavel'.
+// Por isso tratamos erros 403/PGRST silenciosamente e cacheamos o resultado.
 const fetchLojaStatus = async (): Promise<number> => {
+  let total = 0;
+  
   try {
-    const { count: countLojistas, error: errorLojistas } = await supabase
+    const { count, error } = await supabase
       .from('lojistas' as any)
       .select('id', { count: 'exact', head: true });
+    if (!error) total += count || 0;
+  } catch {
+    // RLS block ou tabela inexistente — ignora silenciosamente
+  }
 
-    const totalLojistas = errorLojistas ? 0 : (countLojistas || 0);
-
-    const { count: countProf, error: errorProf } = await supabase
+  try {
+    const { count, error } = await supabase
       .from('curriculos' as any)
       .select('id', { count: 'exact', head: true })
       .or('busca_vaga.eq.true,presta_servico.eq.true');
-
-    const totalProf = errorProf ? 0 : (countProf || 0);
-
-    return totalLojistas + totalProf;
+    if (!error) total += count || 0;
   } catch {
-    return 0;
+    // RLS block ou tabela inexistente — ignora silenciosamente
   }
+
+  return total;
 };
 
 export const BottomNavV2 = () => {
@@ -62,6 +68,9 @@ export const BottomNavV2 = () => {
   const { data: lojaCount } = useQuery({
     queryKey: ['portal-loja-status'],
     queryFn: fetchLojaStatus,
+    retry: false, // Não re-tentar se RLS bloquear (403)
+    staleTime: 30 * 60 * 1000, // 30 min — raramente muda
+    gcTime: 60 * 60 * 1000, // 1h no garbage collector
   });
 
   const showLoja = (lojaCount || 0) > 0;

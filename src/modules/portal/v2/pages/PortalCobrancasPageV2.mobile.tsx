@@ -280,9 +280,22 @@ function AlunoCardMobile({ aluno, onClick }: any) {
       aria-label={`Ver detalhes financeiros de ${aluno.nome_completo}`}
     >
       <div className="flex items-center gap-4">
-        {/* Avatar */}
-        <div className="w-16 h-16 rounded-[20px] bg-slate-900 text-white flex justify-center items-center text-xl font-bold shadow-sm relative flex-shrink-0" aria-hidden="true">
-          {getInitials(aluno.nome_completo)}
+        {/* Avatar - Foto ou Iniciais */}
+        <div className="w-16 h-16 rounded-[20px] bg-slate-900 text-white flex justify-center items-center text-xl font-bold shadow-sm relative flex-shrink-0 overflow-hidden" aria-hidden="true">
+          {aluno.foto_url ? (
+            <img
+              src={aluno.foto_url}
+              alt={aluno.nome_completo}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback para iniciais se a imagem falhar
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.textContent = getInitials(aluno.nome_completo);
+              }}
+            />
+          ) : (
+            getInitials(aluno.nome_completo)
+          )}
           {atrasadas > 0 && (
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 border-2 border-white rounded-full animate-pulse" />
           )}
@@ -296,7 +309,7 @@ function AlunoCardMobile({ aluno, onClick }: any) {
           
           {/* Turma - Caption */}
           <span className="text-[13px] font-semibold text-slate-400 uppercase tracking-wide">
-            {aluno.turma?.nome || 'Turma não informada'}
+            {aluno.turma?.nome || 'Sem turma'}
           </span>
 
           {/* Status Badge */}

@@ -225,8 +225,20 @@ function AlunoCard({ aluno, onClick }: any) {
       className="flex flex-col bg-white border border-slate-100 rounded-[48px] p-10 shadow-[0_10px_45px_rgba(0,0,0,0.04)] cursor-pointer hover:border-teal-300 hover:-translate-y-2 transition-all group"
     >
       <div className="flex items-center gap-6">
-        <div className="w-24 h-24 rounded-full bg-slate-900 text-white flex justify-center items-center text-3xl font-black shadow-2xl relative">
-          {getInitials(aluno.nome_completo)}
+        <div className="w-24 h-24 rounded-full bg-slate-900 text-white flex justify-center items-center text-3xl font-black shadow-2xl relative overflow-hidden">
+          {aluno.foto_url ? (
+            <img
+              src={aluno.foto_url}
+              alt={aluno.nome_completo}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.textContent = getInitials(aluno.nome_completo);
+              }}
+            />
+          ) : (
+            getInitials(aluno.nome_completo)
+          )}
           {atrasadas > 0 && <div className="absolute -top-1 -right-1 w-7 h-7 bg-rose-500 border-4 border-white rounded-full animate-pulse" />}
         </div>
         <div className="flex flex-col flex-1">
@@ -234,7 +246,7 @@ function AlunoCard({ aluno, onClick }: any) {
             {aluno.nome_completo || 'Aluno'}
           </h2>
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{aluno.turma?.nome || 'Turma não informada'}</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">{aluno.turma?.nome || 'Sem turma'}</span>
             <div className="flex items-center gap-2 mt-1">
               {atrasadas > 0 ? (
                 <Badge className="bg-rose-50 text-rose-600 border-rose-100 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
@@ -257,7 +269,7 @@ function AlunoCard({ aluno, onClick }: any) {
       <div className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between">
          <div className="flex flex-col">
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Turma</span>
-            <span className="text-sm font-bold text-slate-500">{aluno.turma?.nome || 'Turma não informada'}</span>
+            <span className="text-sm font-bold text-slate-500">{aluno.turma?.nome || 'Sem turma'}</span>
          </div>
          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:text-white transition-all shadow-sm">
             <ChevronRight size={24} />

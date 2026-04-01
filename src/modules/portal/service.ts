@@ -141,7 +141,33 @@ export const portalService = {
       throw error
     }
 
-    return (data as any[]) || []
+    const vinculos = (data as any[]) || []
+
+    // Enriquecer cada aluno com dados de turma via matriculas (a relação alunos->turmas é via matriculas)
+    if (vinculos.length > 0) {
+      const alunoIds = vinculos.map(v => v.aluno?.id).filter(Boolean)
+      
+      if (alunoIds.length > 0) {
+        const { data: matriculas } = await (supabase.from('matriculas' as any) as any)
+          .select('aluno_id, turma_id, turmas(id, nome, turno)')
+          .in('aluno_id', alunoIds)
+          .eq('status', 'ativa')
+        
+        if (matriculas && matriculas.length > 0) {
+          for (const vinculo of vinculos) {
+            if (vinculo.aluno) {
+              const matricula = matriculas.find((m: any) => m.aluno_id === vinculo.aluno.id)
+              if (matricula) {
+                const turmaRaw = matricula.turmas
+                vinculo.aluno.turma = Array.isArray(turmaRaw) ? turmaRaw[0] : turmaRaw
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return vinculos
   },
 
   async buscarEscolasVinculadas(tenantIds: string[]) {
