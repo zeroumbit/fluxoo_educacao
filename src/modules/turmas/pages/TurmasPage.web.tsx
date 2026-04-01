@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -54,12 +54,12 @@ export function TurmasPageWeb() {
 
   const { data: dbTurmas, isLoading: loadingTurmas } = useTurmas()
   const { data: dbAlunos } = useAlunos()
-  const { data: dbDisciplinas } = useDisciplinas()
+  const { data: dbDisciplinas } = useDisciplinas(authUser!.tenantId)
   const { data: dbProfessores } = useProfessoresTurma()
   const criarTurmaMutation = useCriarTurma()
 
   // Busca contagem dinâmica de alunos por turma
-  const turmaIds = dbTurmas?.map((t: any) => t.id) || []
+  const turmaIds = useMemo(() => dbTurmas?.map((t: any) => t.id) || [], [dbTurmas])
   const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [busca, setBusca] = useState('')

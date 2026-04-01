@@ -80,11 +80,11 @@ export function TurmasPageMobile() {
   const atualizarTurma = useAtualizarTurma()
   const excluirTurma = useExcluirTurma()
   const { data: todosAlunos } = useAlunos()
-  const { data: todasDisciplinas } = useDisciplinas()
+  const { data: todasDisciplinas } = useDisciplinas(authUser!.tenantId)
   const { data: todosProfessores } = useProfessoresTurma()
 
   // Busca contagem dinâmica de alunos por turma
-  const turmaIds = turmas?.map((t: any) => t.id) || []
+  const turmaIds = useMemo(() => turmas?.map((t: any) => t.id) || [], [turmas])
   const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [search, setSearch] = useState('')
