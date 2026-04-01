@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { useResponsavel, useVinculosAtivos } from './hooks'
+import { useResponsavel, useVinculosAtivos, useDashboardFamilia } from './hooks'
 import { supabase } from '@/lib/supabase'
 import { usePortalStore } from './store'
 import { useQueryClient } from '@tanstack/react-query'
@@ -214,7 +214,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   }
 
   const isMultiAluno = (vinculos?.length || 0) > 1
-  
+
   // Loading estado: verdadeiro se estamos carregando o básico ou se temos vínculos mas ainda não definimos o aluno selecionado no store
   const isInitializing = !!(vinculos && vinculos.length > 0 && Array.isArray(vinculos) && !alunoSelecionado)
   const contextLoading = !!(loadingResp || loadingVinculos || isInitializing)
@@ -226,6 +226,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] }),
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] }),
       queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo'] }),
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] }),
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
     ])
   }

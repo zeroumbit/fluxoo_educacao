@@ -38,13 +38,13 @@ export function PortalLayoutV2Mobile() {
           - Android: back button gesture (de baixo para cima)
           - Spring animation: sensação de física natural
         */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 16 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 32, mass: 0.9 }}
+            exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+            transition={{ type: 'spring', stiffness: 450, damping: 38, mass: 1 }}
           >
             <Outlet />
           </motion.div>

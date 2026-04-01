@@ -31,6 +31,7 @@ import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion, AnimatePresence } from 'framer-motion'
+import { NativeHeader } from '../components/NativeHeader'
 
 // Helper de vibração (Haptic Feedback - padrão nativo)
 const vibrate = (ms: number | number[] = 20) => {
@@ -88,7 +89,15 @@ export function PortalCobrancasPageV2Mobile() {
     if (!vinculos || isLoadingCobrancas) return null
     const alunosComFaturas = vinculos.map((v: any, index: number) => {
       const faturas = cobrancasQueries[index]?.data || []
-      return { ...v.aluno, is_financeiro: v.is_financeiro, faturas }
+      // Normalizar estrutura da turma (pode vir como array ou objeto)
+      const turmaRaw = v.aluno?.turma
+      const turma = Array.isArray(turmaRaw) ? turmaRaw[0] : turmaRaw
+      return {
+        ...v.aluno,
+        is_financeiro: v.is_financeiro,
+        faturas,
+        turma: turma || null
+      }
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
     
@@ -123,30 +132,10 @@ export function PortalCobrancasPageV2Mobile() {
   if (loadingVinculos || isLoadingCobrancas || isLoadingCtx) return <CobrancasSkeleton />
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,16px)] pb-32">
+    <div className="flex flex-col gap-6 pb-32">
+      <NativeHeader title="Financeiro" showBack />
       
-      {/* 1. Header - Padrão iOS Large Title / Material Top App Bar */}
-      <header className="flex items-center gap-4 pt-4 pb-2">
-        {/* Back Button - 48px touch target */}
-        <button
-          onClick={() => window.history.back()}
-          className="w-12 h-12 flex items-center justify-center rounded-[16px] bg-slate-50 text-slate-500 active:bg-slate-100 transition-colors touch-manipulation min-h-[48px] min-w-[48px]"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="w-6 h-6" aria-hidden="true" />
-        </button>
-        
-        <div className="flex flex-col flex-1">
-          {/* Large Title - iOS / Headline Small - Material */}
-          <h1 className="text-[28px] font-bold text-slate-800 tracking-tight leading-[34px]">
-            Financeiro
-          </h1>
-          {/* Caption - iOS Caption 1 / Material Body Small */}
-          <p className="text-[13px] font-medium text-slate-500 leading-tight">
-            Gestão financeira da família.
-          </p>
-        </div>
-      </header>
+      <div className="px-4 flex flex-col gap-6">
 
       {/* 2. Dashboard Cards - Scroll Horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar" role="region" aria-label="Resumo financeiro">
@@ -227,6 +216,7 @@ export function PortalCobrancasPageV2Mobile() {
         copiado={copiado}
         setCopiado={setCopiado}
       />
+      </div>
     </div>
   )
 }
@@ -253,7 +243,7 @@ function ResumoCardMobile({ label, value, icon: Icon, color, isCritical, isDate 
   return (
     <motion.div
       whileTap={{ scale: 0.96 }}
-      className="flex-shrink-0 w-[160px] bg-white border border-slate-100 rounded-[24px] p-4 shadow-sm touch-manipulation"
+      className="flex-shrink-0 w-[180px] bg-white border border-slate-100 rounded-[24px] p-4 shadow-sm touch-manipulation"
     >
       <div className="flex items-center gap-3">
         <div className={cn("w-12 h-12 rounded-[16px] flex items-center justify-center shrink-0", colors[color])}>
@@ -332,15 +322,6 @@ function AlunoCardMobile({ aluno, onClick }: any) {
           <ChevronRight size={20} />
         </div>
       </div>
-
-      {/* Footer - Acesso */}
-      <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide">
-            {aluno.is_financeiro ? 'Responsável Financeiro' : 'Acesso Acadêmico'}
-          </span>
-        </div>
-      </div>
     </motion.button>
   )
 }
@@ -356,7 +337,7 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
       <header className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
         {/* Handle Indicator - iOS Sheet */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 bg-slate-200 rounded-full" aria-hidden="true" />
-        
+
         <div className="flex items-center gap-3 pt-4">
           <button
             onClick={onClose}
@@ -376,62 +357,42 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
         </div>
       </header>
 
-      {!aluno.is_financeiro ? (
-        // Empty State - Sem Permissão
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-6">
-          <div
-            className="w-20 h-20 rounded-[28px] bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100"
-            aria-hidden="true"
-          >
-            <AlertCircle size={40} />
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-[18px] font-bold text-slate-800 tracking-tight">
-              Sem Permissão
-            </h4>
-            <p className="text-[14px] font-medium text-slate-500 max-w-[280px] mx-auto">
-              Você não foi designado como responsável financeiro deste aluno.
-            </p>
-          </div>
-        </div>
-      ) : (
-        // Tabs - Pendentes / Histórico
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Tabs */}
-          <div className="px-4 py-3">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-[16px] h-12">
-                <TabsTrigger
-                  value="pendentes"
-                  className="rounded-[12px] font-bold uppercase text-[11px] tracking-wide data-[state=active]:bg-white data-[state=active]:shadow-sm h-full transition-all"
-                >
-                  Em Aberto
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pagos"
-                  className="rounded-[12px] font-bold uppercase text-[11px] tracking-wide data-[state=active]:bg-white data-[state=active]:shadow-sm h-full transition-all"
-                >
-                  Histórico
-                </TabsTrigger>
-              </TabsList>
+      {/* Tabs - Pendentes / Histórico */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Tabs */}
+        <div className="px-4 py-3">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-[16px] h-12">
+              <TabsTrigger
+                value="pendentes"
+                className="rounded-[12px] font-bold uppercase text-[11px] tracking-wide data-[state=active]:bg-white data-[state=active]:shadow-sm h-full transition-all"
+              >
+                Em Aberto
+              </TabsTrigger>
+              <TabsTrigger
+                value="pagos"
+                className="rounded-[12px] font-bold uppercase text-[11px] tracking-wide data-[state=active]:bg-white data-[state=active]:shadow-sm h-full transition-all"
+              >
+                Histórico
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="pendentes" className="flex-1 overflow-y-auto m-0 mt-3">
-                <DrawerFaturaListMobile
-                  faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
-                  onAction={onPagar}
-                />
-              </TabsContent>
+            <TabsContent value="pendentes" className="flex-1 overflow-y-auto m-0 mt-3">
+              <DrawerFaturaListMobile
+                faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
+                onAction={onPagar}
+              />
+            </TabsContent>
 
-              <TabsContent value="pagos" className="flex-1 overflow-y-auto m-0 mt-3">
-                <DrawerFaturaListMobile
-                  faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
-                  isHistorico
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
+            <TabsContent value="pagos" className="flex-1 overflow-y-auto m-0 mt-3">
+              <DrawerFaturaListMobile
+                faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
+                isHistorico
+              />
+            </TabsContent>
+          </Tabs>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -470,36 +431,34 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
                   : "bg-white border-slate-100 shadow-sm"
             )}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-[16px] flex items-center justify-center border",
-                    isHistorico
-                      ? "bg-white text-teal-500"
-                      : isVencida
-                        ? "bg-white text-rose-500"
-                        : "bg-teal-50 text-teal-600 border-teal-100"
-                  )}
-                  aria-hidden="true"
-                >
-                  {isHistorico ? <CheckCircle2 size={20} /> : <Receipt size={20} />}
-                </div>
-                <div className="flex flex-col">
-                  <h5 className="text-[15px] font-bold text-slate-800 tracking-tight leading-tight">
-                    {fat.descricao}
-                  </h5>
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
-                    Venc: {formatDate(fat.data_vencimento)}
-                  </p>
-                </div>
+            <div className="flex items-start gap-3">
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-[16px] flex items-center justify-center border shrink-0",
+                  isHistorico
+                    ? "bg-white text-teal-500"
+                    : isVencida
+                      ? "bg-white text-rose-500"
+                      : "bg-teal-50 text-teal-600 border-teal-100"
+                )}
+                aria-hidden="true"
+              >
+                {isHistorico ? <CheckCircle2 size={20} /> : <Receipt size={20} />}
               </div>
-              <span className={cn(
-                "text-[17px] font-bold tracking-tight",
-                isHistorico ? "text-slate-400" : "text-slate-900"
-              )}>
-                {formatCurrency(fat.valor)}
-              </span>
+              <div className="flex flex-col min-w-0 flex-1">
+                <h5 className="text-[14px] font-bold text-slate-800 tracking-tight leading-tight line-clamp-2">
+                  {fat.descricao}
+                </h5>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1">
+                  Venc: {formatDate(fat.data_vencimento)}
+                </p>
+                <span className={cn(
+                  "text-[18px] font-bold tracking-tight mt-3",
+                  isHistorico ? "text-slate-400" : "text-slate-900"
+                )}>
+                  {formatCurrency(fat.valor)}
+                </span>
+              </div>
             </div>
 
             {!isHistorico && (
@@ -508,8 +467,8 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
                 className={cn(
                   "w-full h-12 rounded-[16px] font-bold text-[11px] uppercase tracking-wide shadow-sm active:scale-98 transition-transform",
                   isVencida
-                    ? "bg-rose-600 hover:bg-rose-700"
-                    : "bg-slate-900 hover:bg-black"
+                    ? "bg-rose-600 hover:bg-rose-700 font-black"
+                    : "bg-slate-900 hover:bg-black font-black"
                 )}
               >
                 Pagar Agora

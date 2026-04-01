@@ -7,6 +7,7 @@ import { format, parseISO, isAfter, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { NativeHeader } from '../components/NativeHeader'
 
 // Helper de vibração (Haptic Feedback - padrão nativo)
 const vibrate = (ms: number | number[] = 20) => {
@@ -200,97 +201,12 @@ export function PortalAvisosPageV2Mobile() {
   const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,20px)] pb-32 mt-4">
+    <div className="flex flex-col gap-6 pb-32">
+      <NativeHeader title="Avisos" showBack />
       
-      {/* 1. Header - Padrão iOS Large Title / Material Top App Bar */}
-      <header className="flex items-center gap-4 pt-4 pb-2">
-        {/* Back Button - 48px touch target */}
-        <button
-          onClick={() => window.history.back()}
-          className="w-12 h-12 flex items-center justify-center rounded-[16px] bg-slate-50 text-slate-500 active:bg-slate-100 transition-colors touch-manipulation min-h-[48px] min-w-[48px]"
-          aria-label="Voltar"
-        >
-          <ArrowLeft className="w-6 h-6" aria-hidden="true" />
-        </button>
-        
-        <div className="flex flex-col flex-1">
-          {/* Large Title - iOS / Headline Small - Material */}
-          <h1 className="text-[28px] font-bold text-slate-800 tracking-tight leading-[34px]">
-            Avisos
-          </h1>
-          {/* Caption - iOS Caption 1 / Material Body Small */}
-          <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
-            Mural da Escola
-          </p>
-        </div>
-      </header>
+      <div className="px-4 flex flex-col gap-6">
+      
 
-      {/* 2. Cards de Alunos (Filtro) - Scroll Horizontal */}
-      {isMultiAluno && (
-        <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar" role="region" aria-label="Selecionar aluno">
-          {vinculos.map((v: any) => (
-            <motion.button
-              key={v.aluno?.id}
-              type="button"
-              whileTap={{ scale: 0.96 }}
-              onClick={() => {
-                vibrate(10);
-                selecionarAluno(v);
-              }}
-              className={cn(
-                "flex items-center gap-3 p-3 pr-4 rounded-[20px] border transition-all cursor-pointer active:scale-96 touch-manipulation min-h-[48px] flex-shrink-0",
-                alunoSelecionado?.id === v.aluno?.id
-                  ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200"
-                  : "bg-white border-slate-100 text-slate-800 hover:border-teal-200"
-              )}
-              aria-pressed={alunoSelecionado?.id === v.aluno?.id}
-              aria-label={`Selecionar ${v.aluno?.nome_completo?.split(' ')[0] || 'aluno'}`}
-            >
-              {/* Avatar - 48px */}
-              <div
-                className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center text-base font-bold shrink-0",
-                  alunoSelecionado?.id === v.aluno?.id
-                    ? "bg-teal-500 text-white"
-                    : "bg-teal-50 text-teal-600"
-                )}
-                aria-hidden="true"
-              >
-                {v.aluno?.nome_completo ? getInitials(v.aluno.nome_completo) : 'A'}
-              </div>
-              
-              <div className="flex flex-col min-w-0 pr-1">
-                {/* Title - iOS Caption / Material Label */}
-                <h4
-                  className={cn(
-                    "text-[14px] font-bold tracking-tight leading-none truncate",
-                    alunoSelecionado?.id === v.aluno?.id ? "text-white" : "text-slate-800"
-                  )}
-                >
-                  {v.aluno?.nome_completo?.split(' ')[0] || 'Aluno'}
-                </h4>
-                {/* Caption - iOS Caption 2 / Material Label Small */}
-                <p
-                  className={cn(
-                    "text-[10px] font-bold uppercase tracking-wide mt-1 opacity-60",
-                    alunoSelecionado?.id === v.aluno?.id ? "text-teal-300" : "text-slate-400"
-                  )}
-                >
-                  {v.aluno?.turma?.nome || 'S/ Turma'}
-                </p>
-              </div>
-              
-              {/* Indicator */}
-              {alunoSelecionado?.id === v.aluno?.id && (
-                <div
-                  className="ml-auto w-2 h-2 rounded-full bg-teal-400 animate-pulse shrink-0"
-                  aria-hidden="true"
-                />
-              )}
-            </motion.button>
-          ))}
-        </div>
-      )}
 
       {/* 3. Renderização Condicional do Conteúdo */}
       {!alunoSelecionado ? (
@@ -440,6 +356,7 @@ export function PortalAvisosPageV2Mobile() {
           )}
         </>
       )}
+      </div>
     </div>
   )
 }

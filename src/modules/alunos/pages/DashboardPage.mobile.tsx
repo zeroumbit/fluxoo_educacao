@@ -571,8 +571,7 @@ export function DashboardPageMobile() {
 
             <section>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-5">Ações Rápidas</h3>
-              <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar">
-                <div className="w-5 shrink-0" />
+              <div className="flex gap-5 overflow-x-auto pb-4 no-scrollbar justify-center">
                 {quickActions.map((action, i) => (
                   <motion.button
                     key={i}
@@ -586,7 +585,6 @@ export function DashboardPageMobile() {
                     <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 tracking-tight whitespace-nowrap">{action.label}</span>
                   </motion.button>
                 ))}
-                <div className="w-5 shrink-0" />
               </div>
             </section>
 

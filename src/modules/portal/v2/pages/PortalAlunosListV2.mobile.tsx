@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, AlertCircle } from 'lucide-react';
 import { usePortalContext } from '../../context';
+import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -19,18 +20,10 @@ export function PortalAlunosListV2Mobile() {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-[env(safe-area-inset-top,12px)] pb-12">
-      {/* Header - Padrão iOS Large Title / Material Top App Bar */}
-      <header className="flex flex-col gap-1 pt-4 pb-2">
-        {/* Title - iOS Large Title (28px Bold) / Material Headline Medium (28px Bold) */}
-        <h1 className="text-[28px] font-bold text-slate-900 tracking-tight leading-[34px]">
-          Meus Filhos
-        </h1>
-        {/* Caption - iOS Caption 1 (13px Regular) / Material Body Small (13px Regular) */}
-        <p className="text-[13px] text-slate-500 leading-tight">
-          Acesse o perfil acadêmico de cada aluno.
-        </p>
-      </header>
+    <div className="flex flex-col gap-4 pb-12">
+      <NativeHeader title="Meus Filhos" showBack />
+      
+      <div className="px-4 flex flex-col gap-4">
 
       {/* Lista de Cards - Touch targets otimizados */}
       <div className="flex flex-col gap-4 pb-4">
@@ -99,6 +92,7 @@ export function PortalAlunosListV2Mobile() {
             )}
           </motion.button>
         ))}
+      </div>
       </div>
     </div>
   );

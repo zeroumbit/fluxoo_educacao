@@ -17,6 +17,7 @@ import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
+import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -74,17 +75,10 @@ export function PortalAlunoPerfilV2Mobile() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      {/* 1. Header do Aluno - Padrão iOS Large Title / Material Top App Bar */}
-      <header className="relative bg-white pt-[env(safe-area-inset-top,16px)] pb-6 px-4 shadow-sm border-b border-slate-100 z-10">
-        {/* Back Button - Touch target 48px mínimo */}
-        <button
-          onClick={() => navigate('/portal')}
-          className="w-12 h-12 flex items-center justify-center rounded-[16px] bg-slate-50 text-slate-500 active:bg-slate-100 transition-colors mb-4 touch-manipulation min-h-[48px] min-w-[48px]"
-          aria-label="Voltar para home"
-        >
-          <ArrowLeft className="w-6 h-6" aria-hidden="true" />
-        </button>
-
+      <NativeHeader title={student?.nome_completo?.split(' ')[0] || 'Perfil'} showBack />
+      
+      {/* 1. Perfil Summary - Estilo Nativo */}
+      <div className="bg-white pb-6 px-4 shadow-sm border-b border-slate-100 z-10">
         <div className="flex items-center gap-4">
           {/* Avatar - 80px padrão iOS Contact Large / Material Avatar Extra Large */}
           <motion.div
@@ -109,7 +103,7 @@ export function PortalAlunoPerfilV2Mobile() {
             </p>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* 2. Módulos e Fila Virtual */}
       <main className="flex-1 px-4 py-6 flex flex-col gap-6">

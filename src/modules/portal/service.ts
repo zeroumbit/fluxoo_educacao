@@ -115,7 +115,24 @@ export const portalService = {
   // ==========================================
   async buscarVinculosAtivos(responsavelId: string) {
     const { data, error } = await supabase.from('aluno_responsavel')
-      .select('id, responsavel_id, aluno_id, is_financeiro, is_academico, status, grau_parentesco, aluno:alunos(id, nome_completo, nome_social, data_nascimento, status, tenant_id, foto_url)')
+      .select(`
+        id,
+        responsavel_id,
+        aluno_id,
+        is_financeiro,
+        is_academico,
+        status,
+        grau_parentesco,
+        aluno:alunos(
+          id,
+          nome_completo,
+          nome_social,
+          data_nascimento,
+          status,
+          tenant_id,
+          foto_url
+        )
+      `)
       .eq('responsavel_id', responsavelId)
       .eq('status', 'ativo')
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { MobileSelect } from '@/components/ui/mobile-select'
 import {
   GraduationCap, TrendingUp, Activity, Award, Info, Calendar, Layers, FileText
 } from 'lucide-react'
@@ -151,29 +152,31 @@ export function PortalBoletimPage({ hideHeader = false }: { hideHeader?: boolean
             </div>
 
             <div className="flex gap-2">
-              <Select value={anoSelecionado} onValueChange={v => { vibrate(15); setAnoSelecionado(v); }}>
-                <SelectTrigger className="w-24 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect 
+                value={anoSelecionado} 
+                onValueChange={setAnoSelecionado}
+                title="Selecionar Ano"
+                options={[
+                  { value: '2026', label: '2026' },
+                  { value: '2025', label: '2025' },
+                  { value: '2024', label: '2024' },
+                ]}
+                className="w-24"
+              />
 
-              <Select value={bimestreSelecionado} onValueChange={v => { vibrate(15); setBimestreSelecionado(v); }}>
-                <SelectTrigger className="w-36 rounded-xl font-semibold text-xs bg-white border-slate-200 h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="1">1º Bimestre</SelectItem>
-                  <SelectItem value="2">2º Bimestre</SelectItem>
-                  <SelectItem value="3">3º Bimestre</SelectItem>
-                  <SelectItem value="4">4º Bimestre</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect 
+                value={bimestreSelecionado} 
+                onValueChange={setBimestreSelecionado}
+                title="Selecionar Bimestre"
+                options={[
+                  { value: 'todos', label: 'Todos' },
+                  { value: '1', label: '1º Bimestre' },
+                  { value: '2', label: '2º Bimestre' },
+                  { value: '3', label: '3º Bimestre' },
+                  { value: '4', label: '4º Bimestre' },
+                ]}
+                className="w-36"
+              />
             </div>
           </div>
           {isMultiAluno && <SeletorAluno />}

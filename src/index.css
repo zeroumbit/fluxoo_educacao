@@ -192,9 +192,41 @@
     transform: translate(-50%, -50%);
     transition: width 0.3s, height 0.3s;
   }
-  .ripple:active::after {
-    width: 200px;
-    height: 200px;
+  /* Standard Header for Native Feel */
+  .header-mobile-native {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: env(safe-area-inset-top, 24px);
+    padding-bottom: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 40;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.5);
+  }
+
+  /* Improved Select/Switcher Button */
+  .btn-premium-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 9999px;
+    background-color: white;
+    border: 1px solid rgb(241 245 249);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-premium-select:active {
+    transform: scale(0.96);
+    background-color: rgb(248 250 252);
   }
 }
 

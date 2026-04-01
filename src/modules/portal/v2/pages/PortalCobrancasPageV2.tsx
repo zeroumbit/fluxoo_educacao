@@ -88,7 +88,15 @@ export function PortalCobrancasPageV2() {
     if (!vinculos || isLoadingCobrancas) return null
     const alunosComFaturas = vinculos.map((v: any, index: number) => {
       const faturas = cobrancasQueries[index]?.data || []
-      return { ...v.aluno, is_financeiro: v.is_financeiro, faturas }
+      // Normalizar estrutura da turma (pode vir como array ou objeto)
+      const turmaRaw = v.aluno?.turma
+      const turma = Array.isArray(turmaRaw) ? turmaRaw[0] : turmaRaw
+      return {
+        ...v.aluno,
+        is_financeiro: v.is_financeiro,
+        faturas,
+        turma: turma || null
+      }
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
     
@@ -248,8 +256,8 @@ function AlunoCard({ aluno, onClick }: any) {
       
       <div className="mt-10 pt-8 border-t border-slate-50 flex items-center justify-between">
          <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Acesso</span>
-            <span className="text-xs font-bold text-slate-500">{aluno.is_financeiro ? 'Responsável Financeiro' : 'Acesso Acadêmico'}</span>
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Turma</span>
+            <span className="text-sm font-bold text-slate-500">{aluno.turma?.nome || 'Turma não informada'}</span>
          </div>
          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-teal-500 group-hover:text-white transition-all shadow-sm">
             <ChevronRight size={24} />
@@ -261,7 +269,7 @@ function AlunoCard({ aluno, onClick }: any) {
 
 function DetailDrawer({ aluno, onClose, onPagar }: any) {
   if (!aluno) return null
-  
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-10 pb-6 flex items-center justify-between border-b border-slate-50">
@@ -276,34 +284,22 @@ function DetailDrawer({ aluno, onClose, onPagar }: any) {
         </div>
       </div>
 
-      {!aluno.is_financeiro ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center gap-6">
-           <div className="w-24 h-24 rounded-[40px] bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
-             <AlertCircle size={48} />
-           </div>
-           <div className="space-y-2">
-             <h4 className="text-xl font-black text-slate-800 tracking-tight">Sem Permissão</h4>
-             <p className="text-sm font-semibold text-slate-500 max-w-xs leading-relaxed">Você não foi designado como responsável financeiro deste aluno.</p>
-           </div>
+      <Tabs defaultValue="pendentes" className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-10 py-6">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1.5 rounded-[24px] h-14">
+            <TabsTrigger value="pendentes" className="rounded-2xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-xl h-full transition-all">Em Aberto</TabsTrigger>
+            <TabsTrigger value="pagos" className="rounded-2xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-xl h-full transition-all">Histórico</TabsTrigger>
+          </TabsList>
         </div>
-      ) : (
-        <Tabs defaultValue="pendentes" className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-10 py-6">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1.5 rounded-[24px] h-14">
-              <TabsTrigger value="pendentes" className="rounded-2xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-xl h-full transition-all">Em Aberto</TabsTrigger>
-              <TabsTrigger value="pagos" className="rounded-2xl font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-xl h-full transition-all">Histórico</TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <TabsContent value="pendentes" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
-             <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')} onAction={onPagar} />
-          </TabsContent>
-          
-          <TabsContent value="pagos" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
-             <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status === 'pago')} isHistorico />
-          </TabsContent>
-        </Tabs>
-      )}
+
+        <TabsContent value="pendentes" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
+           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')} onAction={onPagar} />
+        </TabsContent>
+
+        <TabsContent value="pagos" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
+           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status === 'pago')} isHistorico />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

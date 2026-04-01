@@ -7,6 +7,7 @@ import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
+import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -20,15 +21,6 @@ export function PortalHomeV2Mobile() {
   const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   
-  // Skeleton Loader (Padrão iOS/Android)
-  if (isLoading || loadingDash || loadingAvisos) {
-    return <HomeSkeleton />
-  }
-
-  // Helper de vigência e mensagens
-  const hojeStr = new Date().toISOString().split('T')[0];
-  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
-
   const informativeMessages = [
     "Dê aquele abraço no seu pequeno hoje! O incentivo em casa faz toda a diferença.",
     "Um dia produtivo começa com uma boa parceria entre escola e família!",
@@ -47,6 +39,15 @@ export function PortalHomeV2Mobile() {
     }, 6000);
     return () => clearInterval(timer);
   }, []);
+
+  // Skeleton Loader (Padrão iOS/Android)
+  if (isLoading || loadingDash || loadingAvisos) {
+    return <HomeSkeleton />
+  }
+
+  // Helper de vigência e mensagens
+  const hojeStr = new Date().toISOString().split('T')[0];
+  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
 
   const getInformativeCard = (offset: number) => {
     const idx = (currentMessageIdx + offset) % informativeMessages.length;
@@ -85,48 +86,18 @@ export function PortalHomeV2Mobile() {
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-12">
-      {/* 1. Header de Boas-Vindas */}
-      {/* Safe area top para dispositivos com notch (iOS) */}
-      <header className="flex items-start justify-between pt-[env(safe-area-inset-top,12px)] mt-2 pb-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] text-slate-500 leading-tight">Bom dia,</span>
-          <h1 className="text-[28px] font-bold text-slate-900 tracking-tight leading-[34px]">
-            {responsavel?.nome?.split(' ')[0] || 'Responsável'}
-          </h1>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <NotificationBell
-            total={notifications?.total || 0}
-            items={notifications?.items || []}
-          />
-          <div className="flex -space-x-2">
-            {vinculos.map((v: any) => (
-              <motion.button
-                key={v.aluno?.id}
-                type="button"
-                whileTap={{ scale: 0.92 }}
-                onClick={() => {
-                  selecionarAluno(v);
-                  navigate(`/portal/alunos/${v.aluno?.id}`);
-                }}
-                className={`w-12 h-12 rounded-full border-2 border-white flex items-center justify-center font-semibold shadow-sm cursor-pointer active:scale-95 transition-transform touch-manipulation ${
-                  alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
-                }`}
-                aria-label={`Selecionar aluno ${v.aluno?.nome_completo || 'aluno'}`}
-              >
-                {getInitials(v.aluno?.nome_completo || 'A')}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </header>
+      {/* 1. Header de Boas-Vindas Padronizado */}
+      <NativeHeader 
+        title="Home"
+        showNotifications
+      />
 
       {/* 2. Alertas Críticos - iOS Banner / Material Alert */}
       <section className="flex flex-col gap-3" role="region" aria-label="Alertas">
         {alerts.map((alert) => (
           <motion.div
             key={alert.id}
+            layout
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={alert.action}
@@ -195,7 +166,7 @@ export function PortalHomeV2Mobile() {
         </div>
       </section>
 
-      {/* 4. Mural Rápido - Horizontal Scroll */}
+      {/* 4. Mural Rápido - Horizontal Scroll (Restored) */}
       <section className="flex flex-col gap-3 pb-2">
         <div className="flex items-center justify-between px-1">
           {/* Title 2 - iOS Title 2 (17px Semibold) / Material Title Small (17px Semibold) */}
@@ -215,7 +186,7 @@ export function PortalHomeV2Mobile() {
             </span>
           </button>
         </div>
-        {/* Horizontal scroll snap - padrão iOS/Android */}
+        {/* Horizontal scroll snap - padrão iOS/Android (Restored) */}
         <div
           className="flex gap-3 overflow-x-auto pb-4 px-1 snap-x hide-scrollbar scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -269,7 +240,7 @@ export function PortalHomeV2Mobile() {
               })}
             </>
           ) : (
-            activeAvisos.slice(0, 1).map((news: any, idx: number) => (
+            activeAvisos.map((news: any, idx: number) => (
               <motion.div
                 key={news.id}
                 initial={{ opacity: 0, scale: 0.92 }}
@@ -300,20 +271,19 @@ export function PortalHomeV2Mobile() {
 // --- SKELETON HOME ---
 function HomeSkeleton() {
   return (
-    <div className="flex flex-col gap-6 px-4 animate-pulse pt-[env(safe-area-inset-top,12px)] mt-2">
-      <div className="flex justify-between items-start">
+    <div className="flex flex-col gap-6 animate-pulse">
+      <div className="header-mobile-native h-20 items-center">
         <div className="space-y-2">
           <div className="h-4 w-20 bg-slate-100 rounded" />
           <div className="h-8 w-40 bg-slate-200 rounded-lg" />
         </div>
-        <div className="flex gap-2">
-          <div className="w-12 h-12 rounded-full bg-slate-100" />
-          <div className="w-12 h-12 rounded-full bg-slate-100" />
-        </div>
+        <div className="w-12 h-12 rounded-full bg-slate-100" />
       </div>
-      <div className="h-24 bg-slate-100 rounded-[24px]" />
-      <div className="h-48 bg-slate-100 rounded-[24px]" />
-      <div className="h-40 bg-slate-100 rounded-[24px]" />
+      <div className="px-4 space-y-6">
+        <div className="h-24 bg-slate-100 rounded-[28px]" />
+        <div className="h-48 bg-slate-100 rounded-[28px]" />
+        <div className="h-40 bg-slate-100 rounded-[28px]" />
+      </div>
     </div>
   )
 }

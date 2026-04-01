@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PortalProvider, usePortalContext } from '@/modules/portal/context'
+import { useDashboardFamilia } from '@/modules/portal/hooks'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -166,6 +167,9 @@ function InnerPortalLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { responsavel } = usePortalContext()
   const { data: notifications, isLoading } = usePortalNotifications(responsavel?.id)
+  
+  // Pre-fetching de dados consolidados da família para a Home
+  useDashboardFamilia()
 
   const handleSignOut = async () => {
     vibrate(50)

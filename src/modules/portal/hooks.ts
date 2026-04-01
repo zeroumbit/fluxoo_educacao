@@ -4,7 +4,8 @@ import { portalService } from './service'
 import { usePortalContext } from './context'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { transferenciasService } from '@/modules/academico/transferencias.service'
-import alertaSom from '@/assets/alerta.mp3'
+// import alertaSom from '@/assets/alerta.mp3'
+const alertaSom = '/alerta_v3.mp3'
 
 // ==========================================
 // RESPONSÁVEL
