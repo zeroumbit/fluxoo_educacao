@@ -3,8 +3,10 @@ import {
   BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
   Save, Info, Banknote, ChevronRight, Check, ShieldCheck,
   Loader2, AlertTriangle, BadgeAlert, ArrowLeft, RefreshCw,
-  LayoutGrid, Settings2, Bell, Building
+  LayoutGrid, Settings2, Bell, Building,
+  CreditCard, QrCode, HandCoins
 } from 'lucide-react'
+import { MobileSelect } from '@/components/ui/mobile-select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -213,6 +215,31 @@ export function ConfiguracoesPageMobile() {
                 </div>
             </div>
 
+            <div className="space-y-4">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ciclo de Avaliação</Label>
+                <MobileSelect
+                  title="Ciclo de Avaliação"
+                  value={academica.divisao_etapas}
+                  onValueChange={(v) => setAcademica({ ...academica, divisao_etapas: v as any })}
+                  options={[
+                    { value: '4_bimestres', label: '4 Bimestres' },
+                    { value: '3_trimestres', label: '3 Trimestres' },
+                    { value: '2_semestres', label: '2 Semestres' },
+                  ]}
+                  className="h-14 rounded-2xl bg-slate-50 border-none px-5"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Casas Decimais (Notas)</Label>
+                <Input 
+                  type="number" 
+                  value={academica.casas_decimais}
+                  onChange={(e) => setAcademica({ ...academica, casas_decimais: Number(e.target.value) })}
+                  className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                />
+            </div>
+
             <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-[32px] space-y-4 border border-slate-100">
                <div className="flex items-center justify-between">
                   <div>
@@ -252,6 +279,59 @@ export function ConfiguracoesPageMobile() {
                     />
                     <p className="text-[8px] font-bold text-emerald-600 uppercase ml-1">Padrão: 1%/mês</p>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dia Vencimento</Label>
+                    <MobileSelect
+                      title="Dia de Vencimento"
+                      value={String(financeira.dia_vencimento_padrao)}
+                      onValueChange={(v) => setFinanceira({ ...financeira, dia_vencimento_padrao: Number(v) })}
+                      options={Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: `Dia ${i + 1}` }))}
+                      className="h-14 rounded-2xl bg-slate-50 border-none px-5"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Carencia (Dias)</Label>
+                    <Input 
+                      type="number" 
+                      value={financeira.dias_carencia}
+                      onChange={(e) => setFinanceira({ ...financeira, dias_carencia: Number(e.target.value) })}
+                      className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Qtd Mensalidades</Label>
+                    <Input 
+                      type="number" 
+                      value={financeira.qtd_mensalidades_automaticas}
+                      onChange={(e) => setFinanceira({ ...financeira, qtd_mensalidades_automaticas: Number(e.target.value) })}
+                      className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Multa Fixa (R$)</Label>
+                    <Input 
+                      type="number" step="0.01"
+                      value={financeira.multa_fixa}
+                      onChange={(e) => setFinanceira({ ...financeira, multa_fixa: Number(e.target.value) })}
+                      className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Desconto Irmãos (%)</Label>
+                <Input 
+                  type="number" step="0.5"
+                  value={financeira.desconto_irmaos_perc}
+                  onChange={(e) => setFinanceira({ ...financeira, desconto_irmaos_perc: Number(e.target.value) })}
+                  className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                />
             </div>
 
             {/* Novos Controles de Regras de Negócio */}
@@ -316,16 +396,88 @@ export function ConfiguracoesPageMobile() {
             <div className="p-6 bg-indigo-600 rounded-[32px] text-white space-y-4 shadow-xl shadow-indigo-100">
                 <div className="flex items-center gap-3">
                    <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center text-white">
-                      <Settings2 size={24} />
+                      <QrCode size={24} />
                    </div>
-                   <h4 className="text-sm font-black uppercase tracking-widest">Controle de PIX</h4>
+                   <h4 className="text-sm font-black uppercase tracking-widest">PIX Automático (API)</h4>
+                </div>
+                <div className="flex items-center justify-between">
+                   <p className="text-[10px] font-bold text-indigo-100 leading-relaxed max-w-[200px]">QR Codes dinâmicos com baixa automática instantânea.</p>
+                   <Switch 
+                     checked={financeira.pix_auto} 
+                     onCheckedChange={(v) => setFinanceira({ ...financeira, pix_auto: v })} 
+                     className="data-[state=checked]:bg-white data-[state=unchecked]:bg-slate-600/30"
+                   />
+                </div>
+            </div>
+
+            <div className="p-6 bg-white border border-slate-100 rounded-[32px] space-y-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                         <CreditCard size={22} />
+                      </div>
+                      <div>
+                         <h4 className="text-sm font-black text-slate-900 leading-tight">PIX Manual</h4>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">Input manual de comprovante</p>
+                      </div>
+                   </div>
+                   <Switch 
+                     checked={financeira.pix_manual} 
+                     onCheckedChange={(v) => setFinanceira({ ...financeira, pix_manual: v })} 
+                   />
+                </div>
+                
+                {financeira.pix_manual && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="pt-4 border-t border-slate-100 space-y-4"
+                  >
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Chave PIX</Label>
+                       <Input 
+                         value={financeira.chave_pix}
+                         onChange={(e) => setFinanceira({ ...financeira, chave_pix: e.target.value })}
+                         placeholder="CPF, E-mail ou Aleatória"
+                         className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Favorecido</Label>
+                       <Input 
+                         value={financeira.nome_favorecido}
+                         onChange={(e) => setFinanceira({ ...financeira, nome_favorecido: e.target.value })}
+                         placeholder="Nome da Escola / Conta"
+                         className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Instruções</Label>
+                       <Input 
+                         value={financeira.instrucoes_pix}
+                         onChange={(e) => setFinanceira({ ...financeira, instrucoes_pix: e.target.value })}
+                         placeholder="Ex: Envie o comprovante via chat..."
+                         className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+                       />
+                    </div>
+                  </motion.div>
+                )}
+            </div>
+
+            <div className="p-6 bg-white border border-slate-100 rounded-[32px] flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                   <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                      <HandCoins size={22} />
+                   </div>
+                   <div>
+                      <h4 className="text-sm font-black text-slate-900 leading-tight">Presencial</h4>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Dinheiro / Cartão na Escola</p>
+                   </div>
                 </div>
                 <Switch 
-                  checked={financeira.pix_auto} 
-                  onCheckedChange={(v) => setFinanceira({ ...financeira, pix_auto: v })} 
-                  className="data-[state=checked]:bg-white data-[state=unchecked]:bg-slate-600/30"
+                  checked={financeira.presencial} 
+                  onCheckedChange={(v) => setFinanceira({ ...financeira, presencial: v })} 
                 />
-                <p className="text-[10px] font-bold text-indigo-100 leading-relaxed">O PIX Automático gera QR Codes únicos por parcela e faz a baixa bancária instantânea.</p>
             </div>
          </div>
       </BottomSheet>
@@ -357,6 +509,35 @@ export function ConfiguracoesPageMobile() {
                     </div>
                     <Switch checked={operacional.exige_foto_terceiros} onCheckedChange={(v) => setOperacional({ ...operacional, exige_foto_terceiros: v })} />
                 </div>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h4 className="text-sm font-black text-slate-900">Exigir Documento</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Input de RG/CPF</p>
+                    </div>
+                    <Switch checked={operacional.exige_documento_portaria} onCheckedChange={(v) => setOperacional({ ...operacional, exige_documento_portaria: v })} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Idade Saída Solo</Label>
+                    <Input 
+                      type="number"
+                      value={operacional.idade_minima_saida_desacompanhada}
+                      onChange={(e) => setOperacional({ ...operacional, idade_minima_saida_desacompanhada: Number(e.target.value) })}
+                      className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Validade Acesso</Label>
+                    <Input 
+                      type="number"
+                      value={operacional.validade_temp_dias}
+                      onChange={(e) => setOperacional({ ...operacional, validade_temp_dias: Number(e.target.value) })}
+                      className="h-14 rounded-2xl bg-slate-50 border-none text-base font-black px-5"
+                    />
+                    <p className="text-[8px] font-bold text-slate-400 uppercase ml-1">Dias p/ Terceiros</p>
+                </div>
             </div>
          </div>
       </BottomSheet>
@@ -364,6 +545,17 @@ export function ConfiguracoesPageMobile() {
       {/* 4. Calendário */}
        <BottomSheet isOpen={activeCategory === 'calendario'} onClose={() => setActiveCategory(null)} title="Calendário Letivo">
           <div className="px-1 pb-20 space-y-6">
+             <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Início Aulas</Label>
+                   <Input type="date" value={calendario.inicio_aulas} onChange={(e) => setCalendario({ ...calendario, inicio_aulas: e.target.value })} className="h-14 rounded-2xl bg-slate-50" />
+                </div>
+                <div className="space-y-2">
+                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Término Aulas</Label>
+                   <Input type="date" value={calendario.termino_aulas} onChange={(e) => setCalendario({ ...calendario, termino_aulas: e.target.value })} className="h-14 rounded-2xl bg-slate-50" />
+                </div>
+             </div>
+             
              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dias Letivos</Label>

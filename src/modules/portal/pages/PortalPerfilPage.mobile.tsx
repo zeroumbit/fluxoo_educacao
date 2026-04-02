@@ -161,7 +161,7 @@ export function PortalPerfilPageMobile() {
   // Loading State - Skeleton
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse p-4 pt-[env(safe-area-inset-top,16px)]">
+      <div className="space-y-4 animate-pulse p-4 pt-[env(safe-area-inset-top,24px)]">
         <div className="h-8 w-32 bg-slate-100 rounded-lg" />
         <div className="h-32 bg-white rounded-[24px]" />
         <div className="h-40 bg-white rounded-[24px]" />

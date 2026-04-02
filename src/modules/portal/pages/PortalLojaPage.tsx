@@ -187,7 +187,7 @@ export function PortalLojaPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-32 animate-in fade-in duration-700 pt-[env(safe-area-inset-top,20px)] mt-4 px-4 md:px-8">
+    <div className="flex flex-col gap-6 pb-32 animate-in fade-in duration-700 pt-[env(safe-area-inset-top,24px)] mt-4 px-4 md:px-8">
       <AnimatePresence>
         {isRefreshing && (
           <motion.div
@@ -405,7 +405,7 @@ export function PortalLojaPage() {
 
       {/* 4. Carrinho Drawer */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-hidden bg-slate-50 border-0 flex flex-col pt-[env(safe-area-inset-top,0px)]">
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-hidden bg-slate-50 border-0 flex flex-col pt-[env(safe-area-inset-top,24px)]">
           <SheetHeader className="p-6 bg-white border-b border-slate-100">
             <div className="flex items-center justify-between">
               <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">

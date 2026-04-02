@@ -179,7 +179,7 @@ export function PortalAvisosPage() {
   if (loadingCtx || isLoading) return <AvisosSkeleton />
 
   return (
-    <div className="bg-slate-50 flex flex-col pt-[env(safe-area-inset-top,20px)]">
+    <div className="bg-slate-50 flex flex-col pt-[env(safe-area-inset-top,24px)]">
       
       {/* 1. Header Nativo Interativo */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 py-4 space-y-4 border-b border-slate-100 shadow-sm">

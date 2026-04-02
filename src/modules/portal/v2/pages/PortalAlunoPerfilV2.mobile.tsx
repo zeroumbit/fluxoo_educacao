@@ -179,7 +179,7 @@ export function PortalAlunoPerfilV2Mobile() {
             aria-labelledby="modal-title"
           >
             {/* Header Fixo do Sheet - Padrão iOS Navigation Bar / Material Top App Bar */}
-            <header className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white z-20 pt-[env(safe-area-inset-top,12px)]">
+            <header className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white z-20 pt-[env(safe-area-inset-top,24px)]">
               {/* Back Button - Touch target 48px */}
               <button
                 onClick={() => setActiveModule(null)}
@@ -230,7 +230,7 @@ export function PortalAlunoPerfilV2Mobile() {
             aria-labelledby="fila-virtual-title"
           >
             {/* Header Fixo */}
-            <header className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white z-20 pt-[env(safe-area-inset-top,12px)]">
+            <header className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-white z-20 pt-[env(safe-area-inset-top,24px)]">
               <button
                 onClick={() => setShowFilaVirtual(false)}
                 className="w-12 h-12 flex items-center justify-center rounded-[16px] bg-slate-50 text-slate-500 active:bg-slate-100 transition-colors touch-manipulation min-h-[48px] min-w-[48px]"

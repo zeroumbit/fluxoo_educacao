@@ -115,7 +115,7 @@
     padding-bottom: env(safe-area-inset-bottom, 8px);
   }
   .pt-safe {
-    padding-top: env(safe-area-inset-top, 16px);
+    padding-top: env(safe-area-inset-top, 24px);
   }
   .pl-safe {
     padding-left: env(safe-area-inset-left, 16px);
@@ -124,7 +124,7 @@
     padding-right: env(safe-area-inset-right, 16px);
   }
   .p-safe {
-    padding-top: env(safe-area-inset-top, 16px);
+    padding-top: env(safe-area-inset-top, 24px);
     padding-right: env(safe-area-inset-right, 16px);
     padding-bottom: env(safe-area-inset-bottom, 16px);
     padding-left: env(safe-area-inset-left, 16px);
