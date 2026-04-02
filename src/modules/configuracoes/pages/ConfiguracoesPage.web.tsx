@@ -3,7 +3,7 @@ import {
   BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
   UploadCloud, Save, Info, Banknote, ChevronDown, Check, ShieldCheck,
   Loader2, AlertTriangle, BadgeAlert, BadgeCheck, ChevronRight, Clock,
-  RefreshCw
+  RefreshCw, Settings2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -577,6 +577,29 @@ export function ConfiguracoesPage() {
                     description="Pagamento no caixa físico da escola."
                     checked={financeira.presencial}
                     onCheckedChange={(v) => setFinanceira({ ...financeira, presencial: v })}
+                  />
+                </div>
+              </SectionCard>
+
+              <SectionCard icon={Settings2} title="Ajustes de Automação">
+                <div className="space-y-3">
+                  <ToggleRow
+                    label="Cálculo de Multa/Juros"
+                    description="Se desativado, o portal não exibirá encargos. A escola calcula na mão."
+                    checked={financeira.multa_juros_habilitado}
+                    onCheckedChange={(v) => setFinanceira({ ...financeira, multa_juros_habilitado: v })}
+                  />
+                  <ToggleRow
+                    label="Notificações de Vencimento"
+                    description="Alerta o responsável sobre faturas vencendo."
+                    checked={financeira.notificacoes_habilitado}
+                    onCheckedChange={(v) => setFinanceira({ ...financeira, notificacoes_habilitado: v })}
+                  />
+                  <ToggleRow
+                    label="Geração de Recibo PDF"
+                    description="Gera recibo automático após a baixa da fatura."
+                    checked={financeira.recibo_pdf_auto_habilitado}
+                    onCheckedChange={(v) => setFinanceira({ ...financeira, recibo_pdf_auto_habilitado: v })}
                   />
                 </div>
               </SectionCard>

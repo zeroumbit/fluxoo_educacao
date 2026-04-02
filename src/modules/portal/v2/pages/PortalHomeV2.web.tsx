@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContext } from '../../context';
-import { useDashboardFamilia, useAvisosPortal } from '../../hooks';
+import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
 
@@ -18,6 +18,7 @@ export function PortalHomeV2Web() {
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
+  const { data: configPix } = useConfigPix();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   
   // Helper de vigência e mensagens
@@ -55,9 +56,11 @@ export function PortalHomeV2Web() {
     return informativeIcons[idx];
   };
 
+  const habilitarNotificacoes = configPix?.notificacoes_habilitado !== false;
+
   // Alertas dinâmicos
   const alerts = [];
-  if (dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {
+  if (habilitarNotificacoes && dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {
     alerts.push({
       id: 'fin-atraso',
       text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso. Regularize para evitar suspensão de serviços.`,
@@ -67,7 +70,7 @@ export function PortalHomeV2Web() {
   }
 
   // Novo alerta verde (Em Dia) solicitado pelo usuário
-  if (dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
+  if (habilitarNotificacoes && dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
     const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
     alerts.push({
       id: 'fin-em-dia',

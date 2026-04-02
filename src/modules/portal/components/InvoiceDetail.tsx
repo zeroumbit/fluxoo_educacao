@@ -63,8 +63,10 @@ export function InvoiceDetail({
   if (!open || !cobranca) return null
 
   const valorOriginal = Number(cobranca.valor)
-  const valorAtualizado = valorOriginal // Desativado cálculo automático
-  const diferenca = 0
+  const habilitarEncargos = configPix?.multa_juros_habilitado !== false
+  const valorAtualizado = habilitarEncargos ? calcularValorCobranca(cobranca) : valorOriginal
+  const diferenca = valorAtualizado - valorOriginal
+  
   const dataVencimento = new Date(cobranca.data_vencimento + 'T12:00:00')
   const hoje = new Date()
   const diasAtraso = Math.floor((hoje.getTime() - dataVencimento.getTime()) / (1000 * 60 * 60 * 24))
@@ -118,7 +120,7 @@ export function InvoiceDetail({
                       <h1 class="text-2xl font-bold mb-1">${escola?.razao_social || '---'}</h1>
                       <p class="text-sm text-indigo-100">CNPJ: ${escola?.cnpj || '---'}</p>
                       <p class="text-xs text-indigo-200 mt-1">${escola?.logradouro || ''}, ${escola?.numero || ''} - ${escola?.bairro || ''}</p>
-                      <p class="text-xs text-indigo-200">${escola?.cidade || ''}/${escola?.estado || ''} • CEP: ${escola?.cep || ''}</p>
+                      <p class="text-xs text-indigo-200">${escola?.cidade || ''}/${escola?.state || ''} • CEP: ${escola?.cep || ''}</p>
                       <div class="flex items-center gap-3 mt-2 text-xs text-indigo-200">
                         ${escola?.email_gestor ? `<span class="flex items-center gap-1">📧 ${escola.email_gestor}</span>` : ''}
                         ${escola?.telefone ? `<span class="flex items-center gap-1">📱 ${escola.telefone}</span>` : ''}
@@ -143,14 +145,19 @@ export function InvoiceDetail({
                       </div>
                       <p class="font-bold text-slate-800">${formatCurrency(valorOriginal)}</p>
                     </div>
-                    {/* Encargos removidos (Cálculo Manual) */}
+                    ${habilitarEncargos && diferenca > 0 ? `
+                      <div class="flex justify-between items-center py-2 border-b border-slate-100">
+                        <p class="text-xs text-red-600 font-bold uppercase tracking-wider">Encargos (Multa/Juros)</p>
+                        <p class="font-bold text-red-600">+${formatCurrency(diferenca)}</p>
+                      </div>
+                    ` : ''}
                   </div>
                   <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl mt-4">
                     <div>
                       <p class="text-xs text-slate-500 uppercase tracking-wider">Valor Total</p>
                       <p class="text-2xl font-bold text-slate-800">${formatCurrency(valorAtualizado)}</p>
                     </div>
-                    <Badge class="${statusInfo.color} text-white">${statusInfo.label}</Badge>
+                    <div class="bg-indigo-600 text-white rounded-full px-3 py-1 text-xs font-bold">${statusInfo.label}</div>
                   </div>
                 </div>
               </div>
@@ -263,7 +270,7 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                     <p className="text-xs text-indigo-100">{formatDate(cobranca.data_vencimento)}</p>
                   </div>
                   <Badge className={cn("text-white text-[10px] font-bold px-2.5 py-1", statusInfo.color)}>
-                    <StatusIcon className="h-3 w-3 mr-1" />
+                    <StatusIcon className="h-3 w-3 mr-1.5" />
                     {statusInfo.label}
                   </Badge>
                 </div>
@@ -351,7 +358,22 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                       </div>
 
                       {/* Encargos (se houver) */}
-                      {/* Encargos Removidos (Escola calcula na mão) */}
+                      {habilitarEncargos && diferenca > 0 && (
+                        <div className="p-4 border-b border-slate-100 bg-red-50/30">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-bold text-red-700 flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4" />
+                              Encargos por Atraso
+                            </p>
+                            <p className="text-sm font-bold text-red-700">
+                              +{formatCurrency(diferenca)}
+                            </p>
+                          </div>
+                          <p className="text-[10px] text-red-600 mt-1">
+                            Valores calculados automaticamente conforme regimento da instituição.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Desconto (se houver) */}
                       {configPix?.desconto_pontualidade && diferenca === 0 && cobranca.status !== 'pago' && (
@@ -386,9 +408,6 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                       </div>
                     </div>
                   </div>
-
-                  {/* Instruções Gerais */}
-                  {/* Instruções Removidas */}
                 </div>
 
                 {/* Coluna Direita: Pagamento PIX (1/3) */}
@@ -459,12 +478,6 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                             <p className="text-sm font-bold text-slate-800">{configPix.cpf_cnpj_favorecido}</p>
                           </div>
                         )}
-                        {configPix?.banco_favorecido && (
-                          <div>
-                            <p className="text-[9px] text-slate-400 uppercase tracking-wider mb-1">Banco</p>
-                            <p className="text-sm font-bold text-slate-800">{configPix.banco_favorecido}</p>
-                          </div>
-                        )}
                       </div>
 
                       {/* Instruções Extras */}
@@ -502,21 +515,35 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
               </div>
             </div>
 
-            {/* Footer Actions Modificada: Removido Imprimir e Baixar Recibo */}
+            {/* Footer Actions */}
             <div className="p-4 md:p-6 bg-white border-t border-slate-100 shrink-0">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCompartilhar}
-                  className="flex-1 h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-semibold text-sm"
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Compartilhar
-                </Button>
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex flex-1 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleCompartilhar}
+                    className="flex-1 h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-semibold text-sm"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Compartilhar
+                  </Button>
+                  
+                  {configPix?.recibo_pdf_auto_habilitado !== false && (
+                    <Button
+                      variant="outline"
+                      onClick={handlePrint}
+                      className="flex-1 h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all font-semibold text-sm"
+                    >
+                      <Printer className="h-4 w-4 mr-2" />
+                      {cobranca.status === 'pago' ? 'Recibo PDF' : 'Imprimir'}
+                    </Button>
+                  )}
+                </div>
+
                 <Button
                   variant="ghost"
                   onClick={onClose}
-                  className="h-12 w-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100"
+                  className="h-12 md:w-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100"
                 >
                   <X className="h-5 w-5" />
                 </Button>
@@ -526,14 +553,5 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
         </div>
       )}
     </AnimatePresence>
-  )
-}
-
-// Ícones auxiliares
-function BookIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
   )
 }

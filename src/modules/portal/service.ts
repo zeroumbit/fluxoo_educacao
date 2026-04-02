@@ -357,8 +357,20 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
-    // Escola calcula na mão: Usamos a tabela base 'cobrancas' em vez da view com encargos automáticos
-    const { data, error } = await (supabase.from('cobrancas' as any) as any)
+    // 1. Busca a configuração para saber se habilitamos multa/juros automática
+    const { data: globalConfig } = await (supabase.from('configuracoes_escola' as any) as any)
+      .select('config_financeira')
+      .eq('tenant_id', tenantId)
+      .is('vigencia_fim', null)
+      .maybeSingle();
+
+    const config = globalConfig?.config_financeira;
+    const usarViewEncargos = config?.multa_juros_habilitado !== false; // Padrão é true se não existir
+
+    // 2. Decide qual view/tabela usar
+    const target = usarViewEncargos ? 'vw_cobrancas_com_encargos' : 'cobrancas';
+
+    const { data, error } = await (supabase.from(target as any) as any)
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
@@ -393,7 +405,11 @@ export const portalService = {
       multa_atraso_percentual: config.multa_atraso_perc || 2,
       multa_atraso_valor_fixo: config.multa_fixa || 0,
       juros_mora_mensal: config.juros_mora_mensal_perc || 1,
-      desconto_pontualidade: 0 // Campo legado
+      desconto_pontualidade: 0, // Campo legado
+      // Novos Ajustes
+      multa_juros_habilitado: config.multa_juros_habilitado ?? true,
+      notificacoes_habilitado: config.notificacoes_habilitado ?? true,
+      recibo_pdf_auto_habilitado: config.recibo_pdf_auto_habilitado ?? true
     }
   },
 

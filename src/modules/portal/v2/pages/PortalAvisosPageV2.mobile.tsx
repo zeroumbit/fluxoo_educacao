@@ -201,7 +201,7 @@ export function PortalAvisosPageV2Mobile() {
   const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
 
   return (
-    <div className="flex flex-col gap-6 pb-32">
+    <div className="flex flex-col gap-6 pb-24">
       <NativeHeader title="Avisos" showBack />
       
       <div className="px-4 flex flex-col gap-6">

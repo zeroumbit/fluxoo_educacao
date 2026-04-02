@@ -31,6 +31,10 @@ export interface ConfigFinanceira {
   qtd_mensalidades_automaticas: number // Quantidade de mensalidades para gerar automaticamente
   cobrar_matricula: boolean            // Se a escola cobra taxa de matrícula
   valor_matricula_padrao: number       // Valor padrão para a matrícula (pode ser sobrescrito)
+  // Novos Ajustes
+  multa_juros_habilitado: boolean      // Se aplica multa/juros no portal
+  notificacoes_habilitado: boolean      // Se envia alertas de vencimento
+  recibo_pdf_auto_habilitado: boolean   // Se gera recibo PDF automático
 }
 
 export interface ConfigOperacional {
@@ -101,6 +105,9 @@ export const DEFAULT_CONFIG: Omit<TenantSettings, 'id' | 'tenant_id' | 'updated_
     qtd_mensalidades_automaticas: 12, // Padrão: 12 mensalidades (ano letivo completo)
     cobrar_matricula: true,           // Padrão: cobrar matrícula
     valor_matricula_padrao: 0,        // Valor padrão sugerido
+    multa_juros_habilitado: true,
+    notificacoes_habilitado: true,
+    recibo_pdf_auto_habilitado: true,
   },
   config_operacional: {
     tolerancia_atraso_minutos: 15,

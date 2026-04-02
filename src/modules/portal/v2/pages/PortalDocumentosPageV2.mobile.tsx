@@ -115,7 +115,7 @@ export function PortalDocumentosPageV2Mobile() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col bg-slate-50">
         <NativeHeader title="Documentos" />
         <div className="flex-1 flex items-center justify-center p-12">
           <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
@@ -125,7 +125,7 @@ export function PortalDocumentosPageV2Mobile() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50/50 overflow-hidden">
+    <div className="flex flex-col bg-slate-50/50">
       <NativeHeader title="Documentos" />
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">

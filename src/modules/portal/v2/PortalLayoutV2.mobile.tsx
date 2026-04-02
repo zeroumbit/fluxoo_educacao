@@ -11,7 +11,7 @@ export function PortalLayoutV2Mobile() {
 
   return (
     // Layout base com safe areas para dispositivos com notch (iOS) e gesture bar (Android)
-    <div className="flex flex-col h-[100dvh] overflow-hidden bg-slate-50 text-slate-800 antialiased relative font-sans">
+    <div className="flex flex-col h-[100dvh] bg-slate-50 text-slate-800 antialiased relative font-sans overflow-hidden">
       <AnimatePresence>
         {!isOnline && (
           <motion.div 
@@ -25,19 +25,13 @@ export function PortalLayoutV2Mobile() {
         )}
       </AnimatePresence>
 
-      {/* 
+      {/*
         Main content area
-        - pb-32: Amplo espaço na parte inferior para garantir que o conteúdo nunca fique atrás do BottomNavV2 (~68px)
+        - pb-24: Espaço na parte inferior para garantir que o conteúdo nunca fique atrás do BottomNavV2 (~80px + safe area)
         - max-w-md: largura máxima para simular viewport mobile em tablets/desktop
-        - overflow-x-hidden: previne scroll horizontal indesejado
+        - flex-1 overflow-y-auto: essencial para o scroll interno funcionar
       */}
-      <main className="flex-1 w-full max-w-md mx-auto pb-40 pb-safe overflow-x-hidden overflow-y-auto overscroll-contain">
-        {/* 
-          Page transitions - padrão nativo iOS/Android
-          - iOS: edge swipe gesture (da direita para esquerda)
-          - Android: back button gesture (de baixo para cima)
-          - Spring animation: sensação de física natural
-        */}
+      <main className="flex-1 w-full max-w-md mx-auto pt-safe pb-safe overflow-y-auto scroll-smooth">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={location.pathname}
@@ -45,18 +39,13 @@ export function PortalLayoutV2Mobile() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
             transition={{ type: 'spring', stiffness: 450, damping: 38, mass: 1 }}
+            className="flex flex-col min-h-full pb-24"
           >
             <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* 
-        Bottom Navigation Bar
-        - Fixed position na parte inferior
-        - Safe area bottom para home indicator (iOS) e gesture bar (Android)
-        - Rounded top corners para visual moderno
-      */}
       <BottomNavV2 />
     </div>
   );

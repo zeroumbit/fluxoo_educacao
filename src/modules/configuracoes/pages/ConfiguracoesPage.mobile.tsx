@@ -94,8 +94,9 @@ export function ConfiguracoesPageMobile() {
     { id: 'academico', title: 'Acadêmico', sub: 'Média, Frequência, LDB', icon: BookOpen, color: 'bg-blue-50 text-blue-600' },
     { id: 'financeiro', title: 'Financeiro', sub: 'Multas, Juros, Matrícula', icon: Wallet, color: 'bg-emerald-50 text-emerald-600' },
     { id: 'operacional', title: 'Operacional', sub: 'Portaria, Atrasos, Segurança', icon: ShieldAlert, color: 'bg-amber-50 text-amber-600' },
-    { id: 'comportamento', title: 'Conduta', sub: 'Ocorrências, Regimento', icon: Scale, color: 'bg-purple-50 text-purple-600' },
+    { id: 'conduta', title: 'Conduta', sub: 'Ocorrências, Regimento', icon: Scale, color: 'bg-purple-50 text-purple-600' },
     { id: 'calendario', title: 'Calendário', sub: 'Datas, Carga Horária', icon: CalendarDays, color: 'bg-rose-50 text-rose-600' },
+    { id: 'auditoria', title: 'Auditoria', sub: 'Histórico de Logs', icon: History, color: 'bg-slate-50 text-slate-600' },
   ]
 
   return (
@@ -253,6 +254,40 @@ export function ConfiguracoesPageMobile() {
                 </div>
             </div>
 
+            {/* Novos Controles de Regras de Negócio */}
+            <div className="p-6 bg-rose-50 border border-rose-100 rounded-[32px] space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-black text-rose-900">Multa & Juros</h4>
+                  <p className="text-[10px] font-bold text-rose-600/60 uppercase">Cálculo Automático</p>
+                </div>
+                <Switch 
+                  checked={financeira.multa_juros_habilitado} 
+                  onCheckedChange={(v) => setFinanceira({ ...financeira, multa_juros_habilitado: v })} 
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-black text-rose-900">Notificações</h4>
+                  <p className="text-[10px] font-bold text-rose-600/60 uppercase">Alertas de Vencimento</p>
+                </div>
+                <Switch 
+                  checked={financeira.notificacoes_habilitado} 
+                  onCheckedChange={(v) => setFinanceira({ ...financeira, notificacoes_habilitado: v })} 
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-black text-rose-900">Recibo PDF</h4>
+                  <p className="text-[10px] font-bold text-rose-600/60 uppercase">Geração Automática</p>
+                </div>
+                <Switch 
+                  checked={financeira.recibo_pdf_auto_habilitado} 
+                  onCheckedChange={(v) => setFinanceira({ ...financeira, recibo_pdf_auto_habilitado: v })} 
+                />
+              </div>
+            </div>
+
             <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-[32px] space-y-4 border border-slate-100">
                <div className="flex items-center justify-between">
                   <div>
@@ -326,7 +361,7 @@ export function ConfiguracoesPageMobile() {
          </div>
       </BottomSheet>
 
-       {/* Outras abas (Calendário e Conduta) simuladas ou com campos básicos se necessário */}
+      {/* 4. Calendário */}
        <BottomSheet isOpen={activeCategory === 'calendario'} onClose={() => setActiveCategory(null)} title="Calendário Letivo">
           <div className="px-1 pb-20 space-y-6">
              <div className="grid grid-cols-2 gap-4">
@@ -340,6 +375,50 @@ export function ConfiguracoesPageMobile() {
                 </div>
              </div>
              <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">LDB exige 200 dias / 800 horas anuais.</p>
+          </div>
+       </BottomSheet>
+
+       {/* 5. Conduta */}
+       <BottomSheet isOpen={activeCategory === 'conduta'} onClose={() => setActiveCategory(null)} title="Regimento Escolar">
+          <div className="px-1 pb-20 space-y-8">
+             <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Limite Atrasos (Ocorrência)</Label>
+                <Input 
+                  type="number"
+                  value={conduta.limite_atrasos_penalidade}
+                  onChange={(e) => setConduta({ ...conduta, limite_atrasos_penalidade: Number(e.target.value) })}
+                  className="h-14 rounded-2xl bg-slate-50"
+                />
+             </div>
+             <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[32px] border border-slate-100">
+                <div>
+                   <h4 className="text-sm font-black text-slate-900">Notificar Pais</h4>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase">Alertar Ocorrências</p>
+                </div>
+                <Switch checked={conduta.notifica_pais_falta} onCheckedChange={(v) => setConduta({ ...conduta, notifica_pais_falta: v })} />
+             </div>
+          </div>
+       </BottomSheet>
+
+       {/* 6. Auditoria */}
+       <BottomSheet isOpen={activeCategory === 'auditoria'} onClose={() => setActiveCategory(null)} title="Histórico de Logs">
+          <div className="px-1 pb-20 space-y-4">
+             {vigencias && vigencias.length > 0 ? (
+                vigencias.map((v: any) => (
+                   <div key={v.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="flex justify-between items-start mb-2">
+                         <span className="text-[9px] font-black uppercase text-indigo-600 tracking-widest">Alteração Salva</span>
+                         <span className="text-[10px] font-bold text-slate-400">{new Date(v.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">Configuração Institucional atualizada</p>
+                   </div>
+                ))
+             ) : (
+                <div className="text-center py-12 text-slate-300">
+                   <History size={48} className="mx-auto mb-4 opacity-20" />
+                   <p className="text-xs font-bold uppercase tracking-widest">Nenhum log encontrado</p>
+                </div>
+             )}
           </div>
        </BottomSheet>
 

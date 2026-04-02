@@ -74,9 +74,9 @@ export function PortalAlunoPerfilV2Mobile() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col flex-1 min-h-full bg-slate-50">
       <NativeHeader title={student?.nome_completo?.split(' ')[0] || 'Perfil'} showBack />
-      
+
       {/* 1. Perfil Summary - Estilo Nativo */}
       <div className="bg-white pb-6 px-4 shadow-sm border-b border-slate-100 z-10">
         <div className="flex items-center gap-4">
@@ -106,7 +106,7 @@ export function PortalAlunoPerfilV2Mobile() {
       </div>
 
       {/* 2. Módulos e Fila Virtual */}
-      <main className="flex-1 px-4 py-6 flex flex-col gap-6">
+      <main className="px-4 py-6 flex flex-col gap-6">
 
         {/* Fila Virtual Action - Padrão iOS Card / Material Elevated Button */}
         <motion.button
