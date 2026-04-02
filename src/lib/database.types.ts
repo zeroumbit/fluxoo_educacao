@@ -482,18 +482,79 @@ export type Cobranca = {
   aluno_id: string | null
   descricao: string
   valor: number
+  valor_original: number | null
+  valor_pago: number | null
+  valor_multa: number | null
+  valor_juros: number | null
+  pago: boolean
   data_vencimento: string
+  data_pagamento: string | null
   status: string
-  tipo_cobranca: 'mensalidade' | 'avulso'; // Novo campo: tipo de cobrança
-  turma_id?: string | null;
-  ano_letivo?: number | null;
+  tipo_cobranca: 'mensalidade' | 'avulso'
+  turma_id?: string | null
+  ano_letivo?: number | null
+  dias_atraso_calculado: number | null
+  taxa_multa_aplicada: number | null
+  taxa_juros_aplicada: number | null
+  override_manual: boolean
+  motivo_override: string | null
+  forma_pagamento: string | null
+  comprovante_url: string | null
+  deleted_at: string | null
+  deleted_by: string | null
   created_at: string
   updated_at: string
 }
-export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca'> & {
-  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; created_at?: string; updated_at?: string
+export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca' | 'pago' | 'valor_original' | 'valor_pago' | 'valor_multa' | 'valor_juros' | 'dias_atraso_calculado' | 'taxa_multa_aplicada' | 'taxa_juros_aplicada' | 'override_manual' | 'motivo_override' | 'forma_pagamento' | 'comprovante_url' | 'deleted_at' | 'deleted_by' | 'data_pagamento'> & {
+  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; pago?: boolean; valor_original?: number | null; override_manual?: boolean; created_at?: string; updated_at?: string
 }
 export type CobrancaUpdate = Partial<CobrancaInsert>
+
+// Tipo retornado pela VIEW vw_cobrancas_com_encargos
+export type CobrancaComEncargos = {
+  id: string
+  tenant_id: string | null
+  aluno_id: string | null
+  descricao: string
+  valor_original: number
+  data_vencimento: string
+  status: string
+  pago: boolean
+  data_pagamento: string | null
+  valor_pago: number | null
+  override_manual: boolean
+  motivo_override: string | null
+  tipo_cobranca: 'mensalidade' | 'avulso'
+  turma_id: string | null
+  ano_letivo: number | null
+  forma_pagamento: string | null
+  comprovante_url: string | null
+  created_at: string
+  updated_at: string
+  taxa_multa_aplicada: number | null
+  taxa_juros_aplicada: number | null
+  // Campos calculados pela VIEW
+  dias_atraso: number
+  valor_multa_projetado: number
+  valor_juros_projetado: number
+  multa_fixa: number
+  dias_carencia: number
+  valor_total_projetado: number
+  vencido_apos_carencia: boolean
+}
+
+// Tipo retornado pela RPC registrar_pagamento_cobranca
+export type PagamentoManualResponse = {
+  success: boolean
+  error?: string
+  valor_original?: number
+  multa?: number
+  juros?: number
+  multa_fixa?: number
+  valor_total?: number
+  dias_atraso?: number
+  dias_carencia?: number
+}
 
 // ========== PLANOS DE AULA ==========
 export type PlanoAula = {
@@ -996,12 +1057,25 @@ export type Database = {
         }
         Relationships: any[]
       }
+      vw_cobrancas_com_encargos: {
+        Row: CobrancaComEncargos
+        Relationships: any[]
+      }
     }
     Functions: {
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
       get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
       marcar_notificacao_lida: { Args: { notificacao_id: string }; Returns: void };
       marcar_notificacao_resolvida: { Args: { notificacao_id: string }; Returns: void };
+      registrar_pagamento_cobranca: { 
+        Args: { 
+          p_cobranca_id: string; 
+          p_forma_pagamento?: string | null; 
+          p_comprovante_url?: string | null;
+          p_usuario_id?: string | null;
+        }; 
+        Returns: PagamentoManualResponse 
+      };
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }

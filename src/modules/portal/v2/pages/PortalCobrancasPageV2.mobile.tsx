@@ -108,17 +108,17 @@ export function PortalCobrancasPageV2Mobile() {
     // A Vencer: status 'a_vencer' E data_vencimento >= hoje
     const aVencer = allFaturas
       .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Atrasado: status 'atrasado' OU (status 'a_vencer' mas data_vencimento < hoje)
     const atrasado = allFaturas
       .filter(f => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje))
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Materiais/Compras
     const materiais = allFaturas
       .filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item'))
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Próximo vencimento: APENAS cobranças a vencer (NÃO incluir atrasadas)
     // Mostrar a MENOR data de vencimento que seja >= hoje
@@ -469,7 +469,7 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
                   "text-[18px] font-bold tracking-tight mt-3",
                   isHistorico ? "text-slate-400" : "text-slate-900"
                 )}>
-                  {formatCurrency(fat.valor)}
+                  {formatCurrency(fat.valor_total_projetado || fat.valor_original || fat.valor || 0)}
                 </span>
               </div>
             </div>
@@ -530,7 +530,7 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
     const numeroRaw = configRecados?.whatsapp_contato || ''
     const numero = numeroRaw.replace(/\D/g, '')
     if (!numero || numero.length < 8) return toast.error('WhatsApp não configurado pela escola.')
-    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}).`)
+    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}).`)
     window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
   }
 
@@ -574,7 +574,7 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
               Total a Pagar
             </span>
             <h2 className="text-[32px] font-bold tracking-tight relative z-10 leading-none px-4 text-center">
-              {formatCurrency(cobranca?.valor || 0)}
+              {formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)}
             </h2>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-3 relative z-10 px-4 text-center truncate max-w-full">
               {cobranca?.descricao || ''}

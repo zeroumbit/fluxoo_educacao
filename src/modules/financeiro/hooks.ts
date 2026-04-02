@@ -12,6 +12,43 @@ export function useCobrancas(filtroStatus?: string) {
   })
 }
 
+// ==========================================
+// COBRANCAS V2 (Com Encargos)
+// ==========================================
+
+export function useCobrancasComEncargos(filtroStatus?: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['cobrancas_com_encargos', authUser?.tenantId, filtroStatus],
+    queryFn: () => financeiroService.listarComEncargos(authUser!.tenantId, filtroStatus),
+    enabled: !!authUser?.tenantId,
+  })
+}
+
+export function useCobrancasComEncargosPorAluno(alunoId: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['cobrancas_com_encargos', 'aluno', alunoId, authUser?.tenantId],
+    queryFn: () => financeiroService.listarComEncargosPorAluno(alunoId, authUser!.tenantId),
+    enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}
+
+export function useRegistrarPagamentoManual() {
+  const queryClient = useQueryClient()
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: ({ id, formaPagamento, comprovanteUrl }: { id: string, formaPagamento?: string, comprovanteUrl?: string }) => 
+      financeiroService.registrarPagamentoManual(id, formaPagamento, comprovanteUrl, authUser?.user?.id, authUser?.tenantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ 'cobrancas' ] })
+      queryClient.invalidateQueries({ queryKey: [ 'cobrancas_com_encargos' ] })
+      queryClient.invalidateQueries({ queryKey: [ 'dashboard' ] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
+    },
+  })
+}
+
 export function useCobrancasAbertas() {
   const { authUser } = useAuth()
   return useQuery({

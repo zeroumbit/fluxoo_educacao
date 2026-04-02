@@ -357,16 +357,7 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
-    /*
-    try {
-      const { financeiroService } = await import('@/modules/financeiro/service')
-      await financeiroService.repararStatusAtrasados(tenantId)
-    } catch (e) {
-      console.warn('Falha ao reparar atrasos na listagem do portal:', e)
-    }
-    */
-
-    const { data, error } = await (supabase.from('cobrancas' as any) as any)
+    const { data, error } = await (supabase.from('vw_cobrancas_com_encargos' as any) as any)
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)

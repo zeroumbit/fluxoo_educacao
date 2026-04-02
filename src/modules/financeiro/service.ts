@@ -482,4 +482,67 @@ export const financeiroService = {
 
     if (error) throw error
   },
+
+  // ==========================================
+  // COBRANCAS V2 (Com Encargos)
+  // ==========================================
+  
+  /**
+   * Lista as cobranças utilizando a VIEW otimizada que calcula os encargos no banco
+   */
+  async listarComEncargos(tenantId: string, filtroStatus?: string) {
+    let query = (supabase.from('vw_cobrancas_com_encargos' as any) as any)
+      .select('*, alunos(nome_completo, foto_url, status), turmas(nome)', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .order('data_vencimento', { ascending: false })
+
+    if (filtroStatus && filtroStatus !== 'todos') {
+      query = query.eq('status', filtroStatus)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  /**
+   * Lista as cobranças com encargos para um aluno específico
+   */
+  async listarComEncargosPorAluno(alunoId: string, tenantId: string) {
+    const { data, error } = await (supabase.from('vw_cobrancas_com_encargos' as any) as any)
+      .select('*')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .order('data_vencimento', { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  /**
+   * Registra um pagamento (manual) usando a nova RPC com cálculo de juros/multa automático
+   */
+  async registrarPagamentoManual(cobrancaId: string, formaPagamento?: string, comprovanteUrl?: string, userId?: string, tenantId?: string) {
+     if (userId && tenantId) {
+       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+     }
+
+     const { data, error } = await (supabase.rpc('registrar_pagamento_cobranca', {
+        p_cobranca_id: cobrancaId,
+        p_forma_pagamento: formaPagamento || null,
+        p_comprovante_url: comprovanteUrl || null,
+        p_usuario_id: userId || null
+     }) as any)
+
+     if (error) {
+       logger.error('Erro na RPC registrar_pagamento_cobranca:', error)
+       throw error
+     }
+     
+     if (!data?.success) {
+       throw new Error(data?.error || 'Erro desconhecido ao registrar pagamento')
+     }
+
+     return data
+  },
 }

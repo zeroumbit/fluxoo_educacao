@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePermissions } from '@/providers/RBACProvider'
-import { useCobrancas, useCriarCobranca, useMarcarComoPago, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
+import { useCobrancasComEncargos, useCriarCobranca, useRegistrarPagamentoManual, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,10 +46,10 @@ type CobrancaFormValues = z.infer<typeof cobrancaSchema>
 
 export function FinanceiroPageWeb() {
   const { authUser } = useAuth()
-  const { data: cobrancas, isLoading, refetch } = useCobrancas()
+  const { data: cobrancas, isLoading, refetch } = useCobrancasComEncargos()
   const { data: alunos } = useAlunos()
   const criarCobranca = useCriarCobranca()
-  const baixarCobranca = useMarcarComoPago()
+  const baixarCobranca = useRegistrarPagamentoManual()
   const excluirCobranca = useExcluirCobranca()
   const estornarCobranca = useDesfazerPagamento()
 
@@ -107,7 +107,7 @@ export function FinanceiroPageWeb() {
   const handleConfirmarBaixa = async () => {
     if (!cobrancaPagando) return
     try {
-      await baixarCobranca.mutateAsync(cobrancaPagando)
+      await baixarCobranca.mutateAsync({ id: cobrancaPagando })
       toast.success('Cobrança baixada!')
       setPayDialogOpen(false)
       setCobrancaPagando(null)
@@ -183,10 +183,10 @@ export function FinanceiroPageWeb() {
     if (!cobrancas) return { total: 0, pagos: 0, a_vencer: 0, atrasados: 0 }
     const list = cobrancas as any[]
     return {
-      total: list.reduce((acc, c) => acc + (c.valor || 0), 0),
-      pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + (c.valor || 0), 0),
-      a_vencer: list.filter(c => c.status === 'a_vencer').reduce((acc, c) => acc + (c.valor || 0), 0),
-      atrasados: list.filter(c => c.status === 'atrasado').reduce((acc, c) => acc + (c.valor || 0), 0),
+      total: list.reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor_original || c.valor), 0),
+      pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + Number(c.valor_pago || c.valor_total_projetado || c.valor), 0),
+      a_vencer: list.filter(c => c.status === 'a_vencer').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
+      atrasados: list.filter(c => c.status === 'atrasado').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
     }
   }, [cobrancas])
 
@@ -552,8 +552,14 @@ export function FinanceiroPageWeb() {
                     <p className="font-bold text-slate-900 text-sm">{cobrancaVisualizando.descricao}</p>
                   </div>
                   <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Valor</p>
-                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor || 0)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total a Pagar</p>
+                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor_total_projetado || cobrancaVisualizando.valor || 0)}</p>
+                    {cobrancaVisualizando.valor_multa_projetado > 0 && (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1 uppercase">
+                        + {formatCurrency(cobrancaVisualizando.valor_multa_projetado)} (Multa)
+                        {cobrancaVisualizando.valor_juros_projetado > 0 && ` + ${formatCurrency(cobrancaVisualizando.valor_juros_projetado)} (Juros)`}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -690,7 +696,12 @@ export function FinanceiroPageWeb() {
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4 font-bold text-indigo-700">
-                  {formatCurrency(c.valor || 0)}
+                  <div className="flex flex-col">
+                    <span>{formatCurrency(c.valor_total_projetado || c.valor || 0)}</span>
+                    {(c.valor_multa_projetado > 0 || c.valor_juros_projetado > 0) && c.status !== 'pago' && (
+                      <span className="text-[9px] text-rose-500 font-bold uppercase mt-0.5">Com Encargos</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">
                   <Badge variant="outline" className={cn(

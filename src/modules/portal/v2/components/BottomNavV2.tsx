@@ -36,24 +36,18 @@ import { cn } from '@/lib/utils';
 const fetchLojaStatus = async (): Promise<number> => {
   let total = 0;
   
-  try {
-    const { count, error } = await supabase
-      .from('lojistas' as any)
-      .select('id', { count: 'exact', head: true });
-    if (!error) total += count || 0;
-  } catch {
-    // RLS block ou tabela inexistente — ignora silenciosamente
-  }
+  // Consulta lojistas (count)
+  const { count: lojistasCount, error: lojistasError } = await supabase
+    .from('lojistas' as any)
+    .select('id', { count: 'exact', head: true });
+  if (!lojistasError) total += lojistasCount || 0;
 
-  try {
-    const { count, error } = await supabase
-      .from('curriculos' as any)
-      .select('id', { count: 'exact', head: true })
-      .or('busca_vaga.eq.true,presta_servico.eq.true');
-    if (!error) total += count || 0;
-  } catch {
-    // RLS block ou tabela inexistente — ignora silenciosamente
-  }
+  // Consulta currículos (count)
+  const { count: currCount, error: currError } = await supabase
+    .from('curriculos' as any)
+    .select('id', { count: 'exact', head: true })
+    .or('busca_vaga.eq.true,presta_servico.eq.true');
+  if (!currError) total += currCount || 0;
 
   return total;
 };

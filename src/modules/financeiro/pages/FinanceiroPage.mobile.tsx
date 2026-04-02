@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useCobrancas, useCriarCobranca, useMarcarComoPago, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
+import { useCobrancasComEncargos, useCriarCobranca, useRegistrarPagamentoManual, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,10 +50,10 @@ type CobrancaFormValues = z.infer<typeof cobrancaSchema>
 
 export function FinanceiroPageMobile() {
   const { authUser } = useAuth()
-  const { data: cobrancas, isLoading, refetch } = useCobrancas()
+  const { data: cobrancas, isLoading, refetch } = useCobrancasComEncargos()
   const { data: alunos } = useAlunos()
   const criarCobranca = useCriarCobranca()
-  const baixarCobranca = useMarcarComoPago()
+  const baixarCobranca = useRegistrarPagamentoManual()
   const excluirCobranca = useExcluirCobranca()
   const estornarCobranca = useDesfazerPagamento()
 
@@ -88,7 +88,7 @@ export function FinanceiroPageMobile() {
 
   const handleBaixar = async (id: string) => {
     try {
-      await baixarCobranca.mutateAsync(id)
+      await baixarCobranca.mutateAsync({ id })
       toast.success('Pagamento baixado!')
       setDetailOpen(false)
     } catch {
@@ -143,8 +143,8 @@ export function FinanceiroPageMobile() {
     if (!cobrancas) return { pagos: 0, pendentes: 0 }
     const list = cobrancas as any[]
     return {
-      pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + (c.valor || 0), 0),
-      pendentes: list.filter(c => c.status !== 'pago').reduce((acc, c) => acc + (c.valor || 0), 0)
+      pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + Number(c.valor_pago || c.valor_total_projetado || c.valor), 0),
+      pendentes: list.filter(c => c.status !== 'pago').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0)
     }
   }, [cobrancas])
 
@@ -275,8 +275,11 @@ export function FinanceiroPageMobile() {
                         <div className="mt-3 flex items-center gap-1.5">
                            <span className="text-[10px] font-black text-slate-300 uppercase">Valor:</span>
                            <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
-                            {Number(c.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {Number(c.valor_total_projetado || c.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </p>
+                          {(c.valor_multa_projetado > 0 || c.valor_juros_projetado > 0) && c.status !== 'pago' && (
+                            <span className="text-[9px] text-rose-500 font-bold uppercase mt-0.5">Com Encargos</span>
+                          )}
                         </div>
                       </div>
 
@@ -392,10 +395,16 @@ export function FinanceiroPageMobile() {
           {selectedCobranca && (
             <div className="px-1 pb-16 space-y-8">
               <div className="flex flex-col items-center justify-center p-10 bg-indigo-50/50 dark:bg-slate-900 rounded-[32px] space-y-3 border border-indigo-100/50">
-                <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-[10px]">Valor Total</p>
+                <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-[10px]">Total a Pagar</p>
                 <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-                  {Number(selectedCobranca.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {Number(selectedCobranca.valor_total_projetado || selectedCobranca.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </h2>
+                {selectedCobranca.valor_multa_projetado > 0 && selectedCobranca.status !== 'pago' && (
+                  <p className="text-xs text-rose-500 font-bold text-center mt-1">
+                    + {Number(selectedCobranca.valor_multa_projetado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} Multa
+                    {selectedCobranca.valor_juros_projetado > 0 && <><br />+ {Number(selectedCobranca.valor_juros_projetado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} Juros</>}
+                  </p>
+                )}
                 <div className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mt-2 shadow-sm",
                   selectedCobranca.status === 'pago' ? "bg-emerald-500 text-white" : 

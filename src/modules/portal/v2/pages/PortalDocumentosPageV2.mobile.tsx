@@ -232,7 +232,7 @@ export function PortalDocumentosPageV2Mobile() {
 
       {/* Nova Solicitação Sheet */}
       <Sheet open={openRequestSheet} onOpenChange={setOpenRequestSheet}>
-        <SheetContent side="bottom" size="full" className="rounded-t-[32px] p-0 overflow-hidden border-0 shadow-2xl flex flex-col">
+        <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] p-0 overflow-hidden border-0 shadow-2xl flex flex-col">
           <div className="w-12 h-1 bg-slate-200 rounded-full absolute top-3 left-1/2 -translate-x-1/2 shrink-0" />
 
           <SheetHeader className="p-6 pt-4 text-left border-b border-slate-50 shrink-0">

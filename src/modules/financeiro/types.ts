@@ -1,1 +1,1 @@
-export type { Cobranca, CobrancaInsert, CobrancaUpdate, CobrancaStatus } from '@/lib/database.types'
+export type { Cobranca, CobrancaInsert, CobrancaUpdate, CobrancaStatus, CobrancaComEncargos, PagamentoManualResponse } from '@/lib/database.types'
