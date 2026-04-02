@@ -553,13 +553,7 @@ export function FinanceiroPageWeb() {
                   </div>
                   <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total a Pagar</p>
-                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor_total_projetado || cobrancaVisualizando.valor || 0)}</p>
-                    {cobrancaVisualizando.valor_multa_projetado > 0 && (
-                      <p className="text-[10px] text-rose-500 font-bold mt-1 uppercase">
-                        + {formatCurrency(cobrancaVisualizando.valor_multa_projetado)} (Multa)
-                        {cobrancaVisualizando.valor_juros_projetado > 0 && ` + ${formatCurrency(cobrancaVisualizando.valor_juros_projetado)} (Juros)`}
-                      </p>
-                    )}
+                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor || 0)}</p>
                   </div>
                 </div>
 
@@ -697,10 +691,7 @@ export function FinanceiroPageWeb() {
                 </TableCell>
                 <TableCell className="px-6 py-4 font-bold text-indigo-700">
                   <div className="flex flex-col">
-                    <span>{formatCurrency(c.valor_total_projetado || c.valor || 0)}</span>
-                    {(c.valor_multa_projetado > 0 || c.valor_juros_projetado > 0) && c.status !== 'pago' && (
-                      <span className="text-[9px] text-rose-500 font-bold uppercase mt-0.5">Com Encargos</span>
-                    )}
+                    <span>{formatCurrency(c.valor || 0)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">

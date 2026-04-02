@@ -491,7 +491,9 @@ export const financeiroService = {
    * Lista as cobranças utilizando a VIEW otimizada que calcula os encargos no banco
    */
   async listarComEncargos(tenantId: string, filtroStatus?: string) {
-    let query = (supabase.from('vw_cobrancas_com_encargos' as any) as any)
+    // Escola calcula na mão: Usamos a tabela base 'cobrancas' em vez da view com encargos automáticos
+    let query = supabase
+      .from('cobrancas')
       .select('*, alunos(nome_completo, foto_url, status), turmas(nome)', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
@@ -502,21 +504,37 @@ export const financeiroService = {
 
     const { data, error } = await query
     if (error) throw error
-    return data
+    
+    // Mapeia para manter compatibilidade com a UI que espera campos da view
+    return (data as any[]).map(c => ({
+      ...c,
+      valor_total_projetado: c.valor,
+      valor_multa_projetado: 0,
+      valor_juros_projetado: 0,
+      valor_original: c.valor
+    }))
   },
 
   /**
-   * Lista as cobranças com encargos para um aluno específico
+   * Lista as cobranças com encargos para um aluno específico (Modificado para cálculo manual)
    */
   async listarComEncargosPorAluno(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('vw_cobrancas_com_encargos' as any) as any)
+    const { data, error } = await supabase
+      .from('cobrancas')
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
 
     if (error) throw error
-    return data
+    
+    return (data as any[]).map(c => ({
+      ...c,
+      valor_total_projetado: c.valor,
+      valor_multa_projetado: 0,
+      valor_juros_projetado: 0,
+      valor_original: c.valor
+    }))
   },
 
   /**

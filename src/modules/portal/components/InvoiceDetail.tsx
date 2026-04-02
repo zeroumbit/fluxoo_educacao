@@ -63,8 +63,8 @@ export function InvoiceDetail({
   if (!open || !cobranca) return null
 
   const valorOriginal = Number(cobranca.valor)
-  const valorAtualizado = calcularValorCobranca(cobranca)
-  const diferenca = valorAtualizado - valorOriginal
+  const valorAtualizado = valorOriginal // Desativado cálculo automático
+  const diferenca = 0
   const dataVencimento = new Date(cobranca.data_vencimento + 'T12:00:00')
   const hoje = new Date()
   const diasAtraso = Math.floor((hoje.getTime() - dataVencimento.getTime()) / (1000 * 60 * 60 * 24))
@@ -143,15 +143,7 @@ export function InvoiceDetail({
                       </div>
                       <p class="font-bold text-slate-800">${formatCurrency(valorOriginal)}</p>
                     </div>
-                    ${diferenca > 0 ? `
-                    <div class="flex justify-between items-center py-2 border-b border-slate-100 text-red-600">
-                      <div class="flex items-center gap-2">
-                        <Percent class="h-4 w-4" />
-                        <span class="text-sm">Multa/Juros</span>
-                      </div>
-                      <p class="font-semibold">+${formatCurrency(diferenca)}</p>
-                    </div>
-                    ` : ''}
+                    {/* Encargos removidos (Cálculo Manual) */}
                   </div>
                   <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl mt-4">
                     <div>
@@ -359,31 +351,7 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                       </div>
 
                       {/* Encargos (se houver) */}
-                      {diferenca > 0 && (
-                        <div className="p-4 border-b border-slate-100 bg-red-50">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-sm font-bold text-red-700 flex items-center gap-2">
-                              <Percent className="h-4 w-4" />
-                              Encargos por Atraso
-                            </p>
-                            <p className="text-sm font-bold text-red-700">+{formatCurrency(diferenca)}</p>
-                          </div>
-                          <div className="space-y-1 text-[10px] text-red-600">
-                            <div className="flex justify-between">
-                              <span>Multa ({configPix?.multa_atraso_percentual || 0}%):</span>
-                              <span>{formatCurrency(valorOriginal * ((configPix?.multa_atraso_percentual || 0) / 100))}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Juros ({configPix?.juros_mora_mensal || 0}% a.m.):</span>
-                              <span>{formatCurrency(diferenca - (valorOriginal * ((configPix?.multa_atraso_percentual || 0) / 100)))}</span>
-                            </div>
-                            <p className="text-red-500 mt-2 flex items-center gap-1">
-                              <AlertCircle className="h-3 w-3" />
-                              {diasAtraso} dia{diasAtraso > 1 ? 's' : ''} de atraso • Carência: {carencia} dia{carencia > 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                      {/* Encargos Removidos (Escola calcula na mão) */}
 
                       {/* Desconto (se houver) */}
                       {configPix?.desconto_pontualidade && diferenca === 0 && cobranca.status !== 'pago' && (
@@ -420,17 +388,7 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
                   </div>
 
                   {/* Instruções Gerais */}
-                  {configPix?.instrucoes_pagamento && (
-                    <div className="mt-6 bg-amber-50 border border-amber-100 rounded-xl p-4">
-                      <div className="flex items-start gap-2">
-                        <Info className="h-4 w-4 text-amber-500 mt-0.5" />
-                        <div>
-                          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Instruções</p>
-                          <p className="text-xs text-amber-800 whitespace-pre-line">{configPix.instrucoes_pagamento}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Instruções Removidas */}
                 </div>
 
                 {/* Coluna Direita: Pagamento PIX (1/3) */}
@@ -544,27 +502,9 @@ ${cobranca.status === 'pago' ? '✅ Pago' : statusInfo.label}
               </div>
             </div>
 
-            {/* Footer Actions */}
+            {/* Footer Actions Modificada: Removido Imprimir e Baixar Recibo */}
             <div className="p-4 md:p-6 bg-white border-t border-slate-100 shrink-0">
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePrint}
-                  className="h-12 w-12 rounded-xl border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all"
-                  title="Imprimir Fatura"
-                >
-                  <Printer className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePrint}
-                  className="h-12 w-12 rounded-xl border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all"
-                  title="Baixar PDF"
-                >
-                  <Download className="h-5 w-5" />
-                </Button>
                 <Button
                   variant="outline"
                   onClick={handleCompartilhar}

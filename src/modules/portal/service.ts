@@ -357,7 +357,8 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('vw_cobrancas_com_encargos' as any) as any)
+    // Escola calcula na mão: Usamos a tabela base 'cobrancas' em vez da view com encargos automáticos
+    const { data, error } = await (supabase.from('cobrancas' as any) as any)
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)

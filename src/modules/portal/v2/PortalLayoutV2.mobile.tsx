@@ -11,7 +11,7 @@ export function PortalLayoutV2Mobile() {
 
   return (
     // Layout base com safe areas para dispositivos com notch (iOS) e gesture bar (Android)
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 antialiased relative font-sans">
+    <div className="flex flex-col h-[100dvh] overflow-hidden bg-slate-50 text-slate-800 antialiased relative font-sans">
       <AnimatePresence>
         {!isOnline && (
           <motion.div 
@@ -31,7 +31,7 @@ export function PortalLayoutV2Mobile() {
         - max-w-md: largura máxima para simular viewport mobile em tablets/desktop
         - overflow-x-hidden: previne scroll horizontal indesejado
       */}
-      <main className="flex-1 w-full max-w-md mx-auto pb-[env(safe-area-inset-bottom,120px)] overflow-x-hidden overflow-y-auto">
+      <main className="flex-1 w-full max-w-md mx-auto pb-40 pb-safe overflow-x-hidden overflow-y-auto overscroll-contain">
         {/* 
           Page transitions - padrão nativo iOS/Android
           - iOS: edge swipe gesture (da direita para esquerda)

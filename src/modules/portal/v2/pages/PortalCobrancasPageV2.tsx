@@ -109,9 +109,9 @@ export function PortalCobrancasPageV2() {
       .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
       .reduce((acc, f) => acc + Number(f.valor), 0)
     
-    // Atrasado: status 'atrasado' OU (status 'a_vencer' mas data_vencimento < hoje)
+    // Atrasado: status 'atrasado' literal do banco (escola calcula na mão)
     const atrasado = allFaturas
-      .filter(f => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje))
+      .filter(f => f.status === 'atrasado')
       .reduce((acc, f) => acc + Number(f.valor), 0)
     
     // Materiais/Compras
@@ -217,7 +217,7 @@ function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate }: any
 
 function AlunoCard({ aluno, onClick }: any) {
   const pendentes = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado').length
-  const atrasadas = aluno.faturas.filter((f: any) => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < new Date())).length
+  const atrasadas = aluno.faturas.filter((f: any) => f.status === 'atrasado').length
 
   return (
     <div
@@ -324,7 +324,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
   return (
     <div className="flex flex-col gap-5">
       {sorted.map((fat) => {
-        const isVencida = fat.status === 'atrasado' || (fat.status === 'a_vencer' && new Date(fat.data_vencimento + 'T12:00:00') < new Date())
+        const isVencida = fat.status === 'atrasado'
         return (
           <div key={fat.id} className={cn("p-6 rounded-[32px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
             <div className="flex items-start justify-between">
@@ -346,9 +346,9 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
               </Button>
             )}
             {isHistorico && (
-              <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-slate-100 text-slate-500 gap-2 hover:bg-slate-50">
-                <Download size={18} /> Baixar Recibo
-              </Button>
+               <div className="w-full h-14 rounded-2xl border-2 border-slate-100 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-slate-300">
+                 Recibo não disponível
+               </div>
             )}
           </div>
         )

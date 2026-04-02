@@ -655,29 +655,10 @@ function CheckoutHeader({ onClose, isMobile }: { onClose: () => void, isMobile: 
   )
 }
 
-// Função auxiliar para cálculo de encargos
-function calcularValorCobranca(c: any, configPix?: any) {
+// Função auxiliar para cálculo de encargos (Desativado: Escola calcula na mão)
+function calcularValorCobranca(c: any, _configPix?: any) {
   if (!c) return 0
-  const v = Number(c.valor)
-  const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
-  const hoje = new Date()
-  hoje.setHours(0,0,0,0)
-
-  const carencia = configPix?.dias_carencia || 0
-  const limiteCarencia = new Date(dataVenc)
-  limiteCarencia.setDate(dataVenc.getDate() + carencia)
-
-  if (hoje <= limiteCarencia) return v
-
-  const multaPerc = (configPix?.multa_atraso_percentual || 0) / 100
-  const multaFixa = Number(configPix?.multa_atraso_valor_fixo || 0)
-  const valorMulta = (v * multaPerc) + multaFixa
-
-  const jurosMensalPerc = (configPix?.juros_mora_mensal || 0) / 100
-  const diasAtraso = Math.floor((hoje.getTime() - dataVenc.getTime()) / (1000 * 60 * 60 * 24))
-  const valorJuros = v * (jurosMensalPerc / 30) * diasAtraso
-
-  return v + valorMulta + valorJuros
+  return Number(c.valor)
 }
 
 function CheckoutBody({
