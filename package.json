@@ -15,7 +15,7 @@
   "overrides": {
     "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.4.15",
     "source-map": "npm:source-map@^0.7.4",
-    "glob": "npm:glob@^10.0.0",
+    "glob": "npm:glob@^11.0.0",
     "serialize-javascript": "npm:serialize-javascript@^7.0.4"
   },
   "scripts": {
