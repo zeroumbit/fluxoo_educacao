@@ -98,8 +98,7 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss })
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 200, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed bottom-4 left-3 right-3 z-[100] pointer-events-auto sm:left-auto sm:right-4 sm:max-w-md"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-4 left-3 right-3 z-[100] pointer-events-auto sm:left-auto sm:right-4 sm:max-w-md pb-[env(safe-area-inset-bottom,0px)]"
       >
         <div className="bg-white rounded-[40px] shadow-[0_30px_70px_-15px_rgba(20,184,166,0.4)] border border-teal-50 p-6 md:p-8 overflow-hidden relative">
           

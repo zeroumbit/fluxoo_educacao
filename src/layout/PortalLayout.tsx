@@ -297,7 +297,7 @@ function InnerPortalLayout() {
       </main>
 
       {/* 3. Navegação Mobile (App Shell Bottom Nav Pattern) */}
-      <div style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pt-1 pb-1">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pt-1 pb-[env(safe-area-inset-bottom,8px)]">
         <div className="flex items-center justify-around w-full max-w-md mx-auto px-2">
           <MobileBottomNavItem 
             icon={Home} 

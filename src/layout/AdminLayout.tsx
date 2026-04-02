@@ -9,8 +9,10 @@ import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
   LayoutDashboard,
+  User,
   Users,
   BookOpen,
+  BookType,
   CalendarCheck,
   Megaphone,
   CreditCard,
@@ -35,7 +37,8 @@ import {
   Home,
   Bell,
   FileUser,
-  Search
+  Search,
+  Pencil
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -56,15 +59,15 @@ const navigationGroups = [
   {
     label: 'Acadêmico',
     items: [
-      { name: 'Alunos', href: '/alunos', icon: Users, permission: 'academico.alunos.view' },
-      { name: 'Turmas', href: '/turmas', icon: BookOpen, permission: 'academico.turmas.view' },
+      { name: 'Alunos', href: '/alunos', icon: User, permission: 'academico.alunos.view' },
+      { name: 'Turmas', href: '/turmas', icon: Users, permission: 'academico.turmas.view' },
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
       { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
-      { name: 'Disciplinas', href: '/disciplinas', icon: ClipboardList, permission: 'academico.disciplinas.view' },
+      { name: 'Disciplinas', href: '/disciplinas', icon: BookType, permission: 'academico.disciplinas.view' },
       { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
       { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
-      { name: 'Atividades', href: '/atividades', icon: FileText, permission: 'academico.atividades.view' },
+      { name: 'Atividades', href: '/atividades', icon: Pencil, permission: 'academico.atividades.view' },
       { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'academico.documentos.view' },
       { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront, permission: 'academico.portaria.view' },
     ],
@@ -345,7 +348,7 @@ export function AdminLayout() {
       </Sheet>
 
       {/* Bottom Navigation para Mobile (App Style) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-[env(safe-area-inset-bottom,8px)] shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
         <div className="mx-auto w-full flex items-center justify-around h-20 px-4">
           <NavLink
             to="/dashboard"

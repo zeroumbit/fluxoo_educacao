@@ -42,9 +42,9 @@ export function BottomSheet({
           <motion.div
             className={cn(
               "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[640px] z-[101] bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden",
-              sizeVariants[size]
+              sizeVariants[size],
+              "pb-[env(safe-area-inset-bottom,8px)]"
             )}
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

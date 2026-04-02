@@ -42,18 +42,61 @@
   * {
     @apply border-border;
   }
-  html, body {
+
+  /*
+    ====================================================
+    NATIVE APP VIEWPORT — Full-screen como app nativo
+    Resolve sobreposição da gesture bar (Android) e
+    home indicator (iOS) em TODAS as telas do sistema.
+    ====================================================
+  */
+
+  html {
     height: 100%;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    /* Background se estende por trás da gesture bar / home indicator */
+    background-color: var(--color-background);
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     min-height: 100dvh;
-    /* Evita scroll elástico no topo que pode mostrar fundo branco */
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    /* Evita scroll elástico no topo */
     overscroll-behavior-y: none;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*
+    FIX GLOBAL: min-h-screen → 100dvh
+    Tailwind gera min-h-screen como 100vh, que no mobile
+    não desconta a barra de navegação do browser/gesture bar.
+    100dvh (dynamic viewport height) resolve isso.
+  */
+  .min-h-screen {
+    min-height: 100dvh !important;
+  }
+
+  /*
+    FIX GLOBAL: Elementos fixos na parte inferior
+    Qualquer elemento com position:fixed no bottom
+    recebe automaticamente padding para a gesture bar.
+    Isso cobre TODOS os bottom navs, sheets e footers fixos.
+  */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .fixed.bottom-0 {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
   }
 }
 
@@ -68,7 +111,7 @@
 @layer utilities {
   /* Safe Area Insets - iOS notch e Android gesture bar */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-bottom: env(safe-area-inset-bottom, 8px);
   }
   .pt-safe {
     padding-top: env(safe-area-inset-top, 16px);

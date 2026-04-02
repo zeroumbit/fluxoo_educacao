@@ -20,7 +20,7 @@ export function MobilePageLayout({
   stickyHeader
 }: MobilePageLayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950">
+    <div className="flex flex-col min-h-[100dvh] bg-slate-50/50 dark:bg-slate-950">
       {/* Top App Bar - Fixed */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="mx-auto w-full max-w-[640px] h-full px-4 flex items-center justify-between">
