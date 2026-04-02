@@ -79,7 +79,7 @@ export function CardCobranca({ cobranca, onPagar, onExcluir, onVisualizar, class
       {showEncargos && !simplified && (
         <div className="mt-4 bg-rose-50/50 border border-rose-100 rounded-xl p-3 flex justify-between items-center text-xs">
           <div>
-            <span className="font-bold text-rose-700">Atraso de {cobranca.dias_atraso_calculado} dias</span>
+            <span className="font-bold text-rose-700">Atraso de {cobranca.dias_atraso} dias</span>
           </div>
           <div className="text-right">
             {cobranca.valor_multa_projetado > 0 && <span className="block text-rose-600 font-medium">Multa: {formatCurrency(cobranca.valor_multa_projetado)}</span>}

@@ -541,6 +541,18 @@ export type CobrancaComEncargos = {
   dias_carencia: number
   valor_total_projetado: number
   vencido_apos_carencia: boolean
+  // Alias de compatibilidade
+  valor: number
+  dias_atraso_calculado?: number
+  // Campos de JOIN (via select)
+  alunos?: {
+    nome_completo: string
+    foto_url: string | null
+    status: string
+  } | null
+  turmas?: {
+    nome: string
+  } | null
 }
 
 // Tipo retornado pela RPC registrar_pagamento_cobranca
