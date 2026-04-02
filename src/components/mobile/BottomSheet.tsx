@@ -31,7 +31,7 @@ export function BottomSheet({
         <>
           {/* Overlay */}
           <motion.div
-            className="fixed inset-0 bg-black/40 z-[100] backdrop-blur-[2px]"
+            className="fixed inset-0 bg-black/40 z-[1000] backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -41,7 +41,7 @@ export function BottomSheet({
           {/* Sheet — centralização via left-0/right-0/mx-auto, SEM translateX no motion */}
           <motion.div
             className={cn(
-              "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[640px] z-[101] bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden",
+              "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[640px] z-[1001] bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl flex flex-col overflow-hidden",
               sizeVariants[size],
               "pb-[env(safe-area-inset-bottom,8px)]"
             )}

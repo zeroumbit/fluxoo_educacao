@@ -229,7 +229,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[99]"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[998]"
             />
 
             {isMobile ? (
@@ -239,7 +239,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[40px] z-[100] shadow-[0_-20px_60px_rgba(0,0,0,0.15)] pb-[env(safe-area-inset-bottom,20px)] border-t border-slate-100"
+                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[40px] z-[999] shadow-[0_-20px_60px_rgba(0,0,0,0.15)] pb-[env(safe-area-inset-bottom,20px)] border-t border-slate-100 font-sans"
               >
                 <NotificationContent />
               </motion.div>

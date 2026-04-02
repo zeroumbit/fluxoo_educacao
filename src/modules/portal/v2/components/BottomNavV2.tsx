@@ -34,22 +34,28 @@ import { cn } from '@/lib/utils';
 // NOTA: Tabelas 'lojistas' e 'curriculos' podem ter RLS restritivo para role 'responsavel'.
 // Por isso tratamos erros 403/PGRST silenciosamente e cacheamos o resultado.
 const fetchLojaStatus = async (): Promise<number> => {
-  let total = 0;
-  
-  // Consulta lojistas (count)
-  const { count: lojistasCount, error: lojistasError } = await supabase
-    .from('lojistas' as any)
-    .select('id', { count: 'exact', head: true });
-  if (!lojistasError) total += lojistasCount || 0;
+  try {
+    let total = 0;
+    
+    // Consulta lojistas (count)
+    const { count: lojistasCount, error: lojistasError } = await supabase
+      .from('lojistas' as any)
+      .select('id', { count: 'exact' })
+      .limit(1);
+    if (!lojistasError && lojistasCount !== null) total += lojistasCount;
 
-  // Consulta currículos (count)
-  const { count: currCount, error: currError } = await supabase
-    .from('curriculos' as any)
-    .select('id', { count: 'exact', head: true })
-    .or('busca_vaga.eq.true,presta_servico.eq.true');
-  if (!currError) total += currCount || 0;
+    // Consulta currículos (count)
+    const { count: currCount, error: currError } = await supabase
+      .from('curriculos' as any)
+      .select('id', { count: 'exact' })
+      .or('busca_vaga.eq.true,presta_servico.eq.true')
+      .limit(1);
+    if (!currError && currCount !== null) total += currCount;
 
-  return total;
+    return total;
+  } catch {
+    return 0;
+  }
 };
 
 export const BottomNavV2 = () => {

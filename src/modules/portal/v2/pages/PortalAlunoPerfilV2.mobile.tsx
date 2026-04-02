@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft, CalendarDays, LineChart, BookOpen,
-  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library
+import { 
+  ArrowLeft, CalendarDays, LineChart, BookOpen, 
+  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library, Trophy
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
+import { PortalSelosV2 } from '../components/PortalSelosV2';
 import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
 import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
 import { PortalPlanosAulaPage } from '../../pages/PortalPlanosAulaPage';
@@ -54,23 +55,25 @@ export function PortalAlunoPerfilV2Mobile() {
       case 'boletim': return 'Boletim Escolar';
       case 'frequencia': return 'Frequência';
       case 'planos': return 'Planos de Aula';
-      case 'atividades': return 'Tarefas & Atividades';
-      case 'material': return 'Livros e Materiais';
+      case 'atividades': return 'Atividades e Provas';
+      case 'material': return 'Materiais de Livros';
       case 'agenda': return 'Agenda de Eventos';
       case 'autorizacoes': return 'Autorizações';
+      case 'selos': return 'Conquistas';
       default: return 'Módulo';
     }
   };
 
   const REAL_MODULES = [
-    { id: 'boletim', label: 'Boletim', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { id: 'grade', label: 'Grade Curricular', icon: CalendarDays, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { id: 'boletim', label: 'Boletim Escolar', icon: LineChart, color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { id: 'frequencia', label: 'Frequência', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { id: 'planos', label: 'Planos de Aula', icon: LayoutList, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { id: 'atividades', label: 'Tarefas', icon: PencilLine, color: 'text-amber-500', bg: 'bg-amber-50' },
-    { id: 'material', label: 'Livros e Mats', icon: Library, color: 'text-violet-500', bg: 'bg-violet-50' },
-    { id: 'agenda', label: 'Agenda', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
-    { id: 'grade', label: 'Grade', icon: CalendarDays, color: 'text-slate-500', bg: 'bg-slate-50' },
-    { id: 'autorizacoes', label: 'Logística', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50' },
+    { id: 'planos', label: 'Planos de Aula', icon: LayoutList, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'atividades', label: 'Atividades e Provas', icon: PencilLine, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { id: 'material', label: 'Materiais de Livros', icon: Library, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { id: 'agenda', label: 'Agenda de Eventos', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
+    { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50' },
+    { id: 'selos', label: 'Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50' },
   ];
 
   return (
@@ -206,8 +209,9 @@ export function PortalAlunoPerfilV2Mobile() {
               {activeModule === 'material' && <PortalLivrosPage hideHeader />}
               {activeModule === 'agenda' && <PortalAgendaPage hideHeader />}
               {activeModule === 'autorizacoes' && <PortalAutorizacoesPage hideHeader />}
+              {activeModule === 'selos' && <PortalSelosV2 />}
 
-              {!['grade', 'boletim', 'frequencia', 'planos', 'atividades', 'material', 'agenda', 'autorizacoes'].includes(activeModule) && (
+              {!['grade', 'boletim', 'frequencia', 'planos', 'atividades', 'material', 'agenda', 'autorizacoes', 'selos'].includes(activeModule) && (
                 <div className="flex flex-col items-center justify-center p-12 text-slate-500">
                   <Settings className="w-16 h-16 text-slate-200 mb-4" />
                   <p className="text-[15px] font-medium text-slate-500 text-center">Módulo em desenvolvimento</p>

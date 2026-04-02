@@ -134,15 +134,17 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   }, [vinculos, responsavel, loadingResp, setAlunoSelecionado, clearStore, alunoSelecionado?.id, alunoSelecionado?.turma])
 
   const selecionarAluno = async (vinculo: any) => {
-    if (vinculo.aluno) {
-      // Optimistic Update
-      setAlunoSelecionado({
-        ...vinculo.aluno,
-        turma: null,
-        valor_matricula: null
-      })
+    if (!vinculo?.aluno) return
 
-      try {
+    // 1. Atualização Imediata (UI Reflete na hora)
+    setAlunoSelecionado({
+      ...vinculo.aluno,
+      turma: vinculo.aluno.turma || null,
+      valor_matricula: null
+    })
+
+    try {
+      // 2. Busca dados complementares em background
         const [resMatricula, resTurmaFallback] = await Promise.all([
           (supabase.from('matriculas' as any) as any)
             .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
@@ -194,7 +196,6 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error('PortalContext: Erro ao selecionar aluno:', err)
       }
-    }
   }
 
   const isMultiAluno = (vinculos?.length || 0) > 1
