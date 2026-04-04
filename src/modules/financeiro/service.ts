@@ -190,24 +190,41 @@ export const financeiroService = {
       .is('vigencia_fim', null)
       .maybeSingle()
 
-    const deveCobrarMatricula = config?.config_financeira?.cobrar_matricula !== false // Default true se não existir
+    const configFinanceira = config?.config_financeira || {}
+    const deveCobrarMatricula = configFinanceira.cobrar_matricula === true
+
+    // Se a escola habilitou cobrança de matrícula, precisa ter um valor definido
+    let valorMatriculaUsado = Number(valor_matricula)
+    if (deveCobrarMatricula && valorMatriculaUsado <= 0) {
+      // Tenta pegar o valor_matricula_padrao das configurações
+      const valorPadraoConfig = Number(configFinanceira.valor_matricula_padrao)
+      if (valorPadraoConfig > 0) {
+        valorMatriculaUsado = valorPadraoConfig
+      } else {
+        // Sem valor definido: não gera cobrança de matrícula
+        logger.warn('[gerarCobrancasIniciaisGenerico] cobrar_matricula=true mas sem valor definido. Matrícula não será cobrada.', {
+          aluno_id,
+          tenant_id
+        })
+      }
+    }
 
     // 1. Gerar Cobrança da MATRÍCULA (Taxa Única)
-    if (deveCobrarMatricula && valor_matricula && Number(valor_matricula) > 0) {
+    if (deveCobrarMatricula && valorMatriculaUsado > 0) {
       const descricaoMatricula = `Matrícula - ${unidade || 'Taxa de Matrícula'}`
       logger.debug('[gerarCobrancasIniciaisGenerico] Criando cobrança de matrícula:', {
         descricao: descricaoMatricula,
-        valor: Number(valor_matricula),
+        valor: valorMatriculaUsado,
         data_vencimento: data_inicio,
         aluno_id,
         tenant_id
       })
-      
+
       await this.criar({
         tenant_id,
         aluno_id,
         descricao: descricaoMatricula,
-        valor: Number(valor_matricula),
+        valor: valorMatriculaUsado,
         data_vencimento: data_inicio,
         status: 'a_vencer',
         tipo_cobranca: 'mensalidade',

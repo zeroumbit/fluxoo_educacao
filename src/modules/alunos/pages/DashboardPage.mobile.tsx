@@ -510,10 +510,12 @@ export function DashboardPageMobile() {
     )
   }
 
-  const recebimentos = displayData?.totalReceber || 0
-  const pagamentos = displayData?.totalPagar || 0
-  const saldo = recebimentos - pagamentos
-  const saldoPositivo = saldo >= 0
+  const mensalidadesMes = displayData?.totalMensalidadesMes || 0
+  const receber12Meses = displayData?.totalReceber12Meses || 0
+  const totalPagar = displayData?.totalPagar || 0
+  const totalEstoque = displayData?.totalEstoque || 0
+  const totalSalarios = displayData?.totalSalarios || 0
+  const saudeFinanceira = mensalidadesMes - totalPagar
 
   // Radar de Evasão com contexto de alertas
   const radarData = displayData?.radarEvasao || []
@@ -625,38 +627,16 @@ export function DashboardPageMobile() {
                       <CreditCard className="h-4 w-4 text-sky-600" />
                     </div>
                   </div>
-                  <p className="text-xl font-black text-sky-900 dark:text-sky-100 tracking-tight leading-none truncate" title={`R$ ${recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
-                    R$ {recebimentos >= 10000 ? (recebimentos/1000).toFixed(1).replace('.', ',') + 'k' : recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <p className="text-xl font-black text-sky-900 dark:text-sky-100 tracking-tight leading-none truncate" title={`R$ ${mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                    R$ {mensalidadesMes >= 10000 ? (mensalidadesMes/1000).toFixed(1).replace('.', ',') + 'k' : mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <p className="text-[10px] font-bold text-sky-600 mt-3 leading-tight truncate">
-                  {recebimentos > 0 ? 'Cobranças pendentes' : 'Em dia'}
+                  {mensalidadesMes > 0 ? 'Receita deste mês' : 'Em dia'}
                 </p>
               </motion.div>
 
-              {/* Card 3: Contas */}
-              <motion.div
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/financeiro-relatorios')}
-                className="rounded-2xl p-4 shadow-sm border border-rose-100 bg-rose-50/50 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Contas</p>
-                    <div className="h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 bg-rose-100">
-                      <TrendingUp className="h-4 w-4 text-rose-700" />
-                    </div>
-                  </div>
-                  <p className="text-xl font-black tracking-tight leading-none text-rose-900 truncate" title={`R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
-                    R$ {Math.abs(saldo) >= 10000 ? (saldo/1000).toFixed(1).replace('.', ',') + 'k' : saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <p className="text-[10px] font-bold mt-3 leading-tight truncate text-rose-600">
-                  {saldoPositivo ? 'Saúde positiva' : 'Atenção ao fluxo'}
-                </p>
-              </motion.div>
-
-              {/* Card 4: Alertas Ativos */}
+              {/* Card 3: Alertas Ativos */}
               <motion.div
                 whileTap={{ scale: 0.97 }}
                 onClick={() => {
@@ -683,6 +663,96 @@ export function DashboardPageMobile() {
                   {displayData?.radarEvasao?.length > 0 ? 'Toque para ver' : 'Alunos no radar'}
                 </p>
               </motion.div>
+            </section>
+
+            {/* ── Métricas Secundárias (scroll horizontal) ── */}
+            <section className="px-5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Indicadores</h3>
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {/* Contas a Pagar */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/financeiro-relatorios')}
+                  className="flex-shrink-0 w-[180px] rounded-2xl p-4 shadow-sm border border-rose-100 bg-rose-50/50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Contas a Pagar</p>
+                      <div className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0 bg-rose-100">
+                        <TrendingUp className="h-3.5 w-3.5 text-rose-700" />
+                      </div>
+                    </div>
+                    <p className="text-lg font-black tracking-tight leading-none text-rose-900 truncate">
+                      R$ {totalPagar.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                  <p className="text-[9px] font-bold mt-2 leading-tight text-rose-600">
+                    {totalPagar > 0 ? 'Despesas + folha' : 'Em dia'}
+                  </p>
+                </motion.div>
+
+                {/* A Receber 12 Meses */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/financeiro')}
+                  className="flex-shrink-0 w-[180px] rounded-2xl p-4 shadow-sm border border-emerald-100 bg-emerald-50/50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">12 Meses</p>
+                      <div className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0 bg-emerald-100">
+                        <Calendar className="h-3.5 w-3.5 text-emerald-700" />
+                      </div>
+                    </div>
+                    <p className="text-lg font-black tracking-tight leading-none text-emerald-900 truncate">
+                      R$ {receber12Meses >= 1000000 ? (receber12Meses/1000000).toFixed(1).replace('.', ',') + 'M' : receber12Meses >= 10000 ? (receber12Meses/1000).toFixed(1).replace('.', ',') + 'k' : receber12Meses.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                  <p className="text-[9px] font-bold mt-2 leading-tight text-emerald-600">Projeção anual</p>
+                </motion.div>
+
+                {/* Materiais em Estoque */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/almoxarifado')}
+                  className="flex-shrink-0 w-[180px] rounded-2xl p-4 shadow-sm border border-violet-100 bg-violet-50/50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-violet-500">Estoque</p>
+                      <div className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0 bg-violet-100">
+                        <Archive className="h-3.5 w-3.5 text-violet-700" />
+                      </div>
+                    </div>
+                    <p className="text-lg font-black tracking-tight leading-none text-violet-900 truncate">
+                      R$ {totalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                  <p className="text-[9px] font-bold mt-2 leading-tight text-violet-600">Valor total</p>
+                </motion.div>
+
+                {/* Total de Salários */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/funcionarios')}
+                  className="flex-shrink-0 w-[180px] rounded-2xl p-4 shadow-sm border border-orange-100 bg-orange-50/50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-orange-500">Salários</p>
+                      <div className="h-7 w-7 rounded-[8px] flex items-center justify-center shrink-0 bg-orange-100">
+                        <UserCircle className="h-3.5 w-3.5 text-orange-700" />
+                      </div>
+                    </div>
+                    <p className="text-lg font-black tracking-tight leading-none text-orange-900 truncate">
+                      R$ {totalSalarios >= 10000 ? (totalSalarios/1000).toFixed(1).replace('.', ',') + 'k' : totalSalarios.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                  <p className="text-[9px] font-bold mt-2 leading-tight text-orange-600">
+                    {totalSalarios > 0 ? 'Folha mensal' : 'Sem registros'}
+                  </p>
+                </motion.div>
+              </div>
             </section>
 
             {/* ── Radar de Atenção ── */}

@@ -44,7 +44,7 @@ export const financeiroAvancadoService = {
       // Campos adicionais para compatibilidade total
       pix_chave: config.chave_pix || '', // legado
       pix_manual: config.pix_manual, // para compatibilidade com outros serviços
-      cobrar_matricula: config.cobrar_matricula ?? true,
+      cobrar_matricula: config.cobrar_matricula || false,
       valor_matricula_padrao: config.valor_matricula_padrao || 0,
       contrato_modelo: config.contrato_modelo || '',
     }
@@ -82,7 +82,7 @@ export const financeiroAvancadoService = {
         presencial: config.dinheiro_cartao_presencial !== undefined ? config.dinheiro_cartao_presencial : (current?.config_financeira?.presencial ?? true),
         // Campos adicionais
         qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas ?? current?.config_financeira?.qtd_mensalidades_automaticas ?? 12,
-        cobrar_matricula: config.cobrar_matricula !== undefined ? config.cobrar_matricula : (current?.config_financeira?.cobrar_matricula ?? true),
+        cobrar_matricula: config.cobrar_matricula !== undefined ? config.cobrar_matricula : (current?.config_financeira?.cobrar_matricula ?? false),
         valor_matricula_padrao: config.valor_matricula_padrao ?? current?.config_financeira?.valor_matricula_padrao ?? 0,
         contrato_modelo: config.contrato_modelo ?? current?.config_financeira?.contrato_modelo ?? '',
       }

@@ -23,8 +23,17 @@ export interface DashboardData {
   limiteAlunos: number
   statusAssinatura: string
   metodoPagamento: string
+  /** Mensalidades com vencimento no mês corrente (exclui taxas/materiais) */
+  totalMensalidadesMes: number
+  /** Total de todas as cobranças pendentes/atrasadas (qualquer tipo) */
   totalReceber: number
+  /** Projeção de recebimento para os próximos 12 meses (mensalidades) */
+  totalReceber12Meses: number
   totalPagar: number
+  /** Total de salários da folha (ativos) */
+  totalSalarios: number
+  /** Quantidade total de itens em estoque no almoxarifado */
+  totalEstoque: number
   avisosRecentes: AvisoRecente[]
   onboarding: {
     perfilCompleto: boolean
@@ -73,6 +82,7 @@ export const dashboardService = {
       contasPagarRes,
       salariosRes,
       matriculasRes,
+      almoxarifadoRes,
     ] = await Promise.all([
       (() => {
         // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
@@ -82,7 +92,8 @@ export const dashboardService = {
         return supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo')
       })(),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
-      (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
+      // Busca TODAS as cobranças pendentes/atrasadas com descrição e data de vencimento
+      (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor, descricao, data_vencimento, status').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
       (async () => {
          // Data atual para filtro de vigência (YYYY-MM-DD)
          const hoje = new Date()
@@ -160,6 +171,8 @@ export const dashboardService = {
         }
         return supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa')
       })(),
+      // Total de valor em estoque no almoxarifado (quantidade × custo_unitario)
+      (professorId ? Promise.resolve({ data: [] }) : supabase.from('almoxarifado_itens').select('quantidade, custo_unitario').eq('tenant_id', tenantId)) as any,
     ])
 
     if (!escolaRes.data) {
@@ -168,27 +181,70 @@ export const dashboardService = {
     }
 
     const escola = (escolaRes as any).data
-    const totalReceber = (cobrancasRes.data as any[])?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
-    
-    // Lógica Financeira: Contas a Pagar + Folha Projetada
+
+    // ---- FINANCEIRO ----
+    const cobrancasList = (cobrancasRes.data as any[]) || []
+    const hoje = new Date()
+    const mesAtual = hoje.getMonth()
+    const anoAtual = hoje.getFullYear()
+
+    // Mensalidades do mês corrente: filtra por data_vencimento no mês atual,
+    // exclui taxas de matrícula e materiais
+    const isMensalidade = (c: any) => {
+      const desc = (c.descricao || '').toLowerCase()
+      const isTaxa = desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa') || desc.includes('material') || desc.includes('item')
+      return !isTaxa
+    }
+
+    const cobrancasMesAtual = cobrancasList.filter(c => {
+      if (!c.data_vencimento) return false
+      const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+      return dataVenc.getMonth() === mesAtual && dataVenc.getFullYear() === anoAtual
+    })
+
+    const totalMensalidadesMes = cobrancasMesAtual
+      .filter(isMensalidade)
+      .reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+
+    // Projeção 12 meses: média mensal das mensalidades pendentes × 12
+    // Se não há dados suficientes, usa as mensalidades do mês × 12
+    const mensalidadesPendentes = cobrancasList.filter(isMensalidade)
+    const mediaMensal = mensalidadesPendentes.length > 0
+      ? mensalidadesPendentes.reduce((acc, c) => acc + (Number(c.valor) || 0), 0)
+      : totalMensalidadesMes
+
+    const totalReceber12Meses = totalMensalidadesMes > 0
+      ? totalMensalidadesMes * 12
+      : (mediaMensal > 0 ? mediaMensal * 12 : 0)
+
+    // Total geral de cobranças pendentes (todas, qualquer tipo)
+    const totalReceber = cobrancasList?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
+
+    // Contas a pagar + folha
     const contasPagarList = (contasPagarRes.data as any[]) || []
     const totalContasPagar = contasPagarList.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
-    
-    const hoje = new Date()
+
     const prefixoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
-    const temFolhaGerada = contasPagarList.some(c => 
-      c.categoria === 'Folha de Pagamento' && 
+    const temFolhaGerada = contasPagarList.some(c =>
+      c.categoria === 'Folha de Pagamento' &&
       (c.data_vencimento as string)?.startsWith(prefixoMes)
     )
 
-    let totalPagar = totalContasPagar
-    if (!temFolhaGerada) {
-      const somaSalarios = (salariosRes.data as any[])?.reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0) || 0
+    const somaSalarios = (salariosRes.data as any[])?.reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0) || 0
+    const totalSalarios = professorId ? 0 : somaSalarios
+
+    let totalPagar = professorId ? 0 : totalContasPagar
+    if (!temFolhaGerada && !professorId) {
       totalPagar += somaSalarios
     }
 
-    // Se for professor, zeramos os campos financeiros para garantir que nada apareça na UI
-    const financeiroRestrito = professorId ? 0 : 0
+    // Almoxarifado: soma de (quantidade × custo_unitario) de todos os itens
+    const almoxarifadoList = (almoxarifadoRes.data as any[]) || []
+    const totalEstoque = almoxarifadoList.reduce((acc, item) => {
+      const qtd = Number(item.quantidade) || 0
+      const custo = Number(item.custo_unitario) || 0
+      return acc + (qtd * custo)
+    }, 0)
 
     const radarData: RadarAluno[] = ((radarRes as any)?.data || []).sort(
       (a: RadarAluno, b: RadarAluno) =>
@@ -214,8 +270,12 @@ export const dashboardService = {
       limiteAlunos: professorId ? (alunosRes.count || 0) : escola.limite_alunos_contratado || 0,
       statusAssinatura: escola.status_assinatura || 'pendente',
       metodoPagamento: escola.metodo_pagamento || 'pix',
+      totalMensalidadesMes: professorId ? 0 : totalMensalidadesMes,
       totalReceber: professorId ? 0 : totalReceber,
-      totalPagar: professorId ? 0 : totalPagar,
+      totalReceber12Meses: professorId ? 0 : totalReceber12Meses,
+      totalPagar,
+      totalSalarios,
+      totalEstoque,
       avisosRecentes: (avisosRes.data || []) as unknown as AvisoRecente[],
       onboarding: {
         perfilCompleto: professorId ? true : !!(escolaInfoRes.data as any)?.logradouro,

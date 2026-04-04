@@ -145,7 +145,7 @@ export function PortalCobrancasPageV2() {
 
           {/* Dashboard Cards Consolidados */}
           <div className={`grid gap-6 mt-6 ${familyData?.resumo.materiais > 0 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-            <ResumoCard label="A Vencer" value={familyData?.resumo.aVencer} icon={Calendar} color="teal" />
+            <ResumoCard label="A Vencer em 12 Meses" value={familyData?.resumo.aVencer} icon={Calendar} color="teal" />
             <ResumoCard label="Atrasado" value={familyData?.resumo.atrasado} icon={AlertTriangle} color="rose" isCritical />
             {familyData?.resumo.materiais > 0 && (
               <ResumoCard label="Compras/Materiais" value={familyData?.resumo.materiais} icon={ShoppingBag} color="indigo" />
@@ -318,28 +318,45 @@ function DetailDrawer({ aluno, onClose, onPagar }: any) {
 
 function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
   if (faturas.length === 0) return <div className="py-20 text-center text-slate-300 font-bold italic uppercase tracking-widest text-xs">Vazio</div>
-  
+
   const sorted = [...faturas].sort((a,b) => isHistorico ? new Date(b.data_vencimento).getTime() - new Date(a.data_vencimento).getTime() : new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())
+
+  const getTipoBadge = (descricao: string) => {
+    const desc = descricao?.toLowerCase() || ''
+    if (desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa')) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[9px] font-black uppercase tracking-widest text-amber-600">
+          🎓 Taxa de Matrícula
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[9px] font-black uppercase tracking-widest text-blue-600">
+        📚 Mensalidade
+      </span>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-5">
       {sorted.map((fat) => {
         const isVencida = fat.status === 'atrasado'
         return (
-          <div key={fat.id} className={cn("p-6 rounded-[32px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", isHistorico ? "bg-white text-teal-500" : (isVencida ? "bg-white text-rose-500" : "bg-teal-50 text-teal-600 border-teal-100"))}>
+          <div key={fat.id} className={cn("p-8 rounded-[32px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
+            <div className="flex items-start gap-4">
+                 <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0", isHistorico ? "bg-white text-teal-500" : (isVencida ? "bg-white text-rose-500" : "bg-teal-50 text-teal-600 border-teal-100"))}>
                     {isHistorico ? <CheckCircle2 size={24} /> : <Receipt size={24} />}
                  </div>
-                 <div className="flex flex-col">
-                   <h5 className="font-black text-slate-800 tracking-tight leading-none mb-1">{fat.descricao}</h5>
+                 <div className="flex flex-col flex-1 min-w-0">
+                   <div className="flex items-center gap-2 mb-2 flex-wrap">
+                     <h5 className="font-black text-slate-800 tracking-tight leading-none">{fat.descricao}</h5>
+                     {!isHistorico && getTipoBadge(fat.descricao)}
+                   </div>
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimento: {formatDate(fat.data_vencimento)}</p>
+                   <span className={cn("text-xl font-black tracking-tight mt-2", isHistorico ? "text-slate-400" : "text-slate-900")}>{formatCurrency(fat.valor)}</span>
                  </div>
-              </div>
-              <span className={cn("text-xl font-black tracking-tight", isHistorico ? "text-slate-400" : "text-slate-900")}>{formatCurrency(fat.valor)}</span>
             </div>
-            
+
             {!isHistorico && (
               <Button onClick={() => onAction(fat)} className={cn("w-full h-14 rounded-2xl font-black text-xs uppercase tracking-[2px] shadow-xl transition-all active:scale-95", isVencida ? "bg-rose-600 hover:bg-rose-700 shadow-rose-200" : "bg-slate-900 hover:bg-black shadow-slate-100")}>
                 Pagar Agora

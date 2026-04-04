@@ -140,7 +140,7 @@ export function PortalCobrancasPageV2Mobile() {
       {/* 2. Dashboard Cards - Scroll Horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar" role="region" aria-label="Resumo financeiro">
         <ResumoCardMobile
-          label="A Vencer"
+          label="A Vencer em 12 Meses"
           value={familyData?.resumo.aVencer}
           icon={Calendar}
           color="teal"
@@ -425,11 +425,27 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
       : new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()
   )
 
+  const getTipoBadge = (descricao: string) => {
+    const desc = descricao?.toLowerCase() || ''
+    if (desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa')) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[9px] font-black uppercase tracking-widest text-amber-600 shrink-0">
+          🎓 Matrícula
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[9px] font-black uppercase tracking-widest text-blue-600 shrink-0">
+        📚 Mensalidade
+      </span>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-3 pb-safe">
       {sorted.map((fat: any) => {
         const isVencida = fat.status === 'atrasado' || (fat.status === 'a_vencer' && new Date(fat.data_vencimento + 'T12:00:00') < new Date())
-        
+
         return (
           <motion.div
             key={fat.id}
@@ -459,14 +475,17 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
                 {isHistorico ? <CheckCircle2 size={20} /> : <Receipt size={20} />}
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <h5 className="text-[14px] font-bold text-slate-800 tracking-tight leading-tight line-clamp-2">
-                  {fat.descricao}
-                </h5>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h5 className="text-[14px] font-bold text-slate-800 tracking-tight leading-tight line-clamp-2">
+                    {fat.descricao}
+                  </h5>
+                  {!isHistorico && getTipoBadge(fat.descricao)}
+                </div>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1">
                   Venc: {formatDate(fat.data_vencimento)}
                 </p>
                 <span className={cn(
-                  "text-[18px] font-bold tracking-tight mt-3",
+                  "text-[18px] font-bold tracking-tight mt-2",
                   isHistorico ? "text-slate-400" : "text-slate-900"
                 )}>
                   {formatCurrency(fat.valor_total_projetado || fat.valor_original || fat.valor || 0)}

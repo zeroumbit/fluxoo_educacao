@@ -36,6 +36,14 @@ import {
   X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  detectarTipoCobranca,
+  getLabelTipoCobranca,
+  getBadgeTipoCobranca,
+  getValorExibicao,
+  extrairDiasProporcionais,
+  isTaxaMatricula,
+} from '../utils/cobranca-utils'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const cobrancaSchema = z.object({
@@ -275,8 +283,14 @@ export function FinanceiroPageMobile() {
                         <div className="mt-3 flex items-center gap-1.5">
                            <span className="text-[10px] font-black text-slate-300 uppercase">Valor:</span>
                            <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
-                            {Number(c.valor_total_projetado || c.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {getValorExibicao(c).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </p>
+                          {extrairDiasProporcionais(c.descricao) && (
+                            <span className="text-[9px] text-emerald-500 font-bold uppercase mt-0.5">Proporcional</span>
+                          )}
+                          {isTaxaMatricula(c) && (
+                            <span className="text-[9px] text-orange-500 font-bold uppercase mt-0.5">Matrícula</span>
+                          )}
                           {(c.valor_multa_projetado > 0 || c.valor_juros_projetado > 0) && c.status !== 'pago' && (
                             <span className="text-[9px] text-rose-500 font-bold uppercase mt-0.5">Com Encargos</span>
                           )}
@@ -397,8 +411,18 @@ export function FinanceiroPageMobile() {
               <div className="flex flex-col items-center justify-center p-10 bg-indigo-50/50 dark:bg-slate-900 rounded-[32px] space-y-3 border border-indigo-100/50">
                 <p className="text-indigo-400 font-black uppercase tracking-[0.2em] text-[10px]">Total a Pagar</p>
                 <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
-                  {Number(selectedCobranca.valor_total_projetado || selectedCobranca.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {getValorExibicao(selectedCobranca).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </h2>
+                {extrairDiasProporcionais(selectedCobranca.descricao) && (
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold">
+                    Valor proporcional ({extrairDiasProporcionais(selectedCobranca.descricao)} dias)
+                  </p>
+                )}
+                {isTaxaMatricula(selectedCobranca) && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 font-bold">
+                    Taxa de matrícula
+                  </p>
+                )}
                 {selectedCobranca.valor_multa_projetado > 0 && selectedCobranca.status !== 'pago' && (
                   <p className="text-xs text-rose-500 font-bold text-center mt-1">
                     + {Number(selectedCobranca.valor_multa_projetado).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} Multa
@@ -407,7 +431,7 @@ export function FinanceiroPageMobile() {
                 )}
                 <div className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mt-2 shadow-sm",
-                  selectedCobranca.status === 'pago' ? "bg-emerald-500 text-white" : 
+                  selectedCobranca.status === 'pago' ? "bg-emerald-500 text-white" :
                   selectedCobranca.status === 'atrasado' ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
                 )}>
                   {selectedCobranca.status === 'pago' ? 'RECEBIDO COMPLETAMENTE' : selectedCobranca.status === 'atrasado' ? 'VENCIDO / PENDENTE' : 'AGUARDANDO PAGAMENTO'}
@@ -445,6 +469,42 @@ export function FinanceiroPageMobile() {
                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Vinculado a</span>
                   </div>
                   <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.alunos?.nome_completo || 'Lançamento Avulso'}</span>
+                </div>
+
+                {/* Tipo de Cobrança Detalhado */}
+                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-10 w-10 rounded-xl flex items-center justify-center",
+                      (() => {
+                        const tipoVisual = detectarTipoCobranca(selectedCobranca)
+                        if (tipoVisual === 'matricula') return 'bg-orange-50 text-orange-600'
+                        if (tipoVisual === 'mensalidade_proporcional') return 'bg-emerald-50 text-emerald-600'
+                        if (tipoVisual === 'mensalidade_cheia') return 'bg-blue-50 text-blue-600'
+                        return 'bg-slate-50 text-slate-600'
+                      })()
+                    )}>
+                      <Wallet size={18} />
+                    </div>
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Tipo</span>
+                  </div>
+                  <div className="text-right">
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider",
+                      (() => {
+                        const tipoVisual = detectarTipoCobranca(selectedCobranca)
+                        if (tipoVisual === 'matricula') return 'bg-orange-50 text-orange-600'
+                        if (tipoVisual === 'mensalidade_proporcional') return 'bg-emerald-50 text-emerald-600'
+                        if (tipoVisual === 'mensalidade_cheia') return 'bg-blue-50 text-blue-600'
+                        return 'bg-slate-100 text-slate-600'
+                      })()
+                    )}>
+                      {(() => {
+                        const tipoVisual = detectarTipoCobranca(selectedCobranca)
+                        return getLabelTipoCobranca(tipoVisual)
+                      })()}
+                    </span>
+                  </div>
                 </div>
               </div>
 

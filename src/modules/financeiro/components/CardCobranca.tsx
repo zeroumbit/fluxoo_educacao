@@ -4,6 +4,14 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { Button } from '@/components/ui/button'
 import type { CobrancaComEncargos } from '../types'
+import {
+  detectarTipoCobranca,
+  getLabelTipoCobranca,
+  getBadgeTipoCobranca,
+  getValorExibicao,
+  extrairDiasProporcionais,
+  isTaxaMatricula,
+} from '../utils/cobranca-utils'
 
 interface CardCobrancaProps {
   cobranca: CobrancaComEncargos
@@ -48,15 +56,39 @@ export function CardCobranca({ cobranca, onPagar, onExcluir, onVisualizar, class
             {cobranca.alunos?.nome_completo || 'Lançamento Avulso'}
           </p>
           
-          <div className="mt-3 flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[10px] font-black text-slate-300 uppercase">Total:</span>
-            <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
-              {formatCurrency(cobranca.valor_total_projetado || cobranca.valor || 0)}
-            </p>
-            {showEncargos && !simplified && (
-              <span className="text-[9px] text-rose-500 font-bold uppercase ml-1">
-                Com Encargos
-              </span>
+          <div className="mt-3 flex flex-col gap-1.5">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-[10px] font-black text-slate-300 uppercase">Total:</span>
+              <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
+                {formatCurrency(getValorExibicao(cobranca))}
+              </p>
+              {showEncargos && !simplified && (
+                <span className="text-[9px] text-rose-500 font-bold uppercase ml-1">
+                  Com Encargos
+                </span>
+              )}
+            </div>
+            {/* Badge do tipo de cobrança */}
+            {!simplified && (
+              <div className="flex items-center gap-1.5">
+                {(() => {
+                  const tipoVisual = detectarTipoCobranca(cobranca)
+                  return (
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider",
+                      getBadgeTipoCobranca(tipoVisual)
+                    )}>
+                      {getLabelTipoCobranca(tipoVisual)}
+                    </span>
+                  )
+                })()}
+                {extrairDiasProporcionais(cobranca.descricao) && (
+                  <span className="text-[8px] text-emerald-500 font-bold uppercase">({extrairDiasProporcionais(cobranca.descricao)} dias)</span>
+                )}
+                {isTaxaMatricula(cobranca) && (
+                  <span className="text-[8px] text-orange-500 font-bold uppercase">(Taxa única)</span>
+                )}
+              </div>
             )}
           </div>
         </div>

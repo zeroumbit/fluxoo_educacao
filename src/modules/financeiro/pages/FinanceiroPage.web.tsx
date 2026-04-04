@@ -34,6 +34,16 @@ import {
   Eye
 } from 'lucide-react'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
+import {
+  detectarTipoCobranca,
+  getLabelTipoCobranca,
+  getBadgeTipoCobranca,
+  getIconeTipoCobranca,
+  getSubtextoTipoCobranca,
+  getValorExibicao,
+  extrairDiasProporcionais,
+  isTaxaMatricula,
+} from '../utils/cobranca-utils'
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione o aluno'),
@@ -551,9 +561,16 @@ export function FinanceiroPageWeb() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Descrição</p>
                     <p className="font-bold text-slate-900 text-sm">{cobrancaVisualizando.descricao}</p>
                   </div>
-                  <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
+
+                  {/* Valor Principal */}
+                  <div className="space-y-1 p-4 rounded-xl bg-indigo-50/50 border border-indigo-100">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total a Pagar</p>
-                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(cobrancaVisualizando.valor || 0)}</p>
+                    <p className="font-bold text-indigo-700 text-lg">{formatCurrency(getValorExibicao(cobrancaVisualizando))}</p>
+                    {extrairDiasProporcionais(cobrancaVisualizando.descricao) && (
+                      <p className="text-xs text-indigo-500 font-medium">
+                        Valor proporcional ({extrairDiasProporcionais(cobrancaVisualizando.descricao)} dias)
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -568,12 +585,23 @@ export function FinanceiroPageWeb() {
                   </div>
                   <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tipo de Cobrança</p>
-                    <Badge variant="outline" className={cn(
-                      "w-fit px-2 py-1 text-[10px] font-bold uppercase tracking-wider border-0",
-                      cobrancaVisualizando.tipo_cobranca === 'mensalidade' ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
-                    )}>
-                      {cobrancaVisualizando.tipo_cobranca === 'mensalidade' ? 'Mensalidade' : 'Avulsa'}
-                    </Badge>
+                    {(() => {
+                      const tipoVisual = detectarTipoCobranca(cobrancaVisualizando)
+                      const subtexto = getSubtextoTipoCobranca(cobrancaVisualizando)
+                      return (
+                        <div className="space-y-1.5">
+                          <Badge variant="outline" className={cn(
+                            "w-fit px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border",
+                            getBadgeTipoCobranca(tipoVisual)
+                          )}>
+                            {getLabelTipoCobranca(tipoVisual)}
+                          </Badge>
+                          {subtexto && (
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">{subtexto}</p>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div className="space-y-1 p-4 rounded-xl bg-slate-50 border border-slate-100">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Criado em</p>
@@ -675,12 +703,17 @@ export function FinanceiroPageWeb() {
                 <TableCell className="px-6 py-4">
                   <div className="flex flex-col gap-1">
                     <span className="text-slate-600 font-medium">{c.descricao}</span>
-                    <Badge variant="outline" className={cn(
-                      "w-fit px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider border-0",
-                      c.tipo_cobranca === 'mensalidade' ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
-                    )}>
-                      {c.tipo_cobranca === 'mensalidade' ? 'Mensalidade' : 'Avulso'}
-                    </Badge>
+                    {(() => {
+                      const tipoVisual = detectarTipoCobranca(c)
+                      return (
+                        <Badge variant="outline" className={cn(
+                          "w-fit px-1.5 py-0 text-[9px] font-bold uppercase tracking-wider border",
+                          getBadgeTipoCobranca(tipoVisual)
+                        )}>
+                          {getLabelTipoCobranca(tipoVisual)}
+                        </Badge>
+                      )
+                    })()}
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">
@@ -691,7 +724,13 @@ export function FinanceiroPageWeb() {
                 </TableCell>
                 <TableCell className="px-6 py-4 font-bold text-indigo-700">
                   <div className="flex flex-col">
-                    <span>{formatCurrency(c.valor || 0)}</span>
+                    <span>{formatCurrency(getValorExibicao(c))}</span>
+                    {extrairDiasProporcionais(c.descricao) && (
+                      <span className="text-[9px] text-emerald-600 font-bold uppercase mt-0.5">Proporcional</span>
+                    )}
+                    {isTaxaMatricula(c) && (
+                      <span className="text-[9px] text-orange-600 font-bold uppercase mt-0.5">Matrícula</span>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">

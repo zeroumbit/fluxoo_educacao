@@ -92,7 +92,7 @@ export function TurmasPageWeb() {
       horario_inicio: '07:30',
       horario_fim: '11:30',
       capacidade: 32,
-      valor_mensalidade: 550
+      valor_mensalidade: undefined
     }
   })
 

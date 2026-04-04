@@ -185,17 +185,20 @@ export const portalService = {
   // ==========================================
   async buscarDashboardAluno(alunoId: string, tenantId: string, turmaId?: string | null) {
     if (!alunoId || !tenantId) return null
+    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+      .select('data_matricula')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
+      .order('data_matricula', { ascending: true })
+      .limit(1)
+      .maybeSingle()
 
-    // Removido reparo automático no portal para priorizar performance. 
-    // O status é garantido pelo Admin ou processos em background.
-    /*
-    try {
-      const { financeiroService } = await import('@/modules/financeiro/service')
-      await financeiroService.repararStatusAtrasados(tenantId)
-    } catch (e) {
-      console.warn('Falha ao reparar atrasos no dashboard:', e)
+    const dataMatricula = matricula?.data_matricula ? new Date(matricula.data_matricula + 'T12:00:00') : null
+    if (dataMatricula) {
+      dataMatricula.setDate(1) // Normaliza para o primeiro dia do mês de matrícula
+      dataMatricula.setHours(0, 0, 0, 0)
     }
-    */
 
     const [frequenciaRes, cobrancasRes, avisosRes] = await Promise.all([
       // Frequência recente (últimos 30 dias)
@@ -213,7 +216,6 @@ export const portalService = {
         .in('status', ['a_vencer', 'atrasado', 'pago'])
       ,
       // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
-      // Filtro no banco: (data_inicio null OU <= hoje) E (data_fim null OU >= hoje)
       (supabase.from('mural_avisos' as any) as any)
         .select(`
           id,
@@ -242,7 +244,17 @@ export const portalService = {
     const percentualFrequencia = frequencias.length > 0
       ? Math.round(((totalPresencas + totalJustificadas) / frequencias.length) * 100) : 100
 
-    const cobrancas = (cobrancasRes.data as any[]) || []
+    let cobrancas = (cobrancasRes.data as any[]) || []
+
+    // APLICAR REGRA DE OURO: Filtrar cobranças por data de matrícula
+    if (dataMatricula) {
+      cobrancas = cobrancas.filter((c: any) => {
+        const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+        dataVenc.setDate(1)
+        dataVenc.setHours(0, 0, 0, 0)
+        return dataVenc.getTime() >= dataMatricula.getTime()
+      })
+    }
 
     // Separa cobranças de matrícula das demais (mensalidades)
     const cobrancasMatricula = cobrancas.filter((c: any) =>
@@ -281,13 +293,8 @@ export const portalService = {
       }
       
       // 2. Filtro por data: só mostra se DENTRO DO PERÍODO VÁLIDO
-      // data_inicio <= hoje (ou inexistente) E data_fim >= hoje (ou inexistente)
-      if (a.data_inicio && a.data_inicio > hoje) {
-        return false // Ainda não começou (agendado)
-      }
-      if (a.data_fim && a.data_fim < hoje) {
-        return false // Já expirou
-      }
+      if (a.data_inicio && a.data_inicio > hoje) return false
+      if (a.data_fim && a.data_fim < hoje) return false
       
       return true
     })
@@ -307,7 +314,7 @@ export const portalService = {
         proximoVencimento: cobrancas
           .filter((c: any) => c.status === 'a_vencer')
           .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
-        cobrancasMatricula, // Retorna cobranças de matrícula para verificação
+        cobrancasMatricula,
       },
       avisosRecentes: todosAvisos.slice(0, 3)
     }
@@ -357,6 +364,22 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
+    // 0. Busca Matrícula Ativa para filtrar cobranças
+    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+      .select('data_matricula')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
+      .order('data_matricula', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    const dataMatricula = matricula?.data_matricula ? new Date(matricula.data_matricula + 'T12:00:00') : null
+    if (dataMatricula) {
+      dataMatricula.setDate(1)
+      dataMatricula.setHours(0, 0, 0, 0)
+    }
+
     // 1. Busca a configuração para saber se habilitamos multa/juros automática
     const { data: globalConfig } = await (supabase.from('configuracoes_escola' as any) as any)
       .select('config_financeira')
@@ -377,7 +400,20 @@ export const portalService = {
       .order('data_vencimento', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    
+    let res = (data as any[]) || []
+
+    // APLICAR REGRA DE OURO: Filtrar cobranças por data de matrícula
+    if (dataMatricula) {
+      res = res.filter((c: any) => {
+        const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+        dataVenc.setDate(1)
+        dataVenc.setHours(0, 0, 0, 0)
+        return dataVenc.getTime() >= dataMatricula.getTime()
+      })
+    }
+
+    return res
   },
 
   async buscarConfigPixEscola(tenantId: string) {
@@ -775,8 +811,6 @@ export const portalService = {
         id: item.id,
         titulo: item.titulo,
         descricao: item.descricao,
-        tipo: item.tipo_material,
-        anexo_url: item.anexo_url,
         disciplina: item.disciplina,
         created_at: item.created_at
       }
@@ -784,6 +818,8 @@ export const portalService = {
   },
 
   async getNotificationCounts(responsavelId: string) {
+    if (!responsavelId) return { total: 0, items: [] }
+
     // 1. Busca vínculos ativos para obter IDs de alunos e turmas
     const vinculos = await portalService.buscarVinculosAtivos(responsavelId)
     const alunoIds = vinculos.map(v => v.aluno_id)
@@ -791,24 +827,34 @@ export const portalService = {
 
     if (alunoIds.length === 0) return { total: 0, items: [] }
 
-    // 2. Busca IDs de turmas para atividades e provas
+    // 2. Busca IDs de turmas e data de matrícula
     const { data: matriculas } = await supabase.from('matriculas')
-      .select('turma_id')
+      .select('aluno_id, turma_id, data_matricula')
       .in('aluno_id', alunoIds)
-      .eq('status', 'ativa')
+      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
 
     const turmaIds = [...new Set((matriculas || []).map(m => m.turma_id).filter(Boolean))]
+    
+    // Mapeia data de matrícula por aluno para filtro preciso
+    const matriculasMap = (matriculas || []).reduce((acc: any, m: any) => {
+      if (m.data_matricula) {
+        const d = new Date(m.data_matricula + 'T12:00:00')
+        d.setDate(1)
+        d.setHours(0,0,0,0)
+        acc[m.aluno_id] = d.getTime()
+      }
+      return acc
+    }, {})
 
     // 3. Busca contagens em paralelo
-    const [cobrancasRes, avisosRes, atividadesRes, boletinsRes, faltasRes] = await Promise.all([
+    const [cobrancasFin, avisosRes, atividadesRes, boletinsRes, faltasRes] = await Promise.all([
       (supabase.from('cobrancas' as any) as any)
-        .select('id', { count: 'exact', head: true })
+        .select('status, data_vencimento')
         .in('aluno_id', alunoIds)
         .in('status', ['a_vencer', 'atrasado']),
       (supabase.from('mural_avisos' as any) as any)
         .select('id', { count: 'exact', head: true })
         .in('tenant_id', tenantIds)
-        // Apenas avisos ativos: dentro do período de vigência
         .or(`data_inicio.is.null,data_inicio.lte.${new Date().toISOString().split('T')[0]}`)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()),
@@ -830,17 +876,35 @@ export const portalService = {
 
     const notifications: any[] = []
     
-    // Financeiro
-    if (cobrancasRes.count && cobrancasRes.count > 0) {
+    // Processamento do Financeiro (Com Regras de Matrícula PER-ALUNO e Limite de Exibição)
+    let cobrancasFiltradas = (cobrancasFin.data as any[]) || []
+    
+    cobrancasFiltradas = cobrancasFiltradas.filter((c: any) => {
+      const dataMatriculaLimiar = matriculasMap[c.aluno_id]
+      if (!dataMatriculaLimiar) return true // Se não tem data de matrícula, mantém (regra de segurança)
+      
+      const dV = new Date(c.data_vencimento + 'T12:00:00')
+      dV.setDate(1)
+      dV.setHours(0,0,0,0)
+      return dV.getTime() >= dataMatriculaLimiar
+    })
+
+    const atrasadasCount = cobrancasFiltradas.filter((c: any) => c.status === 'atrasado').length
+    const futurasCount = cobrancasFiltradas.filter((c: any) => c.status === 'a_vencer').length
+    
+    const financeiroDisplayCount = atrasadasCount > 0 ? atrasadasCount : (futurasCount > 0 ? 1 : 0)
+
+    if (financeiroDisplayCount > 0) {
       notifications.push({ 
         id: 'cobrancas', 
-        label: `${cobrancasRes.count} ${cobrancasRes.count === 1 ? 'Nova cobrança' : 'Novas cobranças'}`, 
+        label: atrasadasCount > 0 
+          ? `${atrasadasCount} ${atrasadasCount === 1 ? 'Nova cobrança atrasada' : 'Cobranças atrasadas'}` 
+          : '1 Nova cobrança mensal', 
         href: '/portal/financeiro',
         category: 'FINANCEIRO'
       })
     }
 
-    // Frequência (Faltas)
     if (faltasRes.count && faltasRes.count > 0) {
       notifications.push({ 
         id: 'frequencia_faltas', 
@@ -850,17 +914,15 @@ export const portalService = {
       })
     }
 
-    // Mural
     if (avisosRes.count && avisosRes.count > 0) {
       notifications.push({ 
         id: 'avisos', 
-        label: `${avisosRes.count} ${avisosRes.count === 1 ? 'Novo aviso' : 'Novos avisos'} no mural`, 
+        label: `${avisosRes.count} ${avisosRes.count === 1 ? 'Novo aviso' : 'Novas avisos'} no mural`, 
         href: '/portal/avisos',
         category: 'COMUNICADOS'
       })
     }
 
-    // Atividades
     if (atividadesRes.count && atividadesRes.count > 0) {
       notifications.push({ 
         id: 'atividades', 
@@ -870,7 +932,6 @@ export const portalService = {
       })
     }
 
-    // Notas / Boletim
     if (boletinsRes.count && boletinsRes.count > 0) {
       notifications.push({ 
         id: 'boletins', 
@@ -880,7 +941,7 @@ export const portalService = {
       })
     }
 
-    const total = (cobrancasRes.count || 0) + (avisosRes.count || 0) + (atividadesRes.count || 0) + (boletinsRes.count || 0)
+    const total = financeiroDisplayCount + (avisosRes.count || 0) + (atividadesRes.count || 0) + (boletinsRes.count || 0) + (faltasRes.count || 0)
 
     return {
       total,

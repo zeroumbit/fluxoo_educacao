@@ -312,7 +312,6 @@ export function PortalDashboardPage() {
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
       {/* ALERTA DE TRANSFERÊNCIA PENDENTE (ALTA PRIORIDADE) */}
       {transferencias?.filter(t => t.status === 'pendente_pais').map(transf => (
         <div key={transf.id} className="bg-gradient-to-r from-indigo-600 to-blue-700 p-5 rounded-2xl text-white shadow-lg flex flex-col md:flex-row items-center gap-4 relative overflow-hidden">
@@ -500,7 +499,9 @@ export function PortalDashboardPage() {
                 "text-teal-400 text-[10px] font-medium uppercase tracking-wider mb-5 flex items-center gap-1.5"
              )}>
                 {(fin?.totalAtrasadas || 0) > 0 ? <AlertTriangle size={12} className="text-red-400" /> : <CheckCircle2 size={12} />}
-                {fin?.totalAtrasadas ? `${fin.totalAtrasadas} pendentes` : 'Tudo em dia'}
+                {(fin?.totalAtrasadas || 0) > 0 
+                  ? `${fin?.totalAtrasadas} ${fin?.totalAtrasadas === 1 ? 'atrasada' : 'atrasadas'}` 
+                  : ((fin?.totalPendente || 0) > 0 ? '1 pendente' : 'Tudo em dia')}
              </p>
              <button 
                 onClick={(e) => {
@@ -529,7 +530,9 @@ export function PortalDashboardPage() {
           <StatCard
             label="Total Pendente"
             value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fin?.totalPendente || 0)}
-            trend={fin?.totalAtrasadas ? `${fin.totalAtrasadas} em atraso` : 'Tudo em dia'}
+            trend={(fin?.totalAtrasadas || 0) > 0 
+              ? `${fin?.totalAtrasadas} em atraso` 
+              : ((fin?.totalPendente || 0) > 0 ? 'Próxima mensalidade' : 'Tudo em dia')}
             icon={DollarSign}
             color="bg-amber-500"
             onClick={() => navigate('/portal/cobrancas')}

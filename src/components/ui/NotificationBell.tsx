@@ -249,7 +249,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                 initial={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
-                className="absolute right-0 mt-4 w-[380px] bg-white rounded-[32px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-slate-100 z-[100] overflow-hidden"
+                className="absolute right-0 mt-4 w-[380px] bg-white rounded-[32px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-slate-100 z-[999] overflow-hidden"
               >
                 <NotificationContent />
               </motion.div>

@@ -71,7 +71,7 @@ export function MatriculaFormPageMobile() {
       serie_ano: '',
       turma_id: '',
       turno: 'integral',
-      valor_matricula: 450,
+      valor_matricula: undefined,
       status: 'ativa'
     }
   })
@@ -87,7 +87,7 @@ export function MatriculaFormPageMobile() {
       form.setValue('turma_id', mData.turma_id || '')
       form.setValue('turno', mData.turno || 'integral')
       form.setValue('data_matricula', mData.data_matricula || new Date().toISOString().split('T')[0])
-      form.setValue('valor_matricula', mData.valor_matricula || 450)
+      form.setValue('valor_matricula', mData.valor_matricula || 0)
       form.setValue('status', mData.status || 'ativa')
     }
   }, [mData, form])

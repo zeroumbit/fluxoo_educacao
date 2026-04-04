@@ -266,13 +266,29 @@ export default function PortalCobrancasPage() {
     )
   }
 
+  // Helper para ordenação absoluta (Regra de Ouro: Sequencial Cronológico)
+  const ordenarCobrancas = (lista: any[]) => {
+    return [...lista].sort((a, b) => {
+      const dA = new Date(a.data_vencimento + 'T12:00:00').getTime()
+      const dB = new Date(b.data_vencimento + 'T12:00:00').getTime()
+      if (dA !== dB) return dA - dB // Menor data primeiro (Abril, Maio...)
+      
+      // Se for o mesmo dia/mês, prioriza Matrícula antes de Mensalidade
+      const isMatrA = a.descricao?.toLowerCase().includes('matrícula') || a.descricao?.toLowerCase().includes('matricula')
+      const isMatrB = b.descricao?.toLowerCase().includes('matrícula') || b.descricao?.toLowerCase().includes('matricula')
+      if (isMatrA && !isMatrB) return -1
+      if (!isMatrA && isMatrB) return 1
+      return 0
+    })
+  }
+
   // Separar cobranças atrasadas das a vencer
   const hoje = new Date()
   hoje.setHours(12, 0, 0, 0)
   
-  const aVencer = cobrancas?.filter(c => c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') >= hoje) || []
-  const atrasados = cobrancas?.filter(c => c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)) || []
-  const pagos = cobrancas?.filter(c => c.status === 'pago') || []
+  const aVencer = ordenarCobrancas(cobrancas?.filter(c => c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') >= hoje) || [])
+  const atrasados = ordenarCobrancas(cobrancas?.filter(c => c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)) || [])
+  const pagos = ordenarCobrancas(cobrancas?.filter(c => c.status === 'pago') || [])
 
   return (
     <div className="space-y-5 pb-20 animate-in fade-in duration-500 font-sans">

@@ -102,9 +102,9 @@ export const DEFAULT_CONFIG: Omit<TenantSettings, 'id' | 'tenant_id' | 'updated_
     pix_auto: false,
     presencial: true,
     contrato_modelo: '',
-    qtd_mensalidades_automaticas: 12, // Padrão: 12 mensalidades (ano letivo completo)
-    cobrar_matricula: true,           // Padrão: cobrar matrícula
-    valor_matricula_padrao: 0,        // Valor padrão sugerido
+    qtd_mensalidades_automaticas: 12,
+    cobrar_matricula: false,          // Sem default: escola deve decidir
+    valor_matricula_padrao: 0,        // Sem default: deve ser informado se cobrar_matricula = true
     multa_juros_habilitado: true,
     notificacoes_habilitado: true,
     recibo_pdf_auto_habilitado: true,

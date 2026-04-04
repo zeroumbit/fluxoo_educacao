@@ -85,7 +85,7 @@ export function MatriculaListPageWeb() {
       aluno_id: '',
       serie_ano: '',
       turno: 'integral',
-      valor_matricula: 450,
+      valor_matricula: undefined,
       status: 'ativa'
     }
   })
@@ -257,7 +257,7 @@ export function MatriculaListPageWeb() {
       serie_ano: '',
       turma_id: '',
       turno: 'integral' as any,
-      valor_matricula: 450,
+      valor_matricula: undefined,
       status: 'ativa'
     })
   }

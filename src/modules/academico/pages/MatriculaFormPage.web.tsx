@@ -66,7 +66,7 @@ export function MatriculaFormPageWeb() {
       aluno_id: '',
       serie_ano: '',
       turno: 'integral',
-      valor_matricula: 450,
+      valor_matricula: undefined,
       status: 'ativa'
     }
   })
@@ -203,11 +203,16 @@ export function MatriculaFormPageWeb() {
                   const t = (turmas as any[])?.find(x => x.nome === v)
                   if (t) {
                     form.setValue('turma_id', t.id)
-                    // Atualizar automaticamente o valor da mensalidade baseado na turma
+                    // Valor da matrícula vem automaticamente da mensalidade da turma
                     if (t.valor_mensalidade) {
                       form.setValue('valor_matricula', t.valor_mensalidade)
-                      toast.info(`Mensalidade atualizada para R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
-                        description: `Valor baseado na turma ${t.nome}`
+                      toast.info(`Valor da matrícula definido como R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
+                        description: `Baseado na mensalidade da turma ${t.nome}`
+                      })
+                    } else {
+                      form.setValue('valor_matricula', 0)
+                      toast.warning('A turma não possui valor de mensalidade definido. Preencha o valor da matrícula manualmente.', {
+                        description: 'Configure o valor em Turmas > Editar'
                       })
                     }
                     

@@ -30,6 +30,8 @@ export function ConfigFinanceiraPage() {
     dinheiro_cartao_presencial: true,
     pix_qr_code_url: '',
     qtd_mensalidades_automaticas: 12,
+    cobrar_matricula: false,
+    valor_matricula_padrao: 0,
     id: undefined as string | undefined,
   })
 
@@ -51,6 +53,8 @@ export function ConfigFinanceiraPage() {
         dinheiro_cartao_presencial: config.dinheiro_cartao_presencial ?? true,
         pix_qr_code_url: config.pix_qr_code_url || '',
         qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas ?? 12,
+        cobrar_matricula: config.cobrar_matricula || false,
+        valor_matricula_padrao: config.valor_matricula_padrao || 0,
         id: config.id,
       })
     }
@@ -178,6 +182,45 @@ export function ConfigFinanceiraPage() {
               <Input type="number" step="0.01" value={form.multa_atraso_valor_fixo} onChange={(e) => setForm({ ...form, multa_atraso_valor_fixo: +e.target.value })} className="h-11 bg-slate-50/50 focus:bg-white" />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Taxa de Matrícula */}
+      <Card className="border border-[#E2E8F0] shadow-sm overflow-hidden bg-white">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pt-8">
+          <CardTitle className="text-sm font-bold uppercase tracking-widest text-[#134E4A]">Taxa de Matrícula</CardTitle>
+          <CardDescription className="text-[10px] font-bold text-slate-400">Configure se a escola cobra taxa única na matrícula de novos alunos</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 p-6 md:p-8">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-5 bg-slate-50/30 hover:bg-white transition-colors">
+            <div>
+              <Label className="font-bold text-[#1E293B]">Cobrar Taxa de Matrícula</Label>
+              <p className="text-[11px] text-[#64748B] font-medium">Se ativado, gera cobrança automática de matrícula para novos alunos</p>
+            </div>
+            <Switch
+              checked={form.cobrar_matricula}
+              onCheckedChange={(v) => setForm({ ...form, cobrar_matricula: v })}
+              className="data-[state=checked]:bg-[#14B8A6]"
+            />
+          </div>
+
+          {form.cobrar_matricula && (
+            <div className="pl-4 border-l-2 border-teal-200 py-2 animate-in slide-in-from-top-2 duration-200">
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Valor da Taxa de Matrícula (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.valor_matricula_padrao}
+                  onChange={(e) => setForm({ ...form, valor_matricula_padrao: +e.target.value })}
+                  className="h-11 bg-slate-50/50 focus:bg-white"
+                  placeholder="Informe o valor da taxa de matrícula"
+                />
+                <p className="text-[9px] text-slate-400 ml-1">Este valor será usado automaticamente nas cobranças de matrícula</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

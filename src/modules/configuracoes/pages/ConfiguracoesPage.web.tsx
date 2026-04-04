@@ -3,7 +3,7 @@ import {
   BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
   UploadCloud, Save, Info, Banknote, ChevronDown, Check, ShieldCheck,
   Loader2, AlertTriangle, BadgeAlert, BadgeCheck, ChevronRight, Clock,
-  RefreshCw, Settings2
+  RefreshCw, Settings2, AlertCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -519,18 +519,24 @@ export function ConfiguracoesPage() {
                 <div className="space-y-4">
                   <ToggleRow
                     label="Cobrar Taxa de Matrícula"
-                    description="Se desativado, não gerará cobrança de matrícula nos novos registros."
+                    description="Se ativado, gera cobrança automática de matrícula. Obrigatório informar o valor."
                     checked={financeira.cobrar_matricula}
                     onCheckedChange={(v) => setFinanceira({ ...financeira, cobrar_matricula: v })}
                   />
                   {financeira.cobrar_matricula && (
                     <div className="pl-4 border-l-2 border-indigo-200 py-2 animate-in slide-in-from-top-2 duration-200">
                       <NumberField
-                        label="Valor Padrão Sugerido (R$)"
+                        label="Valor da Taxa de Matrícula (R$)"
                         value={financeira.valor_matricula_padrao || 0}
                         onChange={(v) => setFinanceira({ ...financeira, valor_matricula_padrao: v })}
-                        info="Valor base para preenchimento automático na tela de matrícula. Pode ser sobrescrito manualmente."
+                        info="Valor usado automaticamente nas cobranças de matrícula. Deve ser maior que zero."
                       />
+                      {financeira.valor_matricula_padrao <= 0 && (
+                        <div className="flex items-center gap-2 mt-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          <p className="text-xs font-medium">Informe um valor maior que zero para a taxa de matrícula, caso contrário a cobrança não será gerada.</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

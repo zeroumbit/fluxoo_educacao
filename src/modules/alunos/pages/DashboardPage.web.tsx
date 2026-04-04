@@ -340,11 +340,14 @@ function DashboardContent() {
 
   const totalAlunos = dashboardData?.totalAlunosAtivos || 0
   const limiteAlunos = dashboardData?.limiteAlunos || 1
-  const recebimentos = dashboardData?.totalReceber || 0
-  const pagamentos = dashboardData?.totalPagar || 0
-  const saudeFinanceira = recebimentos - pagamentos
+  const mensalidadesMes = dashboardData?.totalMensalidadesMes || 0
+  const receber12Meses = dashboardData?.totalReceber12Meses || 0
+  const totalPagar = dashboardData?.totalPagar || 0
+  const totalEstoque = dashboardData?.totalEstoque || 0
+  const totalSalarios = dashboardData?.totalSalarios || 0
 
-  const metrics = [
+  // 3 cards principais — responsivos (grid 1→2→3 colunas)
+  const metricsPrimary = [
     {
       label: 'Total de Alunos',
       value: totalAlunos,
@@ -356,8 +359,8 @@ function DashboardContent() {
     },
     {
       label: 'Mensalidades',
-      value: `R$ ${recebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      sub: recebimentos > 0 ? `Cobranças pendentes identificadas` : `Em dia`,
+      value: `R$ ${mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: mensalidadesMes > 0 ? `Receita prevista para este mês` : `Nenhuma pendência este mês`,
       icon: CreditCard,
       iconBg: 'bg-sky-100',
       iconColor: 'text-sky-700',
@@ -367,20 +370,6 @@ function DashboardContent() {
       cardTitleColor: 'text-sky-400',
       cardValueColor: 'text-sky-900',
       cardSubColor: 'text-sky-600',
-    },
-    {
-      label: 'Contas',
-      value: `R$ ${saudeFinanceira.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      sub: saudeFinanceira >= 0 ? 'Saúde financeira positiva' : 'Atenção ao fluxo de caixa',
-      icon: TrendingUp,
-      iconBg: 'bg-rose-100',
-      iconColor: 'text-rose-700',
-      path: '/financeiro-relatorios',
-      cardBg: 'bg-rose-50/30',
-      cardBorder: 'border-rose-100',
-      cardTitleColor: 'text-rose-400',
-      cardValueColor: 'text-rose-900',
-      cardSubColor: 'text-rose-600',
     },
     {
       label: 'Alertas Ativos',
@@ -394,6 +383,66 @@ function DashboardContent() {
     }
   ]
 
+  // 4 cards secundários — linha abaixo
+  const metricsSecondary = [
+    {
+      label: 'Contas a Pagar',
+      value: `R$ ${totalPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: totalPagar > 0 ? 'Despesas pendentes + folha' : 'Em dia',
+      icon: TrendingUp,
+      iconBg: 'bg-rose-100',
+      iconColor: 'text-rose-700',
+      path: '/financeiro-relatorios',
+      cardBg: 'bg-rose-50/30',
+      cardBorder: 'border-rose-100',
+      cardTitleColor: 'text-rose-400',
+      cardValueColor: 'text-rose-900',
+      cardSubColor: 'text-rose-600',
+    },
+    {
+      label: 'A Receber em 12 Meses',
+      value: `R$ ${receber12Meses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: 'Projeção anual de mensalidades',
+      icon: Calendar,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-700',
+      path: '/financeiro',
+      cardBg: 'bg-emerald-50/30',
+      cardBorder: 'border-emerald-100',
+      cardTitleColor: 'text-emerald-400',
+      cardValueColor: 'text-emerald-900',
+      cardSubColor: 'text-emerald-600',
+    },
+    {
+      label: 'Materiais em Estoque',
+      value: `R$ ${totalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: totalEstoque > 0 ? 'Valor total em estoque' : 'Sem itens',
+      icon: Archive,
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-700',
+      path: '/almoxarifado',
+      cardBg: 'bg-violet-50/30',
+      cardBorder: 'border-violet-100',
+      cardTitleColor: 'text-violet-400',
+      cardValueColor: 'text-violet-900',
+      cardSubColor: 'text-violet-600',
+    },
+    {
+      label: 'Total de Salários',
+      value: `R$ ${totalSalarios.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      sub: totalSalarios > 0 ? 'Folha mensal projetada' : 'Sem registros',
+      icon: UserCircle,
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-700',
+      path: '/funcionarios',
+      cardBg: 'bg-orange-50/30',
+      cardBorder: 'border-orange-100',
+      cardTitleColor: 'text-orange-400',
+      cardValueColor: 'text-orange-900',
+      cardSubColor: 'text-orange-600',
+    },
+  ]
+
   const statusAssinatura = dashboardData?.statusAssinatura || 'pendente'
   const metodoPagamento = dashboardData?.metodoPagamento || 'mercado_pago'
 
@@ -405,16 +454,7 @@ function DashboardContent() {
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-1">Visão Geral da Instituição</p>
           <h1 className="text-4xl font-black text-zinc-900 tracking-tighter">Dashboard</h1>
         </div>
-        <div className="flex items-center gap-4 text-right">
-             <div className="hidden md:block">
-               <p className="text-sm font-bold text-zinc-900">Minha Escola</p>
-               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Escola Parceira</p>
-             </div>
 
-             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center border border-indigo-100 shadow-sm overflow-hidden text-right">
-               <img src={CorujaIcon} alt="Fluxoo" className="h-6 w-6" />
-             </div>
-        </div>
       </div>
 
       {/* Alerta de Aprovação */}
@@ -440,10 +480,17 @@ function DashboardContent() {
         }} />
       )}
 
-      {/* Grid de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((m, i) => (
+      {/* Grid de Métricas — 3 cards principais responsivos */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {metricsPrimary.map((m, i) => (
           <MetricCard key={i} {...m} onClick={() => navigate(m.path)} />
+        ))}
+      </div>
+
+      {/* Métricas Secundárias — 4 cards abaixo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metricsSecondary.map((m, i) => (
+          <MetricCard key={`sec-${i}`} {...m} onClick={() => navigate(m.path)} />
         ))}
       </div>
 

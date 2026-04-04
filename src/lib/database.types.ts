@@ -398,9 +398,11 @@ export type AlmoxarifadoItem = {
   id: string
   tenant_id: string
   nome: string
+  categoria: string | null
   quantidade: number
   unidade: string
   estoque_minimo: number
+  custo_unitario: number | null
   created_at: string
   updated_at: string
 }
