@@ -19,10 +19,10 @@ export function useAlunos() {
 
 export function useAluno(id: string) {
   const { authUser } = useAuth()
-  
+
   return useQuery({
     queryKey: ['alunos', id, authUser?.tenantId],
-    queryFn: () => alunoService.buscarPorId(id, authUser!.tenantId),
+    queryFn: () => alunoService.buscarPorId(id, authUser!.tenantId, authUser?.isProfessor || false),
     enabled: !!authUser?.tenantId && !!id,
   })
 }
@@ -41,8 +41,9 @@ export function useAlunosAtivos() {
 
 export function useCriarAluno() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (aluno: AlunoInsert) => alunoService.criar(aluno),
+    mutationFn: (aluno: AlunoInsert) => alunoService.criar(aluno, authUser?.user.id, authUser?.isProfessor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -54,6 +55,7 @@ export function useCriarAluno() {
 
 export function useCriarAlunoComResponsavel() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
     mutationFn: ({
       responsavel,
@@ -65,7 +67,7 @@ export function useCriarAlunoComResponsavel() {
       aluno: AlunoInsert
       grauParentesco: string | null
       isFinanceiro?: boolean
-    }) => alunoService.criarComResponsavel(responsavel, aluno, grauParentesco, isFinanceiro),
+    }) => alunoService.criarComResponsavel(responsavel, aluno, grauParentesco, isFinanceiro, authUser?.user.id, authUser?.isProfessor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -77,9 +79,10 @@ export function useCriarAlunoComResponsavel() {
 
 export function useAtualizarAluno() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
     mutationFn: ({ id, aluno }: { id: string; aluno: AlunoUpdate }) =>
-      alunoService.atualizar(id, aluno),
+      alunoService.atualizar(id, aluno, authUser?.user.id, authUser?.tenantId, authUser?.isProfessor),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -92,8 +95,9 @@ export function useAtualizarAluno() {
 
 export function useExcluirAluno() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (id: string) => alunoService.excluir(id),
+    mutationFn: (id: string) => alunoService.excluir(id, authUser?.user.id, authUser?.tenantId, authUser?.isProfessor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })

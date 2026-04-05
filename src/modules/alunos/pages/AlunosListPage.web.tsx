@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -41,6 +42,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 function AlunosListPageContent() {
+  const { authUser } = useAuth()
   const { data: alunos, isLoading } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
   const [busca, setBusca] = useState('')
@@ -179,12 +181,15 @@ function AlunosListPageContent() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gerenciamento de Alunos</h1>
           <p className="text-muted-foreground">Visualize e gerencie todos os estudantes da sua escola</p>
         </div>
-        <Button
-           onClick={() => navigate('/alunos/novo')}
-           className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
-        </Button>
+        {/* REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos */}
+        {!authUser?.isProfessor && (
+          <Button
+             onClick={() => navigate('/alunos/novo')}
+             className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="alunos" className="space-y-6">

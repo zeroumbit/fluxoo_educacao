@@ -474,7 +474,8 @@ export function DashboardPageMobile() {
   const onRefresh = async () => { await refetch() }
 
   const quickActions = [
-    { label: 'Novo Aluno', icon: Plus, path: '/alunos/novo', color: 'bg-indigo-600' },
+    // REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos
+    ...(!authUser?.isProfessor ? [{ label: 'Novo Aluno', icon: Plus, path: '/alunos/novo', color: 'bg-indigo-600' }] : []),
     { label: 'Matricular', icon: Zap, path: '/matriculas', color: 'bg-emerald-600' },
     { label: 'Chamada', icon: Calendar, path: '/frequencia', color: 'bg-amber-500' },
     { label: 'Financeiro', icon: CreditCard, path: '/financeiro', color: 'bg-rose-500' },
@@ -540,7 +541,7 @@ export function DashboardPageMobile() {
                   possuiAluno: !!onboardingStatus?.possuiAluno,
                   configFinanceira: !!onboardingStatus?.configFinanceira,
                   autorizacoes: !!onboardingStatus?.autorizacoes
-                }} />
+                }} isProfessor={authUser?.isProfessor} />
               </div>
             )}
 

@@ -135,12 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
               perfilNome = pData?.nome?.toLowerCase() || ''
             }
-            // Busca áreas de acesso do funcionário
-            const { data: areasData } = await (supabase as any)
-              .from('funcionario_areas_acesso')
-              .select('area')
-              .eq('funcionario_id', funcionarioData.id)
-            areasAcesso = areasData?.map((a: any) => a.area) || []
+            // Áreas de acesso removidas (tabela não existe no banco)
+            areasAcesso = []
           } catch {
             // RBAC não crítico — não bloqueia o login
           }
@@ -203,12 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
                     perfilNome = pData?.nome?.toLowerCase() || ''
                   }
-                  // Busca áreas de acesso do funcionário
-                  const { data: areasData } = await (supabase as any)
-                    .from('funcionario_areas_acesso')
-                    .select('area')
-                    .eq('funcionario_id', funcByEmail.id)
-                  areasAcesso = areasData?.map((a: any) => a.area) || []
+                  // Áreas de acesso removidas (tabela não existe no banco)
+                  areasAcesso = []
                 } catch { /* não bloqueia */ }
 
                 const isGestor = user.user_metadata?.role === 'gestor' // Apenas dono da escola

@@ -15,9 +15,10 @@ interface OnboardingGuideProps {
     configFinanceira: boolean
     autorizacoes: boolean
   }
+  isProfessor?: boolean
 }
 
-export function OnboardingGuide({ status }: OnboardingGuideProps) {
+export function OnboardingGuide({ status, isProfessor = false }: OnboardingGuideProps) {
   const [dismissed, setDismissed] = useState(false)
 
   const steps = [
@@ -45,14 +46,15 @@ export function OnboardingGuide({ status }: OnboardingGuideProps) {
       done: status.possuiTurma,
       icon: BookOpen,
     },
-    {
+    // REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos
+    ...(!isProfessor ? [{
       id: 'aluno',
       title: 'Cadastrar Primeiro Aluno',
       description: 'Inicie a gestão acadêmica registrando seu primeiro aluno.',
       href: '/alunos/novo',
       done: status.possuiAluno,
       icon: Users,
-    },
+    }] : []),
     {
       id: 'financeiro',
       title: 'Configurar Financeiro',

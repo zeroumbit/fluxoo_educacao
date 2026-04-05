@@ -477,7 +477,7 @@ function DashboardContent() {
           possuiAluno: !!onboardingStatus?.possuiAluno,
           configFinanceira: !!onboardingStatus?.configFinanceira,
           autorizacoes: !!onboardingStatus?.autorizacoes
-        }} />
+        }} isProfessor={authUser?.isProfessor} />
       )}
 
       {/* Grid de Métricas — 3 cards principais responsivos */}

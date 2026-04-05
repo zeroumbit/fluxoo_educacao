@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import {
   Search,
   Plus,
@@ -46,6 +47,7 @@ const CACHE_KEY = 'alunos_list_cache'
 
 export function AlunosListPageMobile() {
   const navigate = useNavigate()
+  const { authUser } = useAuth()
   const { data: alunos, isLoading, refetch } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
   const excluirAluno = useExcluirAluno()
@@ -292,16 +294,18 @@ export function AlunosListPageMobile() {
         </PullToRefresh>
       </div>
 
-      {/* FAB */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => navigate('/alunos/novo')}
-        className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
-      >
-        <Plus className="h-6 w-6" />
-      </motion.button>
+      {/* FAB - REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos */}
+      {!authUser?.isProfessor && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/alunos/novo')}
+          className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+        >
+          <Plus className="h-6 w-6" />
+        </motion.button>
+      )}
 
       {/* Action Sheet */}
       <BottomSheet

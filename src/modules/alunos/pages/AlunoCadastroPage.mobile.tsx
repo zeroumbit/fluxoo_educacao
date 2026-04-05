@@ -483,10 +483,13 @@ export function AlunoCadastroPageMobile() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mensalidade (R$)</Label>
-                      <Input type="number" step="0.01" placeholder="0,00" {...register('valor_mensalidade_atual')} inputMode="decimal" className="h-14 rounded-2xl text-base font-medium" />
-                    </div>
+                    {/* REGRA DE NEGÓCIO: Professores NÃO podem ver/editar valor de mensalidade */}
+                    {!authUser?.isProfessor && (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mensalidade (R$)</Label>
+                        <Input type="number" step="0.01" placeholder="0,00" {...register('valor_mensalidade_atual')} inputMode="decimal" className="h-14 rounded-2xl text-base font-medium" />
+                      </div>
+                    )}
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data de Ingresso</Label>
                       <Input type="date" {...register('data_ingresso')} className="h-14 rounded-2xl text-base font-medium" />

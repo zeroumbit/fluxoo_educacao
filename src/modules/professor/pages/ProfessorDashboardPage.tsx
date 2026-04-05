@@ -18,7 +18,6 @@ import {
   TrendingDown,
   ClipboardCheck,
   FileText,
-  RefreshCw,
   GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -281,24 +280,13 @@ export function ProfessorDashboardPage() {
   return (
     <div className="space-y-6 p-4 lg:p-0 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 lg:text-3xl">
-            Olá, {authUser?.nome?.split(' ')[0]}! 👋
-          </h1>
-          <p className="text-zinc-500 text-sm mt-1">
-            Aqui está o seu painel operacional de hoje.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 flex-shrink-0"
-          onClick={() => refetchAgenda()}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Atualizar</span>
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-zinc-900 lg:text-3xl">
+          Olá, {authUser?.nome?.split(' ')[0]}! 👋
+        </h1>
+        <p className="text-zinc-500 text-sm mt-1">
+          Aqui está o seu painel operacional de hoje.
+        </p>
       </div>
 
       {/* KPI Strip — Pendências em destaque */}

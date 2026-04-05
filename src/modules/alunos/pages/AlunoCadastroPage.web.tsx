@@ -695,18 +695,21 @@ export function AlunoCadastroPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="valor_mensalidade_atual">Valor da Mensalidade (R$)</Label>
-                    <Input
-                      id="valor_mensalidade_atual"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      {...register('valor_mensalidade_atual')}
-                      className="w-full"
-                    />
-                    <p className="text-[10px] text-muted-foreground italic">Cálculo automático de proporcional no primeiro mês</p>
-                  </div>
+                  {/* REGRA DE NEGÓCIO: Professores NÃO podem ver/editar valor de mensalidade */}
+                  {!authUser?.isProfessor && (
+                    <div className="space-y-2">
+                      <Label htmlFor="valor_mensalidade_atual">Valor da Mensalidade (R$)</Label>
+                      <Input
+                        id="valor_mensalidade_atual"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        {...register('valor_mensalidade_atual')}
+                        className="w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground italic">Cálculo automático de proporcional no primeiro mês</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="data_ingresso">Data de Ingresso</Label>
                     <Input

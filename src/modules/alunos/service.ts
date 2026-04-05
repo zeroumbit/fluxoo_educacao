@@ -61,7 +61,10 @@ export const alunoService = {
     return (data as any[])?.map(aluno => {
       const matriculaAtiva = matriculas?.find((m: any) => m.aluno_id === aluno.id && m.status === 'ativa')
       if (matriculaAtiva && matriculaAtiva.turmas) {
-        aluno.valor_mensalidade_atual = matriculaAtiva.turmas.valor_mensalidade
+        // REGRA DE NEGÓCIO: Professores NÃO podem ver valor de mensalidade
+        if (!professorId) {
+          aluno.valor_mensalidade_atual = matriculaAtiva.turmas.valor_mensalidade
+        }
         aluno.turma_atual = matriculaAtiva.turmas
         aluno.data_ingresso = matriculaAtiva.data_matricula
       }
@@ -69,7 +72,7 @@ export const alunoService = {
     }) || []
   },
 
-  async buscarPorId(id: string, tenantId: string) {
+  async buscarPorId(id: string, tenantId: string, isProfessor: boolean = false) {
     const { data: aluno, error: alunoError } = await supabase
       .from('alunos')
       .select(`
@@ -109,7 +112,10 @@ export const alunoService = {
 
         if (turma && !turmaError) {
           const turmaData = turma as any
-          ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
+          // REGRA DE NEGÓCIO: Professores NÃO podem ver valor de mensalidade
+          if (!isProfessor) {
+            ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
+          }
           ;(aluno as any).turma_atual = turmaData
           ;(aluno as any).data_ingresso = matricula.data_matricula
           ;(aluno as any).serie_ano = matricula.serie_ano
@@ -156,7 +162,12 @@ export const alunoService = {
     return count || 0
   },
 
-  async criar(aluno: AlunoInsert, userId?: string) {
+  async criar(aluno: AlunoInsert, userId?: string, isProfessor?: boolean) {
+    // REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos
+    if (isProfessor) {
+      throw new Error('Professores não têm permissão para adicionar alunos.')
+    }
+
     // Validação RBAC: alunos.create
     if (userId && aluno.tenant_id) {
       await validarPermissao(userId, aluno.tenant_id, 'alunos.create')
@@ -177,8 +188,14 @@ export const alunoService = {
     alunoDados: AlunoInsert,
     grauParentesco: string | null,
     isFinanceiro: boolean = true,
-    userId?: string
+    userId?: string,
+    isProfessor?: boolean
   ) {
+    // REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos
+    if (isProfessor) {
+      throw new Error('Professores não têm permissão para adicionar alunos.')
+    }
+
     // Validação RBAC: alunos.create
     if (userId && alunoDados.tenant_id) {
       await validarPermissao(userId, alunoDados.tenant_id, 'alunos.create')
@@ -292,7 +309,12 @@ export const alunoService = {
     return alunoData
   },
 
-  async atualizar(id: string, aluno: AlunoUpdate, userId?: string, tenantId?: string) {
+  async atualizar(id: string, aluno: AlunoUpdate, userId?: string, tenantId?: string, isProfessor?: boolean) {
+    // REGRA DE NEGÓCIO: Professores NÃO podem editar alunos
+    if (isProfessor) {
+      throw new Error('Professores não têm permissão para editar alunos.')
+    }
+
     // Validação RBAC: alunos.update
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'alunos.update')
@@ -309,7 +331,12 @@ export const alunoService = {
     return data
   },
 
-  async excluir(id: string, userId?: string, tenantId?: string) {
+  async excluir(id: string, userId?: string, tenantId?: string, isProfessor?: boolean) {
+    // REGRA DE NEGÓCIO: Professores NÃO podem excluir alunos
+    if (isProfessor) {
+      throw new Error('Professores não têm permissão para excluir alunos.')
+    }
+
     // Validação RBAC: alunos.delete
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'alunos.delete')

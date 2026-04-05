@@ -4,13 +4,7 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import {
   LayoutDashboard,
   Building2,
@@ -24,7 +18,9 @@ import {
   QrCode,
   ArrowUpCircle,
   ShoppingBag,
-  Bell
+  Bell,
+  Home,
+  TrendingUp
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -139,33 +135,104 @@ export function SuperAdminLayout() {
         <SidebarContent />
       </aside>
 
+      {/* Mobile Sheet */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetTitle className="sr-only">Menu Administrativo</SheetTitle>
+          <SheetDescription className="sr-only">Navegação avançada para super administradores.</SheetDescription>
+          <SidebarContent onNavigate={() => setSidebarOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Bottom Navigation para Mobile (App Style) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto w-full flex items-stretch justify-between h-20 px-4 relative">
+          {/* Lado Esquerdo */}
+          <div className="flex items-center gap-1">
+            <NavLink
+              to="/admin/dashboard"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-blue-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <Home className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Home</span>
+            </NavLink>
+
+            <NavLink
+              to="/admin/escolas"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-blue-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <Building2 className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Escolas</span>
+            </NavLink>
+          </div>
+
+          {/* Botão Central de Menu */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 h-16 w-16 rounded-2xl shadow-lg shadow-blue-200 active:scale-90 transition-transform flex items-center justify-center z-10"
+          >
+            <Menu className="h-7 w-7 text-white" />
+          </button>
+
+          {/* Lado Direito */}
+          <div className="flex items-center gap-1">
+            <NavLink
+              to="/admin/faturas"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-blue-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <FileText className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Faturas</span>
+            </NavLink>
+
+            <NavLink
+              to="/admin/upgrades"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  isActive ? "text-blue-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <TrendingUp className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Upgrades</span>
+            </NavLink>
+          </div>
+        </div>
+      </nav>
+
       <main className="lg:pl-64 flex flex-col min-h-screen">
         {/* Top Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-4 lg:px-8">
           <div className="flex items-center gap-4">
-             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-               <SheetTrigger asChild>
-                 <Button variant="ghost" size="icon" className="lg:hidden h-10 w-10">
-                   <Menu className="h-5 w-5" />
-                 </Button>
-               </SheetTrigger>
-               <SheetContent side="left" className="w-64 p-0">
-                 <SheetTitle className="sr-only">Menu Administrativo</SheetTitle>
-                 <SheetDescription className="sr-only">Navegação avançada para super administradores.</SheetDescription>
-                 <SidebarContent onNavigate={() => setSidebarOpen(false)} />
-               </SheetContent>
-             </Sheet>
+             <h1 className="text-base font-semibold text-zinc-900 tracking-tight lg:hidden">
+               Super Admin
+             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <NotificationBell 
-              count={notifications?.total || 0} 
-              items={notifications?.items || []} 
-              isLoading={isLoading} 
+            <NotificationBell
+              count={notifications?.total || 0}
+              items={notifications?.items || []}
+              isLoading={isLoading}
             />
           </div>
         </header>
 
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto flex-1 w-full">
+        <div className="p-6 lg:p-8 max-w-7xl mx-auto flex-1 w-full pb-24 lg:pb-0">
           <Outlet />
         </div>
       </main>
