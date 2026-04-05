@@ -590,79 +590,82 @@ export function DashboardPageMobile() {
               </div>
             </section>
 
-            {/* ── Grid 2x2: Métricas Principais ── */}
-            <section className="grid grid-cols-2 gap-4 px-5">
-              {/* Card 1: Alunos */}
-              <motion.div
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/alunos')}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Alunos</p>
-                    <div className="h-8 w-8 rounded-[10px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
-                      <Users className="h-4 w-4 text-indigo-600" />
+            {/* ── Métricas Principais (carrossel horizontal) ── */}
+            <section className="px-5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Métricas</h3>
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {/* Card 1: Alunos */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/alunos')}
+                  className="flex-shrink-0 w-[200px] bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Alunos</p>
+                      <div className="h-8 w-8 rounded-[10px] bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
+                        <Users className="h-4 w-4 text-indigo-600" />
+                      </div>
                     </div>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                      {displayData?.totalAlunosAtivos || 0}
+                    </p>
                   </div>
-                  <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                    {displayData?.totalAlunosAtivos || 0}
+                  <p className="text-[10px] font-bold text-slate-500 mt-3 leading-tight">
+                    <span className="text-indigo-600 dark:text-indigo-400">{displayData?.totalAlunosAtivos > 0 ? Math.min(100, Math.round(((displayData?.totalAlunosAtivos || 0) / (displayData?.limiteAlunos || 1)) * 100)) : 0}%</span> da licença
                   </p>
-                </div>
-                <p className="text-[10px] font-bold text-slate-500 mt-3 leading-tight">
-                  <span className="text-indigo-600 dark:text-indigo-400">{displayData?.totalAlunosAtivos > 0 ? Math.min(100, Math.round(((displayData?.totalAlunosAtivos || 0) / (displayData?.limiteAlunos || 1)) * 100)) : 0}%</span> da licença
-                </p>
-              </motion.div>
+                </motion.div>
 
-              {/* Card 2: Mensalidades */}
-              <motion.div
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/financeiro')}
-                className="bg-sky-50/50 dark:bg-sky-900/10 rounded-2xl p-4 shadow-sm border border-sky-100 dark:border-sky-900/30 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-sky-500">Mensalidades</p>
-                    <div className="h-8 w-8 rounded-[10px] bg-sky-100 dark:bg-sky-800 flex items-center justify-center shrink-0">
-                      <CreditCard className="h-4 w-4 text-sky-600" />
+                {/* Card 2: Mensalidades */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/financeiro')}
+                  className="flex-shrink-0 w-[200px] bg-sky-50/50 dark:bg-sky-900/10 rounded-2xl p-4 shadow-sm border border-sky-100 dark:border-sky-900/30 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-sky-500">Mensalidades</p>
+                      <div className="h-8 w-8 rounded-[10px] bg-sky-100 dark:bg-sky-800 flex items-center justify-center shrink-0">
+                        <CreditCard className="h-4 w-4 text-sky-600" />
+                      </div>
                     </div>
+                    <p className="text-xl font-black text-sky-900 dark:text-sky-100 tracking-tight leading-none truncate" title={`R$ ${mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
+                      R$ {mensalidadesMes >= 10000 ? (mensalidadesMes/1000).toFixed(1).replace('.', ',') + 'k' : mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                   </div>
-                  <p className="text-xl font-black text-sky-900 dark:text-sky-100 tracking-tight leading-none truncate" title={`R$ ${mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}>
-                    R$ {mensalidadesMes >= 10000 ? (mensalidadesMes/1000).toFixed(1).replace('.', ',') + 'k' : mensalidadesMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <p className="text-[10px] font-bold text-sky-600 mt-3 leading-tight truncate">
+                    {mensalidadesMes > 0 ? 'Receita deste mês' : 'Em dia'}
                   </p>
-                </div>
-                <p className="text-[10px] font-bold text-sky-600 mt-3 leading-tight truncate">
-                  {mensalidadesMes > 0 ? 'Receita deste mês' : 'Em dia'}
-                </p>
-              </motion.div>
+                </motion.div>
 
-              {/* Card 3: Alertas Ativos */}
-              <motion.div
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  if (displayData?.radarEvasao && displayData.radarEvasao.length > 0) {
-                    handleOpenRadarDetails(displayData.radarEvasao[0])
-                  } else {
-                    navigate('/frequencia')
-                  }
-                }}
-                className={`rounded-2xl p-4 shadow-sm border flex flex-col justify-between ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30' : 'bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700'}`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`}>Alertas Ativos</p>
-                    <div className={`h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-100 dark:bg-amber-800' : 'bg-slate-50 dark:bg-slate-700'}`}>
-                      <AlertTriangle className={`h-4 w-4 ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
+                {/* Card 3: Alertas Ativos */}
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    if (displayData?.radarEvasao && displayData.radarEvasao.length > 0) {
+                      handleOpenRadarDetails(displayData.radarEvasao[0])
+                    } else {
+                      navigate('/frequencia')
+                    }
+                  }}
+                  className={`flex-shrink-0 w-[200px] rounded-2xl p-4 shadow-sm border flex flex-col justify-between ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-50/50 border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30' : 'bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700'}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className={`text-[9px] font-black uppercase tracking-widest ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`}>Alertas Ativos</p>
+                      <div className={`h-8 w-8 rounded-[10px] flex items-center justify-center shrink-0 ${displayData?.radarEvasao?.length > 0 ? 'bg-amber-100 dark:bg-amber-800' : 'bg-slate-50 dark:bg-slate-700'}`}>
+                        <AlertTriangle className={`h-4 w-4 ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
+                      </div>
                     </div>
+                    <p className={`text-2xl font-black tracking-tight leading-none ${displayData?.radarEvasao?.length > 0 ? 'text-amber-700 dark:text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                      {displayData?.radarEvasao?.length || 0}
+                    </p>
                   </div>
-                  <p className={`text-2xl font-black tracking-tight leading-none ${displayData?.radarEvasao?.length > 0 ? 'text-amber-700 dark:text-amber-500' : 'text-slate-900 dark:text-white'}`}>
-                    {displayData?.radarEvasao?.length || 0}
+                  <p className={`text-[10px] font-bold mt-3 leading-tight truncate ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-500'}`}>
+                    {displayData?.radarEvasao?.length > 0 ? 'Toque para ver' : 'Alunos no radar'}
                   </p>
-                </div>
-                <p className={`text-[10px] font-bold mt-3 leading-tight truncate ${displayData?.radarEvasao?.length > 0 ? 'text-amber-600' : 'text-slate-500'}`}>
-                  {displayData?.radarEvasao?.length > 0 ? 'Toque para ver' : 'Alunos no radar'}
-                </p>
-              </motion.div>
+                </motion.div>
+              </div>
             </section>
 
             {/* ── Métricas Secundárias (scroll horizontal) ── */}

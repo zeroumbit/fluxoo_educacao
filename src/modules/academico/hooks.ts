@@ -23,15 +23,46 @@ export function useMatricula(id: string | null) {
 }
 export function useCriarMatricula() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => academicoService.criarMatricula(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] }) })
+  return useMutation({
+    mutationFn: (d: any) => academicoService.criarMatricula(d),
+    onSuccess: () => {
+      // Invalida matrículas (atualiza a lista)
+      qc.invalidateQueries({ queryKey: ['matriculas'] })
+      // Invalida turmas (trigger DB atualiza alunos_ids[])
+      qc.invalidateQueries({ queryKey: ['turmas'] })
+      // Invalida alunos (novo aluno pode aparecer na lista)
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+      // Invalida financeiro (trigger DB gera cobranças automáticas)
+      qc.invalidateQueries({ queryKey: ['cobrancas'] })
+      // Invalida dashboard (métricas de alunos e financeiro)
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      // Invalida portal (dados do responsável)
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    }
+  })
 }
 export function useAtualizarMatricula() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, authUser!.tenantId, data),
-    onSuccess: () => {
+    onSuccess: (_, { data }) => {
       qc.invalidateQueries({ queryKey: ['matriculas'] })
+      // Invalida turmas se houve mudança de turma
+      if (data?.turma_id || data?.status) {
+        qc.invalidateQueries({ queryKey: ['turmas'] })
+      }
+      // Invalida alunos se status mudou (ativa/inativa)
+      if (data?.status) {
+        qc.invalidateQueries({ queryKey: ['alunos'] })
+      }
+      // Invalida financeiro (mensalidade, cobranças)
+      if (data?.valor_matricula || data?.turma_id || data?.status) {
+        qc.invalidateQueries({ queryKey: ['cobrancas'] })
+        qc.invalidateQueries({ queryKey: ['dashboard'] })
+      }
       qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
       qc.invalidateQueries({ queryKey: ['portal', 'aluno-completo'] })
@@ -43,7 +74,21 @@ export function useExcluirMatricula() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => academicoService.excluirMatricula(id, authUser!.tenantId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matriculas'] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['matriculas'] })
+      // Invalida turmas (trigger DB remove aluno do array alunos_ids[])
+      qc.invalidateQueries({ queryKey: ['turmas'] })
+      // Invalida alunos (aluno pode sair da lista de ativos)
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+      // Invalida financeiro (cobranças podem ser canceladas)
+      qc.invalidateQueries({ queryKey: ['cobrancas'] })
+      // Invalida dashboard
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      // Invalida portal
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    }
   })
 }
 export function useMatriculasAtivas() {
@@ -215,6 +260,10 @@ export function useUpsertNota() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['boletins_turma'] })
       qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+      // Invalida alertas_status para recalcular gravidade do radar
+      // (notas baixas podem ser indicador de evasão)
+      qc.invalidateQueries({ queryKey: ['alertas_status'] })
+      qc.invalidateQueries({ queryKey: ['radar_evasao'] })
     }
   })
 }

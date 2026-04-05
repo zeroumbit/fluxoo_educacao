@@ -580,4 +580,38 @@ export const financeiroService = {
 
      return data
   },
+
+  /**
+   * Verifica consistência de mensalidades entre turmas e alunos
+   * Retorna divergências encontradas
+   */
+  async verificarConsistenciaMensalidades(tenantId: string) {
+    const { data, error } = await supabase.rpc('fn_verificar_consistencia_mensalidades', {
+      p_tenant_id: tenantId
+    })
+
+    if (error) {
+      logger.error('Erro ao verificar consistência de mensalidades:', error)
+      throw error
+    }
+
+    return data
+  },
+
+  /**
+   * Reconcilia mensalidades: corrige divergências entre turmas.valor_mensalidade
+   * e alunos.valor_mensalidade_atual
+   */
+  async reconciliarMensalidades(tenantId: string) {
+    const { data, error } = await supabase.rpc('fn_reconciliar_mensalidades', {
+      p_tenant_id: tenantId
+    })
+
+    if (error) {
+      logger.error('Erro ao reconciliar mensalidades:', error)
+      throw error
+    }
+
+    return data
+  },
 }

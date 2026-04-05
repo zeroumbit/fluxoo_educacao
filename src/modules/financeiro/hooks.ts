@@ -38,12 +38,50 @@ export function useRegistrarPagamentoManual() {
   const queryClient = useQueryClient()
   const { authUser } = useAuth()
   return useMutation({
-    mutationFn: ({ id, formaPagamento, comprovanteUrl }: { id: string, formaPagamento?: string, comprovanteUrl?: string }) => 
+    mutationFn: ({ id, formaPagamento, comprovanteUrl }: { id: string, formaPagamento?: string, comprovanteUrl?: string }) =>
       financeiroService.registrarPagamentoManual(id, formaPagamento, comprovanteUrl, authUser?.user?.id, authUser?.tenantId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [ 'cobrancas' ] })
-      queryClient.invalidateQueries({ queryKey: [ 'cobrancas_com_encargos' ] })
-      queryClient.invalidateQueries({ queryKey: [ 'dashboard' ] })
+    // Optimistic update: atualiza cache imediatamente
+    onMutate: async ({ id }) => {
+      // Cancela queries em andamento para evitar sobrescrever
+      await queryClient.cancelQueries({ queryKey: ['cobrancas'] })
+      await queryClient.cancelQueries({ queryKey: ['cobrancas_com_encargos'] })
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] })
+
+      // Snapshot do estado anterior para rollback em caso de erro
+      const previousCobrancas = queryClient.getQueryData(['cobrancas', authUser?.tenantId])
+      const previousCobrancasEncargos = queryClient.getQueryData(['cobrancas_com_encargos', authUser?.tenantId])
+      const previousDashboard = queryClient.getQueryData(['dashboard'])
+
+      // Atualiza cache otimista (marca cobrança como paga)
+      queryClient.setQueryData(['cobrancas', authUser?.tenantId], (old: any) => {
+        if (!old) return old
+        return old.map((c: any) => c.id === id ? { ...c, status: 'pago' } : c)
+      })
+
+      queryClient.setQueryData(['cobrancas_com_encargos', authUser?.tenantId], (old: any) => {
+        if (!old) return old
+        return old.map((c: any) => c.cobranca_id === id ? { ...c, status: 'pago' } : c)
+      })
+
+      return { previousCobrancas, previousCobrancasEncargos, previousDashboard }
+    },
+    // Em caso de erro, faz rollback do cache
+    onError: (_err, _vars, context: any) => {
+      if (context?.previousCobrancas) {
+        queryClient.setQueryData(['cobrancas', authUser?.tenantId], context.previousCobrancas)
+      }
+      if (context?.previousCobrancasEncargos) {
+        queryClient.setQueryData(['cobrancas_com_encargos', authUser?.tenantId], context.previousCobrancasEncargos)
+      }
+      if (context?.previousDashboard) {
+        queryClient.setQueryData(['dashboard'], context.previousDashboard)
+      }
+    },
+    // Refetch para garantir consistência
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['cobrancas_com_encargos'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })

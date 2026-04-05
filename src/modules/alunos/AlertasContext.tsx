@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RadarAluno } from './dashboard.service';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { alertasService } from './alertas.service';
 
 export type AlertaStatus = 'ativo' | 'tratado' | 'arquivado';
 export type AlertaGravidade = 'alta' | 'media' | 'baixa';
@@ -29,82 +31,133 @@ export interface RadarAlunoComStatus extends RadarAluno {
 interface AlertasContextType {
   alertas: (RadarAluno & { status: AlertaStatus; gravidade: AlertaGravidade })[];
   historicoAcoes: AlertaHistorico[];
-  mudarStatusAlerta: (alerta: AlertaActionProps, novoStatus: AlertaStatus) => void;
+  mudarStatusAlerta: (alerta: AlertaActionProps, novoStatus: AlertaStatus, observacao?: string) => void;
   isLoading: boolean;
+  isLoadingHistorico: boolean;
 }
 
 const AlertasContext = createContext<AlertasContextType | undefined>(undefined);
 
 export function AlertasProvider({ children, radarData = [] }: { children: React.ReactNode, radarData?: RadarAluno[] }) {
   const { authUser } = useAuth();
-  
-  // Estado de Status (Persistido no LocalStorage do Tenant)
-  const [alertasLocal, setAlertasLocal] = useState<Record<string, AlertaStatus>>(() => {
-    if (typeof window === 'undefined') return {};
-    const saved = localStorage.getItem(`fluxoo_alertas_status_${authUser?.tenantId}`);
-    return saved ? JSON.parse(saved) : {};
-  });
-  
-  // Estado de Histórico (Persistido no LocalStorage do Tenant)
-  const [historicoAcoes, setHistoricoAcoes] = useState<AlertaHistorico[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem(`fluxoo_alertas_historico_${authUser?.tenantId}`);
-    return saved ? JSON.parse(saved) : [];
+  const qc = useQueryClient();
+  const migrationDone = useRef(false);
+
+  // Busca status do banco
+  const { data: alertasDB = {}, isLoading: isLoadingStatus } = useQuery({
+    queryKey: ['alertas_status', authUser?.tenantId],
+    queryFn: () => alertasService.getAlertasStatus(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
-  // Efeito para persistência
+  // Busca histórico do banco
+  const { data: historicoDB = [], isLoading: isLoadingHistorico } = useQuery({
+    queryKey: ['alertas_historico', authUser?.tenantId],
+    queryFn: () => alertasService.getHistorico(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Mutação para atualizar alerta
+  const mutation = useMutation({
+    mutationFn: ({ alerta, novoStatus, observacao }: {
+      alerta: AlertaActionProps;
+      novoStatus: AlertaStatus;
+      observacao?: string;
+    }) => alertasService.updateAlertaStatus(
+      authUser!.tenantId,
+      authUser!.user.id,
+      authUser!.nome || 'Operador',
+      { aluno_id: alerta.aluno_id, novo_status: novoStatus, observacao }
+    ),
+    onSuccess: () => {
+      // Invalida queries para refrescar dados
+      qc.invalidateQueries({ queryKey: ['alertas_status', authUser?.tenantId] });
+      qc.invalidateQueries({ queryKey: ['alertas_historico', authUser?.tenantId] });
+      // Invalida dashboard (pode afetar métricas de alertas)
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  // Migração localStorage → DB (executar uma vez)
   useEffect(() => {
-    if (authUser?.tenantId) {
-      localStorage.setItem(`fluxoo_alertas_status_${authUser.tenantId}`, JSON.stringify(alertasLocal));
+    if (!authUser?.tenantId || migrationDone.current) return;
+    migrationDone.current = true;
+
+    const statusKey = `fluxoo_alertas_status_${authUser.tenantId}`;
+    const histKey = `fluxoo_alertas_historico_${authUser.tenantId}`;
+
+    const savedStatus = localStorage.getItem(statusKey);
+    const savedHist = localStorage.getItem(histKey);
+
+    if (savedStatus || savedHist) {
+      alertasService.migrarLocalStorageParaDB(
+        authUser.tenantId,
+        savedStatus ? JSON.parse(savedStatus) : {},
+        savedHist ? JSON.parse(savedHist) : [],
+        authUser.user.id,
+        authUser.nome || 'Operador'
+      ).then(() => {
+        // Limpa localStorage após migração
+        localStorage.removeItem(statusKey);
+        localStorage.removeItem(histKey);
+      }).catch(console.error);
     }
-  }, [alertasLocal, authUser?.tenantId]);
+  }, [authUser?.tenantId, authUser?.user.id, authUser?.nome]);
 
-  useEffect(() => {
-    if (authUser?.tenantId) {
-      localStorage.setItem(`fluxoo_alertas_historico_${authUser.tenantId}`, JSON.stringify(historicoAcoes));
-    }
-  }, [historicoAcoes, authUser?.tenantId]);
+  const mudarStatusAlerta = useCallback((
+    alerta: AlertaActionProps,
+    novoStatus: AlertaStatus,
+    observacao?: string
+  ) => {
+    mutation.mutate({ alerta, novoStatus, observacao });
+  }, [mutation]);
 
-  const registrarAcao = (alerta: AlertaActionProps, acao: AlertaStatus) => {
-    const novoRegisto: AlertaHistorico = {
-      id: `hist_${Date.now()}`,
-      alertaId: alerta.aluno_id,
-      alertaTitulo: alerta.motivo_principal || 'Alerta de Evasão',
-      alunoNome: alerta.nome_completo,
-      acao,
-      data: new Date().toISOString(),
-      usuario: authUser?.nome || 'Operador'
-    };
-    setHistoricoAcoes(prev => [novoRegisto, ...prev]);
-  };
-
-  const mudarStatusAlerta = (alerta: AlertaActionProps, novoStatus: AlertaStatus) => {
-    setAlertasLocal(prev => ({ ...prev, [alerta.aluno_id]: novoStatus }));
-    registrarAcao(alerta, novoStatus);
-  };
+  // Converte histórico DB para formato da UI
+  const historicoAcoes: AlertaHistorico[] = useMemo(() => {
+    return (historicoDB as any[]).map((item: any) => ({
+      id: item.id,
+      alertaId: item.alerta_id,
+      alertaTitulo: 'Alerta de Evasão',
+      alunoNome: item.aluno_nome,
+      acao: item.status_novo as AlertaStatus,
+      data: item.data_acao,
+      usuario: item.usuario_nome || 'Operador',
+    }));
+  }, [historicoDB]);
 
   const alertas = useMemo(() => {
     return radarData.map(aluno => {
-      const status = alertasLocal[aluno.aluno_id] || 'ativo';
-      
-      // Lógica de Gravidade (Mantendo a regra de negócio da escola)
-      let gravidade: AlertaGravidade = 'baixa'; // ATENÇÃO
+      const statusRaw = (alertasDB as Record<string, string>)[aluno.aluno_id] || 'ativo';
+      const status = (statusRaw === 'ativo' || statusRaw === 'tratado' || statusRaw === 'arquivado')
+        ? statusRaw as AlertaStatus
+        : 'ativo';
+
+      // Lógica de Gravidade
+      let gravidade: AlertaGravidade = 'baixa';
       if (aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 7) {
-        gravidade = 'alta'; // CRÍTICO
+        gravidade = 'alta';
       } else if (aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3) {
-        gravidade = 'media'; // ALERTA
+        gravidade = 'media';
       }
 
       return {
         ...aluno,
         status,
-        gravidade
-      };
+        gravidade,
+      } as RadarAlunoComStatus;
     });
-  }, [radarData, alertasLocal]);
+  }, [radarData, alertasDB]);
 
   return (
-    <AlertasContext.Provider value={{ alertas, historicoAcoes, mudarStatusAlerta, isLoading: false }}>
+    <AlertasContext.Provider value={{
+      alertas,
+      historicoAcoes,
+      mudarStatusAlerta,
+      isLoading: isLoadingStatus,
+      isLoadingHistorico,
+    }}>
       {children}
     </AlertasContext.Provider>
   );

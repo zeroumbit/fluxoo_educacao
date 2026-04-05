@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -38,7 +38,9 @@ import {
   Calendar,
   Clock,
   BookOpen,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 
 const matriculaSchema = z.object({
@@ -75,6 +77,7 @@ export function MatriculaListPageWeb() {
   const [selectedMatricula, setSelectedMatricula] = useState<any>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [expandedTurmas, setExpandedTurmas] = useState<Set<string>>(new Set())
 
   const form = useForm<MatriculaFormData>({
     resolver: zodResolver(matriculaSchema) as any,
@@ -272,6 +275,38 @@ export function MatriculaListPageWeb() {
     }
   }
 
+  const toggleTurma = (turmaNome: string) => {
+    setExpandedTurmas(prev => {
+      const next = new Set(prev)
+      if (next.has(turmaNome)) {
+        next.delete(turmaNome)
+      } else {
+        next.add(turmaNome)
+      }
+      return next
+    })
+  }
+
+  const expandAll = () => {
+    if (matriculasByTurma) {
+      setExpandedTurmas(new Set(matriculasByTurma.map(g => g.turmaNome)))
+    }
+  }
+
+  const collapseAll = () => {
+    setExpandedTurmas(new Set())
+  }
+
+  // Agrupar matrículas por turma
+  const matriculasByTurma = matriculas?.reduce((acc: Record<string, any>[], m: any) => {
+    const turmaNome = m.serie_ano || 'Sem turma'
+    if (!acc.find(g => g.turmaNome === turmaNome)) {
+      acc.push({ turmaNome, matriculas: [] })
+    }
+    acc.find(g => g.turmaNome === turmaNome)!.matriculas.push(m)
+    return acc
+  }, [] as { turmaNome: string; matriculas: any[] }[])
+
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
 
   return (
@@ -444,90 +479,174 @@ export function MatriculaListPageWeb() {
 
       <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
         <CardContent className="p-0">
+          {/* Header com controles de expansão */}
+          <div className="flex items-center justify-between px-6 py-3 bg-slate-50 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-slate-500" />
+              <span className="text-sm font-semibold text-slate-700">
+                {matriculasByTurma?.length || 0} {matriculasByTurma?.length === 1 ? 'Turma' : 'Turmas'}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-sm text-slate-500">
+                {matriculas?.length || 0} {matriculas?.length === 1 ? 'aluno' : 'alunos'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-xs font-medium text-slate-600 hover:text-slate-900"
+                onClick={expandAll}
+              >
+                <ChevronDown className="h-3.5 w-3.5 mr-1" />
+                Expandir tudo
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-3 text-xs font-medium text-slate-600 hover:text-slate-900"
+                onClick={collapseAll}
+              >
+                <ChevronRight className="h-3.5 w-3.5 mr-1" />
+                Recolher tudo
+              </Button>
+            </div>
+          </div>
+
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="pl-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-4">Aluno</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ano</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turma/Ano</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Turno</TableHead>
                 <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status</TableHead>
                 <TableHead className="text-right pr-8 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matriculas?.map((m: any) => (
-                <TableRow key={m.id} className="transition-colors">
-                  <TableCell className="pl-8 font-bold text-slate-700 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                        <User className="h-4 w-4" />
-                      </div>
-                      {m.aluno?.nome_completo || '—'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={m.tipo === 'nova' ? 'default' : 'outline'} className="shadow-none px-3 font-semibold tracking-tighter uppercase text-[9px]">
-                      {m.tipo === 'nova' ? 'Nova' : 'Rematric.'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-medium text-slate-500">{m.ano_letivo}</TableCell>
-                  <TableCell className="font-bold text-indigo-700">{m.serie_ano}</TableCell>
-                  <TableCell className="text-slate-600">{turnoLabels[m.turno] || m.turno}</TableCell>
-                  <TableCell>
-                    <Badge className={`shadow-none font-bold text-[10px] uppercase tracking-widest px-2.5 py-0.5 border ${m.status === 'ativa' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                      m.status === 'cancelada' ? 'bg-red-50 text-red-700 border-red-100' :
-                        'bg-slate-100 text-slate-600 border-slate-200'
-                      }`}>
-                      {m.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right pr-8">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-emerald-600 hover:bg-emerald-50"
-                        onClick={() => handleViewDetails(m)}
-                        title="Ver Detalhes da Matrícula"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
-                        onClick={() => navigate(`/alunos/${m.aluno_id}`)}
-                        title="Ver Detalhes do Aluno"
-                      >
-                        <User className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                        onClick={() => handleEdit(m)}
-                        title="Editar Matrícula"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-600 hover:bg-red-50"
-                        onClick={() => setDeleteId(m.id)}
-                        title="Excluir Matrícula"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!matriculas || matriculas.length === 0) && (
+              {matriculasByTurma?.map((grupo) => {
+                const isExpanded = expandedTurmas.has(grupo.turmaNome)
+                return (
+                  <React.Fragment key={`group-${grupo.turmaNome}`}>
+                    {/* Header do Grupo */}
+                    <TableRow
+                      key={`group-${grupo.turmaNome}`}
+                      className="bg-indigo-50/50 hover:bg-indigo-50 cursor-pointer transition-colors"
+                      onClick={() => toggleTurma(grupo.turmaNome)}
+                    >
+                      <TableCell colSpan={6} className="pl-8 py-3">
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="flex items-center gap-2 flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleTurma(grupo.turmaNome)
+                            }}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-indigo-600" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-indigo-600" />
+                            )}
+                            <BookOpen className="h-4 w-4 text-indigo-600" />
+                            <span className="font-bold text-indigo-900 text-sm">
+                              {grupo.turmaNome}
+                            </span>
+                            <Badge variant="outline" className="ml-2 px-2 py-0.5 text-xs font-semibold bg-white border-indigo-200 text-indigo-700">
+                              {grupo.matriculas.length} {grupo.matriculas.length === 1 ? 'aluno' : 'alunos'}
+                            </Badge>
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Matrículas do Grupo */}
+                    {isExpanded && grupo.matriculas.map((m: any) => (
+                      <TableRow key={m.id} className="transition-colors hover:bg-slate-50/50">
+                        <TableCell className="pl-8 font-bold text-slate-700 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                              <User className="h-4 w-4" />
+                            </div>
+                            {m.aluno?.nome_completo || '—'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={m.tipo === 'nova' ? 'default' : 'outline'} className="shadow-none px-3 font-semibold tracking-tighter uppercase text-[9px]">
+                            {m.tipo === 'nova' ? 'Nova' : 'Rematric.'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-500">{m.ano_letivo}</TableCell>
+                        <TableCell className="text-slate-600">{turnoLabels[m.turno] || m.turno}</TableCell>
+                        <TableCell>
+                          <Badge className={`shadow-none font-bold text-[10px] uppercase tracking-widest px-2.5 py-0.5 border ${m.status === 'ativa' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            m.status === 'cancelada' ? 'bg-red-50 text-red-700 border-red-100' :
+                              'bg-slate-100 text-slate-600 border-slate-200'
+                            }`}>
+                            {m.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right pr-8">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-emerald-600 hover:bg-emerald-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewDetails(m)
+                              }}
+                              title="Ver Detalhes da Matrícula"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/alunos/${m.aluno_id}`)
+                              }}
+                              title="Ver Detalhes do Aluno"
+                            >
+                              <User className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEdit(m)
+                              }}
+                              title="Editar Matrícula"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteId(m.id)
+                              }}
+                              title="Excluir Matrícula"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                )
+              })}
+              {(!matriculasByTurma || matriculasByTurma.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-24 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-24 text-muted-foreground">
                     <GraduationCap className="h-16 w-16 mx-auto mb-4 text-slate-200" />
                     <p className="text-lg font-bold text-slate-400">Nenhuma matrícula registrada.</p>
                   </TableCell>

@@ -39,6 +39,10 @@ export function useSalvarFrequencias() {
       queryClient.invalidateQueries({ queryKey: ['frequencias'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'frequencia'] })
+      // Invalida alertas_status para recalcular gravidade do radar
+      // (faltas consecutivas afetam o nível de risco de evasão)
+      queryClient.invalidateQueries({ queryKey: ['alertas_status'] })
+      queryClient.invalidateQueries({ queryKey: ['radar_evasao'] })
     },
   })
 }

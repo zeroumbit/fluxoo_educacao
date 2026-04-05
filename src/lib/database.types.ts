@@ -5,6 +5,67 @@
 
 
 
+// ========== ALERTAS TRATAMENTO ==========
+export type AlertasTratamentoInsert = {
+  id?: string
+  tenant_id: string
+  aluno_id: string
+  usuario_id: string
+  status?: 'ativo' | 'tratado' | 'arquivado'
+  observacao?: string | null
+  data_criacao?: string
+  data_atualizacao?: string
+}
+
+export type AlertasTratamentoUpdate = {
+  id?: string
+  tenant_id?: string
+  aluno_id?: string
+  usuario_id?: string
+  status?: 'ativo' | 'tratado' | 'arquivado'
+  observacao?: string | null
+  data_criacao?: string
+  data_atualizacao?: string
+}
+
+export type AlertasTratamento = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  usuario_id: string
+  status: 'ativo' | 'tratado' | 'arquivado'
+  observacao: string | null
+  data_criacao: string
+  data_atualizacao: string
+}
+
+// ========== ALERTAS HISTORICO ==========
+export type AlertasHistoricoInsert = {
+  id?: string
+  tenant_id: string
+  alerta_id: string
+  aluno_nome: string
+  status_anterior?: string | null
+  status_novo: string
+  observacao?: string | null
+  usuario_id: string
+  usuario_nome?: string | null
+  data_acao?: string
+}
+
+export type AlertasHistorico = {
+  id: string
+  tenant_id: string
+  alerta_id: string
+  aluno_nome: string
+  status_anterior: string | null
+  status_novo: string
+  observacao: string | null
+  usuario_id: string
+  usuario_nome: string | null
+  data_acao: string
+}
+
 // ========== ESCOLAS ==========
 export type Escola = {
   id: string
@@ -1053,6 +1114,38 @@ export type Database = {
       notificacoes: { Row: Notificacao; Insert: NotificacaoInsert; Update: NotificacaoUpdate; Relationships: any[] }
       disciplinas: { Row: DisciplinaDb; Insert: DisciplinaDbInsert; Update: DisciplinaDbUpdate; Relationships: any[] }
       tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: any; Relationships: any[] }
+      alertas_tratamento: {
+        Row: {
+          id: string
+          tenant_id: string
+          aluno_id: string
+          usuario_id: string
+          status: 'ativo' | 'tratado' | 'arquivado'
+          observacao: string | null
+          data_criacao: string
+          data_atualizacao: string
+        }
+        Insert: Omit<AlertasTratamentoInsert, 'id' | 'data_criacao' | 'data_atualizacao'>
+        Update: Omit<AlertasTratamentoUpdate, 'id' | 'data_criacao' | 'data_atualizacao'>
+        Relationships: any[]
+      }
+      alertas_historico: {
+        Row: {
+          id: string
+          tenant_id: string
+          alerta_id: string
+          aluno_nome: string
+          status_anterior: string | null
+          status_novo: string
+          observacao: string | null
+          usuario_id: string
+          usuario_nome: string | null
+          data_acao: string
+        }
+        Insert: Omit<AlertasHistoricoInsert, 'id' | 'data_acao'>
+        Update: never
+        Relationships: any[]
+      }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
@@ -1081,14 +1174,32 @@ export type Database = {
       get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
       marcar_notificacao_lida: { Args: { notificacao_id: string }; Returns: void };
       marcar_notificacao_resolvida: { Args: { notificacao_id: string }; Returns: void };
-      registrar_pagamento_cobranca: { 
-        Args: { 
-          p_cobranca_id: string; 
-          p_forma_pagamento?: string | null; 
+      registrar_pagamento_cobranca: {
+        Args: {
+          p_cobranca_id: string;
+          p_forma_pagamento?: string | null;
           p_comprovante_url?: string | null;
           p_usuario_id?: string | null;
-        }; 
-        Returns: PagamentoManualResponse 
+        };
+        Returns: PagamentoManualResponse
+      };
+      fn_reconciliar_mensalidades: {
+        Args: { p_tenant_id: string };
+        Returns: {
+          aluno_id: string;
+          turma_id: string;
+          valor_turma: number;
+          valor_aluno: number;
+          corrigido: boolean;
+        }[];
+      };
+      fn_verificar_consistencia_mensalidades: {
+        Args: { p_tenant_id: string };
+        Returns: {
+          total_alunos_ativos: number;
+          total_com_divergencia: number;
+          divergencias: any;
+        };
       };
     }
     Enums: { [_ in never]: never }
