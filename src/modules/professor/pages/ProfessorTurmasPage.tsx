@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Plus, Search, Loader2, Users, Eye, School, TrendingUp, TrendingDown, Clock
+  Plus, Search, Loader2, Users, Eye, School, TrendingUp
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { format } from 'date-fns'
@@ -69,7 +69,7 @@ export function ProfessorTurmasPage() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
@@ -86,37 +86,19 @@ export function ProfessorTurmasPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Frequência Média
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{mediaPresenca.toFixed(1)}%</div>
-            <div className="flex items-center gap-1 mt-1">
-              {mediaPresenca >= 75 ? (
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
-              ) : (
-                <TrendingDown className="w-3 h-3 text-red-500" />
-              )}
-              <span className={`text-xs ${mediaPresenca >= 75 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {mediaPresenca >= 75 ? 'Acima da meta' : 'Abaixo da meta'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Média Geral
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{mediaGeral.toFixed(1)}</div>
-            <p className="text-xs text-slate-400 mt-1">
-              {mediaGeral >= 7 ? 'Excelente' : mediaGeral >= 5 ? 'Regular' : 'Crítico'}
-            </p>
+            <div className="text-3xl font-bold text-slate-900">
+              {mediaGeral > 0 ? mediaGeral.toFixed(1) : '—'}
+            </div>
+            {mediaGeral > 0 && (
+              <p className="text-xs text-slate-400 mt-1">
+                {mediaGeral >= 7 ? 'Excelente' : mediaGeral >= 5 ? 'Regular' : 'Atenção'}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -144,16 +126,15 @@ export function ProfessorTurmasPage() {
                 <TableHead className="text-center">Alunos</TableHead>
                 <TableHead className="text-center">Frequência</TableHead>
                 <TableHead className="text-center">Média</TableHead>
-                <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {turmasFiltradas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={5} className="text-center py-12">
                     <School className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhuma turma encontrada</p>
+                    <p className="text-slate-500">Professor, suas turmas aparecerão aqui para você gerenciar.</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -177,36 +158,35 @@ export function ProfessorTurmasPage() {
                         <span className="text-sm font-medium">{turma.total_alunos}</span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                freq >= 75
-                                  ? 'bg-emerald-500'
-                                  : freq >= 50
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                              }`}
-                              style={{ width: `${freq}%` }}
-                            />
+                        {freq > 0 ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  freq >= 75
+                                    ? 'bg-emerald-500'
+                                    : freq >= 50
+                                    ? 'bg-amber-500'
+                                    : 'bg-red-500'
+                                }`}
+                                style={{ width: `${freq}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium">{freq.toFixed(1)}%</span>
                           </div>
-                          <span className="text-sm font-medium">{freq.toFixed(1)}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
-                        >
-                          {media.toFixed(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {freq >= 75 && media >= 7 ? (
-                          <Badge className="bg-emerald-600">Excelente</Badge>
-                        ) : freq >= 50 && media >= 5 ? (
-                          <Badge variant="secondary">Regular</Badge>
                         ) : (
-                          <Badge variant="destructive">Crítico</Badge>
+                          <span className="text-sm text-slate-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {media > 0 ? (
+                          <Badge
+                            variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
+                          >
+                            {media.toFixed(1)}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-slate-400">—</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
