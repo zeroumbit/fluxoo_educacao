@@ -89,19 +89,19 @@ const navigationGroups = [
     ],
   },
   {
-    label: 'Gestão',
+    label: 'Capital Humano',
     items: [
-      { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
-      { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
       { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
-      { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
-      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
-      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
+      { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
     ],
   },
   {
     label: 'Configurações',
     items: [
+      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
+      { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
+      { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
+      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
       { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
       { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
     ],
@@ -139,8 +139,8 @@ function SidebarContent({
   // Filtrar grupos que possuem pelo menos um item permitido
   let visibleGroups = navigationGroups
     .map(group => {
-      // Regras de negócio restritivas: Professores NUNCA veem Financeiro ou Gestão
-      if (isProfessor && (group.label === 'Financeiro' || group.label === 'Gestão' || group.label === 'Configurações')) {
+      // Regras de negócio restritivas: Professores NUNCA veem Financeiro, Capital Humano ou Configurações
+      if (isProfessor && (group.label === 'Financeiro' || group.label === 'Capital Humano' || group.label === 'Configurações')) {
         return { ...group, items: [] }
       }
 
@@ -477,7 +477,7 @@ export function AdminLayout() {
               </NavLink>
             )}
 
-            {(isProfessor || isGestor || authUser?.role === 'funcionario') && (
+            {(isProfessor || (authUser?.role === 'funcionario' && !isGestor)) && (
               <NavLink
                 to="/meu-perfil"
                 className={({ isActive }) =>
