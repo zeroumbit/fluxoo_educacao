@@ -202,6 +202,7 @@ export type Funcionario = {
   filial_id: string | null
   nome_completo: string
   funcao: string | null
+  cargo: string | null
   cpf: string | null
   email: string | null
   telefone: string | null
