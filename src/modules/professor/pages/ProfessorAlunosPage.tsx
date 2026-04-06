@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Plus, Search, Loader2, Users, Eye, TrendingUp, TrendingDown, AlertCircle
+  Plus, Search, Loader2, Users, Eye, TrendingUp, TrendingDown, AlertCircle, UserCheck
 } from 'lucide-react'
 
 export function ProfessorAlunosPage() {
@@ -74,8 +74,8 @@ export function ProfessorAlunosPage() {
               {alunosFiltrados.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
-                    <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhum aluno encontrado</p>
+                    <UserCheck className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                    <p className="text-slate-500">Seus alunos aparecerão aqui para você acompanhar o desempenho.</p>
                   </TableCell>
                 </TableRow>
               ) : (

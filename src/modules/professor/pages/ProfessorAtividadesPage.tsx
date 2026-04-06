@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Plus, Search, Loader2, FileText, Calendar, Users, Eye, Edit
+  Plus, Search, Loader2, FileText, Calendar, Users, Eye, Edit, ClipboardList
 } from 'lucide-react'
 
 export function ProfessorAtividadesPage() {
@@ -63,8 +63,8 @@ export function ProfessorAtividadesPage() {
               {atividadesFiltradas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12">
-                    <FileText className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhuma atividade encontrada</p>
+                    <ClipboardList className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                    <p className="text-slate-500">Suas atividades e avaliações aparecerão aqui para você gerenciar as entregas dos alunos.</p>
                   </TableCell>
                 </TableRow>
               ) : (
