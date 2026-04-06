@@ -47,7 +47,7 @@ const professorNavGroups = [
       {
         name: 'Minhas Turmas',
         href: '/professores/turmas',
-        icon: School,
+        icon: Users,
       },
       {
         name: 'Alunos',
