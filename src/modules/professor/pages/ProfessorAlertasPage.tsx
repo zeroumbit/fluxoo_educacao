@@ -102,7 +102,7 @@ export function ProfessorAlertasPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Total de Alertas
@@ -114,7 +114,7 @@ export function ProfessorAlertasPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Críticos
@@ -128,7 +128,7 @@ export function ProfessorAlertasPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Altos
@@ -173,79 +173,77 @@ export function ProfessorAlertasPage() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Alerta</TableHead>
+              <TableHead>Aluno</TableHead>
+              <TableHead>Turma</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead className="text-center">Gravidade</TableHead>
+              <TableHead className="text-center">Data</TableHead>
+              <TableHead className="text-right pr-8">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {alertasFiltrados.length === 0 ? (
               <TableRow>
-                <TableHead>Alerta</TableHead>
-                <TableHead>Aluno</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-center">Gravidade</TableHead>
-                <TableHead className="text-center">Data</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <AlertTriangle className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Nenhum alerta encontrado</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {alertasFiltrados.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
-                    <AlertTriangle className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhum alerta encontrado</p>
+            ) : (
+              alertasFiltrados.map((alerta: any) => (
+                <TableRow key={alerta.id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="pl-8 py-4">
+                    <div>
+                      <p className="font-medium text-slate-900">{alerta.titulo}</p>
+                      <p className="text-xs text-slate-500 truncate max-w-xs">{alerta.descricao}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-700">{alerta.aluno_nome || '-'}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant="outline">{alerta.turma_nome || '-'}</Badge>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant="secondary">
+                      {alerta.tipo === 'pedagogico' ? 'Pedagógico' :
+                       alerta.tipo === 'frequencia' ? 'Frequência' :
+                       alerta.tipo === 'saude' ? 'Saúde' :
+                       alerta.tipo === 'operacional_prof' ? 'Operacional' : alerta.tipo}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    {getGravidadeBadge(alerta.gravidade)}
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    <span className="text-xs text-slate-500">
+                      {new Date(alerta.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right pr-8 py-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedAlerta(alerta)
+                        setDialogOpen(true)
+                      }}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Concluir
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ) : (
-                alertasFiltrados.map((alerta: any) => (
-                  <TableRow key={alerta.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{alerta.titulo}</p>
-                        <p className="text-xs text-slate-500 truncate max-w-xs">{alerta.descricao}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-700">{alerta.aluno_nome || '-'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{alerta.turma_nome || '-'}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {alerta.tipo === 'pedagogico' ? 'Pedagógico' : 
-                         alerta.tipo === 'frequencia' ? 'Frequência' : 
-                         alerta.tipo === 'saude' ? 'Saúde' : 
-                         alerta.tipo === 'operacional_prof' ? 'Operacional' : alerta.tipo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getGravidadeBadge(alerta.gravidade)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-xs text-slate-500">
-                        {new Date(alerta.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedAlerta(alerta)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Concluir
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Dialog de Conclusão */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
