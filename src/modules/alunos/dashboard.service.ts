@@ -290,12 +290,79 @@ export const dashboardService = {
     }
   },
 
-  async buscarRadarCompleto(tenantId: string): Promise<RadarAluno[]> {
+  async buscarRadarCompleto(tenantId: string, professorId?: string): Promise<RadarAluno[]> {
     if (!tenantId) throw new Error('Tenant ID não fornecido.')
-    const { data } = await (supabase.from('vw_radar_evasao' as any) as any)
+
+    // IDs autorizados para o professor
+    let idsAlunosProfessor: string[] = []
+
+    if (professorId) {
+      const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+        .select('turma_id')
+        .eq('professor_id', professorId)
+      const idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+
+      if (idsTurmasProfessor.length > 0) {
+        const { data: mats } = await (supabase.from('matriculas' as any) as any)
+          .select('aluno_id')
+          .in('turma_id', idsTurmasProfessor)
+          .eq('status', 'ativa')
+        idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+      }
+
+      // Se professor não tem alunos vinculados, retorna array vazio
+      if (idsAlunosProfessor.length === 0) return []
+    }
+
+    let q = (supabase.from('vw_radar_evasao' as any) as any)
       .select('*')
       .eq('tenant_id', tenantId)
-      .order('cobrancas_atrasadas', { ascending: false })
+
+    // Filtra por alunos do professor se for o caso
+    if (professorId) {
+      q = q.in('aluno_id', idsAlunosProfessor)
+    }
+
+    const { data } = await q.order('cobrancas_atrasadas', { ascending: false })
     return data || []
+  },
+
+  /**
+   * Busca alertas do dia-a-dia para professores
+   * Retorna apenas alunos com faltas consecutivas (sem dados financeiros)
+   */
+  async buscarAlertasProfessor(tenantId: string, professorId: string): Promise<RadarAluno[]> {
+    if (!tenantId || !professorId) return []
+
+    // Busca turmas do professor
+    const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+      .select('turma_id')
+      .eq('professor_id', professorId)
+    const idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+
+    if (idsTurmasProfessor.length === 0) return []
+
+    // Busca alunos dessas turmas
+    const { data: mats } = await (supabase.from('matriculas' as any) as any)
+      .select('aluno_id')
+      .in('turma_id', idsTurmasProfessor)
+      .eq('status', 'ativa')
+    const idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+
+    if (idsAlunosProfessor.length === 0) return []
+
+    // Busca apenas alunos com faltas (ignora cobranças para professores)
+    const { data } = await (supabase.from('vw_radar_evasao' as any) as any)
+      .select('aluno_id, nome_completo, faltas_consecutivas, motivo_principal')
+      .eq('tenant_id', tenantId)
+      .in('aluno_id', idsAlunosProfessor)
+      .gt('faltas_consecutivas', 0)
+      .order('faltas_consecutivas', { ascending: false })
+
+    // Retorna com cobrancas_atrasadas = 0 (não expor dados financeiros)
+    return (data || []).map((aluno: any) => ({
+      ...aluno,
+      cobrancas_atrasadas: 0,
+    }))
   },
 }

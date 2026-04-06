@@ -22,9 +22,10 @@ interface RadarEvasaoModalProps {
   aluno: RadarAlunoComStatus | null;
   isOpen: boolean;
   onClose: () => void;
+  isProfessor?: boolean;
 }
 
-function RadarEvasaoDetailsContent({ aluno, onClose }: { aluno: RadarAlunoComStatus; onClose: () => void }) {
+function RadarEvasaoDetailsContent({ aluno, onClose, isProfessor = false }: { aluno: RadarAlunoComStatus; onClose: () => void; isProfessor?: boolean }) {
   const navigate = useNavigate();
   const { mudarStatusAlerta } = useAlertas();
 
@@ -110,7 +111,7 @@ function RadarEvasaoDetailsContent({ aluno, onClose }: { aluno: RadarAlunoComSta
               </div>
             </div>
           )}
-          {aluno.cobrancas_atrasadas > 0 && (
+          {aluno.cobrancas_atrasadas > 0 && !isProfessor && (
             <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100">
               <div className="h-10 w-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
                 <DollarSign className="h-5 w-5 text-rose-600" />

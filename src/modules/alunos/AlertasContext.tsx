@@ -135,11 +135,23 @@ export function AlertasProvider({ children, radarData = [] }: { children: React.
         : 'ativo';
 
       // Lógica de Gravidade
+      // Para professores: apenas faltas (sem dados financeiros)
+      // Para gestores: faltas + cobranças
       let gravidade: AlertaGravidade = 'baixa';
-      if (aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 7) {
-        gravidade = 'alta';
-      } else if (aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3) {
-        gravidade = 'media';
+      if (aluno.cobrancas_atrasadas > 0) {
+        // Gestor: considera cobranças + faltas
+        if (aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 7) {
+          gravidade = 'alta';
+        } else if (aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3) {
+          gravidade = 'media';
+        }
+      } else {
+        // Professor (sem cobranças) ou aluno sem dívidas: apenas faltas
+        if (aluno.faltas_consecutivas >= 7) {
+          gravidade = 'alta';
+        } else if (aluno.faltas_consecutivas >= 3) {
+          gravidade = 'media';
+        }
       }
 
       return {

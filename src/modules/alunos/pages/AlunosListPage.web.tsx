@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2, 
+import {
+  Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2,
   AlertCircle, FileX, Shield, Percent, Users, UserMinus,
   AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw
 } from 'lucide-react'
@@ -36,12 +36,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
 import { AlertasProvider, useAlertas } from '../AlertasContext'
 import type { RadarAlunoComStatus } from '../AlertasContext'
-import { useRadarCompleto } from '../dashboard.hooks'
+import { useRadarCompleto, useAlertasProfessor } from '../dashboard.hooks'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-function AlunosListPageContent() {
+function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean }) {
   const { authUser } = useAuth()
   const { data: alunos, isLoading } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivas()
@@ -197,9 +197,15 @@ function AlunosListPageContent() {
           <TabsTrigger value="alunos" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-2 font-bold text-sm">
             <Users className="h-4 w-4 mr-2" /> Alunos
           </TabsTrigger>
-          <TabsTrigger value="radar" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-2 font-bold text-sm">
-            <AlertTriangle className="h-4 w-4 mr-2" /> Radar de Evasão
-          </TabsTrigger>
+          {isProfessor ? (
+            <TabsTrigger value="radar" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-2 font-bold text-sm">
+              <AlertTriangle className="h-4 w-4 mr-2" /> Alertas
+            </TabsTrigger>
+          ) : (
+            <TabsTrigger value="radar" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-2 font-bold text-sm">
+              <AlertTriangle className="h-4 w-4 mr-2" /> Radar de Evasão
+            </TabsTrigger>
+          )}
           <TabsTrigger value="historico" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-6 py-2 font-bold text-sm">
             <History className="h-4 w-4 mr-2" /> Histórico de Ações
           </TabsTrigger>
@@ -423,8 +429,14 @@ function AlunosListPageContent() {
               <CardContent className="p-0">
                  <div className="p-8 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                       <CardTitle className="text-2xl font-black text-rose-950 tracking-tight">Radar de Evasão</CardTitle>
-                       <p className="text-zinc-500 text-sm font-medium">Alunos com sinais de abandono escolar detectados</p>
+                       <CardTitle className="text-2xl font-black text-rose-950 tracking-tight">
+                          {isProfessor ? 'Alertas do Dia-a-Dia' : 'Radar de Evasão'}
+                       </CardTitle>
+                       <p className="text-zinc-500 text-sm font-medium">
+                          {isProfessor
+                            ? 'Alunos com faltas consecutivas nas suas turmas'
+                            : 'Alunos com sinais de abandono escolar detectados'}
+                       </p>
                     </div>
                     <div className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center">
                        <AlertTriangle className="h-6 w-6 text-rose-600" />
@@ -436,7 +448,9 @@ function AlunosListPageContent() {
                           <TableHead className="pl-8 py-4 font-bold text-slate-800">Aluno</TableHead>
                           <TableHead className="font-bold text-slate-800">Gravidade</TableHead>
                           <TableHead className="font-bold text-slate-800">Faltas</TableHead>
-                          <TableHead className="font-bold text-slate-800">Financeiro</TableHead>
+                          {!isProfessor && (
+                             <TableHead className="font-bold text-slate-800">Financeiro</TableHead>
+                          )}
                           <TableHead className="font-bold text-slate-800 text-right pr-8 text-[12px]">Status</TableHead>
                           <TableHead className="pr-8 text-right font-bold text-slate-800">Ações</TableHead>
                        </TableRow>
@@ -444,8 +458,10 @@ function AlunosListPageContent() {
                     <TableBody>
                        {alertas.length === 0 ? (
                           <TableRow>
-                             <TableCell colSpan={6} className="py-12 text-center text-zinc-400 italic">
-                                Nenhum risco de evasão identificado no momento.
+                             <TableCell colSpan={isProfessor ? 5 : 6} className="py-12 text-center text-zinc-400 italic">
+                                {isProfessor
+                                   ? 'Nenhum aluno com faltas nas suas turmas.'
+                                   : 'Nenhum risco de evasão identificado no momento.'}
                              </TableCell>
                           </TableRow>
                        ) : alertas.map((alerta) => (
@@ -453,7 +469,9 @@ function AlunosListPageContent() {
                              <TableCell className="pl-8 font-bold text-slate-700">{alerta.nome_completo}</TableCell>
                              <TableCell><BadgeGravidade gravidade={alerta.gravidade} /></TableCell>
                              <TableCell className="text-sm font-medium">{alerta.faltas_consecutivas} faltas</TableCell>
-                             <TableCell className="text-sm font-medium">{alerta.cobrancas_atrasadas} em atraso</TableCell>
+                             {!isProfessor && (
+                                <TableCell className="text-sm font-medium">{alerta.cobrancas_atrasadas} em atraso</TableCell>
+                             )}
                              <TableCell className="text-right pr-8">
                                 <Badge className={cn(
                                    "rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase border-0",
@@ -464,9 +482,9 @@ function AlunosListPageContent() {
                              </TableCell>
                              <TableCell className="text-right pr-8">
                                 <div className="flex items-center justify-end gap-2">
-                                   <Button 
-                                      variant="ghost" 
-                                      size="icon" 
+                                   <Button
+                                      variant="ghost"
+                                      size="icon"
                                       className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                                       onClick={() => handleVerRadar(alerta)}
                                       title="Ver Detalhes"
@@ -640,17 +658,23 @@ function AlunosListPageContent() {
         aluno={selectedRadarAluno}
         isOpen={isRadarModalOpen}
         onClose={() => setIsRadarModalOpen(false)}
+        isProfessor={isProfessor}
       />
     </div>
   )
 }
 
 export function AlunosListPageWeb() {
+  const { authUser } = useAuth()
   const { data: radarData } = useRadarCompleto()
+  const { data: alertasProfessorData } = useAlertasProfessor()
+
+  const isProfessor = authUser?.isProfessor || false
+  const alertasData = isProfessor ? (alertasProfessorData || []) : (radarData || [])
 
   return (
-    <AlertasProvider radarData={radarData || []}>
-      <AlunosListPageContent />
+    <AlertasProvider radarData={alertasData}>
+      <AlunosListPageContent isProfessor={isProfessor} />
     </AlertasProvider>
   )
 }

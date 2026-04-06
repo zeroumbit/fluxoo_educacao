@@ -22,9 +22,29 @@ export function useDashboard() {
 export function useRadarCompleto() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['radar-completo', authUser?.tenantId],
-    queryFn: () => dashboardService.buscarRadarCompleto(authUser!.tenantId),
+    queryKey: ['radar-completo', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryFn: () => dashboardService.buscarRadarCompleto(
+      authUser!.tenantId,
+      authUser?.isProfessor ? authUser.funcionarioId : undefined
+    ),
     enabled: !!authUser?.tenantId,
+    staleTime: 60000,
+  })
+}
+
+/**
+ * Hook para alertas do dia-a-dia do professor
+ * Retorna apenas alunos com faltas das turmas do professor (sem dados financeiros)
+ */
+export function useAlertasProfessor() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['alertas-professor', authUser?.tenantId, authUser?.funcionarioId],
+    queryFn: () => dashboardService.buscarAlertasProfessor(
+      authUser!.tenantId,
+      authUser!.funcionarioId!
+    ),
+    enabled: !!authUser?.tenantId && !!authUser?.isProfessor && !!authUser?.funcionarioId,
     staleTime: 60000,
   })
 }

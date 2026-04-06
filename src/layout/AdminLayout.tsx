@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useIsSuperAdmin } from '@/lib/hooks'
 import { useDashboard } from '@/modules/alunos/dashboard.hooks'
@@ -54,6 +54,7 @@ const navigationGroups = [
     label: 'Principal',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
+      { name: 'Meu Perfil', href: '/meu-perfil', icon: User, permission: 'all' },
     ],
   },
   {
@@ -139,7 +140,9 @@ function SidebarContent({
         return { ...group, items: [] }
       }
 
-      const items = group.items.filter(item => isGestor || hasPermission(item.permission))
+      const items = group.items.filter(item =>
+        item.permission === 'all' || isGestor || hasPermission(item.permission)
+      )
       return { ...group, items }
     })
     .filter(group => group.items.length > 0)
@@ -317,6 +320,8 @@ export function AdminLayout() {
   const { data: notifications, isLoading: isLoadingNotifs } = useEscolaNotifications(authUser?.tenantId && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
   const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
   const navigate = useNavigate()
+  const location = useLocation()
+  const hideBottomNav = location.pathname === '/meu-perfil'
 
   const isGestor = authUser?.isGestor || isSuperAdmin
   const isProfessor = authUser?.isProfessor
@@ -347,16 +352,17 @@ export function AdminLayout() {
         </SheetContent>
       </Sheet>
 
-      {/* Bottom Navigation para Mobile (App Style) */}
+      {/* Bottom Navigation para Mobile (App Style) - escondida em /meu-perfil */}
+      {!hideBottomNav && (
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-        <div className="mx-auto w-full flex items-stretch justify-between h-20 px-4 relative">
+        <div className="mx-auto w-full flex items-stretch justify-between h-20 px-6 relative">
           {/* Lado Esquerdo */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3 flex-1 justify-start">
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-1.5 transition-all duration-300",
+                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
                   isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
                 )
               }
@@ -370,7 +376,7 @@ export function AdminLayout() {
                 to="/alunos"
                 className={({ isActive }) =>
                   cn(
-                    "flex flex-col items-center gap-1.5 transition-all duration-300",
+                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
                     isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
                   )
                 }
@@ -390,13 +396,28 @@ export function AdminLayout() {
           </button>
 
           {/* Lado Direito */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3 flex-1 justify-end">
+            {isProfessor && (
+              <NavLink
+                to="/frequencia"
+                className={({ isActive }) =>
+                  cn(
+                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                  )
+                }
+              >
+                <CalendarCheck className="h-6 w-6" />
+                <span className="text-[10px] font-bold tracking-tight">Frequência</span>
+              </NavLink>
+            )}
+
             {(!isProfessor && (isGestor || hasPermission('financeiro.cobrancas.view'))) && (
               <NavLink
                 to="/financeiro"
                 className={({ isActive }) =>
                   cn(
-                    "flex flex-col items-center gap-1.5 transition-all duration-300",
+                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
                     isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
                   )
                 }
@@ -406,23 +427,39 @@ export function AdminLayout() {
               </NavLink>
             )}
 
-            {(isProfessor || (isGestor || hasPermission('gestao.perfil_escola.view'))) && (
+            {(isProfessor || isGestor || authUser?.role === 'funcionario') && (
+              <NavLink
+                to="/meu-perfil"
+                className={({ isActive }) =>
+                  cn(
+                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                  )
+                }
+              >
+                <User className="h-6 w-6" />
+                <span className="text-[10px] font-bold tracking-tight">Perfil</span>
+              </NavLink>
+            )}
+
+            {isGestor && hasPermission('gestao.perfil_escola.view') && (
               <NavLink
                 to="/perfil-escola"
                 className={({ isActive }) =>
                   cn(
-                    "flex flex-col items-center gap-1.5 transition-all duration-300",
+                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
                     isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
                   )
                 }
               >
                 <UserCog className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Perfil</span>
+                <span className="text-[10px] font-bold tracking-tight">Escola</span>
               </NavLink>
             )}
           </div>
         </div>
       </nav>
+      )}
 
       {/* Main Content */}
       <main className="lg:pl-64 flex flex-col min-h-[100dvh]">
@@ -463,7 +500,7 @@ export function AdminLayout() {
               </Button>
             </div>
           ) : (
-            <div className="pb-36 lg:pb-0 overflow-y-auto">
+            <div className={cn("lg:pb-0 overflow-y-auto", !hideBottomNav && "pb-36")}>
                <Outlet />
             </div>
           )}

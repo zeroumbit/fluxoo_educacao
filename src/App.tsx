@@ -49,6 +49,7 @@ const FinanceiroRelatoriosPage = lazy(() => import('@/modules/financeiro/pages/F
 const DocumentosPage = lazy(() => import('@/modules/documentos/pages/DocumentosPage').then(m => ({ default: m.DocumentosPage })))
 const AlmoxarifadoPage = lazy(() => import('@/modules/almoxarifado/pages/AlmoxarifadoPage').then(m => ({ default: m.AlmoxarifadoPage })))
 const PerfilEscolaPage = lazy(() => import('@/modules/escola-perfil/pages/PerfilEscolaPage').then(m => ({ default: m.PerfilEscolaPage })))
+const MeuPerfilPage = lazy(() => import('@/modules/meu-perfil/pages/MeuPerfilPage').then(m => ({ default: m.MeuPerfilPage })))
 const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then(m => ({ default: m.PlanoPage })))
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
 const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
@@ -224,6 +225,7 @@ function App() {
               <Route path="/almoxarifado" element={<AlmoxarifadoPage />} />
               <Route path="/portaria-expresso" element={<FilaVirtualAdminPage />} />
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
+              <Route path="/meu-perfil" element={<MeuPerfilPage />} />
               <Route path="/plano" element={<PlanoPage />} />
               {/* Currículos */}
               <Route path="/curriculos" element={<CurriculosListPage />} />
