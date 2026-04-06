@@ -194,9 +194,6 @@ export function LoginPage() {
                 {errors.password && (
                   <p className="text-xs text-destructive font-medium">{errors.password.message}</p>
                 )}
-                <p className="text-[10px] text-muted-foreground">
-                  ℹ️ Senhas antigas (6+ caracteres) continuam válidas
-                </p>
               </div>
 
               {error && (

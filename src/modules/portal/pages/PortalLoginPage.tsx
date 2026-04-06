@@ -149,9 +149,6 @@ export function PortalLoginPage() {
                 {errors.password && (
                   <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider ml-1 mt-1">{errors.password.message}</p>
                 )}
-                <p className="text-[9px] text-[#64748B] font-medium ml-1 mt-1">
-                  ℹ️ Senhas antigas (6+ caracteres) continuam válidas
-                </p>
               </div>
 
               {error && (
