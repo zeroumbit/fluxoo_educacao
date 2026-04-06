@@ -54,7 +54,6 @@ const navigationGroups = [
     label: 'Principal',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
-      { name: 'Meu Perfil', href: '/meu-perfil', icon: User, permission: 'all' },
     ],
   },
   {
@@ -109,6 +108,11 @@ const navigationGroups = [
   },
 ]
 
+// Itens fixos na parte inferior da sidebar (sempre por último)
+const bottomNavigationItems = [
+  { name: 'Meu Perfil', href: '/meu-perfil', icon: User, permission: 'all' },
+]
+
 function SidebarContent({ 
   onNavigate, 
   dashboardData, 
@@ -146,6 +150,11 @@ function SidebarContent({
       return { ...group, items }
     })
     .filter(group => group.items.length > 0)
+
+  // Filtrar itens de navegação inferior
+  const visibleBottomItems = bottomNavigationItems.filter(item =>
+    item.permission === 'all' || isGestor || hasPermission(item.permission)
+  )
 
   // Adicionar Grupos Específicos para Marketplace Partners
   if (isLojista) {
@@ -276,6 +285,47 @@ function SidebarContent({
             </div>
           )
         })}
+
+        {/* Itens de navegação inferior (sempre por último) */}
+        {visibleBottomItems.length > 0 && (
+          <>
+            <Separator className="opacity-50" />
+            <div>
+              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Minha Conta
+              </p>
+              <div className="space-y-0.5">
+                {visibleBottomItems.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 lg:gap-3 px-4 py-4 lg:px-3 lg:py-2 rounded-2xl lg:rounded-lg text-[16px] lg:text-sm font-semibold lg:font-medium transition-all duration-300 active:scale-[0.98] lg:active:scale-100 group',
+                        isActive
+                          ? 'bg-indigo-600 lg:bg-indigo-50 text-white lg:text-indigo-700 shadow-lg lg:shadow-none shadow-indigo-100'
+                          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={cn('h-5 w-5 lg:h-4 lg:w-4 transition-colors flex-shrink-0', isActive ? 'text-white lg:text-indigo-600' : 'text-zinc-400')} />
+                        <span className="flex-1 truncate">{item.name}</span>
+                        {isActive ? (
+                          <div className="h-1.5 w-1.5 rounded-full bg-white lg:bg-indigo-400 opacity-50" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 lg:h-3.5 lg:w-3.5 text-zinc-300 flex-shrink-0 lg:opacity-0 group-hover:opacity-100" />
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       <Separator />

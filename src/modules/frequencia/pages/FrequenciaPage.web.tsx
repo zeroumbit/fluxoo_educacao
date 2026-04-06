@@ -32,10 +32,14 @@ import {
   FileX,
   MessageSquare,
   CheckCheck,
-  FileText
+  FileText,
+  Heart,
+  Brain,
+  Cake,
 } from 'lucide-react'
 import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
+import { useAlertasProfessor } from '@/modules/professor/hooks'
 
 const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
   presente: {
@@ -72,6 +76,7 @@ export function FrequenciaPageWeb() {
   const { data: turmas } = useTurmas()
   const { data: alunos, isLoading: isLoadingAlunos } = useAlunos()
   const { data: matriculasAtivas } = useMatriculasAtivasPorTurma(turmaId)
+  const { data: alertasProfessor } = useAlertasProfessor()
   const salvarFrequencias = useSalvarFrequencias()
 
   // Queries
@@ -332,9 +337,34 @@ export function FrequenciaPageWeb() {
                         </TableCell>
                         <TableCell className="pl-8">
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">
-                              {aluno.nome_completo}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-800 text-lg group-hover:text-emerald-700 transition-colors">
+                                  {aluno.nome_completo}
+                                </span>
+                                
+                                {/* BADGES DE ALERTA (PONTO FOCAL DO PROFESSOR) */}
+                                <div className="flex items-center gap-1">
+                                    {/* Alertas de Saúde */}
+                                    {alertasProfessor?.find(a => a.aluno_id === aluno.id && a.tipo === 'saude') && (
+                                        <div className="h-6 w-6 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 animate-pulse" title="Alerta de Saúde">
+                                            <Heart className="h-3.5 w-3.5 fill-current" />
+                                        </div>
+                                    )}
+                                    {/* Alertas de Inclusão (NEE/Cérebro) */}
+                                    {alertasProfessor?.find(a => a.aluno_id === aluno.id && a.tipo === 'inclusao') && (
+                                        <div className="h-6 w-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600" title="Necessidades Especiais/Inclusão">
+                                            <Brain className="h-3.5 w-3.5" />
+                                        </div>
+                                    )}
+                                    {/* Aniversariante do Mês/Dia */}
+                                    {alertasProfessor?.find(a => a.aluno_id === aluno.id && a.tipo === 'operacional_prof' && a.titulo.toLowerCase().includes('aniversário')) && (
+                                        <div className="h-6 w-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600" title="Aniversariante">
+                                            <Cake className="h-3.5 w-3.5" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {hasJustificativa && (
                               <div className="flex items-center gap-1.5 mt-1 text-[11px] font-bold text-amber-600 uppercase bg-amber-50 px-2 py-0.5 rounded-full w-fit">
                                 <MessageSquare className="h-3 w-3" />

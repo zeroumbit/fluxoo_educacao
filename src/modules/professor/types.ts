@@ -29,8 +29,25 @@ export interface SaudeTurma {
   media_geral: number
 }
 
+export interface AlertaProfessor {
+  id: string
+  tenant_id: string
+  aluno_id?: string
+  aluno_nome?: string
+  aluno_foto_url?: string
+  tipo: 'pedagogico' | 'frequencia' | 'saude' | 'inclusao' | 'operacional_prof'
+  gravidade: 'baixa' | 'media' | 'alta' | 'critica'
+  titulo: string
+  descricao: string
+  status: 'ativo' | 'concluido'
+  dados_origem: any
+  created_at: string
+  turma_nome?: string
+}
+
 export interface ProfessorDashboardData {
   agenda: AgendaAula[]
   pendencias: Pendencia[]
   saudeTurmas: SaudeTurma[]
+  alertas: AlertaProfessor[]
 }

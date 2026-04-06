@@ -1,7 +1,105 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useAgendaDiaria, usePendenciasProfessor, useSaudeTurmas } from '@/modules/professor/hooks'
-import type { AgendaAula, Pendencia, SaudeTurma } from '@/modules/professor/types'
+import {
+  useAgendaDiaria,
+  usePendenciasProfessor,
+  useSaudeTurmas,
+  useAlertasProfessor,
+  useConcluirAlerta
+} from '@/modules/professor/hooks'
+import type { AgendaAula, Pendencia, SaudeTurma, AlertaProfessor } from '@/modules/professor/types'
+
+// ... (previous imports)
+
+// ─── Widget: Alertas do Professor ───────────────────────────────────────────
+function AlertasCard({ alerta, onConcluir }: { alerta: AlertaProfessor, onConcluir: (id: string) => void }) {
+  const iconConfig: Record<string, { icon: any, color: string, bg: string }> = {
+    pedagogico: { icon: TrendingDown, color: 'text-rose-600', bg: 'bg-rose-50' },
+    frequencia: { icon: Users, color: 'text-orange-600', bg: 'bg-orange-50' },
+    saude: { icon: AlertTriangle, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    inclusao: { icon: Heart, color: 'text-purple-600', bg: 'bg-purple-50' },
+    operacional_prof: { icon: ClipboardCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' }
+  }
+
+  const { icon: Icon, color, bg } = iconConfig[alerta.tipo] || iconConfig.operacional_prof
+
+  return (
+    <div className={cn(
+      "group relative flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300",
+      "bg-white hover:shadow-md border-zinc-100 hover:border-zinc-200"
+    )}>
+      {/* Icon Side */}
+      <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0", bg)}>
+        <Icon className={cn("h-6 w-6", color)} />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pr-8">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+            {alerta.turma_nome || 'Geral'}
+          </span>
+          {alerta.gravidade === 'critica' && (
+            <Badge className="bg-rose-500 text-white border-0 text-[9px] h-4">CRÍTICO</Badge>
+          )}
+        </div>
+        <h4 className="text-sm font-bold text-zinc-800 leading-snug group-hover:text-indigo-600 transition-colors">
+          {alerta.titulo}
+        </h4>
+        <p className="text-xs text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+          {alerta.aluno_nome && <strong>{alerta.aluno_nome}: </strong>}
+          {alerta.descricao}
+        </p>
+      </div>
+
+      {/* Done Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-4 right-4 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-50 hover:bg-emerald-50 hover:text-emerald-600"
+        onClick={() => onConcluir(alerta.id)}
+      >
+        <CheckCircle2 className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+}
+
+function AlertasWidget({ data, isLoading }: { data?: AlertaProfessor[]; isLoading: boolean }) {
+  const concluir = useConcluirAlerta()
+
+  if (isLoading) return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
+    </div>
+  )
+
+  if (!data || data.length === 0) return (
+     <div className="flex flex-col items-center justify-center py-12 bg-zinc-50/50 rounded-3xl border-2 border-dashed border-zinc-200">
+       <CheckCircle2 className="h-12 w-12 text-zinc-200 mb-4" />
+       <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Silêncio por aqui</p>
+       <p className="text-zinc-400 text-xs mt-1">Nenhum alerta pendente para suas turmas.</p>
+     </div>
+  )
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {data.map(alerta => (
+        <AlertasCard 
+          key={alerta.id} 
+          alerta={alerta} 
+          onConcluir={(id) => {
+            toast.promise(concluir.mutateAsync({ alertaId: id }), {
+              loading: 'Concluindo alerta...',
+              success: 'Alerta arquivado com sucesso!',
+              error: 'Erro ao concluir alerta.'
+            })
+          }} 
+        />
+      ))}
+    </div>
+  )
+}
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,9 +117,11 @@ import {
   ClipboardCheck,
   FileText,
   GraduationCap,
+  Heart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Component, type ReactNode } from 'react'
+import { toast } from 'sonner'
 
 // ─── Error Boundary por Widget ─────────────────────────────────────────────
 class WidgetErrorBoundary extends Component<
@@ -274,8 +374,10 @@ export function ProfessorDashboardPage() {
   const { data: agenda, isLoading: loadingAgenda, refetch: refetchAgenda } = useAgendaDiaria()
   const { data: pendencias, isLoading: loadingPendencias } = usePendenciasProfessor()
   const { data: saudeTurmas, isLoading: loadingSaude } = useSaudeTurmas()
+  const { data: alertas, isLoading: loadingAlertas } = useAlertasProfessor()
 
   const totalPendencias = pendencias?.length ?? 0
+  const totalAlertas = alertas?.length ?? 0
 
   return (
     <div className="space-y-6 p-4 lg:p-0 animate-in fade-in duration-300">
@@ -289,20 +391,35 @@ export function ProfessorDashboardPage() {
         </p>
       </div>
 
-      {/* KPI Strip — Pendências em destaque */}
-      {totalPendencias > 0 && (
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
-          <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+      {/* KPI Strip — Pendências e Alertas em destaque */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {totalPendencias > 0 && (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-amber-800 text-sm">
+                {totalPendencias} {totalPendencias === 1 ? 'pendência' : 'pendências'} identificada{totalPendencias > 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-amber-600">Conteúdos e resultados pendentes</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-amber-800 text-sm">
-              {totalPendencias} {totalPendencias === 1 ? 'pendência' : 'pendências'} identificada{totalPendencias > 1 ? 's' : ''}
-            </p>
-            <p className="text-xs text-amber-600">Conteúdos e resultados dos últimos 15 dias que precisam de atenção</p>
+        )}
+        {totalAlertas > 0 && (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200">
+            <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="h-5 w-5 text-rose-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-rose-800 text-sm">
+                {totalAlertas} {totalAlertas === 1 ? 'alerta' : 'alertas'} de atenção
+              </p>
+              <p className="text-xs text-rose-600">Alunos com queda de rendimento ou observações</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Grid Principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -348,6 +465,31 @@ export function ProfessorDashboardPage() {
               </CardHeader>
               <CardContent>
                 <PendenciasWidget data={pendencias} isLoading={loadingPendencias} />
+              </CardContent>
+            </Card>
+          </WidgetErrorBoundary>
+        </div>
+
+        {/* ALERTAS DO PROFESSOR — Expansão do Ecosystema (Ponto Focal Novo) */}
+        <div className="lg:col-span-3">
+          <WidgetErrorBoundary title="Alertas de Atenção">
+            <Card className="border-0 shadow-sm bg-white overflow-hidden">
+              <CardHeader className="pt-[30px] pb-4 bg-zinc-50/50 border-b">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-rose-600" />
+                  </div>
+                  Alertas e Observações
+                  <span className="text-xs font-normal text-muted-foreground ml-1">— Visão Micro das Turmas</span>
+                  {totalAlertas > 0 && (
+                    <Badge variant="outline" className="ml-auto border-rose-200 text-rose-600 bg-rose-50">
+                      {totalAlertas} ativos
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <AlertasWidget data={alertas} isLoading={loadingAlertas} />
               </CardContent>
             </Card>
           </WidgetErrorBoundary>

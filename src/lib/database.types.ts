@@ -202,11 +202,21 @@ export type Funcionario = {
   filial_id: string | null
   nome_completo: string
   funcao: string | null
+  cpf: string | null
+  email: string | null
+  telefone: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   salario_bruto: number | null
   dia_pagamento: number | null
   data_admissao: string | null
   is_usuario_sistema: boolean
   funcoes: string[]
+  user_id?: string | null
   created_at: string
   updated_at: string
 }

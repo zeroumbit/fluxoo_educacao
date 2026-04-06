@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { professorService } from './service'
+import type { AlertaProfessor } from './types'
 
 /** Agenda de aulas de hoje. StaleTime: 5 minutos. */
 export function useAgendaDiaria() {
@@ -41,5 +42,38 @@ export function useSaudeTurmas() {
     queryFn: () => professorService.buscarSaudeTurmas(professorId!, tenantId!),
     enabled: !!professorId && !!tenantId,
     staleTime: 60 * 60 * 1000,
+  })
+}
+
+/** 
+ * Hook para buscar alertas consolidados do professor. 
+ * Inclui pedagógicos, saúde, frequência e operacionais.
+ */
+export function useAlertasProfessor() {
+  const { authUser } = useAuth()
+  const professorId = authUser?.user?.id
+  const tenantId = authUser?.tenantId
+  
+  return useQuery({
+    queryKey: ['professor_alertas', professorId, tenantId],
+    queryFn: () => professorService.buscarAlertas(professorId!, tenantId!),
+    enabled: !!professorId && !!tenantId,
+    staleTime: 2 * 60 * 1000 // 2 minutos de cache para alertas mais dinâmicos
+  })
+}
+
+/** 
+ * Hook para concluir um alerta através da RPC com registro de auditoria.
+ */
+export function useConcluirAlerta() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ alertaId, observacao }: { alertaId: string, observacao?: string }) => 
+      professorService.concluirAlerta(alertaId, observacao),
+    onSuccess: () => {
+      // Invalida cache para atualizar contador no dashboard
+      queryClient.invalidateQueries({ queryKey: ['professor_alertas'] })
+    }
   })
 }

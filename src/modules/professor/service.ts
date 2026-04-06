@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { AgendaAula, Pendencia, SaudeTurma } from './types'
+import type { AgendaAula, AlertaProfessor, Pendencia, SaudeTurma } from './types'
 
 export const professorService = {
   /**
@@ -58,4 +58,57 @@ export const professorService = {
     }
     return (data as SaudeTurma[]) || []
   },
+
+  /**
+   * Retorna os alertas específicos para o cockpit do professor.
+   * Filtra por alunos do professor + alertas operacionais dele mesmo.
+   */
+  async buscarAlertas(professorId: string, tenantId: string): Promise<AlertaProfessor[]> {
+    const { data, error } = await (supabase as any)
+      .from('vw_alertas_professor')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      // O RLS já filtra por professor_id = auth.uid(), mas reforçamos se necessário
+      .eq('status', 'ativo')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('[professorService] Erro ao buscar alertas:', error)
+      return []
+    }
+    return (data as AlertaProfessor[]) || []
+  },
+
+  /**
+   * Conclui um alerta específico chamando a RPC que registra auditoria.
+   */
+  async concluirAlerta(alertaId: string, observacao?: string): Promise<boolean> {
+    const { error } = await (supabase as any).rpc('concluir_alerta_professor', {
+      p_alerta_id: alertaId,
+      p_observacao: observacao
+    })
+
+    if (error) {
+      console.error('[professorService] Erro ao concluir alerta:', error)
+      return false
+    }
+    return true
+  },
 }
+
+/* 
+  💡 SIMULAÇÃO DE LÓGICA DE GERAÇÃO DE ALERTAS (WORKER/CRON)
+  Abaixo, exemplificação de como o backend geraria estes alertas:
+
+  1. Diário Pendente (Operacional):
+     - Roda todo dia às 18h.
+     - Busca na vw_professor_agenda_hoje onde chamada_realizada IS FALSE.
+     - INSERT INTO alertas_alunos (tenant_id, usuario_id, tipo, titulo, descricao, gravidade)
+       VALUES (t.id, p.id, 'operacional_prof', 'Diário Pendente', 'Você não realizou a chamada para a turma X', 'alta');
+
+  2. Queda de Rendimento (Pedagógico):
+     - Roda após fechamento de bimestre/bimestre ou lançamento de notas.
+     - Se média_atual < (media_anterior * 0.8):
+     - INSERT INTO alertas_alunos (tenant_id, aluno_id, tipo, titulo, descricao, gravidade)
+       VALUES (t.id, a.id, 'pedagogico', 'Queda de Rendimento', 'O aluno X reduziu a média em mais de 20%', 'critica');
+*/
