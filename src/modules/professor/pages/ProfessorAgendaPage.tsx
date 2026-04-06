@@ -48,7 +48,7 @@ export function ProfessorAgendaPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Aulas Hoje
@@ -60,7 +60,7 @@ export function ProfessorAgendaPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Chamadas Pendentes
@@ -86,75 +86,73 @@ export function ProfessorAgendaPage() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Horário</TableHead>
+              <TableHead>Turma</TableHead>
+              <TableHead>Disciplina</TableHead>
+              <TableHead>Sala</TableHead>
+              <TableHead className="text-center">Chamada</TableHead>
+              <TableHead className="text-center pr-8">Conteúdo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {aulasFiltradas.length === 0 ? (
               <TableRow>
-                <TableHead>Horário</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead>Disciplina</TableHead>
-                <TableHead>Sala</TableHead>
-                <TableHead className="text-center">Chamada</TableHead>
-                <TableHead className="text-center">Conteúdo</TableHead>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Nenhuma aula programada para hoje</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {aulasFiltradas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
-                    <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhuma aula programada para hoje</p>
+            ) : (
+              aulasFiltradas.map((aula: any) => (
+                <TableRow key={aula.grade_id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="pl-8 py-4">
+                    <span className="text-sm font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant="outline">{aula.turma_nome}</Badge>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-700">{aula.disciplina_nome}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-500">{aula.sala || '-'}</span>
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    {aula.chamada_realizada ? (
+                      <Badge className="bg-emerald-600">
+                        <Check className="w-3 h-3 mr-1" />
+                        Realizada
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">
+                        <X className="w-3 h-3 mr-1" />
+                        Pendente
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center pr-8 py-4">
+                    {aula.conteudo_registrado ? (
+                      <Badge className="bg-emerald-600">
+                        <Check className="w-3 h-3 mr-1" />
+                        Registrado
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pendente
+                      </Badge>
+                    )}
                   </TableCell>
                 </TableRow>
-              ) : (
-                aulasFiltradas.map((aula: any) => (
-                  <TableRow key={aula.grade_id}>
-                    <TableCell>
-                      <span className="text-sm font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{aula.turma_nome}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-700">{aula.disciplina_nome}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-500">{aula.sala || '-'}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {aula.chamada_realizada ? (
-                        <Badge className="bg-emerald-600">
-                          <Check className="w-3 h-3 mr-1" />
-                          Realizada
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <X className="w-3 h-3 mr-1" />
-                          Pendente
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {aula.conteudo_registrado ? (
-                        <Badge className="bg-emerald-600">
-                          <Check className="w-3 h-3 mr-1" />
-                          Registrado
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Pendente
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
