@@ -60,14 +60,14 @@ export function ProfessorAlunosPage() {
       <Card>
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Aluno</TableHead>
+            <TableHeader className="bg-slate-50/50">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-8">Aluno</TableHead>
                 <TableHead>Turma</TableHead>
                 <TableHead className="text-center">Frequência</TableHead>
                 <TableHead className="text-center">Média</TableHead>
                 <TableHead className="text-center">Alertas</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right pr-8">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,8 +84,8 @@ export function ProfessorAlunosPage() {
                   const media = aluno.media || 0
 
                   return (
-                    <TableRow key={aluno.id}>
-                      <TableCell>
+                    <TableRow key={aluno.id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
                             {aluno.nome?.charAt(0).toUpperCase()}
@@ -96,10 +96,10 @@ export function ProfessorAlunosPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         <Badge variant="outline">{aluno.turma_nome || '-'}</Badge>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         <div className="flex items-center justify-center gap-2">
                           <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
                             <div
@@ -116,21 +116,21 @@ export function ProfessorAlunosPage() {
                           <span className="text-sm font-medium">{freq}%</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         <Badge
                           variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
                         >
                           {media.toFixed(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         {aluno.alertas > 0 ? (
                           <Badge variant="destructive">{aluno.alertas} alerta(s)</Badge>
                         ) : (
                           <span className="text-slate-400 text-sm">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-8 py-4">
                         <Button
                           variant="ghost"
                           size="sm"

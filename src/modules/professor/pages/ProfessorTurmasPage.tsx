@@ -165,14 +165,14 @@ export function ProfessorTurmasPage() {
       <Card>
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Turma</TableHead>
+            <TableHeader className="bg-slate-50/50">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-8">Turma</TableHead>
                 <TableHead className="text-center">Alunos</TableHead>
                 <TableHead className="text-center">Frequência</TableHead>
                 <TableHead className="text-center">Média</TableHead>
                 <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="text-right pr-8">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -191,8 +191,8 @@ export function ProfessorTurmasPage() {
                   const temMedia = media > 0
 
                   return (
-                    <TableRow key={turma.turma_id}>
-                      <TableCell>
+                    <TableRow key={turma.turma_id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                             <School className="w-5 h-5 text-blue-600" />
@@ -202,10 +202,10 @@ export function ProfessorTurmasPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         <span className="text-sm font-medium">{turma.total_alunos}</span>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         {temFreq ? (
                           <div className="flex items-center justify-center gap-2">
                             <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -226,7 +226,7 @@ export function ProfessorTurmasPage() {
                           <span className="text-sm text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         {temMedia ? (
                           <Badge
                             variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
@@ -237,7 +237,7 @@ export function ProfessorTurmasPage() {
                           <span className="text-sm text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         {temFreq && temMedia ? (
                           freq >= 75 && media >= 7 ? (
                             <Badge className="bg-emerald-600">Excelente</Badge>
@@ -250,7 +250,7 @@ export function ProfessorTurmasPage() {
                           <span className="text-sm text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-8 py-4">
                         <Button
                           variant="ghost"
                           size="sm"
