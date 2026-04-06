@@ -12,9 +12,20 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
 import { PortalLayout } from '@/layout/PortalLayout'
+import { ProfessorLayout } from '@/layout/ProfessorLayout'
 import { CookieConsent } from '@/components/shared/CookieConsent'
 import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
 import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
+
+// Pages - Professor
+const ProfessorAlunosPage = lazy(() => import('@/modules/professor/pages/ProfessorAlunosPage').then(m => ({ default: m.ProfessorAlunosPage })))
+const ProfessorTurmasPage = lazy(() => import('@/modules/professor/pages/ProfessorTurmasPage').then(m => ({ default: m.ProfessorTurmasPage })))
+const ProfessorFrequenciaPage = lazy(() => import('@/modules/professor/pages/ProfessorFrequenciaPage').then(m => ({ default: m.ProfessorFrequenciaPage })))
+const ProfessorPlanosAulaPage = lazy(() => import('@/modules/professor/pages/ProfessorPlanosAulaPage').then(m => ({ default: m.ProfessorPlanosAulaPage })))
+const ProfessorAtividadesPage = lazy(() => import('@/modules/professor/pages/ProfessorAtividadesPage').then(m => ({ default: m.ProfessorAtividadesPage })))
+const ProfessorNotasPage = lazy(() => import('@/modules/professor/pages/ProfessorNotasPage').then(m => ({ default: m.ProfessorNotasPage })))
+const ProfessorAgendaPage = lazy(() => import('@/modules/professor/pages/ProfessorAgendaPage').then(m => ({ default: m.ProfessorAgendaPage })))
+const ProfessorAlertasPage = lazy(() => import('@/modules/professor/pages/ProfessorAlertasPage').then(m => ({ default: m.ProfessorAlertasPage })))
 
 // Pages - Admin (Escola)
 const DashboardPage = lazy(() => import('@/modules/alunos/pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
@@ -116,13 +127,19 @@ function RootRedirect() {
   if (!authUser) return <Navigate to="/login" replace />
   if (authUser.role === 'super_admin') return <Navigate to="/admin/dashboard" replace />
   if (authUser.role === 'responsavel') return <Navigate to="/portal" replace />
+  if (authUser.isProfessor) return <Navigate to="/professores/dashboard" replace />
   return <Navigate to="/dashboard" replace />
 }
 
 /** Renderiza a dashboard correta de acordo com o perfil do usuário */
 function DashboardRouter() {
   const { authUser } = useAuth()
-  if (authUser?.isProfessor) return <ProfessorDashboardPage />
+  
+  // Redirecionar professores para a URL dedicada
+  if (authUser?.isProfessor) {
+    return <Navigate to="/professores/dashboard" replace />
+  }
+  
   if (authUser?.role === 'lojista') return <LojistaDashboardPage />
   if (authUser?.role === 'profissional') return <ProfissionalDashboardPage />
   return <DashboardPage />
@@ -190,6 +207,29 @@ function App() {
               <Route path="/admin/logs" element={<div className="p-8"><h1 className="text-2xl font-bold">Logs do Sistema</h1><p>Em breve: Auditoria global.</p></div>} />
             </Route>
 
+            {/* Professor Routes - URL Dedicada */}
+            <Route
+              path="/professores/*"
+              element={
+                <ProtectedRoute allowedRoles={['professor', 'funcionario']}>
+                  <ProfessorLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="dashboard" element={<ProfessorDashboardPage />} />
+              <Route path="alunos" element={<ProfessorAlunosPage />} />
+              <Route path="alunos/:id" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Detalhes do Aluno</h2><p className="text-zinc-500">Em desenvolvimento</p></div>} />
+              <Route path="turmas" element={<ProfessorTurmasPage />} />
+              <Route path="turmas/:id" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Detalhes da Turma</h2><p className="text-zinc-500">Em desenvolvimento</p></div>} />
+              <Route path="frequencia" element={<ProfessorFrequenciaPage />} />
+              <Route path="planos-aula" element={<ProfessorPlanosAulaPage />} />
+              <Route path="atividades" element={<ProfessorAtividadesPage />} />
+              <Route path="notas" element={<ProfessorNotasPage />} />
+              <Route path="agenda" element={<ProfessorAgendaPage />} />
+              <Route path="alertas" element={<ProfessorAlertasPage />} />
+              <Route path="perfil" element={<MeuPerfilPage />} />
+            </Route>
+
             {/* Admin Routes (School) */}
             <Route
               element={
@@ -198,7 +238,10 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/dashboard" element={<DashboardRouter />} />
+              {/* Redirecionar professores que tentam acessar /dashboard */}
+              <Route path="/dashboard" element={
+                <DashboardRouter />
+              } />
               <Route path="/alunos" element={<AlunosListPage />} />
               <Route path="/alunos/novo" element={<AlunoCadastroPage />} />
               <Route path="/alunos/:id" element={<AlunoDetalhePage />} />

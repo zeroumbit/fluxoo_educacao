@@ -32,6 +32,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (authUser.role === 'responsavel') {
       return <Navigate to="/portal" replace />
     }
+    if (authUser.isProfessor) {
+      return <Navigate to="/professores/dashboard" replace />
+    }
     return <Navigate to="/dashboard" replace />
   }
 

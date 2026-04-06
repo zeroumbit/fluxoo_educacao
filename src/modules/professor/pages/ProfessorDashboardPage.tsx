@@ -381,16 +381,6 @@ export function ProfessorDashboardPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-0 animate-in fade-in duration-300">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900 lg:text-3xl">
-          Olá, {authUser?.nome?.split(' ')[0]}! 👋
-        </h1>
-        <p className="text-zinc-500 text-sm mt-1">
-          Aqui está o seu painel operacional de hoje.
-        </p>
-      </div>
-
       {/* KPI Strip — Pendências e Alertas em destaque */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {totalPendencias > 0 && (
