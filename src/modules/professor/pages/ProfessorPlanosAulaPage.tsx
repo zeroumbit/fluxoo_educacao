@@ -4,7 +4,6 @@ import { useAgendaDiaria } from '@/modules/professor/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -54,74 +53,72 @@ export function ProfessorPlanosAulaPage() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Data</TableHead>
+              <TableHead>Horário</TableHead>
+              <TableHead>Turma</TableHead>
+              <TableHead>Disciplina</TableHead>
+              <TableHead>Sala</TableHead>
+              <TableHead className="text-center">Conteúdo</TableHead>
+              <TableHead className="text-right pr-8">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {aulasFiltradas.length === 0 ? (
               <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Horário</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead>Disciplina</TableHead>
-                <TableHead>Sala</TableHead>
-                <TableHead className="text-center">Conteúdo</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Nenhuma aula encontrada</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {aulasFiltradas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
-                    <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhuma aula encontrada</p>
+            ) : (
+              aulasFiltradas.map((aula: any) => (
+                <TableRow key={aula.grade_id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="pl-8 py-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm">{aula.data_aula}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant="outline">{aula.turma_nome}</Badge>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-700">{aula.disciplina_nome}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-500">{aula.sala || '-'}</span>
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    {aula.conteudo_registrado ? (
+                      <Badge className="bg-emerald-600">
+                        <Check className="w-3 h-3 mr-1" />
+                        Registrado
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pendente
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right pr-8 py-4">
+                    <Button variant="ghost" size="sm">
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ) : (
-                aulasFiltradas.map((aula: any) => (
-                  <TableRow key={aula.grade_id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm">{aula.data_aula}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{aula.turma_nome}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-700">{aula.disciplina_nome}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-500">{aula.sala || '-'}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {aula.conteudo_registrado ? (
-                        <Badge className="bg-emerald-600">
-                          <Check className="w-3 h-3 mr-1" />
-                          Registrado
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Pendente
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
