@@ -3,7 +3,6 @@ import { useAuth } from '@/modules/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -13,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Plus, Search, Loader2, FileText, Calendar, Users, Eye, Edit, ClipboardList
+  Search, Loader2, FileText, Calendar, Users, Eye, Edit, ClipboardList
 } from 'lucide-react'
 
 export function ProfessorAtividadesPage() {
@@ -45,77 +44,75 @@ export function ProfessorAtividadesPage() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-8">Atividade</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead>Disciplina</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Data Entrega</TableHead>
-                <TableHead className="text-center">Entregas</TableHead>
-                <TableHead className="text-right pr-8">Ações</TableHead>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Atividade</TableHead>
+              <TableHead>Turma</TableHead>
+              <TableHead>Disciplina</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Data Entrega</TableHead>
+              <TableHead className="text-center">Entregas</TableHead>
+              <TableHead className="text-right pr-8">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {atividadesFiltradas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <ClipboardList className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Suas atividades e avaliações aparecerão aqui para você gerenciar as entregas dos alunos.</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {atividadesFiltradas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
-                    <ClipboardList className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Suas atividades e avaliações aparecerão aqui para você gerenciar as entregas dos alunos.</p>
+            ) : (
+              atividadesFiltradas.map((atividade: any) => (
+                <TableRow key={atividade.id} className="hover:bg-slate-50/80 transition-colors">
+                  <TableCell className="pl-8 py-4">
+                    <div>
+                      <p className="font-medium text-slate-900">{atividade.titulo}</p>
+                      <p className="text-xs text-slate-500">{atividade.descricao}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant="outline">{atividade.turma_nome}</Badge>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <span className="text-sm text-slate-700">{atividade.disciplina_nome}</span>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <Badge variant={atividade.tipo === 'prova' ? 'destructive' : 'secondary'}>
+                      {atividade.tipo}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm">{atividade.data_entrega}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm font-medium">{atividade.entregas}/{atividade.total_alunos}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right pr-8 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                atividadesFiltradas.map((atividade: any) => (
-                  <TableRow key={atividade.id} className="hover:bg-slate-50/80 transition-colors">
-                    <TableCell className="pl-8 py-4">
-                      <div>
-                        <p className="font-medium text-slate-900">{atividade.titulo}</p>
-                        <p className="text-xs text-slate-500">{atividade.descricao}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant="outline">{atividade.turma_nome}</Badge>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <span className="text-sm text-slate-700">{atividade.disciplina_nome}</span>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <Badge variant={atividade.tipo === 'prova' ? 'destructive' : 'secondary'}>
-                        {atividade.tipo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm">{atividade.data_entrega}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm font-medium">{atividade.entregas}/{atividade.total_alunos}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right pr-8 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }

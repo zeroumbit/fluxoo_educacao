@@ -162,111 +162,109 @@ export function ProfessorTurmasPage() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-8">Turma</TableHead>
-                <TableHead className="text-center">Alunos</TableHead>
-                <TableHead className="text-center">Frequência</TableHead>
-                <TableHead className="text-center">Média</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right pr-8">Ações</TableHead>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Turma</TableHead>
+              <TableHead className="text-center">Alunos</TableHead>
+              <TableHead className="text-center">Frequência</TableHead>
+              <TableHead className="text-center">Média</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-right pr-8">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {turmasFiltradas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">Nenhuma turma encontrada para "{busca}"</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {turmasFiltradas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
-                    <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhuma turma encontrada para "{busca}"</p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                turmasFiltradas.map((turma: any) => {
-                  const freq = turma.percentual_presenca
-                  const media = turma.media_geral
-                  const temFreq = freq > 0
-                  const temMedia = media > 0
+            ) : (
+              turmasFiltradas.map((turma: any) => {
+                const freq = turma.percentual_presenca
+                const media = turma.media_geral
+                const temFreq = freq > 0
+                const temMedia = media > 0
 
-                  return (
-                    <TableRow key={turma.turma_id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="pl-8 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <School className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900">{turma.turma_nome}</p>
-                          </div>
+                return (
+                  <TableRow key={turma.turma_id} className="hover:bg-slate-50/50 transition-colors">
+                    <TableCell className="pl-8 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <School className="w-5 h-5 text-blue-600" />
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        <span className="text-sm font-medium">{turma.total_alunos}</span>
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        {temFreq ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  freq >= 75
-                                    ? 'bg-emerald-500'
-                                    : freq >= 50
-                                    ? 'bg-amber-500'
-                                    : 'bg-red-500'
-                                }`}
-                                style={{ width: `${freq}%` }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium">{freq.toFixed(1)}%</span>
+                        <div>
+                          <p className="font-medium text-slate-900">{turma.turma_nome}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      <span className="text-sm font-medium">{turma.total_alunos}</span>
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      {temFreq ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                freq >= 75
+                                  ? 'bg-emerald-500'
+                                  : freq >= 50
+                                  ? 'bg-amber-500'
+                                  : 'bg-red-500'
+                              }`}
+                              style={{ width: `${freq}%` }}
+                            />
                           </div>
-                        ) : (
-                          <span className="text-sm text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        {temMedia ? (
-                          <Badge
-                            variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
-                          >
-                            {media.toFixed(1)}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        {temFreq && temMedia ? (
-                          freq >= 75 && media >= 7 ? (
-                            <Badge className="bg-emerald-600">Excelente</Badge>
-                          ) : freq >= 50 && media >= 5 ? (
-                            <Badge variant="secondary">Regular</Badge>
-                          ) : (
-                            <Badge variant="destructive">Crítico</Badge>
-                          )
-                        ) : (
-                          <span className="text-sm text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right pr-8 py-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/professores/turmas/${turma.turma_id}`)}
+                          <span className="text-sm font-medium">{freq.toFixed(1)}%</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      {temMedia ? (
+                        <Badge
+                          variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
                         >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                          {media.toFixed(1)}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center py-4">
+                      {temFreq && temMedia ? (
+                        freq >= 75 && media >= 7 ? (
+                          <Badge className="bg-emerald-600">Excelente</Badge>
+                        ) : freq >= 50 && media >= 5 ? (
+                          <Badge variant="secondary">Regular</Badge>
+                        ) : (
+                          <Badge variant="destructive">Crítico</Badge>
+                        )
+                      ) : (
+                        <span className="text-sm text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right pr-8 py-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/professores/turmas/${turma.turma_id}`)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
