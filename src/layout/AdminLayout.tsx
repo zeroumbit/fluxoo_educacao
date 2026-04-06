@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
-  LayoutDashboard,
+  House,
   User,
   Users,
   BookOpen,
@@ -53,7 +53,7 @@ const navigationGroups = [
   {
     label: 'Principal',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
+      { name: 'Dashboard', href: '/dashboard', icon: House, permission: 'dashboard.view' },
     ],
   },
   {
@@ -162,7 +162,7 @@ function SidebarContent({
       {
         label: 'Minha Loja',
         items: [
-          { name: 'Dashboard', href: '/loja/dashboard', icon: LayoutDashboard, permission: 'all' },
+          { name: 'Dashboard', href: '/loja/dashboard', icon: House, permission: 'all' },
           { name: 'Meus Produtos', href: '/loja/produtos', icon: Package, permission: 'all' },
           { name: 'Minhas Vendas', href: '/loja/vendas', icon: Wallet, permission: 'all' },
         ]

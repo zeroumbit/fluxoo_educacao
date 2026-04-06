@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation, Outlet, Navigate } from 'react-router-dom'
+import { Link, useLocation, Outlet, Navigate, NavLink } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { cn } from '@/lib/utils'
 import {
@@ -9,20 +9,22 @@ import {
   ClipboardCheck,
   FileText,
   AlertTriangle,
-  LayoutDashboard,
+  House,
   GraduationCap,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
   User,
   LogOut,
   Bell,
-  School
+  School,
+  ChevronRight,
+  Home
 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -34,15 +36,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
 const professorNavGroups = [
   {
-    title: 'Principal',
+    label: 'Principal',
     items: [
       {
         name: 'Dashboard',
         href: '/professores/dashboard',
-        icon: LayoutDashboard,
+        icon: House,
       },
       {
         name: 'Minhas Turmas',
@@ -52,12 +57,12 @@ const professorNavGroups = [
       {
         name: 'Alunos',
         href: '/professores/alunos',
-        icon: Users,
+        icon: User,
       },
     ],
   },
   {
-    title: 'Aulas & Avaliações',
+    label: 'Aulas & Avaliações',
     items: [
       {
         name: 'Frequência',
@@ -82,7 +87,7 @@ const professorNavGroups = [
     ],
   },
   {
-    title: 'Comunicação',
+    label: 'Comunicação',
     items: [
       {
         name: 'Agenda',
@@ -97,24 +102,176 @@ const professorNavGroups = [
       },
     ],
   },
-  {
-    title: 'Perfil',
-    items: [
-      {
-        name: 'Meu Perfil',
-        href: '/professores/perfil',
-        icon: User,
-      },
-    ],
-  },
 ]
 
-export function ProfessorLayout() {
+// Itens fixos na parte inferior da sidebar (sempre por último)
+const bottomNavigationItems = [
+  { name: 'Meu Perfil', href: '/professores/perfil', icon: User },
+]
+
+function SidebarContent({
+  onNavigate,
+}: {
+  onNavigate?: () => void,
+}) {
   const { authUser, signOut } = useAuth()
   const location = useLocation()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const isActive = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/')
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Erro ao sair:', error)
+      window.location.href = '/login'
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo mobile-friendly no menu full-screen */}
+      <div className="h-16 px-6 flex items-center justify-between lg:h-16 lg:px-6 lg:flex lg:items-center">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center shadow-lg shadow-indigo-100 flex-shrink-0">
+            <img src={CorujaIcon} alt="Fluxoo" className="h-5 w-5 lg:h-4.5 lg:w-4.5" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-bold text-lg lg:text-base leading-tight tracking-tight truncate">Fluxoo</h2>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/50 truncate">Professor</p>
+          </div>
+        </div>
+        {onNavigate && (
+           <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden h-9 w-9 rounded-full bg-zinc-100">
+              <X className="h-5 w-5 text-zinc-500" />
+           </Button>
+        )}
+      </div>
+
+      <Separator className="opacity-50" />
+
+      {/* Navigation - Ampliado para mobile */}
+      <nav className="flex-1 px-4 py-6 space-y-6 overflow-y-auto scrollbar-hide">
+        {professorNavGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              {group.label}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item.href)
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      'flex items-center gap-3 lg:gap-3 px-4 py-4 lg:px-3 lg:py-2 rounded-2xl lg:rounded-lg text-[16px] lg:text-sm font-semibold lg:font-medium transition-all duration-300 active:scale-[0.98] lg:active:scale-100 group',
+                      active
+                        ? 'bg-indigo-600 lg:bg-indigo-50 text-white lg:text-indigo-700 shadow-lg lg:shadow-none shadow-indigo-100'
+                        : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
+                    )}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <item.icon className={cn('h-5 w-5 lg:h-4 lg:w-4 transition-colors flex-shrink-0', isActive ? 'text-white lg:text-indigo-600' : 'text-zinc-400')} />
+                        <span className="flex-1 truncate">{item.name}</span>
+                        {item.badge && !isActive && (
+                          <Badge variant="destructive" className="text-xs">!</Badge>
+                        )}
+                        {isActive ? (
+                          <div className="h-1.5 w-1.5 rounded-full bg-white lg:bg-indigo-400 opacity-50" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 lg:h-3.5 lg:w-3.5 text-zinc-300 flex-shrink-0 lg:opacity-0 group-hover:opacity-100" />
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Itens de navegação inferior (sempre por último) */}
+        {bottomNavigationItems.length > 0 && (
+          <>
+            <Separator className="opacity-50" />
+            <div>
+              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Minha Conta
+              </p>
+              <div className="space-y-0.5">
+                {bottomNavigationItems.map((item) => {
+                  const active = isActive(item.href)
+                  return (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        'flex items-center gap-3 lg:gap-3 px-4 py-4 lg:px-3 lg:py-2 rounded-2xl lg:rounded-lg text-[16px] lg:text-sm font-semibold lg:font-medium transition-all duration-300 active:scale-[0.98] lg:active:scale-100 group',
+                        active
+                          ? 'bg-indigo-600 lg:bg-indigo-50 text-white lg:text-indigo-700 shadow-lg lg:shadow-none shadow-indigo-100'
+                          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900',
+                      )}
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <item.icon className={cn('h-5 w-5 lg:h-4 lg:w-4 transition-colors flex-shrink-0', isActive ? 'text-white lg:text-indigo-600' : 'text-zinc-400')} />
+                          <span className="flex-1 truncate">{item.name}</span>
+                          {isActive ? (
+                            <div className="h-1.5 w-1.5 rounded-full bg-white lg:bg-indigo-400 opacity-50" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 lg:h-3.5 lg:w-3.5 text-zinc-300 flex-shrink-0 lg:opacity-0 group-hover:opacity-100" />
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </nav>
+
+      <Separator />
+
+      {/* User */}
+      <div className="p-4 pb-24 lg:pb-4 space-y-2">
+        <div className="flex items-center gap-3 py-2.5 px-3">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-xs">
+              {authUser?.nome?.substring(0, 2).toUpperCase() || 'P'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{authUser?.nome}</p>
+            <p className="text-xs text-muted-foreground truncate">Professor</p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          className="w-full justify-start gap-3 h-10 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="font-medium">Sair do Sistema</span>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export function ProfessorLayout() {
+  const { authUser } = useAuth()
+  const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   // Detectar mobile
   useEffect(() => {
@@ -126,11 +283,6 @@ export function ProfessorLayout() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Fechar menu mobile ao mudar rota
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
-
   // Redirecionar se não é professor
   if (!authUser?.isProfessor) {
     return <Navigate to="/dashboard" replace />
@@ -140,228 +292,110 @@ export function ProfessorLayout() {
     return location.pathname === href || location.pathname.startsWith(href + '/')
   }
 
-  const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-zinc-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
-          {!isCollapsed && !mobile && (
-            <div className="min-w-0">
-              <h1 className="font-bold text-zinc-900 truncate">Fluxoo Professor</h1>
-              <p className="text-xs text-zinc-500 truncate">{authUser.nome}</p>
-            </div>
-          )}
-        </div>
-      </div>
+  const hideBottomNav = location.pathname === '/professores/perfil'
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-        {professorNavGroups.map((group) => (
-          <div key={group.title}>
-            {!isCollapsed && (
-              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-3">
-                {group.title}
-              </h3>
-            )}
-            <ul className="space-y-1">
-              {group.items.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                return (
-                  <li key={item.href}>
-                    <Link
-                      to={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative',
-                        active
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-                      )}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {!isCollapsed && (
-                        <>
-                          <span className="truncate">{item.name}</span>
-                          {item.badge && (
-                            <Badge variant="destructive" className="ml-auto text-xs">
-                              !
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                      {active && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-r-full" />
-                      )}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-3 border-t border-zinc-200">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full justify-start gap-2 text-zinc-600"
-          disabled={mobile}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
-          {!isCollapsed && <span>Recolher</span>}
-        </Button>
-      </div>
-    </div>
-  )
-
-  // Mobile Layout
-  if (isMobile) {
-    return (
-      <div className="min-h-screen bg-zinc-50">
-        {/* Mobile Header */}
-        <header className="sticky top-0 z-40 bg-white border-b border-zinc-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="w-6 h-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <div className="h-full bg-white">
-                  <SidebarContent mobile />
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-zinc-900">Fluxoo Professor</span>
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-5 h-5" />
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs">
-                    !
-                  </Badge>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <div className="px-3 py-2 border-b border-zinc-200">
-                  <p className="font-semibold text-sm">Notificações</p>
-                </div>
-                <div className="py-6 text-center text-zinc-500 text-sm">
-                  Nenhuma notificação
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        {/* Mobile Content */}
-        <main className="pb-20">
-          <Outlet />
-        </main>
-
-        {/* Mobile Bottom Nav */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 shadow-lg z-40 safe-area-bottom">
-          <div className="flex items-center justify-around py-2">
-            <Link
-              to="/professores/dashboard"
-              className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1',
-                isActive('/professores/dashboard')
-                  ? 'text-blue-600'
-                  : 'text-zinc-500'
-              )}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              <span className="text-xs font-medium truncate">Dashboard</span>
-            </Link>
-            <Link
-              to="/professores/turmas"
-              className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1',
-                isActive('/professores/turmas')
-                  ? 'text-blue-600'
-                  : 'text-zinc-500'
-              )}
-            >
-              <School className="w-5 h-5" />
-              <span className="text-xs font-medium truncate">Turmas</span>
-            </Link>
-            <Link
-              to="/professores/frequencia"
-              className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1',
-                isActive('/professores/frequencia')
-                  ? 'text-blue-600'
-                  : 'text-zinc-500'
-              )}
-            >
-              <ClipboardCheck className="w-5 h-5" />
-              <span className="text-xs font-medium truncate">Frequência</span>
-            </Link>
-            <Link
-              to="/professores/perfil"
-              className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-0 flex-1',
-                isActive('/professores/perfil')
-                  ? 'text-blue-600'
-                  : 'text-zinc-500'
-              )}
-            >
-              <User className="w-5 h-5" />
-              <span className="text-xs font-medium truncate">Perfil</span>
-            </Link>
-          </div>
-        </nav>
-      </div>
-    )
-  }
-
-  // Desktop Layout
   return (
-    <div className="flex h-screen bg-zinc-50">
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'bg-white border-r border-zinc-200 flex-shrink-0 transition-all duration-300 relative',
-          isCollapsed ? 'w-16' : 'w-64'
-        )}
-      >
+    <div className="min-h-[100dvh] bg-zinc-50/50 dark:bg-slate-950">
+      {/* Desktop Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r bg-white/80 backdrop-blur-sm lg:block">
         <SidebarContent />
       </aside>
 
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" showCloseButton={false} className="w-full sm:w-[400px] p-0 border-none shadow-2xl">
+          <SheetTitle className="sr-only">Menu de Navegação</SheetTitle>
+          <SheetDescription className="sr-only">Acesse as funcionalidades do professor através do menu lateral.</SheetDescription>
+          <SidebarContent
+            onNavigate={() => setSidebarOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Bottom Navigation para Mobile (App Style) */}
+      {!hideBottomNav && (
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="mx-auto w-full flex items-stretch justify-between h-20 px-6 relative">
+          {/* Lado Esquerdo */}
+          <div className="flex items-center gap-3 flex-1 justify-start">
+            <NavLink
+              to="/professores/dashboard"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <Home className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Home</span>
+            </NavLink>
+
+            <NavLink
+              to="/professores/turmas"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <Users className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Turmas</span>
+            </NavLink>
+          </div>
+
+          {/* Botão Central de Menu */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-indigo-600 to-blue-700 h-16 w-16 rounded-2xl shadow-lg shadow-indigo-200 active:scale-90 transition-transform flex items-center justify-center z-10"
+          >
+            <Menu className="h-7 w-7 text-white" />
+          </button>
+
+          {/* Lado Direito */}
+          <div className="flex items-center gap-3 flex-1 justify-end">
+            <NavLink
+              to="/professores/frequencia"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <ClipboardCheck className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Frequência</span>
+            </NavLink>
+
+            <NavLink
+              to="/professores/perfil"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
+                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                )
+              }
+            >
+              <User className="h-6 w-6" />
+              <span className="text-[10px] font-bold tracking-tight">Perfil</span>
+            </NavLink>
+          </div>
+        </div>
+      </nav>
+      )}
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-zinc-900">
+      <main className="lg:pl-64 flex flex-col min-h-[100dvh]">
+        {/* Top Header - Desktop Only */}
+        <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b bg-white/80 backdrop-blur-md px-8">
+          <div className="flex items-center gap-4">
+            <h1 className="text-base font-semibold text-zinc-900 tracking-tight">
               {professorNavGroups
                 .flatMap(g => g.items)
                 .find(item => isActive(item.href))?.name || 'Professor'}
-            </h2>
-            <p className="text-sm text-zinc-500">
-              Bem-vindo, {authUser.nome}
-            </p>
+            </h1>
           </div>
-
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -381,45 +415,14 @@ export function ProfessorLayout() {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                    {authUser.nome?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium">{authUser.nome}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-3 py-2 border-b border-zinc-200">
-                  <p className="font-semibold text-sm">{authUser.nome}</p>
-                  <p className="text-xs text-zinc-500">{authUser.user.email}</p>
-                </div>
-                <DropdownMenuItem asChild>
-                  <Link to="/professores/perfil" className="cursor-pointer">
-                    <User className="w-4 h-4 mr-2" />
-                    Meu Perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut()}
-                  className="text-red-600 cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <div className={cn("lg:p-8 max-w-7xl mx-auto flex-1 w-full overflow-y-auto", !hideBottomNav && "pb-36 lg:pb-0")}>
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

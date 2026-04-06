@@ -63,29 +63,31 @@ export function ProfessorNotasPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <GraduationCap className="w-4 h-4" />
               Média Geral
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{mediaGeral.toFixed(1)}</div>
-            <div className="flex items-center gap-1 mt-1">
-              {mediaGeral >= 7 ? (
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
-              ) : (
-                <TrendingDown className="w-3 h-3 text-red-500" />
-              )}
-              <span className={`text-xs ${mediaGeral >= 7 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {mediaGeral >= 7 ? 'Acima da média' : 'Abaixo da média'}
-              </span>
-            </div>
+            <div className="text-3xl font-bold text-slate-900">{mediaGeral > 0 ? mediaGeral.toFixed(1) : '—'}</div>
+            {mediaGeral > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                {mediaGeral >= 7 ? (
+                  <TrendingUp className="w-3 h-3 text-emerald-500" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-red-500" />
+                )}
+                <span className={`text-xs ${mediaGeral >= 7 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {mediaGeral >= 7 ? 'Acima da média' : 'Abaixo da média'}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Users className="w-4 h-4" />
               Total de Alunos
@@ -100,7 +102,7 @@ export function ProfessorNotasPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 pt-[30px]">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Turmas Aprovadas
@@ -145,31 +147,29 @@ export function ProfessorNotasPage() {
       </div>
 
       {/* Tabela de Notas */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Aluno</TableHead>
-                <TableHead className="text-center">Nota 1</TableHead>
-                <TableHead className="text-center">Nota 2</TableHead>
-                <TableHead className="text-center">Nota 3</TableHead>
-                <TableHead className="text-center">Nota 4</TableHead>
-                <TableHead className="text-center">Média</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <GraduationCap className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-500">Selecione uma turma para visualizar as notas</p>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-8">Aluno</TableHead>
+              <TableHead className="text-center">Nota 1</TableHead>
+              <TableHead className="text-center">Nota 2</TableHead>
+              <TableHead className="text-center">Nota 3</TableHead>
+              <TableHead className="text-center">Nota 4</TableHead>
+              <TableHead className="text-center">Média</TableHead>
+              <TableHead className="text-center pr-8">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-12">
+                <GraduationCap className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-500">Selecione uma turma para visualizar as notas</p>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }

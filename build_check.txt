@@ -2,8 +2,151 @@
 > fluxoo-educacao@0.1.0 build
 > tsc -b && vite build
 
-src/modules/financeiro/pages/FinanceiroRelatoriosPage.mobile.tsx(52,68): error TS2769: No overload matches this call.
-  Overload 1 of 3, '(locales?: LocalesArgument, options?: DateTimeFormatOptions | undefined): string', gave the following error.
-    Type '"2y"' is not assignable to type '"numeric" | "2-digit" | undefined'.
-  Overload 2 of 3, '(locales?: string | string[] | undefined, options?: DateTimeFormatOptions | undefined): string', gave the following error.
-    Type '"2y"' is not assignable to type '"numeric" | "2-digit" | undefined'.
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 3878 modules transformed.
+rendering chunks...
+[33m[plugin vite:reporter] 
+(!) C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/service.ts is dynamically imported by C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/auth/AuthContext.tsx but also statically imported by C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/hooks/useNotifications.ts, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/components/ModalContratoEscola.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/hooks.ts, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/pages/PortalAgendaPage.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/pages/PortalAtividadesPage.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/pages/PortalLoginPage.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/pages/PortalPlanosAulaPage.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/v2/pages/PortalCobrancasPageV2.mobile.tsx, C:/PROJETOS/01 FLUXOO/01 fluxoo-edu/src/modules/portal/v2/pages/PortalCobrancasPageV2.tsx, dynamic import will not move module into another chunk.
+[39m
+computing gzip size...
+[2mdist/[22m[32mmanifest.webmanifest                                  [39m[1m[2m    0.38 kB[22m[1m[22m
+[2mdist/[22m[32mindex.html                                            [39m[1m[2m    2.13 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+[2mdist/[22m[35massets/index-BKynBNjY.css                             [39m[1m[2m  240.33 kB[22m[1m[22m[2m │ gzip:  33.18 kB[22m
+[2mdist/[22m[36massets/progress-B2limkQ2.js                           [39m[1m[2m    0.46 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[36massets/BotaoVoltarWeb-Cy9le7tB.js                     [39m[1m[2m    0.57 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m
+[2mdist/[22m[36massets/BotaoVoltar-Cr4pl5kq.js                        [39m[1m[2m    0.64 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+[2mdist/[22m[36massets/textarea-D419QadC.js                           [39m[1m[2m    0.65 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m
+[2mdist/[22m[36massets/types-CFX_2R-b.js                              [39m[1m[2m    0.69 kB[22m[1m[22m[2m │ gzip:   0.30 kB[22m
+[2mdist/[22m[36massets/radio-group-Caz-F--1.js                        [39m[1m[2m    0.73 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m
+[2mdist/[22m[36massets/checkbox-B14qI2TY.js                           [39m[1m[2m    0.91 kB[22m[1m[22m[2m │ gzip:   0.46 kB[22m
+[2mdist/[22m[36massets/PullToRefresh-B2vjV-ze.js                      [39m[1m[2m    0.93 kB[22m[1m[22m[2m │ gzip:   0.57 kB[22m
+[2mdist/[22m[36massets/rbac-validation-6vLYg0UY.js                    [39m[1m[2m    1.04 kB[22m[1m[22m[2m │ gzip:   0.56 kB[22m
+[2mdist/[22m[36massets/switch-C4lRu2Tr.js                             [39m[1m[2m    1.09 kB[22m[1m[22m[2m │ gzip:   0.53 kB[22m
+[2mdist/[22m[36massets/card-B_1JFnCz.js                               [39m[1m[2m    1.09 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+[2mdist/[22m[36massets/hooks-DdRuxqjL.js                              [39m[1m[2m    1.23 kB[22m[1m[22m[2m │ gzip:   0.51 kB[22m
+[2mdist/[22m[36massets/table-B-h70uCu.js                              [39m[1m[2m    1.23 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m
+[2mdist/[22m[36massets/hooks-EHzuj7gt.js                              [39m[1m[2m    1.29 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+[2mdist/[22m[36massets/MobilePageLayout-B6uCZQuW.js                   [39m[1m[2m    1.35 kB[22m[1m[22m[2m │ gzip:   0.61 kB[22m
+[2mdist/[22m[36massets/NativeCard-BJCSkUVh.js                         [39m[1m[2m    1.46 kB[22m[1m[22m[2m │ gzip:   0.72 kB[22m
+[2mdist/[22m[36massets/BottomSheet-IrcRaFIo.js                        [39m[1m[2m    1.57 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m
+[2mdist/[22m[36massets/SeletorAluno-ZslJVh6t.js                       [39m[1m[2m    1.69 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+[2mdist/[22m[36massets/hooks-CVjJziUp.js                              [39m[1m[2m    1.73 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+[2mdist/[22m[36massets/use-viacep-DUn5ngPj.js                         [39m[1m[2m    1.74 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m
+[2mdist/[22m[36massets/hooks-Dm2r4qtS.js                              [39m[1m[2m    1.81 kB[22m[1m[22m[2m │ gzip:   0.60 kB[22m
+[2mdist/[22m[36massets/mobile-select-CchvguWA.js                      [39m[1m[2m    1.95 kB[22m[1m[22m[2m │ gzip:   0.93 kB[22m
+[2mdist/[22m[36massets/hooks-BlZFYC6Z.js                              [39m[1m[2m    2.29 kB[22m[1m[22m[2m │ gzip:   0.73 kB[22m
+[2mdist/[22m[36massets/dialog-CwDY-1PY.js                             [39m[1m[2m    2.54 kB[22m[1m[22m[2m │ gzip:   0.96 kB[22m
+[2mdist/[22m[36massets/service-CKAF4Osm.js                            [39m[1m[2m    2.60 kB[22m[1m[22m[2m │ gzip:   0.66 kB[22m
+[2mdist/[22m[36massets/useTenantSettings-DUrnS-Mu.js                  [39m[1m[2m    2.66 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m
+[2mdist/[22m[36massets/tabs-Ci3NA4n9.js                               [39m[1m[2m    2.85 kB[22m[1m[22m[2m │ gzip:   0.91 kB[22m
+[2mdist/[22m[36massets/ProfessorPlanosAulaPage-D2E8nRJT.js            [39m[1m[2m    2.88 kB[22m[1m[22m[2m │ gzip:   1.13 kB[22m
+[2mdist/[22m[36massets/hooks-D-7yG5aZ.js                              [39m[1m[2m    2.94 kB[22m[1m[22m[2m │ gzip:   0.72 kB[22m
+[2mdist/[22m[36massets/pdf-renderer-FSX9KkY-.js                       [39m[1m[2m    2.96 kB[22m[1m[22m[2m │ gzip:   1.42 kB[22m
+[2mdist/[22m[36massets/ProfessorAtividadesPage-eNyB66__.js            [39m[1m[2m    3.15 kB[22m[1m[22m[2m │ gzip:   1.13 kB[22m
+[2mdist/[22m[36massets/ProfessorAlunosPage-DVsBvAuf.js                [39m[1m[2m    3.55 kB[22m[1m[22m[2m │ gzip:   1.39 kB[22m
+[2mdist/[22m[36massets/query-vendor-CLV1Za0W.js                       [39m[1m[2m    3.62 kB[22m[1m[22m[2m │ gzip:   1.55 kB[22m
+[2mdist/[22m[36massets/select-DR24q-LE.js                             [39m[1m[2m    3.70 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m
+[2mdist/[22m[36massets/NativeHeader-sTmxCP4J.js                       [39m[1m[2m    3.73 kB[22m[1m[22m[2m │ gzip:   1.47 kB[22m
+[2mdist/[22m[36massets/hooks-ChDJ289S.js                              [39m[1m[2m    3.75 kB[22m[1m[22m[2m │ gzip:   1.34 kB[22m
+[2mdist/[22m[36massets/ProfessorAgendaPage-DtDDkK4x.js                [39m[1m[2m    3.79 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m
+[2mdist/[22m[36massets/ProfessorNotasPage-PjdCXe11.js                 [39m[1m[2m    4.04 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m
+[2mdist/[22m[36massets/hooks-CLpCq5ix.js                              [39m[1m[2m    4.41 kB[22m[1m[22m[2m │ gzip:   1.38 kB[22m
+[2mdist/[22m[36massets/UpgradesPage-mboehwNz.js                       [39m[1m[2m    4.57 kB[22m[1m[22m[2m │ gzip:   1.59 kB[22m
+[2mdist/[22m[36massets/ProfessorFrequenciaPage-DURx5r1y.js            [39m[1m[2m    4.94 kB[22m[1m[22m[2m │ gzip:   2.00 kB[22m
+[2mdist/[22m[36massets/hooks-avancado-C7de_6Uh.js                     [39m[1m[2m    5.24 kB[22m[1m[22m[2m │ gzip:   1.49 kB[22m
+[2mdist/[22m[36massets/AuditoriaPage-CeQwW_gq.js                      [39m[1m[2m    5.31 kB[22m[1m[22m[2m │ gzip:   1.88 kB[22m
+[2mdist/[22m[36massets/CurriculosListPage-BaCNcqIN.js                 [39m[1m[2m    5.48 kB[22m[1m[22m[2m │ gzip:   1.88 kB[22m
+[2mdist/[22m[36massets/ConfigRecebimentoPage-BoJDkpgO.js              [39m[1m[2m    5.72 kB[22m[1m[22m[2m │ gzip:   1.91 kB[22m
+[2mdist/[22m[36massets/PortalAlunosListV2-B7YbWCRx.js                 [39m[1m[2m    5.91 kB[22m[1m[22m[2m │ gzip:   1.91 kB[22m
+[2mdist/[22m[36massets/LojistaDashboardPage-af8hQWb0.js               [39m[1m[2m    6.03 kB[22m[1m[22m[2m │ gzip:   2.05 kB[22m
+[2mdist/[22m[36massets/hooks-BfdOGUpF.js                              [39m[1m[2m    6.06 kB[22m[1m[22m[2m │ gzip:   2.03 kB[22m
+[2mdist/[22m[36massets/ProfessorTurmasPage-CssCLLba.js                [39m[1m[2m    6.53 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m
+[2mdist/[22m[36massets/ProfissionalDashboardPage-CWrRv6RN.js          [39m[1m[2m    6.54 kB[22m[1m[22m[2m │ gzip:   2.21 kB[22m
+[2mdist/[22m[36massets/ModalContratoEscola-CecCiI_L.js                [39m[1m[2m    6.55 kB[22m[1m[22m[2m │ gzip:   2.61 kB[22m
+[2mdist/[22m[36massets/ProfessorAlertasPage-Dso3UmCW.js               [39m[1m[2m    6.66 kB[22m[1m[22m[2m │ gzip:   2.19 kB[22m
+[2mdist/[22m[36massets/NotificationBell-CSnMwGPq.js                   [39m[1m[2m    6.94 kB[22m[1m[22m[2m │ gzip:   2.33 kB[22m
+[2mdist/[22m[36massets/PortalPlanosAulaPage-Diyl47ts.js               [39m[1m[2m    7.42 kB[22m[1m[22m[2m │ gzip:   2.45 kB[22m
+[2mdist/[22m[36massets/PortalFrequenciaPage-ClLiX21p.js               [39m[1m[2m    7.54 kB[22m[1m[22m[2m │ gzip:   2.26 kB[22m
+[2mdist/[22m[36massets/PortalLoginPage-Bs4uq-_Q.js                    [39m[1m[2m    7.68 kB[22m[1m[22m[2m │ gzip:   2.54 kB[22m
+[2mdist/[22m[36massets/RelatorioMensalFrequenciaPage.web-BsJa752c.js  [39m[1m[2m    8.42 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m
+[2mdist/[22m[36massets/PortalFilaVirtualPage-_NBB_7kZ.js              [39m[1m[2m    8.58 kB[22m[1m[22m[2m │ gzip:   2.76 kB[22m
+[2mdist/[22m[36massets/CurriculoDetalhePage-Dld6OXNh.js               [39m[1m[2m    8.88 kB[22m[1m[22m[2m │ gzip:   2.18 kB[22m
+[2mdist/[22m[36massets/CookiesPage-DkJdvXQ8.js                        [39m[1m[2m    9.29 kB[22m[1m[22m[2m │ gzip:   2.67 kB[22m
+[2mdist/[22m[36massets/service-HxttE6up.js                            [39m[1m[2m    9.35 kB[22m[1m[22m[2m │ gzip:   2.60 kB[22m
+[2mdist/[22m[36massets/PortalDocumentosPageV2-CDudAnBJ.js             [39m[1m[2m    9.40 kB[22m[1m[22m[2m │ gzip:   3.36 kB[22m
+[2mdist/[22m[36massets/PortalDocumentosPage-0gU74L2-.js               [39m[1m[2m    9.51 kB[22m[1m[22m[2m │ gzip:   3.29 kB[22m
+[2mdist/[22m[36massets/PortalBoletimPage-Da23kbuM.js                  [39m[1m[2m    9.78 kB[22m[1m[22m[2m │ gzip:   2.85 kB[22m
+[2mdist/[22m[36massets/PortalAvisosPage-B1Xga3pP.js                   [39m[1m[2m    9.86 kB[22m[1m[22m[2m │ gzip:   3.05 kB[22m
+[2mdist/[22m[36massets/hooks-BlL3fnRf.js                              [39m[1m[2m   10.17 kB[22m[1m[22m[2m │ gzip:   3.05 kB[22m
+[2mdist/[22m[36massets/RadarEvasaoModal-kdg5HFOk.js                   [39m[1m[2m   10.52 kB[22m[1m[22m[2m │ gzip:   3.41 kB[22m
+[2mdist/[22m[36massets/PrivacidadePage-Be_g06n-.js                    [39m[1m[2m   10.73 kB[22m[1m[22m[2m │ gzip:   2.97 kB[22m
+[2mdist/[22m[36massets/PortalLivrosPage-DGyNuR2M.js                   [39m[1m[2m   12.13 kB[22m[1m[22m[2m │ gzip:   3.84 kB[22m
+[2mdist/[22m[36massets/hooks-CYDKCg1-.js                              [39m[1m[2m   12.57 kB[22m[1m[22m[2m │ gzip:   4.30 kB[22m
+[2mdist/[22m[36massets/PortalAutorizacoesPage-Bossz3It.js             [39m[1m[2m   12.75 kB[22m[1m[22m[2m │ gzip:   4.04 kB[22m
+[2mdist/[22m[36massets/FaturasPage-D3Tibs74.js                        [39m[1m[2m   13.29 kB[22m[1m[22m[2m │ gzip:   3.47 kB[22m
+[2mdist/[22m[36massets/ProfessorDashboardPage-BDLs1VkL.js             [39m[1m[2m   14.29 kB[22m[1m[22m[2m │ gzip:   3.86 kB[22m
+[2mdist/[22m[36massets/FilaVirtualAdminPage-CWDmmhzs.js               [39m[1m[2m   14.35 kB[22m[1m[22m[2m │ gzip:   3.95 kB[22m
+[2mdist/[22m[36massets/hooks-BdLYHFbY.js                              [39m[1m[2m   14.42 kB[22m[1m[22m[2m │ gzip:   3.78 kB[22m
+[2mdist/[22m[36massets/PerfisPage-KspqlACS.js                         [39m[1m[2m   14.57 kB[22m[1m[22m[2m │ gzip:   4.17 kB[22m
+[2mdist/[22m[36massets/SuperAdminDashboardPage-fuhnq_ID.js            [39m[1m[2m   14.92 kB[22m[1m[22m[2m │ gzip:   3.37 kB[22m
+[2mdist/[22m[36massets/PlanosPage-B3HbW1xq.js                         [39m[1m[2m   15.40 kB[22m[1m[22m[2m │ gzip:   4.15 kB[22m
+[2mdist/[22m[36massets/TermosUsoPage-CK32BxW1.js                      [39m[1m[2m   16.23 kB[22m[1m[22m[2m │ gzip:   4.09 kB[22m
+[2mdist/[22m[36massets/hooks-qGljXtcd.js                              [39m[1m[2m   16.63 kB[22m[1m[22m[2m │ gzip:   3.73 kB[22m
+[2mdist/[22m[36massets/PortalAvisosV2-DfXt8Fba.js                     [39m[1m[2m   16.63 kB[22m[1m[22m[2m │ gzip:   3.59 kB[22m
+[2mdist/[22m[36massets/PortalHomeV2-C6B1Fwb_.js                       [39m[1m[2m   17.04 kB[22m[1m[22m[2m │ gzip:   4.71 kB[22m
+[2mdist/[22m[36massets/FiliaisPage-C5e9Cdi8.js                        [39m[1m[2m   17.46 kB[22m[1m[22m[2m │ gzip:   5.20 kB[22m
+[2mdist/[22m[36massets/PortalLojaPage-DS_ZYxuM.js                     [39m[1m[2m   17.96 kB[22m[1m[22m[2m │ gzip:   4.91 kB[22m
+[2mdist/[22m[36massets/MatriculaFormPage-Nrh1aJZ0.js                  [39m[1m[2m   17.98 kB[22m[1m[22m[2m │ gzip:   4.25 kB[22m
+[2mdist/[22m[36massets/DisciplinasPage-C_ciAiDk.js                    [39m[1m[2m   18.50 kB[22m[1m[22m[2m │ gzip:   5.06 kB[22m
+[2mdist/[22m[36massets/PortalAgendaPage-BZqMWQmm.js                   [39m[1m[2m   18.58 kB[22m[1m[22m[2m │ gzip:   5.52 kB[22m
+[2mdist/[22m[36massets/PlanoPage-Buq821Gy.js                          [39m[1m[2m   19.02 kB[22m[1m[22m[2m │ gzip:   4.85 kB[22m
+[2mdist/[22m[36massets/MeuPerfilPage-YehrUB5S.js                      [39m[1m[2m   19.51 kB[22m[1m[22m[2m │ gzip:   4.11 kB[22m
+[2mdist/[22m[36massets/PerfilEscolaPage-CkdfPBr6.js                   [39m[1m[2m   20.33 kB[22m[1m[22m[2m │ gzip:   4.66 kB[22m
+[2mdist/[22m[36massets/MuralPage-CweRKwU7.js                          [39m[1m[2m   20.86 kB[22m[1m[22m[2m │ gzip:   5.60 kB[22m
+[2mdist/[22m[36massets/MarketplaceConfigPage-CcaCpbtb.js              [39m[1m[2m   21.68 kB[22m[1m[22m[2m │ gzip:   5.28 kB[22m
+[2mdist/[22m[36massets/ContasPagarPage-pnc_96V1.js                    [39m[1m[2m   22.10 kB[22m[1m[22m[2m │ gzip:   5.61 kB[22m
+[2mdist/[22m[36massets/FinanceiroRelatoriosPage-DIUvXwVs.js           [39m[1m[2m   22.28 kB[22m[1m[22m[2m │ gzip:   4.78 kB[22m
+[2mdist/[22m[36massets/EscolaCadastroPage-B2424OAS.js                 [39m[1m[2m   23.35 kB[22m[1m[22m[2m │ gzip:   6.76 kB[22m
+[2mdist/[22m[36massets/FrequenciaPage-iDu8Q4EN.js                     [39m[1m[2m   23.93 kB[22m[1m[22m[2m │ gzip:   6.43 kB[22m
+[2mdist/[22m[36massets/EscolasPage-Bg0qxbvw.js                        [39m[1m[2m   24.61 kB[22m[1m[22m[2m │ gzip:   5.64 kB[22m
+[2mdist/[22m[36massets/AlmoxarifadoPage-Nxc78xQV.js                   [39m[1m[2m   24.73 kB[22m[1m[22m[2m │ gzip:   6.28 kB[22m
+[2mdist/[22m[36massets/PortalPerfilPage-Dkj1eCDk.js                   [39m[1m[2m   25.28 kB[22m[1m[22m[2m │ gzip:   4.74 kB[22m
+[2mdist/[22m[36massets/AtividadesPage-DsZXZ4lW.js                     [39m[1m[2m   27.03 kB[22m[1m[22m[2m │ gzip:   6.86 kB[22m
+[2mdist/[22m[36massets/PlanoAulaPage-A0fugs89.js                      [39m[1m[2m   30.69 kB[22m[1m[22m[2m │ gzip:   7.20 kB[22m
+[2mdist/[22m[36massets/FuncionariosPage-Bh_QalmP.js                   [39m[1m[2m   32.32 kB[22m[1m[22m[2m │ gzip:   8.98 kB[22m
+[2mdist/[22m[36massets/animation-vendor-CDzB_2zb.js                   [39m[1m[2m   32.40 kB[22m[1m[22m[2m │ gzip:  11.31 kB[22m
+[2mdist/[22m[36massets/NotasPage-CGqP-y50.js                          [39m[1m[2m   33.19 kB[22m[1m[22m[2m │ gzip:   8.65 kB[22m
+[2mdist/[22m[36massets/MatriculaPage-BoFO6cuM.js                      [39m[1m[2m   33.41 kB[22m[1m[22m[2m │ gzip:   7.70 kB[22m
+[2mdist/[22m[36massets/date-utils-BARHd9AZ.js                         [39m[1m[2m   35.94 kB[22m[1m[22m[2m │ gzip:  10.16 kB[22m
+[2mdist/[22m[36massets/PortalFinanceiroV2-CKkycpHW.js                 [39m[1m[2m   37.01 kB[22m[1m[22m[2m │ gzip:   7.73 kB[22m
+[2mdist/[22m[36massets/MarketplaceCadastroPage-Dsy_y2Cn.js            [39m[1m[2m   37.25 kB[22m[1m[22m[2m │ gzip:   8.40 kB[22m
+[2mdist/[22m[36massets/PortalAlunoPerfilV2-hNvxtuYp.js                [39m[1m[2m   38.69 kB[22m[1m[22m[2m │ gzip:   8.35 kB[22m
+[2mdist/[22m[36massets/EventosPage-BZRpDmTf.js                        [39m[1m[2m   38.94 kB[22m[1m[22m[2m │ gzip:   7.95 kB[22m
+[2mdist/[22m[36massets/PortalCobrancasPage-Pw6y1Cty.js                [39m[1m[2m   40.69 kB[22m[1m[22m[2m │ gzip:   9.71 kB[22m
+[2mdist/[22m[36massets/DashboardPage-GiBUzvHd.js                      [39m[1m[2m   42.62 kB[22m[1m[22m[2m │ gzip:   9.72 kB[22m
+[2mdist/[22m[36massets/PortalDashboardPage-_-nRzK3F.js                [39m[1m[2m   42.77 kB[22m[1m[22m[2m │ gzip:  10.56 kB[22m
+[2mdist/[22m[36massets/FinanceiroPage-DN1nf46I.js                     [39m[1m[2m   43.71 kB[22m[1m[22m[2m │ gzip:   9.18 kB[22m
+[2mdist/[22m[36massets/icons-vendor-BMm1VWBs.js                       [39m[1m[2m   44.00 kB[22m[1m[22m[2m │ gzip:  13.59 kB[22m
+[2mdist/[22m[36massets/ConfiguracoesPage-BfC6Sogw.js                  [39m[1m[2m   48.11 kB[22m[1m[22m[2m │ gzip:  10.35 kB[22m
+[2mdist/[22m[36massets/AlunosListPage-CgVSWTNf.js                     [39m[1m[2m   48.75 kB[22m[1m[22m[2m │ gzip:  11.44 kB[22m
+[2mdist/[22m[36massets/AlunoCadastroPage-CRO2XDTY.js                  [39m[1m[2m   49.24 kB[22m[1m[22m[2m │ gzip:  10.51 kB[22m
+[2mdist/[22m[36massets/LivrosPage-BGfAqlGv.js                         [39m[1m[2m   54.03 kB[22m[1m[22m[2m │ gzip:  11.59 kB[22m
+[2mdist/[22m[36massets/AlunoDetalhePage-DwgrRS-u.js                   [39m[1m[2m   58.46 kB[22m[1m[22m[2m │ gzip:  11.36 kB[22m
+[2mdist/[22m[36massets/TurmasPage-CM9iwg6I.js                         [39m[1m[2m   84.65 kB[22m[1m[22m[2m │ gzip:  17.51 kB[22m
+[2mdist/[22m[36massets/DocumentosPage-BxD8zQhj.js                     [39m[1m[2m  125.48 kB[22m[1m[22m[2m │ gzip:  29.62 kB[22m
+[2mdist/[22m[36massets/index-BsxohVnP.js                              [39m[1m[2m  170.79 kB[22m[1m[22m[2m │ gzip:  43.89 kB[22m
+[2mdist/[22m[36massets/vendor-DtnIKukV.js                             [39m[1m[33m2,527.36 kB[39m[22m[2m │ gzip: 809.16 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 17.77s[39m
+
+PWA v1.2.0
+mode      generateSW
+precache  147 entries (5795.91 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-3896e580.js

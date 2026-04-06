@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import {
-  LayoutDashboard,
+  House,
   Building2,
   ClipboardList,
   History,
@@ -27,7 +27,7 @@ import { NotificationBell } from '@/components/NotificationBell'
 import { useSuperAdminNotifications } from '@/hooks/useNotifications'
 
 const superAdminNavigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/admin/dashboard', icon: House },
   { name: 'Escolas', href: '/admin/escolas', icon: Building2 },
   { name: 'Marketplace', href: '/admin/marketplace', icon: ShoppingBag },
   { name: 'Planos', href: '/admin/planos', icon: ClipboardList },
