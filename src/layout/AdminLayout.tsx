@@ -38,7 +38,8 @@ import {
   Bell,
   FileUser,
   Search,
-  Pencil
+  Pencil,
+  KeyRound
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -101,6 +102,7 @@ const navigationGroups = [
       { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
       { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
       { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
+      { name: 'Gateway', href: '/gateway', icon: KeyRound, permission: 'financeiro.config.view' },
       { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
       { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
       { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },

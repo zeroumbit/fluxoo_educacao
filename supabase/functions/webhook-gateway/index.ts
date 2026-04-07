@@ -76,8 +76,11 @@ serve(async (req: Request) => {
     // Detectar gateway
     const isAsaas = req.headers.has("accessToken") || req.headers.get("user-agent")?.includes("Asaas")
     const isMercadoPago = req.headers.has("x-request-id") && req.headers.has("x-signature")
+    // Abacate Pay e outros serão detectados pelo payload ou headers específicos
+    // Por enquanto, fallback para validação pelo externalReference
+    const isAbacatePay = req.headers.get("user-agent")?.includes("Abacate") || req.headers.has("x-abacate-signature")
 
-    if (!isAsaas && !isMercadoPago) {
+    if (!isAsaas && !isMercadoPago && !isAbacatePay) {
       return jsonResponse(400, { error: "Gateway nao identificado" })
     }
 
@@ -99,9 +102,13 @@ serve(async (req: Request) => {
 
     if (isAsaas) {
       return await handleAsaasWebhook(payload, rawBody, supabase)
-    } else {
+    } else if (isMercadoPago) {
       return await handleMercadoPagoWebhook(payload, rawBody, supabase)
+    } else if (isAbacatePay) {
+      return await handleAbacatePayWebhook(payload, rawBody, supabase)
     }
+
+    return jsonResponse(400, { error: "Gateway nao suportado" })
 
   } catch (err: any) {
     console.error("[webhook-gateway] Erro nao tratado:", err.message, err.stack)
@@ -483,6 +490,118 @@ async function handleMercadoPagoWebhook(
   } catch (err: any) {
     console.error("[mp] Erro nao tratado:", err.message)
     return jsonResponse(500, { error: "Erro interno MP", message: err.message, retry: true })
+  }
+}
+
+// =====================================================
+// HANDLER: ABACATE PAY (Multi-Tenant)
+// =====================================================
+
+async function handleAbacatePayWebhook(
+  payload: any,
+  rawBody: string,
+  supabase: any
+): Promise<Response> {
+  try {
+    // Abacate Pay envia: { event: "payment.completed", data: { id, external_reference, amount, ... } }
+    if (!payload.event || !payload.data || !payload.data.id) {
+      return jsonResponse(400, { error: "Payload invalido. Esperado: { event, data: { id, external_reference } }" })
+    }
+
+    const eventData = payload
+    const gatewayEventId = `abacate_${payload.data.id}`
+    const cobrancaId = payload.data.external_reference
+
+    if (!cobrancaId) {
+      return jsonResponse(400, { error: "external_reference (cobranca_id) e obrigatorio" })
+    }
+
+    // Buscar cobranca para descobrir tenant
+    const { data: cobranca, error: cobrancaErr } = await supabase
+      .from("cobrancas")
+      .select("id, tenant_id, valor, status, pago, data_vencimento, deleted_at")
+      .eq("id", cobrancaId)
+      .is("deleted_at", null)
+      .maybeSingle()
+
+    if (cobrancaErr) {
+      return jsonResponse(500, { error: "Erro interno", retry: true })
+    }
+
+    if (!cobranca) {
+      return jsonResponse(404, { error: "Cobranca nao encontrada", cobranca_id: cobrancaId })
+    }
+
+    // Verificar gateway ativo
+    const gatewayCheck = await verificarGatewayAtivo(supabase, cobranca.tenant_id, "abacate_pay")
+    if (!gatewayCheck.disponivel) {
+      return jsonResponse(403, { error: "Gateway nao disponivel", motivo: gatewayCheck.motivo })
+    }
+
+    // Validar token
+    const abacateConfig = await buscarConfigGateway(supabase, cobranca.tenant_id, "abacate_pay")
+    if (!abacateConfig) {
+      return jsonResponse(500, { error: "Gateway nao configurado pela escola" })
+    }
+
+    const storedToken = abacateConfig.configuracao.webhook_token as string
+    const receivedToken = payload.token || ""
+
+    if (storedToken && receivedToken !== storedToken) {
+      return jsonResponse(401, { error: "Token invalido" })
+    }
+
+    // Ignorar eventos que nao sao de pagamento confirmado
+    if (payload.data.status !== "confirmed" && payload.data.status !== "completed" && payload.data.status !== "paid") {
+      return jsonResponse(200, { status: "ignored", reason: `Status ${payload.data.status} nao requer acao` })
+    }
+
+    // Idempotencia
+    const { data: existingEvent } = await supabase
+      .from("webhook_events_log")
+      .select("id, processing_status")
+      .eq("gateway", "abacate_pay")
+      .eq("gateway_event_id", gatewayEventId)
+      .maybeSingle()
+
+    if (existingEvent?.processing_status === "processed") {
+      return jsonResponse(200, { status: "ignored_duplicate", message: "Evento ja processado" })
+    }
+
+    if (cobranca.pago === true || cobranca.status === "pago") {
+      return jsonResponse(200, { status: "ignored_duplicate", message: "Cobranca ja paga" })
+    }
+
+    // Processar
+    const valorPago = payload.data.amount || payload.data.valor || cobranca.valor
+    const formaPagamento = payload.data.payment_method || "abacate_pay"
+    const comprovanteUrl = payload.data.receipt_url || payload.data.comprovante || null
+
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc("registrar_pagamento_webhook", {
+        p_cobranca_id: cobrancaId,
+        p_gateway: "abacate_pay",
+        p_gateway_event_id: gatewayEventId,
+        p_valor_pago: valorPago,
+        p_forma_pagamento: formaPagamento,
+        p_codigo_transacao: payload.data.id,
+        p_comprovante_url: comprovanteUrl,
+        p_webhook_payload: JSON.parse(rawBody)
+      })
+
+    if (rpcError || !rpcResult?.success) {
+      console.error("[abacate] Erro:", rpcError?.message || rpcResult?.error)
+      return jsonResponse(500, { error: "Erro ao processar", retry: true })
+    }
+
+    return jsonResponse(200, {
+      status: "success", cobranca_id: cobrancaId,
+      valor_pago: rpcResult.valor_pago, gateway_event_id: gatewayEventId
+    })
+
+  } catch (err: any) {
+    console.error("[abacate] Erro nao tratado:", err.message)
+    return jsonResponse(500, { error: "Erro interno Abacate Pay", message: err.message, retry: true })
   }
 }
 

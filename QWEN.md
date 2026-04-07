@@ -18,3 +18,4 @@
 - Padrão de altura para BottomSheet/Dialog mobile atualizado: usar size="full" para formulários de edição E para dialogs de confirmação de ações destrutivas (com ícone grande, subtítulo explicativo, caixa de "O que acontece?" com lista numerada de consequências, caixa "Quando usar?" com contexto, e caixa "Importante" com observações adicionais). Botões fixos no rodapé com loading animado. Isso proporciona UX completa e informativa antes de confirmar ações importantes.
 - REGRAS DE NEGÓCIO - PROFESSORES: Professores NÃO podem (1) adicionar/criar/editar alunos e (2) ver valores de mensalidade de alunos. Restrições devem ser aplicadas em rotas, permissões, componentes e API calls.
 - Sempre fazer commit nas duas branches: DESENVOLVIMENTO e main.
+- Estou trabalhando na correção dos gateways de pagamento do projeto fluxoo-edu

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useGatewayConfig, useToggleGatewayGlobal } from '@/modules/super-admin/hooks'
 import { Loader2, ShieldCheck, ShieldOff, Key, Info, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,8 +11,8 @@ import { toast } from 'sonner'
 /**
  * GatewayConfigPage - Super Admin
  *
- * Permite ao Super Admin ativar/desativar gateways de pagamento
- * globalmente. Quando ativo, as escolas podem configurar seus tokens.
+ * Lista TODOS os gateways disponíveis (Asaas, Mercado Pago, Abacate Pay, etc.)
+ * Permite ativar/desativar para toda a plataforma.
  */
 export function GatewayConfigPage() {
   const { data: gateways, isLoading } = useGatewayConfig()
@@ -21,19 +22,17 @@ export function GatewayConfigPage() {
     const novoStatus = !currentStatus
 
     if (novoStatus) {
-      // Ativando: confirmar
       const confirmed = window.confirm(
-        `Ativar o gateway "${gateway === 'asaas' ? 'Asaas' : gateway === 'mercado_pago' ? 'Mercado Pago' : gateway}" para todas as escolas?\n\n` +
-        `As escolas poderão configurar seus tokens após a ativação.`
+        `Ativar o gateway "${getGatewayNome(gateway)}" para todas as escolas?\n\n` +
+        `As escolas poderão configurar seus tokens na página Configurações > Gateway.`
       )
       if (!confirmed) return
     } else {
-      // Desativando: alertar
       const confirmed = window.confirm(
-        `⚠️ ATENÇÃO: Desativar o gateway "${gateway === 'asaas' ? 'Asaas' : gateway === 'mercado_pago' ? 'Mercado Pago' : gateway}"?\n\n` +
+        `⚠️ ATENÇÃO: Desativar o gateway "${getGatewayNome(gateway)}"?\n\n` +
         `- Nenhuma escola poderá receber pagamentos via este gateway\n` +
         `- Webhooks deste gateway serão rejeitados\n` +
-        `- Configurações das escolas serão mantidas (não perdidas)\n\n` +
+        `- As configurações das escolas serão mantidas (não perdidas)\n\n` +
         `Deseja continuar?`
       )
       if (!confirmed) return
@@ -42,7 +41,7 @@ export function GatewayConfigPage() {
     try {
       await toggleGateway.mutateAsync({ gateway, ativo: novoStatus })
       toast.success(
-        novoStatus ? 'Gateway ativado com sucesso!' : 'Gateway desativado.',
+        novoStatus ? `Gateway ${getGatewayNome(gateway)} ativado!` : `Gateway ${getGatewayNome(gateway)} desativado.`,
         {
           description: novoStatus
             ? 'As escolas já podem configurar seus tokens.'
@@ -54,41 +53,26 @@ export function GatewayConfigPage() {
     }
   }
 
-  const getGatewayIcon = (gateway: string) => {
-    switch (gateway) {
-      case 'asaas':
-        return '🟢'
-      case 'mercado_pago':
-        return '🟡'
-      default:
-        return '🔵'
-    }
-  }
-
   const getGatewayNome = (gateway: string) => {
-    switch (gateway) {
-      case 'asaas':
-        return 'Asaas'
-      case 'mercado_pago':
-        return 'Mercado Pago'
-      case 'efi':
-        return 'EFI (EfiPay)'
-      case 'pagseguro':
-        return 'PagSeguro'
-      default:
-        return gateway
+    const map: Record<string, string> = {
+      asaas: 'Asaas',
+      mercado_pago: 'Mercado Pago',
+      abacate_pay: 'Abacate Pay',
+      efi: 'EFI (EfiPay)',
+      pagseguro: 'PagSeguro'
     }
+    return map[gateway] || gateway
   }
 
-  const getGatewayDocUrl = (gateway: string) => {
-    switch (gateway) {
-      case 'asaas':
-        return 'https://docs.asaas.com/reference/introdução-1'
-      case 'mercado_pago':
-        return 'https://www.mercadopago.com.br/developers/pt/docs'
-      default:
-        return '#'
+  const getGatewayIcon = (gateway: string) => {
+    const map: Record<string, string> = {
+      asaas: '🟢',
+      mercado_pago: '🟡',
+      abacate_pay: '🥑',
+      efi: '🔵',
+      pagseguro: '🟣'
     }
+    return map[gateway] || '🔵'
   }
 
   if (isLoading) {
@@ -109,29 +93,17 @@ export function GatewayConfigPage() {
         </p>
       </div>
 
-      {/* Alerta */}
-      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
-        <CardHeader className="pb-3 pt-4">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-amber-600" />
-            Como funciona
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2">
-          <p className="text-amber-800 dark:text-amber-200">
-            <strong>1.</strong> Você (Super Admin) <strong>ativa</strong> o gateway aqui.
-          </p>
-          <p className="text-amber-800 dark:text-amber-200">
-            <strong>2.</strong> Cada escola acessa <strong>Configurações &gt; Gateways de Pagamento</strong> e cola seus tokens.
-          </p>
-          <p className="text-amber-800 dark:text-amber-200">
-            <strong>3.</strong> A Edge Function identifica o tenant automaticamente e usa as credenciais corretas.
-          </p>
-          <p className="text-amber-800 dark:text-amber-200">
-            <strong>4.</strong> Se você <strong>desativar</strong>, todas as escolas perdem acesso imediatamente.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Info */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>Como funciona</AlertTitle>
+        <AlertDescription className="space-y-1">
+          <p><strong>1.</strong> Você (Super Admin) <strong>ativa</strong> o gateway aqui.</p>
+          <p><strong>2.</strong> Cada escola acessa <strong>Configurações &gt; Gateway</strong> e configura seus tokens.</p>
+          <p><strong>3.</strong> A escola escolhe apenas <strong>1 gateway ativo por vez</strong>.</p>
+          <p><strong>4.</strong> Se você <strong>desativar</strong>, todas as escolas perdem acesso a este gateway.</p>
+        </AlertDescription>
+      </Alert>
 
       {/* Lista de Gateways */}
       <div className="grid gap-4">
@@ -145,9 +117,15 @@ export function GatewayConfigPage() {
                     <CardTitle className="text-base">{getGatewayNome(gw.gateway)}</CardTitle>
                     <CardDescription>
                       {gw.ativo_global ? (
-                        <span className="text-green-600 dark:text-green-400 font-medium">Ativo globalmente</span>
+                        <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3" />
+                          Ativo para todas as escolas
+                        </span>
                       ) : (
-                        <span className="text-red-600 dark:text-red-400 font-medium">Desativado</span>
+                        <span className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                          <ShieldOff className="h-3 w-3" />
+                          Desativado
+                        </span>
                       )}
                     </CardDescription>
                   </div>
@@ -181,7 +159,7 @@ export function GatewayConfigPage() {
             <CardContent className="space-y-3">
               <Separator />
 
-              {/* Campos de configuração necessários */}
+              {/* Campos necessários */}
               {gw.campos_config && gw.campos_config.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-2 flex items-center gap-1">
@@ -199,14 +177,14 @@ export function GatewayConfigPage() {
                 </div>
               )}
 
-              {/* Info de webhook */}
+              {/* URL do webhook */}
               <div className="bg-muted rounded-md p-3 text-xs space-y-1">
                 <p className="font-medium flex items-center gap-1">
                   <Info className="h-3 w-3" />
-                  URL do Webhook (para configurar no gateway):
+                  URL do Webhook (para configurar no painel do gateway):
                 </p>
                 <code className="block bg-background rounded px-2 py-1 text-[11px] break-all">
-                  {import.meta.env.VITE_SUPABASE_URL?.replace('.co', '.co')?.replace('supabase', '') || 'https://SEU-PROJETO'}functions.supabase.co/webhook-gateway
+                  https://SEU-PROJETO.functions.supabase.co/webhook-gateway
                 </code>
               </div>
             </CardContent>

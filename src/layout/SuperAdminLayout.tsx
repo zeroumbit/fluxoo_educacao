@@ -20,7 +20,8 @@ import {
   ShoppingBag,
   Bell,
   Home,
-  TrendingUp
+  TrendingUp,
+  CreditCard
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -33,6 +34,7 @@ const superAdminNavigation = [
   { name: 'Planos', href: '/admin/planos', icon: ClipboardList },
   { name: 'Faturas', href: '/admin/faturas', icon: FileText },
   { name: 'Upgrades', href: '/admin/upgrades', icon: ArrowUpCircle },
+  { name: 'Gateways', href: '/admin/gateways', icon: CreditCard },
   { name: 'Configurações gerais', href: '/admin/config-recebimento', icon: QrCode },
   { name: 'Logs', href: '/admin/logs', icon: History },
 ]

@@ -686,7 +686,7 @@ export type WebhookEventLogInsert = Omit<WebhookEventLog, 'id' | 'payload_hash' 
 // ========== GATEWAY CONFIG (Super Admin) ==========
 export type GatewayConfig = {
   id: string
-  gateway: 'asaas' | 'mercado_pago' | 'efi' | 'pagseguro'
+  gateway: 'asaas' | 'mercado_pago' | 'abacate_pay' | 'efi' | 'pagseguro'
   nome_exibicao: string
   ativo_global: boolean
   logo_url: string | null
@@ -705,7 +705,7 @@ export type GatewayConfigUpdate = Partial<GatewayConfigInsert>
 export type GatewayTenantConfig = {
   id: string
   tenant_id: string
-  gateway: 'asaas' | 'mercado_pago' | 'efi' | 'pagseguro'
+  gateway: 'asaas' | 'mercado_pago' | 'abacate_pay' | 'efi' | 'pagseguro'
   ativo: boolean
   configuracao: Record<string, unknown>
   modo_teste: boolean

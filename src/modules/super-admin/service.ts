@@ -307,24 +307,6 @@ export const superAdminService = {
   },
 
   // ==========================================
-  // CONFIGURAÇÃO DE RECEBIMENTO (PIX MANUAL)
-  // ==========================================
-  async getConfiguracaoRecebimento() {
-    const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any).select('*').limit(1).maybeSingle()
-    if (error) throw error
-    return data as any
-  },
-
-  async updateConfiguracaoRecebimento(config: any) {
-    // Upsert no registro único
-    const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any)
-      .upsert({ ...config, updated_at: new Date().toISOString() })
-      .select().maybeSingle()
-    if (error) throw error
-    return data
-  },
-
-  // ==========================================
   // INTELIGÊNCIA E INSIGHTS (ZERO COST)
   // ==========================================
   async getTenantHealthScores() {

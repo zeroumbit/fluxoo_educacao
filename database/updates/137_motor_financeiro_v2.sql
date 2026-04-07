@@ -111,9 +111,12 @@ ON CONFLICT (codigo) DO NOTHING;
 -- 1. TABELA: gateway_config (Global - Super Admin)
 -- =====================================================
 
+-- Drop constraint se existir (para recriar com novos gateways)
+ALTER TABLE public.gateway_config DROP CONSTRAINT IF EXISTS gateway_config_gateway_check;
+
 CREATE TABLE IF NOT EXISTS public.gateway_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    gateway TEXT NOT NULL UNIQUE CHECK (gateway IN ('asaas', 'mercado_pago', 'efi', 'pagseguro')),
+    gateway TEXT NOT NULL UNIQUE CHECK (gateway IN ('asaas', 'mercado_pago', 'abacate_pay', 'efi', 'pagseguro')),
     nome_exibicao TEXT NOT NULL,
     ativo_global BOOLEAN NOT NULL DEFAULT false,
     logo_url TEXT,
@@ -129,7 +132,7 @@ INSERT INTO public.gateway_config (gateway, nome_exibicao, ativo_global, campos_
 VALUES
     ('asaas', 'Asaas', false,
      '[
-        {"key":"api_token","label":"API Token (Sandbox ou Producao)","type":"password","required":true,"help":"Obtenha em Configuracoes > Integracoes no painel Asaas"},
+        {"key":"api_token","label":"API Token","type":"password","required":true,"help":"Obtenha em Configuracoes > Integracoes no painel Asaas"},
         {"key":"webhook_token","label":"Webhook Token","type":"password","required":true,"help":"Token de validacao do webhook"},
         {"key":"sandbox","label":"Modo Sandbox","type":"boolean","required":false,"default":false}
      ]'::jsonb, 1),
@@ -138,17 +141,39 @@ VALUES
         {"key":"access_token","label":"Access Token","type":"password","required":true,"help":"Obtenha em https://www.mercadopago.com.br/developers/panel/app"},
         {"key":"public_key","label":"Public Key","type":"text","required":false,"help":"Necessario para checkout transparent"},
         {"key":"webhook_secret","label":"Webhook Secret","type":"password","required":false,"help":"Para validacao de assinatura dos webhooks"}
-     ]'::jsonb, 2)
+     ]'::jsonb, 2),
+    ('abacate_pay', 'Abacate Pay', false,
+     '[
+        {"key":"api_key","label":"API Key","type":"password","required":true,"help":"Obtenha no painel do Abacate Pay"},
+        {"key":"api_secret","label":"API Secret","type":"password","required":true,"help":"Chave secreta da API"},
+        {"key":"webhook_token","label":"Webhook Token","type":"password","required":true,"help":"Token para validar webhooks"},
+        {"key":"sandbox","label":"Modo Sandbox","type":"boolean","required":false,"default":false}
+     ]'::jsonb, 3),
+    ('efi', 'EFI (EfiPay)', false,
+     '[
+        {"key":"client_id","label":"Client ID","type":"text","required":true,"help":"Obtenha no painel EFI"},
+        {"key":"client_secret","label":"Client Secret","type":"password","required":true,"help":"Segredo do cliente"},
+        {"key":"pix_cert","label":"Certificado PIX (PEM)","type":"textarea","required":false,"help":"Certificado para PIX"}
+     ]'::jsonb, 4),
+    ('pagseguro', 'PagSeguro', false,
+     '[
+        {"key":"email","label":"Email PagSeguro","type":"text","required":true,"help":"Email da conta PagSeguro"},
+        {"key":"token","label":"Token","type":"password","required":true,"help":"Token de integracao"},
+        {"key":"sandbox","label":"Modo Sandbox","type":"boolean","required":false,"default":false}
+     ]'::jsonb, 5)
 ON CONFLICT (gateway) DO NOTHING;
 
 -- =====================================================
 -- 2. TABELA: gateway_tenant_config (Por Escola)
 -- =====================================================
 
+-- Drop constraint se existir
+ALTER TABLE public.gateway_tenant_config DROP CONSTRAINT IF EXISTS gateway_tenant_config_gateway_check;
+
 CREATE TABLE IF NOT EXISTS public.gateway_tenant_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
-    gateway TEXT NOT NULL CHECK (gateway IN ('asaas', 'mercado_pago', 'efi', 'pagseguro')),
+    gateway TEXT NOT NULL CHECK (gateway IN ('asaas', 'mercado_pago', 'abacate_pay', 'efi', 'pagseguro')),
     ativo BOOLEAN NOT NULL DEFAULT false,
     configuracao JSONB NOT NULL DEFAULT '{}'::jsonb,
     modo_teste BOOLEAN NOT NULL DEFAULT false,
@@ -183,10 +208,13 @@ CREATE TRIGGER trg_updated_at_gateway_tenant
 -- 3. TABELA: webhook_events_log (Idempotencia)
 -- =====================================================
 
+-- Drop constraint se existir
+ALTER TABLE public.webhook_events_log DROP CONSTRAINT IF EXISTS webhook_events_log_gateway_check;
+
 CREATE TABLE IF NOT EXISTS public.webhook_events_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     gateway_event_id TEXT NOT NULL,
-    gateway TEXT NOT NULL CHECK (gateway IN ('asaas', 'mercado_pago', 'efi', 'pagseguro')),
+    gateway TEXT NOT NULL CHECK (gateway IN ('asaas', 'mercado_pago', 'abacate_pay', 'efi', 'pagseguro')),
     tenant_id UUID,
     event_type TEXT NOT NULL,
     raw_payload JSONB NOT NULL,
@@ -263,7 +291,7 @@ DECLARE
     v_dias_carencia INTEGER := 0;
 BEGIN
     -- A) Validar gateway
-    IF p_gateway NOT IN ('asaas', 'mercado_pago', 'efi', 'pagseguro') THEN
+    IF p_gateway NOT IN ('asaas', 'mercado_pago', 'abacate_pay', 'efi', 'pagseguro') THEN
         RETURN jsonb_build_object('success', false, 'error', 'Gateway nao suportado', 'gateway', p_gateway);
     END IF;
 

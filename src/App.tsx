@@ -56,6 +56,7 @@ const DisciplinasPage = lazy(() => import('@/modules/academico/pages/Disciplinas
 const EventosPage = lazy(() => import('@/modules/agenda/pages/EventosPage').then(m => ({ default: m.EventosPage })))
 const ConfiguracoesPage = lazy(() => import('@/modules/configuracoes/pages/ConfiguracoesPage').then(m => ({ default: m.ConfiguracoesPage })))
 const ContasPagarPage = lazy(() => import('@/modules/financeiro/pages/ContasPagarPage').then(m => ({ default: m.ContasPagarPage })))
+const GatewayTenantConfigPage = lazy(() => import('@/modules/financeiro/pages/GatewayTenantConfigPage').then(m => ({ default: m.GatewayTenantConfigPage })))
 const FinanceiroRelatoriosPage = lazy(() => import('@/modules/financeiro/pages/FinanceiroRelatoriosPage').then(m => ({ default: m.FinanceiroRelatoriosPage })))
 const DocumentosPage = lazy(() => import('@/modules/documentos/pages/DocumentosPage').then(m => ({ default: m.DocumentosPage })))
 const AlmoxarifadoPage = lazy(() => import('@/modules/almoxarifado/pages/AlmoxarifadoPage').then(m => ({ default: m.AlmoxarifadoPage })))
@@ -75,6 +76,7 @@ const PlanosPage = lazy(() => import('@/modules/super-admin/pages/PlanosPage').t
 const EscolasPage = lazy(() => import('@/modules/super-admin/pages/EscolasPage').then(m => ({ default: m.EscolasPage })))
 const FaturasPage = lazy(() => import('@/modules/super-admin/pages/FaturasPage').then(m => ({ default: m.FaturasPage })))
 const UpgradesPage = lazy(() => import('@/modules/super-admin/pages/UpgradesPage').then(m => ({ default: m.UpgradesPage })))
+const GatewayConfigPage = lazy(() => import('@/modules/super-admin/pages/GatewayConfigPage').then(m => ({ default: m.GatewayConfigPage })))
 const ConfigRecebimentoPage = lazy(() => import('@/modules/super-admin/pages/ConfigRecebimentoPage').then(m => ({ default: m.ConfigRecebimentoPage })))
 const MarketplaceConfigPage = lazy(() => import('@/modules/super-admin/pages/MarketplaceConfigPage').then(m => ({ default: m.MarketplaceConfigPage })))
 
@@ -203,6 +205,7 @@ function App() {
               <Route path="/admin/planos" element={<PlanosPage />} />
               <Route path="/admin/faturas" element={<FaturasPage />} />
               <Route path="/admin/upgrades" element={<UpgradesPage />} />
+              <Route path="/admin/gateways" element={<GatewayConfigPage />} />
               <Route path="/admin/config-recebimento" element={<ConfigRecebimentoPage />} />
               <Route path="/admin/logs" element={<div className="p-8"><h1 className="text-2xl font-bold">Logs do Sistema</h1><p>Em breve: Auditoria global.</p></div>} />
             </Route>
@@ -263,6 +266,7 @@ function App() {
               <Route path="/agenda" element={<EventosPage />} />
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />
               <Route path="/contas-pagar" element={<ContasPagarPage />} />
+              <Route path="/gateway" element={<GatewayTenantConfigPage />} />
               <Route path="/financeiro-relatorios" element={<FinanceiroRelatoriosPage />} />
               <Route path="/documentos" element={<DocumentosPage />} />
               <Route path="/almoxarifado" element={<AlmoxarifadoPage />} />

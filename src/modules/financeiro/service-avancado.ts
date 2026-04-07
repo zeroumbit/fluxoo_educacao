@@ -199,8 +199,8 @@ export const financeiroAvancadoService = {
 
   /**
    * Salva ou atualiza a configuração de gateway da escola.
-   * IMPORTANTE: Os tokens devem ser enviados por HTTPS e serão
-   * armazenados no banco. Em produção, considerar criptografia pgcrypto.
+   * REGRA: Apenas 1 gateway pode ficar ativo por vez.
+   * Ao ativar um gateway, todos os outros são desativados automaticamente.
    */
   async salvarGatewayTenantConfig(tenantId: string, gateway: string, configuracao: Record<string, unknown>, ativo: boolean, modoTeste: boolean = false) {
     // Primeiro verificar se o gateway está ativo globalmente
@@ -211,6 +211,19 @@ export const financeiroAvancadoService = {
 
     if (!globalCheck || globalCheck.ativo_global !== true) {
       throw new Error(`Gateway ${gateway} não foi ativado pelo Super Admin.`)
+    }
+
+    // Se está ativando, desativar TODOS os outros gateways desta escola
+    if (ativo) {
+      const { error: deactivateError } = await (supabase.from('gateway_tenant_config' as any) as any)
+        .update({ ativo: false, updated_at: new Date().toISOString() })
+        .eq('tenant_id', tenantId)
+        .neq('gateway', gateway)
+
+      if (deactivateError) {
+        logger.error('[salvarGatewayTenantConfig] Erro ao desativar outros gateways:', deactivateError)
+        // Não bloqueia — continua salvando o atual
+      }
     }
 
     // Verificar se já existe
