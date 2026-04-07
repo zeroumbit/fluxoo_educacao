@@ -32,9 +32,59 @@ export function useRegistrarPagamento() {
 }
 export function useFechamentoMensal() {
   const { authUser } = useAuth()
-  return useQuery({ 
-    queryKey: ['fechamento_mensal', authUser?.tenantId], 
-    queryFn: () => financeiroAvancadoService.getFechamentoMensal(authUser!.tenantId), 
-    enabled: !!authUser?.tenantId 
+  return useQuery({
+    queryKey: ['fechamento_mensal', authUser?.tenantId],
+    queryFn: () => financeiroAvancadoService.getFechamentoMensal(authUser!.tenantId),
+    enabled: !!authUser?.tenantId
+  })
+}
+
+// ========== GATEWAYS DE PAGAMENTO (por escola) ==========
+export function useGatewaysDisponiveis() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['gateway', 'disponiveis', authUser?.tenantId],
+    queryFn: () => financeiroAvancadoService.getGatewaysDisponiveis(authUser!.tenantId),
+    enabled: !!authUser?.tenantId
+  })
+}
+
+export function useGatewayTenantConfig(gateway: string) {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['gateway', 'tenant-config', gateway, authUser?.tenantId],
+    queryFn: () => financeiroAvancadoService.getGatewayTenantConfig(authUser!.tenantId, gateway),
+    enabled: !!authUser?.tenantId && !!gateway
+  })
+}
+
+export function useSalvarGatewayTenantConfig() {
+  const qc = useQueryClient()
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: ({ gateway, configuracao, ativo, modoTeste }: {
+      gateway: string
+      configuracao: Record<string, unknown>
+      ativo: boolean
+      modoTeste?: boolean
+    }) => financeiroAvancadoService.salvarGatewayTenantConfig(
+      authUser!.tenantId, gateway, configuracao, ativo, modoTeste
+    ),
+    onSuccess: (_, { gateway }) => {
+      qc.invalidateQueries({ queryKey: ['gateway', 'disponiveis'] })
+      qc.invalidateQueries({ queryKey: ['gateway', 'tenant-config', gateway] })
+    }
+  })
+}
+
+export function useDesativarGatewayTenant() {
+  const qc = useQueryClient()
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: (gateway: string) => financeiroAvancadoService.desativarGatewayTenant(authUser!.tenantId, gateway),
+    onSuccess: (__, gateway) => {
+      qc.invalidateQueries({ queryKey: ['gateway', 'disponiveis'] })
+      qc.invalidateQueries({ queryKey: ['gateway', 'tenant-config', gateway] })
+    }
   })
 }

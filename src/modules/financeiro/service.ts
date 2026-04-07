@@ -573,12 +573,57 @@ export const financeiroService = {
        logger.error('Erro na RPC registrar_pagamento_cobranca:', error)
        throw error
      }
-     
+
      if (!data?.success) {
        throw new Error(data?.error || 'Erro desconhecido ao registrar pagamento')
      }
 
      return data
+  },
+
+  /**
+   * Baixa manual de boleto com proteção de concorrência (SELECT FOR UPDATE).
+   * Impede que dois cliques simultâneos no frontend causem dupla cobrança.
+   */
+  async baixarBoletoComConcorrencia(
+    cobrancaId: string,
+    formaPagamento: string = 'boleto',
+    comprovanteUrl?: string,
+    userId?: string,
+    tenantId?: string
+  ) {
+    if (userId && tenantId) {
+      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    }
+
+    const { data, error } = await (supabase.rpc('baixar_boleto_concorrencia', {
+      p_cobranca_id: cobrancaId,
+      p_forma_pagamento: formaPagamento,
+      p_comprovante_url: comprovanteUrl || null,
+      p_usuario_id: userId || null,
+      p_codigo_transacao: `manual_${Date.now()}`
+    }) as any)
+
+    if (error) {
+      logger.error('Erro na RPC baixar_boleto_concorrencia:', error)
+      throw error
+    }
+
+    if (!data?.success) {
+      if (data.concorrencia) {
+        const err = new Error('CONCORRENCIA: Cobrança está sendo processada por outra sessão.')
+        ;(err as any).concorrencia = true
+        throw err
+      }
+      if (data.ja_pago) {
+        const err = new Error('JA_PAGO: Esta cobrança já foi baixada.')
+        ;(err as any).jaPago = true
+        throw err
+      }
+      throw new Error(data?.error || 'Erro desconhecido ao baixar boleto')
+    }
+
+    return data
   },
 
   /**

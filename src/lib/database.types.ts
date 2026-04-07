@@ -576,11 +576,15 @@ export type Cobranca = {
   comprovante_url: string | null
   deleted_at: string | null
   deleted_by: string | null
+  gateway_event_id: string | null
+  gateway_origem: string | null
+  webhook_payload: Record<string, unknown> | null
+  codigo_transacao: string | null
   created_at: string
   updated_at: string
 }
-export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca' | 'pago' | 'valor_original' | 'valor_pago' | 'valor_multa' | 'valor_juros' | 'dias_atraso_calculado' | 'taxa_multa_aplicada' | 'taxa_juros_aplicada' | 'override_manual' | 'motivo_override' | 'forma_pagamento' | 'comprovante_url' | 'deleted_at' | 'deleted_by' | 'data_pagamento'> & {
-  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; pago?: boolean; valor_original?: number | null; override_manual?: boolean; created_at?: string; updated_at?: string
+export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca' | 'pago' | 'valor_original' | 'valor_pago' | 'valor_multa' | 'valor_juros' | 'dias_atraso_calculado' | 'taxa_multa_aplicada' | 'taxa_juros_aplicada' | 'override_manual' | 'motivo_override' | 'forma_pagamento' | 'comprovante_url' | 'deleted_at' | 'deleted_by' | 'data_pagamento' | 'gateway_event_id' | 'gateway_origem' | 'webhook_payload' | 'codigo_transacao'> & {
+  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; pago?: boolean; valor_original?: number | null; override_manual?: boolean; gateway_event_id?: string | null; gateway_origem?: string | null; webhook_payload?: Record<string, unknown> | null; codigo_transacao?: string | null; created_at?: string; updated_at?: string
 }
 export type CobrancaUpdate = Partial<CobrancaInsert>
 
@@ -640,6 +644,91 @@ export type PagamentoManualResponse = {
   valor_total?: number
   dias_atraso?: number
   dias_carencia?: number
+}
+
+// Tipo retornado pela RPC registrar_pagamento_webhook
+export type PagamentoWebhookResponse = PagamentoManualResponse & {
+  cobranca_id?: string
+  gateway?: string
+  gateway_event_id?: string
+}
+
+// Tipo retornado pela RPC baixar_boleto_concorrencia
+export type BaixaBoletoResponse = PagamentoManualResponse & {
+  cobranca_id?: string
+  forma_pagamento?: string
+  codigo_transacao?: string
+  concorrencia?: boolean
+  ja_pago?: boolean
+  retry?: boolean
+}
+
+// Tipo para registros na tabela webhook_events_log
+export type WebhookEventLog = {
+  id: string
+  gateway_event_id: string
+  gateway: 'asaas' | 'mercado_pago'
+  event_type: string
+  raw_payload: Record<string, unknown>
+  cobranca_id: string | null
+  processing_status: 'pending' | 'processed' | 'ignored_duplicate' | 'error'
+  processing_details: Record<string, unknown> | null
+  received_at: string
+  processed_at: string | null
+  retry_count: number
+  payload_hash: string
+}
+export type WebhookEventLogInsert = Omit<WebhookEventLog, 'id' | 'payload_hash' | 'received_at'> & {
+  id?: string
+  received_at?: string
+}
+
+// ========== GATEWAY CONFIG (Super Admin) ==========
+export type GatewayConfig = {
+  id: string
+  gateway: 'asaas' | 'mercado_pago' | 'efi' | 'pagseguro'
+  nome_exibicao: string
+  ativo_global: boolean
+  logo_url: string | null
+  doc_url: string | null
+  campos_config: Record<string, unknown>[]
+  ordem_exibicao: number
+  created_at: string
+  updated_at: string
+}
+export type GatewayConfigInsert = Omit<GatewayConfig, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type GatewayConfigUpdate = Partial<GatewayConfigInsert>
+
+// ========== GATEWAY TENANT CONFIG (por escola) ==========
+export type GatewayTenantConfig = {
+  id: string
+  tenant_id: string
+  gateway: 'asaas' | 'mercado_pago' | 'efi' | 'pagseguro'
+  ativo: boolean
+  configuracao: Record<string, unknown>
+  modo_teste: boolean
+  updated_at: string | null
+  updated_by: string | null
+}
+export type GatewayTenantConfigInsert = Omit<GatewayTenantConfig, 'id' | 'updated_at'> & {
+  id?: string; updated_at?: string
+}
+export type GatewayTenantConfigUpdate = Partial<GatewayTenantConfigInsert>
+
+// ========== VIEW: Gateways Disponíveis ==========
+export type GatewayDisponivelView = {
+  gateway: string
+  nome_exibicao: string
+  logo_url: string | null
+  doc_url: string | null
+  ordem_exibicao: number
+  campos_config: Record<string, unknown>[]
+  tenant_ativo: boolean | null
+  tenant_configurado: boolean
+  modo_teste: boolean | null
+  tenant_updated_at: string | null
 }
 
 // ========== PLANOS DE AULA ==========
@@ -1090,6 +1179,9 @@ export type Database = {
       frequencias: { Row: Frequencia; Insert: FrequenciaInsert; Update: FrequenciaUpdate; Relationships: any[] }
       mural_avisos: { Row: MuralAviso; Insert: MuralAvisoInsert; Update: MuralAvisoUpdate; Relationships: any[] }
       cobrancas: { Row: Cobranca; Insert: CobrancaInsert; Update: CobrancaUpdate; Relationships: any[] }
+      webhook_events_log: { Row: WebhookEventLog; Insert: WebhookEventLogInsert; Update: Partial<WebhookEventLogInsert>; Relationships: any[] }
+      gateway_config: { Row: GatewayConfig; Insert: GatewayConfigInsert; Update: GatewayConfigUpdate; Relationships: any[] }
+      gateway_tenant_config: { Row: GatewayTenantConfig; Insert: GatewayTenantConfigInsert; Update: GatewayTenantConfigUpdate; Relationships: any[] }
       atividades: { Row: Atividade; Insert: AtividadeInsert; Update: AtividadeUpdate; Relationships: any[] }
       atividades_turmas: { Row: AtividadeTurma; Insert: AtividadeTurmaInsert; Update: AtividadeTurmaUpdate; Relationships: any[] }
       planos_aula: { Row: PlanoAula; Insert: PlanoAulaInsert; Update: PlanoAulaUpdate; Relationships: any[] }
@@ -1193,6 +1285,29 @@ export type Database = {
           p_usuario_id?: string | null;
         };
         Returns: PagamentoManualResponse
+      };
+      registrar_pagamento_webhook: {
+        Args: {
+          p_cobranca_id: string;
+          p_gateway: string;
+          p_gateway_event_id: string;
+          p_valor_pago: number;
+          p_forma_pagamento?: string | null;
+          p_codigo_transacao?: string | null;
+          p_comprovante_url?: string | null;
+          p_webhook_payload?: Record<string, unknown> | null;
+        };
+        Returns: PagamentoWebhookResponse
+      };
+      baixar_boleto_concorrencia: {
+        Args: {
+          p_cobranca_id: string;
+          p_forma_pagamento?: string | null;
+          p_comprovante_url?: string | null;
+          p_usuario_id?: string | null;
+          p_codigo_transacao?: string | null;
+        };
+        Returns: BaixaBoletoResponse
       };
       fn_reconciliar_mensalidades: {
         Args: { p_tenant_id: string };

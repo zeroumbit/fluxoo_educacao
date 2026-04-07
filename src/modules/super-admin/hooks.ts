@@ -216,3 +216,32 @@ export function useRadarEvasaoGeral() {
     queryFn: () => superAdminService.getRadarEvasaoGeral(),
   })
 }
+
+// ========== GATEWAYS DE PAGAMENTO (Super Admin) ==========
+export function useGatewayConfig() {
+  return useQuery({
+    queryKey: ['admin', 'gateway-config'],
+    queryFn: () => superAdminService.getGatewayConfig(),
+  })
+}
+
+export function useToggleGatewayGlobal() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ gateway, ativo }: { gateway: string; ativo: boolean }) =>
+      superAdminService.toggleGatewayGlobal(gateway, ativo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'gateway-config'] })
+      qc.invalidateQueries({ queryKey: ['gateway', 'disponiveis'] })
+    },
+  })
+}
+
+export function useUpdateGatewayCamposConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ gateway, campos }: { gateway: string; campos: any[] }) =>
+      superAdminService.updateGatewayCamposConfig(gateway, campos),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'gateway-config'] }),
+  })
+}

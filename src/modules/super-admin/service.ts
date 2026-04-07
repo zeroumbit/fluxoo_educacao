@@ -372,4 +372,70 @@ export const superAdminService = {
       items: notifications
     }
   },
+
+  // ==========================================
+  // GATEWAYS DE PAGAMENTO (Super Admin)
+  // ==========================================
+  async getGatewayConfig() {
+    const { data, error } = await (supabase.from('gateway_config' as any) as any)
+      .select('*')
+      .order('ordem_exibicao', { ascending: true })
+    if (error) throw error
+    return data as any[]
+  },
+
+  async toggleGatewayGlobal(gateway: string, ativo: boolean) {
+    const { data, error } = await (supabase.from('gateway_config' as any) as any)
+      .update({ ativo_global: ativo, updated_at: new Date().toISOString() })
+      .eq('gateway', gateway)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async updateGatewayCamposConfig(gateway: string, camposConfig: any[]) {
+    const { data, error } = await (supabase.from('gateway_config' as any) as any)
+      .update({ campos_config: camposConfig, updated_at: new Date().toISOString() })
+      .eq('gateway', gateway)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  // ==========================================
+  // CONFIGURAÇÕES DE RECEBIMENTO (global)
+  // ==========================================
+  async getConfiguracaoRecebimento() {
+    const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any)
+      .select('*')
+      .maybeSingle()
+    if (error) throw error
+    return data
+  },
+
+  async updateConfiguracaoRecebimento(config: any) {
+    const { data: existing } = await (supabase.from('configuracao_recebimento' as any) as any)
+      .select('id')
+      .limit(1)
+      .maybeSingle()
+
+    if (existing) {
+      const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any)
+        .update({ ...config, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } else {
+      const { data, error } = await (supabase.from('configuracao_recebimento' as any) as any)
+        .insert({ ...config, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
+  },
 }
