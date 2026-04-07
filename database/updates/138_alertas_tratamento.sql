@@ -40,6 +40,12 @@ CREATE TRIGGER trg_atualizar_data_alerta
 -- 4. RLS Policies
 ALTER TABLE public.alertas_tratamento ENABLE ROW LEVEL SECURITY;
 
+-- Drop policies existentes (idempotente)
+DROP POLICY IF EXISTS "alertas_gestor_select" ON public.alertas_tratamento;
+DROP POLICY IF EXISTS "alertas_gestor_insert" ON public.alertas_tratamento;
+DROP POLICY IF EXISTS "alertas_gestor_update" ON public.alertas_tratamento;
+DROP POLICY IF EXISTS "alertas_gestor_delete" ON public.alertas_tratamento;
+
 -- Gestores podem ver todos os alertas da sua escola
 CREATE POLICY "alertas_gestor_select"
     ON public.alertas_tratamento
@@ -88,6 +94,10 @@ CREATE INDEX IF NOT EXISTS idx_alertas_hist_data ON public.alertas_historico(dat
 
 -- RLS para histórico
 ALTER TABLE public.alertas_historico ENABLE ROW LEVEL SECURITY;
+
+-- Drop policies existentes (idempotente)
+DROP POLICY IF EXISTS "alertas_hist_gestor_select" ON public.alertas_historico;
+DROP POLICY IF EXISTS "alertas_hist_gestor_insert" ON public.alertas_historico;
 
 CREATE POLICY "alertas_hist_gestor_select"
     ON public.alertas_historico
