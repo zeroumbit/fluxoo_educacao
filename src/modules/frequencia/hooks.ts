@@ -82,3 +82,47 @@ export function useAlunosDaTurma(turmaId: string) {
     enabled: !!authUser?.tenantId && !!turmaId,
   })
 }
+
+/**
+ * Hook para Chamada em Tempo Real com Optimistic Updates
+ */
+export function useFrequenciaOptimistic(turmaId: string, dataAula: string) {
+  const { authUser } = useAuth()
+  const queryClient = useQueryClient()
+  const queryKey = ['frequencias', turmaId, dataAula, authUser?.tenantId]
+
+  const mutation = useMutation({
+    mutationFn: (frequencias: FrequenciaInsert[]) => 
+      frequenciaService.salvarFrequencias(frequencias),
+    
+    // ⚡ Optimistic Update: Altera UI instantaneamente
+    onMutate: async (newFrequencias) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previousData = queryClient.getQueryData(queryKey)
+      
+      // Atualiza o cache local imediatamente
+      queryClient.setQueryData(queryKey, newFrequencias)
+
+      return { previousData }
+    },
+
+    // 🔄 Rollback em caso de erro
+    onError: (err, newFrequencias, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKey, context.previousData)
+      }
+    },
+
+    // 🏁 Sincronização final
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+  })
+
+  return {
+    ...mutation,
+    salvarLote: mutation.mutate,
+    isSaving: mutation.isPending
+  }
+}

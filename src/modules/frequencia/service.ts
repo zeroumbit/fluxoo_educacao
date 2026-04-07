@@ -121,18 +121,37 @@ export const frequenciaService = {
 
   async listarAlunosDaTurma(turmaId: string, tenantId: string) {
     const { data: matriculas, error: matError } = await (supabase.from('matriculas' as any) as any)
-      .select('aluno_id, alunos(id, nome_completo)')
+      .select(`
+        aluno_id, 
+        alunos (
+          id, 
+          nome_completo, 
+          nome_social, 
+          foto_url, 
+          data_nascimento,
+          patologias,
+          medicamentos,
+          alertas_saude_nee (
+            tipo_alerta,
+            descricao
+          )
+        )
+      `)
       .eq('turma_id', turmaId)
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
 
-    if (matError) throw matError
+    if (matError) {
+      logger.error('❌ [frequenciaService] Erro ao buscar alunos da turma:', matError)
+      throw matError
+    }
 
     return (matriculas || [])
       .map((m: any) => m.alunos)
       .filter(Boolean)
-      .sort((a: any, b: any) => a.nome_completo.localeCompare(b.nome_completo)) as { id: string, nome_completo: string }[]
+      .sort((a: any, b: any) => (a.nome_social || a.nome_completo).localeCompare(b.nome_social || b.nome_completo))
   },
+
 
   async buscarFaltasTurmaPeriodo(turmaId: string, tenantId: string, dataInicio: string, dataFim: string) {
     const { data, error } = await supabase

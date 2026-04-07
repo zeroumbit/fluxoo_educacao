@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAgendaDiaria } from '@/modules/professor/hooks'
@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
@@ -25,33 +24,13 @@ import {
   AlertCircle,
   Save,
   Users,
-  Calendar,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useAlunosDaTurma, useFrequenciaOptimistic, useFrequenciasPorTurmaData } from '@/modules/frequencia/hooks'
+import { FrequenciaMobileList } from '@/modules/frequencia/components/FrequenciaMobileList'
 
 type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
-
-const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string }> = {
-  presente: {
-    label: 'Presente',
-    icon: CheckCircle,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
-  },
-  falta: {
-    label: 'Falta',
-    icon: XCircle,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-  },
-  justificada: {
-    label: 'Justificada',
-    icon: AlertCircle,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
-  },
-}
 
 export function ProfessorFrequenciaPage() {
   const { authUser } = useAuth()
@@ -59,8 +38,6 @@ export function ProfessorFrequenciaPage() {
   
   const [turmaId, setTurmaId] = useState('')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
-  const [statusMap, setStatusMap] = useState<Record<string, FrequenciaStatus>>({})
-  const [justificativaMap, setJustificativaMap] = useState<Record<string, string>>({})
   
   // Modal de Justificativa
   const [modalOpen, setModalOpen] = useState(false)
@@ -82,41 +59,43 @@ export function ProfessorFrequenciaPage() {
     return Array.from(map.values())
   }, [agenda])
 
-  // Alunos mock (será substituído por dados reais do Supabase)
-  const alunosTurma = useMemo(() => {
-    if (!turmaId) return []
-    // TODO: Buscar alunos reais do Supabase via hook
-    return []
-  }, [turmaId])
+  // Dados Reais do Supabase
+  const { data: alunosTurma = [], isLoading: loadingAlunos } = useAlunosDaTurma(turmaId)
+  const { data: frequenciasExistentes = [] } = useFrequenciasPorTurmaData(turmaId, dataAula)
+  const { salvarLote, isSaving } = useFrequenciaOptimistic(turmaId, dataAula)
 
-  const handleStatusChange = (alunoId: string, status: FrequenciaStatus) => {
-    setStatusMap(prev => ({ ...prev, [alunoId]: status }))
-    
-    if (status === 'justificada') {
-      setAlunoJustificando({ id: alunoId, nome: alunoId })
-      setModalOpen(true)
+  // Mapear frequências existentes para o formato do componente
+  const initialFrequencias = useMemo(() => {
+    const map: Record<string, 'presente' | 'falta' | 'justificada'> = {}
+    frequenciasExistentes.forEach((f: any) => {
+      map[f.aluno_id] = f.status as any
+    })
+    return map
+  }, [frequenciasExistentes])
+
+  const handleSalvarFrequenciaBulk = async (payload: Array<{ aluno_id: string; status: string }>) => {
+    try {
+      const frequenciasInsert: any[] = payload.map(p => ({
+        tenant_id: authUser?.tenantId!,
+        turma_id: turmaId,
+        aluno_id: p.aluno_id,
+        status: p.status,
+        data_aula: dataAula,
+        justificativa: p.status === 'justificada' ? 'Informada pelo professor' : null
+      }))
+
+      salvarLote(frequenciasInsert, {
+        onSuccess: () => toast.success('Chamada sincronizada com sucesso!'),
+        onError: () => toast.error('Erro ao salvar. Verifique sua conexão.')
+      })
+    } catch (error) {
+      toast.error('Ocorreu um erro ao processar os dados.')
     }
   }
 
   const handleSalvarJustificativa = () => {
-    if (alunoJustificando) {
-      setJustificativaMap(prev => ({
-        ...prev,
-        [alunoJustificando.id]: justificativaTemp
-      }))
-      setModalOpen(false)
-      setJustificativaTemp('')
-      setAlunoJustificando(null)
-    }
-  }
-
-  const handleSalvarFrequencia = async () => {
-    try {
-      // TODO: Implementar chamada real ao Supabase
-      toast.success('Frequência salva com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao salvar frequência')
-    }
+    // Implementar se necessário no futuro para o componente mobile
+    setModalOpen(false)
   }
 
   if (loadingAgenda) {
@@ -128,16 +107,19 @@ export function ProfessorFrequenciaPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Filtros */}
       <Card>
         <CardHeader className="pb-3 pt-[30px]">
-          <CardTitle className="text-lg">Dados da Aula</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="w-5 h-5 text-zinc-400" />
+            Diário de Frequência
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Turma</Label>
+              <Label>Selecione a Turma</Label>
               <Select value={turmaId} onValueChange={setTurmaId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a turma" />
@@ -153,7 +135,7 @@ export function ProfessorFrequenciaPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Data da Aula</Label>
+              <Label>Data da Chamada</Label>
               <Input
                 type="date"
                 value={dataAula}
@@ -164,99 +146,33 @@ export function ProfessorFrequenciaPage() {
         </CardContent>
       </Card>
 
-      {/* Tabela de Frequência */}
+      {/* Lista Mobile Optimistic */}
       {turmaId && (
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-8">Aluno</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center pr-8">Justificativa</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {alunosTurma.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-12">
-                    <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-500">Nenhum aluno encontrado para esta turma</p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                alunosTurma.map((aluno: any) => {
-                  const status = statusMap[aluno.id] || 'presente'
-                  const config = statusConfig[status]
-                  const Icon = config.icon
-
-                  return (
-                    <TableRow key={aluno.id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="pl-8 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                            {aluno.nome?.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900">{aluno.nome}</p>
-                            <p className="text-xs text-slate-500">{aluno.email || 'Sem email'}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center py-4">
-                        <div className="flex items-center justify-center gap-2">
-                          {(['presente', 'falta', 'justificada'] as FrequenciaStatus[]).map((s) => {
-                            const cfg = statusConfig[s]
-                            const Ico = cfg.icon
-                            const isSelected = status === s
-
-                            return (
-                              <button
-                                key={s}
-                                onClick={() => handleStatusChange(aluno.id, s)}
-                                className={`p-2 rounded-lg border-2 transition-all ${
-                                  isSelected
-                                    ? `${cfg.bgColor} ${cfg.color} border-current`
-                                    : 'border-slate-200 text-slate-400 hover:border-slate-300'
-                                }`}
-                                title={cfg.label}
-                              >
-                                <Ico className="w-5 h-5" />
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center pr-8 py-4">
-                        {justificativaMap[aluno.id] ? (
-                          <Badge variant="secondary" className="max-w-xs truncate">
-                            {justificativaMap[aluno.id]}
-                          </Badge>
-                        ) : (
-                          <span className="text-slate-400 text-sm">—</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-
-          {alunosTurma.length > 0 && (
-            <div className="p-4 border-t border-slate-200">
-              <Button
-                onClick={handleSalvarFrequencia}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Frequência
-              </Button>
+        <div className="mt-4">
+          {loadingAlunos ? (
+            <div className="flex flex-col items-center justify-center h-48 py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-zinc-300 mb-2" />
+              <p className="text-zinc-500 font-medium text-sm">Buscando alunos da {turmasUnicas.find((t: any) => t.id === turmaId)?.nome}...</p>
+            </div>
+          ) : alunosTurma.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-zinc-100 mx-4">
+              <Users className="w-12 h-12 mx-auto text-zinc-300 mb-3" />
+              <p className="text-zinc-500 text-sm">Nenhum aluno ativo encontrado nesta turma.</p>
+            </div>
+          ) : (
+            <div className="px-4 md:px-0">
+              <FrequenciaMobileList 
+                alunos={alunosTurma}
+                initialFrequencias={initialFrequencias}
+                onSave={handleSalvarFrequenciaBulk}
+                isSaving={isSaving}
+              />
             </div>
           )}
         </div>
       )}
 
-      {/* Modal de Justificativa */}
+      {/* Modal de Justificativa (Legado/Opcional) */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -268,9 +184,9 @@ export function ProfessorFrequenciaPage() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Justificativa</Label>
+              <Label>Motivo Especial</Label>
               <Textarea
-                placeholder="Motivo da falta justificada..."
+                placeholder="Ex: Aluno apresentou atestado médico..."
                 value={justificativaTemp}
                 onChange={(e) => setJustificativaTemp(e.target.value)}
                 rows={4}
@@ -283,7 +199,7 @@ export function ProfessorFrequenciaPage() {
               Cancelar
             </Button>
             <Button onClick={handleSalvarJustificativa}>
-              Salvar Justificativa
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
