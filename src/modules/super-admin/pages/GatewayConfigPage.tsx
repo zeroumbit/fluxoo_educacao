@@ -5,8 +5,10 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useGatewayConfig, useToggleGatewayGlobal } from '@/modules/super-admin/hooks'
+import { GatewayConfirmDialog } from '@/modules/super-admin/components/GatewayConfirmDialog'
 import { Loader2, ShieldCheck, ShieldOff, Key, Info, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
+import { useState } from 'react'
 
 /**
  * GatewayConfigPage - Super Admin
@@ -17,40 +19,41 @@ import { toast } from 'sonner'
 export function GatewayConfigPage() {
   const { data: gateways, isLoading } = useGatewayConfig()
   const toggleGateway = useToggleGatewayGlobal()
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    gateway: string
+    isAtivando: boolean
+  }>({ open: false, gateway: '', isAtivando: false })
 
-  const handleToggle = async (gateway: string, currentStatus: boolean) => {
-    const novoStatus = !currentStatus
+  const handleToggle = (gateway: string, currentStatus: boolean) => {
+    setConfirmDialog({
+      open: true,
+      gateway,
+      isAtivando: !currentStatus
+    })
+  }
 
-    if (novoStatus) {
-      const confirmed = window.confirm(
-        `Ativar o gateway "${getGatewayNome(gateway)}" para todas as escolas?\n\n` +
-        `As escolas poderão configurar seus tokens na página Configurações > Gateway.`
-      )
-      if (!confirmed) return
-    } else {
-      const confirmed = window.confirm(
-        `⚠️ ATENÇÃO: Desativar o gateway "${getGatewayNome(gateway)}"?\n\n` +
-        `- Nenhuma escola poderá receber pagamentos via este gateway\n` +
-        `- Webhooks deste gateway serão rejeitados\n` +
-        `- As configurações das escolas serão mantidas (não perdidas)\n\n` +
-        `Deseja continuar?`
-      )
-      if (!confirmed) return
-    }
-
+  const handleConfirm = async () => {
+    const { gateway, isAtivando } = confirmDialog
     try {
-      await toggleGateway.mutateAsync({ gateway, ativo: novoStatus })
+      await toggleGateway.mutateAsync({ gateway, ativo: isAtivando })
       toast.success(
-        novoStatus ? `Gateway ${getGatewayNome(gateway)} ativado!` : `Gateway ${getGatewayNome(gateway)} desativado.`,
+        isAtivando ? `Gateway ${getGatewayNome(gateway)} ativado!` : `Gateway ${getGatewayNome(gateway)} desativado.`,
         {
-          description: novoStatus
+          description: isAtivando
             ? 'As escolas já podem configurar seus tokens.'
             : 'Webhooks deste gateway serão rejeitados.'
         }
       )
     } catch {
       toast.error('Erro ao alterar status do gateway.')
+    } finally {
+      setConfirmDialog({ open: false, gateway: '', isAtivando: false })
     }
+  }
+
+  const handleCloseDialog = () => {
+    setConfirmDialog({ open: false, gateway: '', isAtivando: false })
   }
 
   const getGatewayNome = (gateway: string) => {
@@ -191,6 +194,16 @@ export function GatewayConfigPage() {
           </Card>
         ))}
       </div>
+
+      {/* Dialog de confirmação para ativar/desativar gateway */}
+      <GatewayConfirmDialog
+        open={confirmDialog.open}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirm}
+        gateway={confirmDialog.gateway}
+        isAtivando={confirmDialog.isAtivando}
+        isPending={toggleGateway.isPending}
+      />
     </div>
   )
 }
