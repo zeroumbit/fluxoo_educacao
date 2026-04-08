@@ -14,19 +14,21 @@ export const documentosService = {
     if (error) throw error
     return data
   },
-  async atualizarTemplate(id: string, updates: any) {
+  async atualizarTemplate(id: string, tenantId: string, updates: any) {
     const { data, error } = await (supabase.from('documento_templates' as any) as any)
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
     if (error) throw error
     return data
   },
-  async excluirTemplate(id: string) {
+  async excluirTemplate(id: string, tenantId: string) {
     const { error } = await (supabase.from('documento_templates' as any) as any)
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
   async listarEmitidos(tenantId: string) {
@@ -100,17 +102,18 @@ export const documentosService = {
     return (data as any[]) || []
   },
 
-  async atualizarSolicitacao(id: string, updates: any) {
+  async atualizarSolicitacao(id: string, tenantId: string, updates: any) {
     const { data, error } = await (supabase.from('document_solicitations' as any) as any)
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
     if (error) throw error
     return data
   },
 
-  async vincularDocumentoSolicitacao(solicitacaoId: string, documentoEmitidoId: string) {
+  async vincularDocumentoSolicitacao(solicitacaoId: string, tenantId: string, documentoEmitidoId: string) {
     const { data, error } = await (supabase.from('document_solicitations' as any) as any)
       .update({
         documento_emitido_id: documentoEmitidoId,
@@ -119,6 +122,7 @@ export const documentosService = {
         updated_at: new Date().toISOString(),
       })
       .eq('id', solicitacaoId)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
     if (error) throw error

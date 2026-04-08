@@ -12,11 +12,20 @@ export function useCriarTemplate() {
 }
 export function useAtualizarTemplate() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, updates }: { id: string; updates: any }) => documentosService.atualizarTemplate(id, updates), onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) })
+  const { authUser } = useAuth()
+  return useMutation({ 
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => 
+      documentosService.atualizarTemplate(id, authUser!.tenantId, updates), 
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) 
+  })
 }
 export function useExcluirTemplate() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (id: string) => documentosService.excluirTemplate(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) })
+  const { authUser } = useAuth()
+  return useMutation({ 
+    mutationFn: (id: string) => documentosService.excluirTemplate(id, authUser!.tenantId), 
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_templates'] }) 
+  })
 }
 export function useDocumentosEmitidos() {
   const { authUser } = useAuth()
@@ -48,18 +57,20 @@ export function useSolicitacoesDocumento() {
 
 export function useAtualizarSolicitacao() {
   const qc = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
-      documentosService.atualizarSolicitacao(id, updates),
+      documentosService.atualizarSolicitacao(id, authUser!.tenantId, updates),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_solicitacoes'] }),
   })
 }
 
 export function useVincularDocumentoSolicitacao() {
   const qc = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
     mutationFn: ({ solicitacaoId, documentoEmitidoId }: { solicitacaoId: string; documentoEmitidoId: string }) =>
-      documentosService.vincularDocumentoSolicitacao(solicitacaoId, documentoEmitidoId),
+      documentosService.vincularDocumentoSolicitacao(solicitacaoId, authUser!.tenantId, documentoEmitidoId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doc_solicitacoes', 'docs_emitidos'] }),
   })
 }

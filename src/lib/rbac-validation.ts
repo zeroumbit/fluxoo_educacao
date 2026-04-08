@@ -62,15 +62,21 @@ export async function validarPermissao(
     return // Acesso concedido
   }
 
-  // 3. Verificar se é gestor da escola (acesso total na própria escola)
+  // 3. Verificar se é gestor da escola por ID ou Perfil Administrativo
   const { data: escolaData } = await supabase
     .from('escolas')
-    .select('gestor_user_id')
+    .select('gestor_user_id, email_gestor')
     .eq('id', tenantId)
     .maybeSingle()
 
-  if (escolaData?.gestor_user_id === userId) {
-    return // Gestor tem acesso total na própria escola
+  const perfilNome = (userData as any)?.perfil?.[0]?.nome?.toLowerCase() || ''
+  const isGestorPerfil = perfilNome.includes('gestor') || 
+                         perfilNome.includes('diretor') || 
+                         perfilNome.includes('coordenador') ||
+                         perfilNome.includes('administrativo')
+
+  if (escolaData?.gestor_user_id === userId || isGestorPerfil) {
+    return // Gestores e perfis administrativos têm acesso total na própria escola
   }
 
   // 4. Responsável não tem acesso aos serviços administrativos

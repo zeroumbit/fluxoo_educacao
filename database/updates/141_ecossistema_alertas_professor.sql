@@ -123,6 +123,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 6. RLS (Garantindo que professor só veja o seu)
 ALTER TABLE public.alertas_alunos ENABLE ROW LEVEL SECURITY;
 
+-- Drop policy existente (idempotente)
+DROP POLICY IF EXISTS "Professores visualizam alertas de seus alunos e operacionais" ON public.alertas_alunos;
+
 -- Política para Professores
 CREATE POLICY "Professores visualizam alertas de seus alunos e operacionais"
     ON public.alertas_alunos

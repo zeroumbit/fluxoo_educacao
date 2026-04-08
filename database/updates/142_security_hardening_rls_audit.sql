@@ -29,8 +29,13 @@ CREATE TABLE IF NOT EXISTS public.audit_logs_v2 (
 -- Garantir que a tabela de auditoria seja apenas-leitura após inserção (Imutável)
 ALTER TABLE public.audit_logs_v2 ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Audit_Logs_Select" ON public.audit_logs_v2 
-FOR SELECT TO authenticated 
+-- Drop policies existentes (idempotente)
+DROP POLICY IF EXISTS "Audit_Logs_Select" ON public.audit_logs_v2;
+DROP POLICY IF EXISTS "Audit_Logs_No_Updates" ON public.audit_logs_v2;
+DROP POLICY IF EXISTS "Audit_Logs_No_Deletes" ON public.audit_logs_v2;
+
+CREATE POLICY "Audit_Logs_Select" ON public.audit_logs_v2
+FOR SELECT TO authenticated
 USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- Ninguém pode editar ou deletar logs de auditoria

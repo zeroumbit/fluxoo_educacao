@@ -15,27 +15,32 @@ import React from 'react'
  * return <div>Só aparece para quem tem acesso</div>
  * ```
  */
+import { usePermissions } from '@/providers/RBACProvider'
+
+const areaToPermissionMap: Record<string, string> = {
+  'Financeiro': 'financeiro.view',
+  'Pedagógico': 'academico.view',
+  'Secretaria': 'academico.matriculas.view',
+  'Configurações': 'financeiro.config.view',
+  'RH': 'gestao.funcionarios.view',
+  'Marketplace': 'marketplace.view',
+  'SuperAdmin': 'superadmin.view'
+}
+
 export function usePermissao(area: string) {
   const { authUser, loading } = useAuth()
+  const { hasPermission, isLoading: rbacLoading } = usePermissions()
 
-  // Super admin tem acesso a tudo
-  if (authUser?.role === 'super_admin') {
+  // Super admin e gestor têm acesso total (já tratado pelo usePermissions, mas reforçamos aqui)
+  if (authUser?.role === 'super_admin' || authUser?.role === 'gestor') {
     return { temAcesso: true, isLoading: false }
   }
 
-  // Gestor tem acesso a tudo no seu tenant
-  if (authUser?.role === 'gestor') {
-    return { temAcesso: true, isLoading: false }
-  }
+  // Mapear área para permissão granular
+  const permissionKey = areaToPermissionMap[area] || area.toLowerCase()
+  const temAcesso = hasPermission(permissionKey)
 
-  // Funcionário verifica áreas de acesso
-  if (authUser?.role === 'funcionario') {
-    const temAcesso = authUser.areasAcesso?.includes(area) ?? false
-    return { temAcesso, isLoading: loading }
-  }
-
-  // Sem acesso padrão
-  return { temAcesso: false, isLoading: false }
+  return { temAcesso, isLoading: loading || rbacLoading }
 }
 
 /**
