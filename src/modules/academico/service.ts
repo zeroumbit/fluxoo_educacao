@@ -626,6 +626,7 @@ export const academicoService = {
     return (data as any[]) || []
   },
   async atribuirSelo(selo: any) {
+    if (!selo.tenant_id) throw new Error('ID do tenant é obrigatório.')
     const { data, error } = await (supabase.from('selos' as any) as any).insert(selo).select().single()
     if (error) throw error
     return data

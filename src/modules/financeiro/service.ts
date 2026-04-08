@@ -82,10 +82,13 @@ export const financeiroService = {
       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.update')
     }
 
+    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+
     const { data, error } = await supabase
       .from('cobrancas')
       .update(cobranca)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
 
@@ -94,15 +97,17 @@ export const financeiroService = {
   },
 
   async marcarComoPago(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.cobrancas.pay
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
     }
+
+    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
 
     const { error } = await supabase
       .from('cobrancas')
       .update({ status: 'pago' })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
   },
@@ -140,10 +145,13 @@ export const financeiroService = {
       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.delete')
     }
 
+    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+
     const { error } = await supabase
       .from('cobrancas')
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
   },
@@ -154,10 +162,13 @@ export const financeiroService = {
       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
     }
 
+    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+
     const { error } = await supabase
       .from('cobrancas')
       .update({ status: 'a_vencer' })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (error) throw error
   },

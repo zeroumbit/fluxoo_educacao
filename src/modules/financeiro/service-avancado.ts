@@ -123,20 +123,25 @@ export const financeiroAvancadoService = {
     if (error) throw error
     return data
   },
-  async atualizarContaPagar(id: string, updates: any) {
+  async atualizarContaPagar(id: string, tenantId: string, updates: any) {
     const { data, error } = await (supabase.from('contas_pagar' as any) as any)
-      .update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .select().single()
     if (error) throw error
     return data
   },
-  async deletarContaPagar(id: string) {
+  async deletarContaPagar(id: string, tenantId: string) {
     const { error } = await (supabase.from('contas_pagar' as any) as any)
-      .delete().eq('id', id)
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
     if (error) throw error
   },
 
   // BAIXA MANUAL (registrar pagamento em cobrança existente)
-  async registrarPagamento(cobrancaId: string, pagamento: any) {
+  async registrarPagamento(cobrancaId: string, tenantId: string, pagamento: any) {
     const { data, error } = await (supabase.from('cobrancas' as any) as any)
       .update({
         status: 'pago',
@@ -148,7 +153,10 @@ export const financeiroAvancadoService = {
         codigo_transacao: pagamento.codigo_transacao || null,
         comprovante_url: pagamento.comprovante_url || null,
         updated_at: new Date().toISOString(),
-      }).eq('id', cobrancaId).select().single()
+      })
+      .eq('id', cobrancaId)
+      .eq('tenant_id', tenantId)
+      .select().single()
     if (error) throw error
     return data
   },

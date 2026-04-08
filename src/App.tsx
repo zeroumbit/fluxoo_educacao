@@ -147,6 +147,19 @@ function DashboardRouter() {
   return <DashboardPage />
 }
 
+/** Bloqueia professores de acessarem o AdminLayout — eles devem usar ProfessorLayout */
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { authUser, loading } = useAuth()
+  
+  if (loading) return null
+  
+  if (authUser?.isProfessor) {
+    return <Navigate to="/professores/dashboard" replace />
+  }
+  
+  return <>{children}</>
+}
+
 const persister = createSyncStoragePersister({
   storage: window.localStorage,
   key: 'fluxoo_rbac_cache',
@@ -236,8 +249,10 @@ function App() {
             {/* Admin Routes (School) */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={['gestor', 'admin', 'funcionario', 'lojista', 'profissional']}>
-                  <AdminLayout />
+                <ProtectedRoute allowedRoles={['gestor', 'funcionario', 'lojista', 'profissional']}>
+                  <AdminGuard>
+                    <AdminLayout />
+                  </AdminGuard>
                 </ProtectedRoute>
               }
             >
@@ -276,7 +291,6 @@ function App() {
               <Route path="/plano" element={<PlanoPage />} />
               {/* Currículos */}
               <Route path="/curriculos" element={<CurriculosListPage />} />
-              <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
               <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
 
               {/* Marketplace Partners - Dashboards e Páginas Específicas */}

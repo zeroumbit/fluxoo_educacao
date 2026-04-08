@@ -58,8 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
     try {
-      // 1. SUPER ADMIN (Rollback: Identificação forçada por e-mail)
-      if (isSuperAdminEmail(user.email || '')) {
+      // 1. SUPER ADMIN (Identificação por app_metadata ou e-mail de contingência)
+      const isSuper = user.app_metadata?.role === 'super_admin' || 
+                      user.user_metadata?.role === 'super_admin' ||
+                      isSuperAdminEmail(user.email || '')
+
+      if (isSuper) {
         setAuthUser({
           user, session,
           tenantId: 'super_admin',
@@ -73,19 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // 2. GESTOR
-      if (user.user_metadata?.role === 'gestor') {
-        const { data: escola, error: erro } = await supabase
-          .from('escolas')
-          .select('id, razao_social, logradouro, numero, complemento, bairro, cidade, estado, cep')
-          .eq('gestor_user_id', user.id)
-          .limit(1)
-          .maybeSingle() as any
+      // 2. GESTOR / ESCOLA (Busca por UUID ou Email)
+      const { data: escola, error: erro } = await supabase
+        .from('escolas')
+        .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
+        .or(`gestor_user_id.eq."${user.id}",email_gestor.ilike."${user.email}"`)
+        .maybeSingle() as any
 
-        if (erro) {
-           console.error('❌ Erro na busca da escola:', erro.message)
-        }
-
+      if (escola && !erro) {
         const endereco = escola?.logradouro ? {
           logradouro: escola.logradouro,
           numero: escola.numero,
@@ -98,9 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setAuthUser({
           user, session,
-          tenantId: (escola as any)?.id || 'PENDING_TENANT',
+          tenantId: escola.id,
           role: 'gestor',
-          nome: user.user_metadata?.full_name || 'Gestor',
+          nome: user.user_metadata?.full_name || escola.razao_social || 'Gestor',
           email: user.email || '',
           isProfessor: false,
           isGestor: true,
@@ -199,11 +198,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
                     perfilNome = pData?.nome?.toLowerCase() || ''
                   }
-                  // Áreas de acesso removidas (tabela não existe no banco)
                   areasAcesso = []
                 } catch { /* não bloqueia */ }
 
-                const isGestor = user.user_metadata?.role === 'gestor' // Apenas dono da escola
+                const isGestorMetadata = user.user_metadata?.role === 'gestor'
+                const isGestorPerfil = perfilNome.includes('gestor') || perfilNome.includes('coordenador') || perfilNome.includes('diretor')
+                const isGestor = isGestorMetadata || isGestorPerfil
                 const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
                 setAuthUser({
@@ -216,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   areasAcesso,
                   nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
                   email: user.email || '',
-                  isProfessor,
+                  isProfessor: isProfessor && !isGestor, // Prioridade para Gestor se tiver ambos
                   isGestor,
                   isSuperAdmin: false
                 })

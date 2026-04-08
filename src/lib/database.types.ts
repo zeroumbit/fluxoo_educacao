@@ -1164,7 +1164,7 @@ export type TenantDisciplinaOcultaInsert = Omit<TenantDisciplinaOculta, 'created
 }
 
 // ========== AUTH TYPES ==========
-export type UserRole = 'super_admin' | 'admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
+export type UserRole = 'super_admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
 
 export type Database = {
   public: {

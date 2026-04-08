@@ -119,9 +119,10 @@ export function useCriarCobranca() {
 
 export function useAtualizarCobranca() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
     mutationFn: ({ id, cobranca }: { id: string, cobranca: Partial<CobrancaInsert> }) => 
-      financeiroService.atualizar(id, cobranca),
+      financeiroService.atualizar(id, cobranca, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [ 'cobrancas' ] })
       queryClient.invalidateQueries({ queryKey: [ 'dashboard' ] })
@@ -132,8 +133,9 @@ export function useAtualizarCobranca() {
 
 export function useMarcarComoPago() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (id: string) => financeiroService.marcarComoPago(id),
+    mutationFn: (id: string) => financeiroService.marcarComoPago(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -143,8 +145,9 @@ export function useMarcarComoPago() {
 }
 export function useExcluirCobranca() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (id: string) => financeiroService.excluir(id),
+    mutationFn: (id: string) => financeiroService.excluir(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -154,8 +157,9 @@ export function useExcluirCobranca() {
 }
 export function useDesfazerPagamento() {
   const queryClient = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (id: string) => financeiroService.desfazerPagamento(id),
+    mutationFn: (id: string) => financeiroService.desfazerPagamento(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
