@@ -91,33 +91,33 @@ export function ProfessorAlertasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 pb-32 -m-6 md:m-0">
-      {/* Header Nativo */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-100 px-6 py-4 flex flex-col gap-1">
+    <div className="flex flex-col min-h-full">
+      {/* Header Nativo Premium */}
+      <div className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-zinc-200/50 px-6 pt-safe pb-4 flex flex-col gap-1 shadow-sm">
         <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Central de Alertas</h1>
         <p className="text-[13px] text-zinc-500 font-medium leading-none">Acompanhe e resolva pendências importantes</p>
       </div>
 
-      <div className="px-4 py-6 space-y-4">
+      <div className="p-4 space-y-6">
         {/* Barra de Busca e Filtro Rápido */}
-        <div className="flex flex-col gap-3">
+        <div className="space-y-4">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-zinc-600 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-zinc-900 transition-colors" />
             <input 
               type="text"
               placeholder="Buscar por aluno ou assunto..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full h-12 pl-11 pr-4 bg-white border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all shadow-sm"
+              className="w-full h-12 pl-11 pr-4 bg-white border border-zinc-200 rounded-2xl text-[15px] focus:outline-none focus:ring-4 focus:ring-zinc-900/5 transition-all shadow-sm"
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
             <button 
               onClick={() => setSelectedTipo('todos')}
               className={cn(
-                "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
-                selectedTipo === 'todos' ? "bg-zinc-900 border-zinc-900 text-white shadow-md shadow-zinc-200" : "bg-white border-zinc-100 text-zinc-500"
+                "px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border",
+                selectedTipo === 'todos' ? "bg-zinc-900 border-zinc-900 text-white shadow-lg shadow-zinc-200" : "bg-white border-zinc-200 text-zinc-500"
               )}
             >
               Todos
@@ -127,85 +127,83 @@ export function ProfessorAlertasPage() {
                 key={tipo}
                 onClick={() => setSelectedTipo(tipo)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border capitalize",
-                  selectedTipo === tipo ? "bg-zinc-900 border-zinc-900 text-white shadow-md shadow-zinc-200" : "bg-white border-zinc-100 text-zinc-500"
+                  "px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border capitalize",
+                  selectedTipo === tipo ? "bg-zinc-900 border-zinc-900 text-white shadow-lg shadow-zinc-200" : "bg-white border-zinc-200 text-zinc-500"
                 )}
               >
-                {tipo.replace('_', ' ')}
+                {tipo.replace(/_|prof/g, ' ').trim()}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Lista de Cards */}
+        {/* Lista de Alertas (Visual Nativo) */}
         <div className="space-y-3">
           <AnimatePresence mode="popLayout">
             {alertasFiltrados.length === 0 ? (
               <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }}
-                className="text-center py-20 bg-white rounded-[32px] border border-zinc-100 mx-2"
+                initial={{ opacity: 0, scale: 0.9 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20 bg-white rounded-[40px] border border-zinc-100 shadow-sm"
               >
-                <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-8 h-8 text-emerald-500" />
+                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-inner">
+                  <Check className="w-10 h-10 text-emerald-500" />
                 </div>
-                <h3 className="text-zinc-900 font-bold">Tudo sob controle!</h3>
-                <p className="text-zinc-500 text-sm">Nenhum alerta pendente para estes filtros.</p>
+                <h3 className="text-zinc-900 text-lg font-black tracking-tight">Tudo em dia!</h3>
+                <p className="text-zinc-500 text-sm font-medium">Nenhum alerta pendente no momento.</p>
               </motion.div>
             ) : (
               alertasFiltrados.map((alerta: any, index: number) => (
                 <motion.div
                   key={alerta.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 100, delay: index * 0.05 }}
                   onClick={() => {
                     setSelectedAlerta(alerta)
                     setDialogOpen(true)
                   }}
                 >
                   <Card className={cn(
-                    "overflow-hidden border-none shadow-sm transition-all active:scale-[0.98] cursor-pointer",
+                    "overflow-hidden border-none shadow-sm transition-all active:scale-[0.97] cursor-pointer rounded-[28px]",
                     getCardStyle(alerta.gravidade)
                   )}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
                         <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-white",
+                          "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm bg-white border border-white/50",
                           alerta.gravidade === 'critica' && "animate-pulse"
                         )}>
                           {getAlertaIcon(alerta.tipo, alerta.gravidade)}
                         </div>
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold text-[15px] text-zinc-900 leading-tight truncate pr-2">
+                        <div className="flex-1 min-w-0 py-0.5">
+                          <div className="flex justify-between items-start gap-2 mb-1">
+                            <h3 className="font-black text-[15px] text-zinc-900 leading-tight truncate">
                               {alerta.titulo}
                             </h3>
-                            <span className="text-[10px] font-bold text-zinc-400 whitespace-nowrap">
-                              {new Date(alerta.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                            </span>
                           </div>
                           
-                          <p className="text-sm text-zinc-600 line-clamp-2 leading-snug mb-2">
+                          <p className="text-[14px] text-zinc-600 line-clamp-2 leading-snug font-medium mb-3">
                             {alerta.descricao}
                           </p>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {alerta.aluno_nome && (
-                              <div className="flex items-center gap-1 bg-white/50 px-2 py-0.5 rounded-full ring-1 ring-zinc-200/50">
-                                <User className="w-3 h-3 text-zinc-400" />
-                                <span className="text-[11px] font-bold text-zinc-500 truncate max-w-[100px]">{alerta.aluno_nome}</span>
+                              <div className="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-xl ring-1 ring-zinc-200/50 shadow-sm">
+                                <User className="w-3.5 h-3.5 text-zinc-500" />
+                                <span className="text-[11px] font-bold text-zinc-700 truncate max-w-[120px]">{alerta.aluno_nome}</span>
                               </div>
                             )}
-                            <Badge variant="outline" className="bg-white/50 border-zinc-200 text-[9px] h-5 px-1.5 font-bold uppercase tracking-tight">
+                            <Badge variant="outline" className="bg-white/70 border-zinc-200 text-[10px] h-6 px-2.5 font-black uppercase tracking-widest rounded-xl">
                               {alerta.turma_nome || 'Sem turma'}
                             </Badge>
                           </div>
                         </div>
 
-                        <div className="flex items-center self-center text-zinc-300">
-                          <ChevronRight size={18} />
+                        <div className="flex items-center self-center text-zinc-400">
+                          <ChevronRight size={20} strokeWidth={3} />
                         </div>
                       </div>
                     </CardContent>
@@ -217,55 +215,56 @@ export function ProfessorAlertasPage() {
         </div>
       </div>
 
-      {/* Modal de Detalhes e Resolução */}
+      {/* Modal de Detalhes - Estilo Bottom Sheet em Mobile */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-[32px] sm:max-w-md border-none p-0 overflow-hidden">
-          <DialogHeader className="p-6 bg-zinc-900 text-white">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+        <DialogContent className="rounded-t-[40px] rounded-b-none sm:rounded-[40px] sm:max-w-md border-none p-0 overflow-hidden shadow-2xl">
+          <DialogHeader className="p-8 bg-zinc-900 text-white relative">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full mb-4 sm:hidden" />
+            <div className="flex items-center gap-4 pt-2">
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center shadow-inner">
                 {selectedAlerta && getAlertaIcon(selectedAlerta.tipo, selectedAlerta.gravidade)}
               </div>
               <div>
-                <DialogTitle className="text-lg font-black tracking-tight">{selectedAlerta?.titulo}</DialogTitle>
-                <p className="text-xs text-zinc-400 font-medium">{selectedAlerta?.aluno_nome} • {selectedAlerta?.turma_nome}</p>
+                <DialogTitle className="text-xl font-black tracking-tight">{selectedAlerta?.titulo}</DialogTitle>
+                <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest opacity-80">{selectedAlerta?.aluno_nome} • {selectedAlerta?.turma_nome}</p>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="p-6 space-y-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Descrição Completa</label>
-              <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
-                <p className="text-sm text-zinc-700 leading-relaxed">{selectedAlerta?.descricao}</p>
+          <div className="p-8 space-y-6 bg-white">
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Contexto do Alerta</label>
+              <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100">
+                <p className="text-[15px] text-zinc-800 leading-relaxed font-medium">{selectedAlerta?.descricao}</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Ações de Resolução</label>
+            <div className="space-y-3">
+              <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Observações da Resolução</label>
               <Textarea
-                placeholder="Descreva brevemente como este alerta foi resolvido..."
+                placeholder="Exemplo: Conversado com o responsável, resolvido em sala..."
                 value={observacao}
                 onChange={(e) => setObservacao(e.target.value)}
-                className="min-h-[120px] rounded-2xl border-zinc-200 focus:ring-zinc-900/5 focus:border-zinc-300 transition-all resize-none shadow-sm"
+                className="min-h-[140px] rounded-3xl border-zinc-200 bg-white focus:ring-zinc-900/5 focus:border-zinc-400 transition-all resize-none shadow-sm text-base p-5"
               />
             </div>
           </div>
 
-          <DialogFooter className="p-6 pt-0 flex gap-3">
-            <Button variant="ghost" onClick={() => setDialogOpen(false)} className="flex-1 rounded-2xl text-zinc-500 font-bold">
-              Cancelar
+          <DialogFooter className="p-8 pt-0 flex flex-col-reverse sm:flex-row gap-3 bg-white">
+            <Button variant="ghost" onClick={() => setDialogOpen(false)} className="h-14 w-full sm:flex-1 rounded-2xl text-zinc-500 font-black uppercase text-xs tracking-widest">
+              Voltar
             </Button>
             <Button
               onClick={handleConcluirAlerta}
               disabled={concluirAlertaMutation.isPending}
-              className="flex-[2] rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold gap-2"
+              className="h-14 w-full sm:flex-[2] rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-black uppercase text-xs tracking-widest gap-2 shadow-xl shadow-zinc-200"
             >
               {concluirAlertaMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <Check className="w-4 h-4" />
+                <Check className="w-5 h-5" />
               )}
-              Marcar como Resolvido
+              Confirmar Resolução
             </Button>
           </DialogFooter>
         </DialogContent>

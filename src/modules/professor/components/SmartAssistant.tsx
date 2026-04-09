@@ -25,7 +25,7 @@ import { ptBR } from 'date-fns/locale'
 
 export type InsightType = 'urgent' | 'anomaly' | 'update' | 'positive'
 
-export interface DailyInsight {
+export type DailyInsight = {
   id: string;
   type: InsightType;
   title: string;

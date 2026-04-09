@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DailyInsight } from '../components/SmartAssistant';
+import type { DailyInsight } from '../components/SmartAssistant';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -29,7 +29,7 @@ export function useDailyInsights() {
             title: 'Diário pendente de preenchimento',
             description: 'O diário de classe do "8º Ano B" referente a ontem (Quinta-feira) ainda não foi preenchido. Isso impede o fechamento do sistema.',
             actionLabel: 'Preencher Diário',
-            actionCallback: () => navigate('/portal/professor/frequencia'), 
+            actionCallback: () => navigate('/professores/frequencia'), 
           },
           {
             id: 'ins-2',

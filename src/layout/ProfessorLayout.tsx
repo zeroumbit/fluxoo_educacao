@@ -18,8 +18,11 @@ import {
   Bell,
   School,
   ChevronRight,
-  Home
+  Home,
+  Sparkles
 } from 'lucide-react'
+import { SmartAssistant } from '@/modules/professor/components/SmartAssistant'
+import { useDailyInsights } from '@/modules/professor/hooks/useDailyInsights'
 import {
   Sheet,
   SheetContent,
@@ -423,7 +426,22 @@ export function ProfessorLayout() {
           <Outlet />
         </div>
       </main>
+
+      {/* Assistente Inteligente (FAB + Drawer) */}
+      <ProfessorSmartAssistantWrapper />
     </div>
+  )
+}
+
+function ProfessorSmartAssistantWrapper() {
+  const { authUser } = useAuth()
+  const { insights } = useDailyInsights()
+  
+  return (
+    <SmartAssistant 
+      insights={insights} 
+      professorName={authUser?.nome || 'Professor'} 
+    />
   )
 }
 
