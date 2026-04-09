@@ -15,14 +15,13 @@ import {
   X,
   User,
   LogOut,
-  Bell,
-  School,
   ChevronRight,
   Home,
-  Sparkles
 } from 'lucide-react'
 import { SmartAssistant } from '@/modules/professor/components/SmartAssistant'
 import { useDailyInsights } from '@/modules/professor/hooks/useDailyInsights'
+import { useProfessorNotifications } from '@/modules/professor/hooks/useProfessorNotifications'
+import { NotificationBell } from '@/components/NotificationBell'
 import {
   Sheet,
   SheetContent,
@@ -31,14 +30,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
@@ -101,7 +92,6 @@ const professorNavGroups = [
         name: 'Alertas',
         href: '/professores/alertas',
         icon: AlertTriangle,
-        badge: true,
       },
     ],
   },
@@ -182,9 +172,6 @@ function SidebarContent({
                       <>
                         <item.icon className={cn('h-5 w-5 lg:h-4 lg:w-4 transition-colors flex-shrink-0', isActive ? 'text-white lg:text-indigo-600' : 'text-zinc-400')} />
                         <span className="flex-1 truncate">{item.name}</span>
-                        {item.badge && !isActive && (
-                          <Badge variant="destructive" className="text-xs">!</Badge>
-                        )}
                         {isActive ? (
                           <div className="h-1.5 w-1.5 rounded-full bg-white lg:bg-indigo-400 opacity-50" />
                         ) : (
@@ -275,6 +262,7 @@ export function ProfessorLayout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const { data: notifications, isLoading: isLoadingNotifs } = useProfessorNotifications()
 
   // Detectar mobile
   useEffect(() => {
@@ -400,24 +388,11 @@ export function ProfessorLayout() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-5 h-5" />
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs">
-                    3
-                  </Badge>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="px-3 py-2 border-b border-zinc-200">
-                  <p className="font-semibold text-sm">Notificações</p>
-                </div>
-                <div className="py-6 text-center text-zinc-500 text-sm">
-                  Nenhuma notificação pendente
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NotificationBell
+              count={notifications?.total || 0}
+              items={notifications?.items || []}
+              isLoading={isLoadingNotifs}
+            />
           </div>
         </header>
 

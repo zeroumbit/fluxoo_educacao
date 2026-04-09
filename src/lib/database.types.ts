@@ -1249,6 +1249,33 @@ export type Database = {
         Update: never
         Relationships: any[]
       }
+      importacoes_staging: {
+        Row: {
+          id: string
+          tenant_id: string
+          lote_id: string
+          dados_agrupados: any
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          lote_id: string
+          dados_agrupados: any
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          lote_id?: string
+          dados_agrupados?: any
+          status?: string
+          created_at?: string
+        }
+        Relationships: any[]
+      }
     }
     Views: { 
       vw_fila_tempo_medio: { Row: { id: string; status: string; fila_id: string; tempo_espera: number; tempo_medio_minutos: number }; Relationships: any[] }
@@ -1327,6 +1354,16 @@ export type Database = {
           divergencias: any;
         };
       };
+      processar_lote_importacao: {
+        Args: {
+          p_lote_id: string
+          p_ids_selecionados: string[]
+        }
+        Returns: {
+          sucessos: number
+          erros: number
+        }
+      }
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }

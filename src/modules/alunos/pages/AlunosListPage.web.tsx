@@ -292,7 +292,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                   variant="ghost" 
                   size="sm" 
                   className="text-rose-600 hover:bg-rose-50 font-bold text-xs"
-                  onClick={() => deletarLote.mutate()}
+                  onClick={() => (deletarLote.mutate as any)()}
                   disabled={deletarLote.isPending}
                 >
                   <Trash className="w-4 h-4 mr-1" /> Deletar Lote

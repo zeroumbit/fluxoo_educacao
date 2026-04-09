@@ -169,7 +169,7 @@ export function AlunoCadastroPage() {
       try {
         const parsedDraft = JSON.parse(savedDraft)
         // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
-        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && val?.length !== 0)) {
+        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && (val as any)?.length !== 0)) {
           setDraftStateData(parsedDraft)
           setShowDraftModal(true)
         }

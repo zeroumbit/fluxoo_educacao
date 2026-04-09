@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Papa from 'papaparse'
+import Papa, { type ParseResult } from 'papaparse'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -45,7 +45,7 @@ export function AlunosImportarPage() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: ParseResult<any>) => {
         if (results.errors.length > 0) {
           toast.error('Erro ao ler o arquivo CSV. Verifique o formato.')
           return

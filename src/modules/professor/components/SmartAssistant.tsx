@@ -14,6 +14,9 @@ import {
   Stethoscope, 
   Cake, 
   ChevronRight,
+  BookOpen,
+  Award,
+  AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -23,7 +26,7 @@ import { ptBR } from 'date-fns/locale'
 // TIPAGENS 
 // ==========================================
 
-export type InsightType = 'urgent' | 'anomaly' | 'update' | 'positive'
+export type InsightType = 'urgent' | 'anomaly' | 'update' | 'positive' | 'bncc' | 'pos-reinforcement' | 'pedagogic-alert'
 
 export type DailyInsight = {
   id: string;
@@ -32,11 +35,20 @@ export type DailyInsight = {
   description: string;
   actionLabel?: string;
   actionCallback?: () => void;
+  // Fase 2.0 - Ações de 1-Clique
+  secondaryActionLabel?: string;
+  secondaryActionCallback?: () => void;
+  suggestedBNCCCode?: string;
+  messageTemplate?: 'elogio' | 'alerta';
+  alunoId?: string;
+  alunoNome?: string;
 }
 
 interface SmartAssistantProps {
   insights: DailyInsight[]
   professorName: string
+  onApplyBNCC?: (code: string) => void
+  onOpenMessaging?: (config: { template: 'elogio' | 'alerta'; alunoId: string; message: string }) => void
 }
 
 const InsightIcon = ({ type }: { type: InsightType }) => {
@@ -49,6 +61,12 @@ const InsightIcon = ({ type }: { type: InsightType }) => {
       return <Stethoscope className="w-5 h-5 text-blue-600" />
     case 'positive':
       return <Cake className="w-5 h-5 text-emerald-600" />
+    case 'bncc':
+      return <BookOpen className="w-5 h-5 text-slate-600" />
+    case 'pos-reinforcement':
+      return <Award className="w-5 h-5 text-emerald-600" />
+    case 'pedagogic-alert':
+      return <AlertTriangle className="w-5 h-5 text-amber-600" />
     default:
       return <Sparkles className="w-5 h-5 text-zinc-600" />
   }
@@ -59,13 +77,21 @@ const InsightCardStyles = {
   anomaly: "bg-amber-50 border-amber-100",
   update: "bg-blue-50 border-blue-100",
   positive: "bg-emerald-50 border-emerald-100",
+  bncc: "bg-slate-50 border-slate-200",
+  'pos-reinforcement': "bg-emerald-50 border-emerald-100",
+  'pedagogic-alert': "bg-amber-50 border-amber-100",
 }
 
 // ==========================================
 // COMPONENTE PRINCIPAL
 // ==========================================
 
-export function SmartAssistant({ insights, professorName }: SmartAssistantProps) {
+export function SmartAssistant({ 
+  insights, 
+  professorName,
+  onApplyBNCC,
+  onOpenMessaging
+}: SmartAssistantProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [hasOpenedToday, setHasOpenedToday] = useState(false)
 
@@ -80,11 +106,10 @@ export function SmartAssistant({ insights, professorName }: SmartAssistantProps)
     }
   }
 
-  // Ordena os insights para garantir que 'urgent' fique no topo
+  // Ordena os insights por prioridade
   const sortedInsights = [...insights].sort((a, b) => {
-    if (a.type === 'urgent' && b.type !== 'urgent') return -1
-    if (a.type !== 'urgent' && b.type === 'urgent') return 1
-    return 0
+    const priority = { 'urgent': 1, 'pedagogic-alert': 2, 'bncc': 3, 'pos-reinforcement': 4, 'anomaly': 5, 'update': 6, 'positive': 7 }
+    return (priority[a.type as keyof typeof priority] || 99) - (priority[b.type as keyof typeof priority] || 99)
   })
 
   // Saudação contextual
@@ -151,12 +176,12 @@ export function SmartAssistant({ insights, professorName }: SmartAssistantProps)
                   key={insight.id}
                   className={cn(
                     "flex flex-col p-4 rounded-2xl border bg-white shadow-sm transition-all",
-                    InsightCardStyles[insight.type]
+                    InsightCardStyles[insight.type as keyof typeof InsightCardStyles]
                   )}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 shrink-0">
-                      <InsightIcon type={insight.type} />
+                      <InsightIcon type={insight.type as InsightType} />
                     </div>
                     
                     <div className="flex-1 space-y-1.5">
@@ -174,31 +199,66 @@ export function SmartAssistant({ insights, professorName }: SmartAssistantProps)
                             Novo
                           </Badge>
                         )}
+                        {insight.type === 'pedagogic-alert' && (
+                          <Badge variant="outline" className="h-5 px-1.5 text-[10px] uppercase font-bold tracking-wider shrink-0 border-amber-200 text-amber-700 bg-amber-50">
+                            Atenção
+                          </Badge>
+                        )}
                       </div>
                       
                       <p className="text-[14px] text-zinc-600 leading-snug">
                         {insight.description}
                       </p>
                       
-                      {insight.actionLabel && insight.actionCallback && (
-                        <div className="pt-2">
+                      {/* Bloco de Botões de Ação */}
+                      <div className="pt-2 flex flex-wrap gap-2">
+                        {insight.actionLabel && (
                           <Button 
                             variant={insight.type === 'urgent' ? 'default' : 'secondary'}
                             size="sm"
                             onClick={() => {
-                              insight.actionCallback?.()
-                              setIsOpen(false) // Opcional: fecha a gaveta ao agir
+                              if (insight.type === 'bncc' && insight.suggestedBNCCCode && onApplyBNCC) {
+                                onApplyBNCC(insight.suggestedBNCCCode)
+                              } else if (insight.messageTemplate && insight.alunoId && onOpenMessaging) {
+                                const baseMsg = insight.messageTemplate === 'elogio' 
+                                  ? `Olá responsável! O aluno ${insight.alunoNome || '[Nome]'} teve uma excelente evolução acadêmica recentemente. Parabéns pelo desempenho!`
+                                  : `Olá responsável. Notei uma queda de rendimento recente do aluno ${insight.alunoNome || '[Nome]'} em minhas atividades. Seria bom conversarmos.`
+                                
+                                onOpenMessaging({ 
+                                  template: insight.messageTemplate, 
+                                  alunoId: insight.alunoId,
+                                  message: baseMsg 
+                                })
+                              } else {
+                                insight.actionCallback?.()
+                              }
+                              setIsOpen(false)
                             }}
                             className={cn(
-                              "w-full sm:w-auto h-9 text-xs font-bold rounded-xl",
-                              insight.type === 'urgent' && "bg-red-600 hover:bg-red-700 text-white"
+                              "h-9 text-xs font-bold rounded-xl",
+                              insight.type === 'urgent' && "bg-red-600 hover:bg-red-700 text-white",
+                              insight.type === 'pos-reinforcement' && "bg-emerald-600 hover:bg-emerald-700 text-white"
                             )}
                           >
                             {insight.actionLabel}
                             <ChevronRight className="w-4 h-4 ml-1 opacity-70" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+
+                        {insight.secondaryActionLabel && (
+                          <Button 
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              insight.secondaryActionCallback?.()
+                              setIsOpen(false)
+                            }}
+                            className="h-9 text-xs font-bold text-zinc-500 rounded-xl hover:bg-zinc-100"
+                          >
+                            {insight.secondaryActionLabel}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export function ProfessorAlertasPage() {
-  const { data: alertas, isLoading } = useAlertasProfessor()
+  const { data: alertas, isLoading, refetch, isFetching } = useAlertasProfessor()
   const concluirAlertaMutation = useConcluirAlerta()
   
   const [busca, setBusca] = useState('')
@@ -86,6 +86,20 @@ export function ProfessorAlertasPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <Loader2 className="h-10 w-10 animate-spin text-zinc-300" />
         <p className="text-zinc-400 font-medium animate-pulse">Sincronizando alertas...</p>
+      </div>
+    )
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex flex-col min-h-full">
+        <div className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-zinc-200/50 px-6 pt-safe pb-4 flex flex-col gap-1 shadow-sm">
+          <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Central de Alertas</h1>
+          <p className="text-[13px] text-zinc-500 font-medium leading-none">Atualizando alertas...</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
+        </div>
       </div>
     )
   }

@@ -45,31 +45,33 @@ export function useSaudeTurmas() {
   })
 }
 
-/** 
- * Hook para buscar alertas consolidados do professor. 
+/**
+ * Hook para buscar alertas consolidados do professor.
  * Inclui pedagógicos, saúde, frequência e operacionais.
+ * Dados 100% reais do Supabase via vw_alertas_professor com RLS.
  */
 export function useAlertasProfessor() {
   const { authUser } = useAuth()
-  const professorId = authUser?.user?.id
+  const professorId = authUser?.user?.id || authUser?.funcionarioId
   const tenantId = authUser?.tenantId
-  
+
   return useQuery({
     queryKey: ['professor_alertas', professorId, tenantId],
     queryFn: () => professorService.buscarAlertas(professorId!, tenantId!),
     enabled: !!professorId && !!tenantId,
-    staleTime: 2 * 60 * 1000 // 2 minutos de cache para alertas mais dinâmicos
+    staleTime: 2 * 60 * 1000, // 2 minutos de cache para alertas mais dinâmicos
+    refetchInterval: 30 * 1000, // Re-polling a cada 30s para dados em tempo real
   })
 }
 
-/** 
+/**
  * Hook para concluir um alerta através da RPC com registro de auditoria.
  */
 export function useConcluirAlerta() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ alertaId, observacao }: { alertaId: string, observacao?: string }) => 
+    mutationFn: ({ alertaId, observacao }: { alertaId: string, observacao?: string }) =>
       professorService.concluirAlerta(alertaId, observacao),
     onSuccess: () => {
       // Invalida cache para atualizar contador no dashboard
@@ -77,3 +79,9 @@ export function useConcluirAlerta() {
     }
   })
 }
+
+// Re-export de notificações
+export {
+  useProfessorNotifications,
+  useProfessorNotificacoesActions
+} from './hooks/useProfessorNotifications'
