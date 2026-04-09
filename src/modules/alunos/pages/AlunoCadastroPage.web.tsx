@@ -115,6 +115,9 @@ export function AlunoCadastroPage() {
   const [showPostCadastroModal, setShowPostCadastroModal] = useState(false)
   const [lastCreatedAluno, setLastCreatedAluno] = useState<any>(null)
   
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftStateData, setDraftStateData] = useState<any>(null)
+
   // Estados para Gestão de Foto e Tags de Saúde no Cadastro
   const [uploadingFoto, setUploadingFoto] = useState(false)
   const [tempPatologia, setTempPatologia] = useState('')
@@ -159,24 +162,43 @@ export function AlunoCadastroPage() {
     },
   })
 
-  // 1. Carregar rascunho do localStorage ao montar
+  // 1. Interceptar rascunho do localStorage ao montar
   useEffect(() => {
     const savedDraft = localStorage.getItem('aluno_cadastro_draft')
-    
     if (savedDraft) {
       try {
         const parsedDraft = JSON.parse(savedDraft)
-        Object.entries(parsedDraft).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) setValue(key as any, value)
-        })
+        // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
+        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && val?.length !== 0)) {
+          setDraftStateData(parsedDraft)
+          setShowDraftModal(true)
+        }
       } catch (e) {
-        logger.error('Erro ao carregar rascunho:', e)
+        localStorage.removeItem('aluno_cadastro_draft')
       }
     }
+  }, [])
+
+  const handleContinuarRascunho = () => {
+    if (draftStateData) {
+      Object.entries(draftStateData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) setValue(key as any, value)
+      })
+    }
     
-    // O passo atual já é inicializado no useState, então não precisamos de setCurrentStep aqui,
-    // garantindo que não haja "volto pro início e depois pulo" (flash).
-  }, [setValue])
+    const savedStep = localStorage.getItem('aluno_cadastro_step')
+    if(savedStep) setCurrentStep(parseInt(savedStep, 10))
+    
+    setShowDraftModal(false)
+  }
+
+  const handleNovoCadastro = () => {
+    localStorage.removeItem('aluno_cadastro_draft')
+    localStorage.removeItem('aluno_cadastro_step')
+    reset()
+    setCurrentStep(0)
+    setShowDraftModal(false)
+  }
 
   // 2. Salvar rascunho e passo atual no localStorage
   const watchAllFields = watch()
@@ -537,6 +559,26 @@ export function AlunoCadastroPage() {
 
   return (
     <div className="space-y-6" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <Dialog open={showDraftModal} onOpenChange={setShowDraftModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rascunho Detectado</DialogTitle>
+            <DialogDescription>
+              Encontramos um cadastro em andamento que não foi concluído.
+              Deseja continuar de onde parou ou iniciar um novo em branco?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={handleNovoCadastro}>
+              Começar Novo
+            </Button>
+            <Button onClick={handleContinuarRascunho} className="bg-indigo-600 hover:bg-indigo-700 text-white border-0">
+              Continuar Rascunho
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Button
         variant="ghost"
         onClick={() => navigate('/alunos')}

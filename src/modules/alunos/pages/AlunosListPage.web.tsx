@@ -18,8 +18,9 @@ import {
 import {
   Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2,
   AlertCircle, FileX, Shield, Percent, Users, UserMinus,
-  AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw
+  AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw, FileUp, CloudUpload, Trash
 } from 'lucide-react'
+import { useImportacoesPendentes, useDeletarLoteImportacao } from '../hooks'
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,9 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
   const [alunoParaDesativar, setAlunoParaDesativar] = useState<any | null>(null)
   const [showDesativarDialog, setShowDesativarDialog] = useState(false)
   const [confirmacaoDesativar, setConfirmacaoDesativar] = useState(false)
+
+  const { data: countPendentes } = useImportacoesPendentes()
+  const deletarLote = useDeletarLoteImportacao()
 
   // Cria um Map com IDs de alunos com matrícula ativa
   const alunosComMatriculaMap = useMemo(() => {
@@ -183,12 +187,21 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
         </div>
         {/* REGRA DE NEGÓCIO: Professores NÃO podem adicionar alunos */}
         {!authUser?.isProfessor && (
-          <Button
-             onClick={() => navigate('/alunos/novo')}
-             className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
-          </Button>
+          <div className="flex gap-2">
+            <Button
+               variant="outline"
+               onClick={() => navigate('/alunos/importar')}
+               className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-bold px-4 h-11"
+            >
+              <FileUp className="mr-2 h-4 w-4" /> Cadastro em Massa
+            </Button>
+            <Button
+               onClick={() => navigate('/alunos/novo')}
+               className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-md font-bold px-6 h-11 border-0"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Adicionar Aluno
+            </Button>
+          </div>
         )}
       </div>
 
@@ -261,6 +274,47 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                  </div>
               </Card>
           </div>
+
+          {/* Banner de Tarefa Ativa (Staging Area) */}
+          {!isProfessor && countPendentes && countPendentes > 0 ? (
+            <div className="w-full bg-blue-50/60 border border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <CloudUpload className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-blue-900">Cadastro em Massa Pendente</h3>
+                  <p className="text-xs text-blue-700">Você possui {countPendentes} famílias na área de preparação aguardando revisão.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-rose-600 hover:bg-rose-50 font-bold text-xs"
+                  onClick={() => deletarLote.mutate()}
+                  disabled={deletarLote.isPending}
+                >
+                  <Trash className="w-4 h-4 mr-1" /> Deletar Lote
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-blue-200 text-blue-700 hover:bg-blue-100 font-bold text-xs"
+                  onClick={() => navigate('/alunos/importar')}
+                >
+                  Revisar Dados
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs border-0"
+                  onClick={() => navigate('/alunos/importar')}
+                >
+                  Continuar Matrículas
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
             <CardContent className="p-0">

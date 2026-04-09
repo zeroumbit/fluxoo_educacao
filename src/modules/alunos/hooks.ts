@@ -221,3 +221,24 @@ export function useRevogarOverrides() {
     },
   })
 }
+
+export function useImportacoesPendentes() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['staging', 'pendentes', authUser?.tenantId],
+    queryFn: () => alunoService.contarImportacoesPendentes(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+  })
+}
+
+export function useDeletarLoteImportacao() {
+  const queryClient = useQueryClient()
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: (loteId?: string) => alunoService.deletarLoteImportacao(authUser!.tenantId, loteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staging'] })
+      toast.success('Lote de importação removido com sucesso.')
+    },
+  })
+}

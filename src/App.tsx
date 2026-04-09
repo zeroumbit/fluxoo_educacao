@@ -32,6 +32,7 @@ const DashboardPage = lazy(() => import('@/modules/alunos/pages/DashboardPage').
 const ProfessorDashboardPage = lazy(() => import('@/modules/professor/pages/ProfessorDashboardPage').then(m => ({ default: m.ProfessorDashboardPage })))
 const AlunosListPage = lazy(() => import('@/modules/alunos/pages/AlunosListPage').then(m => ({ default: m.AlunosListPage })))
 const AlunoCadastroPage = lazy(() => import('@/modules/alunos/pages/AlunoCadastroPage').then(m => ({ default: m.AlunoCadastroPage })))
+const AlunosImportarPage = lazy(() => import('@/modules/alunos/pages/AlunosImportarPage.web').then(m => ({ default: m.AlunosImportarPage })))
 const AlunoDetalhePage = lazy(() => import('@/modules/alunos/pages/AlunoDetalhePage').then(m => ({ default: m.AlunoDetalhePage })))
 const TurmasPage = lazy(() => import('@/modules/turmas/pages/TurmasPage').then(m => ({ default: m.TurmasPage })))
 const FrequenciaPage = lazy(() => import('@/modules/frequencia/pages/FrequenciaPage').then(m => ({ default: m.FrequenciaPage })))
@@ -262,6 +263,7 @@ function App() {
               } />
               <Route path="/alunos" element={<AlunosListPage />} />
               <Route path="/alunos/novo" element={<AlunoCadastroPage />} />
+              <Route path="/alunos/importar" element={<AlunosImportarPage />} />
               <Route path="/alunos/:id" element={<AlunoDetalhePage />} />
               <Route path="/turmas" element={<TurmasPage />} />
               <Route path="/frequencia" element={<FrequenciaPage />} />

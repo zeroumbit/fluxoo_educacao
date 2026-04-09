@@ -335,17 +335,15 @@ export const alunoService = {
   },
 
   async excluir(id: string, userId?: string, tenantId?: string, isProfessor?: boolean) {
-    // REGRA DE NEGÓCIO: Professores NÃO podem excluir alunos
     if (isProfessor) {
       throw new Error('Professores não têm permissão para excluir alunos.')
     }
-
-    // Validação RBAC: alunos.delete
+    
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'alunos.delete')
     }
 
-    // 0. Verificar pendências financeiras (REGRA: não pode excluir com pendências)
+    // 1. O financeiro é crítico: Evita a exclusão do aluno caso existam dívidas / faturas pendentes
     const { data: pendencias, error: pendenciaError } = await supabase
       .from('cobrancas')
       .select('id')
@@ -354,80 +352,42 @@ export const alunoService = {
     
     if (pendenciaError) throw pendenciaError
     if (pendencias && pendencias.length > 0) {
-      throw new Error(`Não é possível excluir o aluno pois existem ${pendencias.length} cobranças pendentes ou em atraso. Resolva o financeiro primeiro.`)
+      throw new Error(`Exclusão bloqueada: existem ${pendencias.length} cobranças pendentes.`)
     }
 
-    // 1. Coletar IDs dos responsáveis vinculados antes de deletar
+    // 2. Snaphot dos IDs dos responsáveis ANTES de deletar para lidar com os órfãos depois
     const { data: vinculosPre } = await supabase
       .from('aluno_responsavel')
       .select('responsavel_id')
       .eq('aluno_id', id)
-    
     const responsaveisIds = vinculosPre?.map(v => v.responsavel_id).filter(Boolean) as string[] || []
 
-    // 2. Limpeza de registros dependentes (Cascata manual)
-    // Vínculos familiares
-    await supabase.from('aluno_responsavel').delete().eq('aluno_id', id)
-    
-    // Academico
-    await (supabase.from('matriculas' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('boletins' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('selos' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('frequencias' as any) as any).delete().eq('aluno_id', id)
-    
-    // Autorizacoes
-    await (supabase.from('autorizacoes_respostas' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('autorizacoes_auditoria' as any) as any).delete().eq('aluno_id', id)
+    try {
+      // 3. Exclusão Otimizada - O Postgres tratará faturas, diários de classe, autorizações e faltas nativamente e numa única transaction interna.
+      const { error } = await supabase.from('alunos').delete().eq('id', id)
 
-    // Portal / Outros
-    await (supabase.from('fila_virtual' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('document_solicitations' as any) as any).delete().eq('aluno_id', id)
-    await (supabase.from('documentos_emitidos' as any) as any).delete().eq('aluno_id', id)
-
-    // 3. Tentar excluir o aluno
-    const { error } = await supabase
-      .from('alunos')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      // Mapear erros comuns do Postgres para mensagens amigáveis em PT-BR
-      if (error.code === '23503') {
-        if (error.message.includes('matriculas')) {
-          throw new Error('O aluno ainda possui matrículas vinculadas que não puderam ser removidas automaticamente.')
-        }
-        if (error.message.includes('cobrancas')) {
-          throw new Error('Não é possível excluir o aluno pois ele possui histórico de cobranças (pagas ou canceladas). Entre em contato com o suporte para exclusão total de dados históricos.')
-        }
-        throw new Error(`Não é possível excluir o aluno devido a dependências em: ${error.message.split('violation: ')[1] || 'outras tabelas'}`)
+      if (error) {
+        if (error.code === '23503') throw new Error('Não é possível excluir o aluno. Dívidas ou pendências órfãs bloquearam o CASCADE.')
+        throw error
       }
-      throw error
-    }
 
-    // 4. Pós-exclusão: Tratar responsáveis órfãos (OPÇÃO A)
-    if (responsaveisIds.length > 0) {
+      // 4. Limpar acesso ao Portal dos pais que ficaram sem NENHUM filho após esta deleção
       for (const respId of responsaveisIds) {
-        // Verificar se este responsável ainda tem algum aluno (ativo ou inativo)
         const { count } = await supabase
           .from('aluno_responsavel')
           .select('*', { count: 'exact', head: true })
           .eq('responsavel_id', respId)
 
         if (count === 0) {
-          // Órfão total: Invalida acesso ao portal mas mantém registro nominal/CPF para financeiro
           await supabase
             .from('responsaveis')
-            .update({
-              user_id: null,
-              senha_hash: '',
-              status: 'inativo',
-              primeiro_acesso: false
-            })
+            .update({ user_id: null, senha_hash: '', status: 'inativo', primeiro_acesso: false })
             .eq('id', respId)
-          
-          console.log(`👤 Responsável ${respId} ficou órfão e teve acesso ao portal revogado.`)
         }
       }
+    } catch (err) {
+      logger.error('Erro na exclusão de aluno: ', err)
+      throw err
     }
   },
 
@@ -595,6 +555,31 @@ export const alunoService = {
       .delete()
       .eq('id', vinculoId)
 
+    if (error) throw error
+  },
+
+  async contarImportacoesPendentes(tenantId: string) {
+    const { count, error } = await supabase
+      .from('importacoes_staging')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pendente')
+    if (error) throw error
+    return count || 0
+  },
+
+  async deletarLoteImportacao(tenantId: string, loteId?: string) {
+    const query = supabase
+      .from('importacoes_staging')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pendente')
+    
+    if (loteId) {
+      query.eq('lote_id', loteId)
+    }
+
+    const { error } = await query
     if (error) throw error
   }
 }
