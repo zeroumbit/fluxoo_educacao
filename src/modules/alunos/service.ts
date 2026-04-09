@@ -14,6 +14,7 @@ export const alunoService = {
       .from('alunos')
       .select('*, filiais(*), aluno_responsavel(*, responsaveis(*))')
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
 
     // Se for professor, filtrar alunos que estão em turmas onde ele leciona
     if (professorId) {
@@ -82,6 +83,7 @@ export const alunoService = {
       `)
       .eq('id', id)
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .single()
 
     if (alunoError) throw alunoError
@@ -134,6 +136,7 @@ export const alunoService = {
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('status', 'ativo')
+      .is('deleted_at', null)
 
     if (professorId) {
        const { data: turmasIds } = await (supabase.from('turma_professores' as any) as any)

@@ -1,3 +1,5 @@
+import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
+import { ProfessorTurmasPageMobile } from './ProfessorTurmasPage.mobile'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -266,6 +268,19 @@ export function ProfessorTurmasPage() {
         </Table>
       </div>
     </div>
+  )
+}
+
+function ProfessorTurmasPageWeb() {
+  return <ProfessorTurmasPage />
+}
+
+export function ProfessorTurmasPageAdapter() {
+  return (
+    <AdaptiveView
+      web={<ProfessorTurmasPageWeb />}
+      mobile={<ProfessorTurmasPageMobile />}
+    />
   )
 }
 

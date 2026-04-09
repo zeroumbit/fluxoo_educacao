@@ -107,26 +107,25 @@ export function ProfessorFrequenciaPage() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Filtros */}
-      <Card>
-        <CardHeader className="pb-3 pt-[30px]">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="w-5 h-5 text-zinc-400" />
-            Diário de Frequência
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="min-h-screen bg-zinc-50 pb-32">
+      {/* Header Premium */}
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-100 px-6 py-4 flex flex-col gap-1">
+        <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Diário de Classe</h1>
+        <p className="text-[13px] text-zinc-500 font-medium leading-none">Registre a frequência dos alunos hoje</p>
+      </div>
+
+      <div className="px-4 py-6 space-y-6">
+        {/* Filtros Glassmorphism */}
+        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-zinc-100 flex flex-col gap-5">
             <div className="space-y-2">
-              <Label>Selecione a Turma</Label>
+              <Label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Selecione a Turma</Label>
               <Select value={turmaId} onValueChange={setTurmaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a turma" />
+                <SelectTrigger className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus:ring-zinc-900/5">
+                  <SelectValue placeholder="Toque para escolher..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl border-zinc-100">
                   {turmasUnicas.map((turma: any) => (
-                    <SelectItem key={turma.id} value={turma.id}>
+                    <SelectItem key={turma.id} value={turma.id} className="py-3 rounded-xl focus:bg-zinc-50">
                       {turma.nome}
                     </SelectItem>
                   ))}
@@ -135,16 +134,15 @@ export function ProfessorFrequenciaPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Data da Chamada</Label>
+              <Label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Data da Chamada</Label>
               <Input
                 type="date"
                 value={dataAula}
+                className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus:ring-zinc-900/5 shadow-none"
                 onChange={(e) => setDataAula(e.target.value)}
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
       {/* Lista Mobile Optimistic */}
       {turmaId && (
@@ -204,6 +202,7 @@ export function ProfessorFrequenciaPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 }

@@ -19,7 +19,7 @@ import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 
 // Pages - Professor
 const ProfessorAlunosPage = lazy(() => import('@/modules/professor/pages/ProfessorAlunosPage').then(m => ({ default: m.ProfessorAlunosPage })))
-const ProfessorTurmasPage = lazy(() => import('@/modules/professor/pages/ProfessorTurmasPage').then(m => ({ default: m.ProfessorTurmasPage })))
+const ProfessorTurmasPage = lazy(() => import('@/modules/professor/pages/ProfessorTurmasPage').then(m => ({ default: m.ProfessorTurmasPageAdapter })))
 const ProfessorFrequenciaPage = lazy(() => import('@/modules/professor/pages/ProfessorFrequenciaPage').then(m => ({ default: m.ProfessorFrequenciaPage })))
 const ProfessorPlanosAulaPage = lazy(() => import('@/modules/professor/pages/ProfessorPlanosAulaPage').then(m => ({ default: m.ProfessorPlanosAulaPage })))
 const ProfessorAtividadesPage = lazy(() => import('@/modules/professor/pages/ProfessorAtividadesPage').then(m => ({ default: m.ProfessorAtividadesPage })))

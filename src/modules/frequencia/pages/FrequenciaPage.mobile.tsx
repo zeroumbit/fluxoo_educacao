@@ -185,12 +185,12 @@ export function FrequenciaPageMobile() {
           <div className="grid grid-cols-12 gap-3">
             <div className="col-span-8">
               <Select onValueChange={setTurmaId} value={turmaId}>
-                <SelectTrigger className="h-14 rounded-2xl text-base font-bold bg-slate-50/50 dark:bg-slate-800/50 border-0 shadow-inner">
+                <SelectTrigger className="w-full h-14 rounded-2xl text-[15px] font-semibold bg-slate-50/50 dark:bg-slate-800/50 border-0 shadow-inner">
                   <SelectValue placeholder="Escolha a turma" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
                   {turmas?.map((t) => (
-                    <SelectItem key={t.id} value={t.id} className="py-4 font-bold">{t.nome}</SelectItem>
+                    <SelectItem key={t.id} value={t.id} className="py-4 font-semibold text-[15px]">{t.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
