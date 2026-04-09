@@ -66,9 +66,9 @@ const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
 const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
 
-// Currículos
-const CurriculosListPage = lazy(() => import('@/modules/curriculos/pages/CurriculosListPage').then(m => ({ default: m.CurriculosListPage })))
-const CurriculoDetalhePage = lazy(() => import('@/modules/curriculos/pages/CurriculoDetalhePage').then(m => ({ default: m.CurriculoDetalhePage })))
+// Currículos - MÓDULO EM IMPLEMENTAÇÃO (imports mantidos para reativação futura)
+// const CurriculosListPage = lazy(() => import('@/modules/curriculos/pages/CurriculosListPage').then(m => ({ default: m.CurriculosListPage })))
+// const CurriculoDetalhePage = lazy(() => import('@/modules/curriculos/pages/CurriculoDetalhePage').then(m => ({ default: m.CurriculoDetalhePage })))
 
 // Pages - Super Admin
 const SuperAdminDashboardPage = lazy(() => import('@/modules/super-admin/pages/SuperAdminDashboardPage').then(m => ({ default: m.SuperAdminDashboardPage })))
@@ -289,9 +289,9 @@ function App() {
               <Route path="/perfil-escola" element={<PerfilEscolaPage />} />
               <Route path="/meu-perfil" element={<MeuPerfilPage />} />
               <Route path="/plano" element={<PlanoPage />} />
-              {/* Currículos */}
-              <Route path="/curriculos" element={<CurriculosListPage />} />
-              <Route path="/curriculos/:id" element={<CurriculoDetalhePage />} />
+              {/* Currículos - MÓDULO EM IMPLEMENTAÇÃO */}
+              <Route path="/curriculos" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Módulo em Desenvolvimento</h2><p className="text-zinc-500">A seção de Currículos estará disponível em breve.</p></div>} />
+              <Route path="/curriculos/:id" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Módulo em Desenvolvimento</h2><p className="text-zinc-500">A seção de Currículos estará disponível em breve.</p></div>} />
 
               {/* Marketplace Partners - Dashboards e Páginas Específicas */}
               <Route path="/loja/dashboard" element={<LojistaDashboardPage />} />

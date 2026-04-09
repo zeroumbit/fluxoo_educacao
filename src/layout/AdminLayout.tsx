@@ -93,7 +93,8 @@ const navigationGroups = [
     label: 'Capital Humano',
     items: [
       { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
-      { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
+      // MÓDULO EM IMPLEMENTAÇÃO - Reativar quando pronto
+      // { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
     ],
   },
   {

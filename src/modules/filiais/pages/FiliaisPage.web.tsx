@@ -329,8 +329,8 @@ export function FiliaisPageWeb() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filiais?.map((filial: Filial) => (
-          <Card 
-            key={filial.id} 
+          <Card
+            key={filial.id}
             className={cn(
               "border-0 shadow-md hover:shadow-lg transition-all group relative overflow-hidden",
               filial.is_matriz && "ring-2 ring-indigo-500/20 bg-gradient-to-br from-white to-indigo-50/10"

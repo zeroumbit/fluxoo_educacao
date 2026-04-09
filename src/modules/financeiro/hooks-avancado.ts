@@ -20,15 +20,30 @@ export function useCriarContaPagar() {
 }
 export function useAtualizarContaPagar() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, updates }: { id: string; updates: any }) => financeiroAvancadoService.atualizarContaPagar(id, updates), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+      financeiroAvancadoService.atualizarContaPagar(id, authUser!.tenantId, updates),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] })
+  })
 }
 export function useDeletarContaPagar() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (id: string) => financeiroAvancadoService.deletarContaPagar(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: (id: string) =>
+      financeiroAvancadoService.deletarContaPagar(id, authUser!.tenantId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] })
+  })
 }
 export function useRegistrarPagamento() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, pagamento }: { id: string; pagamento: any }) => financeiroAvancadoService.registrarPagamento(id, pagamento), onSuccess: () => qc.invalidateQueries({ queryKey: ['cobrancas'] }) })
+  const { authUser } = useAuth()
+  return useMutation({
+    mutationFn: ({ id, pagamento }: { id: string; pagamento: any }) =>
+      financeiroAvancadoService.registrarPagamento(id, authUser!.tenantId, pagamento),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cobrancas'] })
+  })
 }
 export function useFechamentoMensal() {
   const { authUser } = useAuth()
