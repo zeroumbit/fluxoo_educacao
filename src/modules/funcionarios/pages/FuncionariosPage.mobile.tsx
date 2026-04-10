@@ -157,14 +157,6 @@ export function FuncionariosPageMobile() {
     <PullToRefresh onRefresh={async () => { await refetch() }}>
       <MobilePageLayout
         title="Equipe"
-        rightActions={
-          <button 
-            onClick={() => { setSelectedFolder(null); funcForm.reset({ funcoes: [], dia_pagamento: 5 }); setEditOpen(true); }}
-            className="h-10 w-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100"
-          >
-            <Plus className="h-5 w-5 text-white" />
-          </button>
-        }
       >
         <div className="space-y-6 pb-20 pt-2">
             {/* Quick Filter & Actions */}
@@ -254,6 +246,15 @@ export function FuncionariosPageMobile() {
                 )}
             </div>
         </div>
+
+        {/* FAB - Novo Funcionário */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => { setSelectedFolder(null); funcForm.reset({ funcoes: [], dia_pagamento: 5 }); setEditOpen(true); }}
+          className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+        >
+          <Plus className="h-7 w-7" />
+        </motion.button>
 
         {/* Edit / Create Form BottomSheet */}
         <BottomSheet 
