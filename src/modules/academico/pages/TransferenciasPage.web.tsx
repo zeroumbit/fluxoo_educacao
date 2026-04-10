@@ -70,7 +70,7 @@ export function TransferenciasPageWeb() {
   const { authUser } = useAuth()
   const tenantId = authUser?.tenantId
   const { data: transferencias, isLoading } = useTransferenciasEscola()
-  const { data: escola } = useEscola()
+  const { data: escola } = useEscola(tenantId!)
   const { data: alunos } = useAlunos()
   const { data: permissao } = useCheckPermissaoTransferencia()
   const solicitar = useSolicitarTransferencia()
@@ -457,7 +457,7 @@ export function TransferenciasPageWeb() {
               <label className="text-sm font-semibold text-slate-700">Escola Destino (sua escola)</label>
               <div className="h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center text-sm text-slate-600 font-medium">
                 <School className="h-4 w-4 mr-2 text-slate-400" />
-                {escola?.razao_social || escola?.nome_fantasia || tenantId}
+                {escola?.razao_social || tenantId}
               </div>
             </div>
 

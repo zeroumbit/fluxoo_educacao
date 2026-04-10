@@ -555,7 +555,7 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[95vh] overflow-y-auto bg-white pb-safe">
+      <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[95vh] overflow-y-auto bg-white pb-safe">
         {/* Handle Indicator - iOS Sheet */}
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-4 mb-6" aria-hidden="true" />
 

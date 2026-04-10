@@ -409,7 +409,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   }
 
   const ModalContent = (
-    <div className="flex flex-col gap-6 sm:gap-10">
+    <div className="flex flex-col gap-4 sm:gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
          <div className="flex items-center gap-3 sm:gap-4">
@@ -427,26 +427,26 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
       </div>
 
       {/* Card de Valor */}
-      <div className="flex flex-col items-center justify-center gap-2 py-6 sm:py-8 bg-slate-900 rounded-[32px] sm:rounded-[48px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
+      <div className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5 bg-slate-900 rounded-[32px] sm:rounded-[40px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
          <div className="absolute top-0 right-0 opacity-10 -mr-4 sm:-mr-8 -mt-4 sm:-mt-8"><DollarSign size={100} className="sm:size-150" /></div>
          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[4px] sm:tracking-[5px] text-teal-400 mb-2 relative z-10 px-4 text-center">Total a Pagar</span>
-         <h2 className="text-3xl sm:text-5xl font-black tracking-tighter relative z-10 leading-none px-4 text-center break-words w-full">{formatCurrency(cobranca?.valor || 0)}</h2>
-         <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-3 sm:mt-4 relative z-10 px-4 text-center truncate max-w-full">{cobranca?.descricao || ''}</p>
+         <h2 className="text-3xl sm:text-4xl font-black tracking-tighter relative z-10 leading-none px-4 text-center break-words w-full">{formatCurrency(cobranca?.valor || 0)}</h2>
+         <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 sm:mt-2 relative z-10 px-4 text-center truncate max-w-full">{cobranca?.descricao || ''}</p>
       </div>
 
       {/* Conteúdo PIX */}
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-4 sm:space-y-6">
         {(configPix?.qr_code_url || configPix?.chave_pix) ? (
-          <div className="space-y-6 sm:space-y-8">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-6 items-stretch">
              {(configPix?.qr_code_url || configPix?.qr_code_auto) ? (
-               <div className="p-6 sm:p-10 rounded-[32px] sm:rounded-[48px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-6 sm:gap-8 group transition-all">
-                  <div className="p-4 sm:p-6 bg-white rounded-[24px] sm:rounded-[40px] shadow-2xl border border-slate-100 flex items-center justify-center">
+               <div className="p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-4 group transition-all h-full justify-center">
+                  <div className="p-3 sm:p-4 bg-white rounded-[20px] sm:rounded-[24px] shadow-xl border border-slate-100 flex items-center justify-center shrink-0">
                     {configPix?.qr_code_url ? (
-                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-40 h-40 sm:w-48 sm:h-48 object-contain" />
+                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-32 h-32 sm:w-36 sm:h-36 object-contain" />
                     ) : (
-                      <div className="w-40 h-40 sm:w-48 sm:h-48 flex flex-col items-center justify-center text-slate-300 gap-2 sm:gap-3">
-                        <QrCode size={48} className="sm:size-64 opacity-20" />
-                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-center">Gerando Código...</span>
+                      <div className="w-32 h-32 sm:w-36 sm:h-36 flex flex-col items-center justify-center text-slate-300 gap-2">
+                        <QrCode size={40} className="sm:size-48 opacity-20" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-center">Gerando...</span>
                       </div>
                     )}
                   </div>
@@ -461,15 +461,15 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
              ) : null}
 
              {configPix?.chave_pix && (
-               <div className="space-y-3 sm:space-y-4">
+               <div className="flex flex-col justify-center space-y-3">
                   <div className="flex items-center gap-2 px-2">
                     <div className="h-px bg-slate-100 flex-1" />
                     <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest flex-shrink-0">Ou use o Copia e Cola</span>
                     <div className="h-px bg-slate-100 flex-1" />
                   </div>
 
-                  <div className="space-y-2 sm:space-y-3">
-                    <div className="p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-white border-2 border-slate-100 font-mono text-[10px] sm:text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center max-h-32 overflow-y-auto">
+                  <div className="space-y-2">
+                    <div className="p-3 sm:p-4 rounded-[20px] sm:rounded-[24px] bg-white border-2 border-slate-100 font-mono text-[10px] sm:text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center max-h-24 overflow-y-auto">
                        {configPix.chave_pix}
                     </div>
                     <Button onClick={handleCopy} className="w-full h-14 sm:h-16 bg-slate-900 hover:bg-black text-white rounded-[24px] sm:rounded-[28px] font-black text-[10px] sm:text-xs uppercase tracking-[2px] sm:tracking-[3px] gap-3 sm:gap-4 shadow-2xl active:scale-95 transition-all">
@@ -489,7 +489,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
         )}
 
         {/* Botão Confirmar */}
-        <Button onClick={handleComprovante} variant="outline" className="w-full h-14 sm:h-16 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[24px] sm:rounded-[28px] text-[10px] sm:text-[10px] font-black uppercase tracking-[2px] sm:tracking-[3px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
+        <Button onClick={handleComprovante} variant="outline" className="w-full h-12 sm:h-14 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[24px] text-[10px] font-black uppercase tracking-[2px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
            Confirmar Pagamento
         </Button>
       </div>
@@ -499,7 +499,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent side="bottom" className="rounded-t-[48px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
+        <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[48px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
           <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
           {ModalContent}
         </SheetContent>
@@ -509,7 +509,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[550px] w-[95vw] sm:w-auto rounded-[48px] sm:rounded-[60px] p-6 sm:p-12 focus:outline-none ring-0 overflow-hidden max-h-[95vh] overflow-y-auto">
+      <DialogContent showCloseButton={false} className="max-w-[550px] w-[95vw] sm:w-auto rounded-[48px] sm:rounded-[60px] p-6 sm:p-12 focus:outline-none ring-0 overflow-hidden max-h-[95vh] overflow-y-auto z-[200]">
         <DialogTitle className="sr-only">Checkout PIX</DialogTitle>
         {ModalContent}
       </DialogContent>
