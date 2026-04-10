@@ -105,7 +105,8 @@ const navigationGroups = [
       { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
       { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
       { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
-      { name: 'Gateway', href: '/gateway', icon: KeyRound, permission: 'financeiro.config.view' },
+      // Gateway temporariamente escondido - reativar quando módulo de pagamentos estiver completo
+      // { name: 'Gateway', href: '/gateway', icon: KeyRound, permission: 'financeiro.config.view' },
       { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
       { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
       { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
