@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
-  Receipt, 
-  Bell, 
-  ShoppingBag, 
+import {
+  Home,
+  Users,
+  Receipt,
+  Bell,
+  ShoppingBag,
   Menu,
   User,
   LogOut,
@@ -14,7 +14,8 @@ import {
   Shield,
   CreditCard,
   MessageSquare,
-  ClipboardList
+  ClipboardList,
+  Send,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
@@ -101,6 +102,7 @@ export const BottomNavV2 = () => {
     ...(showLoja ? [{ label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja', desc: 'Marketplace da escola' }] : []),
     { label: 'Meu Perfil', icon: User, path: '/portal/perfil', desc: 'Dados cadastrais' },
     { label: 'Documentos', icon: ClipboardList, path: '/portal/documentos', desc: 'Contratos e arquivos' },
+    { label: 'Transferências', icon: Send, path: '/portal/transferencias', desc: 'Solicitações e status' },
     { label: 'Privacidade', icon: Shield, path: '/portal/perfil', desc: 'Termos e LGPD' },
   ];
 

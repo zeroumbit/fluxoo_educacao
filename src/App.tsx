@@ -53,6 +53,7 @@ const MatriculaFormPage = lazy(() => import('@/modules/academico/pages/Matricula
 const PlanoAulaPage = lazy(() => import('@/modules/academico/pages/PlanoAulaPage').then(m => ({ default: m.PlanoAulaPage })))
 const AtividadesPage = lazy(() => import('@/modules/academico/pages/AtividadesPage').then(m => ({ default: m.AtividadesPage })))
 const NotasPage = lazy(() => import('@/modules/academico/pages/NotasPage').then(m => ({ default: m.NotasPage })))
+const TransferenciasPage = lazy(() => import('@/modules/academico/pages/TransferenciasPage').then(m => ({ default: m.TransferenciasPage })))
 const DisciplinasPage = lazy(() => import('@/modules/academico/pages/DisciplinasPage').then(m => ({ default: m.DisciplinasPage })))
 const EventosPage = lazy(() => import('@/modules/agenda/pages/EventosPage').then(m => ({ default: m.EventosPage })))
 const ConfiguracoesPage = lazy(() => import('@/modules/configuracoes/pages/ConfiguracoesPage').then(m => ({ default: m.ConfiguracoesPage })))
@@ -106,6 +107,7 @@ const PortalAlunoPerfilV2 = lazy(() => import('@/modules/portal/v2/pages/PortalA
 const PortalAvisosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAvisosV2').then(m => ({ default: m.PortalAvisosV2 })))
 const PortalFinanceiroV2 = lazy(() => import('@/modules/portal/v2/pages/PortalFinanceiroV2').then(m => ({ default: m.PortalFinanceiroV2 })))
 const PortalDocumentosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalDocumentosPageV2').then(m => ({ default: m.default })))
+const PortalTransferenciasV2 = lazy(() => import('@/modules/portal/v2/pages/PortalTransferenciasV2').then(m => ({ default: m.default })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -279,6 +281,7 @@ function App() {
               <Route path="/planos-aula" element={<PlanoAulaPage />} />
               <Route path="/atividades" element={<AtividadesPage />} />
               <Route path="/notas" element={<NotasPage />} />
+              <Route path="/transferencias" element={<TransferenciasPage />} />
               <Route path="/disciplinas" element={<DisciplinasPage />} />
               <Route path="/agenda" element={<EventosPage />} />
               <Route path="/configuracoes" element={<ConfiguracoesPage />} />
@@ -333,6 +336,7 @@ function App() {
               <Route path="/portal/livros" element={<PortalLivrosPage />} />
               <Route path="/portal/agenda" element={<PortalAgendaPage />} />
               <Route path="/portal/documentos" element={<PortalDocumentosV2 />} />
+              <Route path="/portal/transferencias" element={<PortalTransferenciasV2 />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
             </Route>
 

@@ -39,7 +39,8 @@ import {
   FileUser,
   Search,
   Pencil,
-  KeyRound
+  KeyRound,
+  ArrowRightLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
@@ -63,6 +64,7 @@ const navigationGroups = [
       { name: 'Alunos', href: '/alunos', icon: User, permission: 'academico.alunos.view' },
       { name: 'Turmas', href: '/turmas', icon: Users, permission: 'academico.turmas.view' },
       { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
+      { name: 'Transferências', href: '/transferencias', icon: ArrowRightLeft, permission: 'academico.matriculas.view' },
       { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
       { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
       { name: 'Disciplinas', href: '/disciplinas', icon: BookType, permission: 'academico.disciplinas.view' },

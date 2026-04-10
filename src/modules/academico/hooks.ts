@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { academicoService } from './service'
+import { transferenciasService } from './transferencias.service'
 
 export function useMatriculas() {
   const { authUser } = useAuth()
@@ -274,5 +275,39 @@ export function useHistoricoNotasAluno(alunoId: string) {
     queryKey: ['historico_notas_aluno', authUser?.tenantId, alunoId],
     queryFn: () => academicoService.listarHistoricoNotasAluno(authUser!.tenantId, alunoId),
     enabled: !!authUser?.tenantId && !!alunoId,
+  })
+}
+
+// ─── Transferências entre Escolas ─────────────────────────────────────────
+export function useTransferenciasEscola() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['transferencias', 'escola', authUser?.tenantId],
+    queryFn: () => transferenciasService.listarPorEscola(authUser!.tenantId!),
+    enabled: !!authUser?.tenantId,
+    refetchInterval: 30000,
+    staleTime: 15000,
+  })
+}
+
+export function useSolicitarTransferencia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ alunoId, origemId, destinoId, motivo }: {
+      alunoId: string; origemId: string; destinoId: string; motivo: string
+    }) => transferenciasService.solicitar(alunoId, origemId, destinoId, motivo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+    }
+  })
+}
+
+export function useCheckPermissaoTransferencia() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['transferencias', 'permissao', authUser?.tenantId],
+    queryFn: () => transferenciasService.checkPermissaoEscola(authUser!.tenantId!),
+    enabled: !!authUser?.tenantId,
+    staleTime: 5 * 60 * 1000,
   })
 }
