@@ -1,22 +1,23 @@
 import React, { useState } from 'react'
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Sparkles, 
-  AlertCircle, 
-  TrendingDown, 
-  Stethoscope, 
-  Cake, 
+import {
+  Sparkles,
+  AlertCircle,
+  TrendingDown,
+  Stethoscope,
+  Cake,
   ChevronRight,
   BookOpen,
   Award,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -147,10 +148,20 @@ export function SmartAssistant({
         >
           {/* Header da Gaveta */}
           <SheetHeader className="p-6 pb-4 bg-white border-b border-zinc-100 flex-none sticky top-0 z-10 text-left">
-            <SheetTitle className="text-xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-500" />
-              Assistente Pessoal
-            </SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-500" />
+                Assistente Pessoal
+              </SheetTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-xl hover:bg-zinc-100"
+                onClick={() => handleOpenChange(false)}
+              >
+                <X className="w-5 h-5 text-zinc-500" />
+              </Button>
+            </div>
             <div className="mt-2">
               <p className="text-lg font-medium text-zinc-800">
                 {greeting}, Prof. {professorName.split(' ')[0]}
