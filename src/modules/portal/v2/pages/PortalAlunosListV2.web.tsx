@@ -15,7 +15,7 @@ export function PortalAlunosListV2Web() {
   return (
     <div className="flex flex-col gap-8 w-full">
       <header className="flex flex-col border-b border-slate-200 pb-8 mt-2">
-        <h1 className="text-4xl font-black text-slate-800 tracking-tight">Meus Filhos</h1>
+        <h1 className="text-4xl font-black text-slate-800 tracking-tight">Alunos</h1>
         <p className="text-base font-semibold text-slate-500 mt-2">
           Acesse o perfil acadêmico de cada aluno.
         </p>

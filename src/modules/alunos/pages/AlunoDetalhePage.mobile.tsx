@@ -58,7 +58,7 @@ export function AlunoDetalhePageMobile() {
   const [selectedVinculo, setSelectedVinculo] = useState<any>(null)
 
   useEffect(() => {
-    if (aluno && !formData) {
+    if (aluno) {
        setFormData({
          nome_completo: aluno.nome_completo,
          nome_social: aluno.nome_social || '',
@@ -75,7 +75,7 @@ export function AlunoDetalhePageMobile() {
          estado: aluno.estado || '',
        })
     }
-  }, [aluno, formData])
+  }, [aluno])
 
   const handleSave = async () => {
     try {

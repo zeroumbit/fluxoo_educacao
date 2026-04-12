@@ -180,10 +180,13 @@ export function getProximoDiaUtil(data: Date): Date {
 }
 
 /**
- * Converte Date para string YYYY-MM-DD
+ * Converte Date para string YYYY-MM-DD (usa data local, evita problema de timezone UTC)
  */
 export function formatDateISO(data: Date): string {
-  return data.toISOString().split('T')[0]
+  const ano = data.getFullYear()
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
 }
 
 // ==================== HOOKS DE MÁSCARA ====================

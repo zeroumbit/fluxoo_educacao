@@ -81,6 +81,9 @@ export function TransferenciasPageWeb() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [detailTransferencia, setDetailTransferencia] = useState<any>(null)
   const [busca, setBusca] = useState('')
+  const [selectedAlunoId, setSelectedAlunoId] = useState('')
+  const [destinoId, setDestinoId] = useState('')
+  const [motivo, setMotivo] = useState('')
 
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []

@@ -26,7 +26,7 @@ export function PortalLayoutV2Web() {
 
   const navItems = [
     { label: 'Visão Geral', icon: Home, path: '/portal', exact: true },
-    { label: 'Meus Filhos', icon: Users, path: '/portal/alunos' },
+    { label: 'Alunos', icon: Users, path: '/portal/alunos' },
     { label: 'Financeiro', icon: Receipt, path: '/portal/financeiro' },
     { label: 'Notificações', icon: Bell, path: '/portal/avisos' },
     { label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja' },

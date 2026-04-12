@@ -21,7 +21,7 @@ export function PortalAlunosListV2Mobile() {
 
   return (
     <div className="flex flex-col gap-4 pb-12">
-      <NativeHeader title="Meus Filhos" showBack />
+      <NativeHeader title="Alunos" showBack />
       
       <div className="px-4 flex flex-col gap-4">
 

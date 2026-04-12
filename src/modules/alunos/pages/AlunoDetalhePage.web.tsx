@@ -65,7 +65,7 @@ export function AlunoDetalhePageWeb() {
   const [confirmDeleteFoto, setConfirmDeleteFoto] = useState(false)
 
   useEffect(() => {
-    if (aluno && !formData) {
+    if (aluno) {
       setFormData({
         nome_completo: aluno.nome_completo,
         nome_social: aluno.nome_social || '',
@@ -89,7 +89,7 @@ export function AlunoDetalhePageWeb() {
         status: aluno.status || 'ativo'
       })
     }
-  }, [aluno, formData])
+  }, [aluno])
 
   const handleSave = async () => {
     if (!id) return

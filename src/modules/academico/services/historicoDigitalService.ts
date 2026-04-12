@@ -18,7 +18,7 @@ export interface ExitTranscriptPayload {
   aluno: {
     id: string;
     nome_completo: string;
-    codigo_transferencia: string;
+    codigo_transferencia: string | null;
     data_nascimento: string | null;
   };
   escola_origem: {
@@ -70,10 +70,8 @@ export async function buildExitTranscriptPayload(
   }
 
   // 3.2. Fetch Dados da Escola
-  // Obs: Assumindo que temos os dados do tenant no modulo de sistema, ou uma tabela 'escolas'
-  // Adaptar para a tabela real da organização
-  const { data: escola, error: escolaError } = await supabase
-    .from('escolas') // Substituir pela tabela de tenant real se for diferente ('empresas' ou 'unidades')
+  const { data: escola, error: escolaError } = await (supabase as any)
+    .from('escolas')
     .select('id, nome, cnpj')
     .eq('tenant_id', tenantId)
     .single();
@@ -117,7 +115,7 @@ export async function buildExitTranscriptPayload(
 
   // 3.6. Tratamento LGPD: Incluir dados sensíveis de saúde APENAS se explicitamente solicitado
   if (opts.includeHealthData) {
-    const { data: saude } = await supabase
+    const { data: saude } = await (supabase as any)
       .from('alertas_saude_nee')
       .select('tipo_alerta, descricao, cuidados_especificos')
       .eq('aluno_id', alunoId)
@@ -125,9 +123,9 @@ export async function buildExitTranscriptPayload(
 
     if (saude && saude.length > 0) {
       payload.dados_saude = {
-        alergias: saude.filter(s => s.tipo_alerta === 'alergia').map(s => s.descricao),
-        necessidades_especiais: saude.filter(s => s.tipo_alerta === 'nee').map(s => s.descricao),
-        cuidados_especificos: saude[0].cuidados_especificos // Pegando primeiro registro de cuidados
+        alergias: saude.filter((s: any) => s.tipo_alerta === 'alergia').map((s: any) => s.descricao),
+        necessidades_especiais: saude.filter((s: any) => s.tipo_alerta === 'nee').map((s: any) => s.descricao),
+        cuidados_especificos: saude[0].cuidados_especificos
       };
     } else {
       payload.dados_saude = {
@@ -174,14 +172,14 @@ export async function emitirHistoricoOficial(alunoId: string, tenantId: string, 
     .getPublicUrl(storagePath);
 
   // 4.6. Salvar na Tabela de Auditoria IMUTÁVEL (historicos_digitais_emitidos)
-  const { data: historicoRecord, error: insertError } = await supabase
+  const { data: historicoRecord, error: insertError } = await (supabase as any)
     .from('historicos_digitais_emitidos')
     .insert({
       tenant_id: tenantId,
       aluno_id: alunoId,
       transferencia_id: transferenciaId,
       validation_hash: validationHash,
-      payload_snapshot: payload, // Guardamos o JSON para auditorias sem precisar de OCR no PDF
+      payload_snapshot: payload,
       storage_path: publicUrl,
       status: 'final_emitido',
       emitido_por: (await supabase.auth.getUser()).data.user?.id
@@ -197,10 +195,11 @@ export async function emitirHistoricoOficial(alunoId: string, tenantId: string, 
   }
 
   // 4.7. Retornar os dados de sucesso para o frontend baixar o arquivo e mostrar o selo de validação
+  const record = historicoRecord as any;
   return {
     sucesso: true,
-    historico_id: historicoRecord.id,
-    validation_hash: historicoRecord.validation_hash,
-    pdf_url: historicoRecord.storage_path
+    historico_id: record.id,
+    validation_hash: record.validation_hash,
+    pdf_url: record.storage_path
   };
 }

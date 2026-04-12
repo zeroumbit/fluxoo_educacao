@@ -96,7 +96,7 @@ export const BottomNavV2 = () => {
   // Menu completo para o Burger
   const menuFullItems = [
     { label: 'Página Inicial', icon: Home, path: '/portal', desc: 'Resumo geral e alertas' },
-    { label: 'Meus Filhos', icon: Users, path: '/portal/alunos', desc: 'Dados e boletins' },
+    { label: 'Alunos', icon: Users, path: '/portal/alunos', desc: 'Dados e boletins' },
     { label: 'Mural de Avisos', icon: Bell, path: '/portal/avisos', desc: 'Notificações da escola' },
     { label: 'Financeiro', icon: CreditCard, path: '/portal/financeiro', desc: 'Faturas e pagamentos' },
     ...(showLoja ? [{ label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja', desc: 'Marketplace da escola' }] : []),

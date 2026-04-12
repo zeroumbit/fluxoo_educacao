@@ -66,6 +66,8 @@ export function ModalSolicitarTransferencia({
   const [alunoData, setAlunoData] = useState<any>(null)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState<any>(null)
   const [cpfErro, setCpfErro] = useState<string | null>(null)
+  const [rpcStatus, setRpcStatus] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle')
+  const [rpcErrorDetail, setRpcErrorDetail] = useState<string | null>(null)
 
   // Observa mudanças nos campos para conferência em tempo real
   const codigoValue = form.watch("codigoAluno")
@@ -76,22 +78,47 @@ export function ModalSolicitarTransferencia({
     if (codigoValue?.length === 8) {
       const buscarAlunoEresponsaveis = async () => {
         setIsSearching(true)
+        setRpcStatus('loading')
+        setRpcErrorDetail(null)
         try {
-          const { data, error } = await supabase
+          console.log('[TRANSFERENCIA] Buscando código:', codigoValue.toUpperCase())
+          const { data, error } = await (supabase as any)
             .rpc('buscar_aluno_transferencia', { p_codigo: codigoValue.toUpperCase() })
 
-          if (!error && data) {
-            // A RPC retorna um array (SET OF), pegamos o primeiro
+          if (error) {
+            console.error('[TRANSFERENCIA] Erro na RPC:', error)
+            setRpcErrorDetail(error.message || 'Erro desconhecido')
+            setRpcStatus('error')
+            setAlunoData(null)
+            return
+          }
+
+          console.log('[TRANSFERENCIA] Dados recebidos:', data)
+
+          if (data && (Array.isArray(data) ? data.length > 0 : data)) {
+            // A RPC retorna um array (SET OF) ou JSONB direto, pegamos o primeiro
             const aluno = Array.isArray(data) ? data[0] : data
+            
+            // Se o retorno for string JSON (caso do Supabase RPC com JSONB), fazemos parse
+            const parsedAluno = typeof aluno === 'string' ? JSON.parse(aluno) : aluno
+
+            console.log('[TRANSFERENCIA] Aluno parseado:', parsedAluno)
+
             // Remapeamos para manter compatibilidade com o resto do código
             setAlunoData({
-              ...aluno,
-              aluno_responsavel: aluno.responsaveis?.map((r: any) => ({ responsaveis: r }))
+              ...parsedAluno,
+              aluno_responsavel: parsedAluno.responsaveis?.map((r: any) => ({ responsaveis: r })) || []
             })
+            setRpcStatus('success')
           } else {
+            console.warn('[TRANSFERENCIA] Aluno não encontrado para o código:', codigoValue)
+            setRpcStatus('not_found')
             setAlunoData(null)
           }
-        } catch (err) {
+        } catch (err: any) {
+          console.error('[TRANSFERENCIA] Erro inesperado:', err)
+          setRpcErrorDetail(err.message || 'Erro inesperado')
+          setRpcStatus('error')
           setAlunoData(null)
         } finally {
           setIsSearching(false)
@@ -100,6 +127,8 @@ export function ModalSolicitarTransferencia({
       buscarAlunoEresponsaveis()
     } else {
       setAlunoData(null)
+      setRpcStatus('idle')
+      setRpcErrorDetail(null)
     }
   }, [codigoValue])
 
@@ -158,10 +187,10 @@ export function ModalSolicitarTransferencia({
         .insert({
           aluno_id: alunoData.id,
           escola_origem_id: alunoData.tenant_id,
-          responsavel_id: responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id, // Usa o validado ou o primeiro
+          responsavel_id: responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id,
           motivo_solicitacao: data.motivo,
           status: 'pendente_pais'
-        })
+        } as any)
 
       if (insertError) throw insertError
 

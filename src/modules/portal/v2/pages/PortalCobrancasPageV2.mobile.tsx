@@ -174,7 +174,7 @@ export function PortalCobrancasPageV2Mobile() {
         {/* Header da Seção */}
         <div className="flex items-center justify-between px-1">
           <h2 className="text-[17px] font-bold text-slate-800">
-            Meus Filhos
+            Alunos
           </h2>
           <span className="text-[12px] font-bold text-slate-400">
             {familyData?.alunos.length} {familyData?.alunos.length === 1 ? 'aluno' : 'alunos'}

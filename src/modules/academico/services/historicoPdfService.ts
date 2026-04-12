@@ -1,3 +1,4 @@
+// @ts-ignore - puppeteer é uma dependência opcional usada apenas em server-side
 import puppeteer from 'puppeteer';
 import type { ExitTranscriptPayload } from './historicoDigitalService';
 

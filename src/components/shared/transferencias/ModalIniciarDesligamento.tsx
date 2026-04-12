@@ -99,11 +99,11 @@ export function ModalIniciarDesligamento({
           escola_destino_id: data.isForaDoSistema ? null : data.escolaDestinoId,
           escola_destino_nome_manual: data.isForaDoSistema ? data.nomeEscolaManual : null,
           escola_destino_cnpj_manual: data.isForaDoSistema ? data.cnpjEscolaManual : null,
-          responsavel_id: 'fetch-from-aluno-context', // Idealmente buscado antes
+          responsavel_id: 'fetch-from-aluno-context',
           iniciado_por: 'origem',
           status: 'aguardando_responsavel',
           motivo_solicitacao: data.motivo,
-        })
+        } as any)
 
       if (error) throw error
 
