@@ -57,6 +57,9 @@ import { toast } from 'sonner'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
+import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
+import { ModalIniciarDesligamento } from '@/components/shared/transferencias/ModalIniciarDesligamento'
+
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   pendente_pais: { label: 'Aguardando Pais', color: 'text-amber-700', bg: 'bg-amber-50', icon: Clock },
   pendente_destino: { label: 'Aguardando Destino', color: 'text-blue-700', bg: 'bg-blue-50', icon: School },
@@ -78,11 +81,6 @@ export function TransferenciasPageWeb() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [detailTransferencia, setDetailTransferencia] = useState<any>(null)
   const [busca, setBusca] = useState('')
-
-  // Form states
-  const [selectedAlunoId, setSelectedAlunoId] = useState('')
-  const [destinoId, setDestinoId] = useState('')
-  const [motivo, setMotivo] = useState('')
 
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []
@@ -423,86 +421,10 @@ export function TransferenciasPageWeb() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog: Solicitar Transferência */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-[500px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <ArrowRightLeft className="h-5 w-5 text-indigo-600" />
-              Solicitar Transferência
-            </DialogTitle>
-            <DialogDescription>
-              Capture um aluno de outra escola para sua instituição.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Aluno</label>
-              <Select value={selectedAlunoId} onValueChange={setSelectedAlunoId}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecione o aluno..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {alunos?.map((aluno: any) => (
-                    <SelectItem key={aluno.id} value={aluno.id}>
-                      {aluno.nome_completo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Escola Destino (sua escola)</label>
-              <div className="h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center text-sm text-slate-600 font-medium">
-                <School className="h-4 w-4 mr-2 text-slate-400" />
-                {escola?.razao_social || tenantId}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">ID da Escola Destino</label>
-              <Input
-                placeholder="UUID da escola de destino..."
-                value={destinoId}
-                onChange={(e) => setDestinoId(e.target.value)}
-                className="h-12"
-              />
-              <p className="text-xs text-slate-400">
-                Informe o ID da escola para onde o aluno será transferido.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Motivo da Solicitação</label>
-              <Textarea
-                placeholder="Descreva o motivo da transferência..."
-                value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                className="min-h-[100px] resize-none"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="flex gap-3 flex-col-reverse sm:flex-row">
-            <Button variant="ghost" onClick={() => setDialogOpen(false)} className="h-12 sm:flex-1">
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSolicitar}
-              disabled={solicitar.isPending || !selectedAlunoId || !destinoId || !motivo}
-              className="h-12 sm:flex-1 bg-gradient-to-r from-indigo-600 to-blue-600"
-            >
-              {solicitar.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                'Enviar Solicitação'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ModalSolicitarTransferencia 
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
 
       {/* Dialog: Detalhes da Transferência */}
       <Dialog open={!!detailTransferencia} onOpenChange={(open) => !open && setDetailTransferencia(null)}>

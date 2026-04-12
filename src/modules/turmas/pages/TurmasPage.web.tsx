@@ -85,7 +85,7 @@ export function TurmasPageWeb() {
     if (dbProfessores) setProfessores(dbProfessores)
   }, [dbProfessores, setProfessores])
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<TurmaFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
     defaultValues: {
       turno: 'matutino',
@@ -242,7 +242,7 @@ export function TurmasPageWeb() {
 
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Turno</label>
-              <Select defaultValue="matutino" onValueChange={(v: any) => setValue('turno', v)}>
+              <Select value={watch('turno')} onValueChange={(v: any) => setValue('turno', v)}>
                 <SelectTrigger className="h-11 rounded-lg border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 font-medium">
                   <SelectValue placeholder="Selecione o turno" />
                 </SelectTrigger>

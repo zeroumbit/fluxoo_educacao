@@ -165,6 +165,7 @@ export type Aluno = {
   desconto_fim: string | null
   valor_mensalidade_atual: number | null
   data_ingresso: string | null
+  codigo_transferencia: string | null
   created_at: string
   updated_at: string
 }
@@ -272,6 +273,36 @@ export type MatriculaInsert = Omit<Matricula, 'id' | 'created_at' | 'updated_at'
   id?: string; turma_id?: string | null; created_at?: string; updated_at?: string
 }
 export type MatriculaUpdate = Partial<MatriculaInsert>
+
+// ========== TRANSFERENCIAS_ESCOLARES ==========
+export type TransferenciaEscolar = {
+  id: string
+  tenant_id: string | null
+  aluno_id: string
+  escola_origem_id: string
+  responsavel_id: string
+  escola_destino_id: string | null
+  escola_destino_nome: string | null
+  escola_destino_cnpj: string | null
+  status: 'pendente_pais' | 'pendente_destino' | 'aprovado' | 'recusado' | 'cancelado' | 'concluido'
+  motivo_solicitacao: string | null
+  observacoes_recusa: string | null
+  solicitante_tipo: 'escola_destino' | 'escola_origem'
+  data_solicitacao: string
+  aprovado_em: string | null
+  recusado_em: string | null
+  concluido_em: string | null
+  sla_vencimento: string | null
+  created_at: string
+  updated_at: string
+}
+export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'created_at' | 'updated_at' | 'data_solicitacao'> & {
+  id?: string
+  data_solicitacao?: string
+  created_at?: string
+  updated_at?: string
+}
+export type TransferenciaEscolarUpdate = Partial<TransferenciaEscolarInsert>
 
 // ========== EVENTOS ==========
 export type Evento = {
@@ -1217,6 +1248,7 @@ export type Database = {
       notificacoes: { Row: Notificacao; Insert: NotificacaoInsert; Update: NotificacaoUpdate; Relationships: any[] }
       disciplinas: { Row: DisciplinaDb; Insert: DisciplinaDbInsert; Update: DisciplinaDbUpdate; Relationships: any[] }
       tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: any; Relationships: any[] }
+      transferencias_escolares: { Row: TransferenciaEscolar; Insert: TransferenciaEscolarInsert; Update: TransferenciaEscolarUpdate; Relationships: any[] }
       alertas_tratamento: {
         Row: {
           id: string
@@ -1364,6 +1396,14 @@ export type Database = {
           erros: number
         }
       }
+      aprovar_transferencia: {
+        Args: { p_transferencia_id: string };
+        Returns: void
+      };
+      recusar_transferencia: {
+        Args: { p_transferencia_id: string; p_justificativa: string };
+        Returns: void
+      };
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
