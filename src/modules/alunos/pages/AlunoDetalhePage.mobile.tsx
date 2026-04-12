@@ -193,13 +193,18 @@ export function AlunoDetalhePageMobile() {
             <div>
               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{aluno.nome_completo}</h2>
               {aluno.nome_social && <p className="text-sm font-bold text-indigo-600">"{aluno.nome_social}"</p>}
-              <div className="flex justify-center gap-2 mt-3">
+              <div className="flex justify-center gap-2 mt-3 flex-wrap">
                 <Badge className={cn("rounded-lg text-[9px] font-black uppercase tracking-widest px-2 py-0.5 border-0", aluno.status === 'ativo' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400')}>
                   {aluno.status}
                 </Badge>
                 <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-widest px-2 py-0.5 border-slate-200 text-slate-400">
                   {filial?.nome_unidade || 'Sem Unidade'}
                 </Badge>
+                {aluno.codigo_transferencia && (
+                  <Badge className="rounded-lg text-[9px] font-mono font-black uppercase tracking-widest px-2 py-0.5 border-0 bg-amber-100 text-amber-800">
+                    ID: {aluno.codigo_transferencia}
+                  </Badge>
+                )}
               </div>
             </div>
           </NativeCard>

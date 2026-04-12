@@ -102,7 +102,7 @@ export function PortalAlunoPerfilV2Mobile() {
             </p>
             {/* Caption 2 - iOS Caption 2 / Material Label Medium */}
             <p className="text-[12px] font-bold text-slate-400 font-mono tracking-wide uppercase">
-              RA: {student?.id?.slice(0, 8) || '---'}
+              ID: {(student as any)?.codigo_transferencia || '---'}
             </p>
           </div>
         </div>

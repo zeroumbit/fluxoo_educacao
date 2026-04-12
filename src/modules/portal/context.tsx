@@ -100,6 +100,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
         const alunoCompleto = {
           ...vinculo.aluno,
+          codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
           turma: turma || (matricula ? {
             id: '',
             nome: matricula.serie_ano,
@@ -108,7 +109,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           } : null),
           valor_matricula: matricula?.valor_matricula || null
         }
-        
+
         if (active) setAlunoSelecionado(alunoCompleto)
       } catch (err) {
         console.error('PortalContext: Erro crítico ao carregar dados do aluno:', err)
@@ -139,6 +140,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     // 1. Atualização Imediata (UI Reflete na hora)
     setAlunoSelecionado({
       ...vinculo.aluno,
+      codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
       turma: vinculo.aluno.turma || null,
       valor_matricula: null
     })
@@ -183,6 +185,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
         const alunoCompleto = {
           ...vinculo.aluno,
+          codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
           turma: turma || (matricula ? {
             id: '',
             nome: matricula.serie_ano,

@@ -81,8 +81,12 @@ export function PortalAlunoPerfilV2Web() {
                 {student?.nome_completo || 'Aluno'}
               </h1>
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">
-                <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{student?.turma?.nome || 'Sem Turma'}</span>
-                <span>ID: {student?.id?.slice(0, 8)}</span>
+                <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{(student as any)?.turma?.nome || 'Sem Turma'}</span>
+                {(student as any)?.codigo_transferencia && (
+                  <span className="font-mono font-bold text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100">
+                    ID: {(student as any).codigo_transferencia}
+                  </span>
+                )}
               </div>
             </div>
           </div>
