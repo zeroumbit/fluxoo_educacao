@@ -14,7 +14,9 @@ import {
   Clock,
   CreditCard,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Search,
+  X
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
@@ -31,14 +33,18 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),
-  aluno_id: z.string().min(1, 'Selecione um aluno'),
+  alunos_ids: z.array(z.string()).min(1, 'Selecione pelo menos um aluno'),
   ano_letivo: z.coerce.number().min(2024),
-  serie_ano: z.string().min(1, 'Série é obrigatória'),
+  serie_ano: z.string().min(1, 'Série/Turma é obrigatória'),
   turma_id: z.string().optional(),
-  turno: z.enum(['manha', 'tarde', 'integral', 'noturno']),
+  turno: z.enum(['manhã', 'tarde', 'noite', 'integral (manhã e tarde)']),
   data_matricula: z.string().min(1),
   valor_matricula: z.coerce.number().min(0).optional(),
   status: z.string().optional(),
@@ -63,9 +69,9 @@ export function MatriculaFormPageWeb() {
       tipo: 'nova',
       data_matricula: new Date().toISOString().split('T')[0],
       ano_letivo: new Date().getFullYear(),
-      aluno_id: '',
+      alunos_ids: [],
       serie_ano: '',
-      turno: 'integral',
+      turno: 'manhã',
       valor_matricula: undefined,
       status: 'ativa'
     }
@@ -77,7 +83,7 @@ export function MatriculaFormPageWeb() {
       if (m) {
         form.reset({
           tipo: m.tipo,
-          aluno_id: m.aluno_id,
+          alunos_ids: [m.aluno_id],
           ano_letivo: m.ano_letivo,
           serie_ano: m.serie_ano,
           turma_id: m.turma_id,
@@ -90,11 +96,11 @@ export function MatriculaFormPageWeb() {
     }
   }, [editId, matriculas, form])
 
-  const alunoIdSelecionado = useWatch({ control: form.control, name: 'aluno_id' })
+  const alunosSelecionados = useWatch({ control: form.control, name: 'alunos_ids' }) || []
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
   const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
-  const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunoIdSelecionado)
+  const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunosSelecionados[0])
 
   // Filtragem inteligente de alunos
   const alunosFiltrados = alunos?.filter((aluno: any) => {
@@ -129,12 +135,20 @@ export function MatriculaFormPageWeb() {
   const onSubmit = async (data: any) => {
     if (!authUser) return
     try {
+      const alunosIds = data.alunos_ids || []
       if (editId) {
-        await atualizar.mutateAsync({ id: editId, data })
+        const payload = { ...data, aluno_id: alunosIds[0] }
+        delete payload.alunos_ids
+        await atualizar.mutateAsync({ id: editId, data: payload })
         toast.success('Matrícula atualizada!')
       } else {
-        const result = await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
-        toast.success('Matrícula realizada!')
+        const promises = alunosIds.map((id: string) => {
+          const payload = { ...data, aluno_id: id, tenant_id: authUser.tenantId }
+          delete payload.alunos_ids
+          return criar.mutateAsync(payload)
+        })
+        await Promise.all(promises)
+        toast.success(alunosIds.length > 1 ? `${alunosIds.length} Matrículas realizadas!` : 'Matrícula realizada!')
       }
       navigate('/matriculas')
     } catch (err: any) {
@@ -142,6 +156,8 @@ export function MatriculaFormPageWeb() {
       toast.error('Erro ao salvar matrícula')
     }
   }
+
+  const [popoverOpen, setPopoverOpen] = useState(false)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
@@ -178,17 +194,70 @@ export function MatriculaFormPageWeb() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="aluno_id">Aluno *</Label>
-              <Select disabled={!!editId} value={form.getValues('aluno_id')} onValueChange={(v) => form.setValue('aluno_id', v)}>
-                <SelectTrigger id="aluno_id">
-                  <SelectValue placeholder="Selecione o aluno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {alunosFiltrados?.map((a: any) => (
-                    <SelectItem key={a.id} value={a.id} className="font-medium">{a.nome_completo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="alunos_ids">Alunos *</Label>
+              {editId ? (
+                <div className="p-3 border rounded-md bg-slate-50 text-sm font-medium">
+                  {alunosFiltrados?.find(a => a.id === alunosSelecionados[0])?.nome_completo || 'Aluno não encontrado'}
+                </div>
+              ) : (
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between font-normal min-h-[40px] h-auto text-left flex-wrap gap-1 py-2">
+                      {alunosSelecionados.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {alunosSelecionados.map(id => {
+                            const aluno = alunosFiltrados?.find(a => a.id === id)
+                            return (
+                              <Badge key={id} variant="secondary" className="mr-1">
+                                {aluno?.nome_completo}
+                                <X 
+                                  className="ml-1 h-3 w-3 cursor-pointer" 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    form.setValue('alunos_ids', alunosSelecionados.filter(v => v !== id))
+                                  }} 
+                                />
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Selecione um ou mais alunos</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 z-[150]" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
+                    <Command className="w-full">
+                      <CommandInput placeholder="Buscar aluno..." />
+                      <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {(alunosFiltrados || []).map((a: any) => (
+                            <CommandItem
+                              key={a.id}
+                              value={a.nome_completo}
+                              onSelect={() => {
+                                const current = form.getValues('alunos_ids') || []
+                                if (current.includes(a.id)) {
+                                  form.setValue('alunos_ids', current.filter(id => id !== a.id))
+                                } else {
+                                  form.setValue('alunos_ids', [...current, a.id])
+                                }
+                              }}
+                            >
+                              <Checkbox 
+                                checked={alunosSelecionados.includes(a.id)}
+                                className="mr-2"
+                              />
+                              {a.nome_completo}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -198,11 +267,15 @@ export function MatriculaFormPageWeb() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="serie_ano">Turma/Ano *</Label>
-                <Select value={form.getValues('serie_ano')} onValueChange={(v) => {
+                <Select value={form.watch('serie_ano') || undefined} onValueChange={(v) => {
                   form.setValue('serie_ano', v)
                   const t = (turmas as any[])?.find(x => x.nome === v)
                   if (t) {
                     form.setValue('turma_id', t.id)
+                    if (t.turno) {
+                      form.setValue('turno', t.turno)
+                    }
+
                     // Valor da matrícula vem automaticamente da mensalidade da turma
                     if (t.valor_mensalidade) {
                       form.setValue('valor_matricula', t.valor_mensalidade)
@@ -220,7 +293,7 @@ export function MatriculaFormPageWeb() {
                     const matriculados = (t.alunos_ids || []).length
                     if (t.capacidade_maxima && matriculados >= t.capacidade_maxima) {
                       toast.warning(`A turma ${t.nome} atingiu a capacidade máxima (${t.capacidade_maxima}).`, {
-                        description: 'Você pode matricular o aluno, mas o sistema emitirá um alerta no banco.'
+                        description: 'Você pode matricular os alunos, mas o sistema emitirá um alerta no banco.'
                       })
                     }
                   }
@@ -228,8 +301,8 @@ export function MatriculaFormPageWeb() {
                   <SelectTrigger id="serie_ano">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {(turmas as any[])?.map((t: any) => {
+                  <SelectContent className="z-[150]">
+                    {(turmas || []).map((t: any) => {
                       const isFull = t.capacidade_maxima && (t.alunos_ids?.length || 0) >= t.capacidade_maxima;
                       return (
                         <SelectItem key={t.id} value={t.nome} className="font-medium">
@@ -252,15 +325,15 @@ export function MatriculaFormPageWeb() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="turno">Turno *</Label>
-                <Select value={form.getValues('turno')} onValueChange={(v) => form.setValue('turno', v as any)}>
+                <Select value={form.watch('turno') || undefined} onValueChange={(v) => form.setValue('turno', v as any)}>
                   <SelectTrigger id="turno">
                     <SelectValue placeholder="Turno" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manha">Manhã</SelectItem>
+                  <SelectContent className="z-[150]">
+                    <SelectItem value="manhã">Manhã</SelectItem>
                     <SelectItem value="tarde">Tarde</SelectItem>
-                    <SelectItem value="integral">Integral</SelectItem>
-                    <SelectItem value="noturno">Noturno</SelectItem>
+                    <SelectItem value="noite">Noite</SelectItem>
+                    <SelectItem value="integral (manhã e tarde)">Integral (Manhã e Tarde)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -278,11 +351,11 @@ export function MatriculaFormPageWeb() {
               {editId && (
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={form.getValues('status')} onValueChange={(v) => form.setValue('status', v)}>
+                  <Select value={form.watch('status') || undefined} onValueChange={(v) => form.setValue('status', v)}>
                     <SelectTrigger id="status">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[150]">
                       <SelectItem value="ativa">Ativa</SelectItem>
                       <SelectItem value="concluida">Concluída</SelectItem>
                       <SelectItem value="cancelada">Cancelada</SelectItem>

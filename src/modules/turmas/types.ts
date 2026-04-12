@@ -7,7 +7,7 @@ export interface Turma {
   capacidade_maxima: number | null;
   max_alunos?: number | null;
   capacidade?: number; // compatibilidade
-  turno: 'matutino' | 'vespertino' | 'noturno' | 'integral' | string | null;
+  turno: 'manhã' | 'tarde' | 'noite' | 'integral (manhã e tarde)' | string | null;
   valor_mensalidade: number | null;
   status: 'ativa' | 'inativa' | string | null;
   professores_ids: string[] | null;

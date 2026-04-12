@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -31,7 +31,7 @@ import { useEffect } from 'react'
 
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
-  turno: z.enum(['matutino', 'vespertino', 'noturno', 'integral']),
+  turno: z.enum(['manhã', 'tarde', 'noite', 'integral (manhã e tarde)']),
   horario_inicio: z.string().min(5, 'Obrigatório'),
   horario_fim: z.string().min(5, 'Obrigatório'),
   capacidade: z.coerce.number().min(1, 'Capacidade mínima de 1'),
@@ -85,10 +85,10 @@ export function TurmasPageWeb() {
     if (dbProfessores) setProfessores(dbProfessores)
   }, [dbProfessores, setProfessores])
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<TurmaFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
     defaultValues: {
-      turno: 'matutino',
+      turno: 'manhã',
       horario_inicio: '07:30',
       horario_fim: '11:30',
       capacidade: 32,
@@ -242,17 +242,26 @@ export function TurmasPageWeb() {
 
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Turno</label>
-              <Select value={watch('turno')} onValueChange={(v: any) => setValue('turno', v)}>
-                <SelectTrigger className="h-11 rounded-lg border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 font-medium">
-                  <SelectValue placeholder="Selecione o turno" />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg border-slate-200 shadow-lg font-medium">
-                  <SelectItem value="matutino">Matutino</SelectItem>
-                  <SelectItem value="vespertino">Vespertino</SelectItem>
-                  <SelectItem value="noturno">Noturno</SelectItem>
-                  <SelectItem value="integral">Integral</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="turno"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="w-full h-11 rounded-lg border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 font-medium"
+                    >
+                      <SelectValue placeholder="Selecione o turno" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className="rounded-lg border-slate-200 shadow-lg font-medium z-[150]">
+                      <SelectItem value="manhã">Manhã</SelectItem>
+                      <SelectItem value="tarde">Tarde</SelectItem>
+                      <SelectItem value="noite">Noite</SelectItem>
+                      <SelectItem value="integral (manhã e tarde)">Integral (Manhã e Tarde)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

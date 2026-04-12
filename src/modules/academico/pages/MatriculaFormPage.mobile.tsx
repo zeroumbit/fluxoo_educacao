@@ -15,7 +15,9 @@ import {
   Clock,
   CreditCard,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Search,
+  X
 } from 'lucide-react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
@@ -33,15 +35,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),
-  aluno_id: z.string().min(1, 'Selecione um aluno'),
+  alunos_ids: z.array(z.string()).min(1, 'Selecione pelo menos um aluno'),
   ano_letivo: z.coerce.number().min(2024),
-  serie_ano: z.string().min(1, 'Série é obrigatória'),
+  serie_ano: z.string().min(1, 'Série/Turma é obrigatória'),
   turma_id: z.string().optional(),
-  turno: z.enum(['manha', 'tarde', 'integral', 'noturno']),
+  turno: z.enum(['manhã', 'tarde', 'noite', 'integral (manhã e tarde)']),
   data_matricula: z.string().min(1),
   valor_matricula: z.coerce.number().min(0).optional(),
   status: z.string().optional(),
@@ -67,10 +73,10 @@ export function MatriculaFormPageMobile() {
       tipo: 'nova',
       data_matricula: new Date().toISOString().split('T')[0],
       ano_letivo: new Date().getFullYear(),
-      aluno_id: '',
+      alunos_ids: [],
       serie_ano: '',
       turma_id: '',
-      turno: 'integral',
+      turno: 'manhã',
       valor_matricula: undefined,
       status: 'ativa'
     }
@@ -81,16 +87,18 @@ export function MatriculaFormPageMobile() {
     if (mData) {
       // Definir valores individualmente para garantir que sejam aplicados
       form.setValue('tipo', mData.tipo || 'nova')
-      form.setValue('aluno_id', mData.aluno_id || '')
+      form.setValue('alunos_ids', mData.aluno_id ? [mData.aluno_id] : [])
       form.setValue('ano_letivo', mData.ano_letivo || new Date().getFullYear())
       form.setValue('serie_ano', mData.serie_ano || '')
       form.setValue('turma_id', mData.turma_id || '')
-      form.setValue('turno', mData.turno || 'integral')
+      form.setValue('turno', mData.turno || 'manhã')
       form.setValue('data_matricula', mData.data_matricula || new Date().toISOString().split('T')[0])
       form.setValue('valor_matricula', mData.valor_matricula || 0)
       form.setValue('status', mData.status || 'ativa')
     }
   }, [mData, form])
+
+  const alunosSelecionados = useWatch({ control: form.control, name: 'alunos_ids' }) || []
 
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
   const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
@@ -122,10 +130,12 @@ export function MatriculaFormPageMobile() {
       const turma = (turmas as any[])?.find(t => t.nome === serieAtual)
       if (turma) {
         const turnoMap: Record<string, string> = {
-          matutino: 'manha', vespertino: 'tarde', integral: 'integral', noturno: 'noturno'
+          'manhã': 'manhã', 'tarde': 'tarde', 'noite': 'noite', 'integral (manhã e tarde)': 'integral (manhã e tarde)'
         }
-        form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
         form.setValue('turma_id', turma.id)
+        if (turma.turno) {
+          form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
+        }
         if (turma.valor_mensalidade) {
           form.setValue('valor_matricula', turma.valor_mensalidade)
           toast.info(`Mensalidade: R$ ${turma.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, {
@@ -134,34 +144,42 @@ export function MatriculaFormPageMobile() {
         }
       }
     }
-  }, [tipoSelecionado, turmas, form, editId])
+  }, [tipoSelecionado, turmas, form, editId, form.watch('serie_ano')])
 
   const onSubmit = async (data: any) => {
     if (!authUser) return
     try {
+      const alunosIds = data.alunos_ids || []
       if (editId) {
-        await atualizar.mutateAsync({ id: editId, data })
+        const payload = { ...data, aluno_id: alunosIds[0] }
+        delete payload.alunos_ids
+        await atualizar.mutateAsync({ id: editId, data: payload })
         // Atualizar o valor da mensalidade do aluno baseado na turma
-        if (data.aluno_id && data.valor_matricula) {
+        if (alunosIds[0] && data.valor_matricula) {
           await supabase
             .from('alunos')
             .update({ valor_mensalidade_atual: data.valor_matricula })
-            .eq('id', data.aluno_id)
+            .eq('id', alunosIds[0])
         }
         toast.success('Alterações salvas!')
       } else {
-        await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
-        // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
-        if (data.aluno_id && data.valor_matricula) {
-          await supabase
-            .from('alunos')
-            .update({
-              valor_mensalidade_atual: data.valor_matricula,
-              data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
-            })
-            .eq('id', data.aluno_id)
-        }
-        toast.success('Matrícula realizada!')
+        const promises = alunosIds.map(async (id: string) => {
+          const payload = { ...data, aluno_id: id, tenant_id: authUser.tenantId }
+          delete payload.alunos_ids
+          await criar.mutateAsync(payload)
+          // Atualizar o valor da mensalidade do aluno baseado na turma (nova matrícula)
+          if (data.valor_matricula) {
+            await supabase
+              .from('alunos')
+              .update({
+                valor_mensalidade_atual: data.valor_matricula,
+                data_ingresso: data.data_matricula || new Date().toISOString().split('T')[0]
+              })
+              .eq('id', id)
+          }
+        })
+        await Promise.all(promises)
+        toast.success(alunosIds.length > 1 ? `${alunosIds.length} Matrículas realizadas!` : 'Matrícula realizada!')
       }
       navigate('/matriculas')
     } catch (err: any) {
@@ -169,6 +187,8 @@ export function MatriculaFormPageMobile() {
       toast.error('Erro ao salvar matrícula')
     }
   }
+
+  const [popoverOpen, setPopoverOpen] = useState(false)
 
   if (editId && isLoadingM) {
     return (
@@ -222,21 +242,71 @@ export function MatriculaFormPageMobile() {
 
           {/* Aluno - Largura Total */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Aluno *</Label>
-            <Select 
-              disabled={!!editId} 
-              value={form.getValues('aluno_id')} 
-              onValueChange={(v) => form.setValue('aluno_id', v)}
-            >
-              <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
-                <SelectValue placeholder="Selecione o aluno" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl">
-                {alunosFiltrados?.map((a: any) => (
-                  <SelectItem key={a.id} value={a.id} className="font-bold py-3">{a.nome_completo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Alunos *</Label>
+            {editId ? (
+              <div className="w-full h-14 px-4 py-3 border rounded-2xl bg-slate-50 text-base font-bold flex items-center">
+                {alunosFiltrados?.find(a => a.id === alunosSelecionados[0])?.nome_completo || 'Aluno não encontrado'}
+              </div>
+            ) : (
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between font-normal min-h-[56px] h-auto text-left flex-wrap gap-1 py-3 rounded-2xl bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
+                    {alunosSelecionados.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {alunosSelecionados.map(id => {
+                          const aluno = alunosFiltrados?.find(a => a.id === id)
+                          return (
+                            <Badge key={id} variant="secondary" className="mr-1 py-1">
+                              {aluno?.nome_completo}
+                              <X 
+                                className="ml-1 h-3 w-3 cursor-pointer" 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  form.setValue('alunos_ids', alunosSelecionados.filter(v => v !== id))
+                                }} 
+                              />
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-base">Selecione um ou mais alunos</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[calc(100vw-32px)] p-0 z-[150] rounded-2xl" align="center" style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}>
+                  <Command className="w-full rounded-2xl">
+                    <CommandInput placeholder="Buscar aluno..." className="text-base h-12" />
+                    <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
+                    <CommandList className="max-h-[250px]">
+                      <CommandGroup>
+                        {(alunosFiltrados || []).map((a: any) => (
+                          <CommandItem
+                            key={a.id}
+                            value={a.nome_completo}
+                            className="py-3 font-bold text-base border-b border-slate-50 last:border-0"
+                            onSelect={() => {
+                              const current = form.getValues('alunos_ids') || []
+                              if (current.includes(a.id)) {
+                                form.setValue('alunos_ids', current.filter(id => id !== a.id))
+                              } else {
+                                form.setValue('alunos_ids', [...current, a.id])
+                              }
+                            }}
+                          >
+                            <Checkbox 
+                              checked={alunosSelecionados.includes(a.id)}
+                              className="mr-3 scale-110"
+                            />
+                            {a.nome_completo}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
 
           {/* Ano Letivo e Turma/Ano */}
@@ -253,14 +323,14 @@ export function MatriculaFormPageMobile() {
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma/Ano *</Label>
               <Select 
-                value={form.getValues('serie_ano')} 
+                value={form.watch('serie_ano')} 
                 onValueChange={(v) => form.setValue('serie_ano', v)}
               >
                 <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                   <SelectValue placeholder="Série" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  {(turmas as any[])?.map((t: any) => (
+                  {(turmas || []).map((t: any) => (
                     <SelectItem key={t.id} value={t.nome} className="font-bold py-3">{t.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -273,17 +343,17 @@ export function MatriculaFormPageMobile() {
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
               <Select 
-                value={form.getValues('turno')} 
+                value={form.watch('turno')} 
                 onValueChange={(v) => form.setValue('turno', v as any)}
               >
                 <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                   <SelectValue placeholder="Turno" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  <SelectItem value="manha" className="py-3">Manhã</SelectItem>
+                  <SelectItem value="manhã" className="py-3">Manhã</SelectItem>
                   <SelectItem value="tarde" className="py-3">Tarde</SelectItem>
-                  <SelectItem value="integral" className="py-3">Integral</SelectItem>
-                  <SelectItem value="noturno" className="py-3">Noturno</SelectItem>
+                  <SelectItem value="noite" className="py-3">Noite</SelectItem>
+                  <SelectItem value="integral (manhã e tarde)" className="py-3">Integral (Manhã e Tarde)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -313,7 +383,7 @@ export function MatriculaFormPageMobile() {
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</Label>
                 <Select 
-                  value={form.getValues('status')} 
+                  value={form.watch('status')} 
                   onValueChange={(v) => form.setValue('status', v)}
                 >
                   <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">

@@ -262,23 +262,65 @@ export const alunoService = {
     if (respExistente) {
       // 3. Responsável já existe, atualiza o user_id se ele foi gerado agora e estava nulo
       if (authUserId && !respExistente.user_id) {
-        await supabase.from('responsaveis')
-          .update({ user_id: authUserId })
-          .eq('id', respExistente.id)
+        try {
+          const { error: updateError } = await supabase.from('responsaveis')
+            .update({ user_id: authUserId })
+            .eq('id', respExistente.id)
+          
+          if (updateError) {
+            // Se falhar por RLS, logamos mas não travamos — o responsável já existe
+            if (updateError.code === '42501') {
+              logger.warn('⚠️ RLS impediu update do user_id no responsável existente. Continuando sem vincular auth.', {
+                responsavelId: respExistente.id,
+                authUserId,
+                hint: 'Execute a migration 150_fix_responsaveis_rls_definitivo.sql'
+              })
+            } else {
+              logger.error('Erro ao atualizar user_id do responsável:', updateError)
+            }
+          }
+        } catch (err) {
+          logger.error('Falha no update do responsável existente:', err)
+        }
       }
       respData = { id: respExistente.id, cpf: respExistente.cpf, user_id: authUserId }
     } else {
       // 4. Criar novo responsável
+      const insertPayload = {
+        ...responsavel,
+        cpf: cpfLimpo, // Garante CPF limpo no banco
+        user_id: authUserId
+      }
+
+      // Remove senha_hash do payload se veio como campo virtual (não é coluna real no insert direto)
+      const cleanPayload = { ...insertPayload }
+      delete (cleanPayload as any).senha // Remove campo virtual se existir
+
       const { data: novaResp, error: respError } = await supabase.from('responsaveis')
-        .insert({
-          ...responsavel,
-          cpf: cpfLimpo, // Garante CPF limpo no banco
-          user_id: authUserId
-        })
+        .insert(cleanPayload)
         .select('id, cpf, user_id')
         .single()
 
-      if (respError) throw respError
+      if (respError) {
+        // Tratamento específico para erro de RLS (42501)
+        if (respError.code === '42501') {
+          logger.error('❌ Erro RLS ao inserir responsável. Payload:', {
+            cpf: cpfLimpo,
+            nome: responsavel.nome,
+            email: responsavel.email,
+            user_id: authUserId,
+            errorCode: respError.code,
+            errorMessage: respError.message,
+            hint: 'Execute a migration 150_fix_responsaveis_rls_definitivo.sql no Supabase'
+          })
+          throw new Error(
+            'Erro de permissão ao cadastrar responsável. ' +
+            'A política de segurança do banco precisa ser atualizada. ' +
+            'Contate o administrador do sistema (Migration 150 pendente).'
+          )
+        }
+        throw respError
+      }
       respData = novaResp
     }
 

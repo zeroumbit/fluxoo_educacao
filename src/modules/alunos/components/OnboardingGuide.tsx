@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, ArrowRight, X, Building2, BookOpen, Users, UserCog, Wallet, FileCheck } from 'lucide-react'
+import { CheckCircle2, ArrowRight, X, Building2, BookOpen, Users, UserCog, Wallet, FileCheck, UserPlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +12,7 @@ interface OnboardingGuideProps {
     possuiFilial: boolean
     possuiTurma: boolean
     possuiAluno: boolean
+    possuiFuncionario: boolean
     configFinanceira: boolean
     autorizacoes: boolean
   }
@@ -55,6 +56,14 @@ export function OnboardingGuide({ status, isProfessor = false }: OnboardingGuide
       done: status.possuiAluno,
       icon: Users,
     }] : []),
+    {
+      id: 'funcionario',
+      title: 'Cadastrar Funcionário',
+      description: 'Registre funcionários da escola para gestão da equipe.',
+      href: '/funcionarios',
+      done: status.possuiFuncionario,
+      icon: UserPlus,
+    },
     {
       id: 'financeiro',
       title: 'Configurar Financeiro',

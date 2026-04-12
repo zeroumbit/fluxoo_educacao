@@ -162,6 +162,30 @@ export function validarCEP(cep: string): boolean {
   return numeros.length === 8
 }
 
+/**
+ * Retorna o próximo dia útil a partir de uma data.
+ * Se a data for sábado, avança para segunda-feira.
+ * Se a data for domingo, avança para segunda-feira.
+ * Caso contrário, retorna a própria data.
+ */
+export function getProximoDiaUtil(data: Date): Date {
+  const resultado = new Date(data)
+  const diaSemana = resultado.getDay()
+  if (diaSemana === 6) {
+    resultado.setDate(resultado.getDate() + 2)
+  } else if (diaSemana === 0) {
+    resultado.setDate(resultado.getDate() + 1)
+  }
+  return resultado
+}
+
+/**
+ * Converte Date para string YYYY-MM-DD
+ */
+export function formatDateISO(data: Date): string {
+  return data.toISOString().split('T')[0]
+}
+
 // ==================== HOOKS DE MÁSCARA ====================
 
 /**

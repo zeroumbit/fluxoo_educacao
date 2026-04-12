@@ -60,7 +60,7 @@ const CACHE_KEY = 'turmas_mobile_v3'
 
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),
-  turno: z.string().min(1, 'Turno é obrigatório'),
+  turno: z.enum(['manhã', 'tarde', 'noite', 'integral (manhã e tarde)']),
   horario_inicio: z.string().optional().or(z.literal('')),
   horario_fim: z.string().optional().or(z.literal('')),
   sala: z.string().optional().or(z.literal('')),
@@ -110,7 +110,7 @@ export function TurmasPageMobile() {
   // ── CRIAR ──────────────────────────────────────────
   const abrirNovo = () => {
     setEditando(null)
-    reset({ nome: '', turno: '', horario_inicio: '', horario_fim: '', sala: '', capacidade_maxima: 30, filial_id: '', valor_mensalidade: 0 })
+    reset({ nome: '', turno: 'manhã', horario_inicio: '07:30', horario_fim: '11:30', sala: '', capacidade_maxima: 30, filial_id: '', valor_mensalidade: 0 })
     setFormOpen(true)
   }
 
@@ -436,6 +436,80 @@ export function TurmasPageMobile() {
             </div>
           </div>
         </div>
+      </BottomSheet>
+      
+      {/* ═══════════════════════════════════════════════
+          BOTTOM SHEET — FORMULÁRIO (CRIAR / EDITAR)
+      ═══════════════════════════════════════════════ */}
+      <BottomSheet isOpen={formOpen} onClose={() => setFormOpen(false)} title={editando ? "Editar Turma" : "Nova Turma"} size="half">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-4 pb-48 px-1">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome da Turma *</Label>
+            <Input 
+              {...register('nome')} 
+              placeholder="Ex: 5º Ano A"
+              className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" 
+            />
+            {errors.nome && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.nome.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
+            <Select value={watch('turno')} onValueChange={(v: any) => setValue('turno', v)}>
+              <SelectTrigger 
+                onPointerDown={(e) => e.stopPropagation()}
+                className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner"
+              >
+                <SelectValue placeholder="Selecione o turno" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl shadow-xl">
+                <SelectItem value="manhã">Manhã</SelectItem>
+                <SelectItem value="tarde">Tarde</SelectItem>
+                <SelectItem value="noite">Noite</SelectItem>
+                <SelectItem value="integral (manhã e tarde)">Integral (Manhã e Tarde)</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.turno && <p className="text-[10px] font-bold text-red-500 ml-1">{errors.turno.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Início</Label>
+              <Input type="time" {...register('horario_inicio')} className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Término</Label>
+              <Input type="time" {...register('horario_fim')} className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vagas</Label>
+              <Input type="number" {...register('capacidade_maxima')} className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mensalidade</Label>
+              <Input type="number" step="0.01" {...register('valor_mensalidade')} className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Sala / Ambiente</Label>
+            <Input {...register('sala')} placeholder="Ex: Sala 04 ou Quadra" className="h-14 rounded-2xl text-base font-bold bg-slate-50 border-0 shadow-inner" />
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-100 pb-safe">
+            <div className="mx-auto w-full max-w-[640px] px-6 py-4 flex gap-3">
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)} className="flex-1 h-14 rounded-xl font-bold text-base">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex-1 h-14 rounded-xl bg-indigo-600 font-bold text-base shadow-lg shadow-indigo-100">
+                {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : (editando ? 'Salvar Edição' : 'Criar Turma')}
+              </Button>
+            </div>
+          </div>
+        </form>
       </BottomSheet>
 
     </div>

@@ -40,6 +40,7 @@ export interface DashboardData {
     possuiFilial: boolean
     possuiTurma: boolean
     possuiAluno: boolean
+    possuiFuncionario: boolean
     configFinanceira: boolean
     autorizacoes: boolean
   }
@@ -259,6 +260,12 @@ export const dashboardService = {
       .eq('tenant_id', tenantId)
       .maybeSingle()
 
+    const funcionariosRes = await supabase
+      .from('funcionarios')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+
     const autorizacoesRes = await supabase
       .from('autorizacoes_modelos')
       .select('id')
@@ -282,6 +289,7 @@ export const dashboardService = {
         possuiFilial: professorId ? true : (filiaisRes.count || 0) > 0,
         possuiTurma: professorId ? true : (turmasRes.count || 0) > 0,
         possuiAluno: professorId ? true : (alunosRes.count || 0) > 0,
+        possuiFuncionario: professorId ? true : !!(funcionariosRes.data),
         configFinanceira: professorId ? true : !!(configFinanceiraRes.data),
         autorizacoes: professorId ? true : !!(autorizacoesRes.data),
       },

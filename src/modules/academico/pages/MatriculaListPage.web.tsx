@@ -367,11 +367,11 @@ export function MatriculaListPageWeb() {
 
               <div className="space-y-2">
                 <Label htmlFor="aluno_id">Aluno *</Label>
-                <Select disabled={isEditing} value={alunoIdSelecionado || ''} onValueChange={(v) => form.setValue('aluno_id', v)}>
+                <Select disabled={isEditing} value={alunoIdSelecionado || undefined} onValueChange={(v) => form.setValue('aluno_id', v)}>
                   <SelectTrigger id="aluno_id" className="w-full">
                     <SelectValue placeholder="Selecione o aluno" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]">
                     {alunosFiltrados?.map((a: any) => (
                       <SelectItem key={a.id} value={a.id} className="font-bold">
                         {a.nome_completo}
@@ -392,7 +392,7 @@ export function MatriculaListPageWeb() {
                 <div className="space-y-2">
                   <Label htmlFor="serie_ano">Turma/Ano *</Label>
                     <Select 
-                      value={serieSelecionada || ''} 
+                      value={serieSelecionada || undefined} 
                       onValueChange={(v) => {
                         form.setValue('serie_ano', v)
                         const t = (turmas as any[])?.find(x => x.nome === v)
@@ -407,7 +407,7 @@ export function MatriculaListPageWeb() {
                      <SelectTrigger id="serie_ano" className="w-full">
                        <SelectValue placeholder={!turmas ? "Carregando turmas..." : (turmas.length > 0 ? "Selecione a turma" : "Nenhuma turma disponível")} />
                      </SelectTrigger>
-                     <SelectContent>
+                     <SelectContent className="z-[150]">
                        {turmas && (turmas as any[]).length > 0 ? (
                          (turmas as any[]).map((t: any) => (
                            <SelectItem key={t.id} value={t.nome} className="font-bold">
@@ -427,11 +427,11 @@ export function MatriculaListPageWeb() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="turno">Turno *</Label>
-                  <Select value={turnoSelecionado || ''} onValueChange={(v) => form.setValue('turno', v as any)}>
+                  <Select value={turnoSelecionado || undefined} onValueChange={(v) => form.setValue('turno', v as any)}>
                     <SelectTrigger id="turno" className="w-full">
                       <SelectValue placeholder="Selecione o turno" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[150]">
                       <SelectItem value="manha">Manhã</SelectItem>
                       <SelectItem value="tarde">Tarde</SelectItem>
                       <SelectItem value="integral">Integral</SelectItem>
@@ -453,11 +453,11 @@ export function MatriculaListPageWeb() {
                 {isEditing && (
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={statusSelecionado || ''} onValueChange={(v) => form.setValue('status', v)}>
+                    <Select value={statusSelecionado || undefined} onValueChange={(v) => form.setValue('status', v)}>
                       <SelectTrigger id="status" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[150]">
                         <SelectItem value="ativa">Ativa</SelectItem>
                         <SelectItem value="concluida">Concluída</SelectItem>
                         <SelectItem value="cancelada">Cancelada</SelectItem>

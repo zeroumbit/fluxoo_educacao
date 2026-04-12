@@ -30,7 +30,7 @@ import {
   Percent,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
+import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP, getProximoDiaUtil, formatDateISO } from '@/lib/validacoes'
 import { motion } from 'framer-motion'
 
 const alunoSchema = z.object({
@@ -115,7 +115,7 @@ export function AlunoCadastroPageMobile() {
       data_nascimento: '',
       cep: '',
       valor_mensalidade_atual: 0,
-      data_ingresso: new Date().toISOString().split('T')[0],
+      data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
     },
   })
 
@@ -204,8 +204,8 @@ export function AlunoCadastroPageMobile() {
     ]
     if (currentStep === 0 && !responsavelEncontrado) {
       const senha = watch('responsavel_senha')
-      if (!senha || senha.length < 6) {
-        toast.error('Defina uma senha com mínimo de 6 caracteres.')
+      if (!senha || senha.length < 8) {
+        toast.error('Defina uma senha com mínimo de 8 caracteres.')
         return false
       }
     }
@@ -242,7 +242,7 @@ export function AlunoCadastroPageMobile() {
           cep: data.cep || null, logradouro: data.logradouro || null, numero: data.numero || null,
           complemento: data.complemento || null, bairro: data.bairro || null, cidade: data.cidade || null, estado: data.estado || null,
           valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
-          data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
+          data_ingresso: data.data_ingresso || formatDateISO(getProximoDiaUtil(new Date())),
         } as any,
         grauParentesco: data.responsavel_parentesco || null,
         isFinanceiro: data.responsavel_financeiro === 'sim',
@@ -414,7 +414,7 @@ export function AlunoCadastroPageMobile() {
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Senha de acesso *</Label>
                       <div className="relative">
-                        <Input type={showPassword ? 'text' : 'password'} placeholder="Mínimo 6 caracteres" {...register('responsavel_senha')} className="h-14 rounded-2xl text-base font-medium pr-12" />
+                        <Input type={showPassword ? 'text' : 'password'} placeholder="Mínimo 8 caracteres" {...register('responsavel_senha')} className="h-14 rounded-2xl text-base font-medium pr-12" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1">
                           {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
                         </button>
@@ -454,7 +454,22 @@ export function AlunoCadastroPageMobile() {
 
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data de Nascimento *</Label>
-                    <Input type="date" {...register('data_nascimento')} className="h-14 rounded-2xl text-base font-medium" />
+                    <Input
+                      type="date"
+                      {...register('data_nascimento')}
+                      onChange={(e) => {
+                        const valor = e.target.value
+                        if (valor) {
+                          const [ano, mes, dia] = valor.split('-')
+                          if (ano && ano.length > 4) {
+                            setValue('data_nascimento', `${ano.slice(0, 4)}-${mes || ''}-${dia || ''}`)
+                            return
+                          }
+                        }
+                        setValue('data_nascimento', valor)
+                      }}
+                      className="h-14 rounded-2xl text-base font-medium"
+                    />
                     {errors.data_nascimento && <p className="text-xs text-destructive font-bold">{errors.data_nascimento.message}</p>}
                   </div>
 

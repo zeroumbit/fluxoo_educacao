@@ -2,21 +2,24 @@
 
 ## Resumo da Mudança
 
-Adicionado **2 novos passos críticos** no guia de configuração inicial (onboarding) das escolas:
+Adicionado **3 novos passos críticos** no guia de configuração inicial (onboarding) das escolas:
 
-1. ✅ **Configurar Financeiro** - Cobranças automáticas e dados de pagamento
-2. ✅ **Configurar Autorizações** - Modelos de autorização para saída e atividades
+1. ✅ **Cadastrar Funcionário** - Registro de funcionários da escola
+2. ✅ **Configurar Financeiro** - Cobranças automáticas e dados de pagamento
+3. ✅ **Configurar Autorizações** - Modelos de autorização para saída e atividades
 
 ---
 
 ## 🎯 Por Que Esta Mudança?
 
 **Problema identificado:** Escolas começavam a usar o sistema sem configurar:
+- ❌ Cadastro de funcionários
 - ❌ Sistema de cobranças automáticas
 - ❌ Modelos de autorizações para alunos
 - ❌ Dados financeiros básicos
 
 **Impacto:**
+- Escolas sem gestão de equipe (funcionários não registrados)
 - Escolas tinham que cobrar manualmente (ineficiente)
 - Alunos saíam sem autorização registrada
 - Problemas jurídicos e de segurança
@@ -39,19 +42,21 @@ Adicionado **2 novos passos críticos** no guia de configuração inicial (onboa
 ]
 ```
 
-**Agora:** 6 passos
+**Agora:** 7 passos
 ```typescript
 [
   'perfil',           // Perfil da Escola
   'filial',           // Unidades/Filiais
   'turma',            // Turmas
   'aluno',            // Alunos
-  'financeiro',       // ⭐ NOVO - Configurações Financeiras
-  'autorizacoes'      // ⭐ NOVO - Modelos de Autorização
+  'funcionario',      // ⭐ NOVO - Cadastro de Funcionários
+  'financeiro',       // Configurações Financeiras
+  'autorizacoes'      // Modelos de Autorização
 ]
 ```
 
 **Ícones:**
+- Funcionário: `UserPlus` (usuário com sinal de mais)
 - Financeiro: `Wallet` (carteira)
 - Autorizações: `FileCheck` (documento com check)
 
@@ -62,6 +67,13 @@ Adicionado **2 novos passos críticos** no guia de configuração inicial (onboa
 **Novas verificações:**
 
 ```typescript
+// Verifica se escola tem funcionários cadastrados
+const funcionarioRes = await supabase
+  .from('funcionarios')
+  .select('id')
+  .eq('tenant_id', tenantId)
+  .maybeSingle()
+
 // Verifica se escola tem configuração financeira
 const configFinanceiraRes = await supabase
   .from('config_financeira')
@@ -84,8 +96,9 @@ onboarding: {
   possuiFilial: boolean,
   possuiTurma: boolean,
   possuiAluno: boolean,
-  configFinanceira: boolean,  // ⭐ NOVO
-  autorizacoes: boolean       // ⭐ NOVO
+  possuiFuncionario: boolean,  // ⭐ NOVO
+  configFinanceira: boolean,
+  autorizacoes: boolean
 }
 ```
 
@@ -102,21 +115,23 @@ const onboardingStatus = {
   possuiFilial: dashboardData?.onboarding?.possuiFilial,
   possuiTurma: dashboardData?.onboarding?.possuiTurma,
   possuiAluno: dashboardData?.onboarding?.possuiAluno,
-  configFinanceira: dashboardData?.onboarding?.configFinanceira,  // ⭐ NOVO
-  autorizacoes: dashboardData?.onboarding?.autorizacoes,          // ⭐ NOVO
+  possuiFuncionario: dashboardData?.onboarding?.possuiFuncionario,  // ⭐ NOVO
+  configFinanceira: dashboardData?.onboarding?.configFinanceira,
+  autorizacoes: dashboardData?.onboarding?.autorizacoes,
 }
 ```
 
 **Condição de onboarding atualizada:**
 ```typescript
 // Escola precisa completar onboarding se faltar:
-onboardingStatus.needsOnboarding = 
-  !perfilCompleto || 
-  !possuiFilial || 
-  !possuiTurma || 
-  !possuiAluno || 
-  !configFinanceira ||      // ⭐ NOVO
-  !autorizacoes             // ⭐ NOVO
+onboardingStatus.needsOnboarding =
+  !perfilCompleto ||
+  !possuiFilial ||
+  !possuiTurma ||
+  !possuiAluno ||
+  !possuiFuncionario ||     // ⭐ NOVO
+  !configFinanceira ||
+  !autorizacoes
 ```
 
 ---
@@ -125,7 +140,7 @@ onboardingStatus.needsOnboarding =
 
 ### Card de Onboarding
 
-**Layout:** Grid com 6 cards (antes 4)
+**Layout:** Grid com 7 cards (antes 4)
 
 **Cada card mostra:**
 - ✅ Ícone (colorido se pendente, verde se completo)
@@ -134,7 +149,7 @@ onboardingStatus.needsOnboarding =
 - ✅ Link para a página de configuração
 - ✅ Status (check verde se completo)
 
-**Progresso:** Barra de progresso atualiza de 25% para 16.67% por passo
+**Progresso:** Barra de progresso atualiza de ~14.28% por passo (100/7)
 
 ---
 
@@ -142,6 +157,7 @@ onboardingStatus.needsOnboarding =
 
 | Passo | Link | Descrição |
 |-------|------|-----------|
+| Funcionário | `/funcionarios` | Cadastro de funcionários |
 | Financeiro | `/configuracoes` | Configurações financeiras e cobranças |
 | Autorizações | `/autorizacoes` | Modelos de autorização para alunos |
 
@@ -158,8 +174,9 @@ Mostrar onboarding SE:
   - OU não tem filial
   - OU não tem turma
   - OU não tem aluno
-  - OU NÃO tem config financeira  ⭐ NOVO
-  - OU NÃO tem autorizacoes       ⭐ NOVO
+  - OU não tem funcionário       ⭐ NOVO
+  - OU NÃO tem config financeira
+  - OU NÃO tem autorizacoes
 ```
 
 **Para Professor:**

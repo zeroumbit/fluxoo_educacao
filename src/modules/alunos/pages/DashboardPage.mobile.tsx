@@ -463,12 +463,13 @@ export function DashboardPageMobile() {
     possuiFilial: displayData?.onboarding?.possuiFilial,
     possuiTurma: displayData?.onboarding?.possuiTurma,
     possuiAluno: displayData?.onboarding?.possuiAluno,
+    possuiFuncionario: displayData?.onboarding?.possuiFuncionario,
     configFinanceira: displayData?.onboarding?.configFinanceira,
     autorizacoes: displayData?.onboarding?.autorizacoes,
   }
 
   if ((userRole === 'gestor' || userRole === 'funcionario') && displayData?.onboarding) {
-    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma || !onboardingStatus.possuiAluno || !onboardingStatus.configFinanceira || !onboardingStatus.autorizacoes
+    onboardingStatus.needsOnboarding = !onboardingStatus.perfilCompleto || !onboardingStatus.possuiFilial || !onboardingStatus.possuiTurma || !onboardingStatus.possuiAluno || !onboardingStatus.possuiFuncionario || !onboardingStatus.configFinanceira || !onboardingStatus.autorizacoes
   }
 
   const onRefresh = async () => { await refetch() }
@@ -539,6 +540,7 @@ export function DashboardPageMobile() {
                   possuiFilial: !!onboardingStatus?.possuiFilial,
                   possuiTurma: !!onboardingStatus?.possuiTurma,
                   possuiAluno: !!onboardingStatus?.possuiAluno,
+                  possuiFuncionario: !!onboardingStatus?.possuiFuncionario,
                   configFinanceira: !!onboardingStatus?.configFinanceira,
                   autorizacoes: !!onboardingStatus?.autorizacoes
                 }} isProfessor={authUser?.isProfessor} />

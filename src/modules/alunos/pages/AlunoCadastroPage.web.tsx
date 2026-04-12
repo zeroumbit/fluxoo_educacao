@@ -43,7 +43,7 @@ import {
   X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP } from '@/lib/validacoes'
+import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP, getProximoDiaUtil, formatDateISO } from '@/lib/validacoes'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),
@@ -69,9 +69,9 @@ const alunoSchema = z.object({
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
   responsavel_telefone: z.string().optional().or(z.literal('')),
-  responsavel_email: z.string().email('E-mail obrigatório para acesso ao portal'),
+  responsavel_email: z.string().optional().or(z.literal('')),
   responsavel_parentesco: z.string().min(1, 'Parentesco é obrigatório'),
-  responsavel_senha: z.string().optional(),
+  responsavel_senha: z.string().optional().or(z.literal('')),
   responsavel_financeiro: z.string().min(1, 'Defina se é o responsável financeiro'),
 }).refine((data) => !data.cpf || validarCPF(data.cpf), {
   message: 'CPF inválido',
@@ -79,7 +79,7 @@ const alunoSchema = z.object({
 }).refine((data) => validarCPF(data.responsavel_cpf), {
   message: 'CPF do responsável inválido',
   path: ['responsavel_cpf'],
-}).refine((data) => !data.responsavel_email || validarEmail(data.responsavel_email), {
+}).refine((data) => !data.responsavel_email || data.responsavel_email === '' || validarEmail(data.responsavel_email), {
   message: 'E-mail inválido',
   path: ['responsavel_email'],
 })
@@ -158,7 +158,7 @@ export function AlunoCadastroPage() {
       observacoes_saude: '',
       foto_url: '',
       valor_mensalidade_atual: 0,
-      data_ingresso: new Date().toISOString().split('T')[0],
+      data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
     },
   })
 
@@ -234,7 +234,7 @@ export function AlunoCadastroPage() {
       observacoes_saude: '',
       foto_url: '',
       valor_mensalidade_atual: 0,
-      data_ingresso: new Date().toISOString().split('T')[0],
+      data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
       filial_id: watch('filial_id') // Mantém a filial selecionada
     })
     setCurrentStep(0)
@@ -360,17 +360,29 @@ export function AlunoCadastroPage() {
 
   const validateStep = async () => {
     const fieldsPerStep: (keyof AlunoFormValues)[][] = [
-      ['responsavel_nome', 'responsavel_cpf', 'responsavel_financeiro', 'responsavel_parentesco'],
+      ['responsavel_nome', 'responsavel_cpf', 'responsavel_financeiro', 'responsavel_parentesco', 'responsavel_email'],
       ['nome_completo', 'data_nascimento'],
-      ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado'],
+      [],  // Endereço é opcional
       [],
     ]
 
-    // Validação extra para senha se for novo responsável
+    // Validação extra para novo responsável (precisa de email + senha para criar conta)
     if (currentStep === 0 && !responsavelEncontrado) {
       const senha = watch('responsavel_senha')
-      if (!senha || senha.length < 6) {
-        toast.error('Defina uma senha de no mínimo 6 caracteres para o novo responsável.')
+      const email = watch('responsavel_email')
+      
+      if (!email || email.trim() === '') {
+        toast.error('E-mail é obrigatório para criar acesso ao portal do responsável.')
+        return false
+      }
+      
+      if (!validarEmail(email)) {
+        toast.error('O e-mail informado não é válido.')
+        return false
+      }
+
+      if (!senha || senha.length < 8) {
+        toast.error('Defina uma senha de no mínimo 8 caracteres para o novo responsável.')
         return false
       }
     }
@@ -435,6 +447,7 @@ export function AlunoCadastroPage() {
         data_nascimento: data.data_nascimento,
         genero: data.genero || null,
         cpf: data.cpf && data.cpf !== '' ? data.cpf : null,
+        rg: data.rg || null,
         patologias,
         medicamentos,
         foto_url: data.foto_url || null,
@@ -448,7 +461,7 @@ export function AlunoCadastroPage() {
         cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
         estado: data.estado && data.estado !== '' ? data.estado : null,
         valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
-        data_ingresso: data.data_ingresso || new Date().toISOString().split('T')[0],
+        data_ingresso: data.data_ingresso || formatDateISO(getProximoDiaUtil(new Date())),
       }
 
       logger.debug('📝 Payload Responsável:', JSON.stringify(payloadResponsavel, null, 2))
@@ -470,7 +483,7 @@ export function AlunoCadastroPage() {
         responsavel_financeiro: 'sim', responsavel_senha: '', nome_completo: '', nome_social: '',
         data_nascimento: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
         patologias: [], medicamentos: [], observacoes_saude: '', valor_mensalidade_atual: 0,
-        data_ingresso: new Date().toISOString().split('T')[0],
+        data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
         filial_id: data.filial_id // Mantém a filial que ele acabou de usar
       })
       setCurrentStep(0)
@@ -621,7 +634,18 @@ export function AlunoCadastroPage() {
       </div>
 
       <form 
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+          // DIAGNÓSTICO: Expor erros de validação que o Zod/react-hook-form engole silenciosamente
+          console.error('❌ Erros de validação do formulário:', validationErrors)
+          const errorFields = Object.keys(validationErrors)
+          const firstError = Object.values(validationErrors)[0]
+          const errorMsg = (firstError as any)?.message || 'Campo obrigatório não preenchido'
+          
+          toast.error(`Campos com erro: ${errorFields.join(', ')}`, {
+            description: errorMsg,
+            duration: 8000
+          })
+        })}
         onKeyDown={handleKeyDown}
       >
         <Card className="border-0 shadow-md">
@@ -689,6 +713,19 @@ export function AlunoCadastroPage() {
                       id="data_nascimento"
                       type="date"
                       {...register('data_nascimento')}
+                      onChange={(e) => {
+                        const valor = e.target.value
+                        // Limitar ano a 4 caracteres (YYYY-MM-DD => ano tem max 4 dígitos)
+                        if (valor) {
+                          const [ano, mes, dia] = valor.split('-')
+                          if (ano && ano.length > 4) {
+                            const anoLimitado = ano.slice(0, 4)
+                            setValue('data_nascimento', `${anoLimitado}-${mes || ''}-${dia || ''}`)
+                            return
+                          }
+                        }
+                        setValue('data_nascimento', valor)
+                      }}
                       className="w-full"
                     />
                     {errors.data_nascimento && (
@@ -1093,7 +1130,7 @@ export function AlunoCadastroPage() {
                       <Input
                         id="responsavel_senha"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Mínimo 8 caracteres"
                         {...register('responsavel_senha')}
                         className="pr-10"
                       />

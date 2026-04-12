@@ -95,14 +95,13 @@ export function AlunoDetalhePageWeb() {
     if (!id) return
     try {
       // 1. Criar um payload EXTREMAMENTE restrito com apenas o que existe na tabela 'alunos'
-      // Campo 'rg', 'genero' e 'valor_mensalidade_atual' NÃO existem na tabela alunos.
       const payload = {
         nome_completo: formData.nome_completo,
         nome_social: formData.nome_social || null,
         data_nascimento: formData.data_nascimento,
         cpf: formData.cpf ? formData.cpf.replace(/\D/g, '') : null,
+        rg: formData.rg || null,
         genero: formData.genero || null,
-        sexo: formData.genero || null,
         foto_url: formData.foto_url || null,
         cep: formData.cep ? formData.cep.replace(/\D/g, '') : null,
         logradouro: formData.logradouro || null,
