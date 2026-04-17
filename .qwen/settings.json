@@ -7,7 +7,9 @@
       "Bash(git checkout *)",
       "Bash(git merge *)",
       "Bash(rm *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(C:\\PRO/**)",
+      "Read(C:\\/**)"
     ]
   },
   "$version": 3

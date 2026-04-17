@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useMemo, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
 import { portalService } from './service'
@@ -40,7 +41,7 @@ export function useDashboardAluno() {
   const { alunoSelecionado, tenantId } = usePortalContext()
   const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
   return useQuery({
-    queryKey: ['portal', 'dashboard', alunoSelecionado?.id, tenantId, turmaId],
+    queryKey: QueryKeys.PORTAL.DASHBOARD(alunoSelecionado?.id as string, tenantId, turmaId),
     queryFn: () => portalService.buscarDashboardAluno(alunoSelecionado!.id, tenantId!, turmaId),
     enabled: !!alunoSelecionado?.id && !!tenantId,
     staleTime: 60 * 1000,
@@ -60,7 +61,7 @@ export function useDashboardFamilia() {
       const turmaId = v.aluno?.turma?.id || v.aluno?.turma_id || null
       
       return {
-        queryKey: ['portal', 'dashboard', aId, tId, turmaId],
+        queryKey: QueryKeys.PORTAL.DASHBOARD(aId, tId, turmaId),
         queryFn: () => portalService.buscarDashboardAluno(aId, tId, turmaId),
         enabled: !!aId && !!tId,
         staleTime: 60 * 1000,
@@ -118,7 +119,7 @@ export function useDashboardFamilia() {
 export function useFrequenciaAluno(mes?: string) {
   const { alunoSelecionado, tenantId } = usePortalContext()
   return useQuery({
-    queryKey: ['portal', 'frequencia', alunoSelecionado?.id, tenantId, mes],
+    queryKey: QueryKeys.PORTAL.FREQUENCIA(alunoSelecionado?.id as string, tenantId, mes),
     queryFn: () => portalService.buscarFrequenciaPorAluno(alunoSelecionado!.id, tenantId!, mes),
     enabled: !!alunoSelecionado?.id && !!tenantId,
     staleTime: 60 * 1000,
@@ -319,7 +320,7 @@ export function useResponderTransferencia() {
 export function useBoletins() {
   const { alunoSelecionado, tenantId } = usePortalContext()
   return useQuery({
-    queryKey: ['portal', 'boletins', alunoSelecionado?.id, tenantId],
+    queryKey: QueryKeys.PORTAL.BOLETINS(alunoSelecionado?.id as string, tenantId),
     queryFn: () => portalService.buscarBoletins(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
     staleTime: 60 * 1000,

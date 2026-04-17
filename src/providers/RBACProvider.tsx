@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRBACInit as useLegacyInit } from '@/hooks/usePermissions';
 import { useRBACStore } from '@/stores/rbac.store';
 import { rbacService } from '@/modules/rbac/service';
+import { QueryKeys } from '@/lib/query-keys';
 
 interface RBACContextType {
   permissions: string[];
@@ -28,7 +29,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = !!authUser;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['rbac', user?.id, tenantId],
+    queryKey: QueryKeys.RBAC(user?.id, tenantId),
     queryFn: async () => {
       if (!isAuthenticated || !tenantId || !user?.id) {
         return { permissions: [], deniedKeys: new Set<string>() };
@@ -74,7 +75,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_permissions', filter: `user_id=eq.${user.id}` },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['rbac', user.id, tenantId] });
+          queryClient.invalidateQueries({ queryKey: QueryKeys.RBAC(user.id, tenantId) });
         }
       )
       .subscribe();

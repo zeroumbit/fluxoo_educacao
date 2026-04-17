@@ -3,32 +3,7 @@ import { useResponsavel, useVinculosAtivos, useDashboardFamilia } from './hooks'
 import { supabase } from '@/lib/supabase'
 import { usePortalStore } from './store'
 import { useQueryClient } from '@tanstack/react-query'
-
-interface AlunoVinculado {
-  id: string
-  nome_completo: string
-  nome_social: string | null
-  data_nascimento: string
-  status: string
-  tenant_id: string
-  filial_id: string | null
-  turma_id: string | null
-  foto_url: string | null
-  turma: { id: string; nome: string; turno: string; horario?: string | null; valor_mensalidade?: number | null } | null
-  filial: { nome_unidade: string } | null
-  valor_matricula: number | null
-  genero?: string | null
-  cep?: string | null
-  logradouro?: string | null
-  numero?: string | null
-  complemento?: string | null
-  bairro?: string | null
-  cidade?: string | null
-  estado?: string | null
-  patologias?: string[] | null
-  medicamentos?: string[] | null
-  observacoes_saude?: string | null
-}
+import type { AlunoVinculado } from '@/types/shared'
 
 interface PortalContextType {
   responsavel: any | null

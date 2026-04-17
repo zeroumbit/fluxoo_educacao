@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/modules/auth/ProtectedRoute'
 import { RBACProvider } from '@/providers/RBACProvider'
 import { persistQueryClient } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
+import { setupCacheHandlers } from '@/lib/cache-handlers'
 import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
@@ -66,7 +67,6 @@ const PerfilEscolaPage = lazy(() => import('@/modules/escola-perfil/pages/Perfil
 const MeuPerfilPage = lazy(() => import('@/modules/meu-perfil/pages/MeuPerfilPage').then(m => ({ default: m.MeuPerfilPage })))
 const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then(m => ({ default: m.PlanoPage })))
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
-const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
 
 // Currículos - MÓDULO EM IMPLEMENTAÇÃO (imports mantidos para reativação futura)
 // const CurriculosListPage = lazy(() => import('@/modules/curriculos/pages/CurriculosListPage').then(m => ({ default: m.CurriculosListPage })))
@@ -117,6 +117,9 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+// Registra arquitetura global orientada a eventos para o cache 🚀
+setupCacheHandlers(queryClient)
 
 function RootRedirect() {
   const { authUser, loading } = useAuth()
@@ -309,7 +312,6 @@ function App() {
 
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
-              <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
             </Route>
 
             {/* Portal do Responsável V2 */}

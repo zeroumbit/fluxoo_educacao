@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { financeiroService } from './service'
@@ -45,12 +46,12 @@ export function useRegistrarPagamentoManual() {
       // Cancela queries em andamento para evitar sobrescrever
       await queryClient.cancelQueries({ queryKey: ['cobrancas'] })
       await queryClient.cancelQueries({ queryKey: ['cobrancas_com_encargos'] })
-      await queryClient.cancelQueries({ queryKey: ['dashboard'] })
+      await queryClient.cancelQueries({ queryKey: QueryKeys.DASHBOARD })
 
       // Snapshot do estado anterior para rollback em caso de erro
       const previousCobrancas = queryClient.getQueryData(['cobrancas', authUser?.tenantId])
       const previousCobrancasEncargos = queryClient.getQueryData(['cobrancas_com_encargos', authUser?.tenantId])
-      const previousDashboard = queryClient.getQueryData(['dashboard'])
+      const previousDashboard = queryClient.getQueryData(QueryKeys.DASHBOARD)
 
       // Atualiza cache otimista (marca cobrança como paga)
       queryClient.setQueryData(['cobrancas', authUser?.tenantId], (old: any) => {
@@ -74,14 +75,14 @@ export function useRegistrarPagamentoManual() {
         queryClient.setQueryData(['cobrancas_com_encargos', authUser?.tenantId], context.previousCobrancasEncargos)
       }
       if (context?.previousDashboard) {
-        queryClient.setQueryData(['dashboard'], context.previousDashboard)
+        queryClient.setQueryData(QueryKeys.DASHBOARD, context.previousDashboard)
       }
     },
     // Refetch para garantir consistência
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
       queryClient.invalidateQueries({ queryKey: ['cobrancas_com_encargos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
@@ -111,7 +112,7 @@ export function useCriarCobranca() {
     mutationFn: (cobranca: CobrancaInsert) => financeiroService.criar(cobranca),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
@@ -138,7 +139,7 @@ export function useMarcarComoPago() {
     mutationFn: (id: string) => financeiroService.marcarComoPago(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
@@ -150,7 +151,7 @@ export function useExcluirCobranca() {
     mutationFn: (id: string) => financeiroService.excluir(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })
@@ -162,7 +163,7 @@ export function useDesfazerPagamento() {
     mutationFn: (id: string) => financeiroService.desfazerPagamento(id, authUser?.user?.id, authUser?.tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cobrancas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
     },
   })

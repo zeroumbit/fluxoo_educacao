@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { funcionariosService } from './service'
@@ -99,7 +100,7 @@ export function useGerarFolhaPagamento() {
       funcionariosService.gerarFolhaPagamento(authUser!.tenantId, mes, ano),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contas_pagar'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     },
   })
 }

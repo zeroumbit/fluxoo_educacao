@@ -73,16 +73,7 @@ export interface GradeHoraria {
   }[];
 }
 
-export interface AlunoCompacto {
-  id: string;
-  nome_completo: string;
-  matricula?: string | null;
-  status: string;
-  foto_url?: string | null;
-  turma_id?: string | null;
-  cpf?: string | null;
-  turma_atual?: any; // Para o filtro na aba de alunos
-}
+export type { AlunoCompacto } from '@/types/shared';
 
 export interface TurmaStoreState {
   turmas: Turma[];

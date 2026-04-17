@@ -1,3 +1,5 @@
+import { cacheEvents } from "@/lib/cache-events"
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { academicoService } from './service'
@@ -26,9 +28,8 @@ export function useCriarMatricula() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (d: any) => academicoService.criarMatricula(d),
-    onSuccess: () => {
-      // Invalida matrículas (atualiza a lista)
-      qc.invalidateQueries({ queryKey: ['matriculas'] })
+    onSuccess: (data: any, variables: any) => {
+      if (data) cacheEvents.publish('MATRICULA_CRIADA', { matriculaId: data.id, tenantId: data.tenant_id, turmaId: data.turma_id, alunoId: data.aluno_id });
       // Invalida turmas (trigger DB atualiza alunos_ids[])
       qc.invalidateQueries({ queryKey: ['turmas'] })
       // Invalida alunos (novo aluno pode aparecer na lista)
@@ -36,7 +37,7 @@ export function useCriarMatricula() {
       // Invalida financeiro (trigger DB gera cobranças automáticas)
       qc.invalidateQueries({ queryKey: ['cobrancas'] })
       // Invalida dashboard (métricas de alunos e financeiro)
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       // Invalida portal (dados do responsável)
       qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
@@ -62,7 +63,7 @@ export function useAtualizarMatricula() {
       // Invalida financeiro (mensalidade, cobranças)
       if (data?.valor_matricula || data?.turma_id || data?.status) {
         qc.invalidateQueries({ queryKey: ['cobrancas'] })
-        qc.invalidateQueries({ queryKey: ['dashboard'] })
+        qc.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       }
       qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
@@ -84,7 +85,7 @@ export function useExcluirMatricula() {
       // Invalida financeiro (cobranças podem ser canceladas)
       qc.invalidateQueries({ queryKey: ['cobrancas'] })
       // Invalida dashboard
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       // Invalida portal
       qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       qc.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })

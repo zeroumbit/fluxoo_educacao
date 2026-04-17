@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { muralService } from './service'
@@ -43,7 +44,7 @@ export function useCriarAviso() {
     mutationFn: (aviso: MuralAvisoInsert) => muralService.criar(aviso),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })
@@ -55,7 +56,7 @@ export function useExcluirAviso() {
     mutationFn: (id: string) => muralService.excluir(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })
@@ -68,7 +69,7 @@ export function useEditarAviso() {
       muralService.editar(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mural'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'avisos'] })
     },
   })

@@ -109,7 +109,6 @@ const navigationGroups = [
       // { name: 'Gateway', href: '/gateway', icon: KeyRound, permission: 'financeiro.config.view' },
       { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
       { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
-      { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
     ],
   },
 ]

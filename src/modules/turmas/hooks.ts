@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
+import { QueryKeys } from '@/lib/query-keys'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { turmaService } from './service'
 import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
@@ -9,7 +10,7 @@ import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 export function useTurmas() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['turmas', authUser?.tenantId, authUser?.isProfessor ? authUser.funcionarioId : 'all'],
+    queryKey: QueryKeys.TURMAS.LIST(authUser?.tenantId, authUser?.isProfessor, authUser?.funcionarioId),
     queryFn: () => turmaService.listar(
       authUser!.tenantId,
       authUser?.isProfessor ? authUser.funcionarioId : undefined
@@ -22,7 +23,7 @@ export function useTurmas() {
 export function useTurma(id: string) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['turmas', id, authUser?.tenantId],
+    queryKey: QueryKeys.TURMAS.DETAIL(id, authUser?.tenantId),
     queryFn: () => turmaService.buscarPorId(id, authUser!.tenantId),
     enabled: !!authUser?.tenantId && !!id,
   })
@@ -33,8 +34,8 @@ export function useCriarTurma() {
   return useMutation({
     mutationFn: (turma: TurmaInsert) => turmaService.criar(turma),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     },
   })
 }
@@ -45,8 +46,8 @@ export function useAtualizarTurma() {
     mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) =>
       turmaService.atualizar(id, turma),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     },
   })
 }
@@ -56,8 +57,8 @@ export function useExcluirTurma() {
   return useMutation({
     mutationFn: (id: string) => turmaService.excluir(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     },
   })
 }
@@ -65,7 +66,7 @@ export function useExcluirTurma() {
 export function useTurmaDoAluno(alunoId: string) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['turmas_aluno', alunoId, authUser?.tenantId],
+    queryKey: QueryKeys.TURMAS.ALUNO(alunoId, authUser?.tenantId),
     queryFn: () => turmaService.buscarPorAluno(alunoId, authUser!.tenantId),
     enabled: !!authUser?.tenantId && !!alunoId,
   })
@@ -78,7 +79,7 @@ export function useTurmaDoAluno(alunoId: string) {
  */
 export function useDisciplinas(tenantId: string, etapa?: string) {
   return useQuery({
-    queryKey: ['disciplinas', tenantId, etapa],
+    queryKey: QueryKeys.TURMAS.DISCIPLINAS(tenantId, etapa),
     queryFn: () => turmaService.listarDisciplinas(tenantId, etapa),
     enabled: !!tenantId
   })
@@ -86,7 +87,7 @@ export function useDisciplinas(tenantId: string, etapa?: string) {
 
 export function useCatalogoDisciplinas(tenantId: string) {
   return useQuery({
-    queryKey: ['disciplinas-catalogo', tenantId],
+    queryKey: QueryKeys.TURMAS.CATALOGO_DISCIPLINAS(tenantId),
     queryFn: () => turmaService.listarCatalogoDisciplinas(tenantId),
     enabled: !!tenantId
   })
@@ -98,8 +99,8 @@ export function useCriarDisciplina() {
     mutationFn: ({ nome, tenantId, etapa, categoria }: { nome: string, tenantId: string, etapa?: string, categoria?: string }) => 
       turmaService.criarDisciplinaCustomizada(nome, tenantId, etapa, categoria),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['disciplinas', variables.tenantId] })
-      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo', variables.tenantId] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.DISCIPLINAS(variables.tenantId) })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.CATALOGO_DISCIPLINAS(variables.tenantId) })
       toast.success('Disciplina criada com sucesso!')
     },
     onError: (error: any) => {
@@ -118,11 +119,11 @@ export function useToggleDisciplinaAtiva() {
       turmaService.toggleDisciplinaAtiva(disciplinaId, tenantId, isGlobal, ocultar),
     onSuccess: (_, variables) => {
       // Invalida TODAS as queries que dependem de disciplinas
-      queryClient.invalidateQueries({ queryKey: ['disciplinas'] })
-      queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_DISCIPLINAS })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_CATALOGO })
       // Força refetch das atribuições e grade horária que exibem disciplinas
-      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
-      queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_ATRIBUICOES })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_GRADE_HORARIA })
     }
   })
 }
@@ -134,7 +135,7 @@ export function useToggleDisciplinaAtiva() {
 export function useProfessoresTurma() {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['professores-turma', authUser?.tenantId],
+    queryKey: QueryKeys.TURMAS.PROFESSORES(authUser?.tenantId),
     queryFn: () => turmaService.listarProfessores(authUser!.tenantId),
     enabled: !!authUser?.tenantId,
     staleTime: 1000 * 60 * 5,
@@ -146,7 +147,7 @@ export function useProfessoresTurma() {
 export function useAtribuicoes(turmaId?: string) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['atribuicoes', authUser?.tenantId, turmaId],
+    queryKey: QueryKeys.TURMAS.ATRIBUICOES(authUser?.tenantId, turmaId),
     queryFn: () => turmaService.listarAtribuicoes(authUser!.tenantId, turmaId),
     enabled: !!authUser?.tenantId,
   })
@@ -157,7 +158,7 @@ export function useAtribuirProfessor() {
   return useMutation({
     mutationFn: (atribuicao: any) => turmaService.atribuirProfessor(atribuicao),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_ATRIBUICOES })
     },
   })
 }
@@ -167,7 +168,7 @@ export function useRemoverAtribuicao() {
   return useMutation({
     mutationFn: (id: string) => turmaService.removerAtribuicao(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_ATRIBUICOES })
     },
   })
 }
@@ -175,7 +176,7 @@ export function useRemoverAtribuicao() {
 export function useGradeTurma(turmaId: string) {
   const { authUser } = useAuth()
   return useQuery({
-    queryKey: ['grade_horaria', authUser?.tenantId, turmaId],
+    queryKey: QueryKeys.TURMAS.GRADE_HORARIA(authUser?.tenantId, turmaId),
     queryFn: () => turmaService.listarGrade(authUser!.tenantId, turmaId),
     enabled: !!authUser?.tenantId && !!turmaId,
   })
@@ -185,8 +186,8 @@ export function useSalvarGradeItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (item: any) => turmaService.salvarGradeItem(item),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_GRADE_HORARIA })
     },
   })
 }
@@ -203,7 +204,7 @@ export function useRemoverGradeItem() {
 
 export function useContarAlunosTurma(turmaId: string) {
   return useQuery({
-    queryKey: ['turma_alunos_count', turmaId],
+    queryKey: QueryKeys.TURMAS.ALUNOS_COUNT(turmaId),
     queryFn: () => turmaService.contarAlunos(turmaId),
     enabled: !!turmaId,
   })
@@ -229,8 +230,8 @@ export const useTurmaBilling = () => {
       if (error) throw error
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['turmas', variables.tenantId] })
-      queryClient.invalidateQueries({ queryKey: ['alunos', variables.turmaId] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.LIST(variables.tenantId) })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ALUNOS(variables.turmaId) })
       toast.success('Mensalidade da turma atualizada com sucesso!')
     },
     onError: (error: any) => {
@@ -252,7 +253,7 @@ export function useAlunosCountByTurma(turmaId: string) {
   const { authUser } = useAuth()
   
   return useQuery({
-    queryKey: ['turmas', 'alunos-count', turmaId],
+    queryKey: QueryKeys.TURMAS.ALUNOS_COUNT(turmaId),
     queryFn: async () => {
       const { count, error } = await supabase
         .from('matriculas')
@@ -277,7 +278,7 @@ export function useAlunosCountByTurmas(turmaIds: string[]) {
   const { authUser } = useAuth()
   
   return useQuery({
-    queryKey: ['turmas', 'alunos-count', turmaIds.sort()],
+    queryKey: QueryKeys.TURMAS.ALUNOS_COUNT(turmaIds.sort()),
     queryFn: async () => {
       if (turmaIds.length === 0) return {}
 

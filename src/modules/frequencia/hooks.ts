@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { frequenciaService } from './service'
@@ -37,7 +38,7 @@ export function useSalvarFrequencias() {
       frequenciaService.salvarFrequencias(frequencias),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['frequencias'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'frequencia'] })
       // Invalida alertas_status para recalcular gravidade do radar
       // (faltas consecutivas afetam o nível de risco de evasão)
@@ -116,7 +117,7 @@ export function useFrequenciaOptimistic(turmaId: string, dataAula: string) {
     // 🏁 Sincronização final
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     }
   })
 

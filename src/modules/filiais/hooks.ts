@@ -1,3 +1,4 @@
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { filialService } from './service'
@@ -18,7 +19,7 @@ export function useCriarFilial() {
     mutationFn: (filial: FilialInsert) => filialService.criar(filial),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['filiais'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     },
   })
 }

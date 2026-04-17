@@ -1,3 +1,5 @@
+import { cacheEvents } from "@/lib/cache-events"
+import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { alunoService } from './service'
@@ -44,9 +46,10 @@ export function useCriarAluno() {
   const { authUser } = useAuth()
   return useMutation({
     mutationFn: (aluno: AlunoInsert) => alunoService.criar(aluno, authUser?.user.id, authUser?.isProfessor),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      if(data) cacheEvents.publish('ALUNO_CRIADO', { alunoId: data.id, tenantId: data.tenant_id });
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
     },
@@ -70,7 +73,7 @@ export function useCriarAlunoComResponsavel() {
     }) => alunoService.criarComResponsavel(responsavel, aluno, grauParentesco, isFinanceiro, authUser?.user.id, authUser?.isProfessor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
     },
@@ -83,9 +86,10 @@ export function useAtualizarAluno() {
   return useMutation({
     mutationFn: ({ id, aluno }: { id: string; aluno: AlunoUpdate }) =>
       alunoService.atualizar(id, aluno, authUser?.user.id, authUser?.tenantId, authUser?.isProfessor),
-    onSuccess: (_, variables) => {
+    onSuccess: (data: any, variables) => {
+      if(data) cacheEvents.publish('ALUNO_ATUALIZADO', { alunoId: variables.id, tenantId: data.tenant_id });
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
@@ -100,7 +104,7 @@ export function useExcluirAluno() {
     mutationFn: (id: string) => alunoService.excluir(id, authUser?.user.id, authUser?.tenantId, authUser?.isProfessor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alunos'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
       queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
