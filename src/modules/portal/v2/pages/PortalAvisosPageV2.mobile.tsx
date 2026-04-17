@@ -26,7 +26,7 @@ function avisoEstaAtivo(aviso: { data_fim?: string | null }): boolean {
 
 // --- SKELETON LOADING (Padrão iOS/Android) ---
 const AvisosSkeleton = () => (
-  <div className="space-y-4 animate-pulse p-4 pt-[env(safe-area-inset-top,24px)]">
+  <div className="space-y-6 animate-pulse p-4 pt-safe">
     {/* Header Skeleton */}
     <div className="h-8 w-32 bg-slate-200/60 rounded-lg mb-4" />
     {/* Banner Skeleton */}

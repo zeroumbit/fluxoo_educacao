@@ -31,7 +31,7 @@ export function PortalLayoutV2Mobile() {
         - max-w-md: largura máxima para simular viewport mobile em tablets/desktop
         - flex-1 overflow-y-auto: essencial para o scroll interno funcionar
       */}
-      <main className="flex-1 w-full max-w-md mx-auto pt-safe pb-safe overflow-y-auto scroll-smooth">
+      <main className="flex-1 w-full max-w-md mx-auto pb-safe overflow-y-auto scroll-smooth">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={location.pathname}

@@ -47,7 +47,7 @@ const getInitials = (name: string) => {
 
 // --- SKELETON LOADING (Padrão iOS/Android) ---
 const CobrancasSkeleton = () => (
-  <div className="space-y-6 animate-pulse p-4 pt-[env(safe-area-inset-top,24px)]">
+  <div className="space-y-6 animate-pulse p-4 pt-safe">
     {/* Header Skeleton */}
     <div className="h-10 w-48 bg-slate-200/60 rounded-lg mb-4" />
     {/* Dashboard Cards Skeleton */}
@@ -196,7 +196,11 @@ export function PortalCobrancasPageV2Mobile() {
 
       {/* 4. Bottom Sheet - Detalhes do Aluno */}
       <Sheet open={!!selectedAluno} onOpenChange={(open) => !open && setSelectedAluno(null)}>
-        <SheetContent side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[90vh] overflow-hidden">
+        <SheetContent 
+          side="bottom" 
+          className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 h-[92vh] max-h-[92vh] overflow-hidden flex flex-col bg-white"
+          style={{ height: '92vh' }}
+        >
           <DetailDrawerMobile
             aluno={selectedAluno}
             onClose={() => setSelectedAluno(null)}
@@ -347,7 +351,7 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header do Bottom Sheet */}
-      <header className="flex items-center justify-between p-4 border-b border-slate-100 bg-white">
+      <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-100 bg-white">
         {/* Handle Indicator - iOS Sheet */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 bg-slate-200 rounded-full" aria-hidden="true" />
 
@@ -371,10 +375,9 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
       </header>
 
       {/* Tabs - Pendentes / Histórico */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Tabs */}
-        <div className="px-4 py-3">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: '100%' }}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col h-full">
+          <div className="px-4 py-3 shrink-0">
             <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-[16px] h-12">
               <TabsTrigger
                 value="pendentes"
@@ -389,22 +392,30 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
                 Histórico
               </TabsTrigger>
             </TabsList>
+          </div>
 
-            <TabsContent value="pendentes" className="flex-1 overflow-y-auto m-0 mt-3">
-              <DrawerFaturaListMobile
-                faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
-                onAction={onPagar}
-              />
-            </TabsContent>
+          <TabsContent 
+            value="pendentes" 
+            className="flex-1 overflow-y-auto px-4 pb-20 m-0 outline-none"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <DrawerFaturaListMobile
+              faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
+              onAction={onPagar}
+            />
+          </TabsContent>
 
-            <TabsContent value="pagos" className="flex-1 overflow-y-auto m-0 mt-3">
-              <DrawerFaturaListMobile
-                faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
-                isHistorico
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
+          <TabsContent 
+            value="pagos" 
+            className="flex-1 overflow-y-auto px-4 pb-20 m-0 outline-none"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <DrawerFaturaListMobile
+              faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
+              isHistorico
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

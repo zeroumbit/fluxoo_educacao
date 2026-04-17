@@ -67,13 +67,19 @@ export function PortalAlunosListV2Mobile() {
                   {v.aluno?.nome_completo || 'Aluno'}
                 </h2>
                 {/* Caption - iOS Caption 1 (13px Regular) / Material Label Medium (13px Medium) */}
-                <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
-                  <span className="text-teal-600 font-medium">
-                    {v.aluno?.turma?.nome || 'Sem turma'}
-                  </span>
-                  <span className="text-slate-300" aria-hidden="true">•</span>
-                  <span className="font-mono text-slate-500">
-                    {v.aluno?.status || 'Ativo'}
+                {/* Caption - Matrícula e Turma */}
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2 text-[13px]">
+                    <span className="text-slate-500 font-mono font-bold">
+                      #{v.aluno?.id?.slice(0, 8).toUpperCase()}
+                    </span>
+                    <span className="text-slate-200">•</span>
+                    <span className="text-teal-600 font-medium">
+                      {v.aluno?.turma?.nome || 'Sem turma'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                    STATUS: {v.aluno?.status || 'Ativo'}
                   </span>
                 </div>
               </div>
@@ -113,7 +119,7 @@ export function PortalAlunosListV2Mobile() {
 // --- SKELETON ALUNOS ---
 function AlunosSkeleton() {
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,24px)] mt-2 animate-pulse">
+    <div className="flex flex-col gap-6 px-4 pt-safe mt-2 animate-pulse">
       <div className="space-y-4 pt-4">
         <div className="h-10 w-56 bg-slate-200/60 rounded-xl" />
         <div className="h-4 w-72 bg-slate-100/80 rounded" />
