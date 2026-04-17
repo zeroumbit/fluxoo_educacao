@@ -6,6 +6,7 @@ import {
   Users,
   Receipt,
   Bell,
+  Megaphone,
   ShoppingBag,
   Menu,
   User,
@@ -83,7 +84,7 @@ export const BottomNavV2 = () => {
 
   const rightItems = [
     { label: 'Financeiro', icon: Receipt, path: '/portal/financeiro' },
-    { label: 'Avisos', icon: Bell, path: '/portal/avisos' },
+    { label: 'Avisos', icon: Megaphone, path: '/portal/avisos' },
   ];
 
   const handleLinkClick = () => {
@@ -97,7 +98,7 @@ export const BottomNavV2 = () => {
   const menuFullItems = [
     { label: 'Página Inicial', icon: Home, path: '/portal', desc: 'Resumo geral e alertas' },
     { label: 'Alunos', icon: Users, path: '/portal/alunos', desc: 'Dados e boletins' },
-    { label: 'Mural de Avisos', icon: Bell, path: '/portal/avisos', desc: 'Notificações da escola' },
+    { label: 'Mural de Avisos', icon: Megaphone, path: '/portal/avisos', desc: 'Notificações da escola' },
     { label: 'Financeiro', icon: CreditCard, path: '/portal/financeiro', desc: 'Faturas e pagamentos' },
     ...(showLoja ? [{ label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja', desc: 'Marketplace da escola' }] : []),
     { label: 'Meu Perfil', icon: User, path: '/portal/perfil', desc: 'Dados cadastrais' },
