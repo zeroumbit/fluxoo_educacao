@@ -112,6 +112,14 @@ export const academicoService = {
       logger.error('⚠️ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
     }
 
+    // Tenta disparar o informativo de boas-vindas e transparência financeira
+    try {
+      const { welcomeService } = await import('@/modules/comunicacao/welcome.service')
+      await welcomeService.sendWelcomeRelease(data.id)
+    } catch (welcomeError) {
+      logger.error('⚠️ [academicoService.criarMatricula] Erro ao disparar Welcome Release:', welcomeError)
+    }
+
     return data
   },
   async atualizarMatricula(id: string, tenantId: string, matricula: any, userId?: string) {

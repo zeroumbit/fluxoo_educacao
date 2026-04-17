@@ -765,6 +765,37 @@ export const portalService = {
   },
 
   // ==========================================
+  // NOTIFICAÇÕES DA FAMÍLIA (Welcome, Financeiro, etc.)
+  // ==========================================
+  async buscarNotificacoesFamilia(responsavelId: string, alunoId?: string) {
+    let query = supabase
+      .from('notificacoes_familia' as any)
+      .select('*')
+      .eq('responsavel_id', responsavelId)
+      .order('created_at', { ascending: false })
+
+    if (alunoId) {
+      query = query.eq('aluno_id', alunoId)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return (data as any[]) || []
+  },
+
+  async marcarNotificacaoFamiliaLida(notificacaoId: string) {
+    const { error } = await supabase
+      .from('notificacoes_familia' as any)
+      .update({ 
+        lida: true, 
+        lida_em: new Date().toISOString() 
+      } as any)
+      .eq('id', notificacaoId)
+    
+    if (error) throw error
+  },
+
+  // ==========================================
   // ATIVIDADES
   // ==========================================
   async buscarAtividades(alunoId: string, tenantId: string) {

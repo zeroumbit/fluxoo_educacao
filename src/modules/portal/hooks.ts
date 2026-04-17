@@ -417,3 +417,16 @@ export function useNotificacaoSonoraAvisos() {
     prevCountRef.current = currentCount
   }, [avisos, alunoSelecionado])
 }
+
+// ==========================================
+// NOTIFICAÇÕES DA FAMÍLIA
+// ==========================================
+export function useNotificacoesFamilia() {
+  const { responsavel, alunoSelecionado } = usePortalContext()
+  return useQuery({
+    queryKey: ['portal', 'notificacoes-familia', responsavel?.id, alunoSelecionado?.id],
+    queryFn: () => portalService.buscarNotificacoesFamilia(responsavel!.id, alunoSelecionado?.id),
+    enabled: !!responsavel?.id,
+    staleTime: 60 * 1000,
+  })
+}
