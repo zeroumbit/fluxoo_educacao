@@ -196,7 +196,11 @@ export function PortalCobrancasPageV2Mobile() {
 
       {/* 4. Bottom Sheet - Detalhes do Aluno */}
       <Sheet open={!!selectedAluno} onOpenChange={(open) => !open && setSelectedAluno(null)}>
-        <SheetContent side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[90vh] overflow-hidden">
+        <SheetContent 
+          side="bottom" 
+          className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 h-[92vh] max-h-[92vh] overflow-hidden flex flex-col bg-white"
+          style={{ height: '92vh' }}
+        >
           <DetailDrawerMobile
             aluno={selectedAluno}
             onClose={() => setSelectedAluno(null)}
@@ -371,10 +375,9 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
       </header>
 
       {/* Tabs - Pendentes / Histórico */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Tabs */}
-        <div className="px-4 py-3">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+      <div className="flex-1 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex flex-col h-full">
+          <div className="px-4 py-3 border-b border-slate-50 shrink-0">
             <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-[16px] h-12">
               <TabsTrigger
                 value="pendentes"
@@ -389,22 +392,31 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
                 Histórico
               </TabsTrigger>
             </TabsList>
+          </div>
 
-            <TabsContent value="pendentes" className="flex-1 overflow-y-auto m-0 mt-3">
+          <div 
+            className="overflow-y-auto px-4 pt-4 pb-32" 
+            style={{ 
+              height: 'calc(92vh - 180px)',
+              minHeight: '400px',
+              WebkitOverflowScrolling: 'touch' 
+            }}
+          >
+            <TabsContent value="pendentes" className="m-0 outline-none">
               <DrawerFaturaListMobile
                 faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
                 onAction={onPagar}
               />
             </TabsContent>
 
-            <TabsContent value="pagos" className="flex-1 overflow-y-auto m-0 mt-3">
+            <TabsContent value="pagos" className="m-0 outline-none">
               <DrawerFaturaListMobile
                 faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
                 isHistorico
               />
             </TabsContent>
-          </Tabs>
-        </div>
+          </div>
+        </Tabs>
       </div>
     </div>
   )

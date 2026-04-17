@@ -71,6 +71,14 @@ export function PortalAlunosListV2Mobile() {
                   <span className="text-teal-600 font-medium">
                     {v.aluno?.turma?.nome || 'Sem turma'}
                   </span>
+                  {v.aluno?.matricula && (
+                    <>
+                      <span className="text-slate-300" aria-hidden="true">•</span>
+                      <span className="font-bold text-teal-600/80 bg-teal-50 px-1.5 py-0.5 rounded-md text-[11px]">
+                        #{v.aluno.matricula}
+                      </span>
+                    </>
+                  )}
                   <span className="text-slate-300" aria-hidden="true">•</span>
                   <span className="font-mono text-slate-500">
                     {v.aluno?.status || 'Ativo'}
@@ -113,8 +121,8 @@ export function PortalAlunosListV2Mobile() {
 // --- SKELETON ALUNOS ---
 function AlunosSkeleton() {
   return (
-    <div className="flex flex-col gap-6 px-4 pt-[env(safe-area-inset-top,24px)] mt-2 animate-pulse">
-      <div className="space-y-4 pt-4">
+    <div className="flex flex-col gap-6 px-4 pt-safe mt-2 animate-pulse">
+      <div className="space-y-4">
         <div className="h-10 w-56 bg-slate-200/60 rounded-xl" />
         <div className="h-4 w-72 bg-slate-100/80 rounded" />
       </div>

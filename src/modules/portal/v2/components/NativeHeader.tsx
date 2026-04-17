@@ -94,15 +94,18 @@ export function NativeHeader({
               </button>
             </SheetTrigger>
             
-            <SheetContent side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 max-h-[85vh] overflow-hidden">
-               <SheetHeader className="p-6 pb-2 border-b border-slate-50">
-                 <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
-                 <SheetTitle className="text-[20px] font-bold text-slate-900 tracking-tight text-center">
-                    Escolha o Aluno
-                 </SheetTitle>
+            <SheetContent 
+              side="bottom" 
+              className="rounded-t-[32px] p-0 border-t border-slate-100 max-h-[92vh] h-[92vh] overflow-hidden flex flex-col bg-white"
+            >
+               <SheetHeader className="p-6 pb-2 border-b border-slate-50 shrink-0">
+                  <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+                  <SheetTitle className="text-[20px] font-bold text-slate-900 tracking-tight text-center">
+                     Escolha o Aluno
+                  </SheetTitle>
                </SheetHeader>
                
-               <div className="p-4 space-y-3 overflow-y-auto pb-[env(safe-area-inset-bottom,24px)]">
+               <div className="p-4 space-y-3 overflow-y-auto flex-1 pb-safe">
                   {vinculos.map((v) => (
                     <motion.button
                       key={v.aluno?.id}
@@ -137,9 +140,19 @@ export function NativeHeader({
                          )}>
                             {v.aluno?.nome_completo}
                          </span>
-                         <span className="text-[12px] font-medium text-slate-400">
-                            {v.aluno?.turma?.nome || 'Sem turma'}
-                         </span>
+                         <div className="flex items-center gap-2">
+                           <span className="text-[12px] font-medium text-slate-400">
+                              {v.aluno?.turma?.nome || 'Sem turma'}
+                           </span>
+                           {v.aluno?.matricula && (
+                              <>
+                                <span className="text-slate-200 text-[10px]">•</span>
+                                <span className="text-[11px] font-bold text-teal-600/70 bg-teal-50 px-1.5 py-0.5 rounded-md">
+                                   #{v.aluno.matricula}
+                                </span>
+                              </>
+                           )}
+                         </div>
                       </div>
                       
                       {alunoSelecionado?.id === v.aluno?.id && (
