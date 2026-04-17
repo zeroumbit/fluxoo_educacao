@@ -19,6 +19,7 @@ export function useCriarFilial() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['filiais'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'config-escola'] })
     },
   })
 }
@@ -30,6 +31,7 @@ export function useAtualizarFilial() {
       filialService.atualizar(id, filial),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['filiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'config-escola'] })
     },
   })
 }
@@ -40,6 +42,7 @@ export function useExcluirFilial() {
     mutationFn: (id: string) => filialService.excluir(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['filiais'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'config-escola'] })
     },
   })
 }

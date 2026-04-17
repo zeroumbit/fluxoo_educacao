@@ -35,6 +35,8 @@ export function useCriarTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }
@@ -47,6 +49,8 @@ export function useAtualizarTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }
@@ -58,6 +62,8 @@ export function useExcluirTurma() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['turmas'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
 }
@@ -123,6 +129,9 @@ export function useToggleDisciplinaAtiva() {
       // Força refetch das atribuições e grade horária que exibem disciplinas
       queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
       queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+      // Portal
+      queryClient.invalidateQueries({ queryKey: ['portal', 'atividades'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'boletins'] })
     }
   })
 }
@@ -158,6 +167,7 @@ export function useAtribuirProfessor() {
     mutationFn: (atribuicao: any) => turmaService.atribuirProfessor(atribuicao),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'turma-detalhe'] })
     },
   })
 }
@@ -168,6 +178,7 @@ export function useRemoverAtribuicao() {
     mutationFn: (id: string) => turmaService.removerAtribuicao(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'turma-detalhe'] })
     },
   })
 }
@@ -187,6 +198,7 @@ export function useSalvarGradeItem() {
     mutationFn: (item: any) => turmaService.salvarGradeItem(item),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'grade-horaria'] })
     },
   })
 }
@@ -197,6 +209,7 @@ export function useRemoverGradeItem() {
     mutationFn: (id: string) => turmaService.removerGradeItem(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'grade-horaria'] })
     },
   })
 }
@@ -231,6 +244,8 @@ export const useTurmaBilling = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['turmas', variables.tenantId] })
       queryClient.invalidateQueries({ queryKey: ['alunos', variables.turmaId] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
       toast.success('Mensalidade da turma atualizada com sucesso!')
     },
     onError: (error: any) => {
