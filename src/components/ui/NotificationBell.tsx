@@ -87,9 +87,9 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
   const categories = Object.keys(itemsByCategory);
 
   const NotificationContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+      <div className="p-6 border-b border-slate-50 flex items-center justify-between shrink-0">
         <div className="flex flex-col">
           <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tighter leading-none">Alertas</h3>
           <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest leading-none mt-1">
@@ -102,14 +102,14 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
           </button>
         )}
         {isMobile && (
-          <div className="w-12 h-1 bg-slate-200 rounded-full absolute top-3 left-1/2 -translate-x-1/2 opacity-50" />
+          <div className="w-10 h-1 bg-slate-200 rounded-full absolute top-3 left-1/2 -translate-x-1/2 opacity-50" />
         )}
       </div>
 
       {/* List */}
       <div className={cn(
-        "flex-1 overflow-y-auto p-4 space-y-4",
-        isMobile ? "max-h-[70vh]" : "max-h-[400px]"
+        "flex-1 overflow-y-auto p-4 space-y-4 pb-12",
+        isMobile ? "" : "max-h-[400px]"
       )}>
         {items.length > 0 ? (
           categories.map((category) => (
@@ -126,8 +126,8 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                       <motion.button
                         key={notif.id || `${item.id}-${notifIdx}`}
                         initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: (idx + notifIdx * 0.1) * 0.05 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
                         onClick={() => handleItemClick(item.href, [notif])}
                         className="w-full flex items-center gap-3 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98] relative"
                       >
@@ -161,8 +161,8 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                     <motion.button
                       key={item.id}
                       initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
                       onClick={() => handleItemClick(item.href, [])}
                       className="w-full flex items-center gap-4 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98]"
                     >
@@ -198,68 +198,54 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
       </div>
 
       {/* Footer */}
-      <div className="p-4 bg-slate-50/50 border-t border-slate-50 mt-auto">
+      <div className="p-4 bg-slate-50/50 border-t border-slate-50 mt-auto shrink-0 pb-safe">
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center italic">Monitoramento Fluxoo Alertas</p>
       </div>
     </div>
   );
 
   return (
-    <div className={cn("relative", className)}>
-      <button
-        onClick={handleToggle}
-        className={cn(
-          "relative p-2 rounded-xl transition-all active:scale-95 border",
-          isOpen 
-            ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
-            : "bg-white border-slate-100 text-slate-500 hover:border-slate-300"
-        )}
-        aria-label="Notificações"
-      >
-        <Bell className={cn("w-6 h-6", isOpen && "animate-bounce")} />
-        {total > 0 && (
-          <span className={cn(
-            "absolute top-0 right-0 -mr-1 -mt-1 w-5 h-5 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 animate-in zoom-in duration-300 shadow-lg",
-            isOpen ? "bg-teal-500 border-slate-900" : "bg-red-500 border-white"
-          )}>
-            {total}
-          </span>
-        )}
-      </button>
+    <div className={cn("relative z-[101]", className)}>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <button
+            onClick={() => vibrate(20)}
+            className={cn(
+              "relative p-2 rounded-xl transition-all active:scale-95 border",
+              isOpen 
+                ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
+                : "bg-white border-slate-100 text-slate-500 hover:border-slate-300"
+            )}
+            aria-label="Notificações"
+          >
+            <Bell className={cn("w-6 h-6", isOpen && "animate-bounce")} />
+            {total > 0 && (
+              <span className={cn(
+                "absolute top-0 right-0 -mr-1 -mt-1 w-5 h-5 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 animate-in zoom-in duration-300 shadow-lg",
+                isOpen ? "bg-teal-500 border-slate-900" : "bg-red-500 border-white"
+              )}>
+                {total}
+              </span>
+            )}
+          </button>
+        </SheetTrigger>
 
-      <AnimatePresence>
-        {isOpen && (
-          isMobile ? (
-            /* MOBILE BOTTOM SHEET (RADIX) */
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetContent side="bottom" className="rounded-t-[40px] p-0 border-t border-slate-100 max-h-[92vh] overflow-hidden flex flex-col font-sans">
-                <NotificationContent />
-              </SheetContent>
-            </Sheet>
-          ) : (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsOpen(false)}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[998]"
-              />
-
-              {/* WEB POPOVER */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10, x: 20 }}
-                className="absolute right-0 mt-4 w-[380px] bg-white rounded-[32px] shadow-[0_30px_70px_rgba(0,0,0,0.2)] border border-slate-100 z-[999] overflow-hidden"
-              >
-                <NotificationContent />
-              </motion.div>
-            </>
-          )
+        {isMobile ? (
+          <SheetContent 
+            side="bottom" 
+            className="rounded-t-[40px] p-0 border-t border-slate-100 h-[85vh] max-h-[85vh] overflow-hidden flex flex-col bg-white outline-none"
+          >
+            <NotificationContent />
+          </SheetContent>
+        ) : (
+          <SheetContent 
+            side="right" 
+            className="w-[400px] p-0 overflow-hidden flex flex-col bg-white outline-none"
+          >
+            <NotificationContent />
+          </SheetContent>
         )}
-      </AnimatePresence>
+      </Sheet>
     </div>
   );
 }
