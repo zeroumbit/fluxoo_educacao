@@ -36,17 +36,23 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/supabase\./i,
+            // Storage público (avatares, logos) — cache por 30 dias
+            urlPattern: /^https:\/\/.*supabase\.co\/storage\/v1\/object\/public\//i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'supabase-storage-cache',
+              expiration: { maxEntries: 100, maxAgeSeconds: 86400 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            // REST API — NetworkFirst, cache máximo de 5 minutos
+            urlPattern: /^https:\/\/.*supabase\.co\/rest\/v1\//i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
+              cacheName: 'supabase-api-cache',
+              expiration: { maxEntries: 100, maxAgeSeconds: 300 },
+              cacheableResponse: { statuses: [0, 200] }
             }
           }
         ]

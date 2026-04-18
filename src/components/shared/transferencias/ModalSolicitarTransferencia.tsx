@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useAuth } from "@/modules/auth/AuthContext"
 
 const solicitacaoSchema = z.object({
   codigoAluno: z.string()
@@ -51,6 +52,7 @@ export function ModalSolicitarTransferencia({
   isOpen,
   onClose,
 }: ModalSolicitarTransferenciaProps) {
+  const { authUser } = useAuth()
   const [isSuccess, setIsSuccess] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
 
@@ -182,21 +184,26 @@ export function ModalSolicitarTransferencia({
       }
 
       // 2. Inserir solicitação (v2 com Destino Híbrido)
+      const responsavelAlvoId = responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id;
+      const escolaOrigemId = alunoData.tenant_id;
+      
       const { error: insertError } = await supabase
         .from('transferencias_escolares')
         .insert({
           aluno_id: alunoData.id,
-          escola_origem_id: alunoData.tenant_id,
-          responsavel_id: responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id,
+          escola_origem_id: escolaOrigemId,
+          escola_destino_id: authUser?.role !== 'responsavel' && authUser?.tenantId !== 'super_admin' ? authUser?.tenantId : null,
+          responsavel_id: responsavelAlvoId,
+          iniciado_por: authUser?.role === 'responsavel' ? 'responsavel' : 'destino',
           motivo_solicitacao: data.motivo,
-          status: 'pendente_pais'
+          status: 'aguardando_responsavel'
         } as any)
 
       if (insertError) throw insertError
 
       setIsSuccess(true)
       toast.success("Solicitação enviada!", {
-        description: "O responsável será notificado para aprovação via app."
+        description: "O responsável foi notificado para aprovação via app."
       })
     } catch (error) {
       console.error(error)
