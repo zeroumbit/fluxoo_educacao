@@ -21,7 +21,7 @@ export interface TransferenciaRow {
   motivo_solicitacao: string
   justificativa_recusa: string | null
   prazo_liberacao: string | null
-  criado_em: string
+  created_at: string
   aprovado_em: string | null
   concluido_em: string | null
   // Campos enriquecidos no frontend
@@ -124,7 +124,7 @@ export const transferenciasService = {
       .from('transferencias_escolares' as any) as any)
       .select('*')
       .or(`escola_origem_id.eq.${tenantId},escola_destino_id.eq.${tenantId}`)
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     if (!data || data.length === 0) return []
@@ -142,7 +142,7 @@ export const transferenciasService = {
       transferencia_id: t.id,
       status: t.status as TransferenciaStatus,
       solicitante_tipo: t.iniciado_por as TipoSolicitante,
-      data_solicitacao: t.criado_em,
+      data_solicitacao: t.created_at,
       prazo_liberacao: t.prazo_liberacao,
       aluno_nome: alunosMap[t.aluno_id] || `Aluno ${String(t.aluno_id).substring(0, 4)}`,
       origem_id: t.escola_origem_id,
@@ -161,7 +161,7 @@ export const transferenciasService = {
       .from('transferencias_escolares' as any) as any)
       .select('*')
       .in('aluno_id', alunoIds)
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     if (!data || data.length === 0) return []
@@ -176,7 +176,7 @@ export const transferenciasService = {
 
     return data.map((t: any) => ({
       ...t,
-      created_at: t.criado_em,
+      created_at: t.created_at,
       origem_tenant_id: t.escola_origem_id,
       destino_tenant_id: t.escola_destino_id,
       solicitante_tipo: t.iniciado_por,
@@ -204,12 +204,9 @@ export const transferenciasService = {
 
   /** ESCOLA ORIGEM conclui a transferência liberando o aluno */
   async liberarAluno(id: string) {
-    const { error } = await (supabase
-      .from('transferencias_escolares' as any) as any)
-      .update({ status: 'concluido', concluido_em: new Date().toISOString() })
-      .eq('id', id)
-      .eq('status', 'aguardando_liberacao_origem')
-
+    const { error } = await supabase.rpc('liberar_aluno_transferencia' as any, {
+      p_transferencia_id: id
+    })
     if (error) throw error
     return { status: 'concluido' }
   },
