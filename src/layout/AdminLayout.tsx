@@ -51,68 +51,7 @@ import { useEscola } from '@/modules/escolas/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMarketplaceCategorias } from '@/modules/super-admin/marketplace.hooks'
 
-const navigationGroups = [
-  {
-    label: 'Principal',
-    items: [
-      { name: 'Dashboard', href: '/dashboard', icon: House, permission: 'dashboard.view' },
-    ],
-  },
-  {
-    label: 'Acadêmico',
-    items: [
-      { name: 'Alunos', href: '/alunos', icon: User, permission: 'academico.alunos.view' },
-      { name: 'Turmas', href: '/turmas', icon: Users, permission: 'academico.turmas.view' },
-      { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
-      { name: 'Transferências', href: '/transferencias', icon: ArrowRightLeft, permission: 'academico.matriculas.view' },
-      { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
-      { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
-      { name: 'Disciplinas', href: '/disciplinas', icon: BookType, permission: 'academico.disciplinas.view' },
-      { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
-      { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
-      { name: 'Atividades', href: '/atividades', icon: Pencil, permission: 'academico.atividades.view' },
-      { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'academico.documentos.view' },
-      { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront, permission: 'academico.portaria.view' },
-    ],
-  },
-  {
-    label: 'Comunicação',
-    items: [
-      { name: 'Mural', href: '/mural', icon: Megaphone, permission: 'comunicacao.mural.view' },
-      { name: 'Agenda', href: '/agenda', icon: Calendar, permission: 'comunicacao.agenda.view' },
-    ],
-  },
-  {
-    label: 'Financeiro',
-    items: [
-      { name: 'Cobranças', href: '/financeiro', icon: CreditCard, permission: 'financeiro.cobrancas.view' },
-      { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet, permission: 'financeiro.contas_pagar.view' },
-      { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp, permission: 'financeiro.relatorios.view' },
-      { name: 'Configurações', href: '/configuracoes', icon: Settings, permission: 'financeiro.config.view' },
-    ],
-  },
-  {
-    label: 'Capital Humano',
-    items: [
-      { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
-      // MÓDULO EM IMPLEMENTAÇÃO - Reativar quando pronto
-      // { name: 'Currículos', href: '/curriculos', icon: FileUser, permission: 'gestao.curriculos.view' },
-    ],
-  },
-  {
-    label: 'Configurações',
-    items: [
-      { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
-      { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
-      { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
-      // Gateway temporariamente escondido - reativar quando módulo de pagamentos estiver completo
-      // { name: 'Gateway', href: '/gateway', icon: KeyRound, permission: 'financeiro.config.view' },
-      { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
-      { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
-      { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
-    ],
-  },
-]
+
 
 // Itens fixos na parte inferior da sidebar (sempre por último)
 const bottomNavigationItems = [
@@ -141,6 +80,65 @@ function SidebarContent({
   const isProfessor = authUser?.isProfessor
   const isLojista = authUser?.role === 'lojista'
   const isProfissional = authUser?.role === 'profissional'
+
+  const navigationGroups = [
+    {
+      label: 'Principal',
+      items: [
+        { name: 'Dashboard', href: '/dashboard', icon: House, permission: 'dashboard.view' },
+      ],
+    },
+    {
+      label: 'Acadêmico',
+      items: [
+        { name: 'Alunos', href: '/alunos', icon: User, permission: 'academico.alunos.view' },
+        { name: 'Turmas', href: '/turmas', icon: Users, permission: 'academico.turmas.view' },
+        { name: 'Matrículas', href: '/matriculas', icon: GraduationCap, permission: 'academico.matriculas.view' },
+        { name: 'Transferências', href: '/transferencias', icon: ArrowRightLeft, permission: 'academico.matriculas.view' },
+        { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
+        { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
+        { name: 'Disciplinas', href: '/disciplinas', icon: BookType, permission: 'academico.disciplinas.view' },
+        { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
+        { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
+        { name: 'Atividades', href: '/atividades', icon: Pencil, permission: 'academico.atividades.view' },
+        { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'academico.documentos.view' },
+        { name: 'Portaria Expresso', href: '/portaria-expresso', icon: CarFront, permission: 'academico.portaria.view' },
+      ],
+    },
+    {
+      label: 'Comunicação',
+      items: [
+        { name: 'Mural', href: '/mural', icon: Megaphone, permission: 'comunicacao.mural.view' },
+        { name: 'Agenda', href: '/agenda', icon: Calendar, permission: 'comunicacao.agenda.view' },
+      ],
+    },
+    {
+      label: 'Financeiro',
+      items: [
+        { name: 'Cobranças', href: '/financeiro', icon: CreditCard, permission: 'financeiro.cobrancas.view' },
+        { name: 'Contas a Pagar', href: '/contas-pagar', icon: Wallet, permission: 'financeiro.contas_pagar.view' },
+        { name: 'Relatórios', href: '/financeiro-relatorios', icon: TrendingUp, permission: 'financeiro.relatorios.view' },
+        { name: 'Configurações', href: '/configuracoes', icon: Settings, permission: 'financeiro.config.view' },
+      ],
+    },
+    {
+      label: 'Capital Humano',
+      items: [
+        { name: 'Funcionários', href: '/funcionarios', icon: Briefcase, permission: 'gestao.funcionarios.view' },
+      ],
+    },
+    {
+      label: 'Configurações',
+      items: [
+        { name: 'Perfil Escola', href: '/perfil-escola', icon: UserCog, permission: 'gestao.perfil_escola.view' },
+        { name: 'Unidades', href: '/filiais', icon: Building2, permission: 'gestao.filiais.view' },
+        { name: 'Plano', href: '/plano', icon: CreditCard, permission: 'gestao.plano.view' },
+        { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
+        { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
+        isSuperAdmin && { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
+      ].filter(Boolean) as any,
+    },
+  ]
 
   // Filtrar grupos que possuem pelo menos um item permitido
   let visibleGroups = navigationGroups
