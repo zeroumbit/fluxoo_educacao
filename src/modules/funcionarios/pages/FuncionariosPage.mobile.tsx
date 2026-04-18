@@ -56,6 +56,14 @@ const funcSchema = z.object({
 
 type FuncFormData = z.infer<typeof funcSchema>
 
+// Exibe apenas o cargo principal, sem a especialização (ex: "Professor de Ed. Física" → "Professor")
+function normalizarCargo(nome: string): string {
+  if (!nome) return nome
+  const match = nome.match(/^([^\s]+(?:\s+[^\s]+)*?)\s+(de|do|da|dos|das)\s/i)
+  if (match) return match[1]
+  return nome
+}
+
 export function FuncionariosPageMobile() {
   const { authUser } = useAuth()
   const { data: funcionarios, isLoading, refetch } = useFuncionarios()
@@ -93,6 +101,21 @@ export function FuncionariosPageMobile() {
     }
     return list
   }, [funcionarios, search, activeTab])
+
+// Normalizar e dedupar funções para display
+  const getFuncaoDisplay = (f: any): string => {
+    if (!f) return 'Sem função'
+    const funcs = (Array.isArray(f.funcoes) && f.funcoes.length > 0) ? f.funcoes : (f.funcao ? [f.funcao] : ([] as string[]))
+    if (funcs.length === 0) return 'Sem função'
+    const normalizeFn = (fn: string) => {
+      if (!fn) return ''
+      const match = fn.match(/^([^\s]+(?:\s+[^\s]+)*?)\s+(de|do|da|dos|das)\s/i)
+      return match ? match[1] : fn
+    }
+    const unicas = [...new Set(funcs.map(normalizeFn))]
+    const result = unicas[0]
+    return (typeof result === 'string' ? result : 'Sem função') || 'Sem função'
+  }
 
   const handleEdit = (f: any) => {
     setSelectedFolder(f)
@@ -220,7 +243,7 @@ export function FuncionariosPageMobile() {
                                                 {f.como_chamado || f.nome_completo.split(' ')[0]}
                                             </h4>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
-                                                {Array.isArray(f.funcoes) ? f.funcoes[0] : f.funcao || 'Sem função'}
+                                                {getFuncaoDisplay(f)}
                                             </p>
                                         </div>
                                     </div>

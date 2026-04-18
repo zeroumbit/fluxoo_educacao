@@ -52,6 +52,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useMarketplaceCategorias } from '@/modules/super-admin/marketplace.hooks'
 
 
+interface NavItem {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  permission: string
+}
+
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
 
 // Itens fixos na parte inferior da sidebar (sempre por último)
 const bottomNavigationItems = [
@@ -81,7 +93,7 @@ function SidebarContent({
   const isLojista = authUser?.role === 'lojista'
   const isProfissional = authUser?.role === 'profissional'
 
-  const navigationGroups = [
+  const navigationGroups: NavGroup[] = [
     {
       label: 'Principal',
       items: [
@@ -148,7 +160,7 @@ function SidebarContent({
         return { ...group, items: [] }
       }
 
-      const items = group.items.filter(item =>
+      const items = group.items.filter((item: NavItem) =>
         item.permission === 'all' || isGestor || hasPermission(item.permission)
       )
       return { ...group, items }

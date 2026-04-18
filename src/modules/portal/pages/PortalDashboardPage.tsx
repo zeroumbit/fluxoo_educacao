@@ -357,7 +357,7 @@ export function PortalDashboardPage() {
         <WelcomeAnnouncementCard 
           key={notif.id} 
           notification={notif} 
-          whatsappNumber={configRecados?.whatsapp_contato}
+          whatsappNumber={configRecados?.whatsapp_contato || undefined}
         />
       ))}
 

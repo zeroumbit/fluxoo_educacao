@@ -43,7 +43,7 @@ export const welcomeService = {
     }
 
     // 2. Lógica Financeira (Pro-Rata)
-    const valorMensalidadeIntegral = matricula.turma?.valor_mensalidade || matricula.valor_matricula || 0
+    const valorMensalidadeIntegral = (matricula.turma as any)?.valor_mensalidade || matricula.valor_matricula || 0
     const dataMatricula = new Date(matricula.data_matricula + 'T12:00:00')
     
     // Dias no mês atual
@@ -77,8 +77,7 @@ export const welcomeService = {
       lida: false
     }))
 
-    const { error: nError } = await supabase
-      .from('notificacoes_familia')
+    const { error: nError } = await (supabase.from('notificacoes_familia' as any) as any)
       .insert(notificacoes)
 
     if (nError) {
