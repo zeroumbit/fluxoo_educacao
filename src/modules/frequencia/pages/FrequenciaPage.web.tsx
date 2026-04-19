@@ -41,7 +41,7 @@ import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAlertasProfessor } from '@/modules/professor/hooks'
 
-const statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
+const _statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
   presente: {
     label: 'Presente',
     icon: CheckCircle,

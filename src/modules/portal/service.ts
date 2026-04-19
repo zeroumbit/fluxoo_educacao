@@ -314,6 +314,9 @@ export const portalService = {
         proximoVencimento: cobrancas
           .filter((c: any) => c.status === 'a_vencer')
           .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
+        piorPendencia: cobrancas
+          .filter((c: any) => c.status === 'atrasado')
+          .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
         cobrancasMatricula,
       },
       avisosRecentes: todosAvisos.slice(0, 3)
@@ -364,22 +367,6 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
-    // 0. Busca Matrícula Ativa para filtrar cobranças
-    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-      .select('data_matricula')
-      .eq('aluno_id', alunoId)
-      .eq('tenant_id', tenantId)
-      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
-      .order('data_matricula', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-
-    const dataMatricula = matricula?.data_matricula ? new Date(matricula.data_matricula + 'T12:00:00') : null
-    if (dataMatricula) {
-      dataMatricula.setDate(1)
-      dataMatricula.setHours(0, 0, 0, 0)
-    }
-
     // 1. Busca a configuração para saber se habilitamos multa/juros automática
     const { data: globalConfig } = await (supabase.from('configuracoes_escola' as any) as any)
       .select('config_financeira')
@@ -388,7 +375,7 @@ export const portalService = {
       .maybeSingle();
 
     const config = globalConfig?.config_financeira;
-    const usarViewEncargos = config?.multa_juros_habilitado !== false; // Padrão é true se não existir
+    const usarViewEncargos = config?.multa_juros_habilitado !== false; 
 
     // 2. Decide qual view/tabela usar
     const target = usarViewEncargos ? 'vw_cobrancas_com_encargos' : 'cobrancas';
@@ -397,21 +384,30 @@ export const portalService = {
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
-      .order('data_vencimento', { ascending: false })
+      .order('data_vencimento', { ascending: true })
 
     if (error) throw error
     
     let res = (data as any[]) || []
+    // Se o job diário não rodou, cobranças ficam como 'a_vencer' mesmo vencidas.
+    // Esta normalização garante consistência independente do job agendado.
+    const diasCarencia = config?.dias_carencia || 0
+    const agora = new Date()
+    agora.setHours(23, 59, 59, 999) // Final do dia de hoje
 
-    // APLICAR REGRA DE OURO: Filtrar cobranças por data de matrícula
-    if (dataMatricula) {
-      res = res.filter((c: any) => {
-        const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
-        dataVenc.setDate(1)
-        dataVenc.setHours(0, 0, 0, 0)
-        return dataVenc.getTime() >= dataMatricula.getTime()
-      })
-    }
+    res = res.map((c: any) => {
+      if (c.status === 'pago' || c.status === 'cancelado') return c
+
+      const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
+      const diasAtraso = Math.floor((agora.getTime() - dataVenc.getTime()) / (1000 * 60 * 60 * 24))
+
+      if (diasAtraso > diasCarencia) {
+        return { ...c, status: 'atrasado' }
+      } else if (diasAtraso <= 0) {
+        return { ...c, status: 'a_vencer' }
+      }
+      return c
+    })
 
     return res
   },
@@ -460,6 +456,52 @@ export const portalService = {
       whatsapp_contato: data?.telefone || null,
       email_contato: data?.email_gestor || null
     }
+  },
+
+  // ==========================================
+  // CONFIRMAÇÃO DE PAGAMENTO COM COMPROVANTE
+  // ==========================================
+  async uploadComprovante(file: File, tenantId: string, filename: string) {
+    const fileExt = file.name.split('.').pop()
+    const filePath = `${tenantId}/${filename}.${fileExt}`
+
+    const { data, error } = await supabase.storage
+      .from('public' as any) // Tenta bucket public primeiro, ou comprovantes
+      .upload(filePath, file, { 
+        upsert: true,
+        cacheControl: '3600'
+      })
+
+    if (error) {
+      // Tenta bucket específico se public falhar
+      const { data: dataAlt, error: errorAlt } = await supabase.storage
+        .from('comprovantes' as any)
+        .upload(filePath, file, { upsert: true })
+      
+      if (errorAlt) throw errorAlt
+      const { data: urlData } = supabase.storage.from('comprovantes' as any).getPublicUrl(filePath)
+      return urlData.publicUrl
+    }
+
+    const { data: urlData } = supabase.storage.from('public' as any).getPublicUrl(filePath)
+    return urlData.publicUrl
+  },
+
+  async registrarPagamentoComComprovante(cobrancaId: string, comprovanteUrl: string, responsavelId: string) {
+    const { error } = await supabase.from('cobrancas')
+      .update({
+        comprovante_url: comprovanteUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', cobrancaId)
+
+    if (error) throw error
+
+    await portalService.registrarAuditoria({
+      tipo: 'pagamento_comprovante_enviado',
+      responsavel_id: responsavelId,
+      detalhes: { cobranca_id: cobrancaId, url: comprovanteUrl },
+    })
   },
 
   // ==========================================

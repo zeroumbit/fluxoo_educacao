@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useVinculosAtivos } from '../../hooks'
 import { usePortalContext } from '../../context'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useQuery } from '@tanstack/react-query'
@@ -30,9 +32,13 @@ import {
   Receipt,
   TrendingDown,
   ArrowLeft,
-  QrCode
+  QrCode,
+  Upload,
+  FileText,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
 import { useQueries } from '@tanstack/react-query'
@@ -65,7 +71,9 @@ const CobrancasSkeleton = () => (
 )
 
 export function PortalCobrancasPageV2() {
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
 
   const [selectedAluno, setSelectedAluno] = useState<any>(null)
@@ -74,12 +82,14 @@ export function PortalCobrancasPageV2() {
   const [copiado, setCopiado] = useState(false)
 
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
+  const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
+    queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
+    queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
+    enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
+  })), [vinculos]);
+
   const cobrancasQueries = useQueries({
-    queries: (vinculos || []).map((v: any) => ({
-      queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
-      queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
-      enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
-    })),
+    queries: queriesConfig,
   })
 
   const isLoadingCobrancas = cobrancasQueries.some(q => q.isLoading)
@@ -103,21 +113,25 @@ export function PortalCobrancasPageV2() {
     // Data atual para comparação (meia-dia para evitar problemas de fuso)
     const hoje = new Date()
     hoje.setHours(12, 0, 0, 0)
+
+    // Helper para verificar se uma fatura está atrasada (status OU data)
+    const isAtrasada = (f: any) =>
+      f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
     
     // A Vencer: status 'a_vencer' E data_vencimento >= hoje
     const aVencer = allFaturas
       .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Atrasado: status 'atrasado' literal do banco (escola calcula na mão)
+    // Atrasado: status 'atrasado' OU data vencida (não depende do job do banco)
     const atrasado = allFaturas
-      .filter(f => f.status === 'atrasado')
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .filter(isAtrasada)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Materiais/Compras
     const materiais = allFaturas
       .filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item'))
-      .reduce((acc, f) => acc + Number(f.valor), 0)
+      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Próximo vencimento: APENAS cobranças a vencer (NÃO incluir atrasadas)
     // Mostrar a MENOR data de vencimento que seja >= hoje
@@ -125,8 +139,39 @@ export function PortalCobrancasPageV2() {
       .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
       .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
     
-    return { resumo: { aVencer, atrasado, materiais, proximoVenc }, alunos: alunosComFaturas }
-  }, [vinculos, cobrancasQueries, isLoadingCobrancas])
+    // Faturas para Checkout Unificado (A vencer e Atrasadas, exceto pagas/canceladas)
+    const faturasParaCarrinho = allFaturas.filter(f => f.status !== 'pago' && f.status !== 'cancelado')
+
+    return { 
+      resumo: { aVencer, atrasado, materiais, proximoVenc }, 
+      alunos: alunosComFaturas,
+      faturasParaCarrinho,
+      totalCarrinho: faturasParaCarrinho.reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+    }
+  }, [vinculos, isLoadingCobrancas, ...cobrancasQueries.map(q => q.data)])
+
+  // Lógica para abrir fatura específica vinda do Dashboard
+  const lastProcessedId = useRef<string | null>(null)
+
+  useEffect(() => {
+    const targetId = location.state?.selectedCobrancaId;
+    if (!targetId || !familyData?.alunos || lastProcessedId.current === targetId) return;
+    
+    // Encontra qual aluno tem essa fatura
+    for (const aluno of familyData.alunos) {
+      const found = aluno.faturas?.find((f: any) => f.id === targetId)
+      if (found) {
+        lastProcessedId.current = targetId
+        setSelectedAluno(aluno)
+        setCobrancaAtiva({ ...found, alunoNome: aluno.nome_completo, tenant_id: aluno.tenant_id })
+        setShowCheckout(true)
+        
+        // Limpa o state de navegação
+        navigate(location.pathname, { replace: true, state: {} })
+        break
+      }
+    }
+  }, [location.state?.selectedCobrancaId, !!familyData?.alunos, location.pathname, navigate])
 
   if (loadingVinculos || isLoadingCobrancas) return <CobrancasSkeleton />
 
@@ -152,6 +197,46 @@ export function PortalCobrancasPageV2() {
             )}
             <ResumoCard label="Próximo Vencimento" value={familyData?.resumo.proximoVenc} icon={CreditCard} color="amber" isDate />
           </div>
+
+          {/* Carrinho Unificado (Checkout Multi) - Vindo da V1 */}
+          {familyData && familyData.faturasParaCarrinho.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-indigo-600 rounded-[40px] p-8 text-white shadow-2xl shadow-indigo-200 flex flex-col md:flex-row items-center justify-between gap-6"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 rounded-[28px] bg-white/20 flex items-center justify-center shadow-inner">
+                   <ShoppingBag size={32} className="text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black uppercase tracking-[4px] text-indigo-200 mb-1">Carrinho Unificado</span>
+                  <h3 className="text-3xl font-black tracking-tighter leading-none mb-1">
+                    {formatCurrency(familyData.totalCarrinho)}
+                  </h3>
+                  <p className="text-xs font-bold text-indigo-100/70">
+                    Pagar {familyData.faturasParaCarrinho.length} faturas de toda a família de uma vez.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  vibrate(40);
+                  setCobrancaAtiva({
+                    id: 'multi',
+                    valor: familyData.totalCarrinho,
+                    descricao: `Pagamento Consolidado (${familyData.faturasParaCarrinho.length} faturas)`,
+                    alunoNome: 'Família',
+                    tenant_id: familyData.alunos[0]?.tenant_id // Usa o tenant do primeiro aluno (assume mesma conta pix)
+                  });
+                  setShowCheckout(true);
+                }}
+                className="bg-white text-indigo-600 hover:bg-slate-50 font-black uppercase text-xs tracking-[2px] rounded-3xl h-16 px-10 shadow-xl active:scale-95 transition-all w-full md:w-auto"
+              >
+                Pagar Tudo Agora
+              </Button>
+            </motion.div>
+          )}
         </header>
       </div>
 
@@ -216,13 +301,16 @@ function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate }: any
 }
 
 function AlunoCard({ aluno, onClick }: any) {
+  const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
   const pendentes = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado').length
-  const atrasadas = aluno.faturas.filter((f: any) => f.status === 'atrasado').length
+  const atrasadas = aluno.faturas.filter((f: any) =>
+    f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
+  ).length
 
   return (
     <div
       onClick={onClick}
-      className="flex flex-col bg-white border border-slate-100 rounded-[48px] p-10 shadow-[0_10px_45px_rgba(0,0,0,0.04)] cursor-pointer hover:border-teal-300 hover:-translate-y-2 transition-all group"
+      className="flex flex-col bg-white border border-slate-100 rounded-[34px] p-10 shadow-[0_10px_45px_rgba(0,0,0,0.04)] cursor-pointer hover:border-teal-300 hover:-translate-y-2 transition-all group"
     >
       <div className="flex items-center gap-6">
         <div className="w-24 h-24 rounded-full bg-slate-900 text-white flex justify-center items-center text-3xl font-black shadow-2xl relative overflow-hidden">
@@ -337,12 +425,14 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
     )
   }
 
+  const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+
   return (
     <div className="flex flex-col gap-5">
       {sorted.map((fat) => {
-        const isVencida = fat.status === 'atrasado'
+        const isVencida = fat.status === 'atrasado' || (fat.status === 'a_vencer' && new Date(fat.data_vencimento + 'T12:00:00') < hoje)
         return (
-          <div key={fat.id} className={cn("p-8 rounded-[32px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
+          <div key={fat.id} className={cn("p-8 rounded-[22px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
             <div className="flex items-start gap-4">
                  <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0", isHistorico ? "bg-white text-teal-500" : (isVencida ? "bg-white text-rose-500" : "bg-teal-50 text-teal-600 border-teal-100"))}>
                     {isHistorico ? <CheckCircle2 size={24} /> : <Receipt size={24} />}
@@ -351,9 +441,26 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                      <h5 className="font-black text-slate-800 tracking-tight leading-none">{fat.descricao}</h5>
                      {!isHistorico && getTipoBadge(fat.descricao)}
+                     {fat.comprovante_url && (
+                       <Button 
+                         variant="outline" 
+                         onClick={(e) => { e.stopPropagation(); window.open(fat.comprovante_url, '_blank') }} 
+                         className="h-14 px-8 rounded-xl border-2 border-slate-100 bg-white hover:bg-slate-50 text-slate-600 font-black uppercase text-[9px] tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                       >
+                         <FileText size={16} />
+                         Ver Comprovante
+                       </Button>
+                     )}
+                     {!isHistorico && isVencida && (
+                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 border border-rose-200 text-[9px] font-black uppercase tracking-widest text-rose-700">
+                         ⚠️ Atrasada
+                       </span>
+                     )}
                    </div>
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimento: {formatDate(fat.data_vencimento)}</p>
-                   <span className={cn("text-xl font-black tracking-tight mt-2", isHistorico ? "text-slate-400" : "text-slate-900")}>{formatCurrency(fat.valor)}</span>
+                   <span className={cn("text-xl font-black tracking-tight mt-2", isHistorico ? "text-slate-400" : isVencida ? "text-rose-600" : "text-slate-900")}>
+                     {formatCurrency(fat.valor_total_projetado || fat.valor_original || fat.valor || 0)}
+                   </span>
                  </div>
             </div>
 
@@ -363,9 +470,26 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
               </Button>
             )}
             {isHistorico && (
-               <div className="w-full h-14 rounded-2xl border-2 border-slate-100 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-slate-300">
-                 Recibo não disponível
-               </div>
+               <Button
+                 variant="outline"
+                 onClick={() => fat.comprovante_url && window.open(fat.comprovante_url, '_blank')}
+                 disabled={!fat.comprovante_url}
+                 className={cn(
+                   "w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest border-2 transition-all flex items-center justify-center gap-2",
+                   fat.comprovante_url 
+                     ? "border-teal-100 bg-teal-50/50 text-teal-600 hover:bg-teal-100" 
+                     : "border-slate-100 text-slate-300"
+                 )}
+               >
+                 {fat.comprovante_url ? (
+                   <>
+                     <FileText size={18} />
+                     Visualizar Comprovante
+                   </>
+                 ) : (
+                   'Sem comprovante anexo'
+                 )}
+               </Button>
             )}
           </div>
         )
@@ -389,6 +513,18 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
     enabled: !!cobranca?.tenant_id,
   })
 
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const { responsavel } = usePortalContext()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) return toast.error('Arquivo muito grande. Máximo 5MB.')
+      setArquivo(file)
+    }
+  }
+
   const handleCopy = () => {
     vibrate(40)
     if (configPix?.chave_pix) {
@@ -399,13 +535,37 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
     }
   }
 
-  const handleComprovante = () => {
+  const handleComprovante = async () => {
+    if (!arquivo) return toast.error('Por favor, anexe o comprovante de pagamento.')
+    
+    setEnviando(true)
     vibrate(30)
-    const numeroRaw = configRecados?.whatsapp_contato || ''
-    const numero = numeroRaw.replace(/\D/g, '')
-    if (!numero || numero.length < 8) return toast.error('WhatsApp não configurado pela escola.')
-    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}).`)
-    window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
+    
+    try {
+      // 1. Upload do arquivo
+      const filename = `comprovante_${cobranca?.id}_${Date.now()}`
+      const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
+
+      // 2. Registra no banco
+      await portalService.registrarPagamentoComComprovante(cobranca?.id!, url, responsavel?.id!)
+
+      // 3. Envia WhatsApp
+      const numeroRaw = configRecados?.whatsapp_contato || ''
+      const numero = numeroRaw.replace(/\D/g, '')
+      const msg = encodeURIComponent(`Olá, confirmo o pagamento de ${formatCurrency(cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}). Comprovante: ${url}`)
+      
+      toast.success('Comprovante enviado com sucesso!')
+      onClose()
+      
+      if (numero && numero.length >= 8) {
+        window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
+      }
+    } catch (error: any) {
+      console.error(error)
+      toast.error('Erro ao processar comprovante.')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   const ModalContent = (
@@ -427,7 +587,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
       </div>
 
       {/* Card de Valor */}
-      <div className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5 bg-slate-900 rounded-[32px] sm:rounded-[40px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
+      <div className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5 bg-slate-900 rounded-[22px] sm:rounded-[28px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
          <div className="absolute top-0 right-0 opacity-10 -mr-4 sm:-mr-8 -mt-4 sm:-mt-8"><DollarSign size={100} className="sm:size-150" /></div>
          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[4px] sm:tracking-[5px] text-teal-400 mb-2 relative z-10 px-4 text-center">Total a Pagar</span>
          <h2 className="text-3xl sm:text-4xl font-black tracking-tighter relative z-10 leading-none px-4 text-center break-words w-full">{formatCurrency(cobranca?.valor || 0)}</h2>
@@ -488,9 +648,48 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
           </div>
         )}
 
+        {/* Upload de Comprovante */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-2">
+            <div className="h-px bg-slate-100 flex-1" />
+            <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">Upload do Comprovante</span>
+            <div className="h-px bg-slate-100 flex-1" />
+          </div>
+
+          <label className={cn(
+            "relative cursor-pointer flex flex-col items-center justify-center gap-2 p-4 sm:p-6 border-2 border-dashed rounded-[20px] sm:rounded-[24px] transition-all",
+            arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+          )}>
+            <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
+            {arquivo ? (
+              <>
+                <FileText className="text-teal-500" size={24} />
+                <span className="text-[10px] font-bold text-teal-700 truncate max-w-full px-4">{arquivo.name}</span>
+                <span className="text-[8px] text-teal-600/60 uppercase font-black tracking-widest">Clique para trocar</span>
+              </>
+            ) : (
+              <>
+                <Upload className="text-slate-400" size={24} />
+                <span className="text-[10px] font-bold text-slate-500">Selecionar Comprovante</span>
+                <span className="text-[8px] text-slate-400 uppercase font-black tracking-tighter">PDF, PNG ou WebP</span>
+              </>
+            )}
+          </label>
+        </div>
+
         {/* Botão Confirmar */}
-        <Button onClick={handleComprovante} variant="outline" className="w-full h-12 sm:h-14 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[24px] text-[10px] font-black uppercase tracking-[2px] hover:bg-teal-100 active:scale-95 transition-all shadow-sm">
-           Confirmar Pagamento
+        <Button 
+          onClick={handleComprovante} 
+          disabled={!arquivo || enviando}
+          className={cn(
+            "w-full h-12 sm:h-14 rounded-[20px] sm:rounded-[24px] text-[10px] font-black uppercase tracking-[2px] transition-all shadow-lg active:scale-95",
+            arquivo 
+              ? "bg-teal-600 text-white hover:bg-teal-700 shadow-teal-500/20" 
+              : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
+          )}
+        >
+          {enviando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+          {enviando ? 'Processando...' : 'Confirmar Pagamento'}
         </Button>
       </div>
     </div>
@@ -499,7 +698,7 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[48px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
+        <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[32px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
           <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
           {ModalContent}
         </SheetContent>
@@ -509,9 +708,14 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent showCloseButton={false} className="max-w-[550px] w-[95vw] sm:w-auto rounded-[48px] sm:rounded-[60px] p-6 sm:p-12 focus:outline-none ring-0 overflow-hidden max-h-[95vh] overflow-y-auto z-[200]">
-        <DialogTitle className="sr-only">Checkout PIX</DialogTitle>
-        {ModalContent}
+      <DialogContent className="max-w-[800px] p-0 overflow-hidden border-0 rounded-[32px] bg-white gap-0">
+        <DialogTitle className="sr-only">Pagamento PIX - {formatCurrency(cobranca?.valor || 0)}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Página de pagamento PIX com QR Code e instrução para upload de comprovante.
+        </DialogDescription>
+        <div className="p-8 sm:p-12">
+          {ModalContent}
+        </div>
       </DialogContent>
     </Dialog>
   )

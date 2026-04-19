@@ -120,7 +120,7 @@ export const alertasService = {
     statusLocal: Record<string, string>,
     historicoLocal: any[],
     usuarioId: string,
-    usuarioNome: string
+    _usuarioNome: string
   ): Promise<void> {
     // Migra status
     const inserts: AlertasTratamentoInsert[] = Object.entries(statusLocal).map(([alunoId, status]) => ({

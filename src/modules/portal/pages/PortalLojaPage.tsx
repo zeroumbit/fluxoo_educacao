@@ -35,6 +35,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -48,7 +54,7 @@ const IconMap: Record<string, any> = {
 
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { isLoading: loadingCtx } = usePortalContext()
   
@@ -70,7 +76,7 @@ export function PortalLojaPage() {
     else setActiveCategory('all')
   }, [searchParams])
 
-  const handleRefresh = () => {
+  const _handleRefresh = () => {
     if (isRefreshing) return
     vibrate([20, 10, 20])
     setIsRefreshing(true)
@@ -82,6 +88,27 @@ export function PortalLojaPage() {
     setActiveCategory(cat)
   }
 
+<<<<<<< HEAD
+=======
+  const handleProductClick = (product: Product) => {
+    vibrate(20)
+    setSelectedProduct(product)
+  }
+
+  const activeNavCategories = dbCategorias?.map(cat => ({
+    id: cat.id,
+    slug: cat.nome.toLowerCase(),
+    label: cat.nome,
+    icon: IconMap[cat.icone as keyof typeof IconMap] || Package
+  })) || []
+
+  // Mock de Seções
+  const _sections = [
+    { id: 'promocao', title: 'Ofertas Relâmpago', category: 'all', products: PRODUCTS },
+    { id: 'livros', title: 'Livros e Didáticos', category: 'livros', products: PRODUCTS.filter(p => p.category === 'livros') },
+  ]
+
+>>>>>>> DESENVOLVIMENTO
   if (isLoading) {
     return (
       <div className="pt-[env(safe-area-inset-top,24px)] px-4">
@@ -328,6 +355,156 @@ export function PortalLojaPage() {
           </section>
         )}
       </div>
+<<<<<<< HEAD
+=======
+
+      {/* 4. Carrinho Drawer */}
+      <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 overflow-hidden bg-slate-50 border-0 flex flex-col pt-[env(safe-area-inset-top,24px)]">
+          <SheetHeader className="p-6 bg-white border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                <ShoppingBag size={24} className="text-teal-500" /> Meus Itens
+              </SheetTitle>
+              <Badge className="bg-teal-100 text-teal-600 border-0 font-bold px-3 py-1 uppercase">2 Itens</Badge>
+            </div>
+            <SheetDescription className="text-slate-400 font-bold italic">Gerencie seu carrinho e finalize sua compra.</SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {[PRODUCTS[0], PRODUCTS[1]].map((item, idx) => (
+              <div key={idx} className="flex gap-4 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div className="h-16 w-16 rounded-xl overflow-hidden shrink-0">
+                  <img src={item.image} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-slate-800 truncate">{item.name}</h4>
+                  <p className="font-black text-teal-600 text-sm">R$ {item.price_promocional?.toFixed(2) || item.price.toFixed(2)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-6 bg-white border-t border-slate-100 space-y-4 pb-[env(safe-area-inset-bottom,24px)]">
+             <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl">
+                <span className="font-black text-slate-800 uppercase text-xs">Total</span>
+                <span className="text-xl font-black text-teal-600 tracking-tight">R$ 299,80</span>
+             </div>
+             <Button 
+                className="w-full h-14 bg-slate-900 hover:bg-teal-600 text-white rounded-xl font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 transition-all border-0"
+                disabled={isProcessing}
+                onClick={() => {
+                  setIsProcessing(true);
+                  vibrate(40);
+                  setTimeout(() => { setIsProcessing(false); setIsCartOpen(false); }, 2000);
+                }}
+             >
+                {isProcessing ? "Processando..." : "Ir para o Checkout"}
+             </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 5. Modal de Produto */}
+      {isMobile ? (
+        <Sheet open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+          <SheetContent side="bottom" className="rounded-t-[32px] border-0 p-0 overflow-hidden bg-white shadow-2xl h-auto max-h-[90vh]">
+            <ProductDetailsContent product={selectedProduct} onClose={() => setSelectedProduct(null)} isMobile />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+          <DialogContent className="max-w-4xl p-0 rounded-2xl overflow-hidden border-0 bg-white">
+            <ProductDetailsContent product={selectedProduct} onClose={() => setSelectedProduct(null)} isMobile={false} />
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
+}
+
+function StoreHomeCard({ product, onClick, index, _isCarousel }: { product: Product, onClick: () => void, index: number, isCarousel?: boolean }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      whileHover={{ y: -5 }}
+      className="group cursor-pointer h-full"
+      onClick={onClick}
+    >
+      <div className="bg-white rounded-2xl border border-slate-100 p-2.5 h-full flex flex-col gap-3 shadow-sm hover:shadow-xl transition-all duration-300">
+        <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 relative">
+          <img src={product.image} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          <div className="absolute top-2 right-2">
+             <button 
+              className="h-8 w-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm transition-all active:scale-90"
+              onClick={(e) => { e.stopPropagation(); vibrate(10); }}
+             >
+                <Heart size={14} />
+             </button>
+          </div>
+          {product.price_promocional && (
+            <div className="absolute bottom-2 left-2">
+               <Badge className="bg-rose-500 text-white border-0 font-black text-[8px] uppercase px-2 py-0.5 shadow-lg">Oferta</Badge>
+            </div>
+          )}
+        </div>
+        
+        <div className="px-1 flex flex-col gap-1.5 grow">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{product.category}</p>
+          <h4 className="text-[13px] font-black text-slate-800 line-clamp-2 leading-none tracking-tight grow">{product.name}</h4>
+          
+          <div className="mt-2 pt-2 border-t border-slate-50 flex items-center justify-between">
+             <div className="flex flex-col">
+                <span className="text-[8px] font-black text-teal-600 uppercase">A partir de</span>
+                <span className="text-base font-black text-teal-600 leading-none">R$ {(product.price_pix || product.price_promocional || product.price).toFixed(2)}</span>
+             </div>
+             <button 
+                className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white hover:bg-teal-600 transition-all active:scale-90"
+                onClick={(e) => { e.stopPropagation(); vibrate(20); }}
+              >
+                <Plus size={16} />
+              </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function ProductDetailsContent({ product, onClose, isMobile }: { product: Product | null, onClose: () => void, isMobile: boolean }) {
+  if (!product) return null;
+  return (
+    <div className="flex flex-col lg:flex-row h-full">
+      <div className={cn("relative shrink-0", isMobile ? "h-64" : "w-1/2 h-[500px]")}>
+        <img src={product.image} className="w-full h-full object-cover" />
+        <button onClick={onClose} className="absolute top-4 left-4 h-10 w-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white font-bold border-1 border-white/30">X</button>
+      </div>
+      <div className="flex-1 p-6 flex flex-col gap-6">
+        <div className="space-y-2">
+          <Badge className="bg-teal-100 text-teal-600 uppercase text-[10px] border-0">{product.category}</Badge>
+          <h2 className="text-3xl font-black text-slate-900 leading-tight tracking-tighter">{product.name}</h2>
+          <p className="text-sm text-slate-500 font-medium italic">{product.description}</p>
+        </div>
+        
+        <div className="space-y-4 mt-auto">
+          <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Preço Especial</p>
+              <p className="text-3xl font-black text-teal-600 tracking-tight">R$ {product.price_promocional?.toFixed(2) || product.price.toFixed(2)}</p>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-bold text-slate-400 line-through">R$ {product.price.toFixed(2)}</span>
+              <span className="text-[10px] font-bold text-emerald-500 uppercase">Economize 15%</span>
+            </div>
+          </div>
+          <Button className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase text-sm tracking-widest italic border-0 shadow-xl shadow-slate-200">
+            Adicionar à Mochila
+          </Button>
+        </div>
+      </div>
+>>>>>>> DESENVOLVIMENTO
     </div>
   )
 }

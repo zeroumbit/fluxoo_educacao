@@ -149,7 +149,7 @@ export const turmaService = {
     const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
     console.log('[listarDisciplinas] IDs ocultos:', idsOcultos.length, idsOcultos)
 
-    let query = supabase
+    const query = supabase
       .from('disciplinas')
       .select('*')
       .eq('ativa', true)
@@ -173,7 +173,7 @@ export const turmaService = {
     
     console.log(`[listarDisciplinas] Total do banco: ${total}, Após filtro: ${filtered.length}, Removidas: ${total - filtered.length}`)
     
-    return filtered.map((d: any) => this._formatarDisciplina(d, idsOcultos))
+    return filtered.map((d: any) => this.formatarDisciplina(d, idsOcultos))
   },
 
   /**
@@ -196,7 +196,7 @@ export const turmaService = {
 
     if (error) throw error
 
-    return (data || []).map((d: any) => this._formatarDisciplina(d, idsOcultos))
+    return (data || []).map((d: any) => this.formatarDisciplina(d, idsOcultos))
   },
 
   async criarDisciplinaCustomizada(nome: string, tenantId: string, etapa: string = 'TODAS', categoria: string = 'Outros') {

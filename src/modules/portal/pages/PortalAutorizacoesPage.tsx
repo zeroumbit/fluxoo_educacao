@@ -39,7 +39,7 @@ type AutorizacaoModelo = {
 }
 
 export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: boolean }) {
-  const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
+  const { alunoSelecionado, tenantId, _isMultiAluno } = usePortalContext()
   const { data: responsavel } = useResponsavel()
   const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
   const responder = useResponderAutorizacao()
@@ -48,7 +48,7 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
   const [acao, setAcao] = useState<'autorizar' | 'revogar' | null>(null)
   const [textoLido, setTextoLido] = useState(false)
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [_showConfirm, _setShowConfirm] = useState(false)
   const textoRef = useRef<HTMLDivElement>(null)
 
   // Detecta quando o responsável rolou até o fim do texto

@@ -91,7 +91,7 @@ export function AlunoCadastroPageMobile() {
   const [showPassword, setShowPassword] = useState(false)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
   const [buscandoCpf, setBuscandoCpf] = useState(false)
-  const [irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
+  const [_irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 

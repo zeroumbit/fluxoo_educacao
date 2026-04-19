@@ -35,12 +35,12 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const [busca, setBusca] = useState('')
   const [professorDetails, setProfessorDetails] = useState<any>(null)
   const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
-  const [showAllDisciplinas, setShowAllDisciplinas] = useState(false)
+  const [_showAllDisciplinas, _setShowAllDisciplinas] = useState(false)
 
   const { data: turma } = useTurma(turmaId)
   const { data: dbProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
   const { data: dbDisciplinas } = useDisciplinas(authUser?.tenantId || '', turma?.etapa)
-  const { data: instituicaoAtribuicoes, isLoading: loadingAtribuicoes } = useAtribuicoes(turmaId)
+  const { data: instituicaoAtribuicoes, isLoading: _loadingAtribuicoes } = useAtribuicoes(turmaId)
   
   const mutationAtribuir = useAtribuirProfessor()
   const mutationRemover = useRemoverAtribuicao()

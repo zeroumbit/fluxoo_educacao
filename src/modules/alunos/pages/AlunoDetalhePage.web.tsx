@@ -171,7 +171,7 @@ export function AlunoDetalhePageWeb() {
       await atualizarAluno.mutateAsync({ id, aluno: { foto_url: null } })
       setConfirmDeleteFoto(false)
       toast.success('Foto removida com sucesso!')
-    } catch (err: any) {
+    } catch (_err: any) {
       toast.error('Erro ao remover foto')
     }
   }

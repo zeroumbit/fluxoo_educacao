@@ -147,7 +147,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
       setShowDesativarDialog(false)
       setAlunoParaDesativar(null)
       setConfirmacaoDesativar(false)
-    } catch (err: any) {
+    } catch (_err: any) {
       toast.error('Erro ao desativar aluno')
     }
   }
@@ -159,7 +159,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
       toast.success('Aluno removido com sucesso.')
       setShowDeleteDialog(false)
       setAlunoParaExcluir(null)
-    } catch (err: any) {
+    } catch (_err: any) {
       toast.error('Não foi possível excluir')
     }
   }

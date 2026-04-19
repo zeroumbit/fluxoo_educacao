@@ -271,7 +271,7 @@ export function PlanoAulaPageMobile() {
                                </h4>
                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
                                  {(() => {
-                                   const [ano, mes, dia] = plano.data_aula.split('-')
+                                   const [_ano, mes, dia] = plano.data_aula.split('-')
                                    const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
                                    return `${dia} ${meses[parseInt(mes) - 1]}`
                                  })()}

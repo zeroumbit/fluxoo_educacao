@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { School, ArrowRight, Info, Building2 } from "lucide-react"
+import { School, ArrowRight, Info, Building2, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import { supabase } from "@/lib/supabase"

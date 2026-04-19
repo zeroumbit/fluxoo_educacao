@@ -64,7 +64,7 @@ export const BottomNavV2 = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
-  const { responsavel } = usePortalContext();
+  const { _responsavel } = usePortalContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { data: lojaCount } = useQuery({

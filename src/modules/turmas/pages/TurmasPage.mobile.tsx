@@ -75,13 +75,13 @@ export function TurmasPageMobile() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data: turmas, isLoading, refetch } = useTurmas()
-  const { data: filiais } = useFiliais()
+  const { data: _filiais } = useFiliais()
   const criarTurma = useCriarTurma()
   const atualizarTurma = useAtualizarTurma()
   const excluirTurma = useExcluirTurma()
-  const { data: todosAlunos } = useAlunos()
-  const { data: todasDisciplinas } = useDisciplinas(authUser!.tenantId)
-  const { data: todosProfessores } = useProfessoresTurma()
+  const { data: _todosAlunos } = useAlunos()
+  const { data: _todasDisciplinas } = useDisciplinas(authUser!.tenantId)
+  const { data: _todosProfessores } = useProfessoresTurma()
 
   // Busca contagem dinâmica de alunos por turma
   const turmaIds = useMemo(() => turmas?.map((t: any) => t.id) || [], [turmas])

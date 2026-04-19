@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContext } from '../../context';
-import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
-import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
+import { NotificationBell } from '@/components/ui/NotificationBell';
+import { ModalContratoEscola } from '../../components/ModalContratoEscola';
+import { useFilaVirtual } from '../../hooks';
+import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -20,8 +22,18 @@ export function PortalHomeV2Web() {
   const { data: avisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
+  const { data: historicoFila } = useFilaVirtual();
+  const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
   
-  // Helper de vigência e mensagens
+  const [showContrato, setShowContrato] = React.useState(false);
+
+  // Auto-trigger de contrato pendente
+  React.useEffect(() => {
+    if (responsavel && !responsavel.termos_aceitos) {
+      setShowContrato(true);
+    }
+  }, [responsavel]);
+
   const hojeStr = new Date().toISOString().split('T')[0];
   const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 3);
 
@@ -34,8 +46,6 @@ export function PortalHomeV2Web() {
     "Parceria escola e família: o sucesso do aluno começa aqui!"
   ];
 
-  // Escolhe uma mensagem baseada no dia (para não ser totalmente aleatório e mudar a cada render)
-  const messageIndex = new Date().getDate() % informativeMessages.length;
   const [currentMessageIdx, setCurrentMessageIdx] = React.useState(0);
 
   React.useEffect(() => {
@@ -58,18 +68,17 @@ export function PortalHomeV2Web() {
 
   const habilitarNotificacoes = configPix?.notificacoes_habilitado !== false;
 
-  // Alertas dinâmicos
   const alerts = [];
   if (habilitarNotificacoes && dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {
     alerts.push({
       id: 'fin-atraso',
       text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso. Regularize para evitar suspensão de serviços.`,
       type: 'error',
-      icon: Receipt
+      icon: Receipt,
+      action: () => navigate('/portal/financeiro', { state: { selectedCobrancaId: dashboard.financeiro.piorPendencia?.id } })
     });
   }
-
-  // Novo alerta verde (Em Dia) solicitado pelo usuário
+ 
   if (habilitarNotificacoes && dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
     const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
     alerts.push({
@@ -78,13 +87,12 @@ export function PortalHomeV2Web() {
       highlight: 'clique aqui',
       type: 'success',
       icon: Receipt,
-      action: () => navigate('/portal/financeiro')
+      action: () => navigate('/portal/financeiro', { state: { selectedCobrancaId: dashboard.financeiro.proximoVencimento?.id } })
     });
   }
 
   return (
     <div className="flex flex-col gap-8 w-full">
-      {/* 1. Header Web */}
       <header className="flex items-end justify-between border-b border-slate-200 pb-8 mt-2">
         <div className="flex flex-col">
           <span className="text-base font-medium text-slate-500 mb-1">Visão Geral da Família</span>
@@ -117,9 +125,55 @@ export function PortalHomeV2Web() {
         </div>
       </header>
 
-      {/* 2. Grid de Conteúdo Web */}
+      {/* Cards Dinâmicos: Contrato e Fila (Absorção V1) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {responsavel && !responsavel.termos_aceitos && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => setShowContrato(true)}
+            className="bg-amber-600 p-8 rounded-[40px] text-white shadow-xl shadow-amber-100 flex items-center justify-between cursor-pointer group hover:bg-amber-700 transition-all"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
+                <FileSignature size={28} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black mb-1">Contrato Pendente</h3>
+                <p className="text-xs font-medium text-amber-100 italic">Toque aqui para assinar eletronicamente.</p>
+              </div>
+            </div>
+            <ArrowRight className="w-6 h-6 text-amber-200 group-hover:translate-x-2 transition-transform" />
+          </motion.div>
+        )}
+
+        {filaAtiva && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => navigate('/portal/fila')}
+            className="bg-indigo-600 p-8 rounded-[40px] text-white shadow-xl shadow-indigo-100 flex items-center justify-between cursor-pointer group hover:bg-indigo-700 transition-all"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center relative">
+                <Clock size={28} />
+                {filaAtiva.status === 'aguardando' && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-teal-400 rounded-full animate-ping" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-xl font-black mb-1">Fila Virtual</h3>
+                <p className="text-xs font-medium text-indigo-100 italic">
+                  Status: <span className="font-bold uppercase tracking-wider">{filaAtiva.status || 'Inativa'}</span>
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-6 h-6 text-indigo-200 group-hover:translate-x-2 transition-transform" />
+          </motion.div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Coluna Principal: Alertas e Mural */}
         <div className="lg:col-span-2 flex flex-col gap-8">
           {/* Alertas */}
           <section className="flex flex-col gap-4 max-w-[800px]">
@@ -262,6 +316,13 @@ export function PortalHomeV2Web() {
           </section>
         </div>
       </div>
+
+      <ModalContratoEscola 
+        open={showContrato}
+        onClose={() => setShowContrato(false)}
+        responsavel={responsavel}
+        tenantId={responsavel?.tenant_id}
+      />
     </div>
   );
 }

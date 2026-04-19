@@ -16,7 +16,7 @@ export const livrosService = {
 
   // CRIAR DISCIPLINA
   async criarDisciplina(tenantId: string, nome: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabase
       .from('disciplinas' as any)
       .insert({ tenant_id: tenantId, nome })
       .select()

@@ -35,7 +35,7 @@ const vibrate = (ms: number | number[] = 15) => {
   }
 }
 
-export function NotificationBell({ total, items, className, onItemClick, tenantId }: NotificationBellProps) {
+export function NotificationBell({ total, items, className, onItemClick, _tenantId }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleToggle = () => {
+  const _handleToggle = () => {
     vibrate(20);
     setIsOpen(!isOpen);
   };
@@ -119,7 +119,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
               </div>
 
               <div className="grid gap-2">
-                {itemsByCategory[category].map((item, idx) => {
+                {itemsByCategory[category].map((item, _idx) => {
                   // Se tiver notificações individuais, renderiza cada uma
                   if (item.notifications && item.notifications.length > 0) {
                     return item.notifications.map((notif, notifIdx) => (

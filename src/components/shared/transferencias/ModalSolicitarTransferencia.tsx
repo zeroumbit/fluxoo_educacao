@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Search, UserCheck, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { Search, UserCheck, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { toast } from "sonner"
 
 import { supabase } from "@/lib/supabase"
@@ -68,8 +68,8 @@ export function ModalSolicitarTransferencia({
   const [alunoData, setAlunoData] = useState<any>(null)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState<any>(null)
   const [cpfErro, setCpfErro] = useState<string | null>(null)
-  const [rpcStatus, setRpcStatus] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle')
-  const [rpcErrorDetail, setRpcErrorDetail] = useState<string | null>(null)
+  const [_rpcStatus, setRpcStatus] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle')
+  const [_rpcErrorDetail, setRpcErrorDetail] = useState<string | null>(null)
 
   // Observa mudanças nos campos para conferência em tempo real
   const codigoValue = form.watch("codigoAluno")

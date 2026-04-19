@@ -50,7 +50,7 @@ export function PortalAlunoCadastroV2() {
   const [newPatologia, setNewPatologia] = useState('');
   const [newMedicamento, setNewMedicamento] = useState('');
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<AlunoCadastroForm>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<AlunoCadastroForm>({
     resolver: zodResolver(alunoCadastroSchema),
   });
 
@@ -148,7 +148,7 @@ export function PortalAlunoCadastroV2() {
       toast.success('Foto removida!');
       await refreshData();
       setShowDeletePhotoDialog(false);
-    } catch (err: any) {
+    } catch (_err: any) {
       toast.error('Erro ao remover foto.');
     } finally {
       setIsUploading(false);

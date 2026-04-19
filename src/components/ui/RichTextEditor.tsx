@@ -11,7 +11,7 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, className }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
-  const [isMounted, setIsMounted] = useState(false)
+  const [_isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)

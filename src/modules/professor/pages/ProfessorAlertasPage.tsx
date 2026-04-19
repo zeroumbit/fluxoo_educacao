@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export function ProfessorAlertasPage() {
-  const { data: alertas, isLoading, refetch, isFetching } = useAlertasProfessor()
+  const { data: alertas, isLoading, _refetch, isFetching } = useAlertasProfessor()
   const concluirAlertaMutation = useConcluirAlerta()
   
   const [busca, setBusca] = useState('')

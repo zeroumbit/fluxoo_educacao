@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { School, User, Check, X, AlertCircle, Clock, ArrowRight, MessageSquareQuote } from "lucide-react"
+import { School, User, Check, X, AlertCircle, Clock, ArrowRight, MessageSquareQuote } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 

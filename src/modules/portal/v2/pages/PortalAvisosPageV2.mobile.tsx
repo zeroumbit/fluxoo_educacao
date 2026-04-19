@@ -181,12 +181,12 @@ function AvisoPortalCard({ aviso, expirado = false, expandedId, onToggleExpand }
 }
 
 // Helper de iniciais
-const getInitials = (name: string) => {
+const _getInitials = (name: string) => {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 };
 
 export function PortalAvisosPageV2Mobile() {
-  const { alunoSelecionado, selecionarAluno, vinculos, isMultiAluno, isLoading: loadingCtx } = usePortalContext()
+  const { alunoSelecionado, _selecionarAluno, vinculos, _isMultiAluno, isLoading: loadingCtx } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 

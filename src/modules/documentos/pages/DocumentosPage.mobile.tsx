@@ -199,7 +199,7 @@ export function DocumentosPageMobile() {
     setIsEmitModalOpen(true)
   }
 
-  const handleDownloadPDF = (doc?: any) => {
+  const handleDownloadPDF = (_doc?: any) => {
     toast.info('Geração de PDF iniciada...')
     setTimeout(() => {
        toast.success('PDF pronto para download')

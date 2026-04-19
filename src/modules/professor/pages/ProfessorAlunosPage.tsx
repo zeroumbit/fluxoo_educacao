@@ -20,7 +20,7 @@ import {
 export function ProfessorAlunosPage() {
   const { authUser } = useAuth()
   const navigate = useNavigate()
-  const { data: saudeTurmas, isLoading } = useSaudeTurmas()
+  const { data: _saudeTurmas, isLoading } = useSaudeTurmas()
   const [busca, setBusca] = useState('')
 
   // TODO: Buscar alunos reais do Supabase (hook não existe ainda)

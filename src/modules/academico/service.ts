@@ -333,7 +333,7 @@ export const academicoService = {
 
     return plano
   },
-  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any, userId?: string, professorId?: string) {
+  async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: any, userId?: string, _professorId?: string) {
     // Validação RBAC: academico.planos_aula.update
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.update')
@@ -374,7 +374,7 @@ export const academicoService = {
 
     return plano
   },
-  async excluirPlanoAula(id: string, tenantId: string, userId?: string, professorId?: string) {
+  async excluirPlanoAula(id: string, tenantId: string, userId?: string, _professorId?: string) {
     // Validação RBAC: academico.planos_aula.delete
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.delete')
@@ -562,7 +562,7 @@ export const academicoService = {
 
     if (fetchError) throw fetchError
 
-    let disciplinas = existente ? (existente.disciplinas as any[]) : []
+    const disciplinas = existente ? (existente.disciplinas as any[]) : []
     const index = disciplinas.findIndex((d: any) => d.disciplina === disciplinaNome)
 
     if (index >= 0) {

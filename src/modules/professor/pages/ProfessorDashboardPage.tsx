@@ -371,7 +371,7 @@ function SaudeTurmasWidget({ data, isLoading }: { data?: SaudeTurma[]; isLoading
 // ─── Página Principal ────────────────────────────────────────────────────────
 export function ProfessorDashboardPage() {
   const { authUser } = useAuth()
-  const { data: agenda, isLoading: loadingAgenda, refetch: refetchAgenda } = useAgendaDiaria()
+  const { data: agenda, isLoading: loadingAgenda, refetch: _refetchAgenda } = useAgendaDiaria()
   const { data: pendencias, isLoading: loadingPendencias } = usePendenciasProfessor()
   const { data: saudeTurmas, isLoading: loadingSaude } = useSaudeTurmas()
   const { data: alertas, isLoading: loadingAlertas } = useAlertasProfessor()
