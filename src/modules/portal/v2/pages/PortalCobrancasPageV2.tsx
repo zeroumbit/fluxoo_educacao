@@ -71,7 +71,7 @@ const CobrancasSkeleton = () => (
 )
 
 export function PortalCobrancasPageV2() {
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile()
   const location = useLocation()
   const navigate = useNavigate()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
@@ -569,129 +569,112 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
   }
 
   const ModalContent = (
-    <div className="flex flex-col gap-4 sm:gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-         <div className="flex items-center gap-3 sm:gap-4">
-           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-teal-500 text-white flex items-center justify-center shadow-2xl shadow-teal-500/20 flex-shrink-0">
-             <TrendingDown size={24} className="sm:size-28" />
-           </div>
-           <div className="flex flex-col min-w-0">
-              <h3 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight leading-none pt-1 truncate">Pagamento PIX</h3>
-              <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[3px] sm:tracking-[4px]">Fluxo de Segurança</p>
-           </div>
-         </div>
-         <button onClick={onClose} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm flex-shrink-0">
-           <X size={20} className="sm:size-24" />
-         </button>
-      </div>
-
-      {/* Card de Valor */}
-      <div className="flex flex-col items-center justify-center gap-1 py-4 sm:py-5 bg-slate-900 rounded-[22px] sm:rounded-[28px] text-white shadow-3xl relative overflow-hidden mx-2 sm:mx-0">
-         <div className="absolute top-0 right-0 opacity-10 -mr-4 sm:-mr-8 -mt-4 sm:-mt-8"><DollarSign size={100} className="sm:size-150" /></div>
-         <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[4px] sm:tracking-[5px] text-teal-400 mb-2 relative z-10 px-4 text-center">Total a Pagar</span>
-         <h2 className="text-3xl sm:text-4xl font-black tracking-tighter relative z-10 leading-none px-4 text-center break-words w-full">{formatCurrency(cobranca?.valor || 0)}</h2>
-         <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 sm:mt-2 relative z-10 px-4 text-center truncate max-w-full">{cobranca?.descricao || ''}</p>
-      </div>
-
-      {/* Conteúdo PIX */}
-      <div className="space-y-4 sm:space-y-6">
-        {(configPix?.qr_code_url || configPix?.chave_pix) ? (
-          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-6 items-stretch">
-             {(configPix?.qr_code_url || configPix?.qr_code_auto) ? (
-               <div className="p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center gap-4 group transition-all h-full justify-center">
-                  <div className="p-3 sm:p-4 bg-white rounded-[20px] sm:rounded-[24px] shadow-xl border border-slate-100 flex items-center justify-center shrink-0">
-                    {configPix?.qr_code_url ? (
-                      <img src={configPix.qr_code_url} alt="QR Code PIX Escolar" className="w-32 h-32 sm:w-36 sm:h-36 object-contain" />
-                    ) : (
-                      <div className="w-32 h-32 sm:w-36 sm:h-36 flex flex-col items-center justify-center text-slate-300 gap-2">
-                        <QrCode size={40} className="sm:size-48 opacity-20" />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-center">Gerando...</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-center gap-1 sm:gap-2 px-2">
-                     <div className="flex items-center gap-1 sm:gap-2 text-teal-600">
-                        <CheckCircle2 size={14} className="sm:size-16" />
-                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[1px] sm:tracking-[2px] text-center">QR Code Ativo</span>
-                     </div>
-                     <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center leading-tight">Escaneie com o app do seu banco</p>
-                  </div>
-               </div>
-             ) : null}
-
-             {configPix?.chave_pix && (
-               <div className="flex flex-col justify-center space-y-3">
-                  <div className="flex items-center gap-2 px-2">
-                    <div className="h-px bg-slate-100 flex-1" />
-                    <span className="text-[8px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest flex-shrink-0">Ou use o Copia e Cola</span>
-                    <div className="h-px bg-slate-100 flex-1" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="p-3 sm:p-4 rounded-[20px] sm:rounded-[24px] bg-white border-2 border-slate-100 font-mono text-[10px] sm:text-xs text-slate-500 break-all leading-relaxed shadow-inner text-center max-h-24 overflow-y-auto">
-                       {configPix.chave_pix}
-                    </div>
-                    <Button onClick={handleCopy} className="w-full h-14 sm:h-16 bg-slate-900 hover:bg-black text-white rounded-[24px] sm:rounded-[28px] font-black text-[10px] sm:text-xs uppercase tracking-[2px] sm:tracking-[3px] gap-3 sm:gap-4 shadow-2xl active:scale-95 transition-all">
-                       {copiado ? <CheckCircle2 size={18} className="sm:size-20 text-teal-400" /> : <Copy size={18} className="sm:size-20" />}
-                       {copiado ? 'Código Copiado!' : 'Copiar Código PIX'}
-                    </Button>
-                  </div>
-               </div>
-             )}
-          </div>
-        ) : (
-          <div className="p-8 sm:p-14 text-center space-y-3 sm:space-y-4 bg-rose-50 rounded-[32px] sm:rounded-[48px] border border-rose-100 shadow-inner mx-2 sm:mx-0">
-             <AlertCircle size={40} className="sm:size-56 text-rose-500 mx-auto" />
-             <p className="text-base sm:text-lg font-black text-rose-900 uppercase">PIX Não Configurado</p>
-             <p className="text-[11px] sm:text-xs font-semibold text-rose-700/60 leading-relaxed px-4">Esta instituição ainda não cadastrou os dados necessários para pagamento via PIX.</p>
-          </div>
-        )}
-
-        {/* Upload de Comprovante */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 px-2">
-            <div className="h-px bg-slate-100 flex-1" />
-            <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">Upload do Comprovante</span>
-            <div className="h-px bg-slate-100 flex-1" />
-          </div>
-
-          <label className={cn(
-            "relative cursor-pointer flex flex-col items-center justify-center gap-2 p-4 sm:p-6 border-2 border-dashed rounded-[20px] sm:rounded-[24px] transition-all",
-            arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
-          )}>
-            <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
-            {arquivo ? (
-              <>
-                <FileText className="text-teal-500" size={24} />
-                <span className="text-[10px] font-bold text-teal-700 truncate max-w-full px-4">{arquivo.name}</span>
-                <span className="text-[8px] text-teal-600/60 uppercase font-black tracking-widest">Clique para trocar</span>
-              </>
-            ) : (
-              <>
-                <Upload className="text-slate-400" size={24} />
-                <span className="text-[10px] font-bold text-slate-500">Selecionar Comprovante</span>
-                <span className="text-[8px] text-slate-400 uppercase font-black tracking-tighter">PDF, PNG ou WebP</span>
-              </>
-            )}
-          </label>
+    <div className="flex flex-col gap-3 sm:gap-4">
+      {/* Header - Compacto */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-500 text-white flex items-center justify-center shadow-lg shrink-0">
+          <TrendingDown size={20} />
         </div>
-
-        {/* Botão Confirmar */}
-        <Button 
-          onClick={handleComprovante} 
-          disabled={!arquivo || enviando}
-          className={cn(
-            "w-full h-12 sm:h-14 rounded-[20px] sm:rounded-[24px] text-[10px] font-black uppercase tracking-[2px] transition-all shadow-lg active:scale-95",
-            arquivo 
-              ? "bg-teal-600 text-white hover:bg-teal-700 shadow-teal-500/20" 
-              : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
-          )}
-        >
-          {enviando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-          {enviando ? 'Processando...' : 'Confirmar Pagamento'}
-        </Button>
+        <div className="flex flex-col min-w-0">
+          <h3 className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-none truncate">Pagamento PIX</h3>
+          <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Fluxo de Segurança</p>
+        </div>
       </div>
+
+      {/* Card de Valor - Mais compacto */}
+      <div className="flex flex-col items-center justify-center py-3 sm:py-4 bg-slate-900 rounded-[18px] sm:rounded-[22px] text-white shadow-lg relative overflow-hidden mx-1 sm:mx-0">
+        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-teal-400 mb-1 relative z-10">Total a Pagar</span>
+        <h2 className="text-2xl sm:text-3xl font-black tracking-tighter relative z-10 leading-none">{formatCurrency(cobranca?.valor || 0)}</h2>
+        <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 relative z-10 truncate max-w-full px-2">{cobranca?.descricao || ''}</p>
+      </div>
+
+      {/* PIX Content - Otimizado para caber */}
+      {(configPix?.qr_code_url || configPix?.chave_pix) ? (
+        <div className="flex flex-col gap-3">
+          {/* QR Code - Reduzido */}
+          {(configPix?.qr_code_url || configPix?.qr_code_auto) && (
+            <div className="p-3 rounded-[16px] bg-slate-50 border border-slate-200 flex flex-col items-center gap-2">
+              <div className="p-2 bg-white rounded-[12px] shadow-md flex items-center justify-center">
+                {configPix?.qr_code_url ? (
+                  <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-24 h-24 sm:w-28 sm:h-28 object-contain" />
+                ) : (
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center text-slate-300">
+                    <QrCode size={36} className="opacity-30" />
+                  </div>
+                )}
+              </div>
+              <span className="text-[9px] font-black text-teal-600 uppercase tracking-widest">QR Code Ativo</span>
+            </div>
+          )}
+
+          {/* Chave PIX - Reduzida */}
+          {configPix?.chave_pix && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-px bg-slate-100 flex-1" />
+                <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Ou copie e cole</span>
+                <div className="h-px bg-slate-100 flex-1" />
+              </div>
+              <div className="p-2 rounded-[12px] bg-white border border-slate-100 font-mono text-[9px] text-slate-500 break-all leading-relaxed text-center max-h-16 overflow-y-auto">
+                {configPix.chave_pix}
+              </div>
+              <Button onClick={handleCopy} className="w-full h-10 sm:h-12 bg-slate-900 hover:bg-black text-white rounded-[16px] font-black text-[9px] sm:text-[10px] uppercase tracking-widest gap-2 shadow-lg active:scale-95 transition-all">
+                {copiado ? <CheckCircle2 size={14} className="text-teal-400" /> : <Copy size={14} />}
+                {copiado ? 'Copiado!' : 'Copiar PIX'}
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="p-4 text-center space-y-2 bg-rose-50 rounded-[20px] border border-rose-100 mx-1">
+          <AlertCircle size={28} className="text-rose-500 mx-auto" />
+          <p className="text-sm font-black text-rose-900 uppercase">PIX Não Configurado</p>
+          <p className="text-[9px] font-semibold text-rose-700/60">Esta escola ainda não cadastrou os dados para pagamento via PIX.</p>
+        </div>
+      )}
+
+      {/* Upload - Compacto */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="h-px bg-slate-100 flex-1" />
+          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Comprovante</span>
+          <div className="h-px bg-slate-100 flex-1" />
+        </div>
+        <label className={cn(
+          "relative cursor-pointer flex flex-col items-center justify-center gap-1 p-3 border-2 border-dashed rounded-[14px] transition-all",
+          arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+        )}>
+          <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
+          {arquivo ? (
+            <>
+              <FileText className="text-teal-500" size={20} />
+              <span className="text-[9px] font-bold text-teal-700 truncate max-w-full">{arquivo.name}</span>
+              <span className="text-[7px] text-teal-600/60 uppercase font-black">Trocar</span>
+            </>
+          ) : (
+            <>
+              <Upload className="text-slate-400" size={20} />
+              <span className="text-[9px] font-bold text-slate-500">Selecionar</span>
+              <span className="text-[7px] text-slate-400 uppercase font-black">PDF, PNG</span>
+            </>
+          )}
+        </label>
+      </div>
+
+      {/* Botão Confirmar - Sempre visível */}
+      <Button 
+        onClick={handleComprovante} 
+        disabled={!arquivo || enviando}
+        className={cn(
+          "w-full h-11 sm:h-12 rounded-[14px] text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95",
+          arquivo 
+            ? "bg-teal-600 text-white hover:bg-teal-700 shadow-teal-500/20" 
+            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+        )}
+      >
+        {enviando ? <Loader2 className="animate-spin mr-2" size={14} /> : null}
+        {enviando ? 'Processando...' : 'Confirmar Pagamento'}
+      </Button>
     </div>
   )
 
@@ -708,12 +691,12 @@ function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px] p-0 overflow-hidden border-0 rounded-[32px] bg-white gap-0">
+      <DialogContent className="max-w-[340px] p-0 overflow-hidden border-0 rounded-[24px] bg-white gap-0">
         <DialogTitle className="sr-only">Pagamento PIX - {formatCurrency(cobranca?.valor || 0)}</DialogTitle>
         <DialogDescription className="sr-only">
           Página de pagamento PIX com QR Code e instrução para upload de comprovante.
         </DialogDescription>
-        <div className="p-8 sm:p-12">
+        <div className="p-4">
           {ModalContent}
         </div>
       </DialogContent>

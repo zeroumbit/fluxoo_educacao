@@ -18,7 +18,7 @@ const _getInitials = (name: string) => {
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, _selecionarAluno, _alunoSelecionado, isLoading } = usePortalContext();
+  const { responsavel, vinculos, _selecionarAluno, _alunoSelecionado, isLoading } = usePortalContext();
   const { data: dashboard, isLoading: loadingDash } = useDashboardFamilia();
   const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();

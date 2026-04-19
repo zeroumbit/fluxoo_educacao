@@ -27,7 +27,7 @@ import { useViaCEP } from '@/hooks/use-viacep'
 
 export function FiliaisPageMobile() {
   const { authUser } = useAuth()
-  const { data: filiais, isLoading, refetch } = useFiliais()
+  const { data: filiais, isLoading, refetch } = useFiliais()
   const criarFilial = useCriarFilial()
   const atualizarFilial = useAtualizarFilial()
   const excluirFilial = useExcluirFilial()

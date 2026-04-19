@@ -26,7 +26,7 @@ const getInitials = (name: string) => {
 };
 
 export function PortalAlunoPerfilV2Mobile() {
-  const navigate = useNavigate();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const context = usePortalContext();
   const { alunoSelecionado } = context;

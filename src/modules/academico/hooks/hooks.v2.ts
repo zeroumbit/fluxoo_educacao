@@ -65,7 +65,7 @@ export function useSalvarNotasEmLote() {
       avaliacaoId: string
       notas: { aluno_id: string; nota: number | null; ausente: boolean }[]
     }) => academicoV2Service.salvarNotasEmLote(tenantId, avaliacaoId, authUser!.user.id, notas),
-    onSuccess: (data, variables) => {
+    onSuccess: (data, variables) => {
       qc.invalidateQueries({ queryKey: ['avaliacoes_notas', variables.avaliacaoId] })
       qc.invalidateQueries({ queryKey: ['boletim_v2'] })
       qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
