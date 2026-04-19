@@ -43,7 +43,7 @@ type TurmaFormValues = z.infer<typeof turmaSchema>
 export function TurmasPageWeb() {
   const {
     turmas: storeTurmas,
-    alunos: storeAlunos,
+    alunos: _storeAlunos,
     setTurmas,
     setAlunos,
     setProfessores,
@@ -85,7 +85,7 @@ export function TurmasPageWeb() {
     if (dbProfessores) setProfessores(dbProfessores)
   }, [dbProfessores, setProfessores])
 
-  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<TurmaFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<TurmaFormValues>({
     resolver: zodResolver(turmaSchema),
     defaultValues: {
       turno: 'manhã',

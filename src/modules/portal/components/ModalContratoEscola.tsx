@@ -32,7 +32,7 @@ export function ModalContratoEscola({
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState(false)
   const [contratoHtml, setContratoHtml] = useState('')
-  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+  const [_escolaInfo, setEscolaInfo] = useState<any>(null)
 
   useEffect(() => {
     async function loadContrato() {

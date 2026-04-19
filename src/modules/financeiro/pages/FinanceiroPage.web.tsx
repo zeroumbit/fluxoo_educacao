@@ -64,7 +64,7 @@ export function FinanceiroPageWeb() {
   const estornarCobranca = useDesfazerPagamento()
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [cobrancaEditando, setCobrancaEditando] = useState<any>(null)
+  const [cobrancaEditando, _setCobrancaEditando] = useState<any>(null)
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'a_vencer' | 'pago' | 'atrasado'>('todos')
   const [busca, setBusca] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -181,9 +181,16 @@ export function FinanceiroPageWeb() {
 
   const filteredCobrancas = useMemo(() => {
     if (!cobrancas) return []
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+    const isAtrasada = (c: any) =>
+      c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
+
     return (cobrancas as any[]).filter(c => {
-      const matchStatus = filtroStatus === 'todos' || c.status === filtroStatus
-      const matchBusca = c.alunos?.nome_completo?.toLowerCase().includes(busca.toLowerCase()) || 
+      let matchStatus = filtroStatus === 'todos'
+      if (filtroStatus === 'atrasado') matchStatus = isAtrasada(c)
+      else if (filtroStatus === 'a_vencer') matchStatus = c.status === 'a_vencer' && !isAtrasada(c)
+      else if (filtroStatus === 'pago')    matchStatus = c.status === 'pago'
+      const matchBusca = c.alunos?.nome_completo?.toLowerCase().includes(busca.toLowerCase()) ||
                          c.descricao.toLowerCase().includes(busca.toLowerCase())
       return matchStatus && matchBusca
     })
@@ -192,11 +199,17 @@ export function FinanceiroPageWeb() {
   const stats = useMemo(() => {
     if (!cobrancas) return { total: 0, pagos: 0, a_vencer: 0, atrasados: 0 }
     const list = cobrancas as any[]
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+
+    // Normaliza status: cobrança é atrasada se status='atrasado' OU data venceu (banco pode estar desatualizado)
+    const isAtrasada = (c: any) =>
+      c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
+
     return {
       total: list.reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor_original || c.valor), 0),
       pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + Number(c.valor_pago || c.valor_total_projetado || c.valor), 0),
-      a_vencer: list.filter(c => c.status === 'a_vencer').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
-      atrasados: list.filter(c => c.status === 'atrasado').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
+      a_vencer: list.filter(c => c.status === 'a_vencer' && !isAtrasada(c)).reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
+      atrasados: list.filter(isAtrasada).reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
     }
   }, [cobrancas])
 
@@ -734,15 +747,33 @@ export function FinanceiroPageWeb() {
                   </div>
                 </TableCell>
                 <TableCell className="px-6 py-4">
-                  <Badge variant="outline" className={cn(
-                    "rounded-md px-3 py-1 font-bold border-0",
-                    c.status === 'pago' ? "bg-emerald-50 text-emerald-600" :
-                    c.status === 'atrasado' ? "bg-rose-50 text-rose-600" :
-                    "bg-amber-50 text-amber-500"
-                  )}>
-                    {c.status === 'pago' ? 'RECEBIDO' : 
-                     c.status === 'atrasado' ? 'ATRASADO' : 'EM ABERTO'}
-                  </Badge>
+                  {(() => {
+                    const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                    // Regra de Ouro da Plataforma: Vencimento < Hoje é ATRASADO, independente do status do banco (Zero Trust)
+                    const vencida = (c.status === 'a_vencer' || c.status === 'atrasado' || c.status === 'pendente') && 
+                                   new Date(c.data_vencimento + 'T12:00:00') < hoje
+                    
+                    if (c.status === 'pago') return (
+                      <Badge variant="outline" className="rounded-md px-3 py-1 font-bold border-0 bg-emerald-50 text-emerald-600">
+                        RECEBIDO
+                      </Badge>
+                    )
+                    
+                    if (c.status === 'cancelado') return (
+                      <Badge variant="outline" className="rounded-md px-3 py-1 font-bold border-0 bg-slate-100 text-slate-400">
+                        CANCELADO
+                      </Badge>
+                    )
+
+                    return (
+                      <Badge variant="outline" className={cn(
+                        "rounded-md px-3 py-1 font-bold border-0",
+                        vencida ? "bg-rose-100 text-rose-700 animate-pulse border border-rose-200" : "bg-amber-50 text-amber-500"
+                      )}>
+                        {vencida ? '⚠️ ATRASADO' : 'EM ABERTO'}
+                      </Badge>
+                    )
+                  })()}
                 </TableCell>
                 <TableCell className="text-right pr-8">
                   <DropdownMenu>

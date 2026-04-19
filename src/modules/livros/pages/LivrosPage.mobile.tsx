@@ -85,10 +85,10 @@ export function LivrosPageMobile() {
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'livro' | 'material'>('livro')
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isDiscOpen, setIsDiscOpen] = useState(false)
+  const [_isDiscOpen, _setIsDiscOpen] = useState(false)
   const [livroParaEditar, setLivroParaEditar] = useState<Livro | null>(null)
   const [materialParaEditar, setMaterialParaEditar] = useState<MaterialEscolar | null>(null)
-  const [novaDisciplina, setNovaDisciplina] = useState('')
+  const [_novaDisciplina, _setNovaDisciplina] = useState('')
   const [livroCapaFile, setLivroCapaFile] = useState<File | null>(null)
   const [livroCapaPreview, setLivroCapaPreview] = useState<string | null>(null)
   const [materialCapaFile, setMaterialCapaFile] = useState<File | null>(null)
@@ -110,7 +110,7 @@ export function LivrosPageMobile() {
   const editarMaterial = useEditarMaterial()
   const excluirMaterial = useExcluirMaterial()
   
-  const criarDisciplina = useCriarDisciplina()
+  const _criarDisciplina = useCriarDisciplina()
 
   const isLoading = isLoadingLivros || isLoadingMateriais
 

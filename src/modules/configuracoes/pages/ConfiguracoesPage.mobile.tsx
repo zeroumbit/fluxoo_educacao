@@ -27,7 +27,6 @@ import {
   type ConfigConduta,
   type ConfigCalendario,
 } from '@/modules/escolas/hooks/useTenantSettings'
-import { supabase } from '@/lib/supabase'
 
 export function ConfiguracoesPageMobile() {
   const { authUser } = useAuth()

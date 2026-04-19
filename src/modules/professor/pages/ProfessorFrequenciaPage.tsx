@@ -41,7 +41,7 @@ export function ProfessorFrequenciaPage() {
   
   // Modal de Justificativa
   const [modalOpen, setModalOpen] = useState(false)
-  const [alunoJustificando, setAlunoJustificando] = useState<{ id: string, nome: string } | null>(null)
+  const [alunoJustificando, _setAlunoJustificando] = useState<{ id: string, nome: string } | null>(null)
   const [justificativaTemp, setJustificativaTemp] = useState('')
 
   // Turmas únicas da agenda

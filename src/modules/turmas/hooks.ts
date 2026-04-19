@@ -122,7 +122,7 @@ export function useToggleDisciplinaAtiva() {
   return useMutation({
     mutationFn: ({ disciplinaId, tenantId, isGlobal, ocultar }: { disciplinaId: string, tenantId: string, isGlobal: boolean, ocultar: boolean }) => 
       turmaService.toggleDisciplinaAtiva(disciplinaId, tenantId, isGlobal, ocultar),
-    onSuccess: (_, variables) => {
+    onSuccess: (_, _variables) => {
       // Invalida TODAS as queries que dependem de disciplinas
       queryClient.invalidateQueries({ queryKey: ['disciplinas'] })
       queryClient.invalidateQueries({ queryKey: ['disciplinas-catalogo'] })
@@ -196,7 +196,7 @@ export function useSalvarGradeItem() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (item: any) => turmaService.salvarGradeItem(item),
-    onSuccess: (_, variables) => {
+    onSuccess: (_, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'grade-horaria'] })
     },
@@ -222,7 +222,7 @@ export function useContarAlunosTurma(turmaId: string) {
   })
 }
 
-const updateMensalidadeSchema = z.object({
+const _updateMensalidadeSchema = z.object({
   turmaId: z.string().uuid(),
   tenantId: z.string().uuid(),
   valor: z.number().positive("O valor deve ser maior que zero"),

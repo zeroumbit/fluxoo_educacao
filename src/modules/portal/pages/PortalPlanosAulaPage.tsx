@@ -13,7 +13,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 // Helper de vibração
-const vibrate = (ms: number | number[] = 20) => {
+const _vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     navigator.vibrate(ms);
   }

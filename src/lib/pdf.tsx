@@ -3,7 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Font, pdf, type DocumentProps }
 // Registrar fonte customizada (opcional - usa fontes do sistema por padrão)
 Font.register({
   family: 'Inter',
-  src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2'
+  src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-EeA.woff2'
 })
 
 // Estilos base para todos os PDFs

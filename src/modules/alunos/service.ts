@@ -90,7 +90,7 @@ export const alunoService = {
 
     // Buscar matrícula ativa do aluno
     if (aluno) {
-      const { data: matricula, error: matError } = await (supabase.from('matriculas' as any) as any)
+      const { data: matricula, error: _matError } = await (supabase.from('matriculas' as any) as any)
         .select(`
           id,
           status,
@@ -206,7 +206,7 @@ export const alunoService = {
 
     // 0. Preparar dados (limpar CPF)
     const cpfLimpo = responsavel.cpf.replace(/\D/g, '')
-    const alunoCpfLimpo = alunoDados.cpf ? alunoDados.cpf.replace(/\D/g, '') : null
+    const _alunoCpfLimpo = alunoDados.cpf ? alunoDados.cpf.replace(/\D/g, '') : null
 
     // 1. Verificar se responsável já existe pelo CPF (sempre buscar pelo limpo)
     const { data: respExistente, error: respCheckError } = await supabase

@@ -517,7 +517,7 @@ export function DashboardPageMobile() {
   const totalPagar = displayData?.totalPagar || 0
   const totalEstoque = displayData?.totalEstoque || 0
   const totalSalarios = displayData?.totalSalarios || 0
-  const saudeFinanceira = mensalidadesMes - totalPagar
+  const _saudeFinanceira = mensalidadesMes - totalPagar
 
   // Radar de Evasão com contexto de alertas
   const radarData = displayData?.radarEvasao || []

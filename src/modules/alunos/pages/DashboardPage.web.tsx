@@ -177,7 +177,7 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
       ? 'ALERTA'
       : 'ATENÇÃO'
 
-  const badgeClass =
+  const _badgeClass =
     nivel === 'CRÍTICO'
       ? 'bg-red-600 text-white'
       : nivel === 'ALERTA'
@@ -271,7 +271,7 @@ function DashboardContent() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const userRole = authUser?.role
-  const { alertas, mudarStatusAlerta } = useAlertas()
+  const { alertas, _mudarStatusAlerta } = useAlertas()
 
   const {
     data: dashboardData,

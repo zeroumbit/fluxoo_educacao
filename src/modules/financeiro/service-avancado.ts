@@ -184,7 +184,7 @@ export const financeiroAvancadoService = {
   /**
    * Lista gateways disponíveis (apenas os ativos_global=true).
    */
-  async getGatewaysDisponiveis(tenantId: string) {
+  async getGatewaysDisponiveis(_tenantId: string) {
     const { data, error } = await (supabase.from('vw_gateways_disponiveis' as any) as any)
       .select('*')
       .order('ordem_exibicao', { ascending: true })

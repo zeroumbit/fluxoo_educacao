@@ -139,20 +139,31 @@ export function FinanceiroPageMobile() {
 
   const filteredList = useMemo(() => {
     if (!cobrancas) return []
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+    const isAtrasada = (c: any) =>
+      c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
+
     return (cobrancas as any[]).filter(c => {
-      const matchTab = filtroTab === 'todos' || c.status === filtroTab
-      const matchSearch = (c.descricao || '').toLowerCase().includes(busca.toLowerCase()) || 
+      let matchTab = filtroTab === 'todos'
+      if (filtroTab === 'atrasado') matchTab = isAtrasada(c)
+      else if (filtroTab === 'a_vencer') matchTab = c.status === 'a_vencer' && !isAtrasada(c)
+      else if (filtroTab === 'pago')    matchTab = c.status === 'pago'
+      const matchSearch = (c.descricao || '').toLowerCase().includes(busca.toLowerCase()) ||
                           (c.alunos?.nome_completo || '').toLowerCase().includes(busca.toLowerCase())
       return matchTab && matchSearch
     })
   }, [cobrancas, filtroTab, busca])
 
   const totals = useMemo(() => {
-    if (!cobrancas) return { pagos: 0, pendentes: 0 }
+    if (!cobrancas) return { pagos: 0, pendentes: 0, atrasados: 0 }
     const list = cobrancas as any[]
+    const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+    const isAtrasada = (c: any) =>
+      c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
     return {
       pagos: list.filter(c => c.status === 'pago').reduce((acc, c) => acc + Number(c.valor_pago || c.valor_total_projetado || c.valor), 0),
-      pendentes: list.filter(c => c.status !== 'pago').reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0)
+      pendentes: list.filter(c => c.status !== 'pago' && !isAtrasada(c)).reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
+      atrasados: list.filter(isAtrasada).reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0)
     }
   }, [cobrancas])
 
@@ -263,11 +274,23 @@ export function FinanceiroPageMobile() {
                       {/* Ícone - Design Destacado */}
                       <div className={cn(
                         "h-16 w-16 rounded-[20px] flex items-center justify-center shrink-0 shadow-sm transition-colors",
-                        c.status === 'pago' ? "bg-emerald-50 text-emerald-600" : 
-                        c.status === 'atrasado' ? "bg-rose-50 text-rose-600" : "bg-indigo-50 text-indigo-500"
+                        (() => {
+                          const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                          const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
+                          
+                          if (c.status === 'pago') return "bg-emerald-50 text-emerald-600"
+                          if (isVencida) return "bg-rose-100 text-rose-700 animate-pulse"
+                          return "bg-indigo-50 text-indigo-500"
+                        })()
                       )}>
-                        {c.status === 'pago' ? <CheckCircle2 size={32} /> : 
-                         c.status === 'atrasado' ? <AlertCircle size={32} /> : <Calendar size={32} />}
+                        {(() => {
+                          const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                          const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
+                          
+                          if (c.status === 'pago') return <CheckCircle2 size={32} />
+                          if (isVencida) return <AlertCircle size={32} />
+                          return <Calendar size={32} />
+                        })()}
                       </div>
 
                       {/* Info Centralizada Verticalmente */}
@@ -302,9 +325,9 @@ export function FinanceiroPageMobile() {
                         <div className={cn(
                           "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
                           c.status === 'pago' ? "bg-emerald-500 text-white" : 
-                          c.status === 'atrasado' ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                          (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
                         )}>
-                          {c.status === 'pago' ? 'PAGO' : c.status === 'atrasado' ? 'VENCIDO' : 'ABERTO'}
+                          {c.status === 'pago' ? 'PAGO' : (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? 'VENCIDO' : 'ABERTO'}
                         </div>
                       </div>
                     </div>

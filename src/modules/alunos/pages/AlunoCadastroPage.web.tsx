@@ -98,7 +98,7 @@ export function AlunoCadastroPage() {
     try {
       const savedStep = localStorage.getItem('aluno_cadastro_step')
       return savedStep ? parseInt(savedStep, 10) || 0 : 0
-    } catch (e) {
+    } catch (_e) {
       return 0
     }
   })
@@ -173,7 +173,7 @@ export function AlunoCadastroPage() {
           setDraftStateData(parsedDraft)
           setShowDraftModal(true)
         }
-      } catch (e) {
+      } catch (_e) {
         localStorage.removeItem('aluno_cadastro_draft')
       }
     }
@@ -309,7 +309,7 @@ export function AlunoCadastroPage() {
     const cpfLimpo = cpf.replace(/\D/g, '')
     try {
       // 1. Buscar responsável
-      const { data: resp, error: respError } = await supabase
+      const { data: resp, error: _respError } = await supabase
         .from('responsaveis')
         .select('id, nome, email, telefone, user_id')
         .eq('cpf', cpfLimpo)

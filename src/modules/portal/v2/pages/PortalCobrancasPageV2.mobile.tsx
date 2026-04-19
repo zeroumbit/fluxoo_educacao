@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useVinculosAtivos } from '../../hooks'
 import { usePortalContext } from '../../context'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +24,10 @@ import {
   Receipt,
   TrendingDown,
   ArrowLeft,
-  QrCode
+  QrCode,
+  Upload,
+  FileText,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
@@ -66,6 +70,8 @@ const CobrancasSkeleton = () => (
 )
 
 export function PortalCobrancasPageV2Mobile() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
   const { isLoading: isLoadingCtx } = usePortalContext()
 
@@ -75,12 +81,14 @@ export function PortalCobrancasPageV2Mobile() {
   const [copiado, setCopiado] = useState(false)
 
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
+  const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
+    queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
+    queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
+    enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
+  })), [vinculos]);
+
   const cobrancasQueries = useQueries({
-    queries: (vinculos || []).map((v: any) => ({
-      queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
-      queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
-      enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
-    })),
+    queries: queriesConfig,
   })
 
   const isLoadingCobrancas = cobrancasQueries.some(q => q.isLoading)
@@ -126,8 +134,36 @@ export function PortalCobrancasPageV2Mobile() {
       .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
       .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
     
-    return { resumo: { aVencer, atrasado, materiais, proximoVenc }, alunos: alunosComFaturas }
-  }, [vinculos, cobrancasQueries, isLoadingCobrancas])
+    // Faturas para Checkout Unificado (A vencer e Atrasadas, exceto pagas/canceladas)
+    const faturasParaCarrinho = allFaturas.filter(f => f.status !== 'pago' && f.status !== 'cancelado')
+
+    return { 
+      resumo: { aVencer, atrasado, materiais, proximoVenc }, 
+      alunos: alunosComFaturas,
+      faturasParaCarrinho,
+      totalCarrinho: faturasParaCarrinho.reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+    }
+  }, [vinculos, isLoadingCobrancas, ...cobrancasQueries.map(q => q.data)])
+
+  // Lógica para abrir fatura específica vinda do Dashboard
+  useEffect(() => {
+    const targetId = location.state?.selectedCobrancaId;
+    if (!targetId || !familyData?.alunos) return;
+    
+    // Encontra qual aluno tem essa fatura
+    for (const aluno of familyData.alunos) {
+      const found = aluno.faturas?.find((f: any) => f.id === targetId)
+      if (found) {
+        setSelectedAluno(aluno)
+        setCobrancaAtiva({ ...found, alunoNome: aluno.nome_completo, tenant_id: aluno.tenant_id })
+        setShowCheckout(true)
+        
+        // Limpa o state de navegação de forma reativa para evitar loop infinito
+        navigate(location.pathname, { replace: true, state: {} })
+        break
+      }
+    }
+  }, [location.state?.selectedCobrancaId, !!familyData?.alunos, location.pathname, navigate])
 
   if (loadingVinculos || isLoadingCobrancas || isLoadingCtx) return <CobrancasSkeleton />
 
@@ -168,6 +204,43 @@ export function PortalCobrancasPageV2Mobile() {
           isDate
         />
       </div>
+
+      {/* Carrinho Unificado (Checkout Multi) - Vindo da V1 */}
+      {familyData && familyData.faturasParaCarrinho.length > 1 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-indigo-600 rounded-[32px] p-6 text-white shadow-xl shadow-indigo-100 mx-1 flex flex-col gap-4"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+               <ShoppingBag size={24} className="text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-[2px] text-indigo-200">Carrinho Unificado</span>
+              <h3 className="text-xl font-black tracking-tight leading-none">
+                {formatCurrency(familyData.totalCarrinho)}
+              </h3>
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              vibrate(40);
+              setCobrancaAtiva({
+                id: 'multi',
+                valor: familyData.totalCarrinho,
+                descricao: `Pagamento Consolidado (${familyData.faturasParaCarrinho.length} faturas)`,
+                alunoNome: 'Família',
+                tenant_id: familyData.alunos[0]?.tenant_id
+              });
+              setShowCheckout(true);
+            }}
+            className="bg-white text-indigo-600 hover:bg-slate-50 font-black uppercase text-[11px] tracking-[1px] rounded-2xl h-12 shadow-md active:scale-95 transition-all w-full"
+          >
+            Pagar Tudo Agora
+          </Button>
+        </motion.div>
+      )}
 
       {/* 3. Lista de Alunos - Cards */}
       <div className="flex flex-col gap-4">
@@ -492,13 +565,18 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
                     {fat.descricao}
                   </h5>
                   {!isHistorico && getTipoBadge(fat.descricao)}
+                  {!isHistorico && isVencida && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 border border-rose-200 text-[9px] font-black uppercase tracking-widest text-rose-700 shrink-0">
+                      ⚠️ Atrasada
+                    </span>
+                  )}
                 </div>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1">
                   Venc: {formatDate(fat.data_vencimento)}
                 </p>
                 <span className={cn(
                   "text-[18px] font-bold tracking-tight mt-2",
-                  isHistorico ? "text-slate-400" : "text-slate-900"
+                  isHistorico ? "text-slate-400" : isVencida ? "text-rose-600" : "text-slate-900"
                 )}>
                   {formatCurrency(fat.valor_total_projetado || fat.valor_original || fat.valor || 0)}
                 </span>
@@ -521,10 +599,22 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
             {isHistorico && (
               <Button
                 variant="outline"
-                className="w-full h-12 rounded-[16px] font-bold text-[11px] uppercase tracking-wide border border-slate-200 text-slate-500 gap-2 hover:bg-slate-50"
+                onClick={(e) => { e.stopPropagation(); fat.comprovante_url && window.open(fat.comprovante_url, '_blank') }}
+                className={cn(
+                  "w-full h-12 rounded-[16px] font-bold text-[11px] uppercase tracking-wide border-2 transition-all flex items-center justify-center gap-2",
+                  fat.comprovante_url 
+                    ? "border-teal-100 bg-teal-50/50 text-teal-600" 
+                    : "border-slate-100 text-slate-300"
+                )}
               >
-                <Download size={16} aria-hidden="true" />
-                Baixar Recibo
+                {fat.comprovante_url ? (
+                  <>
+                    <FileText size={16} />
+                    Ver Comprovante
+                  </>
+                ) : (
+                  'Recibo não disponível'
+                )}
               </Button>
             )}
           </motion.div>
@@ -546,6 +636,18 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
     enabled: !!cobranca?.tenant_id,
   })
 
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const { responsavel } = usePortalContext()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) return toast.error('Arquivo muito grande. Máximo 5MB.')
+      setArquivo(file)
+    }
+  }
+
   const handleCopy = () => {
     vibrate(40)
     if (configPix?.chave_pix) {
@@ -556,18 +658,42 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
     }
   }
 
-  const handleComprovante = () => {
+  const handleComprovante = async () => {
+    if (!arquivo) return toast.error('Por favor, anexe o comprovante de pagamento.')
+    
+    setEnviando(true)
     vibrate(30)
-    const numeroRaw = configRecados?.whatsapp_contato || ''
-    const numero = numeroRaw.replace(/\D/g, '')
-    if (!numero || numero.length < 8) return toast.error('WhatsApp não configurado pela escola.')
-    const msg = encodeURIComponent(`Olá, envio comprovante de ${formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}).`)
-    window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
+    
+    try {
+      // 1. Upload do arquivo
+      const filename = `comprovante_${cobranca?.id}_${Date.now()}`
+      const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
+
+      // 2. Registra no banco
+      await portalService.registrarPagamentoComComprovante(cobranca?.id!, url, responsavel?.id!)
+
+      // 3. Envia WhatsApp
+      const numeroRaw = configRecados?.whatsapp_contato || ''
+      const numero = numeroRaw.replace(/\D/g, '')
+      const msg = encodeURIComponent(`Olá, confirmo o pagamento de ${formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}). Comprovante: ${url}`)
+      
+      toast.success('Comprovante enviado com sucesso!')
+      onClose()
+      
+      if (numero && numero.length >= 8) {
+        window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
+      }
+    } catch (error: any) {
+      console.error(error)
+      toast.error('Erro ao processar comprovante.')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[32px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[95vh] overflow-y-auto bg-white pb-safe">
+      <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[24px] p-0 border-t border-slate-100 focus:outline-none ring-0 max-h-[95vh] overflow-y-auto bg-white pb-safe">
         {/* Handle Indicator - iOS Sheet */}
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-4 mb-6" aria-hidden="true" />
 
@@ -597,7 +723,7 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
           </div>
 
           {/* Card de Valor - Padrão Material Design Card Elevated */}
-          <div className="flex flex-col items-center justify-center gap-2 py-6 bg-zinc-900 rounded-[28px] text-white shadow-lg relative overflow-hidden">
+          <div className="flex flex-col items-center justify-center gap-2 py-6 bg-zinc-900 rounded-[20px] text-white shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 opacity-10 -mr-4 -mt-4" aria-hidden="true">
               <DollarSign size={100} />
             </div>
@@ -696,13 +822,50 @@ function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }:
               </div>
             )}
 
+            {/* Upload de Comprovante */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-px bg-slate-100 flex-1" aria-hidden="true" />
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide flex-shrink-0">
+                  Upload do Comprovante
+                </span>
+                <div className="h-px bg-slate-100 flex-1" aria-hidden="true" />
+              </div>
+
+              <label className={cn(
+                "relative cursor-pointer flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-[20px] transition-all",
+                arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200"
+              )}>
+                <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
+                {arquivo ? (
+                  <>
+                    <FileText className="text-teal-500" size={24} />
+                    <span className="text-[11px] font-bold text-teal-700 truncate max-w-full px-4">{arquivo.name}</span>
+                    <span className="text-[10px] text-teal-600/60 uppercase font-bold tracking-widest">Toque para trocar</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="text-slate-400" size={24} />
+                    <span className="text-[11px] font-bold text-slate-500">Selecionar Comprovante</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">PDF, PNG ou WebP</span>
+                  </>
+                )}
+              </label>
+            </div>
+
             {/* Botão Confirmar */}
             <Button
               onClick={handleComprovante}
-              variant="outline"
-              className="w-full h-12 bg-teal-50 text-teal-600 border-2 border-teal-100 rounded-[16px] font-bold text-[11px] uppercase tracking-wide hover:bg-teal-100 active:scale-98 transition-transform shadow-sm"
+              disabled={!arquivo || enviando}
+              className={cn(
+                "w-full h-14 rounded-[20px] font-bold text-[11px] uppercase tracking-wide transition-all shadow-md active:scale-95",
+                arquivo 
+                  ? "bg-teal-600 text-white shadow-teal-500/20" 
+                  : "bg-slate-100 text-slate-400"
+              )}
             >
-              Confirmar Pagamento
+              {enviando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+              {enviando ? 'Processando...' : 'Confirmar Pagamento'}
             </Button>
           </div>
         </div>

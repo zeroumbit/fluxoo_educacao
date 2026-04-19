@@ -40,7 +40,7 @@ export function PortalAlunoPerfilV2Web() {
   const { id } = useParams<{ id: string }>();
   const context = usePortalContext();
   const { alunoSelecionado } = context;
-  const { data: dashboard } = useDashboardAluno();
+  const { data: _dashboard } = useDashboardAluno();
   const [activeModule, setActiveModule] = useState<string>('grade');
   const [showFilaVirtual, setShowFilaVirtual] = useState(false);
 

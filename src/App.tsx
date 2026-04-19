@@ -83,17 +83,13 @@ const ConfigRecebimentoPage = lazy(() => import('@/modules/super-admin/pages/Con
 const MarketplaceConfigPage = lazy(() => import('@/modules/super-admin/pages/MarketplaceConfigPage').then(m => ({ default: m.MarketplaceConfigPage })))
 
 // Pages - Portal
-const PortalDashboardPage = lazy(() => import('@/modules/portal/pages/PortalDashboardPage').then(m => ({ default: m.PortalDashboardPage })))
 const PortalFrequenciaPage = lazy(() => import('@/modules/portal/pages/PortalFrequenciaPage').then(m => ({ default: m.PortalFrequenciaPage })))
-const PortalAvisosPage = lazy(() => import('@/modules/portal/pages/PortalAvisosPage').then(m => ({ default: m.PortalAvisosPage })))
-const PortalCobrancasPage = lazy(() => import('@/modules/portal/pages/PortalCobrancasPage'))
 const PortalFilaVirtualPage = lazy(() => import('@/modules/portal/pages/PortalFilaVirtualPage').then(m => ({ default: m.PortalFilaVirtualPage })))
 const PortalLoginPage = lazy(() => import('@/modules/portal/pages/PortalLoginPage').then(m => ({ default: m.PortalLoginPage })))
 const PortalBoletimPage = lazy(() => import('@/modules/portal/pages/PortalBoletimPage').then(m => ({ default: m.PortalBoletimPage })))
 const PortalLivrosPage = lazy(() => import('@/modules/portal/pages/PortalLivrosPage').then(m => ({ default: m.PortalLivrosPage })))
 const PortalAgendaPage = lazy(() => import('@/modules/portal/pages/PortalAgendaPage').then(m => ({ default: m.PortalAgendaPage })))
 const PortalLojaPage = lazy(() => import('@/modules/portal/pages/PortalLojaPage').then(m => ({ default: m.PortalLojaPage })))
-const PortalDocumentosPage = lazy(() => import('@/modules/portal/pages/PortalDocumentosPage').then(m => ({ default: m.PortalDocumentosPage })))
 const PortalPerfilPage = lazy(() => import('@/modules/portal/pages/PortalPerfilPage').then(m => ({ default: m.PortalPerfilPage })))
 const PortalAutorizacoesPage = lazy(() => import('@/modules/portal/pages/PortalAutorizacoesPage').then(m => ({ default: m.PortalAutorizacoesPage })))
 const TermosUsoPage = lazy(() => import('@/modules/portal/pages/TermosUsoPage').then(m => ({ default: m.TermosUsoPage })))
@@ -115,7 +111,6 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
     },
   },
 })
@@ -323,7 +318,6 @@ function App() {
               }
             >
               <Route path="/portal" element={<PortalHomeV2 />} />
-              <Route path="/portal/v2" element={<Navigate to="/portal" replace />} />
               <Route path="/portal/alunos" element={<PortalAlunosListV2 />} />
               <Route path="/portal/alunos/:id" element={<PortalAlunoPerfilV2 />} />
               <Route path="/portal/financeiro" element={<PortalFinanceiroV2 />} />

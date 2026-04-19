@@ -98,7 +98,7 @@ export function MatriculaFormPageWeb() {
 
   const alunosSelecionados = useWatch({ control: form.control, name: 'alunos_ids' }) || []
   const tipoSelecionado = useWatch({ control: form.control, name: 'tipo' })
-  const serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
+  const _serieSelecionada = useWatch({ control: form.control, name: 'serie_ano' })
   const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunosSelecionados[0])
 

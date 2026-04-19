@@ -81,7 +81,7 @@ function SidebarContent({
 }) {
   const { authUser, signOut } = useAuth()
   const isSuperAdmin = useIsSuperAdmin()
-  const { hasPermission, isLoading: rbacLoading } = usePermissions()
+  const { hasPermission, isLoading: _rbacLoading } = usePermissions()
   const status = dashboardData?.statusAssinatura
   const metodo = dashboardData?.metodoPagamento
   const isManual = metodo === 'pix' || metodo === 'pix_manual' || metodo === 'boleto' || metodo === 'manual'

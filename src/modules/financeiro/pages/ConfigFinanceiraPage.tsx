@@ -17,7 +17,7 @@ export function ConfigFinanceiraPage() {
   const { authUser } = useAuth()
   const { data: config, isLoading } = useConfigFinanceira()
   const upsert = useUpsertConfigFinanceira()
-  const { data: turmas } = useTurmas()
+  const { data: _turmas } = useTurmas()
 
   const [form, setForm] = useState({
     dia_vencimento_padrao: 10, dias_carencia: 5,

@@ -113,7 +113,7 @@ export function MarketplaceConfigPage() {
     c.nome.toLowerCase().includes(search.toLowerCase())
   )
 
-  const categoriasCount = filteredCategorias?.length || 0
+  const _categoriasCount = filteredCategorias?.length || 0
 
   const filteredLojistas = lojistas?.filter((l: any) =>
     l.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||

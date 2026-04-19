@@ -8,19 +8,32 @@ import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks'
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
 import { NativeHeader } from '../components/NativeHeader';
+import { ModalContratoEscola } from '../../components/ModalContratoEscola';
+import { useFilaVirtual } from '../../hooks';
 
 // Helper to get initials
-const getInitials = (name: string) => {
+const _getInitials = (name: string) => {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 };
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, isLoading } = usePortalContext();
+  const { responsavel, vinculos, _selecionarAluno, _alunoSelecionado, isLoading } = usePortalContext();
   const { data: dashboard, isLoading: loadingDash } = useDashboardFamilia();
   const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
+  const { data: historicoFila } = useFilaVirtual();
+  const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
+  
+  const [showContrato, setShowContrato] = React.useState(false);
+
+  // Auto-trigger de contrato pendente
+  React.useEffect(() => {
+    if (responsavel && !responsavel.termos_aceitos) {
+      setShowContrato(true);
+    }
+  }, [responsavel]);
   
   const informativeMessages = [
     "Dê aquele abraço no seu pequeno hoje! O incentivo em casa faz toda a diferença.",
@@ -70,10 +83,11 @@ export function PortalHomeV2Mobile() {
       id: 'fin-atraso',
       text: `Você possui ${dashboard.financeiro.totalAtrasadas} fatura(s) em atraso. Regularize para evitar suspensão de serviços.`,
       type: 'error',
-      icon: Receipt
+      icon: Receipt,
+      action: () => navigate('/portal/financeiro', { state: { selectedCobrancaId: dashboard.financeiro.piorPendencia?.id } })
     });
   }
-
+ 
   // Novo alerta verde (Em Dia) solicitado pelo usuário
   if (habilitarNotificacoes && dashboard?.financeiro?.proximoVencimento && dashboard.financeiro.totalAtrasadas === 0) {
     const dataVenc = new Date(dashboard.financeiro.proximoVencimento.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR');
@@ -83,7 +97,7 @@ export function PortalHomeV2Mobile() {
       highlight: 'clique aqui',
       type: 'success',
       icon: Receipt,
-      action: () => navigate('/portal/financeiro')
+      action: () => navigate('/portal/financeiro', { state: { selectedCobrancaId: dashboard.financeiro.proximoVencimento?.id } })
     });
   }
 
@@ -122,6 +136,54 @@ export function PortalHomeV2Mobile() {
             </span>
           </motion.div>
         ))}
+      </section>
+
+      {/* Cards Dinâmicos: Contrato e Fila (Absorção V1) */}
+      <section className="flex flex-col gap-3 px-1">
+        {responsavel && !responsavel.termos_aceitos && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => setShowContrato(true)}
+            className="bg-amber-600 p-6 rounded-[32px] text-white shadow-xl shadow-amber-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                <FileSignature size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-black leading-none mb-1">Contrato Pendente</h3>
+                <p className="text-[10px] font-medium text-amber-100 italic">Toque aqui para assinar.</p>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-amber-200" />
+          </motion.div>
+        )}
+
+        {filaAtiva && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => navigate('/portal/fila')}
+            className="bg-indigo-600 p-6 rounded-[32px] text-white shadow-xl shadow-indigo-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center relative">
+                <Clock size={24} />
+                {filaAtiva.status === 'aguardando' && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-teal-400 rounded-full animate-ping" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-base font-black leading-none mb-1">Fila Virtual</h3>
+                <p className="text-[10px] font-medium text-indigo-100 italic">
+                  Status: <span className="font-bold uppercase tracking-wider">{filaAtiva.status || 'Inativa'}</span>
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-indigo-200" />
+          </motion.div>
+        )}
       </section>
 
       {/* 3. Agenda do Dia Consolidada - iOS Card / Material Card */}
@@ -267,6 +329,13 @@ export function PortalHomeV2Mobile() {
           )}
         </div>
       </section>
+
+      <ModalContratoEscola 
+        open={showContrato}
+        onClose={() => setShowContrato(false)}
+        responsavel={responsavel}
+        tenantId={responsavel?.tenant_id}
+      />
     </div>
   );
 }

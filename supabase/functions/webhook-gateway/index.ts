@@ -335,7 +335,7 @@ async function handleMercadoPagoWebhook(
       return jsonResponse(400, { error: "Payload invalido" })
     }
 
-    const eventData: MercadoPagoPaymentEvent = payload
+    const _eventData: MercadoPagoPaymentEvent = payload
     const mpPaymentId = payload.data.id
 
     if (payload.action !== "payment.created" && payload.action !== "payment.updated") {
@@ -508,7 +508,7 @@ async function handleAbacatePayWebhook(
       return jsonResponse(400, { error: "Payload invalido. Esperado: { event, data: { id, external_reference } }" })
     }
 
-    const eventData = payload
+    const _eventData = payload
     const gatewayEventId = `abacate_${payload.data.id}`
     const cobrancaId = payload.data.external_reference
 

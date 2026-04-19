@@ -246,7 +246,7 @@ export const financeiroService = {
 
     // 2. Gerar PRIMEIRA MENSALIDADE Proporcional
     if (valor_mensalidade && Number(valor_mensalidade) > 0) {
-      const diaVencimento = config?.config_financeira?.dia_vencimento_padrao || 10
+      const _diaVencimento = config?.config_financeira?.dia_vencimento_padrao || 10
       const dataInicioObj = new Date(data_inicio + 'T12:00:00')
       
       const ultimoDiaMes = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + 1, 0).getDate()
@@ -519,10 +519,13 @@ export const financeiroService = {
    * Lista as cobranças utilizando a VIEW otimizada que calcula os encargos no banco
    */
   async listarComEncargos(tenantId: string, filtroStatus?: string) {
+    // Repara status antes de listar (garante dados sempre corretos)
+    await this.repararStatusAtrasados(tenantId)
+
     // Escola calcula na mão: Usamos a tabela base 'cobrancas' em vez da view com encargos automáticos
     let query = supabase
       .from('cobrancas')
-      .select('*, alunos(nome_completo, foto_url, status), turmas(nome)', { count: 'exact' })
+      .select('*, alunos(nome_completo, foto_url, status, data_ingresso), turmas(nome)', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
 
@@ -544,7 +547,7 @@ export const financeiroService = {
   },
 
   /**
-   * Lista as cobranças com encargos para um aluno específico (Modificado para cálculo manual)
+   * Lista as cobranças com encargos para um aluno específico
    */
   async listarComEncargosPorAluno(alunoId: string, tenantId: string) {
     const { data, error } = await supabase
@@ -556,7 +559,7 @@ export const financeiroService = {
 
     if (error) throw error
     
-    return (data as any[]).map(c => ({
+    return ((data as any[]) || []).map(c => ({
       ...c,
       valor_total_projetado: c.valor,
       valor_multa_projetado: 0,
@@ -669,5 +672,39 @@ export const financeiroService = {
     }
 
     return data
+  },
+
+  /**
+   * Gera mensalidades faltantes para todos os alunos ativos do tenant.
+   * Parte do mês da matrícula até dezembro do ano corrente.
+   * Idempotente: não duplica cobranças já existentes.
+   */
+  async gerarMensalidadesFaltantes() {
+    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_tenant_atual') as any)
+
+    if (error) {
+      logger.error('Erro ao gerar mensalidades faltantes:', error)
+      throw error
+    }
+
+    return data as { success: boolean; mensalidades_criadas: number; tenant_id: string }
+  },
+
+  /**
+   * Repara/Gera as mensalidades especificamente para um aluno.
+   * Útil para o Portal garantir que o responsável veja o ano todo do aluno selecionado.
+   */
+  async repararMensalidadesAluno(alunoId: string, tenantId: string) {
+    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno', {
+      p_aluno_id: alunoId,
+      p_tenant_id: tenantId
+    }) as any)
+
+    if (error) {
+      logger.error('Erro ao reparar mensalidades do aluno:', error)
+      throw error
+    }
+
+    return data as { success: boolean; mensalidades_criadas: number }
   },
 }

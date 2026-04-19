@@ -42,7 +42,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/ui/dialog'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -120,7 +120,7 @@ const IconMap: Record<string, any> = {
 
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { isLoading: loadingCtx } = usePortalContext()
   
@@ -143,7 +143,7 @@ export function PortalLojaPage() {
     else setActiveCategory('all')
   }, [searchParams])
 
-  const handleRefresh = () => {
+  const _handleRefresh = () => {
     if (isRefreshing) return
     vibrate([20, 10, 20])
     setIsRefreshing(true)
@@ -168,7 +168,7 @@ export function PortalLojaPage() {
   })) || []
 
   // Mock de Seções
-  const sections = [
+  const _sections = [
     { id: 'promocao', title: 'Ofertas Relâmpago', category: 'all', products: PRODUCTS },
     { id: 'livros', title: 'Livros e Didáticos', category: 'livros', products: PRODUCTS.filter(p => p.category === 'livros') },
   ]
@@ -468,7 +468,7 @@ export function PortalLojaPage() {
   )
 }
 
-function StoreHomeCard({ product, onClick, index, isCarousel }: { product: Product, onClick: () => void, index: number, isCarousel?: boolean }) {
+function StoreHomeCard({ product, onClick, index, _isCarousel }: { product: Product, onClick: () => void, index: number, isCarousel?: boolean }) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}

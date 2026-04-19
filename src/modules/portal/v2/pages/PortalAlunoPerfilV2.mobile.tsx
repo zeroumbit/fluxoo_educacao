@@ -17,7 +17,7 @@ import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 
 import { usePortalContext } from '../../context';
-import { useDashboardAluno } from '../../hooks';
+import { useDashboardAluno, useSelosPortal } from '../../hooks';
 import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
@@ -26,11 +26,12 @@ const getInitials = (name: string) => {
 };
 
 export function PortalAlunoPerfilV2Mobile() {
-  const navigate = useNavigate();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const context = usePortalContext();
   const { alunoSelecionado } = context;
-  const { data: dashboard } = useDashboardAluno();
+  const { data: _dashboard } = useDashboardAluno();
+  const { data: selos } = useSelosPortal(alunoSelecionado?.id);
 
   // Estado para controlar qual módulo está aberto dentro do drill-down
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -106,6 +107,36 @@ export function PortalAlunoPerfilV2Mobile() {
             </p>
           </div>
         </div>
+
+        {/* Preview de Conquistas (Selos) - Novo */}
+        {selos && selos.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Conquistas Recentes</span>
+              <button 
+                onClick={() => setActiveModule('selos')}
+                className="text-[10px] font-black text-teal-600 uppercase tracking-widest px-1"
+              >
+                Ver Todas
+              </button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x">
+              {selos.slice(0, 5).map((selo: any) => (
+                <motion.div
+                  key={selo.id}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveModule('selos')}
+                  className={cn(
+                    "min-w-[80px] h-[80px] rounded-[24px] flex items-center justify-center text-3xl shadow-sm border border-white snap-center",
+                    selo.cor_bg || 'bg-amber-100'
+                  )}
+                >
+                  {selo.icone || '🏆'}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2. Módulos e Fila Virtual */}

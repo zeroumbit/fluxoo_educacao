@@ -70,7 +70,7 @@ export function DocumentosPage() {
   const { data: alunos, isLoading: loadingAlunos } = useAlunos()
   const { data: solicitacoes, isLoading: loadingSolicitacoes } = useSolicitacoesDocumento()
   const atualizarSolicitacao = useAtualizarSolicitacao()
-  const vincularDocumento = useVincularDocumentoSolicitacao()
+  const _vincularDocumento = useVincularDocumentoSolicitacao()
   const criarTemplate = useCriarTemplate()
   const atualizarTemplate = useAtualizarTemplate()
   const excluirTemplate = useExcluirTemplate()
@@ -333,7 +333,7 @@ export function DocumentosPage() {
     printWindow.document.close();
   };
 
-  const { isGenerating, generateAndDownload, generateAndView } = usePdf()
+  const { _isGenerating, generateAndDownload, generateAndView } = usePdf()
 
   const handlePrint = () => {
     openPrintWindow()

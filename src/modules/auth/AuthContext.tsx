@@ -45,7 +45,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 /** Utilitário: Executa uma promise com timeout */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+function _withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
     promise,
     new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
@@ -255,7 +255,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           if (loadingLock) return
           loadingLock = true
-          setLoading(true)
+          
+          // Só ativa o estado de loading se ainda não tivermos um usuário carregado.
+          // Isso evita que atualizações de background (USER_UPDATED) desmontem o app.
+          if (!authUser) {
+            setLoading(true)
+          }
+
           try {
             await loadUserProfile(session.user, session)
           } finally {

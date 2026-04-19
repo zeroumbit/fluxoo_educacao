@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 
-const vibrate = (ms: number | number[] = 20) => {
+const _vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
 }
 
@@ -38,7 +38,7 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
   
   const isAprovado = resultado === 'aprovado' || resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 7)
   const isRecuperacao = resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 5 && notaFinal < 7)
-  const isReprovado = resultado?.startsWith('reprovado') || (!resultado && notaFinal < 5)
+  const _isReprovado = resultado?.startsWith('reprovado') || (!resultado && notaFinal < 5)
 
   const badgeResultado = resultado === 'aprovado' ? 'Aprovado' :
     resultado === 'aprovado_recuperacao' ? 'Rec.' :

@@ -57,7 +57,7 @@ const funcSchema = z.object({
 type FuncFormData = z.infer<typeof funcSchema>
 
 // Exibe apenas o cargo principal, sem a especialização (ex: "Professor de Ed. Física" → "Professor")
-function normalizarCargo(nome: string): string {
+function _normalizarCargo(nome: string): string {
   if (!nome) return nome
   const match = nome.match(/^([^\s]+(?:\s+[^\s]+)*?)\s+(de|do|da|dos|das)\s/i)
   if (match) return match[1]
@@ -70,7 +70,7 @@ export function FuncionariosPageMobile() {
   const { data: funcoesCatalogo = [] } = useFuncoes()
   const criar = useCriarFuncionario()
   const atualizar = useAtualizarFuncionario()
-  const excluir = useExcluirFuncionario()
+  const _excluir = useExcluirFuncionario()
   const gerarFolha = useGerarFolhaPagamento()
 
   // Estados UI
