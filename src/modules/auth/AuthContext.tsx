@@ -224,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }
       } catch (err) {
-        console.error('Erro no fallback do AuthContext:', err)
+        if (import.meta.env.DEV) console.error('Erro no fallback do AuthContext:', err)
       }
 
       // 4. Caso padrão
@@ -239,7 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSuperAdmin: false
       })
     } catch (err) {
-      console.error('Erro no carregamento de perfil:', err)
+      if (import.meta.env.DEV) console.error('Erro no carregamento de perfil:', err)
       setAuthUser(null)
     }
   }, [])

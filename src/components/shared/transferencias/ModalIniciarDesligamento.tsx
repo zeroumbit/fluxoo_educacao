@@ -4,10 +4,11 @@ import React, { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { School, ArrowRight, Info, Building2, Search, ExternalLink } from "lucide-react"
+import { School, ArrowRight, Info, Building2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/modules/auth/AuthContext"
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,7 @@ export function ModalIniciarDesligamento({
   alunoId,
   alunoNome,
 }: ModalIniciarDesligamentoProps) {
+  const { authUser } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<DesligamentoFormValues>({
@@ -91,29 +93,30 @@ export function ModalIniciarDesligamento({
   const onSubmit = async (data: DesligamentoFormValues) => {
     setIsSubmitting(true)
     try {
-      const { error } = await supabase
-        .from('transferencias_escolares')
+      const { error } = await (supabase
+        .from('transferencias_escolares' as any) as any)
         .insert({
           aluno_id: alunoId,
-          escola_origem_id: (await supabase.auth.getUser()).data.user?.user_metadata?.tenant_id,
-          escola_destino_id: data.isForaDoSistema ? null : data.escolaDestinoId,
+          escola_origem_id: authUser?.tenantId,
+          escola_destino_id: data.isForaDoSistema ? null : (data.escolaDestinoId || null),
           escola_destino_nome_manual: data.isForaDoSistema ? data.nomeEscolaManual : null,
           escola_destino_cnpj_manual: data.isForaDoSistema ? data.cnpjEscolaManual : null,
-          responsavel_id: 'fetch-from-aluno-context',
+          responsavel_id: null, // será configurado após busca pelos responsáveis do aluno
           iniciado_por: 'origem',
           status: 'aguardando_responsavel',
           motivo_solicitacao: data.motivo,
-        } as any)
+        })
 
       if (error) throw error
 
-      toast.success("Desligamento iniciado!", {
-        description: "O responsável foi notificado para validar o processo."
+      toast.success("Transferência iniciada!", {
+        description: "O responsável será notificado para validar o processo."
       })
+      form.reset()
       onClose()
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao iniciar desligamento.")
+      toast.error("Erro ao iniciar transferência.")
     } finally {
       setIsSubmitting(false)
     }
@@ -128,12 +131,23 @@ export function ModalIniciarDesligamento({
             Transferência de Saída
           </DialogTitle>
           <DialogDescription>
-            Iniciando fluxo para <span className="font-bold text-foreground">{alunoNome}</span>.
+            Inicie a transferência de saída de <strong>{alunoNome}</strong>.
+            Lembre-se: após a concordância do responsável, a escola possui a obrigação legal de liberar o aluno em até 30 dias.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3">
+              <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-blue-900">Prazo de Documentação</p>
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  Este processo notificará os pais para aprovação. Uma vez aprovado, sua escola terá <strong>30 dias</strong> para regularizar a documentação e confirmar a liberação definitiva.
+                </p>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between space-x-2 rounded-lg border p-3 bg-muted/30">
               <div className="flex flex-col space-y-0.5">
                 <Label className="text-sm font-semibold">Escola Fora do Sistema</Label>

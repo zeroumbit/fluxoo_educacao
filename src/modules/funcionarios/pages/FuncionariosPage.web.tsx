@@ -72,6 +72,15 @@ function parsearMoeda(valor: string): number {
   return parseFloat(limpo.replace(/\./g, ''))
 }
 
+// Exibe apenas o cargo principal, sem a especialização (ex: "Professor de Ed. Física" → "Professor")
+function normalizarCargo(nome: string): string {
+  if (!nome) return nome
+  // Remove especializações introduzidas por preposições (de, do, da, dos, das)
+  const match = nome.match(/^([^\s]+(?:\s+[^\s]+)*?)\s+(de|do|da|dos|das)\s/i)
+  if (match) return match[1]
+  return nome
+}
+
 // ---------------------------------------------------------------------------
 // Componente: Modal "Nova Função"
 // ---------------------------------------------------------------------------
@@ -628,9 +637,12 @@ export function FuncionariosPage() {
                   <TableBody>
                     {(tab === 'ativos' ? ativos : inativos).map((f: any) => {
                       // Suporte a legado: exibe funcoes[] se existir, senão exibe funcao
-                      const funcoesList: string[] = Array.isArray(f.funcoes) && f.funcoes.length > 0
+                      const funcoesListRaw: string[] = Array.isArray(f.funcoes) && f.funcoes.length > 0
                         ? f.funcoes
                         : f.funcao ? [f.funcao] : []
+                      
+                      // Normalizar e dedupar funções (ex: ["Professor de Ed. Física", "Professor de Matemática"] → ["Professor"])
+                      const funcoesUnicas = [...new Set(funcoesListRaw.map(fn => normalizarCargo(fn)))]
 
                       return (
                         <TableRow key={f.id}>
@@ -642,8 +654,8 @@ export function FuncionariosPage() {
                           </TableCell>
                           <TableCell className="pl-4">
                             <div className="flex flex-wrap gap-1">
-                              {funcoesList.length > 0
-                                ? funcoesList.map(fn => (
+                              {funcoesUnicas.length > 0
+                                ? funcoesUnicas.map(fn => (
                                     <Badge key={fn} variant="outline" className="text-xs">{fn}</Badge>
                                   ))
                                 : <span className="text-muted-foreground text-xs">—</span>

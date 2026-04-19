@@ -303,6 +303,27 @@ export function useSolicitarTransferencia() {
   })
 }
 
+export function useSolicitarSaida() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof transferenciasService.solicitarSaida>[0]) =>
+      transferenciasService.solicitarSaida(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+    }
+  })
+}
+
+export function useLiberarAluno() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => transferenciasService.liberarAluno(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+    }
+  })
+}
+
 export function useCheckPermissaoTransferencia() {
   const { authUser } = useAuth()
   return useQuery({

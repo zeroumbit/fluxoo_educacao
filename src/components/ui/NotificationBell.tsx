@@ -205,7 +205,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
   );
 
   return (
-    <div className={cn("relative z-[101]", className)}>
+    <div className={cn("relative z-[50]", className)}>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <button

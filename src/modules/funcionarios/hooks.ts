@@ -16,7 +16,11 @@ export function useCriarFuncionario() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: any) => funcionariosService.criar(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['funcionarios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['funcionarios'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    },
   })
 }
 
@@ -24,7 +28,11 @@ export function useAtualizarFuncionario() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => funcionariosService.atualizar(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['funcionarios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['funcionarios'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    },
   })
 }
 
@@ -32,7 +40,11 @@ export function useExcluirFuncionario() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => funcionariosService.excluir(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['funcionarios'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['funcionarios'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    },
   })
 }
 

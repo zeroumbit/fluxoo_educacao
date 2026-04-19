@@ -94,9 +94,9 @@ export function PortalHomeV2Web() {
           <div className="flex items-center gap-4">
             <span className="text-sm font-bold text-slate-400 tracking-wider">ACESSAR PERFIL:</span>
             <div className="flex -space-x-2">
-              {vinculos.map((v: any) => (
+              {vinculos.map((v: any, index: number) => (
                 <div
-                  key={v.aluno?.id}
+                  key={v.aluno?.id || `vinculo-${index}`}
                   onClick={() => {
                     selecionarAluno(v);
                     navigate(`/portal/alunos/${v.aluno?.id}`);

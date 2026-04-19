@@ -253,11 +253,24 @@ export const dashboardService = {
         (a.cobrancas_atrasadas + a.faltas_consecutivas)
     )
 
-    // Buscar configurações financeiras e de autorizações (usando count para evitar erro de multiple rows no maybeSingle)
+// Buscar configurações de onboarding usando count para evitar falsos negativos com RLS
+    // NOTA: config_financeira é um campo JSONB em 'configuracoes_escola', não uma tabela própria
     const [configFinanceiraRes, funcionariosRes, autorizacoesRes] = await Promise.all([
-      supabase.from('config_financeira').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('funcionarios').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('autorizacoes_modelos').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      (supabase as any)
+        .from('configuracoes_escola')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .is('vigencia_fim', null)
+        .not('config_financeira', 'is', null),
+      supabase
+        .from('funcionarios')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+      supabase
+        .from('autorizacoes_modelos')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+    ])
     ])
 
     return {
@@ -277,9 +290,9 @@ export const dashboardService = {
         possuiFilial: professorId ? true : (filiaisRes.count || 0) > 0,
         possuiTurma: professorId ? true : (turmasRes.count || 0) > 0,
         possuiAluno: professorId ? true : (alunosRes.count || 0) > 0,
-        possuiFuncionario: professorId ? true : (funcionariosRes.count || 0) > 0,
-        configFinanceira: professorId ? true : (configFinanceiraRes.count || 0) > 0,
-        autorizacoes: professorId ? true : (autorizacoesRes.count || 0) > 0,
+possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
+        configFinanceira: professorId ? true : (configFinanceiraRes.count ?? 0) > 0,
+        autorizacoes: professorId ? true : (autorizacoesRes.count ?? 0) > 0,
       },
       radarEvasao: radarData,
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),

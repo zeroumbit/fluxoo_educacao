@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { usePortalContext } from '../context'
 import { supabase } from '@/lib/supabase'
-import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento, useTransferenciasPortal, useResponderTransferencia } from '../hooks'
+import { useDashboardAluno, useConfigPix, useSolicitacoesDocumento, useTransferenciasPortal, useResponderTransferencia, useNotificacoesFamilia, useConfigRecados } from '../hooks'
 import { ModalFichaAluno } from '../components/ModalFichaAluno'
 import { ModalContratoEscola } from '../components/ModalContratoEscola'
+import { WelcomeAnnouncementCard } from '../components/WelcomeAnnouncementCard'
 import { PortalModalPage } from '../components/PortalModalPage'
 import { PortalAgendaPage } from './PortalAgendaPage'
 import { PortalFrequenciaPage } from './PortalFrequenciaPage'
@@ -249,6 +250,8 @@ export function PortalDashboardPage() {
   const { data: configPix } = useConfigPix()
   const { data: solicitacoes } = useSolicitacoesDocumento()
   const { data: transferencias } = useTransferenciasPortal()
+  const { data: notificacoesFamilia } = useNotificacoesFamilia()
+  const { data: configRecados } = useConfigRecados()
   const responderTransferencia = useResponderTransferencia()
   const navigate = useNavigate()
   const [showPixModal, setShowPixModal] = useState(false)
@@ -347,6 +350,15 @@ export function PortalDashboardPage() {
             </button>
           </div>
         </div>
+      ))}
+
+      {/* INFORMATIVOS DE BOAS-VINDAS E TRANSPARÊNCIA FINANCEIRA */}
+      {notificacoesFamilia?.filter(n => n.tipo === 'WELCOME_RELEASE' && !n.lida).map(notif => (
+        <WelcomeAnnouncementCard 
+          key={notif.id} 
+          notification={notif} 
+          whatsappNumber={configRecados?.whatsapp_contato || undefined}
+        />
       ))}
 
       <motion.div 

@@ -58,6 +58,7 @@ export function useToggleAtivoAutorizacao() {
       autorizacoesService.toggleAtivo(id, ativa),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizacoes'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'autorizacoes'] })
     },
   })
 }
@@ -108,6 +109,7 @@ export function useResponderAutorizacao() {
     }) => autorizacoesService.responderAutorizacao(dados),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizacoes'] })
+      queryClient.invalidateQueries({ queryKey: ['portal', 'autorizacoes'] })
     },
   })
 }
