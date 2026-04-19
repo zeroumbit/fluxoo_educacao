@@ -50,7 +50,7 @@ export function PortalAlunoCadastroV2() {
   const [newPatologia, setNewPatologia] = useState('');
   const [newMedicamento, setNewMedicamento] = useState('');
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<AlunoCadastroForm>({
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<AlunoCadastroForm>({
     resolver: zodResolver(alunoCadastroSchema),
   });
 

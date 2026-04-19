@@ -32,7 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 export function AlmoxarifadoPageMobile() {
   const { authUser } = useAuth()
-  const { data: itens, isLoading, refetch } = useItensAlmoxarifado()
+  const { data: itens, isLoading, refetch } = useItensAlmoxarifado()
   const { data: movs, refetch: refetchMovs } = useMovimentacoes()
   const criarMov = useCriarMovimentacao()
   const criarItem = useCriarItemAlmoxarifado()

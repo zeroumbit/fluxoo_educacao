@@ -186,7 +186,7 @@ const _getInitials = (name: string) => {
 };
 
 export function PortalAvisosPageV2Mobile() {
-  const { alunoSelecionado, _selecionarAluno, vinculos, _isMultiAluno, isLoading: loadingCtx } = usePortalContext()
+  const { alunoSelecionado, _selecionarAluno, vinculos, _isMultiAluno, isLoading: loadingCtx } = usePortalContext()
   const { data: avisos, isLoading } = useAvisosPortal()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 

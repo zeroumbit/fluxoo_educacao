@@ -54,7 +54,7 @@ const IconMap: Record<string, any> = {
 
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { isLoading: loadingCtx } = usePortalContext()
   

@@ -593,7 +593,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // TAB: GRADE HORÁRIA
 // ─────────────────────────────────────────────────────────────────────────────
-function TabGrade({ turma }: { turma: Turma }) {
+function TabGrade({ turma }: { turma: Turma }) {
   return (
     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
       <div className="p-8 mt-4 text-center bg-indigo-50/50 dark:bg-indigo-900/20 rounded-[2rem] border border-dashed border-indigo-200 dark:border-indigo-800">

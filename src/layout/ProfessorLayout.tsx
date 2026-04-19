@@ -261,7 +261,7 @@ export function ProfessorLayout() {
   const { authUser } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const { data: notifications, isLoading: isLoadingNotifs } = useProfessorNotifications()
 
   // Detectar mobile
