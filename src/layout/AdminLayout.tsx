@@ -43,15 +43,26 @@ import {
   ArrowRightLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { NotificationBell } from '@/components/NotificationBell'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
+
+interface NavItem {
+  name: string
+  href: string
+  icon: any
+  permission: string
+}
+
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
 import { usePermissions } from '@/providers/RBACProvider'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { useEscola } from '@/modules/escolas/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMarketplaceCategorias } from '@/modules/super-admin/marketplace.hooks'
-
-
 
 // Itens fixos na parte inferior da sidebar (sempre por último)
 const bottomNavigationItems = [
@@ -257,7 +268,7 @@ function SidebarContent({
                 {isGroupBlocked && <Lock className="h-2.5 w-2.5" />}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => (
+                {group.items.map((item: NavItem) => (
                   <NavLink
                     key={item.href}
                     to={isGroupBlocked ? '#' : item.href}
@@ -530,9 +541,8 @@ export function AdminLayout() {
           </div>
           <div className="flex items-center gap-3">
              <NotificationBell
-               count={notifications?.total || 0}
+               total={notifications?.total || 0}
                items={notifications?.items || []}
-               isLoading={isLoadingNotifs}
              />
           </div>
         </header>

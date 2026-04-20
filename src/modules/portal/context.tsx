@@ -100,7 +100,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       
       if (!alunoSelecionado || alunoNoCacheInvalido) {
         carregarDadosCompletos(vinculos[0])
-      } else if (!alunoSelecionado.turma) {
+      } else if (!alunoSelecionado.turma || !alunoSelecionado.codigo_transferencia) {
         const v = vinculos.find(v => (v.aluno_id || v.aluno?.id) === alunoSelecionado.id)
         if (v) carregarDadosCompletos(v)
       }

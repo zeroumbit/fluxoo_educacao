@@ -30,11 +30,11 @@ export const QueryKeys = {
   // Módulo Portal do Aluno/Responsável
   PORTAL: {
     ROOT: ['portal'] as const,
-    DASHBOARD: (alunoId: string, tenantId?: string, turmaId?: string | null) => ['portal', 'dashboard', alunoId, tenantId, turmaId] as const,
+    DASHBOARD: (alunoId: string, tenantId?: string | null, turmaId?: string | null) => ['portal', 'dashboard', alunoId, tenantId, turmaId] as const,
     VINCULOS: (responsavelId: string) => ['portal', 'vinculos', responsavelId] as const,
     COBRANCAS: (alunoId: string) => ['portal', 'cobrancas', alunoId] as const,
-    BOLETINS: (alunoId: string, tenantId?: string) => ['portal', 'boletins', alunoId, tenantId] as const,
-    FREQUENCIA: (alunoId: string, tenantId?: string, mes?: string) => ['portal', 'frequencia', alunoId, tenantId, mes] as const,
+    BOLETINS: (alunoId: string, tenantId?: string | null) => ['portal', 'boletins', alunoId, tenantId] as const,
+    FREQUENCIA: (alunoId: string, tenantId?: string | null, mes?: string) => ['portal', 'frequencia', alunoId, tenantId, mes] as const,
   },
 
   // Módulo Admin / Marketplace

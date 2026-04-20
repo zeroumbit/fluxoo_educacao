@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
+import { FileSignature, Receipt, Clock, Info, ArrowRight, ChevronRight, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePortalContext } from '../../context';
 import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
@@ -10,6 +10,7 @@ import { usePortalNotifications } from '@/hooks/useNotifications';
 import { NativeHeader } from '../components/NativeHeader';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
 import { useFilaVirtual } from '../../hooks';
+import { toast } from 'sonner';
 
 // Helper to get initials
 const _getInitials = (name: string) => {
@@ -18,7 +19,7 @@ const _getInitials = (name: string) => {
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, _selecionarAluno, _alunoSelecionado, isLoading } = usePortalContext();
+  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, isLoading } = usePortalContext();
   const { data: dashboard, isLoading: loadingDash } = useDashboardFamilia();
   const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();
@@ -108,6 +109,55 @@ export function PortalHomeV2Mobile() {
         title="Home"
         showNotifications
       />
+
+      {/* 1.1 Card de Aluno Atual - Acesso Rápido ao ID e Perfil */}
+      {alunoSelecionado && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => navigate(`/portal/alunos/${alunoSelecionado.id}`)}
+          className="bg-white p-4 rounded-[24px] shadow-sm border border-slate-100 flex items-center gap-4 active:scale-[0.98] transition-transform"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-xl font-black shadow-sm overflow-hidden flex-shrink-0">
+             {alunoSelecionado.foto_url ? (
+               <img src={alunoSelecionado.foto_url} alt={alunoSelecionado.nome_completo} className="w-full h-full object-cover" />
+             ) : (
+               alunoSelecionado.nome_completo ? alunoSelecionado.nome_completo.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'A'
+             )}
+          </div>
+          <div className="flex flex-col flex-1 min-w-0">
+            <h2 className="text-[16px] font-bold text-slate-800 truncate leading-tight mb-0.5">
+              {alunoSelecionado.nome_completo}
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-teal-600 uppercase tracking-wide">
+                {alunoSelecionado.turma?.nome || 'Sem Turma'}
+              </span>
+              
+              {alunoSelecionado.codigo_transferencia && (
+                <>
+                  <span className="text-slate-300 text-[10px]">•</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia);
+                      toast.success('ID copiado!');
+                      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+                    }}
+                    className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100 active:scale-95 transition-transform"
+                  >
+                    <span className="text-[10px] font-bold text-amber-700 font-mono">
+                      ID: {alunoSelecionado.codigo_transferencia}
+                    </span>
+                    <Copy size={10} className="text-amber-400" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </motion.div>
+      )}
 
       {/* 2. Alertas Críticos - iOS Banner / Material Alert */}
       <section className="flex flex-col gap-3" role="region" aria-label="Alertas">

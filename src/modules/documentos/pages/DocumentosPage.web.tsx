@@ -333,7 +333,7 @@ export function DocumentosPage() {
     printWindow.document.close();
   };
 
-  const { _isGenerating, generateAndDownload, generateAndView } = usePdf()
+  const { isGenerating, generateAndDownload, generateAndView } = usePdf()
 
   const handlePrint = () => {
     openPrintWindow()

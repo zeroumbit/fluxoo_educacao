@@ -680,7 +680,7 @@ export const financeiroService = {
    * Idempotente: não duplica cobranças já existentes.
    */
   async gerarMensalidadesFaltantes() {
-    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_tenant_atual') as any)
+    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_tenant_atual' as any) as any)
 
     if (error) {
       logger.error('Erro ao gerar mensalidades faltantes:', error)
@@ -695,7 +695,7 @@ export const financeiroService = {
    * Útil para o Portal garantir que o responsável veja o ano todo do aluno selecionado.
    */
   async repararMensalidadesAluno(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno', {
+    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno' as any, {
       p_aluno_id: alunoId,
       p_tenant_id: tenantId
     }) as any)

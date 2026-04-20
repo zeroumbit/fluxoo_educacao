@@ -130,7 +130,8 @@ export const portalService = {
           data_nascimento,
           status,
           tenant_id,
-          foto_url
+          foto_url,
+          codigo_transferencia
         )
       `)
       .eq('responsavel_id', responsavelId)

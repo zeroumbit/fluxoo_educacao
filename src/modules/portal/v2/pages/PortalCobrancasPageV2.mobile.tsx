@@ -286,7 +286,7 @@ export function PortalCobrancasPageV2Mobile() {
       </Sheet>
 
       {/* 5. Bottom Sheet - Checkout PIX */}
-      <CheckoutModalMobile
+      <PagamentoPixManualMobile
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         cobranca={cobrancaAtiva}
@@ -624,7 +624,7 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
   )
 }
 
-function CheckoutModalMobile({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
+function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const { data: configPix } = useQuery({
     queryKey: ['portal', 'config-pix', cobranca?.tenant_id],
     queryFn: () => portalService.buscarConfigPixEscola(cobranca?.tenant_id!),

@@ -67,30 +67,6 @@ export function useExcluirTurma() {
       queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
     },
   })
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, turma }: { id: string; turma: TurmaUpdate }) =>
-      turmaService.atualizar(id, turma),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
-    },
-  })
-}
-
-export function useExcluirTurma() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => turmaService.excluir(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['turmas'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
-      queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
-    },
-  })
 }
 
 export function useTurmaDoAluno(alunoId: string) {
@@ -247,7 +223,7 @@ export function useContarAlunosTurma(turmaId: string) {
   })
 }
 
-const _updateMensalidadeSchema = z.object({
+const updateMensalidadeSchema = z.object({
   turmaId: z.string().uuid(),
   tenantId: z.string().uuid(),
   valor: z.number().positive("O valor deve ser maior que zero"),

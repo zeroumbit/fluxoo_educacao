@@ -35,7 +35,7 @@ const vibrate = (ms: number | number[] = 15) => {
   }
 }
 
-export function NotificationBell({ total, items, className, onItemClick, _tenantId }: NotificationBellProps) {
+export function NotificationBell({ total, items, className, onItemClick, tenantId }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();

@@ -1,6 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useDashboard } from '../dashboard.hooks'
@@ -40,13 +47,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
@@ -271,7 +271,7 @@ function DashboardContent() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const userRole = authUser?.role
-  const { alertas, _mudarStatusAlerta } = useAlertas()
+  const { alertas, mudarStatusAlerta } = useAlertas()
 
   const {
     data: dashboardData,
@@ -283,9 +283,14 @@ function DashboardContent() {
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
+  const [showAllRadares, setShowAllRadares] = useState(false)
   
   // Filtra apenas alertas ativos para a visualização principal
   const radarEvasaoAtivo = useMemo(() => alertas.filter(a => a.status === 'ativo'), [alertas])
+  const visibleRadarCount = 2
+  const radarExibir = showAllRadares ? radarEvasaoAtivo : radarEvasaoAtivo.slice(0, visibleRadarCount)
+  const totalRadar = radarEvasaoAtivo.length
+  const temMaisRadar = totalRadar > visibleRadarCount
 
   const handleOpenRadarDetails = (aluno: RadarAluno) => {
     setSelectedRadarAluno(aluno)
@@ -293,8 +298,12 @@ function DashboardContent() {
   }
 
   const handleCloseRadarSheet = () => {
+    const wasViewingAll = showAllRadares
     setIsRadarSheetOpen(false)
-    setTimeout(() => setSelectedRadarAluno(null), 300)
+    setSelectedRadarAluno(null)
+    if (wasViewingAll) {
+      setShowAllRadares(false)
+    }
   }
 
   const onboardingStatus = {
@@ -514,9 +523,17 @@ function DashboardContent() {
                   <p className="text-xs font-semibold text-rose-600/70 mt-1 uppercase tracking-widest">Alunos em Risco Crítico</p>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
-                  {radarEvasao.map((aluno) => (
+                  {radarExibir.map((aluno) => (
                     <RadarCard key={aluno.aluno_id} aluno={aluno} onOpenDetails={handleOpenRadarDetails} />
                   ))}
+                  {temMaisRadar && (
+                    <button
+                      onClick={() => setShowAllRadares(true)}
+                      className="w-full py-3 text-center text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline transition-colors"
+                    >
+                      Ver todos os {totalRadar} alertas
+                    </button>
+                  )}
                 </CardContent>
               </Card>
             </section>
@@ -568,6 +585,31 @@ function DashboardContent() {
         isOpen={isRadarSheetOpen}
         onClose={handleCloseRadarSheet}
       />
+
+      {/* Modal com Todos os Radares de Evasão */}
+      <Dialog open={showAllRadares && !isRadarSheetOpen} onOpenChange={(open) => setShowAllRadares(open)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-[2rem] p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-rose-900 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Todos os Alertas de Evasão ({totalRadar})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {radarEvasaoAtivo.map((aluno) => (
+              <RadarCard 
+                key={aluno.aluno_id} 
+                aluno={aluno} 
+                onOpenDetails={(a) => {
+                  setSelectedRadarAluno(a)
+                  setIsRadarSheetOpen(true)
+                  setShowAllRadares(false)
+                }} 
+              />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

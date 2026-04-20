@@ -73,7 +73,8 @@ export interface GradeHoraria {
   }[];
 }
 
-export type { AlunoCompacto } from '@/types/shared';
+import type { AlunoCompacto } from '@/types/shared';
+export type { AlunoCompacto };
 
 export interface TurmaStoreState {
   turmas: Turma[];

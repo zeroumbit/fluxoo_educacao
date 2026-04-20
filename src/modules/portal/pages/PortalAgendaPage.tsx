@@ -185,7 +185,7 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                   }
                 }}
                 components={{
-                  DayButton: ({ day, _modifiers, ...props }) => {
+                  DayButton: ({ day, modifiers, ...props }) => {
                     const hasEvent = diasComEvento.some(d => isSameDay(d, day.date))
                     return (
                       <div className="relative w-full h-full p-0 flex flex-col items-center justify-center">

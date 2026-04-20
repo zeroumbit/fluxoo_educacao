@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown, Bell, Users } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Bell, Users, Copy } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
+import { toast } from 'sonner';
 import { 
   Sheet, 
   SheetContent, 
@@ -140,16 +141,25 @@ export function NativeHeader({
                          )}>
                             {v.aluno?.nome_completo}
                          </span>
-                         <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2 mt-1">
                            <span className="text-[12px] font-medium text-slate-400">
                               {v.aluno?.turma?.nome || 'Sem turma'}
                            </span>
-                           {v.aluno?.matricula && (
+                           {v.aluno?.codigo_transferencia && (
                               <>
                                 <span className="text-slate-200 text-[10px]">•</span>
-                                <span className="text-[11px] font-bold text-teal-600/70 bg-teal-50 px-1.5 py-0.5 rounded-md">
-                                   #{v.aluno.matricula}
-                                </span>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(v.aluno.codigo_transferencia);
+                                    toast.success('ID copiado!');
+                                    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+                                  }}
+                                  className="flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md active:scale-95 transition-transform"
+                                >
+                                   <Copy size={10} />
+                                   ID: {v.aluno.codigo_transferencia}
+                                </button>
                               </>
                            )}
                          </div>

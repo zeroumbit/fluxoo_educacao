@@ -12,6 +12,7 @@ export interface AlunoBase {
   turma_id: string | null
   data_nascimento?: string | null
   cpf?: string | null
+  codigo_transferencia?: string | null
 }
 
 export interface TurmaCompacta {

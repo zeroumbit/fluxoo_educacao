@@ -39,7 +39,7 @@ type AutorizacaoModelo = {
 }
 
 export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: boolean }) {
-  const { alunoSelecionado, tenantId, _isMultiAluno } = usePortalContext()
+  const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const { data: responsavel } = useResponsavel()
   const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
   const responder = useResponderAutorizacao()

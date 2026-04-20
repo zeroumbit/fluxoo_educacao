@@ -263,7 +263,7 @@ export function PortalCobrancasPageV2() {
       </Sheet>
 
       {/* Modal de Checkout (PIX) - Versão Clean com QR Code Real da Escola Específica (Isolamento de Contexto) */}
-      <CheckoutModal 
+      <PagamentoPixManual 
          isOpen={showCheckout} 
          onClose={() => setShowCheckout(false)}
          cobranca={cobrancaAtiva}
@@ -498,7 +498,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
   )
 }
 
-function CheckoutModal({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
+function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const isMobile = useIsMobile()
 
   // ISOLAMENTO DE CONTEXTO: Buscar configuração da escola do aluno ESPECÍFICO da cobrança

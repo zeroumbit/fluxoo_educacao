@@ -71,7 +71,7 @@ export function MeuPerfilPageWeb() {
     }
   }, [funcionario, loadingFunc, authUser])
 
-  const { fetchAddressByCEP, fetchCitiesByUF, _cities, _loadingCities, _estados } = useViaCEP()
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, estados } = useViaCEP()
 
   useEffect(() => {
     if (form.estado) {

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, CalendarDays, LineChart, BookOpen, 
   MapPin, ShieldCheck, Car, Settings, Trophy, BookMarked, LayoutList,
-  Activity, Calendar
+  Activity, Calendar, Copy
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
 import { PortalSelosV2 } from '../components/PortalSelosV2';
@@ -17,6 +17,7 @@ import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
+import { toast } from 'sonner';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -83,9 +84,16 @@ export function PortalAlunoPerfilV2Web() {
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">
                 <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{(student as any)?.turma?.nome || 'Sem Turma'}</span>
                 {(student as any)?.codigo_transferencia && (
-                  <span className="font-mono font-bold text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100">
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText((student as any).codigo_transferencia);
+                      toast.success('ID copiado!');
+                    }}
+                    className="flex items-center gap-1.5 font-mono font-bold text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100 hover:bg-amber-100 transition-colors group/copy"
+                  >
                     ID: {(student as any).codigo_transferencia}
-                  </span>
+                    <Copy size={10} className="text-amber-400 group-hover/copy:text-amber-600 transition-colors" />
+                  </button>
                 )}
               </div>
             </div>

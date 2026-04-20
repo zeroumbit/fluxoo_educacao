@@ -1,4 +1,4 @@
-import React, { useState, _useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
   useModelosAutorizacaoAdmin,

@@ -25,7 +25,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 
 export function FinanceiroRelatoriosPageMobile() {
-  const { data: fechamento, isLoading, refetch, _isRefetching } = useFechamentoMensal()
+  const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()
   const { hasPermission } = usePermissions()
   const canExport = hasPermission('financeiro.relatorios.export')
 

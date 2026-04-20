@@ -271,7 +271,6 @@ export const dashboardService = {
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId),
     ])
-    ])
 
     return {
       totalAlunosAtivos: alunosRes.count || 0,

@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search } from 'lucide-react'
+import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro, useDesvincularResponsavel, useAtualizarResponsavel, useVincularResponsavel, useCriarAlunoComResponsavel, useCriarResponsavelAndVincular } from '../hooks'
 import { cn } from '@/lib/utils'
@@ -457,10 +457,18 @@ export function AlunoDetalhePageWeb() {
                   </Badge>
                 )}
                 {aluno.codigo_transferencia && (
-                  <Badge className="px-4 py-1.5 rounded-full font-mono font-black text-[10px] uppercase tracking-widest bg-amber-100 text-amber-800 border-0 shadow-sm shadow-amber-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1.5 inline"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    ID: {aluno.codigo_transferencia}
-                  </Badge>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(aluno.codigo_transferencia)
+                      toast.success('ID do aluno copiado!')
+                    }}
+                    className="group/id"
+                  >
+                    <Badge className="px-4 py-1.5 rounded-full font-mono font-black text-[10px] uppercase tracking-widest bg-amber-100 text-amber-800 border-0 shadow-sm shadow-amber-50 group-hover/id:bg-amber-200 transition-colors flex items-center gap-1.5">
+                      <Copy size={12} className="opacity-50 group-hover/id:opacity-100" />
+                      ID: {aluno.codigo_transferencia}
+                    </Badge>
+                  </button>
                 )}
              </div>
           </div>

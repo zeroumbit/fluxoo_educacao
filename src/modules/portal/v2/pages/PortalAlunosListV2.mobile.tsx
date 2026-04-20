@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, AlertCircle, Copy } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { NativeHeader } from '../components/NativeHeader';
+import { toast } from 'sonner';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -71,16 +72,24 @@ export function PortalAlunosListV2Mobile() {
                   <span className="text-teal-600 font-medium">
                     {v.aluno?.turma?.nome || 'Sem turma'}
                   </span>
-                  {v.aluno?.matricula && (
+                  {v.aluno?.codigo_transferencia && (
                     <>
                       <span className="text-slate-300" aria-hidden="true">•</span>
-                      <span className="font-bold text-teal-600/80 bg-teal-50 px-1.5 py-0.5 rounded-md text-[11px]">
-                        #{v.aluno.matricula}
-                      </span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(v.aluno.codigo_transferencia);
+                          toast.success('ID copiado!');
+                        }}
+                        className="flex items-center gap-1 font-mono font-bold text-[10px] uppercase bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-md border border-amber-100 active:scale-95 transition-transform"
+                      >
+                         <Copy size={10} />
+                         ID: {v.aluno.codigo_transferencia}
+                      </button>
                     </>
                   )}
                   <span className="text-slate-300" aria-hidden="true">•</span>
-                  <span className="font-mono text-slate-500">
+                  <span className="font-mono text-slate-400 text-[11px] uppercase">
                     {v.aluno?.status || 'Ativo'}
                   </span>
                 </div>

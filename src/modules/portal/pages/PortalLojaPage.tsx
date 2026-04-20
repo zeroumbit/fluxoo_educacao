@@ -52,6 +52,50 @@ const IconMap: Record<string, any> = {
   Package, Users, Briefcase, ShoppingBag, Heart, Star, Truck, Store
 }
 
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  price_promocional?: number
+  price_pix?: number
+  image: string
+  category: string
+  rating?: number
+  badge?: string
+}
+
+const PRODUCTS: Product[] = [
+  {
+    id: '1',
+    name: 'Mochila Premium Fluxoo',
+    description: 'Mochila ergonômica com compartimento para notebook e design exclusivo.',
+    price: 249.90,
+    price_promocional: 189.90,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb94c6a62?w=500&q=80',
+    category: 'Acessórios',
+    badge: 'Mais Vendido'
+  },
+  {
+    id: '2',
+    name: 'Kit Escolar Completo',
+    description: 'Conjunto completo de materiais básicos para o ano letivo.',
+    price: 150.00,
+    price_promocional: 124.50,
+    image: 'https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?w=500&q=80',
+    category: 'Material'
+  },
+  {
+    id: '3',
+    name: 'Uniforme Esportivo',
+    description: 'Uniforme em tecido tecnológico dry-fit para atividades físicas.',
+    price: 110.00,
+    price_promocional: 89.00,
+    image: 'https://images.unsplash.com/photo-1515238152791-8216bfdf89a7?w=500&q=80',
+    category: 'Vestuário'
+  }
+]
+
 export function PortalLojaPage() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
@@ -76,6 +120,10 @@ export function PortalLojaPage() {
     else setActiveCategory('all')
   }, [searchParams])
 
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
   const _handleRefresh = () => {
     if (isRefreshing) return
     vibrate([20, 10, 20])
@@ -88,27 +136,16 @@ export function PortalLojaPage() {
     setActiveCategory(cat)
   }
 
-<<<<<<< HEAD
-=======
   const handleProductClick = (product: Product) => {
     vibrate(20)
     setSelectedProduct(product)
   }
-
-  const activeNavCategories = dbCategorias?.map(cat => ({
-    id: cat.id,
-    slug: cat.nome.toLowerCase(),
-    label: cat.nome,
-    icon: IconMap[cat.icone as keyof typeof IconMap] || Package
-  })) || []
 
   // Mock de Seções
   const _sections = [
     { id: 'promocao', title: 'Ofertas Relâmpago', category: 'all', products: PRODUCTS },
     { id: 'livros', title: 'Livros e Didáticos', category: 'livros', products: PRODUCTS.filter(p => p.category === 'livros') },
   ]
-
->>>>>>> DESENVOLVIMENTO
   if (isLoading) {
     return (
       <div className="pt-[env(safe-area-inset-top,24px)] px-4">
@@ -355,8 +392,6 @@ export function PortalLojaPage() {
           </section>
         )}
       </div>
-<<<<<<< HEAD
-=======
 
       {/* 4. Carrinho Drawer */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -423,7 +458,7 @@ export function PortalLojaPage() {
   )
 }
 
-function StoreHomeCard({ product, onClick, index, _isCarousel }: { product: Product, onClick: () => void, index: number, isCarousel?: boolean }) {
+function StoreHomeCard({ product, onClick, index, isCarousel }: { product: Product, onClick: () => void, index: number, isCarousel?: boolean }) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -504,7 +539,6 @@ function ProductDetailsContent({ product, onClose, isMobile }: { product: Produc
           </Button>
         </div>
       </div>
->>>>>>> DESENVOLVIMENTO
     </div>
   )
 }

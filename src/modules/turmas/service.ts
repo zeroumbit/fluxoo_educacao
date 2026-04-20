@@ -89,7 +89,7 @@ export const turmaService = {
   /**
    * Auxiliar para formatar o objeto Disciplina a partir do retorno do banco.
    */
-  _formatarDisciplina(d: any, idsOcultos: string[] = []): Disciplina {
+  formatarDisciplina(d: any, idsOcultos: string[] = []): Disciplina {
     const DISCIPLINE_COLORS: Record<string, string> = {
       'Matemática': '#4f46e5', 'Português': '#ec4899', 'Ciências': '#10b981',
       'História': '#f59e0b', 'Geografia': '#06b6d4', 'Física': '#8b5cf6',

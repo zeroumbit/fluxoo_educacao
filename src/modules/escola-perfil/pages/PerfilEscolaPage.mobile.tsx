@@ -58,7 +58,7 @@ export function PerfilEscolaPageMobile() {
     loadData()
   }, [authUser?.tenantId])
 
-  const { fetchAddressByCEP, fetchCitiesByUF, cities, _loadingCities, loading: buscandoCepHook, estados } = useViaCEP()
+  const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCepHook, estados } = useViaCEP()
 
   useEffect(() => {
     if (form.estado) {

@@ -125,6 +125,51 @@ export function PortalHomeV2Web() {
         </div>
       </header>
 
+      {/* Card de Resumo do Aluno Selecionado - Web */}
+      {alunoSelecionado && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-6 rounded-[40px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex items-center gap-6"
+        >
+          <div className="w-20 h-20 rounded-[28px] bg-teal-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-teal-500/10 overflow-hidden shrink-0">
+             {alunoSelecionado.foto_url ? (
+               <img src={alunoSelecionado.foto_url} alt="" className="w-full h-full object-cover" />
+             ) : (
+               getInitials(alunoSelecionado.nome_completo)
+             )}
+          </div>
+          <div className="flex flex-col flex-1 gap-1">
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">
+              {alunoSelecionado.nome_completo}
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-teal-50 text-teal-600 rounded-xl text-sm font-bold uppercase tracking-widest">
+                {alunoSelecionado.turma?.nome || 'Sem Turma'}
+              </span>
+              {alunoSelecionado.codigo_transferencia && (
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia);
+                    alert('ID copiado!');
+                  }}
+                  className="flex items-center gap-2 font-mono font-bold text-xs uppercase tracking-tight bg-amber-50 text-amber-700 px-3 py-1 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors"
+                >
+                   ID: {alunoSelecionado.codigo_transferencia}
+                   <ArrowRight size={14} className="text-amber-400 rotate-[-45deg]" />
+                </button>
+              )}
+            </div>
+          </div>
+          <button 
+            onClick={() => navigate(`/portal/alunos/${alunoSelecionado.id}`)}
+            className="px-8 py-4 bg-slate-50 text-slate-600 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors"
+          >
+            Ver Perfil Completo
+          </button>
+        </motion.div>
+      )}
+
       {/* Cards Dinâmicos: Contrato e Fila (Absorção V1) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {responsavel && !responsavel.termos_aceitos && (

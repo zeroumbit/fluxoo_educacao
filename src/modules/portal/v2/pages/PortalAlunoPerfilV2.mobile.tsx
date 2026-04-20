@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, CalendarDays, LineChart, BookOpen, 
-  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library, Trophy
+  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library, Trophy, Copy
 } from 'lucide-react';
 import { GradeCurricularV2 } from '../components/GradeCurricularV2';
 import { PortalSelosV2 } from '../components/PortalSelosV2';
@@ -15,6 +15,8 @@ import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
 import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 import { usePortalContext } from '../../context';
 import { useDashboardAluno, useSelosPortal } from '../../hooks';
@@ -30,8 +32,8 @@ export function PortalAlunoPerfilV2Mobile() {
   const { id } = useParams<{ id: string }>();
   const context = usePortalContext();
   const { alunoSelecionado } = context;
-  const { data: _dashboard } = useDashboardAluno();
-  const { data: selos } = useSelosPortal(alunoSelecionado?.id);
+  const { data: dashboard } = useDashboardAluno();
+  const { data: selos } = useSelosPortal();
 
   // Estado para controlar qual módulo está aberto dentro do drill-down
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -98,13 +100,29 @@ export function PortalAlunoPerfilV2Mobile() {
               {student?.nome_completo || 'Aluno'}
             </h1>
             {/* Caption - iOS Caption 1 / Material Label Large */}
-            <p className="text-[14px] font-semibold text-teal-600 mb-0.5">
-              {student?.turma?.nome || 'Sem Turma'}
-            </p>
-            {/* Caption 2 - iOS Caption 2 / Material Label Medium */}
-            <p className="text-[12px] font-bold text-slate-400 font-mono tracking-wide uppercase">
-              ID: {(student as any)?.codigo_transferencia || '---'}
-            </p>
+            <div className="flex items-center flex-wrap gap-2 mb-0.5">
+              <p className="text-[14px] font-semibold text-teal-600">
+                {student?.turma?.nome || 'Sem Turma'}
+              </p>
+              {student?.codigo_transferencia && (
+                <>
+                  <span className="text-slate-300 text-[10px]">•</span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(student.codigo_transferencia);
+                      toast.success('ID do aluno copiado!');
+                      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+                    }}
+                    className="flex items-center gap-1 active:scale-95 transition-transform bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100"
+                  >
+                    <span className="text-[11px] font-bold text-amber-700 font-mono">
+                      ID: {student.codigo_transferencia}
+                    </span>
+                    <Copy size={10} className="text-amber-400" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
