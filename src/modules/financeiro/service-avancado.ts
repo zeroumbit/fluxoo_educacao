@@ -38,9 +38,10 @@ export const financeiroAvancadoService = {
       instrucoes_responsavel: config.instrucoes_pix || '',
       // Mapeamento: pix_auto -> qr_code_auto (compatibilidade)
       qr_code_auto: config.pix_auto || false,
+      //QR Code Manual Upload - CAMPO CRÍTICO NUNCA DEVE SER REMOVIDO
+      pix_qr_code_url: config.pix_qr_code_url || '',
       // Mapeamento: presencial -> dinheiro_cartao_presencial (compatibilidade)
       dinheiro_cartao_presencial: config.presencial ?? true,
-      pix_qr_code_url: '',
       qtd_mensalidades_automaticas: config.qtd_mensalidades_automaticas || 12,
       // Campos adicionais para compatibilidade total
       pix_chave: config.chave_pix || '', // legado
@@ -79,6 +80,8 @@ export const financeiroAvancadoService = {
         instrucoes_pix: config.instrucoes_responsavel ?? current?.config_financeira?.instrucoes_pix ?? '',
         // Mapeamento reverso: qr_code_auto -> pix_auto
         pix_auto: config.qr_code_auto !== undefined ? config.qr_code_auto : (current?.config_financeira?.pix_auto ?? false),
+        //QR Code Manual Upload - CAMPO CRÍTICO NUNCA DEVE SER REMOVIDO
+        pix_qr_code_url: config.pix_qr_code_url ?? current?.config_financeira?.pix_qr_code_url ?? '',
         // Mapeamento reverso: dinheiro_cartao_presencial -> presencial
         presencial: config.dinheiro_cartao_presencial !== undefined ? config.dinheiro_cartao_presencial : (current?.config_financeira?.presencial ?? true),
         // Campos adicionais

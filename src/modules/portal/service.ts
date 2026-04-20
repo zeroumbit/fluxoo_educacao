@@ -430,7 +430,7 @@ export const portalService = {
       pix_manual_ativo: config.pix_manual,
       chave_pix: config.chave_pix,
       favorecido: config.nome_favorecido,
-      qr_code_url: null, // Campo legado ou via API externa
+      qr_code_url: config.pix_qr_code_url || null, // QR CodeManual uploaded pela escola
       instrucoes_extras: config.instrucoes_pix,
       qr_code_auto: config.pix_auto,
       dias_carencia: config.dias_carencia || 0,

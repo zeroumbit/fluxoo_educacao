@@ -301,7 +301,7 @@ export function ConfigFinanceiraPage() {
                         <Upload className="mr-2 h-4 w-4" /> Upload Imagem do QR
                       </Button>
                     )}
-                    <Input id="qrcode-upload" type="file" accept="image/*" className="hidden" onChange={handleUploadQRCode} />
+                    <Input id="qrcode-upload" type="file" accept="image/png,image/webp,image/jpeg,application/pdf" className="hidden" onChange={handleUploadQRCode} />
                   </div>
                 </div>
               )}
