@@ -283,32 +283,33 @@ export function ConfigFinanceiraPage() {
                   placeholder="Ex: enviar comprovante para o whatsapp (85) 9 xxxx-xxxx"
                 />
               </div>
-
-              <div className="md:col-span-2 space-y-2 pt-2 border-t border-dashed mt-2 border-zinc-200">
-                <Label className="flex items-center gap-2 text-zinc-900 font-semibold">
-                  <QrCode className="h-4 w-4" />
-                  Upload do QR Code PIX (PNG, WEBP, PDF)
-                </Label>
-                <p className="text-[10px] text-zinc-500">Imagem do QR Code que aparece no portal para os responsáveis escanearem</p>
-                <div className="flex items-start gap-4">
-                  {form.pix_qr_code_url ? (
-                    <div className="relative group">
-                      <img src={form.pix_qr_code_url} alt="QR Code PIX" className="h-28 w-28 object-contain border-2 border-teal-200 rounded-lg bg-white p-2 shadow-sm" />
-                      <button onClick={() => setForm({...form, pix_qr_code_url: ''})} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity" type="button"><X className="h-3 w-3" /></button>
-                    </div>
-                  ) : (
-                    <Button type="button" variant="outline" size="sm" className="h-10 border-dashed" onClick={() => document.getElementById('qrcode-upload')?.click()}>
-                      <Upload className="mr-2 h-4 w-4" /> Upload QR Code
-                    </Button>
-                  )}
-                  <Input id="qrcode-upload" type="file" accept="image/png,image/webp,image/jpeg,application/pdf" className="hidden" onChange={handleUploadQRCode} />
-                  {form.pix_qr_code_url && (
-                    <span className="text-[10px] text-teal-600 font-medium self-center">QR Code configurado!</span>
-                  )}
-                </div>
-              </div>
             </div>
           )}
+
+          {/* Upload QR Code - SEMPRE VISIVEL */}
+          <div className="space-y-2 pt-2 border-t border-dashed mt-2 border-zinc-200">
+            <Label className="flex items-center gap-2 text-zinc-900 font-semibold">
+              <QrCode className="h-4 w-4" />
+              Upload do QR Code PIX (PNG, WEBP, PDF)
+            </Label>
+            <p className="text-[10px] text-zinc-500">Imagem do QR Code que aparece no portal para os responsáveis escanearem</p>
+            <div className="flex items-start gap-4">
+              {form.pix_qr_code_url ? (
+                <div className="relative group">
+                  <img src={form.pix_qr_code_url} alt="QR Code PIX" className="h-28 w-28 object-contain border-2 border-teal-200 rounded-lg bg-white p-2 shadow-sm" />
+                  <button onClick={() => setForm({...form, pix_qr_code_url: ''})} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity" type="button"><X className="h-3 w-3" /></button>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" size="sm" className="h-10 border-dashed" onClick={() => document.getElementById('qrcode-upload')?.click()}>
+                  <Upload className="mr-2 h-4 w-4" /> Upload QR Code
+                </Button>
+              )}
+              <Input id="qrcode-upload" type="file" accept="image/png,image/webp,image/jpeg,application/pdf" className="hidden" onChange={handleUploadQRCode} />
+              {form.pix_qr_code_url && (
+                <span className="text-[10px] text-teal-600 font-medium self-center">QR Code configurado!</span>
+              )}
+            </div>
+          </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div><Label className="font-bold">Dinheiro / Cartão Presencial</Label><p className="text-xs text-muted-foreground">Pagamento no caixa da escola</p></div>
