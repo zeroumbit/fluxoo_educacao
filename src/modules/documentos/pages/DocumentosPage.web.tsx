@@ -7,7 +7,8 @@ import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTemplates, useCriarTemplate, useAtualizarTemplate, useExcluirTemplate, useDocumentosEmitidos, useEmitirDocumento, useSolicitacoesDocumento, useAtualizarSolicitacao, useVincularDocumentoSolicitacao } from '../hooks'
 import { useAlunos, useAluno } from '@/modules/alunos/hooks'
-import { useMatriculaAtivaDoAluno, useHistoricoNotasAluno } from '@/modules/academico/hooks'
+import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
+import { useBoletimV2PorAluno } from '@/modules/academico/hooks/hooks.v2'
 import { useEscola } from '@/modules/escolas/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,7 +80,7 @@ export function DocumentosPage() {
   const [selectedAluno, setSelectedAluno] = useState('')
   const { data: matriculaAtiva } = useMatriculaAtivaDoAluno(selectedAluno)
   const { data: alunoCompleto } = useAluno(selectedAluno)
-  const { data: historicoNotas } = useHistoricoNotasAluno(selectedAluno)
+  const { data: boletimV2 } = useBoletimV2PorAluno(selectedAluno)
   const { data: escola } = useEscola(authUser?.tenantId || '')
 
   const [activeTab, setActiveTab] = useState('central')
@@ -202,16 +203,15 @@ export function DocumentosPage() {
       hashValidacao: 'DOC-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
       parentesco: 'Responsável',
       responsavelFinanceiro: financeiroRel?.nome || 'Principal',
-      notas: historicoNotas ? historicoNotas.flatMap((b: any) => 
-        (b.disciplinas || []).map((d: any) => ({
-          disciplina: `${d.disciplina} (${b.bimestre}º Bim / ${b.ano_letivo})`,
-          media: d.nota,
-          faltas: d.faltas || 0,
-          situacao: d.nota >= 7 ? 'Aprovado' : 'Em Recuperação'
-        }))
-      ) : [],
-      sintesePedagogica: historicoNotas?.[0]?.observacoes || '',
-      parecerFinal: historicoNotas?.some((b: any) => b.bimestre === 4) ? 'Aprovado para a série seguinte' : 'Em curso'
+      notas: boletimV2 ? boletimV2.map((b: any) => ({
+          disciplina: `${b.nome_disciplina} (${b.bimestre}º Bim)`,
+          media: b.media_final ?? '-',
+          faltas: b.total_faltas || 0,
+          situacao: b.resultado === 'cursando' ? 'Em curso' : 
+                   (b.resultado?.includes('aprovado') ? 'Aprovado' : 'Em Recuperação')
+      })) : [],
+      sintesePedagogica: '',
+      parecerFinal: boletimV2?.some((b: any) => b.bimestre === 4 && b.resultado?.includes('aprovado')) ? 'Aprovado para a série seguinte' : 'Em curso'
     }
   }
 

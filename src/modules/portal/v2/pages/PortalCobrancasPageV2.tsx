@@ -596,7 +596,17 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
             <div className="p-3 rounded-[16px] bg-slate-50 border border-slate-200 flex flex-col items-center gap-2">
               <div className="p-2 bg-white rounded-[12px] shadow-md flex items-center justify-center">
                 {configPix?.qr_code_url ? (
-                  <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-24 h-24 sm:w-28 sm:h-28 object-contain" />
+                  configPix.qr_code_url.toLowerCase().endsWith('.pdf') ? (
+                    <div 
+                      onClick={() => window.open(configPix.qr_code_url, '_blank')}
+                      className="flex flex-col items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-all rounded-xl border border-dashed border-rose-200"
+                    >
+                      <FileText size={40} className="text-rose-500" />
+                      <span className="text-[8px] font-black text-rose-600 uppercase tracking-widest text-center">Ver QR Code (PDF)</span>
+                    </div>
+                  ) : (
+                    <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-24 h-24 sm:w-28 sm:h-28 object-contain" />
+                  )
                 ) : (
                   <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center text-slate-300">
                     <QrCode size={36} className="opacity-30" />

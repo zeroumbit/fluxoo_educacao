@@ -1,19 +1,27 @@
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabase'; // Ajuste o path conforme sua configuração
-import { renderExitTranscriptPdf } from './historicoPdfService';
+import { supabase } from '@/lib/supabase';
+import { getExitTranscriptHtmlTemplate, openHistoricoPrintable } from './historicoPdfService';
 
-// ============================================================================
-// 1. Geração de Hash Seguro (SHA-256)
-// ============================================================================
-export function generateValidationHash(alunoId: string, tenantId: string): string {
-  const timestamp = Date.now().toString();
-  const rawData = `${alunoId}:${tenantId}:${timestamp}`;
-  return crypto.createHash('sha256').update(rawData).digest('hex');
+export interface HistoricoDisciplina {
+  disciplina: string;
+  media_final: number;
+  resultado?: string;
 }
 
-// ============================================================================
-// 2. Tipagem do Payload (Snapshot)
-// ============================================================================
+export interface HistoricoFrequencia {
+  presencas: number;
+  faltas: number;
+  justificadas: number;
+  total_aulas: number;
+  percentual: number;
+}
+
+export interface HistoricoAcademico {
+  disciplinas: HistoricoDisciplina[];
+  frequencia: HistoricoFrequencia;
+  media_geral: number;
+}
+
 export interface ExitTranscriptPayload {
   aluno: {
     id: string;
@@ -26,13 +34,7 @@ export interface ExitTranscriptPayload {
     nome_escola: string;
     cnpj: string | null;
   };
-  academico: {
-    media_geral_disciplinas: Array<{
-      disciplina: string;
-      media_final: number;
-    }>;
-    frequencia_total_percentual: number;
-  };
+  academico: HistoricoAcademico;
   dados_saude?: {
     alergias: string[];
     necessidades_especiais: string[];
@@ -48,28 +50,29 @@ export interface BuildTranscriptOpts {
   includeHealthData: boolean;
 }
 
-// ============================================================================
-// 3. Serviço de Agregação de Dados (Payload Builder)
-// ============================================================================
+export function generateValidationHash(alunoId: string, tenantId: string): string {
+  const timestamp = Date.now().toString();
+  const rawData = `${alunoId}:${tenantId}:${timestamp}`;
+  return crypto.createHash('sha256').update(rawData).digest('hex');
+}
+
 export async function buildExitTranscriptPayload(
   alunoId: string,
   tenantId: string,
   opts: BuildTranscriptOpts
 ): Promise<ExitTranscriptPayload> {
   
-  // 3.1. Fetch Dados do Aluno (incluindo código de transferência)
   const { data: aluno, error: alunoError } = await supabase
     .from('alunos')
     .select('id, nome_completo, codigo_transferencia, data_nascimento')
     .eq('id', alunoId)
-    .eq('tenant_id', tenantId) // Garantindo isolamento cross-tenant
+    .eq('tenant_id', tenantId)
     .single();
 
   if (alunoError || !aluno) {
     throw new Error(`Erro ao buscar dados do aluno: ${alunoError?.message || 'Não encontrado'}`);
   }
 
-  // 3.2. Fetch Dados da Escola
   const { data: escola, error: escolaError } = await (supabase as any)
     .from('escolas')
     .select('id, nome, cnpj')
@@ -80,20 +83,56 @@ export async function buildExitTranscriptPayload(
     throw new Error(`Erro ao buscar dados da escola origem: ${escolaError?.message}`);
   }
 
-  // 3.3. Fetch Acadêmico: Médias Finais e Frequência (Mockado para exemplo, adapte para as schemas reais de notas)
-  // Requereria JOIN ou RPC complexo. Aqui representamos a abstração.
-  const academicoMock = {
-    media_geral_disciplinas: [
-      { disciplina: 'Matemática', media_final: 8.5 },
-      { disciplina: 'Português', media_final: 9.0 }
-    ],
-    frequencia_total_percentual: 95.5
-  };
+  const { data: academicoData, error: academicoError } = await (supabase as any)
+    .rpc('fn_get_historico_consolidado_aluno', {
+      p_aluno_id: alunoId,
+      p_tenant_id: tenantId
+    });
 
-  // 3.4. Geração do SHA-256 para rastreabilidade
+  let disciplinas: HistoricoDisciplina[] = [];
+  let frequencia: HistoricoFrequencia = {
+    presencas: 0,
+    faltas: 0,
+    justificadas: 0,
+    total_aulas: 0,
+    percentual: 100
+  };
+  let media_geral = 0;
+
+  if (!academicoError && academicoData && academicoData.length > 0) {
+    const data = academicoData[0];
+    
+    if (data.disciplinas) {
+      disciplinas = (data.disciplinas as any[]).map((d: any) => ({
+        disciplina: d.disciplina || 'Disciplina',
+        media_final: Number(d.media_final) || 0,
+        resultado: d.resultado || 'cursando'
+      }));
+    }
+    
+    if (data.frequencia) {
+      frequencia = {
+        presencas: data.frequencia.presencas || 0,
+        faltas: data.frequencia.faltas || 0,
+        justificadas: data.frequencia.justificadas || 0,
+        total_aulas: data.frequencia.total_aulas || 0,
+        percentual: Number(data.frequencia.percentual) || 100
+      };
+    }
+    
+    media_geral = Number(data.media_geral) || 0;
+  }
+
+  if (disciplinas.length === 0) {
+    disciplinas = [{
+      disciplina: 'Dados não disponíveis',
+      media_final: 0,
+      resultado: 'sem_dados'
+    }];
+  }
+
   const validationHash = generateValidationHash(alunoId, tenantId);
 
-  // 3.5. Construção Inicial do Payload 
   const payload: ExitTranscriptPayload = {
     aluno: {
       id: aluno.id,
@@ -106,14 +145,17 @@ export async function buildExitTranscriptPayload(
       nome_escola: escola.nome,
       cnpj: escola.cnpj
     },
-    academico: academicoMock,
+    academico: {
+      disciplinas,
+      frequencia,
+      media_geral
+    },
     emissao: {
       validation_hash: validationHash,
       emitido_em: new Date().toISOString()
     }
   };
 
-  // 3.6. Tratamento LGPD: Incluir dados sensíveis de saúde APENAS se explicitamente solicitado
   if (opts.includeHealthData) {
     const { data: saude } = await (supabase as any)
       .from('alertas_saude_nee')
@@ -139,67 +181,96 @@ export async function buildExitTranscriptPayload(
   return payload;
 }
 
-// ============================================================================
-// 4. Fluxo de Emissão Final (Transaction/Orchestrator)
-// ============================================================================
-export async function emitirHistoricoOficial(alunoId: string, tenantId: string, transferenciaId: string | null) {
-  // 4.1. Construir e gerar payload JSON com os dados consolidados
-  const payload = await buildExitTranscriptPayload(alunoId, tenantId, { includeHealthData: false });
-  const validationHash = payload.emissao.validation_hash;
+export interface EmitirHistoricoResult {
+  sucesso: boolean;
+  historico_id: string;
+  validation_hash: string;
+  pdf_url: string;
+  message?: string;
+}
 
-  // 4.2. Renderizar PDF
-  const pdfBuffer = await renderExitTranscriptPdf(payload);
+export async function emitirHistoricoOficial(
+  alunoId: string, 
+  tenantId: string, 
+  transferenciaId: string | null,
+  incluirDadosSaude: boolean = false,
+  userId?: string
+): Promise<EmitirHistoricoResult> {
+  try {
+    const payload = await buildExitTranscriptPayload(alunoId, tenantId, { 
+      includeHealthData: incluirDadosSaude 
+    });
+    const validationHash = payload.emissao.validation_hash;
 
-  // 4.3. Montar Storage Path seguro
-  const filename = `${alunoId}-${validationHash}.pdf`;
-  const storagePath = `${tenantId}/${filename}`;
+    const validationCode = validationHash.substring(0, 12);
+    const htmlContent = getExitTranscriptHtmlTemplate(payload);
+    
+    const { data: historicoRecord, error: insertError } = await (supabase as any)
+      .from('historicos_digitais_emitidos')
+      .insert({
+        tenant_id: tenantId,
+        aluno_id: alunoId,
+        transferencia_id: transferenciaId,
+        validation_hash: validationHash,
+        payload_snapshot: payload,
+        storage_path: null,
+        status: 'final_emitido',
+        criado_por: userId || null
+      })
+      .select('id, validation_hash')
+      .single();
 
-  // 4.4. Upload para o Supabase Storage (Bucket: historicos_oficiais)
-  const { error: uploadError } = await supabase.storage
-    .from('historicos_oficiais')
-    .upload(storagePath, pdfBuffer, {
-      contentType: 'application/pdf',
-      upsert: false // Documentos emitidos são imutáveis; upsert false garante isso e evita sobrescritas
+    if (insertError) {
+      console.error('Erro ao gravar metadados:', insertError);
+      throw new Error('Falha ao registrar a emissão do histórico.');
+    }
+
+    return {
+      sucesso: true,
+      historico_id: historicoRecord.id,
+      validation_hash: validationHash,
+      pdf_url: `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`,
+      message: 'Histórico emitido! Use o botão para imprimir/salvar.'
+    };
+  } catch (error: any) {
+    console.error('Erro ao emitir histórico:', error);
+    return {
+      sucesso: false,
+      historico_id: '',
+      validation_hash: '',
+      pdf_url: '',
+      message: error.message || 'Erro desconhecido ao emitir histórico'
+    };
+  }
+}
+
+export async function listarHistoricosAluno(alunoId: string, tenantId: string) {
+  const { data, error } = await (supabase as any)
+    .rpc('fn_listar_historicos_aluno', {
+      p_aluno_id: alunoId,
+      p_tenant_id: tenantId
     });
 
-  if (uploadError) {
-    throw new Error(`Falha no upload do documento de histórico: ${uploadError.message}`);
+  if (error) {
+    console.error('Erro ao listar históricos:', error);
+    return [];
   }
 
-  // 4.5. Buscar a URL Pùblica ou Assinada para o banco
-  const { data: { publicUrl } } = supabase.storage
-    .from('historicos_oficiais')
-    .getPublicUrl(storagePath);
+  return data || [];
+}
 
-  // 4.6. Salvar na Tabela de Auditoria IMUTÁVEL (historicos_digitais_emitidos)
-  const { data: historicoRecord, error: insertError } = await (supabase as any)
+export async function buscarHistoricoPorHash(hash: string, tenantId: string) {
+  const { data, error } = await (supabase as any)
     .from('historicos_digitais_emitidos')
-    .insert({
-      tenant_id: tenantId,
-      aluno_id: alunoId,
-      transferencia_id: transferenciaId,
-      validation_hash: validationHash,
-      payload_snapshot: payload,
-      storage_path: publicUrl,
-      status: 'final_emitido',
-      emitido_por: (await supabase.auth.getUser()).data.user?.id
-    })
-    .select('id, validation_hash, storage_path')
+    .select('*')
+    .eq('validation_hash', hash)
+    .eq('tenant_id', tenantId)
     .single();
 
-  if (insertError) {
-    // Atenção: Em um fluxo resiliente corporativo ideal, faríamos um rollback (delete)
-    // silencioso no Storage aqui caso a inserção no DB falhasse, mas para o escopo, logamos:
-    console.error(`Erro ao gravar metadados de emissão do Histórico: `, insertError);
-    throw new Error('Falha ao registrar a emissão do histórico.');
+  if (error) {
+    console.error('Erro ao buscar histórico:', error);
+    return null;
   }
 
-  // 4.7. Retornar os dados de sucesso para o frontend baixar o arquivo e mostrar o selo de validação
-  const record = historicoRecord as any;
-  return {
-    sucesso: true,
-    historico_id: record.id,
-    validation_hash: record.validation_hash,
-    pdf_url: record.storage_path
-  };
+  return data;
 }

@@ -35,6 +35,7 @@ export interface ConfigFinanceira {
   multa_juros_habilitado: boolean      // Se aplica multa/juros no portal
   notificacoes_habilitado: boolean      // Se envia alertas de vencimento
   recibo_pdf_auto_habilitado: boolean   // Se gera recibo PDF automático
+  pix_qr_code_url?: string              // URL do QR Code Manual (PNG/WebP/PDF)
 }
 
 export interface ConfigOperacional {
@@ -108,6 +109,7 @@ export const DEFAULT_CONFIG: Omit<TenantSettings, 'id' | 'tenant_id' | 'updated_
     multa_juros_habilitado: true,
     notificacoes_habilitado: true,
     recibo_pdf_auto_habilitado: true,
+    pix_qr_code_url: '',
   },
   config_operacional: {
     tolerancia_atraso_minutos: 15,

@@ -4,7 +4,7 @@ import {
   Save, Info, Banknote, ChevronRight, Check, ShieldCheck,
   Loader2, AlertTriangle, BadgeAlert, ArrowLeft, RefreshCw,
   LayoutGrid, Settings2, Bell, Building,
-  CreditCard, QrCode, HandCoins
+  CreditCard, QrCode, HandCoins, Upload, X, FileText
 } from 'lucide-react'
 import { MobileSelect } from '@/components/ui/mobile-select'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { supabase } from '@/lib/supabase'
 import {
   useTenantSettings,
   useTenantSettingsHistory,
@@ -79,6 +80,47 @@ export function ConfiguracoesPageMobile() {
       setActiveCategory(null)
     } catch {
       toast.error('Erro ao salvar')
+    }
+  }
+
+  const handleUploadQRCode = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !authUser?.tenantId) return
+
+    const isPdf = file.type === 'application/pdf'
+    const isImage = file.type.startsWith('image/')
+    
+    if (!isPdf && !isImage) {
+      toast.error('Formato inválido. Use PNG, WebP ou PDF.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 5MB.')
+      return
+    }
+
+    const toastId = toast.loading('Enviando QR Code...')
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `qrcode_${authUser.tenantId}_${Date.now()}.${fileExt}`
+      const filePath = `comprovantes/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('comprovantes')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('comprovantes')
+        .getPublicUrl(filePath)
+
+      setFinanceira(prev => ({ ...prev, pix_qr_code_url: publicUrl }))
+      toast.success('QR Code enviado com sucesso!', { id: toastId })
+    } catch (error) {
+      console.error('Error uploading QR Code:', error)
+      toast.error('Erro ao enviar QR Code.', { id: toastId })
     }
   }
 
@@ -459,6 +501,51 @@ export function ConfiguracoesPageMobile() {
                          className="h-12 rounded-xl bg-slate-50 border-none font-bold"
                        />
                     </div>
+
+                    <div className="pt-4 border-t border-dashed border-slate-100 flex flex-col gap-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 ml-1">QR Code Manual (Upload)</Label>
+                        
+                        {financeira.pix_qr_code_url ? (
+                          <div className="relative w-max">
+                            {financeira.pix_qr_code_url.toLowerCase().endsWith('.pdf') ? (
+                              <div 
+                                className="h-28 w-28 flex flex-col items-center justify-center border-2 border-indigo-100 rounded-[24px] bg-indigo-50/30 p-2 active:scale-95 transition-transform" 
+                                onClick={() => window.open(financeira.pix_qr_code_url, '_blank')}
+                              >
+                                <FileText className="h-12 w-12 text-rose-500" />
+                                <span className="text-[9px] font-black mt-2 text-slate-500 uppercase">Ver PDF</span>
+                              </div>
+                            ) : (
+                              <img 
+                                src={financeira.pix_qr_code_url} 
+                                alt="QR Code" 
+                                className="h-28 w-28 object-contain border-2 border-indigo-100 rounded-[24px] bg-white p-2" 
+                              />
+                            )}
+                            <button 
+                              onClick={() => setFinanceira(prev => ({ ...prev, pix_qr_code_url: '' }))} 
+                              className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-2 shadow-lg active:scale-90 transition-all" 
+                              type="button"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div 
+                            onClick={() => document.getElementById('qrcode-upload-mobile')?.click()}
+                            className="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-[32px] p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all text-center"
+                          >
+                            <div className="h-14 w-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600">
+                               <Upload size={24} />
+                            </div>
+                            <div>
+                               <p className="text-sm font-black text-indigo-900">Subir QR Code</p>
+                               <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-tighter">PNG, WebP ou PDF (Máx 5MB)</p>
+                            </div>
+                          </div>
+                        )}
+                        <input id="qrcode-upload-mobile" type="file" accept="image/png,image/webp,application/pdf" className="hidden" onChange={handleUploadQRCode} />
+                     </div>
                   </motion.div>
                 )}
             </div>

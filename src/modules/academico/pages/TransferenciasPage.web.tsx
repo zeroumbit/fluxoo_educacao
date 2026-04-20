@@ -55,6 +55,7 @@ import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
+import { EmitirHistoricoModal } from '@/components/shared/transferencias/EmitirHistoricoModal'
 
 // Mapa de ícones para cada status
 const STATUS_ICON: Record<string, any> = {
@@ -88,6 +89,8 @@ export function TransferenciasPageWeb() {
   const [detailTransferencia, setDetailTransferencia] = useState<any>(null)
   const [confirmLiberar, setConfirmLiberar] = useState<any>(null)
   const [busca, setBusca] = useState('')
+  const [historicoModalOpen, setHistoricoModalOpen] = useState(false)
+  const [historicoTransferencia, setHistoricoTransferencia] = useState<any>(null)
 
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []
@@ -436,6 +439,26 @@ export function TransferenciasPageWeb() {
                                   <Unlock className="h-4 w-4" />
                                 </Button>
                               )}
+                              {(t.status === 'concluido' || t.status === 'aguardando_liberacao_origem') && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setHistoricoTransferencia({
+                                      transferencia_id: t.transferencia_id,
+                                      aluno_id: t.aluno_id,
+                                      aluno_nome: t.aluno_nome,
+                                      escola_origem: t.escola_origem,
+                                      escola_destino: t.escola_destino
+                                    })
+                                    setHistoricoModalOpen(true)
+                                  }}
+                                  className="h-9 w-9 rounded-lg text-amber-600 hover:bg-amber-50"
+                                  title="Emitir Histórico Escolar"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -592,10 +615,40 @@ export function TransferenciasPageWeb() {
                   Liberar Aluno (Concluir Transferência)
                 </Button>
               )}
+
+              {detailTransferencia.status === 'concluido' && detailTransferencia.origem_id === tenantId && (
+                <Button
+                  className="w-full bg-amber-600 hover:bg-amber-700"
+                  onClick={() => {
+                    setDetailTransferencia(null)
+                    setHistoricoTransferencia({
+                      transferencia_id: detailTransferencia.transferencia_id,
+                      aluno_id: detailTransferencia.aluno_id,
+                      aluno_nome: detailTransferencia.aluno_nome,
+                      escola_origem: detailTransferencia.escola_origem,
+                      escola_destino: detailTransferencia.escola_destino
+                    })
+                    setHistoricoModalOpen(true)
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Emitir Histórico Escolar
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <EmitirHistoricoModal
+        isOpen={historicoModalOpen}
+        onClose={() => {
+          setHistoricoModalOpen(false)
+          setHistoricoTransferencia(null)
+        }}
+        transferencia={historicoTransferencia}
+        tenantId={tenantId || ''}
+      />
     </div>
   )
 }

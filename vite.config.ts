@@ -5,6 +5,9 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ['idb-keyval', 'dompurify', 'framer-motion', 'lucide-react']
+  },
   plugins: [
     react(),
     tailwindcss(),

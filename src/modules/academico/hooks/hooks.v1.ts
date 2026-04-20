@@ -2,8 +2,8 @@ import { cacheEvents } from "@/lib/cache-events"
 import { QueryKeys } from "@/lib/query-keys"
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { academicoService } from './service'
-import { transferenciasService } from './transferencias.service'
+import { academicoService } from '../services/academico.service.v1'
+import { transferenciasService } from '../transferencias.service'
 
 export function useMatriculas() {
   const { authUser } = useAuth()
@@ -245,39 +245,6 @@ export function useMatriculasAtivasPorTurma(turmaId: string) {
   })
 }
 
-export function useBoletinsPorTurma(turmaId: string, anoLetivo: number, bimestre: number) {
-  const { authUser } = useAuth()
-  return useQuery({
-    queryKey: ['boletins_turma', authUser?.tenantId, turmaId, anoLetivo, bimestre],
-    queryFn: () => academicoService.listarBoletinsPorTurma(authUser!.tenantId, turmaId, anoLetivo, bimestre),
-    enabled: !!authUser?.tenantId && !!turmaId,
-  })
-}
-
-export function useUpsertNota() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ boletimBase, disciplina, nota, faltas, observacoes }: any) =>
-      academicoService.upsertNota(boletimBase, disciplina, nota, faltas, observacoes),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['boletins_turma'] })
-      qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
-      // Invalida alertas_status para recalcular gravidade do radar
-      // (notas baixas podem ser indicador de evasão)
-      qc.invalidateQueries({ queryKey: ['alertas_status'] })
-      qc.invalidateQueries({ queryKey: ['radar_evasao'] })
-    }
-  })
-}
-
-export function useHistoricoNotasAluno(alunoId: string) {
-  const { authUser } = useAuth()
-  return useQuery({
-    queryKey: ['historico_notas_aluno', authUser?.tenantId, alunoId],
-    queryFn: () => academicoService.listarHistoricoNotasAluno(authUser!.tenantId, alunoId),
-    enabled: !!authUser?.tenantId && !!alunoId,
-  })
-}
 
 // ─── Transferências entre Escolas ─────────────────────────────────────────
 export function useTransferenciasEscola() {

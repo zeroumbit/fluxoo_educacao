@@ -113,7 +113,7 @@ export function MultiSelect({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999]" align="start">
         <Command className="w-full">
           <CommandInput placeholder="Buscar..." />
           <CommandList className="max-h-72 overflow-y-auto">

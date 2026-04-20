@@ -1,9 +1,6 @@
-// @ts-ignore - puppeteer é uma dependência opcional usada apenas em server-side
-import puppeteer from 'puppeteer';
 import type { ExitTranscriptPayload } from './historicoDigitalService';
 
 export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): string {
-  // CSS Crítico para PDF e estrutura exigida
   return `
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -63,16 +60,13 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
           color: #0f172a;
         }
         
-        /* 
-         * REGRAS CSS CRÍTICAS PARA IMPRESSÃO/PDF 
-         */
         table {
           width: 100%;
           border-collapse: collapse;
           margin-top: 20px;
         }
         thead {
-          display: table-header-group; /* Repete cabeçalho em quebras de página */
+          display: table-header-group;
         }
         th, td {
           border: 1px solid #cbd5e1;
@@ -85,13 +79,13 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
           color: #334155;
         }
         tr {
-          page-break-inside: avoid; /* Não corta linha no meio */
+          page-break-inside: avoid;
         }
         
         .signature-block {
           margin-top: 50px;
           text-align: center;
-          page-break-inside: avoid; /* Mantém bloco de assinatura junto */
+          page-break-inside: avoid;
         }
         .signature-line {
           width: 300px;
@@ -116,6 +110,11 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
           font-weight: bold;
           color: #0f172a;
         }
+        
+        @media print {
+          body { padding: 20px; }
+          .no-print { display: none; }
+        }
       </style>
     </head>
     <body>
@@ -132,8 +131,8 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
           <div class="info-value">${payload.aluno.nome_completo}</div>
         </div>
         <div class="info-item">
-          <div class="info-label">ID Escolar (Short ID)</div>
-          <div class="info-value"><span style="font-family: monospace; font-weight: bold;">${payload.aluno.codigo_transferencia}</span></div>
+          <div class="info-label">ID Escolar (Código Transferência)</div>
+          <div class="info-value"><span style="font-family: monospace; font-weight: bold;">${payload.aluno.codigo_transferencia || 'N/A'}</span></div>
         </div>
       </div>
 
@@ -143,28 +142,41 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
           <tr>
             <th>Disciplina</th>
             <th style="text-align: center; width: 100px;">Média Final</th>
+            <th style="text-align: center; width: 100px;">Situação</th>
           </tr>
         </thead>
         <tbody>
-          ${payload.academico.media_geral_disciplinas.map(disc => `
+          ${(payload.academico.disciplinas || []).map(disc => `
             <tr>
-              <td>${disc.disciplina}</td>
-              <td style="text-align: center; font-weight: bold;">${disc.media_final.toFixed(1)}</td>
+              <td>${disc.disciplina || 'Disciplina'}</td>
+              <td style="text-align: center; font-weight: bold;">${Number(disc.media_final || 0).toFixed(1)}</td>
+              <td style="text-align: center;">${getSituacaoLabel(disc.resultado)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
 
       <div style="margin-top: 20px;">
+        <span class="info-label">Média Geral:</span> 
+        <span style="font-weight: bold; font-size: 18px; color: #1e40af;">${Number(payload.academico.media_geral || 0).toFixed(1)}</span>
+      </div>
+
+      <div style="margin-top: 20px;">
         <span class="info-label">Frequência Global Registrada:</span> 
-        <span style="font-weight: bold; font-size: 16px;">${payload.academico.frequencia_total_percentual}%</span>
+        <span style="font-weight: bold; font-size: 16px;">${payload.academico.frequencia?.percentual || 0}%</span>
+        <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+          Presenças: ${payload.academico.frequencia?.presencas || 0} | 
+          Faltas: ${payload.academico.frequencia?.faltas || 0} | 
+          Justificadas: ${payload.academico.frequencia?.justificadas || 0} | 
+          Total Aulas: ${payload.academico.frequencia?.total_aulas || 0}
+        </div>
       </div>
 
       ${payload.dados_saude ? `
       <div class="section-title" style="color: #b91c1c; border-color: #fca5a5;">Observações de Saúde e NEE</div>
       <div style="margin-top: 15px; padding: 15px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 4px;">
-        <div style="margin-bottom: 10px;"><strong>Alergias:</strong> ${payload.dados_saude.alergias.length > 0 ? payload.dados_saude.alergias.join(', ') : 'Nenhuma relatada'}</div>
-        <div style="margin-bottom: 10px;"><strong>Necessidades Especiais:</strong> ${payload.dados_saude.necessidades_especiais.length > 0 ? payload.dados_saude.necessidades_especiais.join(', ') : 'Nenhuma relatada'}</div>
+        <div style="margin-bottom: 10px;"><strong>Alergias:</strong> ${payload.dados_saude.alergias?.length > 0 ? payload.dados_saude.alergias.join(', ') : 'Nenhuma relatada'}</div>
+        <div style="margin-bottom: 10px;"><strong>Necessidades Especiais:</strong> ${payload.dados_saude.necessidades_especiais?.length > 0 ? payload.dados_saude.necessidades_especiais.join(', ') : 'Nenhuma relatada'}</div>
         <div><strong>Cuidados Específicos:</strong> ${payload.dados_saude.cuidados_especificos || 'Nenhum cuidado específico aplicável'}</div>
       </div>
       ` : ''}
@@ -176,54 +188,56 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
       </div>
 
       <div class="footer">
-        <div>Para verificar a autenticidade e imutabilidade deste documento, acesse:</div>
+        <div>Para verificar a autenticidade e imutabilidade deste documento, copie o código abaixo e verifique em:</div>
         <div style="margin: 10px 0;">
-          <a href="https://app.fluxoo.edu/v/${payload.emissao.validation_hash}" style="color: #2563eb; text-decoration: none;">
-            https://app.fluxoo.edu/v/<span class="hash-code">${payload.emissao.validation_hash.substring(0, 12)}...</span>
+          <a href="https://app.fluxoo.edu.br/v/${payload.emissao.validation_hash}" style="color: #2563eb; text-decoration: none;">
+            https://app.fluxoo.edu.br/v/<span class="hash-code">${payload.emissao.validation_hash.substring(0, 12)}...</span>
           </a>
         </div>
-        <div>
-          <!-- Placeholder QR Code -->
-          <div style="width: 100px; height: 100px; border: 1px solid #ccc; margin: 10px auto; display: flex; align-items: center; justify-content: center; background: #fff;">
-            <span style="font-size: 10px; color: #999;">[ QR CODE ]</span>
-          </div>
-        </div>
         <div style="margin-top: 15px;">Emitido em: ${new Date(payload.emissao.emitido_em).toLocaleString('pt-BR')}</div>
+      </div>
+
+      <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">
+        <button onclick="window.print()" style="padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">
+          🖨️ Imprimir / Salvar PDF
+        </button>
+        <button onclick="window.close()" style="padding: 12px 24px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+          ✕ Fechar
+        </button>
       </div>
     </body>
     </html>
   `;
 }
 
-// ============================================================================
-// Serviço de Renderização via Puppeteer
-// ============================================================================
+function getSituacaoLabel(resultado?: string): string {
+  const labels: Record<string, string> = {
+    'aprovado': '✅ Aprovado',
+    'reprovado_nota': '❌ Reprovado (Nota)',
+    'reprovado_falta': '❌ Reprovado (Falta)',
+    'aprovado_recuperacao': '✅ Aprovado na Recuperação',
+    'cursando': '📚 Cursando',
+    'sem_dados': '—',
+    'undefined': '—'
+  };
+  return labels[resultado || ''] || '—';
+}
+
 export async function renderExitTranscriptPdf(payload: ExitTranscriptPayload): Promise<Buffer> {
   const htmlContent = getExitTranscriptHtmlTemplate(payload);
+  
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const buffer = await blob.arrayBuffer();
+  
+  return Buffer.from(buffer);
+}
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'], // Crítico para ambientes serverless/docker
-  });
-
-  try {
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-    // Gerar Buffer do PDF formato A4
-    const pdfUint8Array = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20px',
-        bottom: '20px',
-        left: '20px',
-        right: '20px'
-      }
-    });
-    
-    return Buffer.from(pdfUint8Array);
-  } finally {
-    await browser.close();
+export function openHistoricoPrintable(payload: ExitTranscriptPayload): void {
+  const htmlContent = getExitTranscriptHtmlTemplate(payload);
+  const printWindow = window.open('', '_blank', 'width=800,height=900');
+  
+  if (printWindow) {
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   }
 }

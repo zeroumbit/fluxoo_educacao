@@ -2,14 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { financeiroAvancadoService } from './service-avancado'
 
-export function useConfigFinanceira() {
-  const { authUser } = useAuth()
-  return useQuery({ queryKey: ['config_financeira', authUser?.tenantId], queryFn: () => financeiroAvancadoService.getConfig(authUser!.tenantId), enabled: !!authUser?.tenantId })
-}
-export function useUpsertConfigFinanceira() {
-  const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => financeiroAvancadoService.upsertConfig(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['config_financeira'] }) })
-}
+
 export function useContasPagar() {
   const { authUser } = useAuth()
   return useQuery({ queryKey: ['contas_pagar', authUser?.tenantId], queryFn: () => financeiroAvancadoService.listarContasPagar(authUser!.tenantId), enabled: !!authUser?.tenantId })

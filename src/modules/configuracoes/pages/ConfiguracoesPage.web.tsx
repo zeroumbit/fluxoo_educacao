@@ -3,7 +3,7 @@ import {
   BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
   UploadCloud, Save, Info, Banknote, ChevronDown, Check, ShieldCheck,
   Loader2, AlertTriangle, BadgeAlert, BadgeCheck, ChevronRight, Clock,
-  RefreshCw, Settings2, AlertCircle
+  RefreshCw, Settings2, AlertCircle, QrCode, Upload, X, FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -248,6 +248,47 @@ export function ConfiguracoesPage() {
     cargaHoraria: calendario.carga_horaria < 800 ? 'Mín: 800h (LDB)' : null,
     multa: financeira.multa_atraso_perc > 2.0 ? 'Máx: 2% (CDC Art. 52)' : null,
     juros: financeira.juros_mora_mensal_perc > 1.0 ? 'Máx: 1%/mês (CDC)' : null,
+  }
+
+  const handleUploadQRCode = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !authUser?.tenantId) return
+
+    const isPdf = file.type === 'application/pdf'
+    const isImage = file.type.startsWith('image/')
+    
+    if (!isPdf && !isImage) {
+      toast.error('Formato inválido. Use PNG, WebP ou PDF.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 5MB.')
+      return
+    }
+
+    const toastId = toast.loading('Enviando QR Code...')
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `qrcode_${authUser.tenantId}_${Date.now()}.${fileExt}`
+      const filePath = `comprovantes/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('comprovantes')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('comprovantes')
+        .getPublicUrl(filePath)
+
+      setFinanceira(prev => ({ ...prev, pix_qr_code_url: publicUrl }))
+      toast.success('QR Code enviado com sucesso!', { id: toastId })
+    } catch (error) {
+      console.error('Error uploading QR Code:', error)
+      toast.error('Erro ao enviar QR Code.', { id: toastId })
+    }
   }
 
   const hasErrors = Object.values(erros).some(Boolean)
@@ -563,6 +604,51 @@ export function ConfiguracoesPage() {
                       <div className="space-y-1.5 md:col-span-2">
                         <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Instruções ao Responsável</Label>
                         <Input value={financeira.instrucoes_pix} onChange={(e) => setFinanceira({ ...financeira, instrucoes_pix: e.target.value })} placeholder="Ex: Envie o comprovante para o WhatsApp da secretaria" className="h-10 rounded-xl" />
+                      </div>
+
+                      <div className="md:col-span-2 space-y-2 pt-2 border-t border-dashed mt-2 border-slate-200">
+                        <Label className="flex items-center gap-2 text-slate-900 font-semibold mb-1">
+                          <QrCode className="h-4 w-4 text-indigo-600" />
+                          QR Code do PIX Manual (Upload)
+                        </Label>
+                        <div className="flex items-start gap-4 w-full">
+                          {financeira.pix_qr_code_url ? (
+                            <div className="relative group">
+                              {financeira.pix_qr_code_url.toLowerCase().endsWith('.pdf') ? (
+                                <div 
+                                  className="h-24 w-24 flex flex-col items-center justify-center border-2 border-indigo-200 rounded-lg bg-white p-2 cursor-pointer hover:bg-slate-50 transition-colors" 
+                                  onClick={() => window.open(financeira.pix_qr_code_url, '_blank')}
+                                >
+                                  <FileText className="h-10 w-10 text-rose-500" />
+                                  <span className="text-[8px] font-bold mt-1 text-slate-500 text-center uppercase">QR Code PDF</span>
+                                </div>
+                              ) : (
+                                <img src={financeira.pix_qr_code_url} alt="QR Code" className="h-24 w-24 object-contain border-2 border-indigo-200 rounded-lg bg-white p-2" />
+                              )}
+                              <button 
+                                onClick={() => setFinanceira(prev => ({ ...prev, pix_qr_code_url: '' }))} 
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                type="button"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div 
+                              onClick={() => document.getElementById('qrcode-upload')?.click()}
+                              className="w-full flex items-center justify-center gap-4 p-6 border-2 border-dashed border-indigo-100 rounded-2xl bg-indigo-50/20 hover:bg-white hover:border-indigo-300 transition-all cursor-pointer group"
+                            >
+                              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                                <Upload className="h-6 w-6" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-indigo-600">Subir Arquivo do QR Code</span>
+                                <span className="text-[10px] text-indigo-400 font-medium tracking-tight">Formatos aceitos: PNG, WebP ou PDF (até 5MB)</span>
+                              </div>
+                            </div>
+                          )}
+                          <input id="qrcode-upload" type="file" accept="image/png,image/webp,application/pdf" className="hidden" onChange={handleUploadQRCode} />
+                        </div>
                       </div>
                     </div>
                   )}
