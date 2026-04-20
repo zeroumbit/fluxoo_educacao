@@ -21,6 +21,8 @@ import { PwaInstallPrompt } from '@/components/pwa/PwaInstallPrompt'
 // Pages - Professor
 const ProfessorAlunosPage = lazy(() => import('@/modules/professor/pages/ProfessorAlunosPage').then(m => ({ default: m.ProfessorAlunosPage })))
 const ProfessorTurmasPage = lazy(() => import('@/modules/professor/pages/ProfessorTurmasPage').then(m => ({ default: m.ProfessorTurmasPageAdapter })))
+const ProfessorTurmaDetalhePage = lazy(() => import('@/modules/professor/pages/ProfessorTurmaDetalhePage').then(m => ({ default: m.ProfessorTurmaDetalhePage })))
+const ProfessorAlunoDetalhePage = lazy(() => import('@/modules/professor/pages/ProfessorAlunoDetalhePage').then(m => ({ default: m.ProfessorAlunoDetalhePage })))
 const ProfessorFrequenciaPage = lazy(() => import('@/modules/professor/pages/ProfessorFrequenciaPage').then(m => ({ default: m.ProfessorFrequenciaPage })))
 const ProfessorPlanosAulaPage = lazy(() => import('@/modules/professor/pages/ProfessorPlanosAulaPage').then(m => ({ default: m.ProfessorPlanosAulaPage })))
 const ProfessorAtividadesPage = lazy(() => import('@/modules/professor/pages/ProfessorAtividadesPage').then(m => ({ default: m.ProfessorAtividadesPage })))
@@ -237,9 +239,9 @@ function App() {
             >
               <Route path="dashboard" element={<ProfessorDashboardPage />} />
               <Route path="alunos" element={<ProfessorAlunosPage />} />
-              <Route path="alunos/:id" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Detalhes do Aluno</h2><p className="text-zinc-500">Em desenvolvimento</p></div>} />
+              <Route path="alunos/:id" element={<ProfessorAlunoDetalhePage />} />
               <Route path="turmas" element={<ProfessorTurmasPage />} />
-              <Route path="turmas/:id" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Detalhes da Turma</h2><p className="text-zinc-500">Em desenvolvimento</p></div>} />
+              <Route path="turmas/:id" element={<ProfessorTurmaDetalhePage />} />
               <Route path="frequencia" element={<ProfessorFrequenciaPage />} />
               <Route path="planos-aula" element={<ProfessorPlanosAulaPage />} />
               <Route path="atividades" element={<ProfessorAtividadesPage />} />

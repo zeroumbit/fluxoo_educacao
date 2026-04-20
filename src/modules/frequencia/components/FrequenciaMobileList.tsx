@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, XCircle, Cake, Save, Loader2, Search, UserCheck, UserX } from 'lucide-react'
+import { CheckCircle2, XCircle, Cake, Save, Loader2, Search, UserCheck, UserX, MessageSquare, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 interface Student {
   id: string
@@ -20,13 +21,15 @@ interface Student {
 interface FrequenciaMobileListProps {
   alunos: Student[]
   initialFrequencias?: Record<string, 'presente' | 'falta' | 'justificada'>
+  initialJustificativas?: Record<string, string>
   onSave: (data: Array<{ aluno_id: string; status: string }>) => void
   isSaving?: boolean
 }
 
-export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, isSaving }: FrequenciaMobileListProps) {
+export function FrequenciaMobileList({ alunos, initialFrequencias = {}, initialJustificativas = {}, onSave, isSaving }: FrequenciaMobileListProps) {
   const [localStatuses, setLocalStatuses] = useState<Record<string, 'presente' | 'falta' | 'justificada'>>(initialFrequencias)
   const [searchTerm, setSearchTerm] = useState('')
+  const [justificativaSelecionada, setJustificativaSelecionada] = useState<{nome: string, texto: string} | null>(null)
 
   // Sincroniza se os dados iniciais mudarem
   useEffect(() => {
@@ -127,7 +130,7 @@ export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, 
                 transition={{ duration: 0.3, delay: index * 0.03 }}
               >
                 <Card className={cn(
-                  "overflow-hidden transition-all duration-300 border-none shadow-sm h-[88px] flex items-center",
+                  "overflow-hidden transition-all duration-300 border-none shadow-sm h-[96px] flex flex-col justify-center py-0 gap-0",
                   status === 'presente' ? "bg-emerald-50/50 ring-1 ring-emerald-200" : 
                   status === 'falta' ? "bg-red-50/50 ring-1 ring-red-200" : "bg-white ring-1 ring-zinc-100"
                 )}>
@@ -137,9 +140,9 @@ export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, 
                       <div className="flex items-center gap-3">
                         <div className="relative">
                           {aluno.foto_url ? (
-                            <img src={aluno.foto_url} alt={studentName} className="w-14 h-14 rounded-2xl object-cover shadow-sm border-2 border-white" />
+                            <img src={aluno.foto_url} alt={studentName} className="w-14 h-14 rounded-2xl object-cover shadow-sm border border-zinc-100" />
                           ) : (
-                            <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 font-bold shadow-sm border-2 border-white">
+                            <div className="w-14 h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 font-bold shadow-sm border border-zinc-200/50">
                               {studentName.charAt(0)}
                             </div>
                           )}
@@ -150,27 +153,35 @@ export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, 
                           )}
                         </div>
 
-                        <div className="flex flex-col min-w-0 max-w-[140px]">
+                        <div className="flex flex-col min-w-0">
                           <span className="font-bold text-[15px] text-zinc-900 leading-tight truncate">
                             {studentName}
                           </span>
-                          <div className="flex flex-wrap gap-1 mt-1">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             {hasNee && <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-none text-[9px] h-4 px-1.5 font-bold uppercase tracking-tight">NEE</Badge>}
                             {hasAlergia && <Badge variant="secondary" className="bg-red-100 text-red-700 border-none text-[9px] h-4 px-1.5 font-bold uppercase tracking-tight">ALERGIA</Badge>}
                             {!status && <span className="text-[10px] text-zinc-400 font-medium">Pendente</span>}
-                            {status === 'presente' && <span className="text-[10px] text-emerald-600 font-bold uppercase flex items-center gap-0.5"><UserCheck size={10} /> Presente</span>}
-                            {status === 'falta' && <span className="text-[10px] text-red-600 font-bold uppercase flex items-center gap-0.5"><UserX size={10} /> Falta</span>}
+                            {status === 'presente' && <span className="text-[10px] text-emerald-600 font-bold uppercase flex items-center gap-1"><UserCheck size={10} /> Presente</span>}
+                            {status === 'falta' && <span className="text-[10px] text-red-600 font-bold uppercase flex items-center gap-1"><UserX size={10} /> Falta</span>}
+                            {initialJustificativas[aluno.id] && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setJustificativaSelecionada({ nome: studentName, texto: initialJustificativas[aluno.id] }) }}
+                                className="flex items-center gap-1 bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors border-none text-[9px] h-4 px-1.5 font-bold uppercase tracking-tight rounded-full"
+                              >
+                                <Info size={10} /> Justificado
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
 
                       {/* Botões de Ação */}
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => toggleStatus(aluno.id, 'presente')}
                           className={cn(
-                            "flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all border-2",
+                            "flex items-center justify-center w-14 h-14 rounded-2xl transition-all border-2",
                             status === 'presente' 
                               ? "bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-200" 
                               : "bg-white border-zinc-100 text-zinc-400 active:bg-emerald-50"
@@ -183,7 +194,7 @@ export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, 
                           whileTap={{ scale: 0.9 }}
                           onClick={() => toggleStatus(aluno.id, 'falta')}
                           className={cn(
-                            "flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all border-2",
+                            "flex items-center justify-center w-14 h-14 rounded-2xl transition-all border-2",
                             status === 'falta' 
                               ? "bg-red-500 border-red-400 text-white shadow-lg shadow-red-200" 
                               : "bg-white border-zinc-100 text-zinc-400 active:bg-red-50"
@@ -233,11 +244,33 @@ export function FrequenciaMobileList({ alunos, initialFrequencias = {}, onSave, 
               ) : (
                 <Save className="w-6 h-6" />
               )}
-              {percentualConcluido === 100 ? "Finalizar Agora!" : "Salvar Chamada"}
+              {percentualConcluido === 100 ? "SALVAR" : "SALVAR"}
             </Button>
           </motion.div>
         </div>
       </div>
+
+      <Dialog open={!!justificativaSelecionada} onOpenChange={() => setJustificativaSelecionada(null)}>
+        <DialogContent className="max-w-xs mx-auto rounded-[24px]">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mb-3">
+              <MessageSquare className="w-6 h-6 text-amber-500" />
+            </div>
+            <DialogTitle className="text-center">Justificativa Registrada</DialogTitle>
+            <DialogDescription className="text-center">
+               Atestado ou observação para <strong className="text-zinc-900">{justificativaSelecionada?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 text-sm text-zinc-600 font-medium whitespace-pre-wrap mt-2">
+            {justificativaSelecionada?.texto}
+          </div>
+          <DialogFooter className="mt-4 sm:justify-center">
+            <Button className="w-full rounded-xl bg-zinc-900" onClick={() => setJustificativaSelecionada(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

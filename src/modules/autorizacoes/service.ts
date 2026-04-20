@@ -136,21 +136,32 @@ export const autorizacoesService = {
   // RESPOSTAS (Portal do Responsável)
   // ==========================================
   async buscarRespostasResponsavel(responsavelId: string, alunoId: string, tenantId: string) {
-    const [modelosRes, respostasRes] = await Promise.all([
+    const [modelosEscolaRes, modelosGlobaisRes, respostasRes] = await Promise.all([
       (supabase.from('autorizacoes_modelos' as any) as any)
         .select('*')
-        .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
-        .order('categoria').order('ordem'),
+        .eq('tenant_id', tenantId)
+        .eq('ativa', true)
+        .order('ordem'),
+      (supabase.from('autorizacoes_modelos' as any) as any)
+        .select('*')
+        .is('tenant_id', null)
+        .eq('ativa', true)
+        .order('ordem'),
       (supabase.from('autorizacoes_respostas' as any) as any)
         .select('*')
         .eq('responsavel_id', responsavelId)
         .eq('aluno_id', alunoId)
     ])
 
-    if (modelosRes.error) throw modelosRes.error
+    // Se houver erro na busca dos modelos da escola, falha
+    if (modelosEscolaRes.error) throw modelosEscolaRes.error
 
-    const dbModelos = (modelosRes.data as any[]) || []
-    const modelos = this.mesclarComPadroesSistema(dbModelos) // Padrão: só os ativos
+    // Modelos globais podem falhar ou vir vazios se RLS for restrito, tratamos como opcional
+    const dbModelosEscola = (modelosEscolaRes.data as any[]) || []
+    const dbModelosGlobais = (modelosGlobaisRes.data as any[]) || []
+    
+    const dbModelos = [...dbModelosEscola, ...dbModelosGlobais]
+    const modelos = this.mesclarComPadroesSistema(dbModelos)
     
     const respostas = (respostasRes.data as any[]) || []
 

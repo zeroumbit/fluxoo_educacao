@@ -94,6 +94,198 @@ export const professorService = {
     }
     return true
   },
+
+  /**
+   * Busca todos os alunos correspondentes às turmas vinculadas ao professor.
+   */
+  async buscarAlunosDoProfessor(professorId: string, tenantId: string): Promise<any[]> {
+    // 1. Busca turmas vinculadas
+    const { data: turmasVinc } = await (supabase as any)
+      .from('turma_professores')
+      .select('turma_id')
+      .eq('professor_id', professorId);
+
+    const idsTurmas = turmasVinc?.map((t: any) => t.turma_id) || [];
+    if (idsTurmas.length === 0) return [];
+
+    // 2. Busca matriculas com alunos e turmas
+    const { data, error } = await (supabase as any)
+      .from('matriculas')
+      .select(`
+        id,
+        turma_id,
+        aluno_id,
+        alunos (id, nome_completo),
+        turmas (id, nome)
+      `)
+      .in('turma_id', idsTurmas)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[professorService] Erro ao buscar alunos:', error);
+      return [];
+    }
+
+    // 3. Mapear para um formato achatado (flatten)
+    return (data || []).map((m: any) => ({
+      id: m.alunos?.id,
+      nome: m.alunos?.nome_completo,
+      turma_id: m.turma_id,
+      turma_nome: m.turmas?.nome,
+      matricula_id: m.id,
+      // Como não temos views específicas de média/frequência por aluno para o professor aqui facilmente, 
+      // deixamos zerado para evitar N+1 queries ou usamos um valor padrão. 
+      // Se houver necessidade, deveria ser consumida uma view do banco.
+      frequencia: 0, 
+      media: 0,
+      alertas: 0
+    })).sort((a: any, b: any) => a.nome?.localeCompare(b.nome));
+  },
+
+  /**
+   * Busca detalhes de uma turma específica do professor.
+   */
+  async buscarDetalhesTurma(turmaId: string, professorId: string, tenantId: string): Promise<any | null> {
+    // 1. Verificar se o professor leciona nesta turma
+    const { data: vinculo } = await (supabase as any)
+      .from('turma_professores')
+      .select('*, turmas!inner(*), disciplinas!inner(*)')
+      .eq('turma_id', turmaId)
+      .eq('professor_id', professorId)
+      .single()
+
+    if (!vinculo) return null
+
+    // 2. Buscar dados da turma
+    const { data: turmaData } = await (supabase as any)
+      .from('turmas')
+      .select('*')
+      .eq('id', turmaId)
+      .single()
+
+    if (!turmaData) return null
+
+    // 3. Buscar alunos matriculados na turma
+    const { data: matriculas } = await (supabase as any)
+      .from('matriculas')
+      .select('id, aluno_id, status')
+      .eq('turma_id', turmaId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+
+    const alunoIds = matriculas?.map((m: any) => m.aluno_id) || []
+    
+    let alunosData: any[] = []
+    if (alunoIds.length > 0) {
+      const { data: alunos } = await (supabase as any)
+        .from('alunos')
+        .select('id, nome_completo, foto_url')
+        .in('id', alunoIds)
+      
+      alunosData = alunos || []
+    }
+
+    const alunosFormatados = (matriculas || []).map((m: any) => {
+      const aluno = alunosData.find((a: any) => a.id === m.aluno_id)
+      return {
+        id: m.aluno_id,
+        nome: aluno?.nome_completo,
+        foto_url: aluno?.foto_url,
+        matricula_id: m.id,
+        status: m.status,
+      }
+    }).sort((a: any, b: any) => a.nome?.localeCompare(b.nome))
+
+    return {
+      ...turmaData,
+      disciplina: vinculo.disciplinas,
+      alunos: alunosFormatados,
+      total_alunos: alunosFormatados.length,
+      percentual_presenca: 0,
+      media_geral: 0,
+    }
+  },
+
+  /**
+   * Busca detalhes de um aluno para o professor.
+   * Retorna dados básicos do aluno + turmas que o professor leciona onde o aluno está.
+   */
+  async buscarDetalhesAluno(alunoId: string, professorId: string, tenantId: string): Promise<any | null> {
+    // 1. Buscar dados do aluno
+    const { data: alunoData, error: alunoError } = await (supabase as any)
+      .from('alunos')
+      .select('*')
+      .eq('id', alunoId)
+      .single()
+
+    if (alunoError || !alunoData) return null
+
+    // 2. Buscar turmas onde o professor ensina
+    const { data: turmasProfessor } = await (supabase as any)
+      .from('turma_professores')
+      .select('turma_id, turmas!inner(id, nome), disciplinas!inner(id, nome)')
+      .eq('professor_id', professorId)
+
+    const idsTurmasProfessor = turmasProfessor?.map((t: any) => t.turma_id) || []
+
+    if (idsTurmasProfessor.length === 0) {
+      return {
+        ...alunoData,
+        turmas: [],
+        tem_vinculo: false,
+      }
+    }
+
+    // 3. Buscar turmas e disciplinas
+    const { data: turmasData } = await (supabase as any)
+      .from('turmas')
+      .select('id, nome, turno')
+      .in('id', idsTurmasProfessor)
+
+    const { data: turmasDisciplinas } = await (supabase as any)
+      .from('turma_professores')
+      .select('turma_id, disciplinas(id, nome)')
+      .in('turma_id', idsTurmasProfessor)
+      .eq('professor_id', professorId)
+
+    const discMap = new Map()
+    turmasDisciplinas?.forEach((td: any) => {
+      discMap.set(td.turma_id, td.disciplinas?.nome)
+    })
+
+    // 4. Buscar matriculas do aluno
+    const { data: matriculas } = await (supabase as any)
+      .from('matriculas')
+      .select('id, status, data_matricula, turma_id')
+      .eq('aluno_id', alunoId)
+      .in('turma_id', idsTurmasProfessor)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+
+    const turmasFormatadas = (matriculas || []).map((m: any) => {
+      const turma = turmasData?.find((t: any) => t.id === m.turma_id)
+      return {
+        matricula_id: m.id,
+        turma_id: m.turma_id,
+        turma_nome: turma?.nome,
+        disciplina_nome: discMap.get(m.turma_id),
+        turno: turma?.turno,
+        status: m.status,
+      }
+    })
+
+    return {
+      ...alunoData,
+      turmas: turmasFormatadas,
+      tem_vinculo: turmasFormatadas.length > 0,
+      percentual_presenca: 0,
+      media_geral: 0,
+      total_faltas: 0,
+      total_aulas: 0,
+    }
+  }
 }
 
 /* 

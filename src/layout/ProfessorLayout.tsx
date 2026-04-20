@@ -283,7 +283,7 @@ export function ProfessorLayout() {
     return location.pathname === href || location.pathname.startsWith(href + '/')
   }
 
-  const hideBottomNav = location.pathname === '/professores/perfil'
+  const hideBottomNav = location.pathname === '/professores/perfil' || location.pathname === '/professores/frequencia'
 
   return (
     <div className="min-h-[100dvh] bg-zinc-50/50 dark:bg-slate-950">

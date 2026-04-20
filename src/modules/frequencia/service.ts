@@ -18,25 +18,26 @@ export const frequenciaService = {
   async salvarFrequencias(frequencias: FrequenciaInsert[]) {
     if (frequencias.length === 0) return
 
-    // VALIDAÇÃO: Verificar matrícula ativa para cada aluno
-    const alunosSemMatricula: string[] = []
+    // VALIDAÇÃO EM LOTE: Verificar matrícula ativa para todos os alunos
+    const tenantId = frequencias[0].tenant_id!
+    const alunoIds = frequencias.map(f => f.aluno_id!)
 
-    for (const freq of frequencias) {
-      if (!freq.tenant_id || !freq.aluno_id) continue
+    const { data: matriculas, error: matError } = await (supabase.from('matriculas' as any) as any)
+      .select('aluno_id')
+      .in('aluno_id', alunoIds)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
 
-      const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-        .select('id')
-        .eq('aluno_id', freq.aluno_id!)
-        .eq('tenant_id', freq.tenant_id!)
-        .eq('status' as any, 'ativa')
-        .maybeSingle()
-
-      if (!matricula) {
-        alunosSemMatricula.push(freq.aluno_id)
-      }
+    if (matError) {
+      logger.error('❌ [frequenciaService] Erro ao validar matrículas:', matError)
+      throw matError
     }
 
+    const alunosComMatricula = new Set((matriculas as any[])?.map(m => m.aluno_id))
+    const alunosSemMatricula = alunoIds.filter(id => !alunosComMatricula.has(id))
+
     if (alunosSemMatricula.length > 0) {
+      logger.warn('⚠️ [frequenciaService] Alunos sem matrícula ativa detectados:', alunosSemMatricula)
       throw new Error(
         `Não é possível lançar frequência para ${alunosSemMatricula.length} aluno(s) sem matrícula ativa. ` +
         `Regularize as matrículas antes de continuar.`
@@ -44,13 +45,13 @@ export const frequenciaService = {
     }
 
     // Delete existing para a turma/data e reinsere
-    const { tenant_id, turma_id, data_aula } = frequencias[0]
-    if (tenant_id && turma_id && data_aula) {
-      logger.debug('🔄 [frequenciaService] Limpando registros antigos:', { tenant_id, turma_id, data_aula })
+    const { turma_id, data_aula } = frequencias[0]
+    if (tenantId && turma_id && data_aula) {
+      logger.debug('🔄 [frequenciaService] Limpando registros antigos:', { tenantId, turma_id, data_aula })
       const { error: delError } = await supabase
         .from('frequencias')
         .delete()
-        .eq('tenant_id', tenant_id)
+        .eq('tenant_id', tenantId)
         .eq('turma_id', turma_id)
         .eq('data_aula', data_aula)
       
@@ -61,12 +62,30 @@ export const frequenciaService = {
     }
 
     logger.info('📤 [frequenciaService] Inserindo novas frequências:', frequencias.length, 'registros')
+    
+    // Log de segurança para debugar 403
+    if (frequencias.length > 0) {
+      const amostra = frequencias[0];
+      logger.debug('🔍 [frequenciaService] Amostra de payload para INSERT:', {
+        tenant_id: amostra.tenant_id,
+        turma_id: amostra.turma_id,
+        aluno_id: amostra.aluno_id,
+        status: amostra.status,
+        data_aula: amostra.data_aula
+      })
+    }
+
     const { error } = await supabase
       .from('frequencias')
       .insert(frequencias)
 
     if (error) {
-      logger.error('❌ [frequenciaService] Erro no INSERT:', error)
+      logger.error('❌ [frequenciaService] Erro no INSERT:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       throw error
     }
   },

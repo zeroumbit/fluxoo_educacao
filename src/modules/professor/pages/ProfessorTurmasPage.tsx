@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useSaudeTurmas } from '@/modules/professor/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -19,31 +20,52 @@ import {
 import {
   Search, Loader2, Users, Eye, School, TrendingUp, TrendingDown, Clock
 } from 'lucide-react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 
 export function ProfessorTurmasPage() {
   const { authUser } = useAuth()
   const navigate = useNavigate()
-  const { data: saudeTurmas, isLoading } = useSaudeTurmas()
+  const { data: saudeTurmas, isLoading: isLoadingSaude } = useSaudeTurmas()
+  const { data: minhasTurmas, isLoading: isLoadingTurmas } = useTurmas()
   const [busca, setBusca] = useState('')
 
   const turmasUnicas = useMemo(() => {
-    if (!saudeTurmas) return []
     const map = new Map()
-    saudeTurmas.forEach((turma: any) => {
-      if (!map.has(turma.turma_id)) {
-        map.set(turma.turma_id, {
-          turma_id: turma.turma_id,
-          turma_nome: turma.turma_nome,
-          total_alunos: turma.total_alunos || 0,
-          percentual_presenca: turma.percentual_presenca || 0,
-          media_geral: turma.media_geral || 0,
+
+    // Primeiro adiciona todas as turmas vinculadas independentemente de terem dados
+    if (minhasTurmas) {
+      minhasTurmas.forEach((turma: any) => {
+        map.set(turma.id, {
+          turma_id: turma.id,
+          turma_nome: turma.nome,
+          total_alunos: 0,
+          percentual_presenca: 0,
+          media_geral: 0,
         })
-      }
-    })
-    return Array.from(map.values())
-  }, [saudeTurmas])
+      })
+    }
+
+    // Depois, sobrepõe com os dados de saúde (frequência e notas) quando existirem
+    if (saudeTurmas) {
+      saudeTurmas.forEach((turma: any) => {
+        if (map.has(turma.turma_id)) {
+          const t = map.get(turma.turma_id)
+          t.total_alunos = turma.total_alunos || 0
+          t.percentual_presenca = turma.percentual_presenca || 0
+          t.media_geral = turma.media_geral || 0
+        } else {
+          map.set(turma.turma_id, {
+            turma_id: turma.turma_id,
+            turma_nome: turma.turma_nome,
+            total_alunos: turma.total_alunos || 0,
+            percentual_presenca: turma.percentual_presenca || 0,
+            media_geral: turma.media_geral || 0,
+          })
+        }
+      })
+    }
+    
+    return Array.from(map.values()).sort((a, b) => a.turma_nome.localeCompare(b.turma_nome))
+  }, [minhasTurmas, saudeTurmas])
 
   const turmasFiltradas = useMemo(() => {
     return turmasUnicas.filter((turma: any) =>
@@ -52,16 +74,12 @@ export function ProfessorTurmasPage() {
   }, [turmasUnicas, busca])
 
   const totalAlunos = turmasUnicas.reduce((sum: number, t: any) => sum + t.total_alunos, 0)
-  const mediaPresenca = turmasUnicas.length > 0
-    ? turmasUnicas.reduce((sum: number, t: any) => sum + t.percentual_presenca, 0) / turmasUnicas.length
-    : 0
-  const mediaGeral = turmasUnicas.length > 0
-    ? turmasUnicas.reduce((sum: number, t: any) => sum + t.media_geral, 0) / turmasUnicas.length
+  const turmasComMetricas = turmasUnicas.filter((t: any) => t.total_alunos > 0)
+  const mediaPresenca = turmasComMetricas.length > 0
+    ? turmasComMetricas.reduce((sum: number, t: any) => sum + t.percentual_presenca, 0) / turmasComMetricas.length
     : 0
 
-  const temDadosReais = turmasUnicas.length > 0 && turmasUnicas.some((t: any) => t.total_alunos > 0)
-
-  if (isLoading) {
+  if (isLoadingSaude || isLoadingTurmas) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
@@ -69,8 +87,8 @@ export function ProfessorTurmasPage() {
     )
   }
 
-  // Empty state quando não há turmas
-  if (!temDadosReais) {
+  // Empty state quando o professor não está vinculado a nenhuma turma
+  if (turmasUnicas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-6">
@@ -78,7 +96,7 @@ export function ProfessorTurmasPage() {
         </div>
         <h3 className="text-lg font-semibold text-slate-700 mb-2">Suas turmas aparecerão aqui</h3>
         <p className="text-sm text-slate-400 text-center max-w-sm">
-          Professor, assim que suas turmas forem cadastradas pela escola, você poderá visualizar todos os dados de alunos, frequência e médias nesta página.
+          Professor, assim que a gestão escolar vincular você a uma turma, ela aparecerá nesta página.
         </p>
       </div>
     )
@@ -89,7 +107,7 @@ export function ProfessorTurmasPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pt-6 pb-0">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Users className="w-4 h-4" />
               Total de Alunos
@@ -102,7 +120,7 @@ export function ProfessorTurmasPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pt-6 pb-0">
             <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Frequência Média
@@ -130,25 +148,7 @@ export function ProfessorTurmasPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Média Geral
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">
-              {mediaGeral > 0 ? mediaGeral.toFixed(1) : '—'}
-            </div>
-            {mediaGeral > 0 && (
-              <p className="text-xs text-slate-400 mt-1">
-                {mediaGeral >= 7 ? 'Excelente' : mediaGeral >= 5 ? 'Regular' : 'Atenção'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        </div>
 
       {/* Busca */}
       <div className="flex items-center gap-2">
@@ -187,9 +187,7 @@ export function ProfessorTurmasPage() {
             ) : (
               turmasFiltradas.map((turma: any) => {
                 const freq = turma.percentual_presenca
-                const media = turma.media_geral
                 const temFreq = freq > 0
-                const temMedia = media > 0
 
                 return (
                   <TableRow key={turma.turma_id} className="hover:bg-slate-50/50 transition-colors">
@@ -228,24 +226,19 @@ export function ProfessorTurmasPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center py-4">
-                      {temMedia ? (
-                        <Badge
-                          variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
-                        >
-                          {media.toFixed(1)}
-                        </Badge>
+                      <span className="text-sm text-slate-400">—</span>
                       ) : (
                         <span className="text-sm text-slate-400">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-center py-4">
-                      {temFreq && temMedia ? (
-                        freq >= 75 && media >= 7 ? (
-                          <Badge className="bg-emerald-600">Excelente</Badge>
-                        ) : freq >= 50 && media >= 5 ? (
+                      {temFreq ? (
+                        freq >= 75 ? (
+                          <Badge className="bg-emerald-600">Boa</Badge>
+                        ) : freq >= 50 ? (
                           <Badge variant="secondary">Regular</Badge>
                         ) : (
-                          <Badge variant="destructive">Crítico</Badge>
+                          <Badge variant="destructive">Crítica</Badge>
                         )
                       ) : (
                         <span className="text-sm text-slate-400">—</span>

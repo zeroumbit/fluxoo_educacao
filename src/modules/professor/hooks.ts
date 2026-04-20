@@ -80,6 +80,54 @@ export function useConcluirAlerta() {
   })
 }
 
+/**
+ * Hook para buscar todos os alunos das turmas vinculadas ao professor.
+ */
+export function useAlunosProfessor() {
+  const { authUser } = useAuth()
+  const professorId = authUser?.funcionarioId || authUser?.user?.id
+  const tenantId = authUser?.tenantId
+
+  return useQuery({
+    queryKey: ['professor_alunos', professorId, tenantId],
+    queryFn: () => professorService.buscarAlunosDoProfessor(professorId!, tenantId!),
+    enabled: !!professorId && !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/**
+ * Hook para buscar detalhes de uma turma específica do professor.
+ */
+export function useDetalhesTurma(turmaId: string | undefined) {
+  const { authUser } = useAuth()
+  const professorId = authUser?.funcionarioId || authUser?.user?.id
+  const tenantId = authUser?.tenantId
+
+  return useQuery({
+    queryKey: ['professor_turma_detalhes', turmaId, professorId],
+    queryFn: () => professorService.buscarDetalhesTurma(turmaId!, professorId!, tenantId!),
+    enabled: !!turmaId && !!professorId && !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/**
+ * Hook para buscar detalhes de um aluno para o professor.
+ */
+export function useDetalhesAluno(alunoId: string | undefined) {
+  const { authUser } = useAuth()
+  const professorId = authUser?.funcionarioId || authUser?.user?.id
+  const tenantId = authUser?.tenantId
+
+  return useQuery({
+    queryKey: ['professor_aluno_detalhes', alunoId, professorId],
+    queryFn: () => professorService.buscarDetalhesAluno(alunoId!, professorId!, tenantId!),
+    enabled: !!alunoId && !!professorId && !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 // Re-export de notificações
 export {
   useProfessorNotifications,

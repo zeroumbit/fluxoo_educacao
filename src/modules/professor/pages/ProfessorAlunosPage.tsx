@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useSaudeTurmas } from '@/modules/professor/hooks'
+import { useSaudeTurmas, useAlunosProfessor } from '@/modules/professor/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -20,11 +20,9 @@ import {
 export function ProfessorAlunosPage() {
   const { authUser } = useAuth()
   const navigate = useNavigate()
-  const { data: _saudeTurmas, isLoading } = useSaudeTurmas()
+  const { data: _saudeTurmas, isLoading: loadingSaude } = useSaudeTurmas()
+  const { data: alunos = [], isLoading: loadingAlunos } = useAlunosProfessor()
   const [busca, setBusca] = useState('')
-
-  // TODO: Buscar alunos reais do Supabase (hook não existe ainda)
-  const alunos = useMemo(() => [], [])
 
   const alunosFiltrados = useMemo(() => {
     return alunos.filter((aluno: any) =>
@@ -32,7 +30,7 @@ export function ProfessorAlunosPage() {
     )
   }, [alunos, busca])
 
-  if (isLoading) {
+  if (loadingSaude || loadingAlunos) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
@@ -63,23 +61,20 @@ export function ProfessorAlunosPage() {
               <TableHead className="pl-8">Aluno</TableHead>
               <TableHead>Turma</TableHead>
               <TableHead className="text-center">Frequência</TableHead>
-              <TableHead className="text-center">Média</TableHead>
-              <TableHead className="text-center">Alertas</TableHead>
               <TableHead className="text-right pr-8">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {alunosFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={4} className="text-center py-12">
                   <UserCheck className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-500">Seus alunos aparecerão aqui para você acompanhar o desempenho.</p>
+                  <p className="text-slate-500">Seus alunos aparecerão aqui.</p>
                 </TableCell>
               </TableRow>
             ) : (
               alunosFiltrados.map((aluno: any) => {
                 const freq = aluno.frequencia || 0
-                const media = aluno.media || 0
 
                 return (
                   <TableRow key={aluno.id} className="hover:bg-slate-50/50 transition-colors">
@@ -90,7 +85,6 @@ export function ProfessorAlunosPage() {
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{aluno.nome}</p>
-                          <p className="text-xs text-slate-500">{aluno.email || 'Sem email'}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -98,34 +92,24 @@ export function ProfessorAlunosPage() {
                       <Badge variant="outline">{aluno.turma_nome || '-'}</Badge>
                     </TableCell>
                     <TableCell className="text-center py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              freq >= 75
-                                ? 'bg-emerald-500'
-                                : freq >= 50
-                                ? 'bg-amber-500'
-                                : 'bg-red-500'
-                            }`}
-                            style={{ width: `${freq}%` }}
-                          />
+                      {freq > 0 ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                freq >= 75
+                                  ? 'bg-emerald-500'
+                                  : freq >= 50
+                                  ? 'bg-amber-500'
+                                  : 'bg-red-500'
+                              }`}
+                              style={{ width: `${freq}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium">{freq}%</span>
                         </div>
-                        <span className="text-sm font-medium">{freq}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center py-4">
-                      <Badge
-                        variant={media >= 7 ? 'default' : media >= 5 ? 'secondary' : 'destructive'}
-                      >
-                        {media.toFixed(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center py-4">
-                      {aluno.alertas > 0 ? (
-                        <Badge variant="destructive">{aluno.alertas} alerta(s)</Badge>
                       ) : (
-                        <span className="text-slate-400 text-sm">-</span>
+                        <span className="text-sm text-slate-400">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right pr-8 py-4">

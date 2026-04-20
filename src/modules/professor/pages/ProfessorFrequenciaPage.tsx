@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAgendaDiaria } from '@/modules/professor/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { useNavigate } from 'react-router-dom'
 import {
   Loader2,
   CheckCircle,
@@ -24,6 +26,7 @@ import {
   AlertCircle,
   Save,
   Users,
+  ArrowLeft,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -33,8 +36,10 @@ import { FrequenciaMobileList } from '@/modules/frequencia/components/Frequencia
 type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
 
 export function ProfessorFrequenciaPage() {
+  const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data: agenda, isLoading: loadingAgenda } = useAgendaDiaria()
+  const { data: minhasTurmas, isLoading: loadingTurmas } = useTurmas()
   
   const [turmaId, setTurmaId] = useState('')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
@@ -44,20 +49,32 @@ export function ProfessorFrequenciaPage() {
   const [alunoJustificando, _setAlunoJustificando] = useState<{ id: string, nome: string } | null>(null)
   const [justificativaTemp, setJustificativaTemp] = useState('')
 
-  // Turmas únicas da agenda
+  // Turmas únicas combinadas (agenda + turmas vinculadas)
   const turmasUnicas = useMemo(() => {
-    if (!agenda) return []
     const map = new Map()
-    agenda.forEach((aula: any) => {
-      if (!map.has(aula.turma_id)) {
-        map.set(aula.turma_id, {
-          id: aula.turma_id,
-          nome: aula.turma_nome,
+
+    if (minhasTurmas) {
+      minhasTurmas.forEach((turma: any) => {
+        map.set(turma.id, {
+          id: turma.id,
+          nome: turma.nome,
         })
-      }
-    })
-    return Array.from(map.values())
-  }, [agenda])
+      })
+    }
+
+    if (agenda) {
+      agenda.forEach((aula: any) => {
+        if (!map.has(aula.turma_id)) {
+          map.set(aula.turma_id, {
+            id: aula.turma_id,
+            nome: aula.turma_nome,
+          })
+        }
+      })
+    }
+    
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome))
+  }, [agenda, minhasTurmas])
 
   // Dados Reais do Supabase
   const { data: alunosTurma = [], isLoading: loadingAlunos } = useAlunosDaTurma(turmaId)
@@ -69,6 +86,16 @@ export function ProfessorFrequenciaPage() {
     const map: Record<string, 'presente' | 'falta' | 'justificada'> = {}
     frequenciasExistentes.forEach((f: any) => {
       map[f.aluno_id] = f.status as any
+    })
+    return map
+  }, [frequenciasExistentes])
+
+  const initialJustificativas = useMemo(() => {
+    const map: Record<string, string> = {}
+    frequenciasExistentes.forEach((f: any) => {
+      if (f.justificativa) {
+        map[f.aluno_id] = f.justificativa
+      }
     })
     return map
   }, [frequenciasExistentes])
@@ -108,10 +135,20 @@ export function ProfessorFrequenciaPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 pb-32">
-      {/* Header Premium */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-100 px-6 py-4 flex flex-col gap-1">
-        <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Diário de Classe</h1>
-        <p className="text-[13px] text-zinc-500 font-medium leading-none">Registre a frequência dos alunos hoje</p>
+      {/* Header Nativo (Estilo App) */}
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-100 px-4 py-4 flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate(-1)}
+          className="h-10 w-10 rounded-2xl bg-zinc-100 active:scale-90 transition-all"
+        >
+          <ArrowLeft className="h-5 w-5 text-zinc-600" />
+        </Button>
+        <div className="flex flex-col">
+          <h1 className="text-[17px] font-black text-zinc-900 tracking-tight leading-none">Diário de Classe</h1>
+          <p className="text-[10px] uppercase font-bold text-zinc-400 mt-1.5 tracking-widest leading-none">Chamada Presença</p>
+        </div>
       </div>
 
       <div className="px-4 py-6 space-y-6">
@@ -162,6 +199,7 @@ export function ProfessorFrequenciaPage() {
               <FrequenciaMobileList 
                 alunos={alunosTurma}
                 initialFrequencias={initialFrequencias}
+                initialJustificativas={initialJustificativas}
                 onSave={handleSalvarFrequenciaBulk}
                 isSaving={isSaving}
               />

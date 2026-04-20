@@ -38,7 +38,113 @@ type AutorizacaoModelo = {
   resposta_id: string | null
 }
 
+// Componente interno para gerenciar a leitura do texto com monitoramento de scroll robusto
+function LeitorAutorizacao({ item, acao, onLeituraConcluida }: { 
+  item: AutorizacaoModelo, 
+  acao: 'autorizar' | 'revogar',
+  onLeituraConcluida: (lido: boolean) => void 
+}) {
+  const textoRef = useRef<HTMLDivElement>(null)
+  const [scrolledToBottom, setScrolledToBottom] = useState(false)
+
+  // Detecta quando o responsável rolou até o fim do texto
+  useEffect(() => {
+    const el = textoRef.current
+    if (!el || acao !== 'autorizar') return
+
+    const handleScroll = () => {
+      if (!el) return
+      
+      const currentPosition = Math.ceil(el.scrollTop + el.clientHeight)
+      const bottomThreshold = el.scrollHeight - 20 // Tolerância de 20px
+
+      if (currentPosition >= bottomThreshold) {
+        setScrolledToBottom(true)
+        onLeituraConcluida(true)
+      }
+    }
+
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    
+    // Verifica imediatamente se o texto é curto e não precisa de scroll
+    const checkImmediate = () => {
+      if (!el) return
+      // Se a altura do scroll (conteúdo) for menor ou igual à altura visível + tolerância
+      const isShort = el.scrollHeight <= el.clientHeight + 25
+      if (isShort) {
+        setScrolledToBottom(true)
+        onLeituraConcluida(true)
+      }
+    }
+
+    // Delay maior para garantir renderização correta em dispositivos lentos/mobile
+    const timer = setTimeout(checkImmediate, 300)
+    
+    return () => {
+      el.removeEventListener('scroll', handleScroll)
+      clearTimeout(timer)
+    }
+  }, [item.id, acao])
+
+  if (acao === 'revogar') {
+    return (
+      <div className="px-6 space-y-4 py-4">
+        <div className="bg-red-50 border border-red-100 rounded-3xl p-6">
+          <div className="flex items-start gap-4">
+            <AlertTriangle className="h-6 w-6 text-red-600 shrink-0 mt-1" />
+            <div className="space-y-2">
+               <p className="font-bold text-red-900 text-base">Você está revogando esta autorização</p>
+               <p className="text-sm text-red-700 leading-relaxed">
+                 Ao confirmar, você <strong>desautoriza</strong> a escola de realizar a ação descrita neste termo de <em>"{item.descricao_curta}"</em>.
+               </p>
+               <div className="pt-2 border-t border-red-100">
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest leading-normal">Ação registrada com data e hora para fins jurídicos.</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-5 min-h-0 flex-1 px-6">
+      <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+        <BookOpen className="h-4 w-4 text-emerald-500" />
+        Leia com atenção — Role até o fim
+      </div>
+    
+      {/* Texto com scroll */}
+      <div
+        ref={textoRef}
+        className={cn(
+          "bg-slate-50 rounded-2xl border border-slate-100 p-6 text-sm text-slate-700 leading-relaxed",
+          "overflow-y-auto flex-1 min-h-[200px] w-full box-border whitespace-pre-wrap break-words",
+          "prose prose-slate prose-sm max-w-none scroll-smooth touch-pan-y"
+        )}
+      >
+        {item.texto_completo}
+      </div>
+
+      <div className="min-h-[32px] flex items-center transition-all duration-300">
+        {!scrolledToBottom ? (
+          <p className="flex items-center gap-1.5 text-xs text-amber-600 font-bold animate-pulse">
+            <ChevronDown className="h-4 w-4 animate-bounce" />
+            Role até o final do texto para habilitar a confirmação
+          </p>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-emerald-600 font-bold bg-emerald-50 py-2 px-4 rounded-full border border-emerald-100">
+            <CheckCircle2 className="h-4 w-4" />
+            Texto lido — Você já pode confirmar abaixo
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: boolean }) {
+
   const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const { data: responsavel } = useResponsavel()
   const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
@@ -47,48 +153,6 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
   const [modalItem, setModalItem] = useState<AutorizacaoModelo | null>(null)
   const [acao, setAcao] = useState<'autorizar' | 'revogar' | null>(null)
   const [textoLido, setTextoLido] = useState(false)
-  const [scrolledToBottom, setScrolledToBottom] = useState(false)
-  const [_showConfirm, _setShowConfirm] = useState(false)
-  const textoRef = useRef<HTMLDivElement>(null)
-
-  // Detecta quando o responsável rolou até o fim do texto
-  useEffect(() => {
-    const el = textoRef.current
-    if (!el || !modalItem) return
-    setScrolledToBottom(false)
-    setTextoLido(false)
-
-    const handleScroll = () => {
-      if (!el || acao !== 'autorizar') return
-      
-      const currentPosition = el.scrollTop + el.clientHeight
-      const bottomThreshold = el.scrollHeight - 50
-
-      if (currentPosition >= bottomThreshold) {
-        setScrolledToBottom(true)
-        setTextoLido(true)
-      }
-    }
-
-    el.addEventListener('scroll', handleScroll, { passive: true })
-    
-    const checkImmediate = () => {
-      if (acao !== 'autorizar') return
-      const isShort = el.scrollHeight <= el.clientHeight + 20
-      if (isShort) {
-        setScrolledToBottom(true)
-        setTextoLido(true)
-      }
-    }
-
-    // Executa após um pequeno delay para garantir que o layout foi renderizado
-    const timer = setTimeout(checkImmediate, 100)
-    
-    return () => {
-      el.removeEventListener('scroll', handleScroll)
-      clearTimeout(timer)
-    }
-  }, [modalItem])
 
   const handleAbrirModal = (item: AutorizacaoModelo, acaoTipo: 'autorizar' | 'revogar') => {
     vibrate(20)
@@ -97,10 +161,8 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
     // Se for revogação, já liberamos o botão direto
     if (acaoTipo === 'revogar') {
       setTextoLido(true)
-      setScrolledToBottom(true)
     } else {
       setTextoLido(false)
-      setScrolledToBottom(false)
     }
   }
 
@@ -355,84 +417,44 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
                  </Button>
               </div>
 
-              <div className="px-6 pt-8 pb-4">
+              <div className="px-6 pt-8 pb-2">
                  <h4 className="font-black text-slate-800 text-2xl md:text-xl leading-snug text-left">
                    {modalItem?.titulo}
                  </h4>
               </div>
 
-            {acao === 'revogar' ? (
-              <div className="px-6 space-y-4 py-4">
-                <div className="bg-red-50 border border-red-100 rounded-3xl p-6">
-                  <div className="flex items-start gap-4">
-                    <AlertTriangle className="h-6 w-6 text-red-600 shrink-0 mt-1" />
-                    <div className="space-y-2">
-                       <p className="font-bold text-red-900 text-base">Você está revogando esta autorização</p>
-                       <p className="text-sm text-red-700 leading-relaxed">
-                         Ao confirmar, você <strong>desautoriza</strong> a escola de realizar a ação descrita neste termo de <em>"{modalItem?.descricao_curta}"</em>.
-                       </p>
-                       <div className="pt-2 border-t border-red-100">
-                          <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest leading-normal">Ação registrada com data e hora para fins jurídicos.</p>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-5 min-h-0 flex-1 px-6">
-                <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  <BookOpen className="h-4 w-4 text-emerald-500" />
-                  Leia com atenção
-                </div>
-              
-              {/* Texto com scroll */}
-              <div
-                ref={textoRef}
-                className="bg-slate-50 rounded-2xl border border-slate-100 p-6 text-sm text-slate-700 leading-relaxed overflow-y-auto flex-1 min-h-[200px] max-h-[350px] prose prose-sm w-full box-border"
+            {modalItem && acao && (
+              <LeitorAutorizacao 
+                item={modalItem} 
+                acao={acao} 
+                onLeituraConcluida={(lido) => setTextoLido(lido)} 
+              />
+            )}
+
+            <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50 space-y-3">
+              <Button
+                onClick={handleConfirmar}
+                disabled={responder.isPending || (acao === 'autorizar' && !textoLido)}
+                className={cn(
+                  "w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg",
+                  acao === 'autorizar'
+                    ? 'bg-teal-500 text-white shadow-teal-500/20'
+                    : 'bg-slate-700 text-white shadow-slate-700/30'
+                )}
               >
-                {modalItem?.texto_completo}
-              </div>
-
-              {!scrolledToBottom && (
-                <p className="flex items-center gap-1.5 text-xs text-amber-600 font-bold">
-                  <ChevronDown className="h-4 w-4 animate-bounce" />
-                  Role até o final do texto para habilitar a confirmação
-                </p>
-              )}
-
-              {scrolledToBottom && (
-                <div className="flex items-center gap-2 text-xs text-emerald-600 font-bold">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Texto lido — você pode confirmar a autorização
-                </div>
-              )}
+                {responder.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : acao === 'autorizar' ? (
+                  'Confirmar Aceite Agora'
+                ) : (
+                  'Confirmar Revogação'
+                )}
+              </Button>
+              <Button variant="ghost" onClick={() => setModalItem(null)} className="w-full text-slate-400 font-bold uppercase text-[10px] tracking-widest hover:bg-transparent">
+                Voltar sem autorizar
+              </Button>
             </div>
-          )}
-
-          <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/50 space-y-3">
-            <Button
-              onClick={handleConfirmar}
-              disabled={responder.isPending || (acao === 'autorizar' && !textoLido)}
-              className={cn(
-                "w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg",
-                acao === 'autorizar'
-                  ? 'bg-teal-500 text-white shadow-teal-500/20'
-                  : 'bg-slate-700 text-white shadow-slate-700/30'
-              )}
-            >
-              {responder.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : acao === 'autorizar' ? (
-                'Confirmar Aceite Agora'
-              ) : (
-                'Confirmar Revogação'
-              )}
-            </Button>
-            <Button variant="ghost" onClick={() => setModalItem(null)} className="w-full text-slate-400 font-bold uppercase text-[10px] tracking-widest hover:bg-transparent">
-              Voltar sem autorizar
-            </Button>
           </div>
-        </div>
         </DialogContent>
       </Dialog>
     </div>
