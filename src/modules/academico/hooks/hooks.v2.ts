@@ -25,10 +25,12 @@ export function useDisciplinasPorTurma(turmaId: string) {
 export function useCriarAvaliacao() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Parameters<typeof academicoV2Service.criarAvaliacao>[0]) =>
-      academicoV2Service.criarAvaliacao(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['avaliacoes_config'] })
+    mutationFn: async (payload: Parameters<typeof academicoV2Service.criarAvaliacao>[0]) => {
+      const result = await academicoV2Service.criarAvaliacao(payload)
+      return { result, payload }
+    },
+    onSuccess: ({ payload }) => {
+      qc.invalidateQueries({ queryKey: ['avaliacoes_config', payload.turma_id, payload.disciplina_id, payload.bimestre] })
     },
   })
 }
@@ -38,9 +40,6 @@ export function useExcluirAvaliacao() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => academicoV2Service.excluirAvaliacao(id, authUser!.user.id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['avaliacoes_config'] })
-    },
   })
 }
 

@@ -148,10 +148,10 @@ function NovaFuncaoDialog({ tenantId, categorias, onCreated }: NovaFuncaoDialogP
           <div className="space-y-2">
             <Label htmlFor="nova-funcao-categoria">Categoria *</Label>
             <Select onValueChange={(v) => setValue('categoria', v)}>
-              <SelectTrigger id="nova-funcao-categoria">
+              <SelectTrigger id="nova-funcao-categoria" className="w-full">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[9999]">
                 {categorias.map(cat => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
@@ -413,7 +413,7 @@ export function FuncionariosPage() {
                   <Label>Mês de Referência</Label>
                   <Select value={String(mesFolha)} onValueChange={(v) => setMesFolha(Number(v))}>
                     <SelectTrigger className="w-full"><SelectValue placeholder="Mês" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" className="z-[9999]">
                       {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((m, i) => (
                         <SelectItem key={i+1} value={String(i+1)}>{m}</SelectItem>
                       ))}
@@ -424,7 +424,7 @@ export function FuncionariosPage() {
                   <Label>Ano</Label>
                   <Select value={String(anoFolha)} onValueChange={(v) => setAnoFolha(Number(v))}>
                     <SelectTrigger className="w-full"><SelectValue placeholder="Ano" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" className="z-[9999]">
                       {[2024, 2025, 2026, 2027].map(a => (
                         <SelectItem key={a} value={String(a)}>{a}</SelectItem>
                       ))}
@@ -589,10 +589,10 @@ export function FuncionariosPage() {
                 name="perfil_id"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um perfil de acesso..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" className="z-[9999]">
                       {perfis.map(p => (
                         <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                       ))}
