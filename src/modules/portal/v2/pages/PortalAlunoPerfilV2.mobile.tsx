@@ -109,7 +109,7 @@ export function PortalAlunoPerfilV2Mobile() {
                   <span className="text-slate-300 text-[10px]">•</span>
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText(student.codigo_transferencia);
+                      navigator.clipboard.writeText(student.codigo_transferencia || '');
                       toast.success('ID do aluno copiado!');
                       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
                     }}

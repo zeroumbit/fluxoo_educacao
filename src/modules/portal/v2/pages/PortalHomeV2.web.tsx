@@ -150,7 +150,7 @@ export function PortalHomeV2Web() {
               {alunoSelecionado.codigo_transferencia && (
                 <button 
                   onClick={() => {
-                    navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia);
+                    navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia || '');
                     alert('ID copiado!');
                   }}
                   className="flex items-center gap-2 font-mono font-bold text-xs uppercase tracking-tight bg-amber-50 text-amber-700 px-3 py-1 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors"

@@ -140,7 +140,7 @@ export function PortalHomeV2Mobile() {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia);
+                      navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia || '');
                       toast.success('ID copiado!');
                       if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
                     }}

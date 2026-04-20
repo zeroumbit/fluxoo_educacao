@@ -459,7 +459,7 @@ export function AlunoDetalhePageWeb() {
                 {aluno.codigo_transferencia && (
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText(aluno.codigo_transferencia)
+                      navigator.clipboard.writeText(aluno.codigo_transferencia!)
                       toast.success('ID do aluno copiado!')
                     }}
                     className="group/id"

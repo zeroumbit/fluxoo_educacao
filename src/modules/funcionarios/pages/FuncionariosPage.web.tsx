@@ -155,7 +155,9 @@ function NovaFuncaoDialog({ tenantId, categorias, onCreated }: NovaFuncaoDialogP
                 {categorias.map(cat => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
-                <SelectItem value="15. Outros Cargos Específicos">Outros</SelectItem>
+                {!categorias.includes('15. Outros Cargos Específicos') && (
+                  <SelectItem value="15. Outros Cargos Específicos">Outros</SelectItem>
+                )}
               </SelectContent>
             </Select>
             {errors.categoria && <p className="text-sm text-destructive">{errors.categoria.message as string}</p>}
