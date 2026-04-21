@@ -66,7 +66,7 @@ export function PortalHomeV2Web() {
     return informativeIcons[idx];
   };
 
-  const habilitarNotificacoes = configPix?.notificacoes_habilitado !== false;
+  const habilitarNotificacoes = true;
 
   const alerts = [];
   if (habilitarNotificacoes && dashboard?.financeiro?.totalAtrasadas && dashboard.financeiro.totalAtrasadas > 0) {

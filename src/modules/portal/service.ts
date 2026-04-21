@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { PortalConfigPix } from '@/lib/database.types'
 
 export const portalService = {
   // ==========================================
@@ -413,7 +414,7 @@ export const portalService = {
     return res
   },
 
-  async buscarConfigPixEscola(tenantId: string) {
+  async buscarConfigPixEscola(tenantId: string): Promise<PortalConfigPix | null> {
     if (!tenantId) return null
 
     try {
@@ -433,9 +434,10 @@ export const portalService = {
       }
       
       // Mapeamento ultra-permissivo para garantir que nada falhe por nome de campo
-      const mapped = {
+      const mapped: PortalConfigPix = {
         pix_manual_ativo: config.pix_manual !== false,
         chave_pix: config.chave_pix || config.pix_chave || config.chave || '',
+        pix_chave: config.pix_chave || undefined,
         favorecido: config.nome_favorecido || config.favorecido || config.favorecido_nome || '',
         qr_code_url: config.pix_qr_code_url || config.qr_code_url || config.qrcode_url || '',
         instrucoes_pix: config.instrucoes_pix || config.instrucoes || config.pix_instrucoes || '',
@@ -575,7 +577,8 @@ export const portalService = {
 
         // Cria a notificação para a gestão escolar/financeira
         await supabase.from('notificacoes').insert({
-          tenant_id: tenantId,
+          tenant_id: tenantId ?? 'sistema',
+          user_id: null,
           tipo: 'PAGAMENTO_PIX_MANUAL',
           titulo: 'Novo Comprovante PIX',
           mensagem: `${responsavelNome} enviou comprovante de R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} para ${alunosNomes} (${turmasNomes}). Referente a: ${meses}. Por favor, valide se o pagamento foi mesmo feito e verifique o WhatsApp.`,
@@ -596,7 +599,7 @@ export const portalService = {
           },
           lida: false,
           resolvida: false
-        })
+        } as any)
       }
     } catch (notifyError) {
       console.warn('Falha silenciosa ao gerar notificação para a escola:', notifyError)

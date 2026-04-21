@@ -113,8 +113,10 @@ export function PortalCobrancasPageV2Mobile() {
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
     
-    const isAtrasada = (f: any) =>
-       f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
+    const isAtrasada = (f: any) => {
+       const hoje = new Date()
+       return f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
+     }
     
     // Total Pago: Soma as faturas marcadas como 'pago' ou onde pago === true, usando valor_pago prioritariamente
     const totalPago = allFaturas

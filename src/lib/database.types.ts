@@ -352,6 +352,21 @@ export type ConfigFinanceiraInsert = Omit<ConfigFinanceira, 'id' | 'updated_at'>
 }
 export type ConfigFinanceiraUpdate = Partial<ConfigFinanceiraInsert>
 
+// ========== PORTAL CONFIG PIX (Tipo mapeado para o front) ==========
+export type PortalConfigPix = {
+  pix_manual_ativo: boolean
+  chave_pix: string
+  pix_chave?: string
+  favorecido: string
+  qr_code_url: string
+  instrucoes_pix: string
+  qr_code_auto: boolean
+  dias_carencia: number
+  multa_atraso_percentual: number
+  juros_mora_mensal: number
+  multa_juros_habilitado: boolean
+}
+
 // ========== CONTAS_PAGAR ==========
 export type ContaPagar = {
   id: string

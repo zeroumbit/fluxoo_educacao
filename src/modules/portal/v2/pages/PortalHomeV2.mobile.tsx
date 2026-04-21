@@ -75,7 +75,7 @@ export function PortalHomeV2Mobile() {
     return informativeIcons[idx];
   };
 
-  const habilitarNotificacoes = configPix?.notificacoes_habilitado !== false;
+  const habilitarNotificacoes = true;
 
   // Alertas dinâmicos
   const alerts = [];

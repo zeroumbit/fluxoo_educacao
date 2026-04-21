@@ -65,7 +65,7 @@ export function EscolaCadastroPage() {
   const { data: planos } = usePlanos()
   const { data: configPix } = useConfigRecebimento()
 
-  const { register, handleSubmit, setValue, watch, trigger, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(cadastroSchema) as any,
     mode: 'onChange',
     defaultValues: {
@@ -75,6 +75,38 @@ export function EscolaCadastroPage() {
       cidade: '',
     },
   })
+
+  const { register, handleSubmit, setValue, watch, trigger, formState: { errors, isSubmitting } } = form
+
+  // PERSISTÊNCIA: Recuperar dados do LocalStorage ao carregar
+  useEffect(() => {
+    const savedData = localStorage.getItem('fluxoo_escola_cadastro_data')
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData)
+        // Não restauramos a senha por segurança
+        const { password, ...dataToRestore } = parsedData
+        form.reset({ ...form.getValues(), ...dataToRestore })
+        
+        // Se houver step salvo, restaura também
+        const savedStep = localStorage.getItem('fluxoo_escola_cadastro_step')
+        if (savedStep) setCurrentStep(Number(savedStep))
+        
+        logger.info('Cadastro de escola recuperado do LocalStorage')
+      } catch (e) {
+        logger.error('Erro ao restaurar dados salvos:', e)
+      }
+    }
+  }, [])
+
+  // PERSISTÊNCIA: Salvar dados no LocalStorage a cada mudança
+  const formData = watch()
+  useEffect(() => {
+    const { password, ...dataToSave } = formData
+    localStorage.setItem('fluxoo_escola_cadastro_data', JSON.stringify(dataToSave))
+    localStorage.setItem('fluxoo_escola_cadastro_step', currentStep.toString())
+  }, [formData, currentStep])
+
 
   const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
   const selectedEstado = watch('estado')
@@ -263,6 +295,11 @@ export function EscolaCadastroPage() {
       })
 
       toast.success('Escola registrada com sucesso!')
+      
+      // Limpar persistência
+      localStorage.removeItem('fluxoo_escola_cadastro_data')
+      localStorage.removeItem('fluxoo_escola_cadastro_step')
+
       setTimeout(() => navigate('/login'), 2000)
 
     } catch (err) {

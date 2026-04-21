@@ -217,6 +217,47 @@ export function MarketplaceCadastroPage() {
     }
   })
 
+  // PERSISTÊNCIA: Recuperar dados ao carregar
+  useEffect(() => {
+    const savedData = localStorage.getItem('fluxoo_marketplace_cadastro_data')
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData)
+        // Não restauramos a senha por segurança
+        if (parsedData.acesso) {
+          delete parsedData.acesso.password
+          delete parsedData.acesso.confirmPassword
+        }
+        form.reset({ ...form.getValues(), ...parsedData })
+        
+        // Restaurar estado da UI
+        const savedStep = localStorage.getItem('fluxoo_marketplace_cadastro_step')
+        const savedTipo = localStorage.getItem('fluxoo_marketplace_cadastro_tipo')
+        if (savedStep) setCurrentStep(Number(savedStep))
+        if (savedTipo) setTipoAtivo(savedTipo as any)
+        
+        console.log('Cadastro do Marketplace recuperado do LocalStorage')
+      } catch (e) {
+        console.error('Erro ao restaurar dados salvos:', e)
+      }
+    }
+  }, [])
+
+  // PERSISTÊNCIA: Salvar dados a cada mudança
+  const formData = form.watch()
+  useEffect(() => {
+    // Clone para remover senhas antes de salvar
+    const dataToSave = JSON.parse(JSON.stringify(formData))
+    if (dataToSave.acesso) {
+      delete dataToSave.acesso.password
+      delete dataToSave.acesso.confirmPassword
+    }
+    
+    localStorage.setItem('fluxoo_marketplace_cadastro_data', JSON.stringify(dataToSave))
+    localStorage.setItem('fluxoo_marketplace_cadastro_step', currentStep.toString())
+    localStorage.setItem('fluxoo_marketplace_cadastro_tipo', tipoAtivo)
+  }, [formData, currentStep, tipoAtivo])
+
   const { fields: fieldsFormacao, append: appendFormacao, remove: removeFormacao } = useFieldArray({
     control: form.control,
     name: "profissional.formacao"
@@ -389,6 +430,11 @@ export function MarketplaceCadastroPage() {
 
       toast.success('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar a conta.')
       
+      // Limpar persistência
+      localStorage.removeItem('fluxoo_marketplace_cadastro_data')
+      localStorage.removeItem('fluxoo_marketplace_cadastro_step')
+      localStorage.removeItem('fluxoo_marketplace_cadastro_tipo')
+
       // Delay para navegação
       setTimeout(() => {
         window.location.href = '/login'

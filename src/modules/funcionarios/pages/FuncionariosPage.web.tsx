@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -213,6 +213,30 @@ export function FuncionariosPage() {
       dia_pagamento: 5
     } 
   })
+
+  // PERSISTÊNCIA: Recuperar dados ao carregar (apenas para NOVO funcionário)
+  useEffect(() => {
+    const savedData = localStorage.getItem('fluxoo_funcionario_cadastro_data')
+    if (savedData && !editFunc) {
+      try {
+        const parsedData = JSON.parse(savedData)
+        funcForm.reset({ ...funcForm.getValues(), ...parsedData })
+        setSalarioInput(parsedData.salario_bruto ? parsedData.salario_bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '')
+        console.log('Dados de funcionário recuperados do LocalStorage')
+      } catch (e) {
+        console.error('Erro ao restaurar dados salvos:', e)
+      }
+    }
+  }, [editFunc])
+
+  // PERSISTÊNCIA: Salvar dados a cada mudança (apenas para NOVO funcionário)
+  const funcData = funcForm.watch()
+  useEffect(() => {
+    if (!editFunc && dialogOpen) {
+      localStorage.setItem('fluxoo_funcionario_cadastro_data', JSON.stringify(funcData))
+    }
+  }, [funcData, editFunc, dialogOpen])
+
   const userForm = useForm<UserFormData>({ resolver: zodResolver(userSchema) as any })
 
   // Ordem personalizada das categorias (grupos) solicitada pelo usuário
@@ -326,6 +350,7 @@ export function FuncionariosPage() {
         })
         toast.success('Funcionário cadastrado!')
       }
+      localStorage.removeItem('fluxoo_funcionario_cadastro_data')
       funcForm.reset()
       setDialogOpen(false)
       setEditFunc(null)

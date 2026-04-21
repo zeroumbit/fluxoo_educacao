@@ -5,6 +5,7 @@ import { portalService } from './service'
 import { usePortalContext } from './context'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { transferenciasService } from '@/modules/academico/transferencias.service'
+import type { PortalConfigPix } from '@/lib/database.types'
 // import alertaSom from '@/assets/alerta.mp3'
 const alertaSom = '/alerta_v3.mp3'
 
@@ -160,7 +161,7 @@ export function useCobrancasAluno() {
 }
 export function useConfigPix() {
   const { tenantId } = usePortalContext()
-  return useQuery({
+  return useQuery<PortalConfigPix | null>({
     queryKey: ['portal', 'config-pix', tenantId],
     queryFn: () => portalService.buscarConfigPixEscola(tenantId!),
     enabled: !!tenantId,
