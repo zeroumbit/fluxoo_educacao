@@ -34,8 +34,11 @@ import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NativeHeader } from '../components/NativeHeader'
+import { portalFinanceiroService } from '../../financeiro.service'
 
 // Helper de vibração (Haptic Feedback - padrão nativo)
 const vibrate = (ms: number | number[] = 20) => {
@@ -60,8 +63,8 @@ const CobrancasSkeleton = () => (
         <div key={i} className="h-24 w-40 bg-slate-100/80 rounded-[24px] shrink-0" />
       ))}
     </div>
-    {/* Alunos Cards Skeleton */}
-    <div className="space-y-4">
+    {/* Lista Skeleton */}
+    <div className="flex flex-col gap-4 mt-8">
       {[1, 2, 3].map(i => (
         <div key={i} className="h-28 bg-white border border-slate-100 rounded-[24px]" />
       ))}
@@ -83,7 +86,7 @@ export function PortalCobrancasPageV2Mobile() {
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
   const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
     queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
-    queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
+    queryFn: () => portalFinanceiroService.obterFaturasDoAluno(v.aluno.id, v.aluno.tenant_id),
     enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
   })), [vinculos]);
 
@@ -92,11 +95,12 @@ export function PortalCobrancasPageV2Mobile() {
   })
 
   const isLoadingCobrancas = cobrancasQueries.some(q => q.isLoading)
-
+  
   const familyData = useMemo(() => {
-    if (!vinculos || isLoadingCobrancas) return null
+    if (!vinculos || isLoadingCobrancas || isLoadingCtx) return null
     const alunosComFaturas = vinculos.map((v: any, index: number) => {
       const faturas = cobrancasQueries[index]?.data || []
+      
       // Normalizar estrutura da turma (pode vir como array ou objeto)
       const turmaRaw = v.aluno?.turma
       const turma = Array.isArray(turmaRaw) ? turmaRaw[0] : turmaRaw
@@ -109,41 +113,63 @@ export function PortalCobrancasPageV2Mobile() {
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
     
-    // Data atual para comparação (meia-dia para evitar problemas de fuso)
-    const hoje = new Date()
-    hoje.setHours(12, 0, 0, 0)
+    const isAtrasada = (f: any) =>
+       f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
     
-    // A Vencer: status 'a_vencer' E data_vencimento >= hoje
-    const aVencer = allFaturas
-      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+    // Total Pago: Soma as faturas marcadas como 'pago' ou onde pago === true, usando valor_pago prioritariamente
+    const totalPago = allFaturas
+      .filter((f: any) => f.status === 'pago' || f.pago === true)
+      .reduce((acc: number, f: any) => acc + Number(f.valor_pago || f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Atrasado: status 'atrasado' OU (status 'a_vencer' mas data_vencimento < hoje)
+    // Atrasado: status 'atrasado' OU data vencida, e NAO pago
     const atrasado = allFaturas
-      .filter(f => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje))
-      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+      .filter((f: any) => isAtrasada(f) && f.status !== 'pago' && f.pago !== true)
+      .reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Materiais/Compras
     const materiais = allFaturas
       .filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item'))
       .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Próximo vencimento: APENAS cobranças a vencer (NÃO incluir atrasadas)
-    // Mostrar a MENOR data de vencimento que seja >= hoje
-    const proximoVenc = allFaturas
-      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
+    // Proximo vencimento: TOTAL DO PRÓXIMO MÊS (ex: se hoje é abril, soma tudo de maio)
+    const dataRef = new Date()
+    const mesAlvo = (dataRef.getMonth() + 1) % 12
+    const anoAlvo = dataRef.getMonth() === 11 ? dataRef.getFullYear() + 1 : dataRef.getFullYear()
+
+    const faturasProximoMes = allFaturas.filter(f => {
+      if (f.status === 'pago' || f.pago === true || f.status === 'cancelado') return false
+      // Parsing manual para evitar flutuações de timezone
+      const parts = f.data_vencimento.split('-')
+      if (parts.length < 2) return false
+      const fAno = parseInt(parts[0], 10)
+      const fMes = parseInt(parts[1], 10) - 1
+      return fMes === mesAlvo && fAno === anoAlvo
+    })
+
+    const proximoVencValor = faturasProximoMes.reduce((acc, f) => 
+      acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+    
+    const nomeMesAlvo = format(new Date(anoAlvo, mesAlvo, 1), 'MMMM', { locale: ptBR })
+    const proximoVencSubtitle = proximoVencValor > 0 
+      ? `Total de ${nomeMesAlvo.charAt(0).toUpperCase() + nomeMesAlvo.slice(1)}`
+      : `Nada para ${nomeMesAlvo}`
     
     // Faturas para Checkout Unificado (A vencer e Atrasadas, exceto pagas/canceladas)
-    const faturasParaCarrinho = allFaturas.filter(f => f.status !== 'pago' && f.status !== 'cancelado')
+    const faturasParaCarrinho = allFaturas.filter(f => f.status !== 'pago' && f.pago !== true && f.status !== 'cancelado')
 
     return { 
-      resumo: { aVencer, atrasado, materiais, proximoVenc }, 
+      resumo: { 
+        totalPago, 
+        atrasado, 
+        materiais, 
+        proximoVencValor, 
+        proximoVencSubtitle 
+      }, 
       alunos: alunosComFaturas,
       faturasParaCarrinho,
       totalCarrinho: faturasParaCarrinho.reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     }
-  }, [vinculos, isLoadingCobrancas, ...cobrancasQueries.map(q => q.data)])
+  }, [vinculos, isLoadingCobrancas, isLoadingCtx, ...cobrancasQueries.map(q => q.data)])
 
   // Lógica para abrir fatura específica vinda do Dashboard
   useEffect(() => {
@@ -155,7 +181,7 @@ export function PortalCobrancasPageV2Mobile() {
       const found = aluno.faturas?.find((f: any) => f.id === targetId)
       if (found) {
         setSelectedAluno(aluno)
-        setCobrancaAtiva({ ...found, alunoNome: aluno.nome_completo, tenant_id: aluno.tenant_id })
+        setCobrancaAtiva({ ...found, alunoNome: aluno.nome_completo, tenant_id: found.tenant_id || aluno.tenant_id })
         setShowCheckout(true)
         
         // Limpa o state de navegação de forma reativa para evitar loop infinito
@@ -176,9 +202,16 @@ export function PortalCobrancasPageV2Mobile() {
       {/* 2. Dashboard Cards - Scroll Horizontal */}
       <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar" role="region" aria-label="Resumo financeiro">
         <ResumoCardMobile
-          label="A Vencer em 12 Meses"
-          value={familyData?.resumo.aVencer}
+          label="Próximo Venc."
+          value={familyData?.resumo.proximoVencValor}
+          subtitle={familyData?.resumo.proximoVencSubtitle}
           icon={Calendar}
+          color="amber"
+        />
+        <ResumoCardMobile
+          label="Total Pago"
+          value={familyData?.resumo.totalPago}
+          icon={CheckCircle2}
           color="teal"
         />
         <ResumoCardMobile
@@ -196,57 +229,47 @@ export function PortalCobrancasPageV2Mobile() {
             color="indigo"
           />
         )}
-        <ResumoCardMobile
-          label="Próximo Venc."
-          value={familyData?.resumo.proximoVenc}
-          icon={CreditCard}
-          color="amber"
-          isDate
-        />
       </div>
 
-      {/* Carrinho Unificado (Checkout Multi) - Vindo da V1 */}
-      {familyData && familyData.faturasParaCarrinho.length > 1 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-indigo-600 rounded-[32px] p-6 text-white shadow-xl shadow-indigo-100 mx-1 flex flex-col gap-4"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-               <ShoppingBag size={24} className="text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-[2px] text-indigo-200">Carrinho Unificado</span>
-              <h3 className="text-xl font-black tracking-tight leading-none">
-                {formatCurrency(familyData.totalCarrinho)}
-              </h3>
-            </div>
+      {/* 3. Checkout Unificado Mobile */}
+      {familyData && familyData.faturasParaCarrinho.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[17px] font-bold text-slate-800 tracking-tight">Checkout Rápido</h2>
+            <Badge className="bg-slate-900 text-white border-none text-[10px] font-black px-2 py-0.5 rounded-full">
+              {familyData.faturasParaCarrinho.length} ITENS
+            </Badge>
           </div>
-          <Button
+          <Button 
             onClick={() => {
-              vibrate(40);
+              vibrate(25);
               setCobrancaAtiva({
                 id: 'multi',
+                ids: familyData.faturasParaCarrinho.map(f => f.id),
                 valor: familyData.totalCarrinho,
                 descricao: `Pagamento Consolidado (${familyData.faturasParaCarrinho.length} faturas)`,
                 alunoNome: 'Família',
-                tenant_id: familyData.alunos[0]?.tenant_id
+                tenant_id: familyData.faturasParaCarrinho[0]?.tenant_id || familyData.alunos[0]?.tenant_id
               });
               setShowCheckout(true);
             }}
-            className="bg-white text-indigo-600 hover:bg-slate-50 font-black uppercase text-[11px] tracking-[1px] rounded-2xl h-12 shadow-md active:scale-95 transition-all w-full"
+            className="w-full h-14 bg-teal-600 hover:bg-teal-700 text-white rounded-[24px] shadow-lg shadow-teal-500/20 flex items-center justify-between px-6 active:scale-[0.98] transition-transform"
           >
-            Pagar Tudo Agora
+            <div className="flex items-center gap-3">
+              <ShoppingBag size={20} className="text-teal-200" />
+              <span className="text-[12px] font-black uppercase tracking-widest">Pagar Todas</span>
+            </div>
+            <span className="text-[16px] font-black tracking-tight tracking-[-0.5px]">
+              {formatCurrency(familyData.totalCarrinho)}
+            </span>
           </Button>
-        </motion.div>
+        </div>
       )}
 
-      {/* 3. Lista de Alunos - Cards */}
-      <div className="flex flex-col gap-4">
-        {/* Header da Seção */}
+      {/* Cards Alunos */}
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-[17px] font-bold text-slate-800">
+          <h2 className="text-[17px] font-bold text-slate-800 tracking-tight">
             Alunos
           </h2>
           <span className="text-[12px] font-bold text-slate-400">
@@ -277,10 +300,7 @@ export function PortalCobrancasPageV2Mobile() {
           <DetailDrawerMobile
             aluno={selectedAluno}
             onClose={() => setSelectedAluno(null)}
-            onPagar={(fat: any) => {
-              setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: selectedAluno.tenant_id });
-              setShowCheckout(true);
-            }}
+            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
           />
         </SheetContent>
       </Sheet>
@@ -307,9 +327,10 @@ interface ResumoCardMobileProps {
   color: 'teal' | 'rose' | 'indigo' | 'amber';
   isCritical?: boolean;
   isDate?: boolean;
+  subtitle?: string;
 }
 
-function ResumoCardMobile({ label, value, icon: Icon, color, isCritical, isDate }: ResumoCardMobileProps) {
+function ResumoCardMobile({ label, value, icon: Icon, color, isCritical, isDate, subtitle }: ResumoCardMobileProps) {
   const colors: any = {
     teal: 'bg-teal-500 text-white',
     rose: 'bg-rose-500 text-white',
@@ -333,11 +354,12 @@ function ResumoCardMobile({ label, value, icon: Icon, color, isCritical, isDate 
           </span>
           {/* Value - iOS Title / Material Title Medium */}
           <span className={cn(
-            "text-[18px] font-bold tracking-tight leading-tight truncate",
+            "text-[18px] font-bold tracking-tight leading-loose truncate",
             isCritical && value > 0 ? "text-rose-600" : "text-slate-900"
           )}>
             {isDate ? (value ? formatDate(value) : '---') : formatCurrency(value || 0)}
           </span>
+          {subtitle && <span className="text-[9px] font-bold text-slate-400 truncate tracking-tight">{subtitle}</span>}
         </div>
       </div>
     </motion.div>
@@ -418,8 +440,13 @@ function AlunoCardMobile({ aluno, onClick }: any) {
 
 function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
   const [activeTab, setActiveTab] = useState<'pendentes' | 'pagos'>('pendentes')
+  const [exibirTodas, setExibirTodas] = useState(false)
 
   if (!aluno) return null
+
+  // Total Geral de todas as faturas em aberto
+  const pendentesFaturas = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.pago !== true && f.status !== 'cancelado')
+  const totalGeral = pendentesFaturas.reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -476,16 +503,24 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
             }}
           >
             <TabsContent value="pendentes" className="m-0 outline-none">
+              <div className="mb-6 p-6 bg-slate-900 rounded-[28px] text-white flex flex-col items-center justify-center">
+                <span className="text-[10px] font-black uppercase tracking-[3px] text-slate-500 mb-1">Total do Ano Letivo</span>
+                <h4 className="text-2xl font-black tracking-tighter">{formatCurrency(totalGeral)}</h4>
+              </div>
+
               <DrawerFaturaListMobile
-                faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')}
+                faturas={pendentesFaturas}
                 onAction={onPagar}
+                exibirTodas={exibirTodas}
+                onToggleTodas={() => setExibirTodas(true)}
               />
             </TabsContent>
 
             <TabsContent value="pagos" className="m-0 outline-none">
               <DrawerFaturaListMobile
-                faturas={aluno.faturas.filter((f: any) => f.status === 'pago')}
+                faturas={aluno.faturas.filter((f: any) => f.status === 'pago' || f.pago === true)}
                 isHistorico
+                exibirTodas
               />
             </TabsContent>
           </div>
@@ -495,7 +530,7 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
   )
 }
 
-function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
+function DrawerFaturaListMobile({ faturas, onAction, isHistorico, exibirTodas, onToggleTodas }: any) {
   if (faturas.length === 0) {
     return (
       <div className="py-16 text-center text-slate-400">
@@ -504,11 +539,15 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
     )
   }
 
-  const sorted = [...faturas].sort((a, b) =>
+  const rawSorted = [...faturas].sort((a, b) =>
     isHistorico
       ? new Date(b.data_vencimento).getTime() - new Date(a.data_vencimento).getTime()
       : new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()
   )
+
+  // O slice e temMais já mostram min. 3 se disponíveis
+  const sorted = exibirTodas ? rawSorted : rawSorted.slice(0, 3)
+  const temMais = !exibirTodas && rawSorted.length > 3
 
   const getTipoBadge = (descricao: string) => {
     const desc = descricao?.toLowerCase() || ''
@@ -620,6 +659,16 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico }: any) {
           </motion.div>
         )
       })}
+
+      {temMais && (
+        <Button
+          variant="ghost"
+          onClick={onToggleTodas}
+          className="w-full h-16 rounded-[20px] border-2 border-dashed border-slate-100 text-slate-400 font-bold uppercase text-[10px] tracking-[2px] mt-2 mb-10"
+        >
+          Ver todas as parcelas do ano
+        </Button>
+      )}
     </div>
   )
 }
@@ -669,8 +718,8 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
       const filename = `comprovante_${cobranca?.id}_${Date.now()}`
       const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
 
-      // 2. Registra no banco
-      await portalService.registrarPagamentoComComprovante(cobranca?.id!, url, responsavel?.id!)
+      // 2. Registra no banco (suporta ID único ou array de IDs para pagamento unificado)
+      await portalService.registrarPagamentoComComprovante(cobranca?.ids || cobranca?.id!, url, responsavel?.id!)
 
       // 3. Envia WhatsApp
       const numeroRaw = configRecados?.whatsapp_contato || ''
@@ -740,7 +789,7 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
 
           {/* Conteúdo PIX */}
           <div className="space-y-6">
-            {(configPix?.qr_code_url || configPix?.chave_pix) ? (
+            {configPix ? (
               <div className="space-y-6">
                 {/* QR Code */}
                 {(configPix?.qr_code_url || configPix?.qr_code_auto) && (
@@ -759,12 +808,12 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
                           <img
                             src={configPix.qr_code_url}
                             alt="QR Code PIX"
-                            className="w-40 h-40 object-contain"
+                            className="w-48 h-48 object-contain"
                           />
                         )
                       ) : (
-                        <div className="w-40 h-40 flex flex-col items-center justify-center text-slate-300 gap-2">
-                          <QrCode size={48} aria-hidden="true" />
+                        <div className="w-48 h-48 flex flex-col items-center justify-center text-slate-300 gap-2">
+                          <QrCode size={56} aria-hidden="true" />
                           <span className="text-[10px] font-bold uppercase tracking-wide text-center">
                             Gerando...
                           </span>
@@ -785,8 +834,27 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
                   </div>
                 )}
 
+                {/* Favorecido e Instruções - Adicionado */}
+                {(configPix?.favorecido || configPix?.instrucoes_pix) && (
+                  <div className="flex flex-col gap-1.5 px-1 pb-2">
+                    {configPix?.favorecido && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Favorecido:</span>
+                        <span className="text-[12px] font-black text-slate-700">{configPix.favorecido}</span>
+                      </div>
+                    )}
+                    {configPix?.instrucoes_pix && (
+                      <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-3 mt-1">
+                        <p className="text-[11px] font-bold text-amber-800 leading-normal italic">
+                          "{configPix.instrucoes_pix}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Copia e Cola */}
-                {configPix?.chave_pix && (
+                {(configPix?.chave_pix || configPix?.pix_chave) && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <div className="h-px bg-slate-100 flex-1" aria-hidden="true" />
@@ -798,7 +866,7 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
 
                     <div className="space-y-3">
                       <div className="p-4 rounded-[16px] bg-white border-2 border-slate-100 font-mono text-[11px] text-slate-500 break-all leading-relaxed shadow-inner text-center max-h-32 overflow-y-auto">
-                        {configPix.chave_pix}
+                        {configPix.chave_pix || configPix.pix_chave}
                       </div>
                       <Button
                         onClick={handleCopy}
@@ -832,35 +900,52 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
               </div>
             )}
 
-            {/* Upload de Comprovante */}
-            <div className="space-y-3">
+            {/* Upload de Comprovante - Fluxo de Segurança */}
+            <div className="space-y-4 pt-4 border-t border-slate-50">
               <div className="flex items-center gap-2">
-                <div className="h-px bg-slate-100 flex-1" aria-hidden="true" />
-                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wide flex-shrink-0">
-                  Upload do Comprovante
-                </span>
-                <div className="h-px bg-slate-100 flex-1" aria-hidden="true" />
+                <div className="h-px bg-slate-100 flex-1" />
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Fluxo de Segurança</span>
+                <div className="h-px bg-slate-100 flex-1" />
+              </div>
+
+              <div className="px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-[20px] text-center">
+                <p className="text-[12px] font-bold text-indigo-900 leading-tight">
+                  Após o pagamento com pix, envie o comprovante para a escola logo abaixo.
+                </p>
               </div>
 
               <label className={cn(
-                "relative cursor-pointer flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-[20px] transition-all",
+                "relative cursor-pointer flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed rounded-[24px] transition-all",
                 arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200"
               )}>
                 <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
                 {arquivo ? (
                   <>
-                    <FileText className="text-teal-500" size={24} />
-                    <span className="text-[11px] font-bold text-teal-700 truncate max-w-full px-4">{arquivo.name}</span>
-                    <span className="text-[10px] text-teal-600/60 uppercase font-bold tracking-widest">Toque para trocar</span>
+                    <FileText className="text-teal-500" size={28} />
+                    <span className="text-[11px] font-bold text-teal-900 truncate max-w-full px-4">{arquivo.name}</span>
+                    <span className="text-[10px] text-teal-600/60 uppercase font-black tracking-widest">Toque para trocar</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="text-slate-400" size={24} />
-                    <span className="text-[11px] font-bold text-slate-500">Selecionar Comprovante</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">PDF, PNG ou WebP</span>
+                    <Upload className="text-slate-300" size={28} />
+                    <span className="text-[11px] font-bold text-slate-500 uppercase">Selecionar Comprovante</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-widest">PDF, PNG ou WebP</span>
                   </>
                 )}
               </label>
+
+              {/* Chave para conferência logo abaixo do upload */}
+              {(configPix?.chave_pix || configPix?.pix_chave) && (
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-[20px] flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Chave PIX da Escola</p>
+                    <p className="text-[11px] font-mono text-slate-700 truncate font-bold">{configPix.chave_pix || configPix.pix_chave}</p>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-10 w-10 text-slate-400 hover:text-indigo-600 shrink-0" onClick={handleCopy}>
+                    {copiado ? <CheckCircle2 size={20} className="text-teal-500" /> : <Copy size={20} />}
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Botão Confirmar */}

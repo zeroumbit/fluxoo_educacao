@@ -39,10 +39,13 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
 import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
+import { portalFinanceiroService } from '../../financeiro.service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // Helper de vibração
@@ -84,7 +87,7 @@ export function PortalCobrancasPageV2() {
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
   const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
     queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
-    queryFn: () => portalService.buscarCobrancasPorAluno(v.aluno.id, v.aluno.tenant_id),
+    queryFn: () => portalFinanceiroService.obterFaturasDoAluno(v.aluno.id, v.aluno.tenant_id),
     enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
   })), [vinculos]);
 
@@ -114,18 +117,17 @@ export function PortalCobrancasPageV2() {
     const hoje = new Date()
     hoje.setHours(12, 0, 0, 0)
 
-    // Helper para verificar se uma fatura está atrasada (status OU data)
     const isAtrasada = (f: any) =>
       f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
     
-    // A Vencer: status 'a_vencer' E data_vencimento >= hoje
-    const aVencer = allFaturas
-      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+    // Total Pago: Soma as notas pagas usando valor_pago se existir (pagamentos manuais) 
+    const totalPago = allFaturas
+      .filter(f => f.status === 'pago' || f.pago === true)
+      .reduce((acc, f) => acc + Number(f.valor_pago || f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Atrasado: status 'atrasado' OU data vencida (não depende do job do banco)
+    // Atrasado: status 'atrasado' OU data vencida, desde que não esteja pago
     const atrasado = allFaturas
-      .filter(isAtrasada)
+      .filter(f => isAtrasada(f) && f.status !== 'pago' && f.pago !== true)
       .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Materiais/Compras
@@ -133,20 +135,52 @@ export function PortalCobrancasPageV2() {
       .filter(f => f.status !== 'pago' && f.descricao?.toLowerCase().includes('item'))
       .reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Próximo vencimento: APENAS cobranças a vencer (NÃO incluir atrasadas)
-    // Mostrar a MENOR data de vencimento que seja >= hoje
-    const proximoVenc = allFaturas
-      .filter(f => f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') >= hoje)
-      .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0]?.data_vencimento
+    // Proximo vencimento: TOTAL DO PRÓXIMO MÊS (ex: se hoje é abril, soma tudo de maio)
+    const dataRef = new Date()
+    const mesAlvo = (dataRef.getMonth() + 1) % 12
+    const anoAlvo = dataRef.getMonth() === 11 ? dataRef.getFullYear() + 1 : dataRef.getFullYear()
+
+    const faturasProximoMes = allFaturas.filter(f => {
+      if (f.status === 'pago' || f.pago === true || f.status === 'cancelado') return false
+      // Parsing manual para evitar flutuações de timezone
+      const parts = f.data_vencimento.split('-')
+      if (parts.length < 2) return false
+      const fAno = parseInt(parts[0], 10)
+      const fMes = parseInt(parts[1], 10) - 1
+      return fMes === mesAlvo && fAno === anoAlvo
+    })
+
+    const proximoVencValor = faturasProximoMes.reduce((acc, f) => 
+      acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
-    // Faturas para Checkout Unificado (A vencer e Atrasadas, exceto pagas/canceladas)
-    const faturasParaCarrinho = allFaturas.filter(f => f.status !== 'pago' && f.status !== 'cancelado')
+    const nomeMesAlvo = format(new Date(anoAlvo, mesAlvo, 1), 'MMMM', { locale: ptBR })
+    const proximoVencSubtitle = proximoVencValor > 0 
+      ? `Total de ${nomeMesAlvo.charAt(0).toUpperCase() + nomeMesAlvo.slice(1)}` 
+      : `Nenhuma fatura para ${nomeMesAlvo}`
+    const proximoVencLabelMes = nomeMesAlvo.charAt(0).toUpperCase() + nomeMesAlvo.slice(1)
+    
+    // Faturas para Checkout Unificado (Apenas próximo mês, conforme solicitado)
+    // Refinamento extra de proteção para o status 'pago' via valor_pago
+    const isPaga = (f: any) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
+    
+    // Filtro mais robusto
+    const faturasAbertas = allFaturas.filter(f => !isPaga(f) && f.status !== 'cancelado')
+    
+    // Carrinho recebe APENAS as do próximo mês (ex: 1200 reais)
+    const faturasParaCarrinho = faturasProximoMes.filter(f => !isPaga(f) && f.status !== 'cancelado')
 
     return { 
-      resumo: { aVencer, atrasado, materiais, proximoVenc }, 
+      resumo: { 
+        totalPago, 
+        atrasado, 
+        materiais, 
+        proximoVencValor, 
+        proximoVencSubtitle: proximoVencValor > 0 ? `Total de ${proximoVencLabelMes}` : 'Nenhuma fatura para o próximo mês' 
+      }, 
       alunos: alunosComFaturas,
       faturasParaCarrinho,
-      totalCarrinho: faturasParaCarrinho.reduce((acc, f) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+      // Total carrinho passa a ser igual ao Total do Proximo Vencimento
+      totalCarrinho: proximoVencValor
     }
   }, [vinculos, isLoadingCobrancas, ...cobrancasQueries.map(q => q.data)])
 
@@ -190,12 +224,29 @@ export function PortalCobrancasPageV2() {
 
           {/* Dashboard Cards Consolidados */}
           <div className={`grid gap-6 mt-6 ${familyData?.resumo.materiais > 0 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-            <ResumoCard label="A Vencer em 12 Meses" value={familyData?.resumo.aVencer} icon={Calendar} color="teal" />
-            <ResumoCard label="Atrasado" value={familyData?.resumo.atrasado} icon={AlertTriangle} color="rose" isCritical />
+            <ResumoCard 
+              label="Próximo Vencimento" 
+              value={familyData?.resumo.proximoVencValor} 
+              subtitle={familyData?.resumo.proximoVencSubtitle}
+              icon={CreditCard} 
+              color="amber" 
+            />
+            <ResumoCard 
+              label="Total Pago" 
+              value={familyData?.resumo.totalPago} 
+              icon={CheckCircle2} 
+              color="teal" 
+            />
+            <ResumoCard 
+              label="Atrasado" 
+              value={familyData?.resumo.atrasado} 
+              icon={AlertTriangle} 
+              color="rose" 
+              isCritical 
+            />
             {familyData?.resumo.materiais > 0 && (
               <ResumoCard label="Compras/Materiais" value={familyData?.resumo.materiais} icon={ShoppingBag} color="indigo" />
             )}
-            <ResumoCard label="Próximo Vencimento" value={familyData?.resumo.proximoVenc} icon={CreditCard} color="amber" isDate />
           </div>
 
           {/* Carrinho Unificado (Checkout Multi) - Vindo da V1 */}
@@ -224,10 +275,11 @@ export function PortalCobrancasPageV2() {
                   vibrate(40);
                   setCobrancaAtiva({
                     id: 'multi',
+                    ids: familyData.faturasParaCarrinho.map(f => f.id),
                     valor: familyData.totalCarrinho,
                     descricao: `Pagamento Consolidado (${familyData.faturasParaCarrinho.length} faturas)`,
                     alunoNome: 'Família',
-                    tenant_id: familyData.alunos[0]?.tenant_id // Usa o tenant do primeiro aluno (assume mesma conta pix)
+                    tenant_id: familyData.faturasParaCarrinho[0]?.tenant_id || familyData.alunos[0]?.tenant_id
                   });
                   setShowCheckout(true);
                 }}
@@ -257,7 +309,7 @@ export function PortalCobrancasPageV2() {
           <DetailDrawer 
             aluno={selectedAluno} 
             onClose={() => setSelectedAluno(null)}
-            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: selectedAluno.tenant_id }); setShowCheckout(true); }}
+            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
           />
         </SheetContent>
       </Sheet>
@@ -276,7 +328,7 @@ export function PortalCobrancasPageV2() {
 
 // --- COMPONENTES AUXILIARES ---
 
-function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate }: any) {
+function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate, subtitle }: any) {
   const colors: any = {
     teal: 'bg-teal-500 text-white shadow-teal-500/10',
     rose: 'bg-rose-500 text-white shadow-rose-500/10',
@@ -294,6 +346,7 @@ function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate }: any
           <span className={cn("text-2xl font-black tracking-tighter leading-none", isCritical && value > 0 ? "text-rose-600" : "text-slate-900")}>
             {isDate ? (value ? formatDate(value) : '---') : formatCurrency(value || 0)}
           </span>
+          {subtitle && <span className="text-[10px] font-bold text-slate-400 mt-1">{subtitle}</span>}
         </div>
       </CardContent>
     </Card>
@@ -368,7 +421,13 @@ function AlunoCard({ aluno, onClick }: any) {
 }
 
 function DetailDrawer({ aluno, onClose, onPagar }: any) {
+  const [exibirTodas, setExibirTodas] = useState(false)
   if (!aluno) return null
+
+  // Total Geral de todas as faturas em aberto (para transparência total)
+  const isPagaLocal = (f: any) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
+  const pendentesFaturas = aluno.faturas.filter((f: any) => !isPagaLocal(f) && f.status !== 'cancelado')
+  const totalGeral = pendentesFaturas.reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -393,21 +452,35 @@ function DetailDrawer({ aluno, onClose, onPagar }: any) {
         </div>
 
         <TabsContent value="pendentes" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
-           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado')} onAction={onPagar} />
+           <div className="mb-8 p-6 bg-slate-900 rounded-[32px] text-white flex flex-col items-center justify-center">
+              <span className="text-[10px] font-black uppercase tracking-[3px] text-slate-500 mb-1">Total até Dezembro</span>
+              <h4 className="text-3xl font-black tracking-tighter">{formatCurrency(totalGeral)}</h4>
+           </div>
+
+           <DrawerFaturaList 
+              faturas={pendentesFaturas} 
+              onAction={onPagar} 
+              exibirTodas={exibirTodas}
+              onToggleTodas={() => setExibirTodas(true)}
+           />
         </TabsContent>
 
         <TabsContent value="pagos" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
-           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => f.status === 'pago')} isHistorico />
+           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => isPagaLocal(f))} isHistorico exibirTodas />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
 
-function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
+function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggleTodas }: any) {
   if (faturas.length === 0) return <div className="py-20 text-center text-slate-300 font-bold italic uppercase tracking-widest text-xs">Vazio</div>
 
-  const sorted = [...faturas].sort((a,b) => isHistorico ? new Date(b.data_vencimento).getTime() - new Date(a.data_vencimento).getTime() : new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())
+  const rawSorted = [...faturas].sort((a,b) => isHistorico ? new Date(b.data_vencimento).getTime() - new Date(a.data_vencimento).getTime() : new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())
+  
+  // SEMPRE exibe ao menos as proximas 3 NO MINIMO a menos que exibirTodas esteja ativo
+  const sorted = exibirTodas ? rawSorted : rawSorted.slice(0, 3)
+  const temMais = !exibirTodas && rawSorted.length > 3
 
   const getTipoBadge = (descricao: string) => {
     const desc = descricao?.toLowerCase() || ''
@@ -431,6 +504,13 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
     <div className="flex flex-col gap-5">
       {sorted.map((fat) => {
         const isVencida = fat.status === 'atrasado' || (fat.status === 'a_vencer' && new Date(fat.data_vencimento + 'T12:00:00') < hoje)
+        
+        // Parsing data para exibir Mês/Ano
+        const parts = fat.data_vencimento.split('-')
+        const dataRef = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1)
+        const mesExtenso = format(dataRef, 'MMMM/yyyy', { locale: ptBR })
+        const labelMes = mesExtenso.charAt(0).toUpperCase() + mesExtenso.slice(1)
+
         return (
           <div key={fat.id} className={cn("p-8 rounded-[22px] border transition-all flex flex-col gap-6", isHistorico ? "bg-slate-50/30 border-slate-100" : (isVencida ? "bg-rose-50/40 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"))}>
             <div className="flex items-start gap-4">
@@ -439,7 +519,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
                  </div>
                  <div className="flex flex-col flex-1 min-w-0">
                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                     <h5 className="font-black text-slate-800 tracking-tight leading-none">{fat.descricao}</h5>
+                     <h5 className="font-black text-slate-800 tracking-tight leading-none">{labelMes}</h5>
                      {!isHistorico && getTipoBadge(fat.descricao)}
                      {fat.comprovante_url && (
                        <Button 
@@ -457,7 +537,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
                        </span>
                      )}
                    </div>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vencimento: {formatDate(fat.data_vencimento)}</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{fat.descricao} • Vencimento: {formatDate(fat.data_vencimento)}</p>
                    <span className={cn("text-xl font-black tracking-tight mt-2", isHistorico ? "text-slate-400" : isVencida ? "text-rose-600" : "text-slate-900")}>
                      {formatCurrency(fat.valor_total_projetado || fat.valor_original || fat.valor || 0)}
                    </span>
@@ -494,6 +574,16 @@ function DrawerFaturaList({ faturas, onAction, isHistorico }: any) {
           </div>
         )
       })}
+
+      {temMais && (
+        <Button
+          variant="ghost"
+          onClick={onToggleTodas}
+          className="w-full h-16 rounded-[24px] border-2 border-dashed border-slate-100 text-slate-400 font-black uppercase text-[10px] tracking-[2px] hover:bg-slate-50 hover:text-slate-600"
+        >
+          Ver todas as parcelas do ano
+        </Button>
+      )}
     </div>
   )
 }
@@ -546,8 +636,8 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
       const filename = `comprovante_${cobranca?.id}_${Date.now()}`
       const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
 
-      // 2. Registra no banco
-      await portalService.registrarPagamentoComComprovante(cobranca?.id!, url, responsavel?.id!)
+      // 2. Registra no banco (suporta ID único ou array de IDs para pagamento unificado)
+      await portalService.registrarPagamentoComComprovante(cobranca?.ids || cobranca?.id!, url, responsavel?.id!)
 
       // 3. Envia WhatsApp
       const numeroRaw = configRecados?.whatsapp_contato || ''
@@ -584,12 +674,14 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
       {/* Card de Valor - Mais compacto */}
       <div className="flex flex-col items-center justify-center py-3 sm:py-4 bg-slate-900 rounded-[18px] sm:rounded-[22px] text-white shadow-lg relative overflow-hidden mx-1 sm:mx-0">
         <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-teal-400 mb-1 relative z-10">Total a Pagar</span>
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tighter relative z-10 leading-none">{formatCurrency(cobranca?.valor || 0)}</h2>
+        <h2 className="text-2xl sm:text-3xl font-black tracking-tighter relative z-10 leading-none">
+          {formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)}
+        </h2>
         <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 relative z-10 truncate max-w-full px-2">{cobranca?.descricao || ''}</p>
       </div>
 
       {/* PIX Content - Otimizado para caber */}
-      {(configPix?.qr_code_url || configPix?.chave_pix) ? (
+      {configPix ? (
         <div className="flex flex-col gap-3">
           {/* QR Code - Reduzido */}
           {(configPix?.qr_code_url || configPix?.qr_code_auto) && (
@@ -605,11 +697,11 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
                       <span className="text-[8px] font-black text-rose-600 uppercase tracking-widest text-center">Ver QR Code (PDF)</span>
                     </div>
                   ) : (
-                    <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-24 h-24 sm:w-28 sm:h-28 object-contain" />
+                    <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-32 h-32 sm:w-40 sm:h-40 object-contain" />
                   )
                 ) : (
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center text-slate-300">
-                    <QrCode size={36} className="opacity-30" />
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center text-slate-300">
+                    <QrCode size={48} className="opacity-30" />
                   </div>
                 )}
               </div>
@@ -617,16 +709,35 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
             </div>
           )}
 
+          {/* Favorecido e Instruções - Adicionado */}
+          {(configPix?.favorecido || configPix?.instrucoes_pix) && (
+            <div className="flex flex-col gap-1 px-1">
+              {configPix?.favorecido && (
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-bold text-slate-400 uppercase tracking-tight">Favorecido:</span>
+                  <span className="font-black text-slate-700">{configPix.favorecido}</span>
+                </div>
+              )}
+              {configPix?.instrucoes_pix && (
+                <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-2 mt-1">
+                  <p className="text-[9px] font-bold text-amber-700 leading-tight">
+                    {configPix.instrucoes_pix}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Chave PIX - Reduzida */}
-          {configPix?.chave_pix && (
+          {(configPix?.chave_pix || configPix?.pix_chave) && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-1">
                 <div className="h-px bg-slate-100 flex-1" />
                 <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Ou copie e cole</span>
                 <div className="h-px bg-slate-100 flex-1" />
               </div>
               <div className="p-2 rounded-[12px] bg-white border border-slate-100 font-mono text-[9px] text-slate-500 break-all leading-relaxed text-center max-h-16 overflow-y-auto">
-                {configPix.chave_pix}
+                {configPix.chave_pix || configPix.pix_chave}
               </div>
               <Button onClick={handleCopy} className="w-full h-10 sm:h-12 bg-slate-900 hover:bg-black text-white rounded-[16px] font-black text-[9px] sm:text-[10px] uppercase tracking-widest gap-2 shadow-lg active:scale-95 transition-all">
                 {copiado ? <CheckCircle2 size={14} className="text-teal-400" /> : <Copy size={14} />}
@@ -643,32 +754,52 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
         </div>
       )}
 
-      {/* Upload - Compacto */}
-      <div className="space-y-2">
+      {/* Upload - Fluxo de Segurança */}
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-px bg-slate-100 flex-1" />
-          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Comprovante</span>
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fluxo de Segurança</span>
           <div className="h-px bg-slate-100 flex-1" />
         </div>
+
+        <div className="px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-center">
+          <p className="text-[10px] font-bold text-indigo-900 leading-tight">
+            Após o pagamento com pix, envie o comprovante para a escola logo abaixo.
+          </p>
+        </div>
+
         <label className={cn(
-          "relative cursor-pointer flex flex-col items-center justify-center gap-1 p-3 border-2 border-dashed rounded-[14px] transition-all",
+          "relative cursor-pointer flex flex-col items-center justify-center gap-1 p-4 border-2 border-dashed rounded-[16px] transition-all",
           arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100"
         )}>
           <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
           {arquivo ? (
             <>
-              <FileText className="text-teal-500" size={20} />
-              <span className="text-[9px] font-bold text-teal-700 truncate max-w-full">{arquivo.name}</span>
-              <span className="text-[7px] text-teal-600/60 uppercase font-black">Trocar</span>
+              <FileText className="text-teal-500" size={24} />
+              <span className="text-[10px] font-bold text-teal-700 truncate max-w-full">{arquivo.name}</span>
+              <span className="text-[8px] text-teal-600/60 uppercase font-black">Trocar Arquivo</span>
             </>
           ) : (
             <>
-              <Upload className="text-slate-400" size={20} />
-              <span className="text-[9px] font-bold text-slate-500">Selecionar</span>
-              <span className="text-[7px] text-slate-400 uppercase font-black">PDF, PNG</span>
+              <Upload className="text-slate-400" size={24} />
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Selecionar Comprovante</span>
+              <span className="text-[8px] text-slate-400 uppercase font-black">PDF, PNG ou WebP</span>
             </>
           )}
         </label>
+
+        {/* Chave para conferência logo abaixo do upload */}
+        {(configPix?.chave_pix || configPix?.pix_chave) && (
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Chave PIX da Escola</p>
+              <p className="text-[10px] font-mono text-slate-700 truncate font-bold">{configPix.chave_pix || configPix.pix_chave}</p>
+            </div>
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-indigo-600 shrink-0" onClick={handleCopy}>
+              {copiado ? <CheckCircle2 size={16} className="text-teal-500" /> : <Copy size={16} />}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Botão Confirmar - Sempre visível */}
@@ -701,7 +832,7 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[340px] p-0 overflow-hidden border-0 rounded-[24px] bg-white gap-0">
+      <DialogContent className="max-w-[340px] max-h-[85vh] p-0 overflow-hidden border-0 rounded-[24px] bg-white gap-0">
         <DialogTitle className="sr-only">Pagamento PIX - {formatCurrency(cobranca?.valor || 0)}</DialogTitle>
         <DialogDescription className="sr-only">
           Página de pagamento PIX com QR Code e instrução para upload de comprovante.
