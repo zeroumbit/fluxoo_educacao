@@ -226,7 +226,8 @@ export function ProfessorTurmasPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center py-4">
-                      <span className="text-sm text-slate-400">—</span>
+                      {turma.media_geral > 0 ? (
+                        <span className="text-sm font-medium">{turma.media_geral.toFixed(1)}</span>
                       ) : (
                         <span className="text-sm text-slate-400">—</span>
                       )}
