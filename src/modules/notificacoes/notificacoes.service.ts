@@ -207,7 +207,8 @@ export const notificacoesService = {
       RADAR_EVASAO: count === 1 ? 'Perigo de evasão' : 'Perigo de evasão',
       DOCUMENTO: count === 1 ? 'Pedido de documento' : 'Pedidos de documentação',
       FINANCEIRO: count === 1 ? 'Alerta financeiro' : 'Alertas financeiros',
-      MATRICULA: count === 1 ? 'Matrícula pendente' : 'Matrículas pendentes'
+      MATRICULA: count === 1 ? 'Matrícula pendente' : 'Matrículas pendentes',
+      PAGAMENTO_PIX_MANUAL: count === 1 ? 'Comprovante PIX' : 'Comprovantes PIX'
     }
     return labels[tipo] || 'Notificações'
   }

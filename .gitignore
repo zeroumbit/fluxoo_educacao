@@ -27,3 +27,7 @@ npm-debug.log*
 
 # temporary investigation files
 tmp/
+
+# security & build
+lint-results.json
+dev-dist/

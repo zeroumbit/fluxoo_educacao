@@ -57,6 +57,31 @@ interface GatewayTenantConfig {
 
 const ASAAS_PROCESSED_STATUSES = ["CONFIRMED", "RECEIVED", "CREDIT_CARD_CAPTURE_CLOSE"]
 const GATEWAY_TIMEOUT_MS = 25000
+const RATE_LIMIT_WINDOW_MS = 60000 // 1 minuto
+const RATE_LIMIT_MAX_REQUESTS = 30 // max 30 requests por minuto por IP
+
+// =====================================================
+// RATE LIMITING (in-memory)
+// =====================================================
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(clientIp: string): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now()
+  const entry = rateLimitMap.get(clientIp)
+
+  if (!entry || now > entry.resetAt) {
+    const resetAt = now + RATE_LIMIT_WINDOW_MS
+    rateLimitMap.set(clientIp, { count: 1, resetAt })
+    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, resetAt }
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return { allowed: false, remaining: 0, resetAt: entry.resetAt }
+  }
+
+  entry.count++
+  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - entry.count, resetAt: entry.resetAt }
+}
 
 // =====================================================
 // HANDLER PRINCIPAL
@@ -68,6 +93,28 @@ serve(async (req: Request) => {
   }, GATEWAY_TIMEOUT_MS)
 
   try {
+    // -----------------------------------------------
+    // Rate Limiting - pegar IP do cliente
+    // -----------------------------------------------
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(clientIp)
+
+    // Header de rate limit sempre presente (para debug)
+    const responseHeaders = new Headers({
+      "Content-Type": "application/json",
+      "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
+      "X-RateLimit-Remaining": String(rateLimit.remaining),
+      "X-RateLimit-Reset": new Date(rateLimit.resetAt).toISOString(),
+    })
+
+    if (!rateLimit.allowed) {
+      console.warn("[webhook-gateway] Rate limit excedido para IP:", clientIp)
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: responseHeaders,
+      })
+    }
+
     const contentType = req.headers.get("content-type") || ""
     if (!contentType.includes("application/json")) {
       return jsonResponse(400, { error: "Content-Type deve ser application/json" })
@@ -81,6 +128,7 @@ serve(async (req: Request) => {
     const isAbacatePay = req.headers.get("user-agent")?.includes("Abacate") || req.headers.has("x-abacate-signature")
 
     if (!isAsaas && !isMercadoPago && !isAbacatePay) {
+      console.warn("[webhook-gateway] Tentativa de acesso com gateway nao identificado")
       return jsonResponse(400, { error: "Gateway nao identificado" })
     }
 
@@ -88,6 +136,7 @@ serve(async (req: Request) => {
     try {
       rawBody = await req.text()
     } catch {
+      console.warn("[webhook-gateway] Falha ao ler corpo da requisicao")
       return jsonResponse(400, { error: "Falha ao ler corpo da requisicao" })
     }
 
@@ -95,23 +144,30 @@ serve(async (req: Request) => {
     try {
       payload = JSON.parse(rawBody)
     } catch {
+      console.warn("[webhook-gateway] JSON invalido recebido")
       return jsonResponse(400, { error: "JSON invalido" })
     }
 
     const supabase = createSupabaseClient()
 
+    // Headers para validacao
+    const headers = {
+      signature: req.headers.get("x-signature") || "",
+      timestamp: req.headers.get("x-request-id") || "",
+    }
+
     if (isAsaas) {
-      return await handleAsaasWebhook(payload, rawBody, supabase)
+      return await handleAsaasWebhook(payload, rawBody, supabase, headers)
     } else if (isMercadoPago) {
-      return await handleMercadoPagoWebhook(payload, rawBody, supabase)
+      return await handleMercadoPagoWebhook(payload, rawBody, supabase, headers)
     } else if (isAbacatePay) {
-      return await handleAbacatePayWebhook(payload, rawBody, supabase)
+      return await handleAbacatePayWebhook(payload, rawBody, supabase, headers)
     }
 
     return jsonResponse(400, { error: "Gateway nao suportado" })
 
   } catch (err: any) {
-    console.error("[webhook-gateway] Erro nao tratado:", err.message, err.stack)
+    console.error("[webhook-gateway] Erro CRITICO nao tratado:", err.message, err.stack)
     return jsonResponse(500, { error: "Erro interno do servidor", message: err.message })
   } finally {
     clearTimeout(timeoutId)
@@ -125,7 +181,8 @@ serve(async (req: Request) => {
 async function handleAsaasWebhook(
   payload: any,
   rawBody: string,
-  supabase: any
+  supabase: any,
+  headers: { signature: string; timestamp: string }
 ): Promise<Response> {
   try {
     // -----------------------------------------------
@@ -151,12 +208,12 @@ async function handleAsaasWebhook(
       .maybeSingle()
 
     if (cobrancaErr) {
-      console.error("[asaas] Erro ao buscar cobranca:", cobrancaErr.message)
+      console.error("[asaas] Erro ao buscar cobranca no banco:", cobrancaErr.message)
       return jsonResponse(500, { error: "Erro interno", retry: true })
     }
 
     if (!cobranca) {
-      console.error("[asaas] Cobranca nao encontrada:", cobrancaId)
+      console.warn("[asaas] Cobranca nao encontrada para id:", cobrancaId)
       return jsonResponse(404, { error: "Cobranca nao encontrada", cobranca_id: cobrancaId })
     }
 
@@ -166,7 +223,7 @@ async function handleAsaasWebhook(
     // -----------------------------------------------
     const gatewayCheck = await verificarGatewayAtivo(supabase, cobranca.tenant_id, "asaas")
     if (!gatewayCheck.disponivel) {
-      console.error("[asaas] Gateway nao disponivel para tenant:", cobranca.tenant_id, gatewayCheck.motivo)
+      console.warn("[asaas] Gateway nao disponivel para tenant:", cobranca.tenant_id, gatewayCheck.motivo)
       return jsonResponse(403, {
         error: "Gateway nao disponivel para esta escola",
         motivo: gatewayCheck.motivo,
@@ -179,7 +236,7 @@ async function handleAsaasWebhook(
     // -----------------------------------------------
     const tokenValido = await validarTokenAsaas(supabase, cobranca.tenant_id, receivedToken)
     if (!tokenValido) {
-      console.error("[asaas] Token invalido para tenant:", cobranca.tenant_id)
+      console.warn("[asaas] Token invalido para tenant:", cobranca.tenant_id)
       return jsonResponse(401, { error: "Token de autenticacao invalido" })
     }
 
@@ -328,12 +385,27 @@ async function handleAsaasWebhook(
 async function handleMercadoPagoWebhook(
   payload: any,
   rawBody: string,
-  supabase: any
+  supabase: any,
+  headers: { signature: string; timestamp: string }
 ): Promise<Response> {
   try {
     if (!payload.type || !payload.data || !payload.data.id) {
       return jsonResponse(400, { error: "Payload invalido" })
     }
+
+    // -----------------------------------------------
+    // A) Validar assinatura do webhook MP
+    //    MP usa x-signature com timestamp no formato: t=timestamp,v1=signature
+    // -----------------------------------------------
+    const { signature, timestamp } = headers
+    if (!signature || !timestamp) {
+      console.warn("[mp] Headers x-signature ou x-request-id faltando")
+      return jsonResponse(401, { error: "Headers obrigatorios faltando" })
+    }
+
+    // Buscar tenant pelo external_reference antes de validar
+    // Precisamos do token secret para validar a assinatura
+    // Por agora, vamos aceitar e validar o token na configuracao
 
     const _eventData: MercadoPagoPaymentEvent = payload
     const mpPaymentId = payload.data.id
@@ -420,9 +492,26 @@ async function handleMercadoPagoWebhook(
     }
 
     const mpAccessToken = mpConfig.configuracao.access_token as string
+    const mpClientSecret = mpConfig.configuracao.client_secret as string
 
     if (!mpAccessToken) {
       return jsonResponse(500, { error: "Access Token do MP nao configurado" })
+    }
+
+    // -----------------------------------------------
+    // D) Validar assinatura do webhook
+    // -----------------------------------------------
+    if (mpClientSecret) {
+      const signatureValida = validarAssinaturaMercadoPago(
+        timestamp,
+        rawBody,
+        mpClientSecret,
+        signature
+      )
+      if (!signatureValida) {
+        console.warn("[mp] Assinatura invalida para tenant:", tenantId)
+        return jsonResponse(401, { error: "Assinatura do webhook invalida" })
+      }
     }
 
     // Re-fazer a chamada com o token correto
@@ -500,7 +589,8 @@ async function handleMercadoPagoWebhook(
 async function handleAbacatePayWebhook(
   payload: any,
   rawBody: string,
-  supabase: any
+  supabase: any,
+  headers: { signature: string; timestamp: string }
 ): Promise<Response> {
   try {
     // Abacate Pay envia: { event: "payment.completed", data: { id, external_reference, amount, ... } }
@@ -538,7 +628,7 @@ async function handleAbacatePayWebhook(
       return jsonResponse(403, { error: "Gateway nao disponivel", motivo: gatewayCheck.motivo })
     }
 
-    // Validar token
+    // Validar token/assinatura
     const abacateConfig = await buscarConfigGateway(supabase, cobranca.tenant_id, "abacate_pay")
     if (!abacateConfig) {
       return jsonResponse(500, { error: "Gateway nao configurado pela escola" })
@@ -547,7 +637,20 @@ async function handleAbacatePayWebhook(
     const storedToken = abacateConfig.configuracao.webhook_token as string
     const receivedToken = payload.token || ""
 
-    if (storedToken && receivedToken !== storedToken) {
+    // Verificar se tem assinatura HMAC (header x-abacate-signature) - mais seguro
+    const abacateSignature = headers.signature
+    if (abacateSignature && storedToken) {
+      const signatureValida = validarAssinaturaAbacate(
+        rawBody,
+        storedToken,
+        abacateSignature
+      )
+      if (!signatureValida) {
+        console.warn("[abacate] Assinatura invalida para tenant:", cobranca.tenant_id)
+        return jsonResponse(401, { error: "Assinatura do webhook invalida" })
+      }
+    } else if (storedToken && receivedToken !== storedToken) {
+      // Fallback: token simples
       return jsonResponse(401, { error: "Token invalido" })
     }
 
@@ -679,6 +782,7 @@ async function buscarConfigGateway(
 
 /**
  * Valida o token do webhook Asaas contra o token armazenado da escola.
+ * Suporta both: token simples e JWT.
  */
 async function validarTokenAsaas(
   supabase: any,
@@ -693,8 +797,57 @@ async function validarTokenAsaas(
   const storedToken = config.configuracao.webhook_token as string
   if (!storedToken) return false
 
-  // Comparacao constante para evitar timing attacks
+  // Verificar se e um JWT (formato: header.payload.signature)
+  if (receivedToken.split(".").length === 3) {
+    return validarJwtAsaas(receivedToken, storedToken)
+  }
+
+  // Token simples - comparacao constante
   return constantTimeCompare(receivedToken, storedToken)
+}
+
+/**
+ * Valida JWT do Asaas.
+ */
+function validarJwtAsaas(jwt: string, secret: string): boolean {
+  try {
+    const [headerB64, payloadB64, signatureB64] = jwt.split(".")
+
+    // Validar estrutura basica do JWT
+    const header = JSON.parse(atob(headerB64))
+    if (!header.typ || !header.alg) {
+      return false
+    }
+
+    // Validar claim 'exp' (expiracao)
+    const payload = JSON.parse(atob(payloadB64))
+    if (payload.exp) {
+      const now = Math.floor(Date.now() / 1000)
+      if (payload.exp < now) {
+        console.warn("[asaas] JWT expirado:", payload.exp)
+        return false
+      }
+    }
+
+    // Validar assinatura (HS256)
+    const data = `${headerB64}.${payloadB64}`
+    const expectedSignature = await hmacSha256(secret, data)
+    const actualSignature = signatureB64.replace(/-/g, "+").replace(/_/g, "/")
+
+    // Base64 decode para comparar
+    const expectedBytes = Uint8Array.from(atob(expectedSignature), (c) => c.charCodeAt(0))
+    const actualBytes = Uint8Array.from(atob(actualSignature), (c) => c.charCodeAt(0))
+
+    if (expectedBytes.length !== actualBytes.length) return false
+    let result = 0
+    for (let i = 0; i < expectedBytes.length; i++) {
+      result |= expectedBytes[i] ^ actualBytes[i]
+    }
+    return result === 0
+  } catch (err) {
+    console.error("[asaas] Erro ao validar JWT:", err)
+    return false
+  }
 }
 
 /**
@@ -756,11 +909,120 @@ function mapAsaasBillingType(billingType: string): string {
   return map[billingType] || billingType.toLowerCase()
 }
 
+/**
+ * Valida assinatura HMAC-SHA256 do Mercado Pago.
+ * Formato: x-signature = "t=timestamp,v1=signature"
+ * Ohash e gerado de: timestamp.payload (raw body)
+ */
+function validarAssinaturaMercadoPago(
+  timestamp: string,
+  rawBody: string,
+  clientSecret: string,
+  receivedSignature: string
+): boolean {
+  if (!timestamp || !rawBody || !clientSecret || !receivedSignature) {
+    return false
+  }
+
+  try {
+    // Parse do header de assinatura: t=timestamp,v1=signature
+    const parts = receivedSignature.split(",")
+    let sigTimestamp = ""
+    let sigHash = ""
+
+    for (const part of parts) {
+      const [key, value] = part.split("=")
+      if (key === "t") sigTimestamp = value
+      if (key === "v1") sigHash = value
+    }
+
+    // Validar timestamp (evitar replay attacks - 5min timeout)
+    const now = Math.floor(Date.now() / 1000)
+    const reqTime = parseInt(sigTimestamp || timestamp, 10)
+    if (Math.abs(now - reqTime) > 300) {
+      console.warn("[mp] Timestamp expirado:", reqTime, "vs", now)
+      return false
+    }
+
+    // Gerar hash esperado
+    const data = `${sigTimestamp || timestamp}.${rawBody}`
+    const expectedHash = await hmacSha256(clientSecret, data)
+
+    // Comparacao constante
+    return constantTimeCompare(expectedHash, sigHash)
+  } catch (err) {
+    console.error("[mp] Erro ao validar assinatura:", err)
+    return false
+  }
+}
+
+/**
+ * Gera HMAC-SHA256.
+ */
+async function hmacSha256(key: string, data: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(key)
+  const dataData = encoder.encode(data)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  )
+
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, dataData)
+  const hashArray = new Uint8Array(signature)
+  return Array.from(hashArray, (b) => b.toString(16).padStart(2, "0")).join("")
+}
+
+/**
+ * Valida assinatura HMAC-SHA256 do Abacate Pay.
+ * O Abacate pode enviar assinatura no header x-abacate-signature.
+ */
+function validarAssinaturaAbacate(
+  rawBody: string,
+  webhookSecret: string,
+  receivedSignature: string
+): boolean {
+  if (!rawBody || !webhookSecret || !receivedSignature) {
+    return false
+  }
+
+  try {
+    // Abacate pode usar formato simples ou timestamp.body
+    const expectedSignature = await hmacSha256(webhookSecret, rawBody)
+    return constantTimeCompare(expectedSignature, receivedSignature)
+  } catch (err) {
+    console.error("[abacate] Erro ao validar assinatura:", err)
+    return false
+  }
+}
+
 function createSupabaseClient() {
   const url = Deno.env.get("SUPABASE_URL")
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
   if (!url || !key) throw new Error("Variaveis do Supabase nao configuradas")
   return createClient(url, key)
+}
+
+/**
+ * Pega IP real do cliente.
+ * Suporta proxy/reverse proxy (X-Forwarded-For) e Direct.
+ */
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for")
+  if (forwarded) {
+    return forwarded.split(",")[0].trim()
+  }
+
+  const realIp = req.headers.get("x-real-ip")
+  if (realIp) {
+    return realIp
+  }
+
+  return "unknown"
 }
 
 function jsonResponse(status: number, body: Record<string, any>): Response {

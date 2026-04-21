@@ -304,10 +304,8 @@ export const financeiroService = {
       const valorFormatado = Number(valorProporcional.toFixed(2))
 
       // ============================================================
-      // NOVA REGRA: Gerar todas as mensalidades automáticas
+      // REGRA: Gerar mensalidades até DEZEMBRO sempre
       // ============================================================
-      // Busca quantidade de mensalidades para gerar (padrão: 12)
-      const qtdMensalidades = config?.config_financeira?.qtd_mensalidades_automaticas || 12
       const diaVencimentoPadrao = config?.config_financeira?.dia_vencimento_padrao || 10
 
       // 1. Gerar PRIMEIRA mensalidade proporcional (dias restantes do mês)
@@ -328,15 +326,18 @@ export const financeiroService = {
         })
       }
 
-      // 2. Gerar mensalidades CHEIAS restantes (uma por mês)
-      // A proporcional cobre o primeiro mês parcial e vence no mês seguinte (mês+1).
-      // As mensalidades cheias começam no mês SEGUINTE ao da proporcional (mês+2).
-      // Total gerado: 1 proporcional + (qtdMensalidades - 1) mensalidades cheias.
-      for (let i = 2; i <= qtdMensalidades; i++) {
-        const dataVencimentoMensalidade = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + i, diaVencimentoPadrao)
+      // 2. Gerar mensalidades CHEIAS até DEZEMBRO sempre
+      // Calcula quantos meses faltam até dezembro (do mês SEGUINTE ao da proporcional até dezembro)
+      const anoAtual = dataInicioObj.getFullYear()
+      const mesProporcional = dataInicioObj.getMonth() + 1
+      const mesesAteDezembro = 12 - mesProporcional // Ex: se proporcional abril (4), falta: 12-4=8
+
+      for (let i = 0; i < mesesAteDezembro; i++) {
+        const mesIndex = mesProporcional + i + 1
+        const dataVencimentoMensalidade = new Date(anoAtual, mesIndex - 1, diaVencimentoPadrao)
         
         // Ajusta para o último dia do mês se o dia de vencimento for maior
-        const ultimoDiaDoMesVencimento = new Date(dataVencimentoMensalidade.getFullYear(), dataVencimentoMensalidade.getMonth() + 1, 0).getDate()
+        const ultimoDiaDoMesVencimento = new Date(anoAtual, mesIndex, 0).getDate()
         if (diaVencimentoPadrao > ultimoDiaDoMesVencimento) {
           dataVencimentoMensalidade.setDate(ultimoDiaDoMesVencimento)
         }
@@ -367,16 +368,21 @@ export const financeiroService = {
       .eq('id', matricula.turma_id)
       .maybeSingle()
 
-    // Lógica inteligente: se a turma tiver valor, usa ele. 
-    // Se não, usa o valor_matricula da própria matrícula como base para mensalidade (fallback comum no sistema)
-    const valorMensalidadeBase = turma?.valor_mensalidade || matricula.valor_matricula || 0
+    // Lógica inteligente: Prioridade: turma.valor_mensalidade > matricula.valor_mensalidade > matricula.valor_matricula
+    // Só usa valor_matricula como último fallback (não como mensalidade)
+    const valorMensalidadeBase = 
+      Number(turma?.valor_mensalidade) || 
+      Number(matricula.valor_mensalidade) || 0
+    // Só usa valor_matricula se NENHUM valor de mensalidade existir (proteção)
+    const valorMatricula = Number(matricula.valor_matricula) || 0
+    const ValorFinal = valorMensalidadeBase > 0 ? valorMensalidadeBase : valorMatricula
 
     await this.gerarCobrancasIniciaisGenerico({
       aluno_id: matricula.aluno_id,
       tenant_id: matricula.tenant_id,
       data_inicio: matricula.data_matricula,
-      valor_mensalidade: Number(valorMensalidadeBase),
-      valor_matricula: Number(matricula.valor_matricula),
+      valor_mensalidade: ValorFinal,
+      valor_matricula: valorMatricula,
       unidade: matricula.serie_ano,
       turma_id: matricula.turma_id,
       ano_letivo: Number(matricula.ano_letivo)
@@ -694,11 +700,12 @@ export const financeiroService = {
    * Repara/Gera as mensalidades especificamente para um aluno.
    * Útil para o Portal garantir que o responsável veja o ano todo do aluno selecionado.
    */
-  async repararMensalidadesAluno(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno' as any, {
-      p_aluno_id: alunoId,
-      p_tenant_id: tenantId
-    }) as any)
+   async repararMensalidadesAluno(alunoId: string, tenantId: string, ano?: number) {
+     const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno' as any, {
+       p_aluno_id: alunoId,
+       p_tenant_id: tenantId,
+       p_ano: ano || new Date().getFullYear()
+     }) as any)
 
     if (error) {
       logger.error('Erro ao reparar mensalidades do aluno:', error)

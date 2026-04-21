@@ -492,16 +492,6 @@ export function ConfiguracoesPageMobile() {
                          className="h-12 rounded-xl bg-slate-50 border-none font-bold"
                        />
                     </div>
-                    <div className="space-y-2">
-                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Instruções</Label>
-                       <Input 
-                         value={financeira.instrucoes_pix}
-                         onChange={(e) => setFinanceira({ ...financeira, instrucoes_pix: e.target.value })}
-                         placeholder="Ex: Envie o comprovante via chat..."
-                         className="h-12 rounded-xl bg-slate-50 border-none font-bold"
-                       />
-                    </div>
-
                     <div className="pt-4 border-t border-dashed border-slate-100 flex flex-col gap-3">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 ml-1">QR Code Manual (Upload)</Label>
                         
@@ -546,6 +536,16 @@ export function ConfiguracoesPageMobile() {
                         )}
                         <input id="qrcode-upload-mobile" type="file" accept="image/png,image/webp,application/pdf" className="hidden" onChange={handleUploadQRCode} />
                      </div>
+
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Instruções</Label>
+                       <Input 
+                         value={financeira.instrucoes_pix}
+                         onChange={(e) => setFinanceira({ ...financeira, instrucoes_pix: e.target.value })}
+                         placeholder="Ex: Envie o comprovante via chat..."
+                         className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+                       />
+                    </div>
                   </motion.div>
                 )}
             </div>

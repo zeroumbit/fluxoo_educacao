@@ -46,7 +46,7 @@ import type { AvisoRecente, RadarAluno } from '../dashboard.service'
 import { useState, useEffect, useMemo } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications } from '@/hooks/useNotifications'
+import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 
@@ -265,6 +265,91 @@ function StatusAprovacaoNotification({ status, metodo }: { status: string, metod
 }
 
 // ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Pagamento PIX Manual Pendente
+// ---------------------------------------------------------------------------
+function PixManualBannerNotification() {
+  const navigate = useNavigate()
+  const { authUser } = useAuth()
+  const { data } = useEscolaNotifications(authUser?.tenantId)
+  const { marcarComoLida } = useNotificacoesActions()
+  
+  // Filtra apenas notificações de pix manual que não foram resolvidas
+  const pixNotifications = useMemo(() => {
+    if (!data?.notificacoes) return []
+    return data.notificacoes.filter(n => n.tipo === 'PAGAMENTO_PIX_MANUAL' && !n.resolvida && !n.lida)
+  }, [data?.notificacoes])
+  
+  if (pixNotifications.length === 0) return null
+
+  return (
+    <div className="space-y-4 mb-8">
+      {pixNotifications.map((n) => (
+        <div 
+          key={n.id} 
+          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-50 via-white to-blue-50 border border-indigo-200 shadow-lg shadow-indigo-100/50 transition-all hover:shadow-xl hover:-translate-y-0.5"
+        >
+          {/* Badge Flutuante */}
+          <div className="absolute top-6 left-6 z-10">
+            <Badge className="bg-indigo-600 text-white border-0 text-[10px] uppercase font-black px-3 py-1 rounded-full shadow-sm shadow-indigo-200">
+              PIX MANUAL
+            </Badge>
+          </div>
+
+          <div className="p-8 pt-14 flex items-start gap-6">
+            <div className="h-16 w-16 rounded-[2rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
+               <CreditCard className="h-8 w-8 text-indigo-600" />
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-black text-indigo-900 text-xl tracking-tight">
+                  Validação de Pagamento Pendente
+                </h3>
+              </div>
+              
+              <p className="text-base font-medium text-indigo-700/80 mb-6 leading-relaxed max-w-3xl">
+                <strong className="text-indigo-900 font-extrabold">{n.metadata?.responsavel_nome}</strong> enviou comprovante para 
+                o aluno <strong className="text-indigo-900 font-extrabold">{n.metadata?.aluno_nome}</strong> ({n.metadata?.turma_nome}).
+                <br />
+                <span className="text-sm">
+                  Valor: <strong className="text-indigo-600 font-black text-lg">R$ {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> 
+                  <span className="mx-2 opacity-30">|</span> 
+                  Ref: {n.metadata?.meses_referencia} ({n.metadata?.tipo_cobranca})
+                </span>
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <Button
+                  onClick={() => navigate(n.href || '/financeiro/cobrancas')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm px-8 h-12 shadow-md shadow-indigo-200 transition-all active:scale-95"
+                >
+                  VALIDAR AGORA
+                </Button>
+                
+                <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <Phone className="h-4 w-4 text-indigo-500" />
+                  <p className="text-xs font-bold text-indigo-600">
+                    Por favor, valide se o pagamento foi feito e verifique o WhatsApp.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Botão de Fechar Silencioso */}
+          <button
+            onClick={() => marcarComoLida.mutate(n.id)}
+            className="absolute top-6 right-6 h-10 w-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-all text-indigo-400 hover:text-indigo-600 border border-indigo-50 shadow-sm"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Componente Principal: DashboardPageWeb
 // ---------------------------------------------------------------------------
 function DashboardContent() {
@@ -469,6 +554,9 @@ function DashboardContent() {
 
       {/* Alerta de Aprovação */}
       <StatusAprovacaoNotification status={statusAssinatura} metodo={metodoPagamento} />
+
+      {/* Notificações de Pagamentos PIX Manual Pendentes */}
+      <PixManualBannerNotification />
 
       {/* Notificação de Alunos Sem Matrícula */}
       {(dashboardData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (

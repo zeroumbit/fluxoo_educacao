@@ -414,35 +414,49 @@ export const portalService = {
   },
 
   async buscarConfigPixEscola(tenantId: string) {
-    // Busca a config via Motor de Configurações Tenant (Unificado)
-    const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
-      .select('config_financeira')
-      .eq('tenant_id', tenantId)
-      .is('vigencia_fim', null)
-      .maybeSingle()
-    
-    if (error) throw error
-    if (!data?.config_financeira) return null
-    
-    const config = data.config_financeira
-    
-    return {
-      pix_manual_ativo: config.pix_manual,
-      chave_pix: config.chave_pix,
-      favorecido: config.nome_favorecido,
-      qr_code_url: config.pix_qr_code_url, // URL da imagem ou PDF do QR Code manual
-      instrucoes_extras: config.instrucoes_pix,
-      qr_code_auto: config.pix_auto,
-      dias_carencia: config.dias_carencia || 0,
-      // Regras de Multa e Juros dinâmicas
-      multa_atraso_percentual: config.multa_atraso_perc || 2,
-      multa_atraso_valor_fixo: config.multa_fixa || 0,
-      juros_mora_mensal: config.juros_mora_mensal_perc || 1,
-      desconto_pontualidade: 0, // Campo legado
-      // Novos Ajustes
-      multa_juros_habilitado: config.multa_juros_habilitado ?? true,
-      notificacoes_habilitado: config.notificacoes_habilitado ?? true,
-      recibo_pdf_auto_habilitado: config.recibo_pdf_auto_habilitado ?? true
+    if (!tenantId) return null
+
+    try {
+      // Busca a configuração mais recente para o tenant sem restrição excessiva de contexto
+      const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+        .select('config_financeira')
+        .eq('tenant_id', tenantId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      const config = data?.config_financeira
+      
+      if (!config) {
+        console.warn('Nenhuma configuração financeira encontrada para o tenant:', tenantId)
+        return null
+      }
+      
+      // Mapeamento ultra-permissivo para garantir que nada falhe por nome de campo
+      const mapped = {
+        pix_manual_ativo: config.pix_manual !== false,
+        chave_pix: config.chave_pix || config.pix_chave || config.chave || '',
+        favorecido: config.nome_favorecido || config.favorecido || config.favorecido_nome || '',
+        qr_code_url: config.pix_qr_code_url || config.qr_code_url || config.qrcode_url || '',
+        instrucoes_pix: config.instrucoes_pix || config.instrucoes || config.pix_instrucoes || '',
+        qr_code_auto: config.pix_auto === true,
+        dias_carencia: Number(config.dias_carencia || 0),
+        multa_atraso_percentual: Number(config.multa_atraso_perc || config.multa_atraso_percentual || 2),
+        juros_mora_mensal: Number(config.juros_mora_mensal_perc || config.juros_mora_mensal_percentual || 1),
+        multa_juros_habilitado: config.multa_juros_habilitado !== false,
+      }
+
+      // Verifica se as chaves existem de fato para PIX Manual ser considerado configurado ativo (UX check)
+      const isPixConfigured = !!(mapped.chave_pix || mapped.qr_code_url || mapped.qr_code_auto);
+
+      if (!isPixConfigured) {
+        console.warn('PIX não configurado adequadamente na config_financeira:', config)
+      }
+
+      return isPixConfigured ? mapped : null;
+    } catch (err) {
+      console.error('Erro buscarConfigPixEscola:', err)
+      return null
     }
   },
 
@@ -466,15 +480,16 @@ export const portalService = {
     const fileExt = file.name.split('.').pop()
     const filePath = `${tenantId}/${filename}.${fileExt}`
 
+    // O bucket correto é 'publico' conforme padrão do sistema
     const { data, error } = await supabase.storage
-      .from('public' as any) // Tenta bucket public primeiro, ou comprovantes
+      .from('publico' as any)
       .upload(filePath, file, { 
         upsert: true,
         cacheControl: '3600'
       })
 
     if (error) {
-      // Tenta bucket específico se public falhar
+      // Fallback para bucket de comprovantes se existir
       const { data: dataAlt, error: errorAlt } = await supabase.storage
         .from('comprovantes' as any)
         .upload(filePath, file, { upsert: true })
@@ -484,24 +499,117 @@ export const portalService = {
       return urlData.publicUrl
     }
 
-    const { data: urlData } = supabase.storage.from('public' as any).getPublicUrl(filePath)
+    const { data: urlData } = supabase.storage.from('publico' as any).getPublicUrl(filePath)
     return urlData.publicUrl
   },
 
-  async registrarPagamentoComComprovante(cobrancaId: string, comprovanteUrl: string, responsavelId: string) {
-    const { error } = await supabase.from('cobrancas')
-      .update({
-        comprovante_url: comprovanteUrl,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', cobrancaId)
+  async registrarPagamentoComComprovante(cobrancaIds: string | string[], comprovanteUrl: string, responsavelId: string) {
+    const isArray = Array.isArray(cobrancaIds)
+    
+    let query = supabase.from('cobrancas').update({
+      comprovante_url: comprovanteUrl,
+      updated_at: new Date().toISOString()
+    })
+
+    if (isArray) {
+      query = query.in('id', cobrancaIds)
+    } else {
+      query = query.eq('id', cobrancaIds)
+    }
+
+    const { error } = await query
 
     if (error) throw error
 
+    // 1. Notifica a escola sobre o novo comprovante para baixa manual
+    try {
+      const ids = isArray ? cobrancaIds : [cobrancaIds]
+      // Busca dados das faturas e alunos para compor a mensagem
+      const { data: cobData } = await supabase
+        .from('cobrancas')
+        .select(`
+          valor, 
+          aluno_id, 
+          tenant_id, 
+          descricao,
+          tipo_cobranca,
+          alunos:aluno_id (
+            nome_completo,
+            matriculas (
+              status,
+              turma:turma_id (nome)
+            )
+          )
+        `)
+        .in('id', ids)
+
+      if (cobData && cobData.length > 0) {
+        const tenantId = cobData[0].tenant_id
+        const totalValor = cobData.reduce((acc, c) => acc + Number(c.valor || 0), 0)
+        
+        // Coleta dados dos alunos e turmas
+        const alunosTurmasInfo = cobData.map(c => {
+          const aluno = c.alunos as any
+          const matriculaAtiva = aluno?.matriculas?.find((m: any) => m.status === 'ativa')
+          return {
+            nome: aluno?.nome_completo,
+            turma: matriculaAtiva?.turma?.nome || 'Sem Turma'
+          }
+        })
+
+        const alunosNomes = [...new Set(alunosTurmasInfo.map(a => a.nome))].join(', ')
+        const turmasNomes = [...new Set(alunosTurmasInfo.map(a => a.turma))].join(', ')
+        
+        // Extrai meses e tipo das descrições
+        const meses = [...new Set(cobData.map(c => c.descricao))].join('; ')
+        const tipos = [...new Set(cobData.map(c => c.tipo_cobranca))].map(t => t === 'mensalidade' ? 'Mensalidade' : 'Outro').join(', ')
+
+        // Busca nome do responsável que enviou
+        const { data: respData } = await supabase
+          .from('responsaveis')
+          .select('nome')
+          .eq('id', responsavelId)
+          .maybeSingle()
+
+        const responsavelNome = respData?.nome || 'Um responsável'
+
+        // Cria a notificação para a gestão escolar/financeira
+        await supabase.from('notificacoes').insert({
+          tenant_id: tenantId,
+          tipo: 'PAGAMENTO_PIX_MANUAL',
+          titulo: 'Novo Comprovante PIX',
+          mensagem: `${responsavelNome} enviou comprovante de R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} para ${alunosNomes} (${turmasNomes}). Referente a: ${meses}. Por favor, valide se o pagamento foi mesmo feito e verifique o WhatsApp.`,
+          href: '/financeiro/cobrancas',
+          categoria: 'FINANCEIRO',
+          prioridade: 2,
+          metadata: { 
+            cobranca_ids: ids, 
+            responsavel_id: responsavelId,
+            responsavel_nome: responsavelNome,
+            aluno_nome: alunosNomes,
+            turma_nome: turmasNomes,
+            valor_total: totalValor,
+            meses_referencia: meses,
+            tipo_cobranca: tipos,
+            perfis_permitidos: ['gestor', 'administrativo', 'financeiro'],
+            perfis_excluidos: ['contador']
+          },
+          lida: false,
+          resolvida: false
+        })
+      }
+    } catch (notifyError) {
+      console.warn('Falha silenciosa ao gerar notificação para a escola:', notifyError)
+    }
+
+    // 2. Registra auditoria técnica
     await portalService.registrarAuditoria({
-      tipo: 'pagamento_comprovante_enviado',
+      tipo: isArray ? 'pagamento_multiplo_comprovante_enviado' : 'pagamento_comprovante_enviado',
       responsavel_id: responsavelId,
-      detalhes: { cobranca_id: cobrancaId, url: comprovanteUrl },
+      detalhes: { 
+        cobranca_ids: isArray ? cobrancaIds : [cobrancaIds], 
+        url: comprovanteUrl 
+      },
     })
   },
 

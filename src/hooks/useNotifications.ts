@@ -33,15 +33,28 @@ export function useEscolaNotifications(tenantId?: string) {
       // Usa o serviço centralizado de notificações
       const userId = authUser?.funcionarioId || authUser?.responsavelId || authUser?.user?.id
       const result = await notificacoesService.buscarNotificacoesAgrupadas(tenantId, userId)
+      
+      let notificacoes = result.notificacoes
+      let items = result.items
+      let total = result.total
+
+      // REGRA DE NEGÓCIO: Contador não visualiza notificações de recebimento PIX Manual (baixa manual)
+      const isContador = authUser?.perfilNome?.toLowerCase().includes('contador')
+      if (isContador) {
+        notificacoes = notificacoes.filter(n => n.tipo !== 'PAGAMENTO_PIX_MANUAL')
+        items = items.filter(i => i.id !== 'PAGAMENTO_PIX_MANUAL')
+        total = notificacoes.length
+      }
+
       return {
-        total: result.total,
-        items: result.items.map(item => ({
+        total,
+        items: items.map(item => ({
           id: item.id,
           label: item.label,
           href: item.href,
           category: item.category
         })),
-        notificacoes: result.notificacoes
+        notificacoes
       }
     },
     enabled: !!tenantId,
