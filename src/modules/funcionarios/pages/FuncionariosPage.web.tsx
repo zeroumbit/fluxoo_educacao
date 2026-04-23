@@ -258,15 +258,29 @@ export function FuncionariosPage() {
     '15. Outros Cargos Específicos'
   ]
 
-  // Transforma o catálogo em opções para o MultiSelect com ordenação customizada
+  // Transforma o catálogo em opções para o MultiSelect com ordenação customizada e limpeza de redundâncias
   const funcaoOptions = useMemo(() => {
-    const options = (funcoesCatalogo as any[]).map(f => ({ 
-      value: f.nome, 
-      label: f.nome, 
-      group: f.categoria 
-    }))
+    const rawOptions = (funcoesCatalogo as any[]).map(f => {
+      const isCorpoDocente = f.categoria === '3. Corpo Docente'
+      const nomeNormalizado = isCorpoDocente ? normalizarCargo(f.nome) : f.nome
 
-    return options.sort((a, b) => {
+      return { 
+        value: nomeNormalizado, 
+        label: nomeNormalizado, 
+        group: f.categoria 
+      }
+    })
+
+    // De-duplicar opções (especialmente útil para consolidar múltiplos "Professor" no Corpo Docente)
+    const seen = new Set<string>()
+    const uniqueOptions = rawOptions.filter(opt => {
+      const key = `${opt.group}-${opt.value}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+
+    return uniqueOptions.sort((a, b) => {
       const idxA = CATEGORY_ORDER.indexOf(a.group)
       const idxB = CATEGORY_ORDER.indexOf(b.group)
       
