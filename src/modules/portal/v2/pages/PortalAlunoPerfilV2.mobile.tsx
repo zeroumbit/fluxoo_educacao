@@ -59,7 +59,7 @@ export function PortalAlunoPerfilV2Mobile() {
       case 'frequencia': return 'Frequência';
       case 'planos': return 'Planos de Aula';
       case 'atividades': return 'Atividades e Provas';
-      case 'material': return 'Materiais de Livros';
+      case 'material': return 'Livros e Materiais';
       case 'agenda': return 'Agenda de Eventos';
       case 'autorizacoes': return 'Autorizações';
       case 'selos': return 'Conquistas';
@@ -73,7 +73,7 @@ export function PortalAlunoPerfilV2Mobile() {
     { id: 'frequencia', label: 'Frequência', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { id: 'planos', label: 'Planos de Aula', icon: LayoutList, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { id: 'atividades', label: 'Atividades e Provas', icon: PencilLine, color: 'text-orange-500', bg: 'bg-orange-50' },
-    { id: 'material', label: 'Materiais de Livros', icon: Library, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { id: 'material', label: 'Livros e Materiais', icon: Library, color: 'text-violet-500', bg: 'bg-violet-50' },
     { id: 'agenda', label: 'Agenda de Eventos', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50' },
     { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50' },
     { id: 'selos', label: 'Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50' },

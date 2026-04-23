@@ -9,7 +9,7 @@ export function useEventos() {
 export function useCriarEvento() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (d: any) => agendaService.criarEvento(d),
+    mutationFn: (d: any) => agendaService.salvarEvento(d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['eventos'] })
       qc.invalidateQueries({ queryKey: ['portal', 'eventos'] })

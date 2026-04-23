@@ -7,8 +7,18 @@ export const agendaService = {
     if (error) throw error
     return (data as any[]) || []
   },
-  async criarEvento(evento: any) {
-    const { data, error } = await (supabase.from('eventos' as any) as any).insert(evento).select().single()
+  async salvarEvento(evento: any) {
+    const { id, ...dados } = evento
+    if (id) {
+      const { data, error } = await (supabase.from('eventos' as any) as any)
+        .update(dados)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
+    const { data, error } = await (supabase.from('eventos' as any) as any).insert(dados).select().single()
     if (error) throw error
     return data
   },

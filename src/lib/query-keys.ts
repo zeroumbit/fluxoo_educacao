@@ -3,6 +3,23 @@ export const QueryKeys = {
   DASHBOARD: ['dashboard'] as const,
   RBAC: (userId?: string, tenantId?: string) => ['rbac', userId, tenantId] as const,
 
+  // Módulo Alunos
+  ALUNOS: {
+    ROOT: ['alunos'] as const,
+    LIST: (tenantId?: string, isProfessor?: boolean, funcionarioId?: string) => 
+      ['alunos', tenantId, isProfessor ? funcionarioId : 'all'] as const,
+    DETAIL: (id: string, tenantId?: string) => ['alunos', id, tenantId] as const,
+    ATIVOS: (tenantId?: string, isProfessor?: boolean, funcionarioId?: string) => 
+      ['alunos', 'ativos', tenantId, isProfessor ? funcionarioId : 'all'] as const,
+  },
+  
+  OVERRIDES: {
+    ALUNO: (alunoId: string, tenantId?: string) => ['overrides', alunoId, tenantId] as const,
+  },
+  STAGING: {
+    PENDENTES: (tenantId?: string) => ['staging', 'pendentes', tenantId] as const,
+  },
+
   // Módulo Acadêmico / Turmas
   TURMAS: {
     ROOT: ['turmas'] as const,
@@ -10,6 +27,13 @@ export const QueryKeys = {
       ['turmas', tenantId, isProfessor ? funcionarioId : 'all'] as const,
     DETAIL: (id: string, tenantId?: string) => ['turmas', id, tenantId] as const,
     ALUNO: (alunoId: string, tenantId?: string) => ['turmas_aluno', alunoId, tenantId] as const,
+    
+    ROOT_ACADEMICO: ['academico'] as const,
+    AVALIACOES: (turmaId: string, disciplinaId: string, bimestre: number) => ['avaliacoes_config', turmaId, disciplinaId, bimestre] as const,
+    NOTAS: (avaliacaoId: string) => ['avaliacoes_notas', avaliacaoId] as const,
+    BOLETIM: (alunoId: string) => ['boletim_v2', 'aluno', alunoId] as const,
+    BOLETIM_TURMA: (turmaId: string, bimestre: number) => ['boletim_v2', 'turma', turmaId, bimestre] as const,
+    FECHAMENTO: (tenantId: string, turmaId: string, bimestre: number) => ['fechamento_bimestre', tenantId, turmaId, bimestre] as const,
     
     ROOT_DISCIPLINAS: ['disciplinas'] as const,
     DISCIPLINAS: (tenantId: string, etapa?: string) => ['disciplinas', tenantId, etapa] as const,

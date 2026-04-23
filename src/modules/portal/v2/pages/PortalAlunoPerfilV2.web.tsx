@@ -30,7 +30,7 @@ const REAL_MODULES = [
   { id: 'frequencia', label: 'Frequência', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
   { id: 'planos', label: 'Planos de Aula', icon: BookMarked, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
   { id: 'atividades', label: 'Atividades e Provas', icon: LayoutList, color: 'text-orange-500', bg: 'bg-orange-50', border: 'hover:border-orange-200' },
-  { id: 'material', label: 'Materiais e Livros', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
+  { id: 'material', label: 'Livros e Materiais', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'hover:border-emerald-200' },
   { id: 'agenda', label: 'Agenda de Eventos', icon: Calendar, color: 'text-rose-500', bg: 'bg-rose-50', border: 'hover:border-rose-200' },
   { id: 'autorizacoes', label: 'Autorizações', icon: ShieldCheck, color: 'text-teal-500', bg: 'bg-teal-50', border: 'hover:border-teal-200' },
   { id: 'selos', label: 'Conquistas', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50', border: 'hover:border-amber-200' },

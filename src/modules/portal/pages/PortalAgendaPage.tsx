@@ -91,12 +91,13 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
     catch { return '' }
   }
 
-  const getDia = (dataStr: string) => (dataStr || new Date().toISOString()).split('-')[2] || '01'
+  const getDia = (dataStr: string) => {
+    try { return format(parseISO(dataStr), "dd") }
+    catch { return '01' }
+  }
+
   const getMes = (dataStr: string) => {
-    try { 
-      const date = dataStr ? parseISO(dataStr) : new Date()
-      return format(date, "MMM", { locale: ptBR }) 
-    }
+    try { return format(parseISO(dataStr), "MMM", { locale: ptBR }) }
     catch { return '' }
   }
 
@@ -154,7 +155,7 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Lado Esquerdo: Calendário */}
-        <div className="lg:col-span-5 space-y-4 sticky top-4">
+        <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-4">
           <Card className="border-none shadow-xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
             <CardContent className="p-4">
               <Calendar
@@ -270,13 +271,13 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                     className="group cursor-pointer"
                   >
                     <Card className={cn(
-                      "border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden flex flex-row hover:shadow-xl transition-all hover:border-teal-100 group min-h-[120px]",
+                      "border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden flex flex-row hover:shadow-xl transition-all hover:border-teal-100 group min-h-[120px] p-0 gap-0",
                       isPassado(evento.data_inicio) && "border-slate-200"
                     )}>
                       
                       {/* Data Visual - Design Nativo 100% altura horizontal */}
                       <div className={cn(
-                        "w-20 sm:w-24 flex flex-col items-center justify-center p-4 sm:p-6 text-white shrink-0 gap-0 transition-colors relative",
+                        "w-20 sm:w-24 flex flex-col items-center justify-center p-4 sm:p-6 text-white shrink-0 gap-0 transition-colors relative self-stretch",
                         getDotColor(evento.tipo, isPassado(evento.data_inicio)),
                         isPassado(evento.data_inicio) ? "bg-slate-400" : ""
                       )}>
@@ -328,14 +329,21 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                             <div className="h-1 w-1 bg-slate-300 rounded-full" />
                             <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
                               <Clock size={12} className="text-slate-400" />
-                              {format(parseISO(evento.data_inicio), "HH:mm")}
+                              {evento.hora_inicio ? (
+                                <>
+                                  {evento.hora_inicio.slice(0, 5)}
+                                  {evento.hora_fim && ` - ${evento.hora_fim.slice(0, 5)}`}
+                                </>
+                              ) : (
+                                format(parseISO(evento.data_inicio), "HH:mm")
+                              )}
                             </div>
                           </div>
 
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-8 w-8 p-0 rounded-full hover:bg-teal-50 hover:text-teal-600 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-teal-50 hover:text-teal-600 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                           >
                             <Info size={16} />
                           </Button>
@@ -410,7 +418,19 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
                         {selectedEvent.data_inicio ? format(parseISO(selectedEvent.data_inicio), "dd 'de' MMMM", { locale: ptBR }) : 'Data Indeterminada'}
                       </p>
                       <p className="text-sm font-medium text-slate-500">
-                        {selectedEvent.data_inicio ? `${formatarDiaSemana(selectedEvent.data_inicio)}, às ${format(parseISO(selectedEvent.data_inicio), "HH:mm")}` : 'Consulte a secretaria'}
+                        {selectedEvent.data_inicio ? (
+                          <>
+                            {formatarDiaSemana(selectedEvent.data_inicio)}, às{' '}
+                            {selectedEvent.hora_inicio ? (
+                              <>
+                                {selectedEvent.hora_inicio.slice(0, 5)}
+                                {selectedEvent.hora_fim && ` às ${selectedEvent.hora_fim.slice(0, 5)}`}
+                              </>
+                            ) : (
+                              format(parseISO(selectedEvent.data_inicio), "HH:mm")
+                            )}
+                          </>
+                        ) : 'Consulte a secretaria'}
                       </p>
                     </div>
                   </div>

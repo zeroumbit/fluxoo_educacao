@@ -57,7 +57,7 @@ export function EventosPage() {
 
   const abrirNovo = () => {
     setEditando(null)
-    form.reset({ nome: '', data_inicio: '', data_termino: '', publico_alvo: '', descricao: '', publicar_no_mural: false })
+    form.reset({ nome: '', data_inicio: '', data_termino: '', hora_inicio: '', hora_fim: '', local: '', publico_alvo: 'toda_escola', descricao: '', publicar_no_mural: false })
     setOpen(true)
   }
 
@@ -67,7 +67,10 @@ export function EventosPage() {
       nome: evento.nome,
       data_inicio: evento.data_inicio,
       data_termino: evento.data_termino || '',
-      publico_alvo: evento.publico_alvo || '',
+      hora_inicio: evento.hora_inicio || '',
+      hora_fim: evento.hora_fim || '',
+      local: evento.local || '',
+      publico_alvo: evento.publico_alvo || 'toda_escola',
       descricao: evento.descricao || '',
       publicar_no_mural: evento.publicar_no_mural || false,
     })
@@ -96,7 +99,7 @@ export function EventosPage() {
   const onSubmit = async (data: any) => {
     if (!authUser) return
     try {
-      await criar.mutateAsync({ ...data, tenant_id: authUser.tenantId })
+      await criar.mutateAsync({ ...data, id: editando?.id, tenant_id: authUser.tenantId })
       
       if (data.publicar_no_mural && !editando) {
         await muralService.criar({
