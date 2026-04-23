@@ -215,6 +215,7 @@ export function TurmasPageWeb() {
               turma={turma}
               alunosCount={alunosCountMap?.[turma.id] || 0}
               onViewAlunos={() => handleGerir(turma.id, 'alunos')}
+              onViewProfessores={() => handleGerir(turma.id, 'professores')}
               onViewGrade={() => handleGerir(turma.id, 'grade')}
               onManage={() => handleGerir(turma.id, 'dados')}
             />

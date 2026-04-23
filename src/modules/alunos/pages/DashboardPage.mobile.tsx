@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { AlertasProvider, useAlertas, type RadarAlunoComStatus } from '../AlertasContext'
 import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
+import { Greeting } from '@/components/ui/Greeting'
 
 const CACHE_KEY = 'dashboard_cache'
 
@@ -549,15 +550,8 @@ export function DashboardPageMobile() {
 
 
             {/* ── Saudação ── */}
-            <section className="flex items-center justify-between px-5">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-1.5">
-                  {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                </p>
-                <h1 className="text-[1.625rem] font-black text-slate-900 dark:text-white tracking-tight leading-none">
-                  Fluxoo <span className="text-indigo-600">Edu</span>
-                </h1>
-              </div>
+            <section className="flex items-start justify-between px-5">
+              <Greeting />
               <NotificationBell
                 total={notifications?.total || 0}
                 items={notifications?.items || []}

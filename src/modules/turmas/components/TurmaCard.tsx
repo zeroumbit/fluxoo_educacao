@@ -9,7 +9,8 @@ import {
   BookOpen,
   Clock,
   DollarSign,
-  ChevronRight
+  ChevronRight,
+  GraduationCap
 } from 'lucide-react'
 import type { Turma } from '../types'
 import { cn } from '@/lib/utils'
@@ -19,11 +20,12 @@ interface TurmaCardProps {
   turma: Turma;
   alunosCount: number;
   onViewAlunos: () => void;
+  onViewProfessores: () => void;
   onViewGrade: () => void;
   onManage: () => void;
 }
 
-export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onManage }: TurmaCardProps) {
+export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewProfessores, onViewGrade, onManage }: TurmaCardProps) {
   const isAtiva = turma.status === 'ativa'
   const { authUser } = useAuth()
 
@@ -126,20 +128,20 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewGrade, onMan
                <Button
                 variant="ghost"
                 size="sm"
+                onClick={onViewProfessores}
+                className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
+               >
+                  <GraduationCap size={16} className="text-orange-500" />
+                  Professores
+               </Button>
+               <Button
+                variant="ghost"
+                size="sm"
                 onClick={onViewGrade}
                 className="rounded-xl h-11 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
                >
                   <Calendar size={16} className="text-teal-500" />
                   Grade
-               </Button>
-               <Button
-                variant="ghost"
-                size="sm"
-                onClick={onManage}
-                className="rounded-xl h-11 font-bold text-xs gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
-               >
-                  Gerir
-                  <ChevronRight size={14} />
                </Button>
              </>
            ) : (

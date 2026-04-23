@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ArrowLeft,
@@ -32,6 +39,8 @@ import {
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP, getProximoDiaUtil, formatDateISO } from '@/lib/validacoes'
 import { motion } from 'framer-motion'
+import { safeStorage, checkRateLimit } from '@/lib/security'
+import { rbacService } from '@/modules/rbac/service'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),
@@ -51,7 +60,6 @@ const alunoSchema = z.object({
   medicamentos: z.string().optional(),
   observacoes_saude: z.string().optional(),
   filial_id: z.string().optional(),
-  valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
   data_ingresso: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
@@ -81,7 +89,14 @@ const steps = [
 ]
 
 export function AlunoCadastroPageMobile() {
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(() => {
+    try {
+      const savedStep = localStorage.getItem('aluno_cadastro_step_mobile')
+      return savedStep ? parseInt(savedStep, 10) || 0 : 0
+    } catch (_e) {
+      return 0
+    }
+  })
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const criarAlunoComResponsavel = useCriarAlunoComResponsavel()
@@ -92,6 +107,16 @@ export function AlunoCadastroPageMobile() {
   const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
   const [buscandoCpf, setBuscandoCpf] = useState(false)
   const [_irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
+  
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftStateData, setDraftStateData] = useState<any>(null)
+  const [showPostCadastroModal, setShowPostCadastroModal] = useState(false)
+  const [lastCreatedAluno, setLastCreatedAluno] = useState<any>(null)
+
+  // Segurança & Auditoria
+  const [showSecurityConfirm, setShowSecurityConfirm] = useState(false)
+  const [formDataCache, setFormDataCache] = useState<AlunoFormValues | null>(null)
+  const [lgpdAccepted, setLgpdAccepted] = useState(false)
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -114,18 +139,81 @@ export function AlunoCadastroPageMobile() {
       nome_completo: '',
       data_nascimento: '',
       cep: '',
-      valor_mensalidade_atual: 0,
       data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
     },
   })
 
+  // Selecionar automaticamente a unidade se houver apenas uma ou se houver uma matriz
   useEffect(() => {
     if (filiais && filiais.length > 0) {
-      const matriz = (filiais as any[]).find(f => f.is_matriz)
-      if (matriz) setValue('filial_id', matriz.id)
-      else if (filiais.length === 1) setValue('filial_id', (filiais[0] as any).id)
+      const currentFilialId = watch('filial_id')
+      if (!currentFilialId) {
+        if (filiais.length === 1) {
+          setValue('filial_id', (filiais[0] as any).id)
+        } else {
+          const matriz = (filiais as any[]).find(f => f.is_matriz)
+          if (matriz) {
+            setValue('filial_id', matriz.id)
+          }
+        }
+      }
     }
-  }, [filiais, setValue])
+  }, [filiais, setValue, watch])
+
+  // 1. Interceptar rascunho do localStorage ao montar (Descriptografado)
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('aluno_cadastro_draft_mobile')
+    if (savedDraft) {
+      try {
+        const parsedDraft = safeStorage.decrypt(savedDraft)
+        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && (val as any)?.length !== 0)) {
+          setDraftStateData(parsedDraft)
+          setShowDraftModal(true)
+        }
+      } catch (_e) {
+        localStorage.removeItem('aluno_cadastro_draft_mobile')
+      }
+    }
+  }, [])
+
+  const handleContinuarRascunho = () => {
+    if (draftStateData) {
+      Object.entries(draftStateData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) setValue(key as any, value)
+      })
+    }
+    const savedStep = localStorage.getItem('aluno_cadastro_step_mobile')
+    if(savedStep) setCurrentStep(parseInt(savedStep, 10))
+    setShowDraftModal(false)
+  }
+
+  const handleNovoCadastro = () => {
+    localStorage.removeItem('aluno_cadastro_draft_mobile')
+    localStorage.removeItem('aluno_cadastro_step_mobile')
+    setCurrentStep(0)
+    setShowDraftModal(false)
+  }
+
+  // 2. Salvar rascunho e passo atual no localStorage (Criptografado)
+  const watchAllFields = watch()
+  useEffect(() => {
+    const draftContent = { ...watchAllFields }
+    delete (draftContent as any).responsavel_senha
+    
+    const encryptedDraft = safeStorage.encrypt(draftContent)
+    localStorage.setItem('aluno_cadastro_draft_mobile', encryptedDraft)
+    localStorage.setItem('aluno_cadastro_step_mobile', currentStep.toString())
+  }, [watchAllFields, currentStep])
+
+  const resetForm = () => {
+    localStorage.removeItem('aluno_cadastro_draft_mobile')
+    localStorage.removeItem('aluno_cadastro_step_mobile')
+    setCurrentStep(0)
+    setResponsavelEncontrado(false)
+    setIrmaosExistentes([])
+    setShowPostCadastroModal(false)
+    navigate('/alunos')
+  }
 
   const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
   const selectedEstado = watch('estado')
@@ -221,13 +309,28 @@ export function AlunoCadastroPageMobile() {
 
   const onSubmit = async (data: AlunoFormValues) => {
     if (currentStep !== steps.length - 1) return
-    if (!authUser) return
-    if (limiteAtingido) { toast.error('Limite de alunos atingido!'); return }
+    
+    if (!checkRateLimit('aluno_cadastro_submit_mobile')) {
+      return
+    }
+
+    // Step-up Security
+    setFormDataCache(data)
+    setShowSecurityConfirm(true)
+  }
+
+  const handleFinalSubmit = async () => {
+    const data = formDataCache
+    if (!data || !authUser || !lgpdAccepted) return
+    
+    setShowSecurityConfirm(false)
+    const toastId = toast.loading('Processando cadastro seguro...')
+    
     try {
-      if (!authUser.tenantId) { toast.error('Perfil não vinculado a nenhuma escola.'); return }
+      if (!authUser.tenantId) { toast.error('Perfil não vinculado a nenhuma escola.', { id: toastId }); return }
       const patologias = data.patologias ? data.patologias.split(',').map(p => p.trim()).filter(Boolean) : null
       const medicamentos = data.medicamentos ? data.medicamentos.split(',').map(m => m.trim()).filter(Boolean) : null
-      await criarAlunoComResponsavel.mutateAsync({
+      const result = await criarAlunoComResponsavel.mutateAsync({
         responsavel: {
           cpf: data.responsavel_cpf, nome: data.responsavel_nome,
           telefone: data.responsavel_telefone || null, email: data.responsavel_email || null,
@@ -241,16 +344,39 @@ export function AlunoCadastroPageMobile() {
           observacoes_saude: data.observacoes_saude || null, status: 'ativo' as const,
           cep: data.cep || null, logradouro: data.logradouro || null, numero: data.numero || null,
           complemento: data.complemento || null, bairro: data.bairro || null, cidade: data.cidade || null, estado: data.estado || null,
-          valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
           data_ingresso: data.data_ingresso || formatDateISO(getProximoDiaUtil(new Date())),
         } as any,
         grauParentesco: data.responsavel_parentesco || null,
         isFinanceiro: data.responsavel_financeiro === 'sim',
       })
-      toast.success('Aluno cadastrado!')
-      navigate('/alunos')
+      toast.success('Aluno cadastrado!', { id: toastId })
+
+      // AUDITORIA
+      try {
+        await rbacService.criarAuditLog({
+          tenant_id: authUser.tenantId,
+          user_id: authUser.id,
+          acao: 'CRIAR_ALUNO',
+          recurso_id: result.id,
+          valor_anterior: null,
+          valor_novo: { 
+            nome: data.nome_completo, 
+            responsavel: data.responsavel_nome 
+          },
+          motivo_declarado: 'Cadastro manual (Mobile)',
+          ip_address: null,
+          user_agent: navigator.userAgent
+        })
+      } catch (auditErr) {
+        console.warn('Falha auditoria (mobile):', auditErr)
+      }
+
+      setLastCreatedAluno(data)
+      localStorage.removeItem('aluno_cadastro_draft_mobile')
+      localStorage.removeItem('aluno_cadastro_step_mobile')
+      setShowPostCadastroModal(true)
     } catch (err: any) {
-      toast.error('Erro: ' + (err?.message || 'Verifique os campos.'))
+      toast.error('Erro: ' + (err?.message || 'Verifique os campos.'), { id: toastId })
     }
   }
 
@@ -309,6 +435,105 @@ export function AlunoCadastroPageMobile() {
           </div>
         </div>
       </div>
+      
+      <Dialog open={showDraftModal} onOpenChange={setShowDraftModal}>
+        <DialogContent className="w-[90%] rounded-3xl sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rascunho Detectado</DialogTitle>
+            <DialogDescription>
+              Encontramos um cadastro em andamento. Deseja continuar de onde parou?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button className="h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold" onClick={handleContinuarRascunho}>
+              Continuar de onde parei
+            </Button>
+            <Button variant="outline" className="h-12 rounded-2xl font-bold" onClick={handleNovoCadastro}>
+              Começar Novo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Segurança (Mobile) */}
+      <Dialog open={showSecurityConfirm} onOpenChange={setShowSecurityConfirm}>
+        <DialogContent className="w-[90%] rounded-3xl sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-emerald-500" />
+              Confirmar Cadastro
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação registrará os dados sensíveis do aluno e responsável nos logs de auditoria.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center h-5">
+                <input
+                  id="lgpd_mobile"
+                  type="checkbox"
+                  checked={lgpdAccepted}
+                  onChange={(e) => setLgpdAccepted(e.target.checked)}
+                  className="h-5 w-5 rounded-lg border-slate-300 text-indigo-600"
+                />
+              </div>
+              <Label htmlFor="lgpd_mobile" className="text-xs text-slate-600 leading-normal font-medium">
+                Confirmo que os dados são verídicas e estão em conformidade com a LGPD.
+              </Label>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={handleFinalSubmit} 
+              disabled={!lgpdAccepted}
+              className="h-14 rounded-2xl bg-indigo-600 text-white font-bold text-base shadow-lg shadow-indigo-100"
+            >
+              Confirmar e Salvar
+            </Button>
+            <Button variant="ghost" className="h-12 rounded-2xl font-bold text-slate-500" onClick={() => setShowSecurityConfirm(false)}>
+              Revisar Dados
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Pós-Cadastro */}
+      <Dialog open={showPostCadastroModal} onOpenChange={setShowPostCadastroModal}>
+        <DialogContent className="w-[90%] rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <Check className="h-5 w-5" />
+              Aluno Cadastrado!
+            </DialogTitle>
+            <DialogDescription>
+              O que você deseja fazer agora com <strong>{lastCreatedAluno?.nome_completo}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4">
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 rounded-2xl text-sm font-bold"
+              onClick={() => navigate('/matriculas', { state: { aluno_id: (lastCreatedAluno as any)?.id, autoOpen: true } })}
+            >
+              Matricular este aluno agora
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full h-12 rounded-2xl text-xs font-bold"
+              onClick={resetForm}
+            >
+              Cadastrar outro novo aluno
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full h-12 rounded-2xl text-xs text-muted-foreground"
+              onClick={() => navigate('/alunos')}
+            >
+              Ir para lista de alunos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Form Content ── */}
       <div className="mx-auto w-full max-w-[640px] px-4 pt-6">
@@ -375,7 +600,7 @@ export function AlunoCadastroPageMobile() {
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Parentesco *</Label>
                     <Select value={watch('responsavel_parentesco')} onValueChange={(v) => setValue('responsavel_parentesco', v, { shouldValidate: true })}>
-                      <SelectTrigger className="h-14 rounded-2xl text-base font-medium"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="w-full h-14 rounded-2xl text-base font-medium"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pai">Pai</SelectItem>
                         <SelectItem value="mae">Mãe</SelectItem>
@@ -401,8 +626,10 @@ export function AlunoCadastroPageMobile() {
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                       <CreditCard className="h-3 w-3 text-emerald-600" /> Responsável financeiro? *
                     </Label>
-                    <Select onValueChange={(v) => setValue('responsavel_financeiro', v)}>
-                      <SelectTrigger className="h-14 rounded-2xl text-base font-medium"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <Select value={watch('responsavel_financeiro')} onValueChange={(v) => setValue('responsavel_financeiro', v, { shouldValidate: true })}>
+                      <SelectTrigger className="w-full h-14 rounded-2xl text-base font-medium">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sim">✅ Sim</SelectItem>
                         <SelectItem value="nao">❌ Não</SelectItem>
@@ -426,13 +653,18 @@ export function AlunoCadastroPageMobile() {
                     <div className="space-y-2 pt-4 border-t border-slate-100">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Unidade</Label>
                       <Select value={watch('filial_id')} onValueChange={(v) => setValue('filial_id', v)}>
-                        <SelectTrigger className="h-14 rounded-2xl text-base font-medium"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="w-full h-14 rounded-2xl text-base font-medium">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
                         <SelectContent>
                           {(filiais as any[]).map((f: any) => (
                             <SelectItem key={f.id} value={f.id}>{f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      {filiais.length === 1 && (
+                        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest px-1">Selecionada automaticamente</p>
+                      )}
                     </div>
                   )}
                 </>
@@ -497,18 +729,9 @@ export function AlunoCadastroPageMobile() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* REGRA DE NEGÓCIO: Professores NÃO podem ver/editar valor de mensalidade */}
-                    {!authUser?.isProfessor && (
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mensalidade (R$)</Label>
-                        <Input type="number" step="0.01" placeholder="0,00" {...register('valor_mensalidade_atual')} inputMode="decimal" className="h-14 rounded-2xl text-base font-medium" />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data de Ingresso</Label>
-                      <Input type="date" {...register('data_ingresso')} className="h-14 rounded-2xl text-base font-medium" />
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data de Ingresso</Label>
+                    <Input type="date" {...register('data_ingresso')} className="h-14 rounded-2xl text-base font-medium" />
                   </div>
                 </>
               )}
@@ -589,13 +812,23 @@ export function AlunoCadastroPageMobile() {
             {/* ── Navigation Buttons (Fixo no Bottom) ── */}
             <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
               <div className="mx-auto w-full max-w-[640px] px-4 py-3 flex gap-3">
-                {currentStep > 0 && (
-                  <Button type="button" variant="outline" onClick={prevStep} className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-200">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-                  </Button>
-                )}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={prevStep} 
+                  disabled={currentStep === 0}
+                  className="flex-1 h-14 rounded-2xl font-bold text-base border-slate-200"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
+                </Button>
+
                 {currentStep < steps.length - 1 ? (
-                  <Button key="btn-next-mobile" type="button" onClick={nextStep} className="flex-1 h-14 rounded-2xl bg-indigo-600 font-bold text-base shadow-lg shadow-indigo-100">
+                  <Button 
+                    key="btn-next-mobile" 
+                    type="button" 
+                    onClick={nextStep} 
+                    className="flex-1 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-bold text-base text-white shadow-lg shadow-indigo-100"
+                  >
                     Próximo <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
@@ -603,9 +836,9 @@ export function AlunoCadastroPageMobile() {
                     key="btn-save-mobile"
                     type="submit" 
                     disabled={isSubmitting} 
-                    className="flex-1 h-14 rounded-2xl bg-emerald-600 font-bold text-base shadow-lg shadow-emerald-100"
+                    className="flex-1 h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold text-base text-white shadow-lg shadow-emerald-100"
                   >
-                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Check className="mr-2 h-4 w-4" /> Cadastrar Aluno</>}
+                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : <><Check className="mr-2 h-4 w-4" /> Finalizar</>}
                   </Button>
                 )}
               </div>

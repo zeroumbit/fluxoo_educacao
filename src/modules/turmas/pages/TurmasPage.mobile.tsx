@@ -148,6 +148,12 @@ export function TurmasPageMobile() {
     setDetalhesOpen(true)
   }
 
+  const abrirProfessores = (turma: Turma) => {
+    setVendo(turma)
+    setDetalhesTab('professores')
+    setDetalhesOpen(true)
+  }
+
   const abrirGrade = (turma: Turma) => {
     setVendo(turma)
     setDetalhesTab('grade')
@@ -330,20 +336,20 @@ export function TurmasPageMobile() {
                              <Button
                               variant="ghost"
                               size="sm"
+                              onClick={(e) => { e.stopPropagation(); abrirProfessores(turma) }}
+                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-orange-50/50 text-orange-600 dark:text-orange-400"
+                             >
+                                <GraduationCap size={14} />
+                                Professores
+                             </Button>
+                             <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => { e.stopPropagation(); abrirGrade(turma) }}
                               className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 hover:bg-teal-50/50 text-teal-600 dark:text-teal-400"
                              >
                                 <CalendarDays size={14} />
                                 Grade
-                             </Button>
-                             <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); abrirVer(turma) }}
-                              className="h-10 rounded-xl font-bold text-[10px] uppercase gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none"
-                             >
-                                Gerir
-                                <ChevronRight size={12} />
                              </Button>
                           </>
                         ) : (

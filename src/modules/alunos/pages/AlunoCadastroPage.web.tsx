@@ -44,6 +44,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP, getProximoDiaUtil, formatDateISO } from '@/lib/validacoes'
+import { safeStorage, checkRateLimit } from '@/lib/security'
+import { rbacService } from '@/modules/rbac/service'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),
@@ -64,7 +66,6 @@ const alunoSchema = z.object({
   observacoes_saude: z.string().optional(),
   foto_url: z.string().optional(),
   filial_id: z.string().optional(),
-  valor_mensalidade_atual: z.coerce.number().min(0, 'Valor inválido').optional(),
   data_ingresso: z.string().optional(),
   responsavel_nome: z.string().min(3, 'Nome do responsável é obrigatório'),
   responsavel_cpf: z.string().min(14, 'CPF inválido'),
@@ -122,6 +123,11 @@ export function AlunoCadastroPage() {
   const [uploadingFoto, setUploadingFoto] = useState(false)
   const [tempPatologia, setTempPatologia] = useState('')
   const [tempMedicamento, setTempMedicamento] = useState('')
+  
+  // Segurança & Auditoria
+  const [showSecurityConfirm, setShowSecurityConfirm] = useState(false)
+  const [formDataCache, setFormDataCache] = useState<AlunoFormValues | null>(null)
+  const [lgpdAccepted, setLgpdAccepted] = useState(false)
 
   const limiteAtingido = limite !== undefined && totalAtivos !== undefined && totalAtivos >= limite
 
@@ -157,17 +163,16 @@ export function AlunoCadastroPage() {
       medicamentos: [],
       observacoes_saude: '',
       foto_url: '',
-      valor_mensalidade_atual: 0,
       data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
     },
   })
 
-  // 1. Interceptar rascunho do localStorage ao montar
+  // 1. Interceptar rascunho do localStorage ao montar (Descriptografado)
   useEffect(() => {
     const savedDraft = localStorage.getItem('aluno_cadastro_draft')
     if (savedDraft) {
       try {
-        const parsedDraft = JSON.parse(savedDraft)
+        const parsedDraft = safeStorage.decrypt(savedDraft)
         // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
         if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && (val as any)?.length !== 0)) {
           setDraftStateData(parsedDraft)
@@ -200,12 +205,14 @@ export function AlunoCadastroPage() {
     setShowDraftModal(false)
   }
 
-  // 2. Salvar rascunho e passo atual no localStorage
+  // 2. Salvar rascunho e passo atual no localStorage (Criptografado)
   const watchAllFields = watch()
   useEffect(() => {
     const draftContent = { ...watchAllFields }
     delete draftContent.responsavel_senha
-    localStorage.setItem('aluno_cadastro_draft', JSON.stringify(draftContent))
+    
+    const encryptedDraft = safeStorage.encrypt(draftContent)
+    localStorage.setItem('aluno_cadastro_draft', encryptedDraft)
     localStorage.setItem('aluno_cadastro_step', currentStep.toString())
   }, [watchAllFields, currentStep])
 
@@ -229,11 +236,9 @@ export function AlunoCadastroPage() {
       bairro: '',
       cidade: '',
       estado: '',
-      patologias: [],
       medicamentos: [],
       observacoes_saude: '',
       foto_url: '',
-      valor_mensalidade_atual: 0,
       data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
       filial_id: watch('filial_id') // Mantém a filial selecionada
     })
@@ -243,17 +248,22 @@ export function AlunoCadastroPage() {
     setShowPostCadastroModal(false)
   }
 
-  // Selecionar automaticamente a matriz se houver filiais
+  // Selecionar automaticamente a unidade se houver apenas uma ou se houver uma matriz
   useEffect(() => {
     if (filiais && filiais.length > 0) {
-      const matriz = (filiais as any[]).find(f => f.is_matriz)
-      if (matriz) {
-        setValue('filial_id', matriz.id)
-      } else if (filiais.length === 1) {
-        setValue('filial_id', (filiais[0] as any).id)
+      const currentFilialId = watch('filial_id')
+      if (!currentFilialId) {
+        if (filiais.length === 1) {
+          setValue('filial_id', (filiais[0] as any).id)
+        } else {
+          const matriz = (filiais as any[]).find(f => f.is_matriz)
+          if (matriz) {
+            setValue('filial_id', matriz.id)
+          }
+        }
       }
     }
-  }, [filiais, setValue])
+  }, [filiais, setValue, watch])
 
   const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
   const selectedEstado = watch('estado')
@@ -408,7 +418,21 @@ export function AlunoCadastroPage() {
       return
     }
 
-    if (!authUser) return
+    if (!checkRateLimit('aluno_cadastro_submit')) {
+      return
+    }
+
+    // Step-up Security: Abre modal de confirmação antes de processar
+    setFormDataCache(data)
+    setShowSecurityConfirm(true)
+  }
+
+  const handleFinalSubmit = async () => {
+    const data = formDataCache
+    if (!data || !authUser || !lgpdAccepted) return
+    
+    setShowSecurityConfirm(false)
+    const toastId = toast.loading('Finalizando cadastro seguro...')
     if (limiteAtingido) {
       toast.error('Limite de alunos atingido!')
       return
@@ -460,7 +484,6 @@ export function AlunoCadastroPage() {
         bairro: data.bairro && data.bairro !== '' ? data.bairro : null,
         cidade: data.cidade && data.cidade !== '' ? data.cidade : null,
         estado: data.estado && data.estado !== '' ? data.estado : null,
-        valor_mensalidade_atual: data.valor_mensalidade_atual || 0,
         data_ingresso: data.data_ingresso || formatDateISO(getProximoDiaUtil(new Date())),
       }
 
@@ -475,14 +498,35 @@ export function AlunoCadastroPage() {
       })
 
       setLastCreatedAluno(result)
-      toast.success('Aluno cadastrado com sucesso!')
+      toast.success('Aluno cadastrado com sucesso!', { id: toastId })
+
+      // AUDITORIA: Registra a ação no log do sistema
+      try {
+        await rbacService.criarAuditLog({
+          tenant_id: authUser.tenantId,
+          user_id: authUser.id,
+          acao: 'CRIAR_ALUNO',
+          recurso_id: result.id,
+          valor_anterior: null,
+          valor_novo: { 
+            nome: data.nome_completo, 
+            responsavel: data.responsavel_nome,
+            filial: data.filial_id 
+          },
+          motivo_declarado: 'Cadastro manual via dashboard',
+          ip_address: null,
+          user_agent: navigator.userAgent
+        })
+      } catch (auditErr) {
+        logger.error('Falha ao registrar auditoria (não-bloqueante):', auditErr)
+      }
       
       // Limpeza COMPLETA do estado do form para a nova entrada não pegar sujeira
       reset({
         responsavel_nome: '', responsavel_cpf: '', responsavel_email: '', responsavel_parentesco: '',
         responsavel_financeiro: 'sim', responsavel_senha: '', nome_completo: '', nome_social: '',
         data_nascimento: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
-        patologias: [], medicamentos: [], observacoes_saude: '', valor_mensalidade_atual: 0,
+        patologias: [], medicamentos: [], observacoes_saude: '',
         data_ingresso: formatDateISO(getProximoDiaUtil(new Date())),
         filial_id: data.filial_id // Mantém a filial que ele acabou de usar
       })
@@ -587,6 +631,50 @@ export function AlunoCadastroPage() {
             </Button>
             <Button onClick={handleContinuarRascunho} className="bg-indigo-600 hover:bg-indigo-700 text-white border-0">
               Continuar Rascunho
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Segurança (Step-up Auth) */}
+      <Dialog open={showSecurityConfirm} onOpenChange={setShowSecurityConfirm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-emerald-500" />
+              Confirmação de Segurança
+            </DialogTitle>
+            <DialogDescription>
+              Você está prestes a registrar um novo aluno e seu respectivo responsável. 
+              Esta ação será registrada nos logs de auditoria.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center h-5">
+                <input
+                  id="lgpd"
+                  type="checkbox"
+                  checked={lgpdAccepted}
+                  onChange={(e) => setLgpdAccepted(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                />
+              </div>
+              <Label htmlFor="lgpd" className="text-xs text-slate-600 leading-normal cursor-pointer">
+                Confirmo que as informações são verídicas e que o tratamento desses dados sensíveis está em conformidade com a LGPD e as políticas da instituição.
+              </Label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setShowSecurityConfirm(false)}>
+              Revisar Dados
+            </Button>
+            <Button 
+              onClick={handleFinalSubmit} 
+              disabled={!lgpdAccepted}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white border-0 shadow-lg shadow-indigo-100"
+            >
+              Confirmar e Salvar
             </Button>
           </div>
         </DialogContent>
@@ -774,21 +862,6 @@ export function AlunoCadastroPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* REGRA DE NEGÓCIO: Professores NÃO podem ver/editar valor de mensalidade */}
-                  {!authUser?.isProfessor && (
-                    <div className="space-y-2">
-                      <Label htmlFor="valor_mensalidade_atual">Valor da Mensalidade (R$)</Label>
-                      <Input
-                        id="valor_mensalidade_atual"
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
-                        {...register('valor_mensalidade_atual')}
-                        className="w-full"
-                      />
-                      <p className="text-[10px] text-muted-foreground italic">Cálculo automático de proporcional no primeiro mês</p>
-                    </div>
-                  )}
                   <div className="space-y-2">
                     <Label htmlFor="data_ingresso">Data de Ingresso</Label>
                     <Input
@@ -1103,8 +1176,8 @@ export function AlunoCadastroPage() {
                     <CreditCard className="h-4 w-4 text-emerald-600" />
                     Responsável pelo pagamento da mensalidade? *
                   </Label>
-                  <Select onValueChange={(v) => setValue('responsavel_financeiro', v)}>
-                    <SelectTrigger className={`h-12 rounded-2xl ${errors.responsavel_financeiro ? 'border-destructive' : 'border-zinc-100 bg-zinc-50/50'}`}>
+                  <Select value={watch('responsavel_financeiro')} onValueChange={(v) => setValue('responsavel_financeiro', v, { shouldValidate: true })}>
+                    <SelectTrigger className={`w-full h-12 rounded-2xl ${errors.responsavel_financeiro ? 'border-destructive' : 'border-zinc-100 bg-zinc-50/50'}`}>
                       <SelectValue placeholder="Selecione Sim ou Não" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1166,6 +1239,9 @@ export function AlunoCadastroPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {filiais.length === 1 && (
+                      <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest px-1">Unidade selecionada automaticamente (única disponível)</p>
+                    )}
                     <p className="text-xs text-muted-foreground">Selecione a unidade onde o aluno será cadastrado (opcional)</p>
                   </div>
                 )}

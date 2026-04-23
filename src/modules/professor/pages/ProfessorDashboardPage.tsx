@@ -8,6 +8,7 @@ import {
   useConcluirAlerta
 } from '@/modules/professor/hooks'
 import type { AgendaAula, Pendencia, SaudeTurma, AlertaProfessor } from '@/modules/professor/types'
+import { Greeting } from '@/components/ui/Greeting'
 
 // ... (previous imports)
 
@@ -381,14 +382,16 @@ export function ProfessorDashboardPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-0 animate-in fade-in duration-300">
+      <Greeting />
+
       {/* KPI Strip — Pendências e Alertas em destaque */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {totalPendencias > 0 && (
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+          <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
             <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="h-5 w-5 text-amber-600" />
             </div>
-            <div>
+            <div className="text-center">
               <p className="font-semibold text-amber-800 text-sm">
                 {totalPendencias} {totalPendencias === 1 ? 'pendência' : 'pendências'} identificada{totalPendencias > 1 ? 's' : ''}
               </p>
@@ -397,11 +400,11 @@ export function ProfessorDashboardPage() {
           </div>
         )}
         {totalAlertas > 0 && (
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200">
+          <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200">
             <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
               <TrendingDown className="h-5 w-5 text-rose-600" />
             </div>
-            <div>
+            <div className="text-center">
               <p className="font-semibold text-rose-800 text-sm">
                 {totalAlertas} {totalAlertas === 1 ? 'alerta' : 'alertas'} de atenção
               </p>
@@ -464,19 +467,21 @@ export function ProfessorDashboardPage() {
         <div className="lg:col-span-3">
           <WidgetErrorBoundary title="Alertas de Atenção">
             <Card className="border-0 shadow-sm bg-white overflow-hidden">
-              <CardHeader className="pt-[30px] pb-4 bg-zinc-50/50 border-b">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 text-rose-600" />
-                  </div>
-                  Alertas e Observações
-                  <span className="text-xs font-normal text-muted-foreground ml-1">— Visão Micro das Turmas</span>
+              <CardHeader className="pt-[30px] pb-2 bg-zinc-50/50 border-b">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-rose-600" />
+                    </div>
+                    Alertas e Observações
+                  </CardTitle>
+                  <span className="text-xs font-normal text-muted-foreground">— Visão macro das turmas</span>
                   {totalAlertas > 0 && (
                     <Badge variant="outline" className="ml-auto border-rose-200 text-rose-600 bg-rose-50">
                       {totalAlertas} ativos
                     </Badge>
                   )}
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="p-6">
                 <AlertasWidget data={alertas} isLoading={loadingAlertas} />

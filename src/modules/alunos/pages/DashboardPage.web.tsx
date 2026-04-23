@@ -49,6 +49,7 @@ import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { Greeting } from '@/components/ui/Greeting'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Sem Matrícula
@@ -543,13 +544,9 @@ function DashboardContent() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header com context */}
-      <div className="flex items-center justify-between px-2">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-1">Visão Geral da Instituição</p>
-          <h1 className="text-4xl font-black text-zinc-900 tracking-tighter">Dashboard</h1>
-        </div>
-
+      {/* Header com Greeting */}
+      <div className="px-2">
+        <Greeting />
       </div>
 
       {/* Alerta de Aprovação */}
