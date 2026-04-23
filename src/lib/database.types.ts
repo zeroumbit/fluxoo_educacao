@@ -202,6 +202,7 @@ export type Funcionario = {
   tenant_id: string | null
   filial_id: string | null
   nome_completo: string
+  como_chamado: string | null
   funcao: string | null
   cargo: string | null
   cpf: string | null
@@ -216,12 +217,15 @@ export type Funcionario = {
   salario_bruto: number | null
   dia_pagamento: number | null
   data_admissao: string | null
+  status: 'ativo' | 'inativo' | 'afastado' | 'demitido' | null
   is_usuario_sistema: boolean
   funcoes: string[]
+  areas_acesso: string[] | null
   user_id?: string | null
   created_at: string
   updated_at: string
 }
+
 export type FuncionarioInsert = Omit<Funcionario, 'id' | 'created_at' | 'updated_at'> & {
   id?: string; created_at?: string; updated_at?: string
 }
@@ -1210,6 +1214,183 @@ export type TenantDisciplinaOcultaInsert = Omit<TenantDisciplinaOculta, 'created
 }
 
 // ========== AUTH TYPES ==========
+// ========== SYSTEM_MODULES ==========
+export type SystemModule = {
+  id: string
+  key: string
+  nome: string
+  icone: string | null
+  ordem: number
+  created_at: string
+}
+export type SystemModuleInsert = Omit<SystemModule, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== PERMISSIONS ==========
+export type Permission = {
+  id: string
+  key: string
+  modulo_key: string
+  recurso: string
+  acao: string
+  descricao: string
+  requires_approval: boolean
+  created_at: string
+}
+export type PermissionInsert = Omit<Permission, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== PERFIS_ACESSO ==========
+export type PerfilAcesso = {
+  id: string
+  tenant_id: string | null
+  nome: string
+  descricao: string | null
+  parent_perfil_id: string | null
+  created_at: string
+}
+export type PerfilAcessoInsert = Omit<PerfilAcesso, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type PerfilAcessoUpdate = Partial<PerfilAcessoInsert>
+
+// ========== PERFIL_PERMISSIONS ==========
+export type PerfilPermission = {
+  id: string
+  perfil_id: string
+  permission_id: string
+  scope_type: 'self' | 'minhas_turmas' | 'minhas_disciplinas' | 'minha_unidade' | 'toda_escola' | 'rede'
+  created_at: string
+}
+export type PerfilPermissionInsert = Omit<PerfilPermission, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== CARGOS_V2 ==========
+export type CargoV2 = {
+  id: string
+  tenant_id: string
+  nome: string
+  is_template_sistema: boolean
+  created_at: string
+}
+export type CargoV2Insert = Omit<CargoV2, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== USER_PERMISSION_OVERRIDES ==========
+export type UserPermissionOverride = {
+  id: string
+  tenant_id: string
+  user_id: string
+  permission_id: string
+  status: 'allow' | 'deny'
+  concedido_por: string | null
+  motivo: string | null
+  created_at: string
+}
+export type UserPermissionOverrideInsert = Omit<UserPermissionOverride, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== APPROVAL_WORKFLOWS ==========
+export type ApprovalWorkflow = {
+  id: string
+  tenant_id: string
+  permission_key: string
+  threshold: number
+  required_role: string
+  created_at: string
+}
+export type ApprovalWorkflowInsert = Omit<ApprovalWorkflow, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+
+// ========== PORTAL_AUDIT_LOG ==========
+export type PortalAuditLog = {
+  id: string
+  tipo: string
+  responsavel_id: string
+  detalhes: Record<string, any> | null
+  ip: string | null
+  created_at: string
+}
+export type PortalAuditLogInsert = Omit<PortalAuditLog, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type PortalAuditLogUpdate = Partial<PortalAuditLogInsert>
+
+// ========== NOTIFICACOES_FAMILIA ==========
+export type NotificacaoFamilia = {
+  id: string
+  tenant_id: string
+  responsavel_id: string
+  aluno_id: string | null
+  tipo: string
+  titulo: string
+  mensagem: string
+  lida: boolean
+  lida_em: string | null
+  created_at: string
+}
+export type NotificacaoFamiliaInsert = Omit<NotificacaoFamilia, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type NotificacaoFamiliaUpdate = Partial<NotificacaoFamiliaInsert>
+
+// ========== CONFIGURACOES_ESCOLA ==========
+export type ConfiguracaoEscola = {
+  id: string
+  tenant_id: string
+  config_financeira: Record<string, any> | null
+  config_academica: Record<string, any> | null
+  vigencia_inicio: string
+  vigencia_fim: string | null
+  updated_at: string
+}
+export type ConfiguracaoEscolaInsert = Omit<ConfiguracaoEscola, 'id' | 'updated_at'> & {
+  id?: string; updated_at?: string
+}
+export type ConfiguracaoEscolaUpdate = Partial<ConfiguracaoEscolaInsert>
+
+// ========== USUARIOS_SISTEMA ==========
+export type UsuarioSistema = {
+  id: string
+  tenant_id: string
+  funcionario_id: string | null
+  email_login: string
+  status: 'ativo' | 'bloqueado'
+  perfil_id: string | null
+  created_at: string
+  updated_at: string
+}
+export type UsuarioSistemaInsert = Omit<UsuarioSistema, 'created_at' | 'updated_at'> & {
+  created_at?: string; updated_at?: string
+}
+export type UsuarioSistemaUpdate = Partial<UsuarioSistemaInsert>
+
+// ========== AUDIT_LOGS_V2 ==========
+export type AuditLogV2 = {
+  id: string
+  tenant_id: string
+  user_id: string
+  acao: string
+  recurso_id: string
+  valor_anterior: Record<string, any> | null
+  valor_novo: Record<string, any> | null
+  motivo_declarado: string
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+export type AuditLogV2Insert = Omit<AuditLogV2, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type AuditLogV2Update = Partial<AuditLogV2Insert>
+
+// ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
 
 export type Database = {
@@ -1264,6 +1445,18 @@ export type Database = {
       disciplinas: { Row: DisciplinaDb; Insert: DisciplinaDbInsert; Update: DisciplinaDbUpdate; Relationships: any[] }
       tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: any; Relationships: any[] }
       transferencias_escolares: { Row: TransferenciaEscolar; Insert: TransferenciaEscolarInsert; Update: TransferenciaEscolarUpdate; Relationships: any[] }
+      system_modules: { Row: SystemModule; Insert: SystemModuleInsert; Update: any; Relationships: any[] }
+      permissions: { Row: Permission; Insert: PermissionInsert; Update: any; Relationships: any[] }
+      perfis_acesso: { Row: PerfilAcesso; Insert: PerfilAcessoInsert; Update: PerfilAcessoUpdate; Relationships: any[] }
+      perfil_permissions: { Row: PerfilPermission; Insert: PerfilPermissionInsert; Update: any; Relationships: any[] }
+      cargos_v2: { Row: CargoV2; Insert: CargoV2Insert; Update: any; Relationships: any[] }
+      user_permission_overrides: { Row: UserPermissionOverride; Insert: UserPermissionOverrideInsert; Update: any; Relationships: any[] }
+      approval_workflows: { Row: ApprovalWorkflow; Insert: ApprovalWorkflowInsert; Update: any; Relationships: any[] }
+      portal_audit_log: { Row: PortalAuditLog; Insert: PortalAuditLogInsert; Update: PortalAuditLogUpdate; Relationships: any[] }
+      notificacoes_familia: { Row: NotificacaoFamilia; Insert: NotificacaoFamiliaInsert; Update: NotificacaoFamiliaUpdate; Relationships: any[] }
+      configuracoes_escola: { Row: ConfiguracaoEscola; Insert: ConfiguracaoEscolaInsert; Update: ConfiguracaoEscolaUpdate; Relationships: any[] }
+      usuarios_sistema: { Row: UsuarioSistema; Insert: UsuarioSistemaInsert; Update: UsuarioSistemaUpdate; Relationships: any[] }
+      audit_logs_v2: { Row: AuditLogV2; Insert: AuditLogV2Insert; Update: AuditLogV2Update; Relationships: any[] }
       alertas_tratamento: {
         Row: {
           id: string
@@ -1343,6 +1536,77 @@ export type Database = {
       }
       vw_cobrancas_com_encargos: {
         Row: CobrancaComEncargos
+        Relationships: any[]
+      }
+      vw_boletim_completo: {
+        Row: {
+          aluno_id: string
+          tenant_id: string
+          bimestre: number
+          nome_disciplina: string
+          disciplina_id: string
+          media_final: number | null
+          media_parcial: number | null
+          nota_recuperacao: number | null
+          total_faltas: number | null
+          total_aulas_bimestre: number | null
+          resultado: string | null
+        }
+        Relationships: any[]
+      }
+      vw_professor_agenda_hoje: {
+        Row: {
+          grade_id: string
+          turma_id: string
+          turma_nome: string
+          disciplina_id: string
+          disciplina_nome: string
+          hora_inicio: string
+          hora_fim: string
+          sala: string
+          data_aula: string
+          chamada_realizada: boolean
+          conteudo_registrado: boolean
+        }
+        Relationships: any[]
+      }
+      vw_professor_pendencias: {
+        Row: {
+          tipo_pendencia: 'conteudo' | 'notas' | 'outros'
+          descricao: string
+          contexto: string
+          data_referencia: string
+        }
+        Relationships: any[]
+      }
+      vw_alertas_professor: {
+        Row: {
+          id: string
+          tenant_id: string
+          aluno_id?: string
+          aluno_nome?: string
+          aluno_foto_url?: string
+          tipo: 'pedagogico' | 'frequencia' | 'saude' | 'inclusao' | 'operacional_prof'
+          gravidade: 'baixa' | 'media' | 'alta' | 'critica'
+          titulo: string
+          descricao: string
+          status: 'ativo' | 'concluido'
+          dados_origem: any
+          created_at: string
+          turma_nome?: string
+        }
+        Relationships: any[]
+      }
+      vw_professor_saude_turmas: {
+        Row: {
+          turma_id: string
+          turma_nome: string
+          total_alunos: number
+          percentual_presenca: number
+          media_geral: number
+          professor_id: string
+          tenant_id: string
+        }
         Relationships: any[]
       }
     }

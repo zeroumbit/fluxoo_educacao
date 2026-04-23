@@ -51,7 +51,7 @@ const ProfissionalDashboardPage = lazy(() => import('@/modules/marketplace/pages
 
 const LivrosPage = lazy(() => import('@/modules/livros/pages/LivrosPage').then(m => ({ default: m.LivrosPage })))
 const FuncionariosPage = lazy(() => import('@/modules/funcionarios/pages/FuncionariosPage').then(m => ({ default: m.FuncionariosPage })))
-const MatriculaPage = lazy(() => import('@/modules/academico/pages/MatriculaPage'))
+const MatriculaPage = lazy(() => import('@/modules/academico/pages/MatriculaPage').then(m => ({ default: m.MatriculaPage })))
 const MatriculaFormPage = lazy(() => import('@/modules/academico/pages/MatriculaFormPage').then(m => ({ default: m.MatriculaFormPage })))
 const PlanoAulaPage = lazy(() => import('@/modules/academico/pages/PlanoAulaPage').then(m => ({ default: m.PlanoAulaPage })))
 const AtividadesPage = lazy(() => import('@/modules/academico/pages/AtividadesPage').then(m => ({ default: m.AtividadesPage })))

@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MultiSelect } from '@/components/ui/multi-select'
-import { Plus, Loader2, UserPlus, KeyRound, Eye, EyeOff, PlusCircle, Wallet, Calendar } from 'lucide-react'
+import { Plus, Loader2, UserPlus, KeyRound, Eye, EyeOff, PlusCircle, Wallet, Calendar, Shield } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -419,6 +419,11 @@ export function FuncionariosPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Link para Perfis */}
+          <Button variant="ghost" className="text-zinc-500 hover:text-indigo-600" onClick={() => window.location.href = '/configuracoes/perfis'}>
+            <Shield className="mr-2 h-4 w-4" /> Configurar Perfis
+          </Button>
+
           {/* Modal: Gerar Folha */}
           <Dialog open={folhaDialogOpen} onOpenChange={setFolhaDialogOpen}>
             <DialogTrigger asChild>

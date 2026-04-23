@@ -29,10 +29,9 @@ export const rbacService = {
   // ==========================================
   // MÓDULOS DO SISTEMA (Global)
   // ==========================================
-
   async listarModulos(): Promise<SystemModule[]> {
     const { data, error } = await supabase
-      .from('system_modules' as any)
+      .from('system_modules')
       .select('*')
       .order('ordem', { ascending: true })
 
@@ -46,7 +45,7 @@ export const rbacService = {
 
   async listarPermissoes(): Promise<Permission[]> {
     const { data, error } = await supabase
-      .from('permissions' as any)
+      .from('permissions')
       .select('*')
       .order('modulo_key', { ascending: true })
       .order('recurso', { ascending: true })
@@ -57,7 +56,7 @@ export const rbacService = {
 
   async listarPermissoesPorModulo(moduloKey: string): Promise<Permission[]> {
     const { data, error } = await supabase
-      .from('permissions' as any)
+      .from('permissions')
       .select('*')
       .eq('modulo_key', moduloKey)
       .order('recurso', { ascending: true })
@@ -72,7 +71,7 @@ export const rbacService = {
 
   async listarPerfis(tenantId?: string): Promise<PerfilAcesso[]> {
     let query = supabase
-      .from('perfis_acesso' as any)
+      .from('perfis_acesso')
       .select('*')
       .order('nome', { ascending: true })
 
@@ -88,41 +87,41 @@ export const rbacService = {
 
   async buscarPerfil(id: string) {
     const { data, error } = await supabase
-      .from('perfis_acesso' as any)
+      .from('perfis_acesso')
       .select('*')
       .eq('id', id)
       .single()
 
     if (error) throw error
-    return data as unknown as PerfilAcesso
+    return data
   },
 
   async criarPerfil(perfil: PerfilAcessoInsert): Promise<PerfilAcesso> {
     const { data, error } = await supabase
-      .from('perfis_acesso' as any)
-      .insert(perfil as any)
+      .from('perfis_acesso')
+      .insert(perfil)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as PerfilAcesso
+    return data
   },
 
   async atualizarPerfil(id: string, updates: PerfilAcessoUpdate): Promise<PerfilAcesso> {
     const { data, error } = await supabase
-      .from('perfis_acesso' as any)
-      .update(updates as any)
+      .from('perfis_acesso')
+      .update(updates)
       .eq('id', id)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as PerfilAcesso
+    return data
   },
 
   async excluirPerfil(id: string): Promise<void> {
     const { error } = await supabase
-      .from('perfis_acesso' as any)
+      .from('perfis_acesso')
       .delete()
       .eq('id', id)
 
@@ -135,7 +134,7 @@ export const rbacService = {
 
   async listarPermissoesDoPerfil(perfilId: string) {
     const { data, error } = await supabase
-      .from('perfil_permissions' as any)
+      .from('perfil_permissions')
       .select('*, permission:permissions(*)')
       .eq('perfil_id', perfilId)
 
@@ -146,7 +145,7 @@ export const rbacService = {
   async definirPermissoesDoPerfil(perfilId: string, permissoes: { permissionId: string; scope: ScopeType }[]) {
     // 1. Remover todas as permissões atuais do perfil
     const { error: delError } = await supabase
-      .from('perfil_permissions' as any)
+      .from('perfil_permissions')
       .delete()
       .eq('perfil_id', perfilId)
 
@@ -162,23 +161,23 @@ export const rbacService = {
     }))
 
     const { error } = await supabase
-      .from('perfil_permissions' as any)
-      .insert(inserts as any[])
+      .from('perfil_permissions')
+      .insert(inserts)
 
     if (error) throw error
   },
 
   async adicionarPermissaoAoPerfil(perfilId: string, permissionId: string, scope: ScopeType) {
     const { error } = await supabase
-      .from('perfil_permissions' as any)
-      .insert({ perfil_id: perfilId, permission_id: permissionId, scope_type: scope } as any)
+      .from('perfil_permissions')
+      .insert({ perfil_id: perfilId, permission_id: permissionId, scope_type: scope })
 
     if (error) throw error
   },
 
   async removerPermissaoDoPerfil(perfilId: string, permissionId: string) {
     const { error } = await supabase
-      .from('perfil_permissions' as any)
+      .from('perfil_permissions')
       .delete()
       .eq('perfil_id', perfilId)
       .eq('permission_id', permissionId)
@@ -192,7 +191,7 @@ export const rbacService = {
 
   async listarCargos(tenantId: string): Promise<CargoV2[]> {
     const { data, error } = await supabase
-      .from('cargos_v2' as any)
+      .from('cargos_v2')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('nome', { ascending: true })
@@ -203,13 +202,13 @@ export const rbacService = {
 
   async criarCargo(cargo: CargoV2Insert): Promise<CargoV2> {
     const { data, error } = await supabase
-      .from('cargos_v2' as any)
-      .insert(cargo as any)
+      .from('cargos_v2')
+      .insert(cargo)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as CargoV2
+    return data
   },
 
   // ==========================================
@@ -218,7 +217,7 @@ export const rbacService = {
 
   async listarUsuarios(tenantId: string): Promise<UsuarioSistema[]> {
     const { data, error } = await supabase
-      .from('usuarios_sistema' as any)
+      .from('usuarios_sistema')
       .select('*, perfil:perfis_acesso(id, nome), funcionario:funcionarios(id, nome_completo, status)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
@@ -229,36 +228,36 @@ export const rbacService = {
 
   async buscarUsuarioPorAuthId(authUserId: string): Promise<UsuarioSistema | null> {
     const { data, error } = await supabase
-      .from('usuarios_sistema' as any)
+      .from('usuarios_sistema')
       .select('*, perfil:perfis_acesso(id, nome)')
       .eq('id', authUserId)
       .maybeSingle()
 
     if (error) throw error
-    return data as unknown as UsuarioSistema | null
+    return data
   },
 
   async criarUsuarioSistema(usuario: UsuarioSistemaInsert): Promise<UsuarioSistema> {
     const { data, error } = await supabase
-      .from('usuarios_sistema' as any)
-      .insert(usuario as any)
+      .from('usuarios_sistema')
+      .insert(usuario)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as UsuarioSistema
+    return data
   },
 
   async atualizarUsuarioSistema(id: string, updates: UsuarioSistemaUpdate): Promise<UsuarioSistema> {
     const { data, error } = await supabase
-      .from('usuarios_sistema' as any)
-      .update({ ...updates, updated_at: new Date().toISOString() } as any)
+      .from('usuarios_sistema')
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as UsuarioSistema
+    return data
   },
 
   // ==========================================
@@ -267,7 +266,7 @@ export const rbacService = {
 
   async listarOverrides(tenantId: string): Promise<UserPermissionOverride[]> {
     const { data, error } = await supabase
-      .from('user_permission_overrides' as any)
+      .from('user_permission_overrides')
       .select('*, permission:permissions(key, descricao), user:usuarios_sistema(email_login, funcionario:funcionarios(nome_completo))')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
@@ -278,8 +277,8 @@ export const rbacService = {
 
   async criarOverride(override: UserPermissionOverrideInsert) {
     const { data, error } = await supabase
-      .from('user_permission_overrides' as any)
-      .insert(override as any)
+      .from('user_permission_overrides')
+      .insert(override)
       .select()
       .single()
 
@@ -289,7 +288,7 @@ export const rbacService = {
 
   async removerOverride(id: string) {
     const { error } = await supabase
-      .from('user_permission_overrides' as any)
+      .from('user_permission_overrides')
       .delete()
       .eq('id', id)
 
@@ -301,7 +300,7 @@ export const rbacService = {
   // ==========================================
 
   async resolverPermissoes(userId: string): Promise<ResolvedPermission[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .rpc('fn_resolve_user_permissions', { p_user_id: userId })
 
     if (error) {
@@ -311,7 +310,7 @@ export const rbacService = {
     }
 
     const results = Array.isArray(data) ? data : []
-    return results.map((d: any) => ({
+    return (results as any[]).map((d: any) => ({
       permission_key: d.permission_key,
       scope: d.scope,
       source: d.source,
@@ -341,13 +340,13 @@ export const rbacService = {
 
       // Subir na herança
       const perfil = await this.buscarPerfil(currentPerfilId)
-      currentPerfilId = perfil?.parent_perfil_id || null
+      currentPerfilId = (perfil as any)?.parent_perfil_id || null
       depth++
     }
 
     // 3. Buscar overrides
     const { data: overrides } = await supabase
-      .from('user_permission_overrides' as any)
+      .from('user_permission_overrides')
       .select('*, permission:permissions(key)')
       .eq('user_id', userId)
 
@@ -370,7 +369,7 @@ export const rbacService = {
 
   async listarWorkflows(tenantId: string): Promise<ApprovalWorkflow[]> {
     const { data, error } = await supabase
-      .from('approval_workflows' as any)
+      .from('approval_workflows')
       .select('*')
       .eq('tenant_id', tenantId)
 
@@ -380,13 +379,13 @@ export const rbacService = {
 
   async criarWorkflow(workflow: ApprovalWorkflowInsert): Promise<ApprovalWorkflow> {
     const { data, error } = await supabase
-      .from('approval_workflows' as any)
-      .insert(workflow as any)
+      .from('approval_workflows')
+      .insert(workflow)
       .select()
       .single()
 
     if (error) throw error
-    return data as unknown as ApprovalWorkflow
+    return data
   },
 
   // ==========================================
@@ -395,7 +394,7 @@ export const rbacService = {
 
   async listarAuditLogs(tenantId: string, options?: { limit?: number; offset?: number; acao?: string }) {
     let query = supabase
-      .from('audit_logs_v2' as any)
+      .from('audit_logs_v2')
       .select('*', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
@@ -420,8 +419,8 @@ export const rbacService = {
 
   async criarAuditLog(log: AuditLogV2Insert) {
     const { error } = await supabase
-      .from('audit_logs_v2' as any)
-      .insert(log as any)
+      .from('audit_logs_v2')
+      .insert(log)
 
     if (error) console.error('Erro ao criar audit log:', error)
   },

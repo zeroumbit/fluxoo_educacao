@@ -7,7 +7,7 @@ export const professorService = {
    * Fonte: vw_professor_agenda_hoje
    */
   async buscarAgendaHoje(professorId: string, tenantId: string): Promise<AgendaAula[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('vw_professor_agenda_hoje')
       .select('*')
       .eq('professor_id', professorId)
@@ -26,7 +26,7 @@ export const professorService = {
    * Fonte: vw_professor_pendencias
    */
   async buscarPendencias(professorId: string, tenantId: string): Promise<Pendencia[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('vw_professor_pendencias')
       .select('*')
       .eq('professor_id', professorId)
@@ -45,7 +45,7 @@ export const professorService = {
    * Fonte: vw_professor_saude_turmas
    */
   async buscarSaudeTurmas(professorId: string, tenantId: string): Promise<SaudeTurma[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('vw_professor_saude_turmas')
       .select('*')
       .eq('professor_id', professorId)
@@ -64,7 +64,7 @@ export const professorService = {
    * Filtra por alunos do professor + alertas operacionais dele mesmo.
    */
   async buscarAlertas(professorId: string, tenantId: string): Promise<AlertaProfessor[]> {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('vw_alertas_professor')
       .select('*')
       .eq('tenant_id', tenantId)
@@ -83,7 +83,7 @@ export const professorService = {
    * Conclui um alerta específico chamando a RPC que registra auditoria.
    */
   async concluirAlerta(alertaId: string, observacao?: string): Promise<boolean> {
-    const { error } = await (supabase as any).rpc('concluir_alerta_professor', {
+    const { error } = await supabase.rpc('concluir_alerta_professor', {
       p_alerta_id: alertaId,
       p_observacao: observacao
     })

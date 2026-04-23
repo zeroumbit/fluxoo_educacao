@@ -621,7 +621,7 @@ export const portalService = {
   // ==========================================
   async entrarNaFila(dados: { tenant_id: string; aluno_id: string; responsavel_id: string }) {
     // Verifica se já está na fila aguardando
-    const { data: existente } = await (supabase.from('fila_virtual' as any) as any)
+    const { data: existente } = await supabase.from('fila_virtual')
       .select('id')
       .eq('aluno_id', dados.aluno_id)
       .eq('responsavel_id', dados.responsavel_id)
@@ -630,11 +630,11 @@ export const portalService = {
 
     if (existente) throw new Error('Você já está na fila de espera.')
 
-    const { data, error } = await (supabase.from('fila_virtual' as any) as any)
+    const { data, error } = await supabase.from('fila_virtual')
       .insert({
         ...dados,
         status: 'aguardando',
-      } as any)
+      })
       .select()
       .single()
 
@@ -650,7 +650,7 @@ export const portalService = {
   },
 
   async buscarStatusFila(responsavelId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('fila_virtual' as any) as any)
+    const { data, error } = await supabase.from('fila_virtual')
       .select('*, aluno:alunos(nome_completo)')
       .eq('responsavel_id', responsavelId)
       .eq('tenant_id', tenantId)
@@ -661,9 +661,9 @@ export const portalService = {
     return (data as any[]) || []
   },
 
-  async cancelarFila(filaId: string) {
-    const { error } = await (supabase.from('fila_virtual' as any) as any)
-      .update({ status: 'cancelado', updated_at: new Date().toISOString() } as any)
+   async cancelarFila(filaId: string) {
+    const { error } = await supabase.from('fila_virtual')
+      .update({ status: 'cancelado', updated_at: new Date().toISOString() })
       .eq('id', filaId)
 
     if (error) throw error
@@ -674,15 +674,15 @@ export const portalService = {
   // ==========================================
   async registrarAuditoria(log: { tipo: string; responsavel_id: string; detalhes?: any }) {
     try {
-      await (supabase.from('portal_audit_log' as any) as any).insert({
+      await supabase.from('portal_audit_log').insert({
         tipo: log.tipo,
         responsavel_id: log.responsavel_id,
         detalhes: log.detalhes || {},
         ip: null, // Preenchido por RLS/trigger no futuro
-      } as any)
-    } catch {
+      })
+    } catch (error) {
       // Não bloquear fluxo por falha de auditoria
-      console.warn('Falha ao registrar auditoria:', log.tipo)
+      console.error('Falha ao registrar auditoria:', log.tipo, error)
     }
   },
 
@@ -692,7 +692,7 @@ export const portalService = {
   async buscarBoletins(alunoId: string, tenantId: string) {
     // 1. Tenta a view V2 (novo modelo relacional)
     try {
-      const { data: v2Data, error: v2Error } = await (supabase.from('vw_boletim_completo' as any) as any)
+      const { data: v2Data, error: v2Error } = await supabase.from('vw_boletim_completo')
         .select('*')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
@@ -729,12 +729,13 @@ export const portalService = {
         })
         return Object.values(porBimestre).sort((a: any, b: any) => a.bimestre - b.bimestre)
       }
-    } catch {
-      // Silencia erros (view pode não existir em ambientes antigos)
+    } catch (error) {
+      // Silencia erros mas loga para depuração (view pode não existir em ambientes antigos)
+      console.error('PortalService: Erro ao buscar boletins V2:', error)
     }
 
     // 2. Fallback: modelo legado JSONB
-    const { data, error } = await (supabase.from('boletins' as any) as any)
+    const { data, error } = await supabase.from('boletins')
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
@@ -749,7 +750,7 @@ export const portalService = {
   // EVENTOS / AGENDA
   // ==========================================
   async buscarEventos(tenantId: string, inicio?: string, fim?: string) {
-    let query = (supabase.from('eventos' as any) as any)
+    let query = supabase.from('eventos')
       .select('*')
       .eq('tenant_id', tenantId)
 
@@ -775,11 +776,11 @@ export const portalService = {
     documento_tipo: string
     observacoes?: string
   }) {
-    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+    const { data, error } = await supabase.from('document_solicitations')
       .insert({
         ...dados,
         status: 'pendente',
-      } as any)
+      })
       .select()
       .single()
 
@@ -795,7 +796,7 @@ export const portalService = {
   },
 
   async buscarSolicitacoesDocumento(responsavelId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('document_solicitations' as any) as any)
+    const { data, error } = await supabase.from('document_solicitations')
       .select(`
         *,
         aluno:alunos(*),

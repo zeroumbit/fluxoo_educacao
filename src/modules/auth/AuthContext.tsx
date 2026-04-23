@@ -5,6 +5,8 @@ import type { UserRole } from '@/lib/database.types'
 import { isSuperAdminEmail } from '@/lib/config'
 import { usePortalStore } from '@/modules/portal/store'
 import { useRBACStore } from '@/stores/rbac.store'
+import { rbacService } from '@/modules/rbac/service'
+import type { ResolvedPermission } from '@/modules/rbac/types'
 
 export interface Endereco {
   logradouro?: string
@@ -30,6 +32,7 @@ export interface AuthUser {
   isProfessor: boolean
   isGestor: boolean
   isSuperAdmin: boolean
+  resolvedPermissions?: ResolvedPermission[]
   areasAcesso?: string[]
   endereco?: Endereco
 }
@@ -78,13 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // 2. GESTOR / ESCOLA (Busca por UUID ou Email)
-      const { data: escola, error: erro } = await supabase
+      const { data: escola, error: escolaErro } = await supabase
         .from('escolas')
         .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
-        .or(`gestor_user_id.eq."${user.id}",email_gestor.ilike."${user.email}"`)
+        .or(`gestor_user_id.eq.${user.id},email_gestor.ilike.${user.email}`)
         .maybeSingle() as any
 
-      if (escola && !erro) {
+      if (escola && !escolaErro) {
+        console.log('🏫 Escola encontrada para o usuário:', escola.id)
+        
         const endereco = escola?.logradouro ? {
           logradouro: escola.logradouro,
           numero: escola.numero,
@@ -95,6 +100,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           cep: escola.cep
         } : undefined
 
+        // Sincronização de Segurança: Garante que o gestor_user_id esteja preenchido para RLS legados
+        if (!escola.gestor_user_id) {
+          console.log('🔄 Sincronizando gestor_user_id na tabela escolas...')
+          const { error: syncError } = await supabase
+            .from('escolas')
+            .update({ gestor_user_id: user.id })
+            .eq('id', escola.id)
+          
+          if (syncError) console.error('⚠️ Falha ao sincronizar gestor_user_id:', syncError.message)
+        }
+
+        // Sincronização de Metadados: Essencial para a função public.uid_tenant() no RLS
+        const currentTenantId = user.user_metadata?.tenant_id
+        const currentRole = user.user_metadata?.role || user.app_metadata?.role || 'gestor'
+        
+        if (currentTenantId !== escola.id) {
+          console.log(`🔄 Atualizando tenant_id nos metadados: ${currentTenantId} -> ${escola.id}`)
+          const { error: updateMetaError } = await supabase.auth.updateUser({
+            data: { 
+              tenant_id: escola.id, 
+              role: currentRole // Preserva o papel (super_admin ou outro)
+            }
+          })
+          
+          if (updateMetaError) {
+            console.error('⚠️ Falha ao atualizar metadados do usuário:', updateMetaError.message)
+          } else {
+            console.log('✅ Metadados atualizados. Atualizando sessão para refletir no JWT...')
+            // O RLS depende do JWT, então precisamos de um novo token com o tenant_id correto
+            await supabase.auth.refreshSession()
+          }
+        }
+
+        const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
+
         setAuthUser({
           user, session,
           tenantId: escola.id,
@@ -104,7 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isProfessor: false,
           isGestor: true,
           isSuperAdmin: false,
-          endereco
+          endereco,
+          resolvedPermissions
         })
         return
       }
@@ -144,6 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const isSuperAdmin = user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin'
           const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
+          const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
+
           setAuthUser({
             user, session,
             tenantId: finalTenantId,
@@ -156,9 +199,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: user.email || '',
             isProfessor,
             isGestor,
-            isSuperAdmin
+            isSuperAdmin,
+            resolvedPermissions
           })
+
+          if (user.user_metadata?.tenant_id !== finalTenantId) {
+            await supabase.auth.updateUser({
+              data: { tenant_id: finalTenantId }
+            })
+            await supabase.auth.refreshSession()
+          }
           return
+        }
+
+        // Step 1.2: Se não é funcionário direto, tenta usuários_sistema (RBAC V2)
+        // Isso captura Contadores, Administradores e outros perfis que podem não estar na tabela de funcionários
+        if (!funcionarioData) {
+          const { data: systemUserData } = await (supabase.from('usuarios_sistema' as any) as any)
+            .select('id, tenant_id, perfil_id')
+            .eq('id', user.id)
+            .maybeSingle()
+
+          if (systemUserData) {
+            const finalTenantId = systemUserData.tenant_id
+            let perfilNome = ''
+            try {
+              const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', systemUserData.perfil_id).maybeSingle()
+              perfilNome = pData?.nome?.toLowerCase() || ''
+            } catch { /* não crítico */ }
+
+            const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
+
+            setAuthUser({
+              user, session,
+              tenantId: finalTenantId,
+              role: 'funcionario',
+              perfilId: systemUserData.perfil_id,
+              perfilNome,
+              nome: user.user_metadata?.full_name || 'Usuário do Sistema',
+              email: user.email || '',
+              isProfessor: perfilNome.includes('professor'),
+              isGestor: perfilNome.includes('gestor') || perfilNome.includes('diretor') || perfilNome.includes('adm') || perfilNome.includes('contador'),
+              isSuperAdmin: user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin',
+              resolvedPermissions
+            })
+
+            if (user.user_metadata?.tenant_id !== finalTenantId) {
+              await supabase.auth.updateUser({ data: { tenant_id: finalTenantId } })
+              await supabase.auth.refreshSession()
+            }
+            return
+          }
         }
 
         const { data: responsavelData } = await supabase.from('responsaveis').select('*').eq('user_id', user.id).maybeSingle()
@@ -206,21 +297,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const isGestor = isGestorMetadata || isGestorPerfil
                 const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
-                setAuthUser({
-                  user, session,
-                  tenantId: funcByEmail.tenant_id,
-                  role: 'funcionario',
-                  funcionarioId: funcByEmail.id,
-                  perfilId,
-                  perfilNome,
-                  areasAcesso,
-                  nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
-                  email: user.email || '',
-                  isProfessor: isProfessor && !isGestor, // Prioridade para Gestor se tiver ambos
-                  isGestor,
-                  isSuperAdmin: false
-                })
-                return
+          setAuthUser({
+            user, session,
+            tenantId: funcByEmail.tenant_id,
+            role: 'funcionario',
+            funcionarioId: funcByEmail.id,
+            perfilId,
+            perfilNome,
+            areasAcesso,
+            nome: funcByEmail.nome_completo || user.user_metadata?.full_name || 'Funcionário',
+            email: user.email || '',
+            isProfessor: isProfessor && !isGestor, // Prioridade para Gestor se tiver ambos
+            isGestor,
+            isSuperAdmin: false
+          })
+
+          if (user.user_metadata?.tenant_id !== funcByEmail.tenant_id) {
+            await supabase.auth.updateUser({
+              data: { tenant_id: funcByEmail.tenant_id }
+            })
+            await supabase.auth.refreshSession()
+          }
+          return
             }
         }
       } catch (err) {

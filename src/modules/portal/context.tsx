@@ -32,12 +32,12 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
       try {
         const [resMatricula, resTurmaFallback] = await Promise.all([
-          (supabase.from('matriculas' as any) as any)
+          supabase.from('matriculas')
             .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
             .eq('aluno_id', vinculo.aluno.id)
             .eq('status', 'ativa')
             .maybeSingle(),
-          (supabase.from('turmas' as any) as any)
+          supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('tenant_id', vinculo.aluno.tenant_id)
             .contains('alunos_ids', [vinculo.aluno.id])
@@ -50,7 +50,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         let turma = resTurmaFallback.data
 
         if (matricula?.turma_id) {
-          const { data: turmaData } = await (supabase.from('turmas' as any) as any)
+          const { data: turmaData } = await supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('id', matricula.turma_id)
             .maybeSingle()
@@ -60,7 +60,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         if (!active) return
 
         if (!turma && matricula) {
-          const { data: turmaNome } = await (supabase.from('turmas' as any) as any)
+          const { data: turmaNome } = await supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('tenant_id', vinculo.aluno.tenant_id)
             .eq('nome', matricula.serie_ano)
@@ -123,12 +123,12 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     try {
       // 2. Busca dados complementares em background
         const [resMatricula, resTurmaFallback] = await Promise.all([
-          (supabase.from('matriculas' as any) as any)
+          supabase.from('matriculas')
             .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
             .eq('aluno_id', vinculo.aluno.id)
             .eq('status', 'ativa')
             .maybeSingle(),
-          (supabase.from('turmas' as any) as any)
+          supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('tenant_id', vinculo.aluno.tenant_id)
             .contains('alunos_ids', [vinculo.aluno.id])
@@ -139,7 +139,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         let turma = resTurmaFallback.data
 
         if (matricula?.turma_id) {
-          const { data: turmaData } = await (supabase.from('turmas' as any) as any)
+          const { data: turmaData } = await supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('id', matricula.turma_id)
             .maybeSingle()
@@ -147,7 +147,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         }
 
         if (!turma && matricula) {
-          const { data: turmaNome } = await (supabase.from('turmas' as any) as any)
+          const { data: turmaNome } = await supabase.from('turmas')
             .select('id, nome, turno, valor_mensalidade')
             .eq('tenant_id', vinculo.aluno.tenant_id)
             .eq('nome', matricula.serie_ano)

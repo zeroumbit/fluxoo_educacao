@@ -35,12 +35,33 @@ export const funcionariosService = {
       throw new Error('tenant_id é obrigatório')
     }
 
-    // Preparar dados com valores padrão
+    // Preparação dos dados para o Supabase (evitando enviar campos que não existem na tabela)
     const dadosFuncionario = {
-      ...funcionario,
+      tenant_id: funcionario.tenant_id,
+      nome_completo: funcionario.nome_completo,
+      como_chamado: funcionario.como_chamado || null,
+      funcao: funcionario.funcao || null,
+      funcoes: funcionario.funcoes || [],
+      salario_bruto: funcionario.salario_bruto || null,
+      dia_pagamento: funcionario.dia_pagamento || null,
+      data_admissao: funcionario.data_admissao || null,
+      email: funcionario.email || null,
       status: funcionario.status || 'ativo',
+      is_usuario_sistema: funcionario.is_usuario_sistema ?? false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+    }
+
+    // Diagnóstico RLS: O banco usa public.uid_tenant() que lê do JWT (user_metadata)
+    const { data: { user } } = await supabase.auth.getUser()
+    const metadataTenantId = user?.user_metadata?.tenant_id
+    
+    if (metadataTenantId !== dadosFuncionario.tenant_id) {
+      console.warn('⚠️ Discrepância de Tenant Detectada:', {
+        payload: dadosFuncionario.tenant_id,
+        metadata: metadataTenantId,
+        uid: user?.id
+      })
     }
 
     const { data, error } = await supabase
@@ -48,11 +69,18 @@ export const funcionariosService = {
       .insert(dadosFuncionario)
       .select()
       .single()
-    
+
     if (error) {
-      console.error('Erro ao criar funcionário:', error)
-      throw new Error(error.message || 'Erro ao criar funcionário')
+      const msg = `❌ ERRO RLS FUNCIONARIOS:
+        - Payload Tenant: ${dadosFuncionario.tenant_id}
+        - Metadata Tenant: ${metadataTenantId}
+        - UID: ${user?.id}
+        - Erro: ${error.message} (Code: ${error.code})`
+      
+      console.error(msg)
+      throw error
     }
+
     return data
   },
 

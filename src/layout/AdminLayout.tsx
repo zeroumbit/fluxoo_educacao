@@ -158,6 +158,10 @@ function SidebarContent({
       if (isProfessor && (group.label === 'Financeiro' || group.label === 'Capital Humano' || group.label === 'Configurações')) {
         return { ...group, items: [] }
       }
+      // Contador não vê o guia de Configurações — área administrativa já está configurada
+      if (authUser?.perfilNome?.toLowerCase().includes('contador') && group.label === 'Configurações') {
+        return { ...group, items: [] }
+      }
 
       const items = group.items.filter((item: NavItem) =>
         item.permission === 'all' || isGestor || hasPermission(item.permission)

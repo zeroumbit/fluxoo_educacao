@@ -56,7 +56,7 @@ export function useDashboardFamilia() {
   const { vinculos, tenantId } = usePortalContext()
   
   const queries = useQueries({
-    queries: (vinculos || []).map((v: any) => {
+    queries: (vinculos || []).map((v) => {
       const aId = v.aluno_id || v.aluno?.id
       const tId = v.tenant_id || v.aluno?.tenant_id || tenantId
       const turmaId = v.aluno?.turma?.id || v.aluno?.turma_id || null
@@ -76,7 +76,7 @@ export function useDashboardFamilia() {
   const dataConsolidada = useMemo(() => {
     if (isLoading || !queries.length) return null
 
-    return queries.reduce((acc: any, q: any) => {
+    return queries.reduce((acc: any, q) => {
       const d = q.data
       if (!d) return acc
 
@@ -299,7 +299,7 @@ export function useTemplatesDocumento() {
 // ==========================================
 export function useTransferenciasPortal() {
   const { data: vinculosRaw } = useVinculosAtivos()
-  const alunoIds = vinculosRaw?.map((v: any) => v.aluno_id) || []
+  const alunoIds = vinculosRaw?.map((v) => v.aluno_id) || []
   
   return useQuery({
     queryKey: ['portal', 'transferencias', alunoIds],

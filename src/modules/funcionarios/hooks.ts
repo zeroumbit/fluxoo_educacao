@@ -14,8 +14,9 @@ export function useFuncionarios() {
 
 export function useCriarFuncionario() {
   const qc = useQueryClient()
+  const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (data: any) => funcionariosService.criar(data),
+    mutationFn: (data: any) => funcionariosService.criar(data, authUser?.user.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['funcionarios'] })
       qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
