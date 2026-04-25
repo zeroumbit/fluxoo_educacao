@@ -218,7 +218,7 @@ export const transferenciasService = {
       .from('transferencias_escolares')
       .select('*')
       .or(`escola_origem_id.eq.${tenantId}`)
-      .order('criado_em' as never, { ascending: false })
+      .order('criado_em', { ascending: false })
 
     if (error) throw error
     const rows = (data || []) as unknown as TransferenciaRaw[]
@@ -243,7 +243,7 @@ export const transferenciasService = {
       .from('transferencias_escolares')
       .select('*')
       .in('aluno_id', alunoIds)
-      .order('criado_em' as never, { ascending: false })
+      .order('criado_em', { ascending: false })
 
     if (error) throw error
     const rows = (data || []) as unknown as TransferenciaRaw[]
