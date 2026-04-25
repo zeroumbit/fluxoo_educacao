@@ -10,3 +10,5 @@ export function AlunosListPage() {
     />
   )
 }
+
+export default AlunosListPage

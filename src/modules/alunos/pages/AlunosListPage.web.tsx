@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
@@ -18,7 +18,7 @@ import {
 import {
   Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2,
   AlertCircle, FileX, Shield, Percent, Users, UserMinus,
-  AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw, FileUp, CloudUpload, Trash
+  AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw, FileUp, CloudUpload, Trash, X, ArrowUpRight
 } from 'lucide-react'
 import { useImportacoesPendentes, useDeletarLoteImportacao, useAlunosPendentesEnturmacao } from '../hooks'
 import {
@@ -41,6 +41,90 @@ import { useRadarCompleto, useAlertasProfessor } from '../dashboard.hooks'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+
+// ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Alunos Pendentes de Enturmação
+// ---------------------------------------------------------------------------
+function AlunosPendentesEnturmacaoNotification({ count, onDismiss }: { count: number, onDismiss: () => void }) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-sm mb-8">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-indigo-600 hover:text-indigo-700 z-10"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+            <Shield className="h-6 w-6 text-indigo-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-indigo-900 text-lg tracking-tight mb-1">
+              Alunos Pendentes de Enturmação
+            </h3>
+            <p className="text-sm font-medium text-indigo-700 mb-4">
+              Existem <strong className="font-black">{count} {count === 1 ? 'aluno' : 'alunos'}</strong> que foram transferidos para sua escola e precisam ser alocados em uma turma para que a matrícula seja efetivada e o financeiro gerado.
+            </p>
+
+            <Button
+              onClick={() => navigate('/matriculas')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-indigo-200"
+            >
+              Enturmar Alunos Agora
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TransferenciasPendentesAceiteNotification({ count, onDismiss }: { count: number, onDismiss: () => void }) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm mb-8">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-emerald-600 hover:text-emerald-700 z-10"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+             <ArrowUpRight className="h-6 w-6 text-emerald-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-emerald-900 text-lg tracking-tight mb-1">
+              Novos Pedidos de Transferência
+            </h3>
+            <p className="text-sm font-medium text-emerald-700 mb-4">
+              Sua escola recebeu <strong className="font-black">{count} {count === 1 ? 'novo pedido' : 'novos pedidos'}</strong> de transferência de alunos.
+              <br />
+              <span className="text-xs opacity-80 italic">Você tem 5 dias úteis para aceitar ou recusar estes pedidos no menu acadêmico.</span>
+            </p>
+
+            <Button
+              onClick={() => navigate('/transferencias')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-emerald-200"
+            >
+              Analisar Pedidos Agora
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean }) {
   const { authUser } = useAuth()
@@ -65,6 +149,9 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
 
   const { data: countPendentes } = useImportacoesPendentes()
   const { data: countEnturmacao } = useAlunosPendentesEnturmacao()
+  const [showPendentesBanner, setShowPendentesBanner] = useState(true)
+  const [showTransferenciasBanner, setShowTransferenciasBanner] = useState(true)
+  const countAceite = useTransferenciasPendentesAceite()
   const deletarLote = useDeletarLoteImportacao()
 
   // Cria um Map com IDs de alunos com matrícula ativa
@@ -205,6 +292,22 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
           </div>
         )}
       </div>
+      
+      {/* Banner de Alunos Pendentes de Enturmação (Transferência Concluída) */}
+      {showPendentesBanner && countEnturmacao && countEnturmacao > 0 && (
+        <AlunosPendentesEnturmacaoNotification 
+          count={countEnturmacao}
+          onDismiss={() => setShowPendentesBanner(false)}
+        />
+      )}
+
+      {/* Banner de Novos Pedidos de Transferência (Escola Destino) */}
+      {showTransferenciasBanner && countAceite > 0 && (
+        <TransferenciasPendentesAceiteNotification
+          count={countAceite}
+          onDismiss={() => setShowTransferenciasBanner(false)}
+        />
+      )}
 
       <Tabs defaultValue="alunos" className="space-y-6">
         <TabsList className="bg-slate-100/50 p-1 rounded-xl h-auto self-start">

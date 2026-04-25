@@ -10,3 +10,5 @@ export function AtividadesPage() {
     />
   )
 }
+
+export default AtividadesPage

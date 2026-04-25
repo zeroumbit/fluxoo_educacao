@@ -309,15 +309,15 @@ export type TransferenciaEscolar = {
   recusado_por: 'responsavel' | 'escola_origem' | 'escola_destino' | null
   recusado_em: string | null
   cancelado_em: string | null
-  criado_em: string
+  created_at: string
   aprovado_em: string | null
   concluido_em: string | null
-  atualizado_em: string
+  updated_at: string
 }
-export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'criado_em' | 'atualizado_em'> & {
+export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'created_at' | 'updated_at'> & {
   id?: string
-  criado_em?: string
-  atualizado_em?: string
+  created_at?: string
+  updated_at?: string
 }
 export type TransferenciaEscolarUpdate = Partial<TransferenciaEscolarInsert>
 

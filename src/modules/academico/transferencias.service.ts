@@ -24,7 +24,7 @@ export interface TransferenciaRow {
   aceite_destino_em: string | null
   recusado_por: string | null
   recusado_em: string | null
-  criado_em: string
+  created_at: string
   aprovado_em: string | null
   concluido_em: string | null
   // Campos enriquecidos (resolvidos no frontend)
@@ -102,10 +102,10 @@ interface TransferenciaRaw {
   aceite_destino_em: string | null
   recusado_por: string | null
   recusado_em: string | null
-  criado_em: string
+  created_at: string
   aprovado_em: string | null
   concluido_em: string | null
-  atualizado_em: string
+  updated_at: string
 }
 
 function enrichTransferencia(
@@ -117,7 +117,7 @@ function enrichTransferencia(
     ...t,
     transferencia_id: t.id,
     solicitante_tipo: t.iniciado_por,
-    data_solicitacao: t.criado_em,
+    data_solicitacao: t.created_at,
     aluno_nome: alunosMap[t.aluno_id] || `Aluno ${t.aluno_id.substring(0, 4)}`,
     origem_id: t.escola_origem_id,
     escola_origem: escolasMap[t.escola_origem_id] || 'Escola de Origem',
@@ -217,8 +217,8 @@ export const transferenciasService = {
     const { data, error } = await supabase
       .from('transferencias_escolares')
       .select('*')
-      .or(`escola_origem_id.eq.${tenantId}`)
-      .order('criado_em', { ascending: false })
+      .or(`escola_origem_id.eq.${tenantId},escola_destino_id.eq.${tenantId}`)
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     const rows = (data || []) as unknown as TransferenciaRaw[]
@@ -243,7 +243,7 @@ export const transferenciasService = {
       .from('transferencias_escolares')
       .select('*')
       .in('aluno_id', alunoIds)
-      .order('criado_em', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     const rows = (data || []) as unknown as TransferenciaRaw[]
@@ -259,7 +259,7 @@ export const transferenciasService = {
 
     return rows.map((t) => ({
       ...t,
-      data_solicitacao: t.criado_em,
+      data_solicitacao: t.created_at,
       origem_tenant_id: t.escola_origem_id,
       destino_tenant_id: t.escola_destino_id,
       solicitante_tipo: t.iniciado_por,

@@ -10,3 +10,5 @@ export function PlanoAulaPage() {
     />
   )
 }
+
+export default PlanoAulaPage

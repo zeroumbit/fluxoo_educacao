@@ -10,3 +10,5 @@ export function NotasPage() {
     />
   )
 }
+
+export default NotasPage

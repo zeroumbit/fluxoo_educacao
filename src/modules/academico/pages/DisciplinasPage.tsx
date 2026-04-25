@@ -11,3 +11,5 @@ export function DisciplinasPage() {
     />
   )
 }
+
+export default DisciplinasPage

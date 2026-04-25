@@ -9,8 +9,61 @@ import {
 } from '@/modules/professor/hooks'
 import type { AgendaAula, Pendencia, SaudeTurma, AlertaProfessor } from '@/modules/professor/types'
 import { Greeting } from '@/components/ui/Greeting'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  BookOpen,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  ClipboardCheck,
+  FileText,
+  GraduationCap,
+  Heart,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Component, type ReactNode } from 'react'
+import { toast } from 'sonner'
 
-// ... (previous imports)
+// ─── Error Boundary por Widget ─────────────────────────────────────────────
+class WidgetErrorBoundary extends Component<
+  { children: ReactNode; title: string },
+  { hasError: boolean }
+> {
+  state = { hasError: false }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">
+              Erro ao carregar <strong>{this.props.title}</strong>. Os outros painéis continuam funcionando.
+            </p>
+          </CardContent>
+        </Card>
+      )
+    }
+    return this.props.children
+  }
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+
+function formatarDataPendencia(iso: string) {
+  const d = new Date(iso + 'T00:00:00')
+  return `${d.getDate()} ${MESES[d.getMonth()]}`
+}
 
 // ─── Widget: Alertas do Professor ───────────────────────────────────────────
 function AlertasCard({ alerta, onConcluir }: { alerta: AlertaProfessor, onConcluir: (id: string) => void }) {
@@ -100,61 +153,6 @@ function AlertasWidget({ data, isLoading }: { data?: AlertaProfessor[]; isLoadin
       ))}
     </div>
   )
-}
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  BookOpen,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  ClipboardCheck,
-  FileText,
-  GraduationCap,
-  Heart,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Component, type ReactNode } from 'react'
-import { toast } from 'sonner'
-
-// ─── Error Boundary por Widget ─────────────────────────────────────────────
-class WidgetErrorBoundary extends Component<
-  { children: ReactNode; title: string },
-  { hasError: boolean }
-> {
-  state = { hasError: false }
-  static getDerivedStateFromError() { return { hasError: true } }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="flex items-center gap-3 p-4">
-            <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-            <p className="text-sm text-destructive">
-              Erro ao carregar <strong>{this.state.constructor.name || this.props.title}</strong>. Os outros painéis continuam funcionando.
-            </p>
-          </CardContent>
-        </Card>
-      )
-    }
-    return this.props.children
-  }
-}
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-
-function formatarDataPendencia(iso: string) {
-  const d = new Date(iso + 'T00:00:00')
-  return `${d.getDate()} ${MESES[d.getMonth()]}`
 }
 
 // ─── Widget: Agenda do Dia ──────────────────────────────────────────────────
@@ -372,7 +370,7 @@ function SaudeTurmasWidget({ data, isLoading }: { data?: SaudeTurma[]; isLoading
 // ─── Página Principal ────────────────────────────────────────────────────────
 export function ProfessorDashboardPage() {
   const { authUser } = useAuth()
-  const { data: agenda, isLoading: loadingAgenda, refetch: _refetchAgenda } = useAgendaDiaria()
+  const { data: agenda, isLoading: loadingAgenda } = useAgendaDiaria()
   const { data: pendencias, isLoading: loadingPendencias } = usePendenciasProfessor()
   const { data: saudeTurmas, isLoading: loadingSaude } = useSaudeTurmas()
   const { data: alertas, isLoading: loadingAlertas } = useAlertasProfessor()
@@ -519,3 +517,5 @@ export function ProfessorDashboardPage() {
     </div>
   )
 }
+
+export default ProfessorDashboardPage

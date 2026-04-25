@@ -333,3 +333,15 @@ export function useConcluirTransferencia() {
   })
 }
 
+
+export function useTransferenciasPendentesAceite() {
+  const { data: transferencias } = useTransferenciasEscola()
+  const { authUser } = useAuth()
+  
+  if (!transferencias) return 0
+  
+  return transferencias.filter(t => 
+    t.status === 'aguardando_aceite_destino' && 
+    t.escola_destino_id === authUser?.tenantId
+  ).length
+}

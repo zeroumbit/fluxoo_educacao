@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,13 +44,14 @@ import { ptBR } from 'date-fns/locale'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { cn } from '@/lib/utils'
 import type { AvisoRecente, RadarAluno } from '../dashboard.service'
-import { useState, useEffect, useMemo } from 'react'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { Greeting } from '@/components/ui/Greeting'
+import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import { PixManualBannerNotification } from '@/modules/financeiro/components/PixManualBannerNotification'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Sem Matrícula
@@ -140,6 +142,55 @@ function AlunosPendentesEnturmacaoNotification({ count, onDismiss }: AlunosPende
               className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-indigo-200"
             >
               Alocar Alunos em Turmas
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Transferências Pendentes de Aceite (Destino)
+// ---------------------------------------------------------------------------
+interface TransferenciasPendentesAceiteNotificationProps {
+  count: number
+  onDismiss: () => void
+}
+
+function TransferenciasPendentesAceiteNotification({ count, onDismiss }: TransferenciasPendentesAceiteNotificationProps) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm mb-8">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-emerald-600 hover:text-emerald-700"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+             <ArrowUpRight className="h-6 w-6 text-emerald-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-emerald-900 text-lg tracking-tight mb-1">
+              Novos Pedidos de Transferência
+            </h3>
+            <p className="text-sm font-medium text-emerald-700 mb-4">
+              Sua escola recebeu <strong className="font-black">{count} {count === 1 ? 'novo pedido' : 'novos pedidos'}</strong> de transferência de alunos.
+              <br />
+              <span className="text-xs opacity-80 italic">Você tem 5 dias úteis para aceitar ou recusar estes pedidos.</span>
+            </p>
+
+            <Button
+              onClick={() => navigate('/transferencias')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-emerald-200"
+            >
+              Analisar Pedidos Agora
             </Button>
           </div>
         </div>
@@ -413,6 +464,8 @@ function DashboardContent() {
 
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
   const [showAlunosPendentesEnturmacaoNotification, setShowAlunosPendentesEnturmacaoNotification] = useState(true)
+  const [showTransferenciasPendentesAceiteNotification, setShowTransferenciasPendentesAceiteNotification] = useState(true)
+  const pendentesAceiteCount = useTransferenciasPendentesAceite()
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
   const [showAllRadares, setShowAllRadares] = useState(false)
@@ -600,6 +653,14 @@ function DashboardContent() {
 
       {/* Notificações de Pagamentos PIX Manual Pendentes */}
       <PixManualBannerNotification />
+
+      {/* Notificação de Novos Pedidos de Transferência (Escola Destino) */}
+      {pendentesAceiteCount > 0 && showTransferenciasPendentesAceiteNotification && (
+        <TransferenciasPendentesAceiteNotification
+          count={pendentesAceiteCount}
+          onDismiss={() => setShowTransferenciasPendentesAceiteNotification(false)}
+        />
+      )}
 
       {/* Notificação de Alunos Transferidos Pendentes de Enturmação */}
       {(dashboardData?.alunosPendentesEnturmacao ?? 0) > 0 && showAlunosPendentesEnturmacaoNotification && (
