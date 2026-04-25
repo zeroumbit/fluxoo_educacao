@@ -623,6 +623,18 @@ export const alunoService = {
 
     const { error } = await query
     if (error) throw error
+  },
+
+  async contarPendentesEnturmacao(tenantId: string) {
+    const { count, error } = await supabase
+      .from('alunos')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('necessita_enturmacao', true)
+      .is('deleted_at', null)
+    
+    if (error) throw error
+    return count || 0
   }
 }
 

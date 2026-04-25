@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select'
 import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { LucideIcon, ArrowRightLeft, Plus, Search, Loader2, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, FileText, ArrowLeft, ChevronRight, UserCheck, SearchCode, ArrowUpRight, ArrowDownLeft, ThumbsUp, ThumbsDown, Unlock } from 'lucide-react'
+import { type LucideIcon, ArrowRightLeft, Plus, Search, Loader2, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, FileText, ArrowLeft, ChevronRight, UserCheck, SearchCode, ArrowUpRight, ArrowDownLeft, ThumbsUp, ThumbsDown, Unlock } from 'lucide-react'
 
 import { type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
 

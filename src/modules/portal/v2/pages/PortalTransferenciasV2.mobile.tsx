@@ -19,7 +19,7 @@ import { toast } from 'sonner'
 import { useTransferenciasPortal, useResponderTransferencia } from '../../hooks'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { LucideIcon, Send, Clock, CheckCircle2, XCircle, School, User, FileText, Loader2, AlertTriangle, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { type LucideIcon, Send, Clock, CheckCircle2, XCircle, School, User, FileText, Loader2, AlertTriangle, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { type TransferenciaEscolarStatus, type TransferenciaRow } from '../../service'
 
 const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {

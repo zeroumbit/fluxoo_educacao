@@ -20,7 +20,7 @@ import {
   AlertCircle, FileX, Shield, Percent, Users, UserMinus,
   AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw, FileUp, CloudUpload, Trash
 } from 'lucide-react'
-import { useImportacoesPendentes, useDeletarLoteImportacao } from '../hooks'
+import { useImportacoesPendentes, useDeletarLoteImportacao, useAlunosPendentesEnturmacao } from '../hooks'
 import {
   Dialog,
   DialogContent,
@@ -64,6 +64,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
   const [confirmacaoDesativar, setConfirmacaoDesativar] = useState(false)
 
   const { data: countPendentes } = useImportacoesPendentes()
+  const { data: countEnturmacao } = useAlunosPendentesEnturmacao()
   const deletarLote = useDeletarLoteImportacao()
 
   // Cria um Map com IDs de alunos com matrícula ativa
@@ -311,6 +312,30 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                   onClick={() => navigate('/alunos/importar')}
                 >
                   Continuar Matrículas
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          
+          {/* Banner de Alunos Pendentes de Enturmação (Transferidos) */}
+          {!isProfessor && countEnturmacao && countEnturmacao > 0 ? (
+            <div className="w-full bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 transition-all animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-indigo-900">Alunos Transferidos sem Turma</h3>
+                  <p className="text-xs text-indigo-700">Existem {countEnturmacao} alunos vindos de transferência que aguardam enturmação para gerar cobranças.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs border-0"
+                  onClick={() => navigate('/matriculas')}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Realizar Enturmação
                 </Button>
               </div>
             </div>

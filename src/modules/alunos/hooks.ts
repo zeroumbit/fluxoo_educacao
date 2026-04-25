@@ -247,3 +247,12 @@ export function useDeletarLoteImportacao() {
     },
   })
 }
+
+export function useAlunosPendentesEnturmacao() {
+  const { authUser } = useAuth()
+  return useQuery({
+    queryKey: ['alunos', 'pendentes-enturmacao', authUser?.tenantId],
+    queryFn: () => alunoService.contarPendentesEnturmacao(authUser!.tenantId),
+    enabled: !!authUser?.tenantId,
+  })
+}

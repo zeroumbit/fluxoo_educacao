@@ -100,8 +100,53 @@ function AlunosSemMatriculaNotification({ count, onDismiss }: AlunosSemMatricula
 }
 
 // ---------------------------------------------------------------------------
-// Sub-componente: Card de Métrica
+// Sub-componente: Notificação de Alunos Transferidos Pendentes de Enturmação
 // ---------------------------------------------------------------------------
+interface AlunosPendentesEnturmacaoNotificationProps {
+  count: number
+  onDismiss: () => void
+}
+
+function AlunosPendentesEnturmacaoNotification({ count, onDismiss }: AlunosPendentesEnturmacaoNotificationProps) {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-sm mb-8">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-indigo-600 hover:text-indigo-700"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+             <Shield className="h-6 w-6 text-indigo-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-indigo-900 text-lg tracking-tight mb-1">
+              Alunos Transferidos Pendentes
+            </h3>
+            <p className="text-sm font-medium text-indigo-700 mb-4">
+              Você tem <strong className="font-black">{count} {count === 1 ? 'aluno' : 'alunos'}</strong> vindo{count === 1 ? '' : 's'} de transferência que ainda não foi alocado em uma turma.
+              <br />
+              <span className="text-xs opacity-80 italic">O valor da matrícula só será registrado após a enturmação.</span>
+            </p>
+
+            <Button
+              onClick={() => navigate('/matriculas')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-indigo-200"
+            >
+              Alocar Alunos em Turmas
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 interface MetricCardProps {
   label: string
   value: number | string
@@ -367,6 +412,7 @@ function DashboardContent() {
   } = useDashboard()
 
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
+  const [showAlunosPendentesEnturmacaoNotification, setShowAlunosPendentesEnturmacaoNotification] = useState(true)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
   const [showAllRadares, setShowAllRadares] = useState(false)
@@ -554,6 +600,14 @@ function DashboardContent() {
 
       {/* Notificações de Pagamentos PIX Manual Pendentes */}
       <PixManualBannerNotification />
+
+      {/* Notificação de Alunos Transferidos Pendentes de Enturmação */}
+      {(dashboardData?.alunosPendentesEnturmacao ?? 0) > 0 && showAlunosPendentesEnturmacaoNotification && (
+        <AlunosPendentesEnturmacaoNotification
+          count={dashboardData?.alunosPendentesEnturmacao ?? 0}
+          onDismiss={() => setShowAlunosPendentesEnturmacaoNotification(false)}
+        />
+      )}
 
       {/* Notificação de Alunos Sem Matrícula */}
       {(dashboardData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (

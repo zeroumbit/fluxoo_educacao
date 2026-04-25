@@ -46,6 +46,7 @@ export interface DashboardData {
   }
   radarEvasao: RadarAluno[]
   alunosSemMatricula: number
+  alunosPendentesEnturmacao: number
 }
 
 export const dashboardService = {
@@ -84,6 +85,7 @@ export const dashboardService = {
       salariosRes,
       matriculasRes,
       almoxarifadoRes,
+      pendentesEnturmacaoRes,
     ] = await Promise.all([
       (() => {
         // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
@@ -174,6 +176,7 @@ export const dashboardService = {
       })(),
       // Total de valor em estoque no almoxarifado (quantidade × custo_unitario)
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('almoxarifado_itens').select('quantidade, custo_unitario').eq('tenant_id', tenantId)) as any,
+      supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('necessita_enturmacao', true),
     ])
 
     if (!escolaRes.data) {
@@ -295,6 +298,7 @@ possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
       },
       radarEvasao: radarData,
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),
+      alunosPendentesEnturmacao: pendentesEnturmacaoRes.count || 0,
     }
   },
 

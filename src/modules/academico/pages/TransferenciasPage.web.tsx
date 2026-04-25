@@ -38,7 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { LucideIcon, ArrowRightLeft, Plus, Search, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, TrendingDown, FileText, CalendarClock, Unlock, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { type LucideIcon, ArrowRightLeft, Plus, Search, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, TrendingDown, FileText, CalendarClock, Unlock, ThumbsUp, ThumbsDown } from 'lucide-react'
 
 import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
 import { EmitirHistoricoModal } from '@/components/shared/transferencias/EmitirHistoricoModal'
