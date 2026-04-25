@@ -7,7 +7,10 @@ import { useEscolas } from '@/modules/escolas/hooks'
 import {
   useTransferenciasEscola,
   useSolicitarTransferencia,
-  useCheckPermissaoTransferencia
+  useCheckPermissaoTransferencia,
+  useAceitarTransferenciaDestino,
+  useRecusarTransferenciaDestino,
+  useConcluirTransferencia
 } from '@/modules/academico/hooks'
 import { supabase } from '@/lib/supabase'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
@@ -27,38 +30,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  ArrowRightLeft,
-  Plus,
-  Search,
-  Loader2,
-  Eye,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  User,
-  School,
-  ShieldCheck,
-  FileText,
-  ArrowLeft,
-  ChevronRight,
-  UserCheck,
-  SearchCode,
-  ArrowUpRight,
-  ArrowDownLeft,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { LucideIcon, ArrowRightLeft, Plus, Search, Loader2, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, FileText, ArrowLeft, ChevronRight, UserCheck, SearchCode, ArrowUpRight, ArrowDownLeft, ThumbsUp, ThumbsDown, Unlock } from 'lucide-react'
 
-const statusConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
-  pendente_pais: { label: 'Aguardando Pais', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },
-  pendente_destino: { label: 'Aguardando Destino', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', icon: School },
-  pendente_origem: { label: 'Aguardando Origem', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', icon: FileText },
-  recusada: { label: 'Recusada', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', icon: XCircle },
-  cancelada: { label: 'Cancelada', color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-200', icon: XCircle },
-  concluida: { label: 'Concluída', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle2 },
+import { type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
+
+const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
+  aguardando_responsavel: { label: 'Aguardando Responsável', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },
+  aguardando_aceite_destino: { label: 'Aguardando Destino', color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', icon: School },
+  aguardando_liberacao_origem: { label: 'Aguardando Liberação', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', icon: FileText },
+  recusado: { label: 'Recusada', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', icon: XCircle },
+  cancelado: { label: 'Cancelada', color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-200', icon: XCircle },
+  concluido: { label: 'Concluída', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle2 },
+  expirado: { label: 'Expirada', color: 'text-stone-500', bg: 'bg-stone-50', border: 'border-stone-200', icon: XCircle },
 }
 
 export function TransferenciasPageMobile() {
@@ -68,12 +53,18 @@ export function TransferenciasPageMobile() {
   const { data: escolas } = useEscolas()
   const { data: alunos } = useAlunos()
   const { data: permissao } = useCheckPermissaoTransferencia()
+  
   const solicitar = useSolicitarTransferencia()
+  const aceitarDestino = useAceitarTransferenciaDestino()
+  const recusarDestino = useRecusarTransferenciaDestino()
+  const concluirTransferencia = useConcluirTransferencia()
 
   const [activeTab, setActiveTab] = useState<'recebidas' | 'enviadas'>('recebidas')
   const [busca, setBusca] = useState('')
-  const [detailTransferencia, setDetailTransferencia] = useState<any>(null)
+  const [detailTransferencia, setDetailTransferencia] = useState<TransferenciaRow | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [recusarDestinoDialog, setRecusarDestinoDialog] = useState<TransferenciaRow | null>(null)
+  const [justificativaRecusa, setJustificativaRecusa] = useState('')
   
   // Form Logic Toggle
   const [formMode, setFormMode] = useState<'inbound' | 'outbound'>('inbound')
@@ -94,32 +85,28 @@ export function TransferenciasPageMobile() {
   // Filter e separação por tipo
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []
-    return transferencias.filter((t: any) => {
-      const nomeAluno = t.aluno_nome || t.aluno?.nome_completo || ''
-      const escolaOrigem = t.escola_origem_nome || t.escola_origem?.nome || ''
-      const escolaDestino = t.escola_destino_nome || t.escola_destino?.nome || ''
-      
-      const match = nomeAluno.toLowerCase().includes(busca.toLowerCase()) ||
-        escolaOrigem.toLowerCase().includes(busca.toLowerCase()) ||
-        escolaDestino.toLowerCase().includes(busca.toLowerCase())
-      return match
+    return transferencias.filter((t) => {
+      const q = busca.toLowerCase()
+      return t.aluno_nome?.toLowerCase().includes(q) ||
+             t.escola_origem?.toLowerCase().includes(q) ||
+             t.escola_destino?.toLowerCase().includes(q)
     })
   }, [transferencias, busca])
 
   const recebidas = useMemo(() =>
-    transferenciasList?.filter((t: any) => t.destino_id === tenantId || t.destino_tenant_id === tenantId) || [],
+    transferenciasList.filter((t) => t.destino_id === tenantId),
     [transferenciasList, tenantId]
   )
 
   const enviadas = useMemo(() =>
-    transferenciasList?.filter((t: any) => t.origem_id === tenantId || t.origem_tenant_id === tenantId) || [],
+    transferenciasList.filter((t) => t.origem_id === tenantId),
     [transferenciasList, tenantId]
   )
 
   const pendentes = useMemo(() =>
-    transferenciasList?.filter((t: any) =>
-      t.status !== 'concluida' && t.status !== 'recusada' && t.status !== 'cancelada'
-    ).length || 0,
+    transferenciasList.filter((t) =>
+      !['concluido', 'recusado', 'cancelado', 'expirado'].includes(t.status)
+    ).length,
     [transferenciasList]
   )
 
@@ -186,19 +173,14 @@ export function TransferenciasPageMobile() {
         return
       }
       try {
-        const { error } = await supabase
-          .from('transferencias' as any)
-          .insert({
-            aluno_id: alunoEncontrado.id,
-            origem_tenant_id: alunoEncontrado.tenant_id,
-            destino_tenant_id: tenantId,
-            responsavel_id: responsavelEncontrado.id,
-            motivo_solicitacao: motivo,
-            status: 'pendente_pais',
-            solicitante_tipo: 'escola_destino'
-          } as any)
-
-        if (error) throw error
+        await solicitar.mutateAsync({
+          alunoId: alunoEncontrado.id,
+          origemId: alunoEncontrado.tenant_id,
+          destinoId: tenantId!,
+          responsavelId: responsavelEncontrado.id,
+          motivo,
+          iniciadoPor: 'destino'
+        })
         toast.success('Solicitação enviada com sucesso!')
         resetForm()
         refetch()
@@ -217,6 +199,8 @@ export function TransferenciasPageMobile() {
           origemId: tenantId!,
           destinoId,
           motivo,
+          iniciadoPor: 'origem',
+          responsavelId: null // Será buscado no backend/trigger se necessário ou definido na modal
         })
         toast.success('Transferência iniciada!')
         resetForm()
@@ -224,6 +208,42 @@ export function TransferenciasPageMobile() {
       } catch (error: any) {
         toast.error(error.message || 'Erro ao iniciar transferência')
       }
+    }
+  }
+
+  const handleAceitarDestino = async (id: string) => {
+    try {
+      await aceitarDestino.mutateAsync(id)
+      toast.success('Transferência aceita!')
+      setDetailTransferencia(null)
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao aceitar')
+    }
+  }
+
+  const handleRecusarDestino = async () => {
+    if (!recusarDestinoDialog || !justificativaRecusa.trim()) {
+      toast.error('Informe a justificativa')
+      return
+    }
+    try {
+      await recusarDestino.mutateAsync({ id: recusarDestinoDialog.transferencia_id, justificativa: justificativaRecusa })
+      toast.success('Recusada com sucesso.')
+      setRecusarDestinoDialog(null)
+      setJustificativaRecusa('')
+      setDetailTransferencia(null)
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao recusar')
+    }
+  }
+
+  const handleConcluir = async (id: string) => {
+    try {
+      await concluirTransferencia.mutateAsync(id)
+      toast.success('Concluído com sucesso! Dados integrados.')
+      setDetailTransferencia(null)
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao concluir')
     }
   }
 
@@ -258,6 +278,11 @@ export function TransferenciasPageMobile() {
       leftAction={
         <button onClick={() => window.history.back()} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
           <ArrowLeft className="h-5 w-5 text-slate-500" />
+        </button>
+      }
+      rightAction={
+        <button onClick={() => setIsFormOpen(true)} className="h-10 w-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+          <Plus className="h-5 w-5 text-white" />
         </button>
       }
     >
@@ -299,7 +324,7 @@ export function TransferenciasPageMobile() {
         >
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 text-emerald-500">Concluídas</p>
           <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
-            {transferenciasList.filter((t: any) => t.status === 'concluida').length}
+            {transferenciasList.filter((t) => t.status === 'concluido').length}
           </p>
         </motion.div>
       </div>
@@ -366,39 +391,47 @@ export function TransferenciasPageMobile() {
             </div>
           ) : (
             <AnimatePresence mode="popLayout">
-              {currentList.map((t: any, idx) => {
-                const cfg = statusConfig[t.status] || statusConfig.pendente_pais
-                const StatusIcon = cfg.icon
+              {currentList.map((t, idx) => {
+                const cfg = statusConfig[t.status] || statusConfig.aguardando_responsavel
+                const isActionableDestino = t.status === 'aguardando_aceite_destino' && t.destino_id === tenantId
+                const isActionableOrigem = t.status === 'aguardando_liberacao_origem' && t.origem_id === tenantId
 
                 return (
                   <motion.div
-                    key={t.id || idx}
+                    key={t.transferencia_id || idx}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                   >
                     <NativeCard
                       onClick={() => setDetailTransferencia(t)}
-                      className="p-5 border-none bg-white dark:bg-slate-800 shadow-sm relative overflow-hidden group"
+                      className={cn(
+                        "p-5 border-none bg-white dark:bg-slate-800 shadow-sm relative overflow-hidden group transition-all active:scale-98",
+                        (isActionableDestino || isActionableOrigem) && "ring-2 ring-indigo-500/10 bg-indigo-50/5"
+                      )}
                     >
-                      <div className={cn("absolute top-0 left-0 w-1 h-full", cfg.bg)} />
+                      <div className={cn("absolute top-0 left-0 w-1.5 h-full", cfg.bg)} />
                       
                       <div className="flex items-start gap-4">
-                        <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0 group-hover:scale-105 transition-transform">
+                        <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
                           <User className="h-7 w-7" />
                         </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <h4 className="font-black text-slate-800 dark:text-white text-sm truncate">
-                              {t.aluno_nome || t.aluno?.nome_completo || 'Aluno não identificado'}
+                              {t.aluno_nome}
                             </h4>
-                            <ChevronRight className="h-5 w-5 text-slate-200" />
+                            {(isActionableDestino || isActionableOrigem) ? (
+                              <div className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-slate-200" />
+                            )}
                           </div>
                           
                           <p className="text-[10px] text-slate-400 mb-4 flex items-center gap-1.5 font-bold uppercase tracking-tighter">
                             <School className="h-3.5 w-3.5" />
-                            {activeTab === 'recebidas' ? `De: ${t.escola_origem_nome || t.escola_origem?.nome}` : `Para: ${t.escola_destino_nome || t.escola_destino?.nome}`}
+                            {activeTab === 'recebidas' ? `De: ${t.escola_origem}` : `Para: ${t.escola_destino}`}
                           </p>
 
                           <div className="flex items-center justify-between mt-auto">
@@ -428,7 +461,6 @@ export function TransferenciasPageMobile() {
         size="full"
       >
         <div className="space-y-8 pt-4 pb-12">
-          {/* Form Mode Selector */}
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl">
             <button
                onClick={() => setFormMode('inbound')}
@@ -453,8 +485,7 @@ export function TransferenciasPageMobile() {
           <div className="space-y-6">
             {formMode === 'inbound' ? (
               <>
-                {/* Search Code */}
-                <div className="space-y-2">
+                 <div className="space-y-2">
                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">ID de Transferência (8 dígitos)</Label>
                    <div className="relative">
                       <Input
@@ -466,7 +497,7 @@ export function TransferenciasPageMobile() {
                       />
                       {isSearchingCode ? (
                         <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 animate-spin text-indigo-500" />
-                      ) : codigoAluno.length === 8 && alunoEncontrado ? (
+                      ) : (codigoAluno.length === 8 && alunoEncontrado) ? (
                         <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-emerald-500" />
                       ) : <SearchCode className="absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-300" />}
                    </div>
@@ -492,17 +523,15 @@ export function TransferenciasPageMobile() {
 
                         <div className="space-y-2">
                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Verificação CPF do Responsável</Label>
-                           <div className="relative">
-                              <Input
-                                placeholder="000.000.000-00"
-                                value={verificacaoResponsavel}
-                                onChange={(e) => setVerificacaoResponsavel(e.target.value)}
-                                className={cn(
-                                   "h-14 rounded-[20px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700",
-                                   responsavelEncontrado ? "border-emerald-500 bg-emerald-50/20" : cpfErro ? "border-rose-500 bg-rose-50/20" : ""
-                                )}
-                              />
-                           </div>
+                           <Input
+                             placeholder="000.000.000-00"
+                             value={verificacaoResponsavel}
+                             onChange={(e) => setVerificacaoResponsavel(e.target.value)}
+                             className={cn(
+                                "h-14 rounded-[20px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700",
+                                responsavelEncontrado ? "border-emerald-500 bg-emerald-50/20" : cpfErro ? "border-rose-500 bg-rose-50/20" : ""
+                             )}
+                           />
                            {responsavelEncontrado && (
                              <p className="text-[10px] font-black text-emerald-600 ml-1 uppercase">✓ Confere: {responsavelEncontrado.nome}</p>
                            )}
@@ -516,7 +545,6 @@ export function TransferenciasPageMobile() {
               </>
             ) : (
               <>
-                {/* Outbound Form */}
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Selecione o Aluno</Label>
                   <Select value={selectedAlunoId} onValueChange={setSelectedAlunoId}>
@@ -539,7 +567,7 @@ export function TransferenciasPageMobile() {
                     </SelectTrigger>
                     <SelectContent>
                       {escolas?.map((e: any) => (
-                         (e.id !== tenantId && e.id !== authUser?.tenantId) && 
+                         (e.id !== tenantId) && 
                          <SelectItem key={e.id} value={e.id}>{e.razao_social || e.nome || 'Escola Virtual'}</SelectItem>
                       ))}
                     </SelectContent>
@@ -561,11 +589,7 @@ export function TransferenciasPageMobile() {
 
           <Button
             onClick={handleSolicitar}
-            disabled={
-              solicitar.isPending || 
-              (formMode === 'inbound' && (!alunoEncontrado || !responsavelEncontrado || !motivo)) ||
-              (formMode === 'outbound' && (!selectedAlunoId || !destinoId || !motivo))
-            }
+            disabled={solicitar.isPending}
             className="w-full h-16 rounded-[24px] bg-indigo-600 hover:bg-indigo-700 text-lg font-black shadow-xl shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
           >
             {solicitar.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar Solicitação'}
@@ -589,7 +613,7 @@ export function TransferenciasPageMobile() {
                     <div>
                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Aluno</p>
                        <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
-                          {detailTransferencia.aluno_nome || detailTransferencia.aluno?.nome_completo}
+                          {detailTransferencia.aluno_nome}
                        </h3>
                     </div>
                  </div>
@@ -597,11 +621,11 @@ export function TransferenciasPageMobile() {
                  <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm">
                        <p className="text-[9px] font-black uppercase text-slate-300 mb-2">Origem</p>
-                       <p className="text-[10px] font-bold truncate text-slate-700 dark:text-slate-200 uppercase">{detailTransferencia.escola_origem_nome || detailTransferencia.escola_origem?.nome || '—'}</p>
+                       <p className="text-[10px] font-bold truncate text-slate-700 dark:text-slate-200 uppercase">{detailTransferencia.escola_origem || '—'}</p>
                     </div>
                     <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm">
                        <p className="text-[9px] font-black uppercase text-slate-300 mb-2">Destino</p>
-                       <p className="text-[10px] font-bold truncate text-slate-700 dark:text-slate-200 uppercase">{detailTransferencia.escola_destino_nome || detailTransferencia.escola_destino?.nome || '—'}</p>
+                       <p className="text-[10px] font-bold truncate text-slate-700 dark:text-slate-200 uppercase">{detailTransferencia.escola_destino || '—'}</p>
                     </div>
                  </div>
               </div>
@@ -616,7 +640,7 @@ export function TransferenciasPageMobile() {
               )}
 
               {(() => {
-                const cfg = statusConfig[detailTransferencia.status] || statusConfig.pendente_pais
+                const cfg = statusConfig[detailTransferencia.status] || statusConfig.aguardando_responsavel
                 const StatusIcon = cfg.icon
                 return (
                   <div className={cn("p-5 rounded-2xl border flex items-center gap-4", cfg.bg, cfg.border)}>
@@ -630,8 +654,69 @@ export function TransferenciasPageMobile() {
                   </div>
                 )
               })()}
+
+              {/* Ações Mobile */}
+              <div className="flex flex-col gap-3 pt-4">
+                 {detailTransferencia.status === 'aguardando_aceite_destino' && detailTransferencia.destino_id === tenantId && (
+                   <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold"
+                        onClick={() => handleAceitarDestino(detailTransferencia.transferencia_id)}
+                        disabled={aceitarDestino.isPending}
+                      >
+                         <ThumbsUp className="mr-2 h-5 w-5" />
+                         Aceitar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-14 rounded-2xl text-rose-600 border-rose-100 font-bold"
+                        onClick={() => setRecusarDestinoDialog(detailTransferencia)}
+                      >
+                         <ThumbsDown className="mr-2 h-5 w-5" />
+                         Recusar
+                      </Button>
+                   </div>
+                 )}
+
+                 {detailTransferencia.status === 'aguardando_liberacao_origem' && detailTransferencia.origem_id === tenantId && (
+                    <Button
+                      className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold"
+                      onClick={() => handleConcluir(detailTransferencia.transferencia_id)}
+                      disabled={concluirTransferencia.isPending}
+                    >
+                       <Unlock className="mr-2 h-5 w-5" />
+                       Liberar e Concluir
+                    </Button>
+                 )}
+              </div>
            </div>
          )}
+      </BottomSheet>
+
+      {/* Recusar BottomSheet */}
+      <BottomSheet
+        isOpen={!!recusarDestinoDialog}
+        onClose={() => { setRecusarDestinoDialog(null); setJustificativaRecusa(''); }}
+        title="Recusar Solicitação"
+      >
+         <div className="space-y-6 pb-12">
+            <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+               <p className="text-xs text-rose-800 font-medium">Você está recusando o ingresso deste aluno. Descreva o motivo abaixo.</p>
+            </div>
+            <Textarea 
+               placeholder="Motivo da recusa..."
+               value={justificativaRecusa}
+               onChange={(e) => setJustificativaRecusa(e.target.value)}
+               className="min-h-[120px] rounded-2xl border-slate-100 bg-slate-50 text-base"
+            />
+            <Button
+              className="w-full h-14 rounded-2xl bg-rose-600 hover:bg-rose-700 font-bold"
+              onClick={handleRecusarDestino}
+              disabled={recusarDestino.isPending}
+            >
+               Confirmar Recusa
+            </Button>
+         </div>
       </BottomSheet>
     </MobilePageLayout>
   )

@@ -1,13 +1,10 @@
 import { supabase } from '@/lib/supabase'
+import type { TransferenciaEscolarStatus, TransferenciaEscolarIniciador } from '@/lib/database.types'
 
-export type TransferenciaStatus =
-  | 'aguardando_responsavel'
-  | 'aguardando_liberacao_origem'
-  | 'concluido'
-  | 'recusado'
-  | 'cancelado'
+// Re-exportar tipos do database.types para uso externo
+export type { TransferenciaEscolarStatus, TransferenciaEscolarIniciador }
 
-export type TipoSolicitante = 'origem' | 'destino' | 'responsavel'
+// ─── Interface enriquecida para o frontend ────────────────────
 
 export interface TransferenciaRow {
   id: string
@@ -15,48 +12,65 @@ export interface TransferenciaRow {
   escola_origem_id: string
   escola_destino_id: string | null
   escola_destino_nome_manual: string | null
+  escola_destino_cnpj_manual: string | null
   responsavel_id: string | null
-  iniciado_por: TipoSolicitante
-  status: TransferenciaStatus
+  iniciado_por: TransferenciaEscolarIniciador
+  status: TransferenciaEscolarStatus
   motivo_solicitacao: string
   justificativa_recusa: string | null
   prazo_liberacao: string | null
-  created_at: string
+  prazo_responsavel: string | null
+  prazo_aceite_destino: string | null
+  aceite_destino_em: string | null
+  recusado_por: string | null
+  recusado_em: string | null
+  criado_em: string
   aprovado_em: string | null
   concluido_em: string | null
-  // Campos enriquecidos no frontend
+  // Campos enriquecidos (resolvidos no frontend)
   transferencia_id: string
   aluno_nome: string
   escola_origem: string
   escola_destino: string
   data_solicitacao: string
-  solicitante_tipo: TipoSolicitante
+  solicitante_tipo: TransferenciaEscolarIniciador
   origem_id: string
   destino_id: string | null
 }
 
-export const STATUS_LABEL: Record<string, string> = {
+// ─── Labels e cores para status ───────────────────────────────
+
+export const STATUS_LABEL: Record<TransferenciaEscolarStatus, string> = {
   aguardando_responsavel:      'Aguardando Responsável',
+  aguardando_aceite_destino:   'Aguardando Escola Destino',
   aguardando_liberacao_origem: 'Liberar em 30 dias',
   concluido:                   'Concluída',
   recusado:                    'Recusada',
   cancelado:                   'Cancelada',
+  expirado:                    'Expirada',
 }
 
-export const STATUS_COLOR: Record<string, { color: string; bg: string }> = {
+export const STATUS_COLOR: Record<TransferenciaEscolarStatus, { color: string; bg: string }> = {
   aguardando_responsavel:      { color: 'text-amber-700',   bg: 'bg-amber-50'   },
+  aguardando_aceite_destino:   { color: 'text-indigo-700',  bg: 'bg-indigo-50'  },
   aguardando_liberacao_origem: { color: 'text-blue-700',    bg: 'bg-blue-50'    },
   concluido:                   { color: 'text-emerald-700', bg: 'bg-emerald-50' },
   recusado:                    { color: 'text-rose-700',    bg: 'bg-rose-50'    },
   cancelado:                   { color: 'text-zinc-500',    bg: 'bg-zinc-50'    },
+  expirado:                    { color: 'text-stone-500',   bg: 'bg-stone-50'   },
 }
+
+// ─── Helpers internos ─────────────────────────────────────────
+
+interface EscolaMin { id: string; razao_social: string }
+interface AlunoMin { id: string; nome_completo: string }
 
 async function fetchEscolasMap(ids: string[]): Promise<Record<string, string>> {
   const uniq = [...new Set(ids.filter(Boolean))]
   if (!uniq.length) return {}
   const { data } = await supabase.from('escolas').select('id, razao_social').in('id', uniq)
   const map: Record<string, string> = {}
-  data?.forEach((e: any) => { map[e.id] = e.razao_social })
+  ;(data as EscolaMin[] | null)?.forEach((e) => { map[e.id] = e.razao_social })
   return map
 }
 
@@ -65,23 +79,71 @@ async function fetchAlunosMap(ids: string[]): Promise<Record<string, string>> {
   if (!uniq.length) return {}
   const { data } = await supabase.from('alunos').select('id, nome_completo').in('id', uniq)
   const map: Record<string, string> = {}
-  data?.forEach((a: any) => { map[a.id] = a.nome_completo })
+  ;(data as AlunoMin[] | null)?.forEach((a) => { map[a.id] = a.nome_completo })
   return map
 }
+
+// Tipo raw retornado pelo Supabase (sem enriquecimento)
+interface TransferenciaRaw {
+  id: string
+  aluno_id: string
+  escola_origem_id: string
+  escola_destino_id: string | null
+  escola_destino_nome_manual: string | null
+  escola_destino_cnpj_manual: string | null
+  responsavel_id: string | null
+  iniciado_por: TransferenciaEscolarIniciador
+  status: TransferenciaEscolarStatus
+  motivo_solicitacao: string
+  justificativa_recusa: string | null
+  prazo_liberacao: string | null
+  prazo_responsavel: string | null
+  prazo_aceite_destino: string | null
+  aceite_destino_em: string | null
+  recusado_por: string | null
+  recusado_em: string | null
+  criado_em: string
+  aprovado_em: string | null
+  concluido_em: string | null
+  atualizado_em: string
+}
+
+function enrichTransferencia(
+  t: TransferenciaRaw,
+  escolasMap: Record<string, string>,
+  alunosMap: Record<string, string>
+): TransferenciaRow {
+  return {
+    ...t,
+    transferencia_id: t.id,
+    solicitante_tipo: t.iniciado_por,
+    data_solicitacao: t.criado_em,
+    aluno_nome: alunosMap[t.aluno_id] || `Aluno ${t.aluno_id.substring(0, 4)}`,
+    origem_id: t.escola_origem_id,
+    escola_origem: escolasMap[t.escola_origem_id] || 'Escola de Origem',
+    destino_id: t.escola_destino_id,
+    escola_destino: (t.escola_destino_id ? escolasMap[t.escola_destino_id] : null)
+      || t.escola_destino_nome_manual
+      || 'Escola de Destino',
+  }
+}
+
+// ─── Service ──────────────────────────────────────────────────
 
 export const transferenciasService = {
   /** ESCOLA DESTINO inicia pedido de transferência pelo código do aluno */
   async solicitar(alunoId: string, origemId: string, destinoId: string, motivo: string) {
-    const { data, error } = await (supabase.from('transferencias_escolares' as any) as any)
+    const { data, error } = await supabase
+      .from('transferencias_escolares')
       .insert({
         aluno_id: alunoId,
         escola_origem_id: origemId,
         escola_destino_id: destinoId,
-        iniciado_por: 'destino',
-        status: 'aguardando_responsavel',
+        iniciado_por: 'destino' as const,
+        status: 'aguardando_responsavel' as const,
         motivo_solicitacao: motivo,
         responsavel_id: null,
-      })
+      } as never)
       .select()
       .single()
 
@@ -89,7 +151,7 @@ export const transferenciasService = {
     return data
   },
 
-  /** ESCOLA ORIGEM ou RESPONSÁVEL inicia pedido de saída do aluno */
+  /** ESCOLA ORIGEM inicia transferência de saída do aluno */
   async solicitarSaida(payload: {
     alunoId: string
     origemId: string
@@ -98,9 +160,10 @@ export const transferenciasService = {
     cnpjEscolaManual?: string
     responsavelId: string | null
     motivo: string
-    iniciadoPor: TipoSolicitante
+    iniciadoPor: TransferenciaEscolarIniciador
   }) {
-    const { data, error } = await (supabase.from('transferencias_escolares' as any) as any)
+    const { data, error } = await supabase
+      .from('transferencias_escolares')
       .insert({
         aluno_id: payload.alunoId,
         escola_origem_id: payload.origemId,
@@ -109,9 +172,9 @@ export const transferenciasService = {
         escola_destino_cnpj_manual: payload.cnpjEscolaManual || null,
         responsavel_id: payload.responsavelId,
         iniciado_por: payload.iniciadoPor,
-        status: 'aguardando_responsavel',
+        status: 'aguardando_responsavel' as const,
         motivo_solicitacao: payload.motivo,
-      })
+      } as never)
       .select()
       .single()
 
@@ -119,98 +182,143 @@ export const transferenciasService = {
     return data
   },
 
-  async listarPorEscola(tenantId: string): Promise<TransferenciaRow[]> {
-    const { data, error } = await (supabase
-      .from('transferencias_escolares' as any) as any)
-      .select('*')
-      .or(`escola_origem_id.eq.${tenantId},escola_destino_id.eq.${tenantId}`)
-      .order('created_at', { ascending: false })
+  /** RESPONSÁVEL inicia transferência via portal */
+  async solicitarPeloResponsavel(payload: {
+    alunoId: string
+    origemId: string
+    responsavelId: string
+    destinoNome?: string
+    destinoCnpj?: string
+    motivo: string
+  }) {
+    const { data, error } = await supabase
+      .from('transferencias_escolares')
+      .insert({
+        aluno_id: payload.alunoId,
+        escola_origem_id: payload.origemId,
+        escola_destino_id: null,
+        escola_destino_nome_manual: payload.destinoNome || null,
+        escola_destino_cnpj_manual: payload.destinoCnpj || null,
+        responsavel_id: payload.responsavelId,
+        iniciado_por: 'responsavel' as const,
+        status: 'aguardando_liberacao_origem' as const, // Responsável já é o aprovador implícito
+        motivo_solicitacao: payload.motivo,
+        aprovado_em: new Date().toISOString(),
+      } as never)
+      .select()
+      .single()
 
     if (error) throw error
-    if (!data || data.length === 0) return []
+    return data
+  },
+
+  /** Lista transferências por escola (admin panel) */
+  async listarPorEscola(tenantId: string): Promise<TransferenciaRow[]> {
+    const { data, error } = await supabase
+      .from('transferencias_escolares')
+      .select('*')
+      .or(`escola_origem_id.eq.${tenantId},escola_destino_id.eq.${tenantId}`)
+      .order('criado_em' as never, { ascending: false })
+
+    if (error) throw error
+    const rows = (data || []) as unknown as TransferenciaRaw[]
+    if (!rows.length) return []
 
     const [escolasMap, alunosMap] = await Promise.all([
       fetchEscolasMap([
-        ...data.map((t: any) => t.escola_origem_id),
-        ...data.map((t: any) => t.escola_destino_id),
-      ].filter(Boolean)),
-      fetchAlunosMap(data.map((t: any) => t.aluno_id)),
+        ...rows.map((t) => t.escola_origem_id),
+        ...rows.map((t) => t.escola_destino_id).filter((id): id is string => id !== null),
+      ]),
+      fetchAlunosMap(rows.map((t) => t.aluno_id)),
     ])
 
-    return data.map((t: any) => ({
-      ...t,
-      transferencia_id: t.id,
-      status: t.status as TransferenciaStatus,
-      solicitante_tipo: t.iniciado_por as TipoSolicitante,
-      data_solicitacao: t.created_at,
-      prazo_liberacao: t.prazo_liberacao,
-      aluno_nome: alunosMap[t.aluno_id] || `Aluno ${String(t.aluno_id).substring(0, 4)}`,
-      origem_id: t.escola_origem_id,
-      escola_origem: escolasMap[t.escola_origem_id] || 'Escola de Origem',
-      destino_id: t.escola_destino_id,
-      escola_destino: escolasMap[t.escola_destino_id] || t.escola_destino_nome_manual || 'Escola de Destino',
-      motivo_solicitacao: t.motivo_solicitacao,
-      justificativa_recusa: t.justificativa_recusa,
-    }))
+    return rows.map((t) => enrichTransferencia(t, escolasMap, alunosMap))
   },
 
+  /** Lista transferências por responsável (portal família) */
   async listarPorResponsavel(alunoIds: string[]) {
     if (!alunoIds.length) return []
 
-    const { data, error } = await (supabase
-      .from('transferencias_escolares' as any) as any)
+    const { data, error } = await supabase
+      .from('transferencias_escolares')
       .select('*')
       .in('aluno_id', alunoIds)
-      .order('created_at', { ascending: false })
+      .order('criado_em' as never, { ascending: false })
 
     if (error) throw error
-    if (!data || data.length === 0) return []
+    const rows = (data || []) as unknown as TransferenciaRaw[]
+    if (!rows.length) return []
 
     const [escolasMap, alunosMap] = await Promise.all([
       fetchEscolasMap([
-        ...data.map((t: any) => t.escola_origem_id),
-        ...data.map((t: any) => t.escola_destino_id),
-      ].filter(Boolean)),
-      fetchAlunosMap(data.map((t: any) => t.aluno_id)),
+        ...rows.map((t) => t.escola_origem_id),
+        ...rows.map((t) => t.escola_destino_id).filter((id): id is string => id !== null),
+      ]),
+      fetchAlunosMap(rows.map((t) => t.aluno_id)),
     ])
 
-    return data.map((t: any) => ({
+    return rows.map((t) => ({
       ...t,
-      created_at: t.created_at,
+      data_solicitacao: t.criado_em,
       origem_tenant_id: t.escola_origem_id,
       destino_tenant_id: t.escola_destino_id,
       solicitante_tipo: t.iniciado_por,
       aprovacao_responsavel: t.status !== 'aguardando_responsavel' && t.status !== 'recusado' && t.status !== 'cancelado',
       aluno: { nome_completo: alunosMap[t.aluno_id] || 'Aluno' },
       escola_origem: { razao_social: escolasMap[t.escola_origem_id] || 'Escola de Origem' },
-      escola_destino: { razao_social: escolasMap[t.escola_destino_id] || t.escola_destino_nome_manual || 'Escola de Destino' },
-    })) as any[]
+      escola_destino: {
+        razao_social: (t.escola_destino_id ? escolasMap[t.escola_destino_id] : null)
+          || t.escola_destino_nome_manual
+          || 'Escola de Destino'
+      },
+    }))
   },
 
+  /** Responsável aprova ou recusa transferência */
   async responderResponsavel(id: string, aprovado: boolean, motivoRecusa?: string) {
     if (aprovado) {
       const { error } = await supabase.rpc('aprovar_transferencia', { p_transferencia_id: id })
       if (error) throw error
-      return { status: 'aguardando_liberacao_origem' }
+      return { status: 'aprovado' as const }
     } else {
       const { error } = await supabase.rpc('recusar_transferencia', {
         p_transferencia_id: id,
         p_justificativa: motivoRecusa || 'Recusado pelo responsável'
       })
       if (error) throw error
-      return { status: 'recusado' }
+      return { status: 'recusado' as const }
     }
   },
 
-  /** ESCOLA ORIGEM conclui a transferência liberando o aluno */
-  async liberarAluno(id: string) {
-    const { error } = await supabase.rpc('liberar_aluno_transferencia' as any, {
+  /** ESCOLA DESTINO aceita a transferência */
+  async aceitarTransferenciaDestino(id: string) {
+    const { error } = await supabase.rpc('aceitar_transferencia_destino' as never, {
       p_transferencia_id: id
-    })
+    } as never)
     if (error) throw error
-    return { status: 'concluido' }
+    return { status: 'aguardando_liberacao_origem' as const }
   },
 
+  /** ESCOLA DESTINO recusa a transferência */
+  async recusarTransferenciaDestino(id: string, justificativa: string) {
+    const { error } = await supabase.rpc('recusar_transferencia_destino' as never, {
+      p_transferencia_id: id,
+      p_justificativa: justificativa
+    } as never)
+    if (error) throw error
+    return { status: 'recusado' as const }
+  },
+
+  /** ESCOLA ORIGEM conclui a transferência com integração de dados */
+  async concluirTransferencia(id: string) {
+    const { error } = await supabase.rpc('concluir_transferencia_integrar' as never, {
+      p_transferencia_id: id
+    } as never)
+    if (error) throw error
+    return { status: 'concluido' as const }
+  },
+
+  /** Verifica permissão de transferência da escola */
   async checkPermissaoEscola(tenantId: string) {
     const { data, error } = await supabase
       .from('escolas')

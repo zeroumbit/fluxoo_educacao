@@ -16,70 +16,50 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import {
-  Send,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  School,
-  User,
-  FileText,
-  Loader2,
-  AlertTriangle,
-  ChevronRight,
-} from 'lucide-react'
 import { useTransferenciasPortal, useResponderTransferencia } from '../../hooks'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { LucideIcon, Send, Clock, CheckCircle2, XCircle, School, User, FileText, Loader2, AlertTriangle, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { type TransferenciaEscolarStatus, type TransferenciaRow } from '../../service'
 
-const statusConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
-  pendente_pais: { label: 'Aguardando sua Aprovação', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },
-  pendente_destino: { label: 'Aguardando Escola Destino', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', icon: School },
-  pendente_origem: { label: 'Aguardando Escola Origem', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', icon: FileText },
-  recusada: { label: 'Recusada', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', icon: XCircle },
-  cancelada: { label: 'Cancelada', color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-200', icon: XCircle },
-  concluida: { label: 'Concluída', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle2 },
+const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
+  aguardando_responsavel: { label: 'Aguardando sua Aprovação', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },
+  aguardando_aceite_destino: { label: 'Aguardando Escola Destino', color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', icon: School },
+  aguardando_liberacao_origem: { label: 'Aguardando Escola Origem', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', icon: FileText },
+  recusado: { label: 'Recusada', color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', icon: XCircle },
+  cancelado: { label: 'Cancelada', color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-200', icon: XCircle },
+  concluido: { label: 'Concluída', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle2 },
+  expirado: { label: 'Expirada', color: 'text-stone-500', bg: 'bg-stone-50', border: 'border-stone-200', icon: XCircle },
 }
 
 export function PortalTransferenciasV2Mobile() {
   const { alunoSelecionado } = usePortalContext()
   const { data: transferencias, isLoading } = useTransferenciasPortal()
   const responder = useResponderTransferencia()
-
-  const [selectedTransf, setSelectedTransf] = useState<any>(null)
+  const [selectedTransf, setSelectedTransf] = useState<TransferenciaRow | null>(null)
   const [recusando, setRecusando] = useState(false)
   const [motivoRecusa, setMotivoRecusa] = useState('')
 
   // Filtrar transferências do aluno selecionado
   const transferenciasAluno = React.useMemo(() => {
     if (!transferencias || !alunoSelecionado) return []
-    return transferencias.filter((t: any) => t.aluno_id === alunoSelecionado.id)
+    return (transferencias as TransferenciaRow[]).filter((t) => t.aluno_id === alunoSelecionado.id)
   }, [transferencias, alunoSelecionado])
 
   const pendentes = React.useMemo(() =>
-    transferenciasAluno.filter((t: any) => t.status === 'pendente_pais').length,
+    transferenciasAluno.filter((t) => t.status === 'aguardando_responsavel').length,
     [transferenciasAluno]
   )
 
-  const handleAprovar = async (id: string) => {
+  const handleResponder = async (id: string, aprovado: boolean) => {
     try {
-      await responder.mutateAsync({ id, aprovado: true })
-      toast.success('Transferência aprovada com sucesso!')
-      setSelectedTransf(null)
-    } catch {
-      toast.error('Erro ao aprovar transferência')
-    }
-  }
-
-  const handleRecusar = async (id: string) => {
-    try {
-      await responder.mutateAsync({ id, aprovado: false, motivoRecusa })
-      toast.success('Transferência recusada')
+      await responder.mutateAsync({ id, aprovado, justificativa: aprovado ? undefined : motivoRecusa })
+      toast.success(aprovado ? 'Transferência aprovada!' : 'Transferência recusada')
       setSelectedTransf(null)
       setRecusando(false)
       setMotivoRecusa('')
-    } catch {
-      toast.error('Erro ao recusar transferência')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao responder transferência')
     }
   }
 
@@ -115,9 +95,7 @@ export function PortalTransferenciasV2Mobile() {
                   {pendentes} {pendentes === 1 ? 'Solicitação Pendente' : 'Solicitações Pendentes'}
                 </h3>
                 <p className="text-amber-100 text-sm font-medium">
-                  {pendentes === 1
-                    ? 'Você precisa analisar uma solicitação de transferência.'
-                    : 'Você precisa analisar solicitações de transferência.'}
+                  Você precisa autorizar uma solicitação para que o processo continue.
                 </p>
               </div>
             </div>
@@ -128,7 +106,7 @@ export function PortalTransferenciasV2Mobile() {
         <section className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-[17px] font-bold text-slate-800">
-              Histórico de Transferências
+              Histórico
             </h3>
             <Badge className="bg-slate-100 text-slate-600 border-0 text-xs font-bold px-2.5 py-1">
               {transferenciasAluno.length}
@@ -145,24 +123,25 @@ export function PortalTransferenciasV2Mobile() {
                 <Send className="h-8 w-8 text-slate-200" />
               </div>
               <h4 className="text-slate-800 font-bold text-base mb-1">Nenhuma transferência</h4>
-              <p className="text-slate-400 text-sm">Nenhuma solicitação de transferência registrada para este aluno.</p>
+              <p className="text-slate-400 text-sm">Nenhuma solicitação registrada para este aluno.</p>
             </motion.div>
           ) : (
             <AnimatePresence mode="popLayout">
               {transferenciasAluno.map((t: any, i: number) => {
-                const cfg = statusConfig[t.status] || statusConfig.pendente_pais
+                const cfg = statusConfig[t.status as TransferenciaEscolarStatus] || statusConfig.aguardando_responsavel
                 const StatusIcon = cfg.icon
-                const isPendentePais = t.status === 'pendente_pais'
+                const isPendentePais = t.status === 'aguardando_responsavel'
 
                 return (
                   <motion.div
-                    key={t.id}
+                    key={t.transferencia_id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     className={cn(
                       "bg-white p-4 rounded-[20px] border shadow-sm active:scale-[0.98] transition-all cursor-pointer",
-                      cfg.border
+                      cfg.border,
+                      isPendentePais && "ring-2 ring-amber-500/10"
                     )}
                     onClick={() => {
                       setSelectedTransf(t)
@@ -181,21 +160,21 @@ export function PortalTransferenciasV2Mobile() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
                           <h4 className="font-bold text-slate-800 text-sm truncate">
-                            {t.aluno?.nome_completo || alunoSelecionado?.nome_completo}
+                            {t.aluno_nome || alunoSelecionado?.nome_completo}
                           </h4>
                           {isPendentePais && (
                             <Badge className="bg-amber-500 text-white border-0 text-[9px] font-bold px-2 py-0.5">
-                              AÇÃO NECESSÁRIA
+                              Pendente
                             </Badge>
                           )}
                         </div>
 
-                        <p className="text-xs text-slate-500 mb-2">
-                          {t.escola_origem?.razao_social || 'Escola Origem'} → {t.escola_destino?.razao_social || 'Escola Destino'}
+                        <p className="text-xs text-slate-500 mb-2 truncate">
+                          {t.escola_origem} → {t.escola_destino}
                         </p>
 
                         <div className="flex items-center justify-between">
-                          <Badge className={`${cfg.bg} ${cfg.color} border-0 text-[9px] font-bold px-2.5 py-1 gap-1.5`}>
+                          <Badge className={cn(cfg.bg, cfg.color, "border-0 text-[9px] font-bold px-2.5 py-1 gap-1.5")}>
                             <StatusIcon className="h-3 w-3" />
                             {cfg.label}
                           </Badge>
@@ -217,13 +196,12 @@ export function PortalTransferenciasV2Mobile() {
         </section>
 
         {/* Tip */}
-        <section className="bg-sky-50 border border-sky-100 rounded-[20px] p-4 flex gap-3">
-          <Send className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
+        <section className="bg-indigo-50 border border-indigo-100 rounded-[20px] p-4 flex gap-3">
+          <Send className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-sky-800">Como funciona?</p>
-            <p className="text-xs text-sky-600 leading-relaxed mt-0.5">
-              Transferências entre escolas são solicitadas pela escola de destino ou pelos responsáveis.
-              Quando uma solicitação chegar para você, analise e aprove ou recuse com um motivo.
+            <p className="text-sm font-semibold text-indigo-800">Transferências</p>
+            <p className="text-xs text-indigo-600 leading-relaxed mt-0.5">
+              Toda transferência precisa da sua aprovação. Após aprovar, a escola de destino deve aceitar e a de origem deve liberar os documentos.
             </p>
           </div>
         </section>
@@ -231,13 +209,13 @@ export function PortalTransferenciasV2Mobile() {
 
       {/* Sheet: Detalhes + Aprovação/Recusa */}
       <Sheet open={!!selectedTransf} onOpenChange={(open) => !open && setSelectedTransf(null)}>
-        <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] p-0">
+        <SheetContent side="bottom" className="h-[92vh] rounded-t-[32px] p-0 flex flex-col">
           {selectedTransf && (
             <>
-              <SheetHeader className="p-6 pt-4">
-                <SheetTitle className="text-xl font-black text-slate-900">Detalhes da Transferência</SheetTitle>
+              <SheetHeader className="p-6 pt-4 shrink-0">
+                <SheetTitle className="text-xl font-black text-slate-900">Detalhes</SheetTitle>
                 <SheetDescription className="text-sm text-slate-500">
-                  Analise a solicitação e tome uma decisão.
+                  Analise a solicitação abaixo.
                 </SheetDescription>
               </SheetHeader>
 
@@ -250,7 +228,7 @@ export function PortalTransferenciasV2Mobile() {
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Aluno</p>
                     <p className="font-bold text-slate-700 text-sm">
-                      {selectedTransf.aluno?.nome_completo || alunoSelecionado?.nome_completo}
+                      {selectedTransf.aluno_nome}
                     </p>
                   </div>
                 </div>
@@ -259,11 +237,11 @@ export function PortalTransferenciasV2Mobile() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 bg-amber-50 rounded-xl">
                     <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Origem</p>
-                    <p className="text-sm font-bold text-amber-800">{selectedTransf.escola_origem?.razao_social || '—'}</p>
+                    <p className="text-sm font-bold text-amber-800">{selectedTransf.escola_origem}</p>
                   </div>
                   <div className="p-4 bg-blue-50 rounded-xl">
                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Destino</p>
-                    <p className="text-sm font-bold text-blue-800">{selectedTransf.escola_destino?.razao_social || '—'}</p>
+                    <p className="text-sm font-bold text-blue-800">{selectedTransf.escola_destino}</p>
                   </div>
                 </div>
 
@@ -271,13 +249,13 @@ export function PortalTransferenciasV2Mobile() {
                 {selectedTransf.motivo_solicitacao && (
                   <div className="p-4 bg-zinc-50 rounded-xl">
                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Motivo</p>
-                    <p className="text-sm text-zinc-700 leading-relaxed">{selectedTransf.motivo_solicitacao}</p>
+                    <p className="text-sm text-zinc-700 leading-relaxed italic">"{selectedTransf.motivo_solicitacao}"</p>
                   </div>
                 )}
 
                 {/* Status */}
                 {(() => {
-                  const cfg = statusConfig[selectedTransf.status] || statusConfig.pendente_pais
+                  const cfg = statusConfig[selectedTransf.status as TransferenciaEscolarStatus] || statusConfig.aguardando_responsavel
                   const StatusIcon = cfg.icon
                   return (
                     <div className={cn("p-4 rounded-xl flex items-center gap-3", cfg.bg)}>
@@ -290,29 +268,27 @@ export function PortalTransferenciasV2Mobile() {
                   )
                 })()}
 
-                {/* Recusa */}
-                {selectedTransf.observacoes_recusa && (
+                {selectedTransf.justificativa_recusa && (
                   <div className="p-4 bg-rose-50 rounded-xl">
-                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Observações de Recusa</p>
-                    <p className="text-sm text-rose-700 leading-relaxed">{selectedTransf.observacoes_recusa}</p>
+                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Motivo da Recusa</p>
+                    <p className="text-sm text-rose-700 leading-relaxed">{selectedTransf.justificativa_recusa}</p>
                   </div>
                 )}
 
-                {/* Aprovação/Recusa (só mostra se pendente_pais) */}
-                {selectedTransf.status === 'pendente_pais' && recusando && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-bold text-slate-700">Motivo da Recusa</Label>
+                {selectedTransf.status === 'aguardando_responsavel' && recusando && (
+                  <div className="space-y-3 p-4 bg-rose-50 rounded-2xl">
+                    <Label className="text-xs font-black text-rose-800 uppercase ml-1">Justificativa da Recusa</Label>
                     <Textarea
-                      placeholder="Informe o motivo da recusa..."
+                      placeholder="Por que você não aprova esta transferência?"
                       value={motivoRecusa}
                       onChange={(e) => setMotivoRecusa(e.target.value)}
-                      className="min-h-[100px] rounded-2xl resize-none"
+                      className="min-h-[100px] rounded-2xl resize-none border-rose-100"
                     />
                   </div>
                 )}
               </div>
 
-              {selectedTransf.status === 'pendente_pais' && (
+              {selectedTransf.status === 'aguardando_responsavel' && (
                 <SheetFooter className="p-6 pt-4 border-t bg-white shrink-0">
                   {!recusando ? (
                     <div className="flex gap-3 w-full">
@@ -321,19 +297,19 @@ export function PortalTransferenciasV2Mobile() {
                         onClick={() => setRecusando(true)}
                         className="flex-1 h-14 rounded-2xl font-bold text-sm text-rose-600 border-rose-200 hover:bg-rose-50"
                       >
-                        <XCircle className="h-4 w-4 mr-2" />
+                        <ThumbsDown className="h-4 w-4 mr-2" />
                         Recusar
                       </Button>
                       <Button
-                        onClick={() => handleAprovar(selectedTransf.id)}
+                        onClick={() => handleResponder(selectedTransf.transferencia_id, true)}
                         disabled={responder.isPending}
-                        className="flex-1 h-14 rounded-2xl bg-teal-600 hover:bg-teal-700 font-bold text-sm text-white"
+                        className="flex-1 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-bold text-sm text-white"
                       >
                         {responder.isPending ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                           <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            <ThumbsUp className="h-4 w-4 mr-2" />
                             Aprovar
                           </>
                         )}
@@ -349,7 +325,7 @@ export function PortalTransferenciasV2Mobile() {
                         Voltar
                       </Button>
                       <Button
-                        onClick={() => handleRecusar(selectedTransf.id)}
+                        onClick={() => handleResponder(selectedTransf.transferencia_id, false)}
                         disabled={responder.isPending || !motivoRecusa.trim()}
                         className="flex-1 h-14 rounded-2xl bg-rose-600 hover:bg-rose-700 font-bold text-sm text-white"
                       >

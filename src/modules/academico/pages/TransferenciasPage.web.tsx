@@ -2,10 +2,12 @@ import { useState, useMemo } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
   useTransferenciasEscola,
-  useLiberarAluno,
-  useCheckPermissaoTransferencia
+  useConcluirTransferencia,
+  useCheckPermissaoTransferencia,
+  useAceitarTransferenciaDestino,
+  useRecusarTransferenciaDestino
 } from '../hooks'
-import { STATUS_LABEL, STATUS_COLOR } from '../transferencias.service'
+import { STATUS_LABEL, STATUS_COLOR, type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -33,40 +35,26 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  ArrowRightLeft,
-  Plus,
-  Search,
-  Eye,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  User,
-  School,
-  ShieldCheck,
-  TrendingDown,
-  FileText,
-  CalendarClock,
-  Unlock,
-} from 'lucide-react'
-import { toast } from 'sonner'
+import { Textarea } from '@/components/ui/textarea'
 import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { LucideIcon, ArrowRightLeft, Plus, Search, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, TrendingDown, FileText, CalendarClock, Unlock, ThumbsUp, ThumbsDown } from 'lucide-react'
 
 import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
 import { EmitirHistoricoModal } from '@/components/shared/transferencias/EmitirHistoricoModal'
 
 // Mapa de ícones para cada status
-const STATUS_ICON: Record<string, any> = {
+const STATUS_ICON: Record<string, LucideIcon> = {
   aguardando_responsavel:      Clock,
+  aguardando_aceite_destino:   ArrowRightLeft,
   aguardando_liberacao_origem: CalendarClock,
   concluido:                   CheckCircle2,
   recusado:                    XCircle,
   cancelado:                   XCircle,
+  expirado:                    XCircle,
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: { status: TransferenciaEscolarStatus }) {
   const cfg = STATUS_COLOR[status] || STATUS_COLOR.cancelado
   const label = STATUS_LABEL[status] || status
   const Icon = STATUS_ICON[status] || Clock
@@ -83,18 +71,23 @@ export function TransferenciasPageWeb() {
   const tenantId = authUser?.tenantId
   const { data: transferencias, isLoading } = useTransferenciasEscola()
   const { data: permissao } = useCheckPermissaoTransferencia()
-  const liberarAluno = useLiberarAluno()
+  
+  const concluirTransferencia = useConcluirTransferencia()
+  const aceitarDestino = useAceitarTransferenciaDestino()
+  const recusarDestino = useRecusarTransferenciaDestino()
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [detailTransferencia, setDetailTransferencia] = useState<any>(null)
-  const [confirmLiberar, setConfirmLiberar] = useState<any>(null)
+  const [detailTransferencia, setDetailTransferencia] = useState<TransferenciaRow | null>(null)
+  const [confirmLiberar, setConfirmLiberar] = useState<TransferenciaRow | null>(null)
+  const [recusarDestinoDialog, setRecusarDestinoDialog] = useState<TransferenciaRow | null>(null)
+  const [justificativaRecusa, setJustificativaRecusa] = useState('')
   const [busca, setBusca] = useState('')
   const [historicoModalOpen, setHistoricoModalOpen] = useState(false)
   const [historicoTransferencia, setHistoricoTransferencia] = useState<any>(null)
 
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []
-    return transferencias.filter((t: any) => {
+    return transferencias.filter((t) => {
       const q = busca.toLowerCase()
       return t.aluno_nome?.toLowerCase().includes(q) ||
              t.escola_origem?.toLowerCase().includes(q) ||
@@ -104,38 +97,73 @@ export function TransferenciasPageWeb() {
 
   // Recebidas = escola destino = solicitações onde minha escola é a destino
   const recebidas = useMemo(() =>
-    transferenciasList.filter((t: any) => t.destino_id === tenantId),
+    transferenciasList.filter((t) => t.destino_id === tenantId),
     [transferenciasList, tenantId]
   )
 
   // Enviadas = escola origem = alunos que estou liberando
   const enviadas = useMemo(() =>
-    transferenciasList.filter((t: any) => t.origem_id === tenantId),
+    transferenciasList.filter((t) => t.origem_id === tenantId),
     [transferenciasList, tenantId]
   )
 
-  // Pendentes de ação da minha escola
+  // Pendentes de ação da minha escola (Origem)
   const pendentesLiberacao = useMemo(() =>
-    enviadas.filter((t: any) => t.status === 'aguardando_liberacao_origem'),
+    enviadas.filter((t) => t.status === 'aguardando_liberacao_origem'),
     [enviadas]
   )
 
-  const pendentes = useMemo(() =>
-    transferenciasList.filter((t: any) =>
-      t.status !== 'concluido' && t.status !== 'recusado' && t.status !== 'cancelado'
+  // Pendentes de ação da minha escola (Destino)
+  const pendentesAceiteDestino = useMemo(() =>
+    recebidas.filter((t) => t.status === 'aguardando_aceite_destino'),
+    [recebidas]
+  )
+
+  const pendentesTotal = useMemo(() =>
+    transferenciasList.filter((t) =>
+      !['concluido', 'recusado', 'cancelado', 'expirado'].includes(t.status)
     ).length,
     [transferenciasList]
   )
 
-  const handleLiberarAluno = async () => {
+  const handleConcluirTransferencia = async () => {
     if (!confirmLiberar) return
     try {
-      await liberarAluno.mutateAsync(confirmLiberar.transferencia_id)
-      toast.success('Aluno liberado com sucesso! Transferência concluída.')
+      await concluirTransferencia.mutateAsync(confirmLiberar.transferencia_id)
+      toast.success('Aluno liberado com sucesso! Dados integrados na escola destino.')
       setConfirmLiberar(null)
       setDetailTransferencia(null)
     } catch (error: any) {
-      toast.error(error?.message || 'Erro ao liberar aluno')
+      toast.error(error?.message || 'Erro ao concluir transferência')
+    }
+  }
+
+  const handleAceitarDestino = async (id: string) => {
+    try {
+      await aceitarDestino.mutateAsync(id)
+      toast.success('Transferência aceita! Agora aguarde a liberação da escola de origem.')
+      setDetailTransferencia(null)
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao aceitar transferência')
+    }
+  }
+
+  const handleRecusarDestino = async () => {
+    if (!recusarDestinoDialog || !justificativaRecusa.trim()) {
+      toast.error('Informe a justificativa da recusa')
+      return
+    }
+    try {
+      await recusarDestino.mutateAsync({ 
+        id: recusarDestinoDialog.transferencia_id, 
+        justificativa: justificativaRecusa 
+      })
+      toast.success('Transferência recusada com sucesso.')
+      setRecusarDestinoDialog(null)
+      setJustificativaRecusa('')
+      setDetailTransferencia(null)
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao recusar transferência')
     }
   }
 
@@ -182,22 +210,22 @@ export function TransferenciasPageWeb() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pendentes</p>
-                <p className="text-2xl font-bold text-slate-900">{pendentes}</p>
+                <p className="text-2xl font-bold text-slate-900">{pendentesTotal}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`rounded-xl border shadow-sm ${pendentesLiberacao.length > 0 ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'}`}>
+        <Card className={`rounded-xl border shadow-sm ${pendentesLiberacao.length > 0 || pendentesAceiteDestino.length > 0 ? 'border-blue-200 bg-blue-50' : 'border-slate-200 bg-white'}`}>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${pendentesLiberacao.length > 0 ? 'bg-blue-100' : 'bg-slate-50'}`}>
-                <CalendarClock className={`h-6 w-6 ${pendentesLiberacao.length > 0 ? 'text-blue-600' : 'text-slate-400'}`} />
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${pendentesLiberacao.length > 0 || pendentesAceiteDestino.length > 0 ? 'bg-blue-100' : 'bg-slate-50'}`}>
+                <CalendarClock className={`h-6 w-6 ${pendentesLiberacao.length > 0 || pendentesAceiteDestino.length > 0 ? 'text-blue-600' : 'text-slate-400'}`} />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Aguardam Liberação</p>
-                <p className={`text-2xl font-bold ${pendentesLiberacao.length > 0 ? 'text-blue-700' : 'text-slate-900'}`}>
-                  {pendentesLiberacao.length}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ação Necessária</p>
+                <p className={`text-2xl font-bold ${pendentesLiberacao.length > 0 || pendentesAceiteDestino.length > 0 ? 'text-blue-700' : 'text-slate-900'}`}>
+                  {pendentesLiberacao.length + pendentesAceiteDestino.length}
                 </p>
               </div>
             </div>
@@ -213,7 +241,7 @@ export function TransferenciasPageWeb() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Concluídas</p>
                 <p className="text-2xl font-bold text-slate-900">
-                  {transferenciasList.filter((t: any) => t.status === 'concluido').length}
+                  {transferenciasList.filter((t) => t.status === 'concluido').length}
                 </p>
               </div>
             </div>
@@ -228,7 +256,21 @@ export function TransferenciasPageWeb() {
           <div>
             <p className="text-sm font-semibold text-rose-800">Solicitações Bloqueadas</p>
             <p className="text-xs text-rose-600">
-              Sua escola está temporariamente suspensa de realizar solicitações ativas de alunos.
+              Sua escola está temporariamente suspensa de realizar solicitações ativas de alunos devido à baixa reputação na rede.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {pendentesAceiteDestino.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex items-center gap-3">
+          <ArrowRightLeft className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-indigo-800">
+              {pendentesAceiteDestino.length} solicitação{pendentesAceiteDestino.length > 1 ? 'ões' : 'ão'} aguardando seu aceite
+            </p>
+            <p className="text-xs text-indigo-600">
+              Alunos que desejam ingressar na sua escola. Você tem 5 dias úteis para aceitar ou recusar.
             </p>
           </div>
         </div>
@@ -239,16 +281,14 @@ export function TransferenciasPageWeb() {
           <AlertTriangle className="h-5 w-5 text-blue-500 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-blue-800">
-              {pendentesLiberacao.length} aluno{pendentesLiberacao.length > 1 ? 's' : ''} com liberação obrigatória pendente
+              {pendentesLiberacao.length} aluno{pendentesLiberacao.length > 1 ? 's' : ''} com liberação pendente
             </p>
             <p className="text-xs text-blue-600">
-              O responsável aprovou a transferência. Você tem até 30 dias para validar a documentação e clicar em "Liberar Aluno" para concluir o processo.
+              O responsável aprovou a transferência. Você tem até 30 dias para validar a documentação e clicar em "Liberar Aluno".
             </p>
           </div>
         </div>
       )}
-
-
 
       {/* Tabs */}
       <Tabs defaultValue="recebidas" className="space-y-6">
@@ -299,13 +339,13 @@ export function TransferenciasPageWeb() {
                     <TableRow className="border-slate-100">
                       <TableCell colSpan={6} className="h-48 text-center">
                         <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                          <School className="h-8 w-8 text-slate-200" />
+                           <School className="h-8 w-8 text-slate-200" />
                         </div>
                         <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Nenhuma transferência recebida</p>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    recebidas.map((t: any) => (
+                    recebidas.map((t) => (
                       <TableRow key={t.transferencia_id} className="border-slate-100 hover:bg-slate-50/30 transition-colors">
                         <TableCell className="pl-8 py-5">
                           <div className="flex items-center gap-3">
@@ -333,15 +373,39 @@ export function TransferenciasPageWeb() {
                         </TableCell>
                         <TableCell><StatusBadge status={t.status} /></TableCell>
                         <TableCell className="pr-8 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDetailTransferencia(t)}
-                            className="h-9 w-9 rounded-lg text-indigo-600 hover:bg-indigo-50"
-                            title="Ver Detalhes"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDetailTransferencia(t)}
+                              className="h-9 w-9 rounded-lg text-indigo-600 hover:bg-indigo-50"
+                              title="Ver Detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {t.status === 'aguardando_aceite_destino' && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleAceitarDestino(t.transferencia_id)}
+                                  className="h-9 w-9 rounded-lg text-emerald-600 hover:bg-emerald-50"
+                                  title="Aceitar Aluno"
+                                >
+                                  <ThumbsUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRecusarDestinoDialog(t)}
+                                  className="h-9 w-9 rounded-lg text-rose-600 hover:bg-rose-50"
+                                  title="Recusar Aluno"
+                                >
+                                  <ThumbsDown className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -377,12 +441,22 @@ export function TransferenciasPageWeb() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    enviadas.map((t: any) => {
+                    enviadas.map((t) => {
                       const isLiberacaoPendente = t.status === 'aguardando_liberacao_origem'
-                      const diasRestantes = t.prazo_liberacao
-                        ? 30 - differenceInDays(new Date(), new Date(t.prazo_liberacao))
-                        : null
-                      const prazoVencido = diasRestantes !== null && diasRestantes < 0
+                      const isAguardandoDestino = t.status === 'aguardando_aceite_destino'
+                      
+                      let prazoLabel = '—'
+                      let prazoVencido = false
+
+                      if (isLiberacaoPendente && t.prazo_liberacao) {
+                        const dias = differenceInDays(new Date(t.prazo_liberacao), new Date())
+                        prazoLabel = dias < 0 ? `Vencido há ${Math.abs(dias)}d` : `${dias}d restantes`
+                        prazoVencido = dias < 0
+                      } else if (isAguardandoDestino && t.prazo_aceite_destino) {
+                        const dias = differenceInDays(new Date(t.prazo_aceite_destino), new Date())
+                        prazoLabel = dias < 0 ? `Vencido há ${Math.abs(dias)}d` : `${dias}d restantes`
+                        prazoVencido = dias < 0
+                      }
 
                       return (
                         <TableRow key={t.transferencia_id} className={`border-slate-100 hover:bg-slate-50/30 transition-colors ${isLiberacaoPendente ? 'bg-blue-50/30' : ''}`}>
@@ -406,15 +480,9 @@ export function TransferenciasPageWeb() {
                           </TableCell>
                           <TableCell className="text-slate-600 font-medium text-xs">{t.escola_destino || '—'}</TableCell>
                           <TableCell>
-                            {isLiberacaoPendente && t.prazo_liberacao ? (
-                              <span className={`text-xs font-bold ${prazoVencido ? 'text-rose-600' : 'text-blue-600'}`}>
-                                {prazoVencido
-                                  ? `Vencido há ${Math.abs(diasRestantes!)}d`
-                                  : `${diasRestantes}d restantes`}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-slate-400">—</span>
-                            )}
+                            <span className={`text-xs font-bold ${prazoVencido ? 'text-rose-600' : 'text-blue-600'}`}>
+                              {prazoLabel}
+                            </span>
                           </TableCell>
                           <TableCell><StatusBadge status={t.status} /></TableCell>
                           <TableCell className="pr-8 text-right">
@@ -487,7 +555,7 @@ export function TransferenciasPageWeb() {
               Confirmar Liberação
             </DialogTitle>
             <DialogDescription>
-              A transferência foi aprovada pelo responsável. Use este tempo para garantir que a documentação do aluno esteja 100% regularizada antes de confirmar a saída definitiva.
+              A transferência foi aprovada. Ao confirmar, o aluno será inativado na sua escola e uma cópia dos dados será integrada na escola de destino.
             </DialogDescription>
           </DialogHeader>
           {confirmLiberar && (
@@ -502,7 +570,7 @@ export function TransferenciasPageWeb() {
               </div>
               <div className="bg-amber-50 border border-amber-100 p-3 rounded-lg">
                 <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                  <strong>Aviso Legal:</strong> A liberação é obrigatória após a anuência dos responsáveis. O botão abaixo conclui o desligamento acadêmico do aluno no sistema.
+                  <strong>Aviso Legal:</strong> Este processo é irreversível e marca a saída definitiva do aluno. O histórico escolar será preservado para consultas futuras.
                 </p>
               </div>
             </div>
@@ -511,10 +579,43 @@ export function TransferenciasPageWeb() {
             <Button variant="outline" onClick={() => setConfirmLiberar(null)}>Cancelar</Button>
             <Button
               className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={handleLiberarAluno}
-              disabled={liberarAluno.isPending}
+              onClick={handleConcluirTransferencia}
+              disabled={concluirTransferencia.isPending}
             >
-              {liberarAluno.isPending ? 'Processando...' : 'Confirmar Liberação'}
+              {concluirTransferencia.isPending ? 'Integrando Dados...' : 'Confirmar e Integrar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Recusar Transferência (Escola Destino) */}
+      <Dialog open={!!recusarDestinoDialog} onOpenChange={(open) => !open && setRecusarDestinoDialog(null)}>
+        <DialogContent className="max-w-[420px] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-700">
+              <ThumbsDown className="h-5 w-5" />
+              Recusar Solicitação
+            </DialogTitle>
+            <DialogDescription>
+              Explique o motivo pelo qual sua escola não pode aceitar este aluno no momento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea 
+              placeholder="Ex: Não temos vagas para esta série ou o aluno não atende aos requisitos pedagógicos..."
+              value={justificativaRecusa}
+              onChange={(e) => setJustificativaRecusa(e.target.value)}
+              className="min-h-[100px] rounded-xl bg-slate-50"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRecusarDestinoDialog(null)}>Cancelar</Button>
+            <Button
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+              onClick={handleRecusarDestino}
+              disabled={recusarDestino.isPending}
+            >
+              {recusarDestino.isPending ? 'Processando...' : 'Confirmar Recusa'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -602,39 +703,66 @@ export function TransferenciasPageWeb() {
                 </div>
               )}
 
-              {detailTransferencia.status === 'aguardando_liberacao_origem' &&
-               detailTransferencia.origem_id === tenantId && (
-                <Button
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  onClick={() => {
-                    setDetailTransferencia(null)
-                    setConfirmLiberar(detailTransferencia)
-                  }}
-                >
-                  <Unlock className="mr-2 h-4 w-4" />
-                  Liberar Aluno (Concluir Transferência)
-                </Button>
-              )}
+              {/* Botões de ação no detalhe */}
+              <div className="flex flex-col gap-2 pt-2">
+                {detailTransferencia.status === 'aguardando_aceite_destino' && 
+                 detailTransferencia.destino_id === tenantId && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={() => handleAceitarDestino(detailTransferencia.transferencia_id)}
+                      disabled={aceitarDestino.isPending}
+                    >
+                      <ThumbsUp className="mr-2 h-4 w-4" />
+                      Aceitar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                      onClick={() => setRecusarDestinoDialog(detailTransferencia)}
+                    >
+                      <ThumbsDown className="mr-2 h-4 w-4" />
+                      Recusar
+                    </Button>
+                  </div>
+                )}
 
-              {detailTransferencia.status === 'concluido' && detailTransferencia.origem_id === tenantId && (
-                <Button
-                  className="w-full bg-amber-600 hover:bg-amber-700"
-                  onClick={() => {
-                    setDetailTransferencia(null)
-                    setHistoricoTransferencia({
-                      transferencia_id: detailTransferencia.transferencia_id,
-                      aluno_id: detailTransferencia.aluno_id,
-                      aluno_nome: detailTransferencia.aluno_nome,
-                      escola_origem: detailTransferencia.escola_origem,
-                      escola_destino: detailTransferencia.escola_destino
-                    })
-                    setHistoricoModalOpen(true)
-                  }}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Emitir Histórico Escolar
-                </Button>
-              )}
+                {detailTransferencia.status === 'aguardando_liberacao_origem' &&
+                 detailTransferencia.origem_id === tenantId && (
+                  <Button
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    onClick={() => {
+                      setDetailTransferencia(null)
+                      setConfirmLiberar(detailTransferencia)
+                    }}
+                  >
+                    <Unlock className="mr-2 h-4 w-4" />
+                    Liberar Aluno (Integrar Dados)
+                  </Button>
+                )}
+
+                {(detailTransferencia.status === 'concluido' || detailTransferencia.status === 'aguardando_liberacao_origem') && 
+                 detailTransferencia.origem_id === tenantId && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-amber-600 border-amber-200 hover:bg-amber-50"
+                    onClick={() => {
+                      setDetailTransferencia(null)
+                      setHistoricoTransferencia({
+                        transferencia_id: detailTransferencia.transferencia_id,
+                        aluno_id: detailTransferencia.aluno_id,
+                        aluno_nome: detailTransferencia.aluno_nome,
+                        escola_origem: detailTransferencia.escola_origem,
+                        escola_destino: detailTransferencia.escola_destino
+                      })
+                      setHistoricoModalOpen(true)
+                    }}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Emitir Histórico Escolar
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>

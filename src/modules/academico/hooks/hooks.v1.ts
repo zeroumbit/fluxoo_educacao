@@ -4,6 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { academicoService } from '../services/academico.service.v1'
 import { transferenciasService } from '../transferencias.service'
+import type { 
+  Matricula,
+  MatriculaInsert, 
+  MatriculaUpdate, 
+  SeloInsert 
+} from '@/lib/database.types'
+import type { PlanoAulaComTurmas, AtividadeComTurmas } from '../types'
 
 export function useMatriculas() {
   const { authUser } = useAuth()
@@ -20,16 +27,17 @@ export function useMatricula(id: string | null) {
   const { authUser } = useAuth()
   return useQuery({ 
     queryKey: ['matricula', id, authUser?.tenantId], 
-    queryFn: () => academicoService.listarMatriculas(authUser!.tenantId).then(list => list.find((m: any) => m.id === id)), 
+    queryFn: () => academicoService.listarMatriculas(authUser!.tenantId).then(list => list.find((m) => m.id === id)), 
     enabled: !!authUser?.tenantId && !!id 
   })
 }
 export function useCriarMatricula() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (d: any) => academicoService.criarMatricula(d),
-    onSuccess: (data: any, variables: any) => {
-      if (data) cacheEvents.publish('MATRICULA_CRIADA', { matriculaId: data.id, tenantId: data.tenant_id, turmaId: data.turma_id, alunoId: data.aluno_id });
+    mutationFn: (d: Partial<MatriculaInsert> & Record<string, unknown>) => academicoService.criarMatricula(d),
+    onSuccess: (data) => {
+      const m = data as Matricula;
+      if (m) cacheEvents.publish('MATRICULA_CRIADA', { matriculaId: m.id, tenantId: m.tenant_id, turmaId: m.turma_id, alunoId: m.aluno_id });
       // Invalida turmas (trigger DB atualiza alunos_ids[])
       qc.invalidateQueries({ queryKey: ['turmas'] })
       // Invalida alunos (novo aluno pode aparecer na lista)
@@ -49,7 +57,7 @@ export function useAtualizarMatricula() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarMatricula(id, authUser!.tenantId, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<MatriculaUpdate> & Record<string, unknown> }) => academicoService.atualizarMatricula(id, authUser!.tenantId, data),
     onSuccess: (_, { data }) => {
       qc.invalidateQueries({ queryKey: ['matriculas'] })
       // Invalida turmas se houve mudança de turma
@@ -129,7 +137,7 @@ export function useCriarPlanoAula() {
   const qc = useQueryClient()
   const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (d: any) => academicoService.criarPlanoAula(d, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
+    mutationFn: (d: PlanoAulaComTurmas) => academicoService.criarPlanoAula(d, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['planos_aula'] })
       qc.invalidateQueries({ queryKey: ['portal', 'planos-aula'] })
@@ -140,7 +148,7 @@ export function useAtualizarPlanoAula() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarPlanoAula(id, authUser!.tenantId, data, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
+    mutationFn: ({ id, data }: { id: string; data: PlanoAulaComTurmas }) => academicoService.atualizarPlanoAula(id, authUser!.tenantId, data, undefined, authUser?.isProfessor ? authUser.funcionarioId : undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['planos_aula'] })
       qc.invalidateQueries({ queryKey: ['portal', 'planos-aula'] })
@@ -173,7 +181,7 @@ export function useAtividades() {
 export function useCriarAtividade() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (d: any) => academicoService.criarAtividade(d),
+    mutationFn: (d: AtividadeComTurmas) => academicoService.criarAtividade(d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['atividades'] })
       qc.invalidateQueries({ queryKey: ['portal', 'atividades'] })
@@ -184,7 +192,7 @@ export function useAtualizarAtividade() {
   const { authUser } = useAuth()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => academicoService.atualizarAtividade(id, authUser!.tenantId, data),
+    mutationFn: ({ id, data }: { id: string; data: AtividadeComTurmas }) => academicoService.atualizarAtividade(id, authUser!.tenantId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['atividades'] })
       qc.invalidateQueries({ queryKey: ['portal', 'atividades'] })
@@ -217,7 +225,7 @@ export function useSelos() {
 export function useAtribuirSelo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (d: any) => academicoService.atribuirSelo(d),
+    mutationFn: (d: SeloInsert) => academicoService.atribuirSelo(d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['selos'] })
       qc.invalidateQueries({ queryKey: ['portal', 'selos'] })
@@ -281,15 +289,6 @@ export function useSolicitarSaida() {
   })
 }
 
-export function useLiberarAluno() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => transferenciasService.liberarAluno(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
-    }
-  })
-}
 
 export function useCheckPermissaoTransferencia() {
   const { authUser } = useAuth()
@@ -300,3 +299,37 @@ export function useCheckPermissaoTransferencia() {
     staleTime: 5 * 60 * 1000,
   })
 }
+
+export function useAceitarTransferenciaDestino() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => transferenciasService.aceitarTransferenciaDestino(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+    }
+  })
+}
+
+export function useRecusarTransferenciaDestino() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, justificativa }: { id: string; justificativa: string }) =>
+      transferenciasService.recusarTransferenciaDestino(id, justificativa),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+    }
+  })
+}
+
+export function useConcluirTransferencia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => transferenciasService.concluirTransferencia(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
+      qc.invalidateQueries({ queryKey: ['matriculas'] })
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+    }
+  })
+}
+

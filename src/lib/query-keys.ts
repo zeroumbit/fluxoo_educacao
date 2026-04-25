@@ -29,14 +29,17 @@ export const QueryKeys = {
     ALUNO: (alunoId: string, tenantId?: string) => ['turmas_aluno', alunoId, tenantId] as const,
     
     ROOT_ACADEMICO: ['academico'] as const,
+    ROOT_AVALIACOES_CONFIG: ['avaliacoes_config'] as const,
     AVALIACOES: (turmaId: string, disciplinaId: string, bimestre: number) => ['avaliacoes_config', turmaId, disciplinaId, bimestre] as const,
     NOTAS: (avaliacaoId: string) => ['avaliacoes_notas', avaliacaoId] as const,
+    ROOT_BOLETIM: ['boletim_v2'] as const,
     BOLETIM: (alunoId: string) => ['boletim_v2', 'aluno', alunoId] as const,
     BOLETIM_TURMA: (turmaId: string, bimestre: number) => ['boletim_v2', 'turma', turmaId, bimestre] as const,
     FECHAMENTO: (tenantId: string, turmaId: string, bimestre: number) => ['fechamento_bimestre', tenantId, turmaId, bimestre] as const,
     
     ROOT_DISCIPLINAS: ['disciplinas'] as const,
     DISCIPLINAS: (tenantId: string, etapa?: string) => ['disciplinas', tenantId, etapa] as const,
+    DISCIPLINAS_TURMA: (turmaId: string) => ['disciplinas_turma', turmaId] as const,
     ROOT_CATALOGO: ['disciplinas-catalogo'] as const,
     CATALOGO_DISCIPLINAS: (tenantId: string) => ['disciplinas-catalogo', tenantId] as const,
     

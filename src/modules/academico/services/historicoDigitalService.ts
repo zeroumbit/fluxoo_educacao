@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { supabase } from '@/lib/supabase';
-import { getExitTranscriptHtmlTemplate, openHistoricoPrintable } from './historicoPdfService';
+import { getExitTranscriptHtmlTemplate } from './historicoPdfService';
+import type { HistoricoRpcResponse } from '../types';
 
 export interface HistoricoDisciplina {
   disciplina: string;
@@ -77,7 +78,7 @@ export async function buildExitTranscriptPayload(
     .from('escolas')
     .select('id, nome, cnpj')
     .eq('tenant_id', tenantId)
-    .single();
+    .single() as { data: { id: string; nome: string; cnpj: string | null } | null; error: Error | null };
 
   if (escolaError || !escola) {
     throw new Error(`Erro ao buscar dados da escola origem: ${escolaError?.message}`);
@@ -87,7 +88,7 @@ export async function buildExitTranscriptPayload(
     .rpc('fn_get_historico_consolidado_aluno', {
       p_aluno_id: alunoId,
       p_tenant_id: tenantId
-    });
+    }) as { data: HistoricoRpcResponse[] | null; error: Error | null };
 
   let disciplinas: HistoricoDisciplina[] = [];
   let frequencia: HistoricoFrequencia = {
@@ -103,7 +104,7 @@ export async function buildExitTranscriptPayload(
     const data = academicoData[0];
     
     if (data.disciplinas) {
-      disciplinas = (data.disciplinas as any[]).map((d: any) => ({
+      disciplinas = data.disciplinas.map((d) => ({
         disciplina: d.disciplina || 'Disciplina',
         media_final: Number(d.media_final) || 0,
         resultado: d.resultado || 'cursando'
@@ -161,12 +162,12 @@ export async function buildExitTranscriptPayload(
       .from('alertas_saude_nee')
       .select('tipo_alerta, descricao, cuidados_especificos')
       .eq('aluno_id', alunoId)
-      .eq('tenant_id', tenantId);
+      .eq('tenant_id', tenantId) as { data: { tipo_alerta: string; descricao: string; cuidados_especificos: string | null }[] | null };
 
     if (saude && saude.length > 0) {
       payload.dados_saude = {
-        alergias: saude.filter((s: any) => s.tipo_alerta === 'alergia').map((s: any) => s.descricao),
-        necessidades_especiais: saude.filter((s: any) => s.tipo_alerta === 'nee').map((s: any) => s.descricao),
+        alergias: saude.filter((s) => s.tipo_alerta === 'alergia').map((s) => s.descricao),
+        necessidades_especiais: saude.filter((s) => s.tipo_alerta === 'nee').map((s) => s.descricao),
         cuidados_especificos: saude[0].cuidados_especificos
       };
     } else {
@@ -202,7 +203,6 @@ export async function emitirHistoricoOficial(
     });
     const validationHash = payload.emissao.validation_hash;
 
-    const validationCode = validationHash.substring(0, 12);
     const htmlContent = getExitTranscriptHtmlTemplate(payload);
     
     const { data: historicoRecord, error: insertError } = await (supabase as any)
@@ -232,14 +232,15 @@ export async function emitirHistoricoOficial(
       pdf_url: `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`,
       message: 'Histórico emitido! Use o botão para imprimir/salvar.'
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao emitir histórico:', error);
+    const err = error as Error;
     return {
       sucesso: false,
       historico_id: '',
       validation_hash: '',
       pdf_url: '',
-      message: error.message || 'Erro desconhecido ao emitir histórico'
+      message: err.message || 'Erro desconhecido ao emitir histórico'
     };
   }
 }
@@ -249,7 +250,7 @@ export async function listarHistoricosAluno(alunoId: string, tenantId: string) {
     .rpc('fn_listar_historicos_aluno', {
       p_aluno_id: alunoId,
       p_tenant_id: tenantId
-    });
+    }) as { data: Record<string, unknown>[] | null; error: Error | null };
 
   if (error) {
     console.error('Erro ao listar históricos:', error);
@@ -265,7 +266,7 @@ export async function buscarHistoricoPorHash(hash: string, tenantId: string) {
     .select('*')
     .eq('validation_hash', hash)
     .eq('tenant_id', tenantId)
-    .single();
+    .single() as { data: Record<string, unknown> | null; error: Error | null };
 
   if (error) {
     console.error('Erro ao buscar histórico:', error);

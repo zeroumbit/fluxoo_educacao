@@ -20,7 +20,7 @@ export function useAvaliacoesByTurmaDisciplina(turmaId: string, disciplinaId: st
 
 export function useDisciplinasPorTurma(turmaId: string) {
   return useQuery({
-    queryKey: ['disciplinas_turma', turmaId], // Could add to QueryKeys if needed
+    queryKey: QueryKeys.TURMAS.DISCIPLINAS_TURMA(turmaId),
     queryFn: () => academicoV2Service.listarDisciplinasPorTurma(turmaId),
     enabled: !!turmaId,
     staleTime: 10 * 60 * 1000,
@@ -49,7 +49,7 @@ export function useExcluirAvaliacao() {
     mutationFn: (id: string) => academicoV2Service.excluirAvaliacao(id, authUser!.user.id),
     onSuccess: () => {
       // Nota: Idealmente passaríamos os IDs na mutação para invalidar exato, mas invalidate all de avaliacoes é seguro
-      qc.invalidateQueries({ queryKey: ['avaliacoes_config'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_AVALIACOES_CONFIG })
       toast.success('Avaliação excluída.')
     }
   })
@@ -79,7 +79,7 @@ export function useSalvarNotasEmLote() {
     }) => academicoV2Service.salvarNotasEmLote(tenantId, avaliacaoId, authUser!.user.id, notas),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.NOTAS(variables.avaliacaoId) })
-      qc.invalidateQueries({ queryKey: ['boletim_v2'] }) // Invalida genérico para garantir atualização
+      qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM }) // Invalida genérico para garantir atualização
       qc.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
       cacheEvents.publish('NOTAS_LANCADAS', { avaliacaoId: variables.avaliacaoId })
       toast.success('Notas salvas com sucesso!')
@@ -119,7 +119,7 @@ export function useSalvarRecuperacao() {
     mutationFn: (payload: Parameters<typeof academicoV2Service.salvarRecuperacao>[0]) =>
       academicoV2Service.salvarRecuperacao(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['boletim_v2'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
       qc.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
       toast.success('Recuperação salva com sucesso!')
     },
@@ -154,7 +154,7 @@ export function useFecharBimestre() {
       }),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.FECHAMENTO(authUser!.tenantId, variables.turmaId, variables.bimestre) })
-      qc.invalidateQueries({ queryKey: ['boletim_v2'] })
+      qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
       cacheEvents.publish('BIMESTRE_FECHADO', { turmaId: variables.turmaId, bimestre: variables.bimestre })
       toast.success(`Bimestre ${variables.bimestre} fechado com sucesso!`)
     },

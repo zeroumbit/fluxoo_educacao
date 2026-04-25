@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, AlertCircle, ArrowRightLeft } from 'lucide-react';
 import { usePortalContext } from '../../context';
+import { ModalSolicitarTransferenciaPortal } from '../components/ModalSolicitarTransferenciaPortal';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -11,6 +12,7 @@ const getInitials = (name: string) => {
 export function PortalAlunosListV2Web() {
   const navigate = useNavigate();
   const { vinculos, selecionarAluno } = usePortalContext();
+  const [transferAluno, setTransferaluno] = React.useState<any>(null);
 
   return (
     <div className="flex flex-col gap-8 w-full">
@@ -53,17 +55,34 @@ export function PortalAlunosListV2Web() {
               </div>
             </div>
 
-            {v.aluno?.status === 'inativo' && (
-              <div className="flex flex-col gap-2 mt-8 pt-6 border-t border-slate-100">
+            <div className="flex flex-col gap-2 mt-8 pt-6 border-t border-slate-100">
+              {v.aluno?.status === 'inativo' ? (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-2xl border text-sm font-bold w-full bg-rose-50 text-rose-700 border-rose-100">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   Matrícula Inativa
                 </div>
-              </div>
-            )}
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTransferaluno(v.aluno);
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-slate-100 text-xs font-black uppercase tracking-widest text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all w-full"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                  Solicitar Transferência
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
+
+      <ModalSolicitarTransferenciaPortal
+        isOpen={!!transferAluno}
+        onClose={() => setTransferaluno(null)}
+        aluno={transferAluno}
+      />
     </div>
   );
 }

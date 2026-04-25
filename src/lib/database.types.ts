@@ -279,32 +279,45 @@ export type MatriculaInsert = Omit<Matricula, 'id' | 'created_at' | 'updated_at'
 export type MatriculaUpdate = Partial<MatriculaInsert>
 
 // ========== TRANSFERENCIAS_ESCOLARES ==========
+export type TransferenciaEscolarStatus =
+  | 'aguardando_responsavel'
+  | 'aguardando_aceite_destino'
+  | 'aguardando_liberacao_origem'
+  | 'concluido'
+  | 'recusado'
+  | 'cancelado'
+  | 'expirado'
+
+export type TransferenciaEscolarIniciador = 'origem' | 'destino' | 'responsavel'
+
 export type TransferenciaEscolar = {
   id: string
-  tenant_id: string | null
   aluno_id: string
   escola_origem_id: string
-  responsavel_id: string
   escola_destino_id: string | null
-  escola_destino_nome: string | null
-  escola_destino_cnpj: string | null
-  status: 'pendente_pais' | 'pendente_destino' | 'aprovado' | 'recusado' | 'cancelado' | 'concluido'
-  motivo_solicitacao: string | null
-  observacoes_recusa: string | null
-  solicitante_tipo: 'escola_destino' | 'escola_origem'
-  data_solicitacao: string
-  aprovado_em: string | null
+  escola_destino_nome_manual: string | null
+  escola_destino_cnpj_manual: string | null
+  responsavel_id: string | null
+  iniciado_por: TransferenciaEscolarIniciador
+  status: TransferenciaEscolarStatus
+  motivo_solicitacao: string
+  justificativa_recusa: string | null
+  prazo_liberacao: string | null
+  prazo_responsavel: string | null
+  prazo_aceite_destino: string | null
+  aceite_destino_em: string | null
+  recusado_por: 'responsavel' | 'escola_origem' | 'escola_destino' | null
   recusado_em: string | null
+  cancelado_em: string | null
+  criado_em: string
+  aprovado_em: string | null
   concluido_em: string | null
-  sla_vencimento: string | null
-  created_at: string
-  updated_at: string
+  atualizado_em: string
 }
-export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'created_at' | 'updated_at' | 'data_solicitacao'> & {
+export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'criado_em' | 'atualizado_em'> & {
   id?: string
-  data_solicitacao?: string
-  created_at?: string
-  updated_at?: string
+  criado_em?: string
+  atualizado_em?: string
 }
 export type TransferenciaEscolarUpdate = Partial<TransferenciaEscolarInsert>
 

@@ -321,6 +321,17 @@ export function useResponderTransferencia() {
   })
 }
 
+export function useSolicitarTransferenciaResponsavel() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof transferenciasService.solicitarPeloResponsavel>[0]) =>
+      transferenciasService.solicitarPeloResponsavel(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portal', 'transferencias'] })
+    },
+  })
+}
+
 // ==========================================
 // BOLETIM
 // ==========================================
