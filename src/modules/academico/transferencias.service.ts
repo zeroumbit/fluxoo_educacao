@@ -217,7 +217,7 @@ export const transferenciasService = {
     const { data, error } = await supabase
       .from('transferencias_escolares')
       .select('*')
-      .or(`escola_origem_id.eq.${tenantId},escola_destino_id.is.not.null`)
+      .or(`escola_origem_id.eq.${tenantId}`)
       .order('criado_em' as never, { ascending: false })
 
     if (error) throw error
