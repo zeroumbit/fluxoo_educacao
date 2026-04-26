@@ -33,7 +33,7 @@ import {
 import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { type LucideIcon, ArrowRightLeft, Plus, Search, Loader2, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, FileText, ArrowLeft, ChevronRight, UserCheck, SearchCode, ArrowUpRight, ArrowDownLeft, ThumbsUp, ThumbsDown, Unlock } from 'lucide-react'
-
+import { toast } from 'sonner'
 import { type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
 
 const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
@@ -280,7 +280,7 @@ export function TransferenciasPageMobile() {
           <ArrowLeft className="h-5 w-5 text-slate-500" />
         </button>
       }
-      rightAction={
+      rightActions={
         <button onClick={() => setIsFormOpen(true)} className="h-10 w-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
           <Plus className="h-5 w-5 text-white" />
         </button>

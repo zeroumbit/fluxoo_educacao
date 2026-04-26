@@ -48,7 +48,7 @@ export const academicoV2Service = {
 
   async listarDisciplinasPorTurma(turmaId: string) {
     const { data, error } = await supabase
-      .from('turma_professores' as never)
+      .from('turma_professores' as any)
       .select('disciplina:disciplinas(id, nome)')
       .eq('turma_id', turmaId)
       .eq('status', 'ativo')
@@ -69,7 +69,7 @@ export const academicoV2Service = {
 
   async listarAvaliacoesByTurmaDisciplina(turmaId: string, disciplinaId: string, bimestre: number) {
     const { data, error } = await supabase
-      .from('avaliacoes_config' as never)
+      .from('avaliacoes_config' as any)
       .select('*')
       .eq('turma_id', turmaId)
       .eq('disciplina_id', disciplinaId)
@@ -82,8 +82,8 @@ export const academicoV2Service = {
 
   async criarAvaliacao(payload: Omit<AvaliacaoConfig, 'id' | 'created_at' | 'deleted_at'>) {
     const { data, error } = await supabase
-      .from('avaliacoes_config' as never)
-      .insert(payload)
+      .from('avaliacoes_config' as any)
+      .insert(payload as any)
       .select()
       .single()
     if (error) throw error
@@ -92,15 +92,15 @@ export const academicoV2Service = {
 
   async excluirAvaliacao(id: string, userId: string) {
     const { error } = await supabase
-      .from('avaliacoes_config' as never)
-      .update({ deleted_at: new Date().toISOString(), deleted_by: userId })
+      .from('avaliacoes_config' as any)
+      .update({ deleted_at: new Date().toISOString(), deleted_by: userId } as any)
       .eq('id', id)
     if (error) throw error
   },
 
   async listarNotasPorAvaliacao(avaliacaoId: string): Promise<AvaliacaoNota[]> {
     const { data, error } = await supabase
-      .from('avaliacoes_notas' as never)
+      .from('avaliacoes_notas' as any)
       .select('*')
       .eq('avaliacao_id', avaliacaoId)
       .is('deleted_at', null)
@@ -125,8 +125,8 @@ export const academicoV2Service = {
     }))
 
     const { error } = await supabase
-      .from('avaliacoes_notas' as never)
-      .upsert(payload, { onConflict: 'avaliacao_id,aluno_id' })
+      .from('avaliacoes_notas' as any)
+      .upsert(payload as any, { onConflict: 'avaliacao_id,aluno_id' })
     if (error) throw error
     return true
   },
@@ -137,7 +137,7 @@ export const academicoV2Service = {
 
   async buscarBoletimConsolidadoPorTurma(turmaId: string, bimestre: number): Promise<BoletimConsolidado[]> {
     const { data, error } = await supabase
-      .from('vw_boletim_completo' as never)
+      .from('vw_boletim_completo' as any)
       .select('*')
       .eq('turma_id', turmaId)
       .eq('bimestre', bimestre)
@@ -147,7 +147,7 @@ export const academicoV2Service = {
 
   async buscarBoletimConsolidadoPorAluno(alunoId: string): Promise<BoletimConsolidado[]> {
     const { data, error } = await supabase
-      .from('vw_boletim_completo' as never)
+      .from('vw_boletim_completo' as any)
       .select('*')
       .eq('aluno_id', alunoId)
       .order('bimestre', { ascending: true })
@@ -168,8 +168,8 @@ export const academicoV2Service = {
     registrado_por: string
   }) {
     const { error } = await supabase
-      .from('recuperacoes' as never)
-      .upsert(payload, { onConflict: 'aluno_id,disciplina_id,bimestre' })
+      .from('recuperacoes' as any)
+      .upsert(payload as any, { onConflict: 'aluno_id,disciplina_id,bimestre' })
     if (error) throw error
     return true
   },
@@ -180,7 +180,7 @@ export const academicoV2Service = {
 
   async buscarStatusFechamento(tenantId: string, turmaId: string, bimestre: number) {
     const { data, error } = await supabase
-      .from('fechamento_bimestre' as never)
+      .from('fechamento_bimestre' as any)
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('turma_id', turmaId)
@@ -198,20 +198,20 @@ export const academicoV2Service = {
     observacoes?: string
   }) {
     const { error } = await supabase
-      .from('fechamento_bimestre' as never)
+      .from('fechamento_bimestre' as any)
       .upsert({
         ...payload,
         status: 'fechado' as StatusBimestre,
         fechado_em: new Date().toISOString(),
-      }, { onConflict: 'tenant_id,turma_id,bimestre' })
+      } as any, { onConflict: 'tenant_id,turma_id,bimestre' })
     if (error) throw error
     return true
   },
 
   async reabrirBimestre(tenantId: string, turmaId: string, bimestre: number) {
     const { error } = await supabase
-      .from('fechamento_bimestre' as never)
-      .update({ status: 'aberto' as StatusBimestre, fechado_em: null })
+      .from('fechamento_bimestre' as any)
+      .update({ status: 'aberto' as StatusBimestre, fechado_em: null } as any)
       .eq('tenant_id', tenantId)
       .eq('turma_id', turmaId)
       .eq('bimestre', bimestre)
@@ -225,7 +225,7 @@ export const academicoV2Service = {
 
   async listarCalendario(tenantId: string) {
     const { data, error } = await supabase
-      .from('calendario_letivo' as never)
+      .from('calendario_letivo' as any)
       .select('*')
       .eq('tenant_id', tenantId)
       .order('data', { ascending: true })
@@ -248,15 +248,15 @@ export const academicoV2Service = {
     registrado_por: string
   }) {
     const { error } = await supabase
-      .from('observacoes_pedagogicas' as never)
-      .upsert(payload, { onConflict: 'aluno_id,bimestre,turma_id' })
+      .from('observacoes_pedagogicas' as any)
+      .upsert(payload as any, { onConflict: 'aluno_id,bimestre,turma_id' })
     if (error) throw error
     return true
   },
 
   async buscarObservacaoPedagogica(alunoId: string, bimestre: number, turmaId: string) {
     const { data, error } = await supabase
-      .from('observacoes_pedagogicas' as never)
+      .from('observacoes_pedagogicas' as any)
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('bimestre', bimestre)

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { portalService } from '../service'
 import { toast } from 'sonner'
+import { usePortalContext } from '../context'
+import { useAceitarTermos } from '../hooks'
 import { cn } from '@/lib/utils'
 
 interface ModalContratoEscolaProps {
@@ -29,6 +31,8 @@ export function ModalContratoEscola({
   escolaEndereco = '[Endereço]',
   alunoNome = '[Nome do Aluno]'
 }: ModalContratoEscolaProps) {
+  const { refreshData } = usePortalContext()
+  const aceitarMutation = useAceitarTermos()
   const [loading, setLoading] = useState(true)
   const [accepting, setAccepting] = useState(false)
   const [contratoHtml, setContratoHtml] = useState('')
@@ -36,23 +40,61 @@ export function ModalContratoEscola({
 
   useEffect(() => {
     async function loadContrato() {
-      if (!open || !tenantId) return
+      if (!open) return
+      
+      console.log('ModalContrato: Carregando para tenantId:', tenantId)
+      console.log('ModalContrato: Responsável:', responsavel?.id)
+
+      // Tenta obter o tenantId das props ou do responsável/vínculos
+      let currentTenantId = tenantId
+      if (!currentTenantId && responsavel?.tenant_id) {
+        currentTenantId = responsavel.tenant_id
+        console.log('ModalContrato: Usando tenantId do responsável:', currentTenantId)
+      }
+      
+      // Se ainda não tem tenantId, tenta pegar do primeiro vínculo (caso multi-escola)
+      if (!currentTenantId && responsavel?.id) {
+        console.log('ModalContrato: Buscando tenantId via vínculos...')
+        const { data: vinculos, error: vError } = await supabase.from('aluno_responsavel').select('aluno:alunos(tenant_id)').eq('responsavel_id', responsavel.id).limit(1).maybeSingle() as any
+        if (vError) console.error('ModalContrato: Erro ao buscar vínculos:', vError)
+        if (vinculos?.aluno?.tenant_id) {
+          currentTenantId = vinculos.aluno.tenant_id
+          console.log('ModalContrato: TenantId encontrado via vínculos:', currentTenantId)
+        }
+      }
+
+      if (!currentTenantId) {
+        console.warn('ModalContrato: Nenhum tenantId encontrado!')
+        setLoading(false)
+        return
+      }
       
       try {
         setLoading(true)
         // Busca dados da escola primeiro
-        const { data: school } = await supabase.from('escolas').select('*').eq('id', tenantId).maybeSingle()
+        const { data: school } = await supabase.from('escolas').select('*').eq('id', currentTenantId).maybeSingle()
         if (school) setEscolaInfo(school)
 
-        const { data, error } = await supabase
-          .from('config_financeira' as any)
-          .select('contrato_modelo')
-          .eq('tenant_id', tenantId)
+        console.log('ModalContrato: Buscando config para tenant:', currentTenantId)
+        const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
+          .select('config_financeira')
+          .eq('tenant_id', currentTenantId)
+          .eq('contexto', 'escola')
+          .is('vigencia_fim', null)
           .maybeSingle() as any
 
-        if (data?.contrato_modelo) {
+        if (error) {
+          console.error('ModalContrato: Erro na query de config:', error)
+          throw error
+        }
+
+        console.log('ModalContrato: Resultado da query:', data)
+        const modelo = data?.config_financeira?.contrato_modelo
+
+        if (modelo) {
+          console.log('ModalContrato: Modelo encontrado, aplicando variáveis...')
           // Replace variables
-          let html = data.contrato_modelo
+          let html = modelo
           const replacements: Record<string, string> = {
             '{{escola_nome}}': school?.razao_social || escolaNome,
             '{{escola_cnpj}}': school?.cnpj || escolaCnpj,
@@ -71,27 +113,30 @@ export function ModalContratoEscola({
           
           setContratoHtml(html)
         } else {
+            console.warn('ModalContrato: modelo de contrato é nulo ou vazio')
             setContratoHtml('<div class="p-20 text-center"><p class="text-slate-400 font-medium">O modelo de contrato ainda não foi configurado pela instituição.</p></div>')
         }
       } catch (err) {
         console.error('Erro ao carregar contrato:', err)
+        setContratoHtml('<div class="p-20 text-center text-red-500 font-medium">Erro ao carregar o contrato. Por favor, tente novamente mais tarde.</div>')
       } finally {
         setLoading(false)
       }
     }
 
     loadContrato()
-  }, [open, tenantId])
+  }, [open, tenantId, responsavel])
 
   const handleAccept = async () => {
     setAccepting(true)
     try {
-      await portalService.aceitarTermos(responsavel.id)
+      await aceitarMutation.mutateAsync(responsavel.id)
+      await refreshData()
       toast.success('Contrato aceito com sucesso!')
       onClose()
     } catch (err) {
       console.error('Erro ao aceitar contrato:', err)
-      toast.error('Erro ao registrar aceite.')
+      toast.error('Não foi possível registrar o aceite. Tente novamente.')
     } finally {
       setAccepting(false)
     }

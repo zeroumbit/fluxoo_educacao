@@ -67,6 +67,8 @@ export function MatriculaFormPageMobile() {
   const criar = useCriarMatricula()
   const atualizar = useAtualizarMatricula()
 
+  const m = mData as any
+
   const form = useForm<MatriculaFormData>({
     resolver: zodResolver(matriculaSchema) as any,
     defaultValues: {
@@ -84,19 +86,19 @@ export function MatriculaFormPageMobile() {
 
   // Preencher formulário quando for edição
   useEffect(() => {
-    if (mData) {
+    if (m) {
       // Definir valores individualmente para garantir que sejam aplicados
-      form.setValue('tipo', mData.tipo || 'nova')
-      form.setValue('alunos_ids', mData.aluno_id ? [mData.aluno_id] : [])
-      form.setValue('ano_letivo', mData.ano_letivo || new Date().getFullYear())
-      form.setValue('serie_ano', mData.serie_ano || '')
-      form.setValue('turma_id', mData.turma_id || '')
-      form.setValue('turno', mData.turno || 'manhã')
-      form.setValue('data_matricula', mData.data_matricula || new Date().toISOString().split('T')[0])
-      form.setValue('valor_matricula', mData.valor_matricula || 0)
-      form.setValue('status', mData.status || 'ativa')
+      form.setValue('tipo', m.tipo || 'nova')
+      form.setValue('alunos_ids', m.aluno_id ? [m.aluno_id] : [])
+      form.setValue('ano_letivo', m.ano_letivo || new Date().getFullYear())
+      form.setValue('serie_ano', m.serie_ano || '')
+      form.setValue('turma_id', m.turma_id || '')
+      form.setValue('turno', m.turno || 'manhã')
+      form.setValue('data_matricula', m.data_matricula || new Date().toISOString().split('T')[0])
+      form.setValue('valor_matricula', m.valor_matricula || 0)
+      form.setValue('status', m.status || 'ativa')
     }
-  }, [mData, form])
+  }, [m, form])
 
   const alunosSelecionados = useWatch({ control: form.control, name: 'alunos_ids' }) || []
 

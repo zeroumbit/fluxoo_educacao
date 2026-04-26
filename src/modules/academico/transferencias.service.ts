@@ -143,7 +143,7 @@ export const transferenciasService = {
         status: 'aguardando_responsavel' as const,
         motivo_solicitacao: motivo,
         responsavel_id: null,
-      } as never)
+      } as any)
       .select()
       .single()
 
@@ -174,7 +174,7 @@ export const transferenciasService = {
         iniciado_por: payload.iniciadoPor,
         status: 'aguardando_responsavel' as const,
         motivo_solicitacao: payload.motivo,
-      } as never)
+      } as any)
       .select()
       .single()
 
@@ -204,7 +204,7 @@ export const transferenciasService = {
         status: 'aguardando_liberacao_origem' as const, // Responsável já é o aprovador implícito
         motivo_solicitacao: payload.motivo,
         aprovado_em: new Date().toISOString(),
-      } as never)
+      } as any)
       .select()
       .single()
 
@@ -292,28 +292,28 @@ export const transferenciasService = {
 
   /** ESCOLA DESTINO aceita a transferência */
   async aceitarTransferenciaDestino(id: string) {
-    const { error } = await supabase.rpc('aceitar_transferencia_destino' as never, {
+    const { error } = await supabase.rpc('aceitar_transferencia_destino', {
       p_transferencia_id: id
-    } as never)
+    } as any)
     if (error) throw error
     return { status: 'aguardando_liberacao_origem' as const }
   },
 
   /** ESCOLA DESTINO recusa a transferência */
   async recusarTransferenciaDestino(id: string, justificativa: string) {
-    const { error } = await supabase.rpc('recusar_transferencia_destino' as never, {
+    const { error } = await supabase.rpc('recusar_transferencia_destino', {
       p_transferencia_id: id,
       p_justificativa: justificativa
-    } as never)
+    } as any)
     if (error) throw error
     return { status: 'recusado' as const }
   },
 
   /** ESCOLA ORIGEM conclui a transferência com integração de dados */
   async concluirTransferencia(id: string) {
-    const { error } = await supabase.rpc('concluir_transferencia_integrar' as never, {
+    const { error } = await supabase.rpc('concluir_transferencia_integrar', {
       p_transferencia_id: id
-    } as never)
+    } as any)
     if (error) throw error
     return { status: 'concluido' as const }
   },

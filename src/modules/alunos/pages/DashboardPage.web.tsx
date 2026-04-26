@@ -51,7 +51,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { Greeting } from '@/components/ui/Greeting'
 import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
-import { PixManualBannerNotification } from '@/modules/financeiro/components/PixManualBannerNotification'
+import { PixManualBannerNotification as PixManualBannerNotificationComponent } from '@/modules/financeiro/components/PixManualBannerNotification'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Sem Matrícula
@@ -652,7 +652,7 @@ function DashboardContent() {
       <StatusAprovacaoNotification status={statusAssinatura} metodo={metodoPagamento} />
 
       {/* Notificações de Pagamentos PIX Manual Pendentes */}
-      <PixManualBannerNotification />
+      <PixManualBannerNotificationComponent />
 
       {/* Notificação de Novos Pedidos de Transferência (Escola Destino) */}
       {pendentesAceiteCount > 0 && showTransferenciasPendentesAceiteNotification && (

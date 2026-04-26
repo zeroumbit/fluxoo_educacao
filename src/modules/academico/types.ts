@@ -47,12 +47,13 @@ export interface PlanoAulaComTurmas extends Partial<PlanoAulaInsert> {
   }[];
 }
 
-export interface AtividadeComTurmas extends Partial<AtividadeInsert> {
+export interface AtividadeComTurmas extends Omit<AtividadeInsert, 'tipo_material'> {
   turmas?: {
     turma_id: string;
     turno?: string | null;
     horario?: string | null;
   }[];
+  tipo_material?: string | null | undefined;
 }
 
 export type MatriculaPayload = Partial<MatriculaInsert> & Record<string, unknown>;

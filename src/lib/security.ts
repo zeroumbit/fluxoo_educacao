@@ -35,7 +35,15 @@ export const safeStorage = {
   decrypt: (cipherText: string): any => {
     if (!cipherText) return null
     try {
-      const binaryString = atob(cipherText)
+      // Limpa caracteres inválidos antes de decodificar
+      const cleanText = cipherText
+        .replace(/%[0-9A-F]{2}/gi, '') // Remove sequências URL-encoded
+        .replace(/[^A-Za-z0-9+/=]/g, '') // Remove caracteres não-base64
+        .trim()
+      
+      if (!cleanText) return null
+      
+      const binaryString = atob(cleanText)
       const encrypted = new Uint8Array(binaryString.length)
       for (let i = 0; i < binaryString.length; i++) {
         encrypted[i] = binaryString.charCodeAt(i)
@@ -50,7 +58,7 @@ export const safeStorage = {
       const text = new TextDecoder().decode(decrypted)
       return JSON.parse(text)
     } catch (error) {
-      console.error('Erro ao descriptografar rascunho:', error)
+      // Retorna null em vez de logar erro para dados corrompidos
       return null
     }
   }

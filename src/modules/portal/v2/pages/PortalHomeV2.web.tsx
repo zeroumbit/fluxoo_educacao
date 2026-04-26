@@ -17,7 +17,7 @@ const getInitials = (name: string) => {
 
 export function PortalHomeV2Web() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, selecionarAluno, alunoSelecionado } = usePortalContext();
+  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, tenantId } = usePortalContext();
   const { data: dashboard } = useDashboardFamilia();
   const { data: avisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();
@@ -366,7 +366,8 @@ export function PortalHomeV2Web() {
         open={showContrato}
         onClose={() => setShowContrato(false)}
         responsavel={responsavel}
-        tenantId={responsavel?.tenant_id}
+        tenantId={tenantId || responsavel?.tenant_id}
+        alunoNome={alunoSelecionado?.nome_completo}
       />
     </div>
   );

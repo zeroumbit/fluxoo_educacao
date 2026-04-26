@@ -19,7 +19,7 @@ const _getInitials = (name: string) => {
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
-  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, isLoading } = usePortalContext();
+  const { responsavel, vinculos, selecionarAluno, alunoSelecionado, tenantId, isLoading } = usePortalContext();
   const { data: dashboard, isLoading: loadingDash } = useDashboardFamilia();
   const { data: avisos, isLoading: loadingAvisos } = useAvisosPortal();
   const { data: configPix } = useConfigPix();
@@ -384,7 +384,8 @@ export function PortalHomeV2Mobile() {
         open={showContrato}
         onClose={() => setShowContrato(false)}
         responsavel={responsavel}
-        tenantId={responsavel?.tenant_id}
+        tenantId={tenantId || responsavel?.tenant_id}
+        alunoNome={alunoSelecionado?.nome_completo}
       />
     </div>
   );

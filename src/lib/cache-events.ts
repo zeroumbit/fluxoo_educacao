@@ -10,6 +10,10 @@ export type CacheEvents = {
   COBRANCA_CRIADA: { cobrancaId: string; tenantId: string; alunoId: string }
   COBRANCA_ATUALIZADA: { cobrancaId: string; tenantId: string; alunoId: string }
   VINCULO_CRIADO: { alunoId: string; responsavelId: string; tenantId: string }
+  AVALIACAO_CRIADA: { turmaId: string; disciplinaId: string }
+  NOTAS_LANCADAS: { avaliacaoId: string; turmaId?: string; disciplinaId?: string; bimestre?: number }
+  BIMESTRE_FECHADO: { turmaId: string; bimestre: number }
+  BIMESTRE_REABERTO: { turmaId: string; bimestre: number }
 }
 
 export type CacheEventType = keyof CacheEvents

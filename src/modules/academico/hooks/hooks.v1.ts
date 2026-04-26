@@ -37,7 +37,7 @@ export function useCriarMatricula() {
     mutationFn: (d: Partial<MatriculaInsert> & Record<string, unknown>) => academicoService.criarMatricula(d),
     onSuccess: (data) => {
       const m = data as Matricula;
-      if (m) cacheEvents.publish('MATRICULA_CRIADA', { matriculaId: m.id, tenantId: m.tenant_id, turmaId: m.turma_id, alunoId: m.aluno_id });
+      if (m && m.aluno_id) cacheEvents.publish('MATRICULA_CRIADA', { matriculaId: m.id, tenantId: m.tenant_id || '', turmaId: m.turma_id || '', alunoId: m.aluno_id });
       // Invalida turmas (trigger DB atualiza alunos_ids[])
       qc.invalidateQueries({ queryKey: ['turmas'] })
       // Invalida alunos (novo aluno pode aparecer na lista)
@@ -269,8 +269,9 @@ export function useTransferenciasEscola() {
 export function useSolicitarTransferencia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ alunoId, origemId, destinoId, motivo }: {
+    mutationFn: ({ alunoId, origemId, destinoId, motivo, responsavelId, iniciadoPor }: {
       alunoId: string; origemId: string; destinoId: string; motivo: string
+      responsavelId?: string | null; iniciadoPor?: string
     }) => transferenciasService.solicitar(alunoId, origemId, destinoId, motivo),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
