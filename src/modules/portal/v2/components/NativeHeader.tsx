@@ -5,7 +5,6 @@ import { ArrowLeft, ChevronDown, Bell, Users, Copy } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
-import { toast } from 'sonner';
 import { 
   Sheet, 
   SheetContent, 
@@ -20,13 +19,15 @@ interface NativeHeaderProps {
   showBack?: boolean;
   showNotifications?: boolean;
   onBack?: () => void;
+  onCopyId?: (id: string) => void;
 }
 
 export function NativeHeader({ 
   title, 
   showBack = false, 
   showNotifications = true,
-  onBack
+  onBack,
+  onCopyId
 }: NativeHeaderProps) {
   const navigate = useNavigate();
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado, isMultiAluno } = usePortalContext();
@@ -145,23 +146,22 @@ export function NativeHeader({
                            <span className="text-[12px] font-medium text-slate-400">
                               {v.aluno?.turma?.nome || 'Sem turma'}
                            </span>
-                           {v.aluno?.codigo_transferencia && (
-                              <>
-                                <span className="text-slate-200 text-[10px]">•</span>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigator.clipboard.writeText(v.aluno.codigo_transferencia);
-                                    toast.success('ID copiado!');
-                                    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-                                  }}
-                                  className="flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md active:scale-95 transition-transform"
-                                >
-                                   <Copy size={10} />
-                                   ID: {v.aluno.codigo_transferencia}
-                                </button>
-                              </>
-                           )}
+{v.aluno?.codigo_transferencia && (
+                               <>
+                                 <span className="text-slate-200 text-[10px]">•</span>
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     onCopyId?.(v.aluno.codigo_transferencia);
+                                     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+                                   }}
+                                   className="flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md active:scale-95 transition-transform"
+                                 >
+                                    <Copy size={10} />
+                                    ID: {v.aluno.codigo_transferencia}
+                                 </button>
+                               </>
+                            )}
                          </div>
                       </div>
                       

@@ -8,6 +8,7 @@ import { usePortalNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
 import { useFilaVirtual } from '../../hooks';
+import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
 
 // Helper to get initials
@@ -26,6 +27,8 @@ export function PortalHomeV2Web() {
   const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
   
   const [showContrato, setShowContrato] = React.useState(false);
+  const [showCopyModal, setShowCopyModal] = React.useState(false);
+  const [copyId, setCopyId] = React.useState('');
 
   // Auto-trigger de contrato pendente
   React.useEffect(() => {
@@ -93,6 +96,7 @@ export function PortalHomeV2Web() {
 
   return (
     <div className="flex flex-col gap-8 w-full">
+      <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
       <header className="flex items-end justify-between border-b border-slate-200 pb-8 mt-2">
         <div className="flex flex-col">
           <span className="text-base font-medium text-slate-500 mb-1">Visão Geral da Família</span>
@@ -148,10 +152,10 @@ export function PortalHomeV2Web() {
                 {alunoSelecionado.turma?.nome || 'Sem Turma'}
               </span>
               {alunoSelecionado.codigo_transferencia && (
-                <button 
+                <button
                   onClick={() => {
-                    navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia || '');
-                    alert('ID copiado!');
+                    setCopyId(alunoSelecionado.codigo_transferencia || '');
+                    setShowCopyModal(true);
                   }}
                   className="flex items-center gap-2 font-mono font-bold text-xs uppercase tracking-tight bg-amber-50 text-amber-700 px-3 py-1 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors"
                 >

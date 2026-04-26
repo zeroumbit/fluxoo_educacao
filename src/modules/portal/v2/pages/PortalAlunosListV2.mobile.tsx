@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, AlertCircle, Copy, ArrowRightLeft } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { NativeHeader } from '../components/NativeHeader';
-import { toast } from 'sonner';
+import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { ModalSolicitarTransferenciaPortal } from '../components/ModalSolicitarTransferenciaPortal';
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,8 @@ export function PortalAlunosListV2Mobile() {
   const navigate = useNavigate();
   const { vinculos, selecionarAluno, isLoading } = usePortalContext();
   const [transferAluno, setTransferaluno] = useState<any>(null);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyId, setCopyId] = useState('');
 
   // Skeleton Loader (Padrão iOS/Android)
   if (isLoading) {
@@ -25,7 +27,8 @@ export function PortalAlunosListV2Mobile() {
 
   return (
     <div className="flex flex-col gap-4 pb-12">
-      <NativeHeader title="Alunos" showBack />
+      <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
+      <NativeHeader title="Alunos" showBack onCopyId={(id) => { setCopyId(id); setShowCopyModal(true); }} />
       
       <div className="px-4 flex flex-col gap-4">
 
@@ -69,11 +72,11 @@ export function PortalAlunosListV2Mobile() {
                   {v.aluno?.codigo_transferencia && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigator.clipboard.writeText(v.aluno.codigo_transferencia);
-                          toast.success('ID copiado!');
+                          setCopyId(v.aluno.codigo_transferencia);
+                          setShowCopyModal(true);
                         }}
                         className="flex items-center gap-1 font-mono font-bold text-[10px] uppercase bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-md border border-amber-100 active:scale-95"
                       >

@@ -9,8 +9,8 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 import { usePortalNotifications } from '@/hooks/useNotifications';
 import { NativeHeader } from '../components/NativeHeader';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
+import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { useFilaVirtual } from '../../hooks';
-import { toast } from 'sonner';
 
 // Helper to get initials
 const _getInitials = (name: string) => {
@@ -28,6 +28,8 @@ export function PortalHomeV2Mobile() {
   const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
   
   const [showContrato, setShowContrato] = React.useState(false);
+  const [showCopyModal, setShowCopyModal] = React.useState(false);
+  const [copyId, setCopyId] = React.useState('');
 
   // Auto-trigger de contrato pendente
   React.useEffect(() => {
@@ -108,7 +110,12 @@ export function PortalHomeV2Mobile() {
       <NativeHeader 
         title="Home"
         showNotifications
+        onCopyId={(id) => {
+          setCopyId(id);
+          setShowCopyModal(true);
+        }}
       />
+      <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
 
       {/* 1.1 Card de Aluno Atual - Acesso Rápido ao ID e Perfil */}
       {alunoSelecionado && (
@@ -137,12 +144,11 @@ export function PortalHomeV2Mobile() {
               {alunoSelecionado.codigo_transferencia && (
                 <>
                   <span className="text-slate-300 text-[10px]">•</span>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(alunoSelecionado.codigo_transferencia || '');
-                      toast.success('ID copiado!');
-                      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+                      setCopyId(alunoSelecionado.codigo_transferencia || '');
+                      setShowCopyModal(true);
                     }}
                     className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100 active:scale-95 transition-transform"
                   >

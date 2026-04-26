@@ -294,7 +294,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
       </div>
       
       {/* Banner de Alunos Pendentes de Enturmação (Transferência Concluída) */}
-      {showPendentesBanner && countEnturmacao && countEnturmacao > 0 && (
+      {showPendentesBanner && countEnturmacao > 0 && (
         <AlunosPendentesEnturmacaoNotification 
           count={countEnturmacao}
           onDismiss={() => setShowPendentesBanner(false)}

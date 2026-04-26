@@ -16,11 +16,11 @@ import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 import { usePortalContext } from '../../context';
 import { useDashboardAluno, useSelosPortal } from '../../hooks';
 import { NativeHeader } from '../components/NativeHeader';
+import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -38,6 +38,8 @@ export function PortalAlunoPerfilV2Mobile() {
   // Estado para controlar qual módulo está aberto dentro do drill-down
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [showFilaVirtual, setShowFilaVirtual] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyId, setCopyId] = useState('');
 
   // Sincroniza o aluno selecionado se acessar via URL direta
   React.useEffect(() => {
@@ -82,6 +84,7 @@ export function PortalAlunoPerfilV2Mobile() {
   return (
     <div className="flex flex-col flex-1 min-h-full bg-slate-50">
       <NativeHeader title={student?.nome_completo?.split(' ')[0] || 'Perfil'} showBack />
+      <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
 
       {/* 1. Perfil Summary - Estilo Nativo */}
       <div className="bg-white pb-6 px-4 shadow-sm border-b border-slate-100 z-10">
@@ -107,11 +110,10 @@ export function PortalAlunoPerfilV2Mobile() {
               {student?.codigo_transferencia && (
                 <>
                   <span className="text-slate-300 text-[10px]">•</span>
-                  <button 
+                  <button
                     onClick={() => {
-                      navigator.clipboard.writeText(student.codigo_transferencia || '');
-                      toast.success('ID do aluno copiado!');
-                      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+                      setCopyId(student.codigo_transferencia || '');
+                      setShowCopyModal(true);
                     }}
                     className="flex items-center gap-1 active:scale-95 transition-transform bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100"
                   >

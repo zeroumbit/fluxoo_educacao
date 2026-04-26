@@ -17,7 +17,8 @@ import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
-import { toast } from 'sonner';
+import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
+import { cn } from '@/lib/utils';
 
 // Helper to get initials
 const getInitials = (name: string) => {
@@ -44,6 +45,8 @@ export function PortalAlunoPerfilV2Web() {
   const { data: _dashboard } = useDashboardAluno();
   const [activeModule, setActiveModule] = useState<string>('grade');
   const [showFilaVirtual, setShowFilaVirtual] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyId, setCopyId] = useState('');
 
   // Sincroniza o aluno selecionado se acessar via URL direta
   React.useEffect(() => {
@@ -61,6 +64,7 @@ export function PortalAlunoPerfilV2Web() {
     <div className="flex flex-col gap-8 w-full">
       {/* 1. Web Header Header and Return Array */}
       <header className="flex items-center justify-between border-b border-slate-200 pb-8 mt-2">
+        <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
         <div className="flex items-center gap-6">
           <button 
             onClick={() => navigate('/portal/alunos')}
@@ -84,10 +88,10 @@ export function PortalAlunoPerfilV2Web() {
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">
                 <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{(student as any)?.turma?.nome || 'Sem Turma'}</span>
                 {(student as any)?.codigo_transferencia && (
-                  <button 
+                  <button
                     onClick={() => {
-                      navigator.clipboard.writeText((student as any).codigo_transferencia);
-                      toast.success('ID copiado!');
+                      setCopyId((student as any).codigo_transferencia);
+                      setShowCopyModal(true);
                     }}
                     className="flex items-center gap-1.5 font-mono font-bold text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100 hover:bg-amber-100 transition-colors group/copy"
                   >
