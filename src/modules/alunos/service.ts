@@ -303,21 +303,28 @@ export const alunoService = {
 
       if (respError) {
         // Tratamento específico para erro de RLS (42501)
-        if (respError.code === '42501') {
-          logger.error('❌ Erro RLS ao inserir responsável. Payload:', {
-            cpf: cpfLimpo,
-            nome: responsavel.nome,
-            email: responsavel.email,
-            user_id: authUserId,
-            errorCode: respError.code,
-            errorMessage: respError.message,
-            hint: 'Execute a migration 150_fix_responsaveis_rls_definitivo.sql no Supabase'
+        if (respError) {
+          logger.error('❌ Erro RLS ao inserir responsável. Payload: ', { 
+            ...cleanPayload, 
+            senha_hash: '[REDACTED]',
+            errorCode: (respError as any).code,
+            errorMessage: respError.message 
           })
-          throw new Error(
-            'Erro de permissão ao cadastrar responsável. ' +
-            'A política de segurança do banco precisa ser atualizada. ' +
-            'Contate o administrador do sistema (Migration 150 pendente).'
-          )
+
+          // Se for erro 42501 (Forbidden), é quase certeza que a Migration 150 não foi aplicada
+          if ((respError as any).code === '42501') {
+            console.error('🚨 BLOQUEIO DE SEGURANÇA (RLS): O banco de dados recusou a inserção do responsável.')
+            console.error('Isso ocorre porque a política "Universal_Modify_Responsaveis" não permite que GESTORES criem novos responsáveis.')
+            console.error('SOLUÇÃO: Execute a migration 150_fix_responsaveis_rls_definitivo.sql no Supabase.')
+            
+            throw new Error(
+              'Erro de permissão (RLS) ao cadastrar responsável. ' +
+              'A política de segurança do banco precisa ser atualizada para permitir que gestores criem responsáveis. ' +
+              'Acesse o Dashboard do Supabase e execute a Migration 150 pendente.'
+            )
+          }
+
+          throw respError
         }
         throw respError
       }

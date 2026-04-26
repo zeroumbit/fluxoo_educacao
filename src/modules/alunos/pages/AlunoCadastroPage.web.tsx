@@ -506,6 +506,7 @@ export function AlunoCadastroPage() {
           tenant_id: authUser.tenantId,
           user_id: authUser.id,
           acao: 'CRIAR_ALUNO',
+          tabela_nome: 'alunos',
           recurso_id: result.id,
           valor_anterior: null,
           valor_novo: { 
@@ -1299,7 +1300,13 @@ export function AlunoCadastroPage() {
           <div className="grid gap-3 py-4">
             <Button 
               className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-sm font-bold"
-              onClick={() => navigate('/matriculas', { state: { aluno_id: lastCreatedAluno?.id, autoOpen: true } })}
+              onClick={() => navigate('/matriculas', { 
+                state: { 
+                  aluno_id: lastCreatedAluno?.id, 
+                  data_ingresso: lastCreatedAluno?.data_ingresso,
+                  autoOpen: true 
+                } 
+              })}
             >
               Matricular este aluno agora
             </Button>

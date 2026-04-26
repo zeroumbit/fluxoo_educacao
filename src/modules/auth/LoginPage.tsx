@@ -230,7 +230,7 @@ export function LoginPage() {
             </div>
 
             <div className="pt-6 border-t border-zinc-100 space-y-4">
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-muted-foreground text-center hidden md:block">
                 É pai ou aluno?{' '}
                 <a
                   href="/portal/login"
@@ -238,11 +238,21 @@ export function LoginPage() {
                   rel="noopener noreferrer"
                   className="text-indigo-600 hover:text-indigo-500 font-bold transition-colors underline underline-offset-4"
                 >
-                  Acessar Portal do Aluno
+                  Acessar Portal da família
+                </a>
+              </p>
+              <p className="text-sm text-muted-foreground text-center md:hidden">
+                <a
+                  href="/portal/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-500 font-bold transition-colors underline underline-offset-4"
+                >
+                  Acessar Portal da família
                 </a>
               </p>
 
-              <p className="text-sm text-muted-foreground text-center border-t pt-4">
+              <p className="text-sm text-muted-foreground text-center border-t pt-4 hidden md:block">
                 Sua escola ainda não é cadastrada?{' '}
                 <Link
                   to="/cadastro"
@@ -252,7 +262,7 @@ export function LoginPage() {
                 </Link>
               </p>
 
-              <p className="text-sm text-muted-foreground text-center pt-2">
+              <p className="text-sm text-muted-foreground text-center pt-2 hidden md:block">
                 Venda produtos ou preste serviços{' '}
                 <Link
                   to="/marketplace/cadastro"

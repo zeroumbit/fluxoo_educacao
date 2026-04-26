@@ -5,8 +5,15 @@ import {
   useUpdateEscolaStatus,
   useSuspenderEscola,
   useEscolaDetalhes,
-  useFaturas
+  useFaturas,
+  useCreateFatura,
+  useDeleteFatura,
+  useEscolasDevedoras,
+  useConfirmarPagamentoEscola,
+  useEnviarCobranca,
+  useCancelarAcessoEscola
 } from '../hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -35,9 +42,12 @@ import {
   Eye,
   Ban,
   AlertTriangle,
-  Phone,
   MapPin,
-  TrendingUp
+  Plus,
+  Trash2,
+  DollarSign,
+  Send,
+  Loader2
 } from 'lucide-react'
 import { 
   DropdownMenu, 
@@ -64,11 +74,18 @@ export function EscolasPageWeb() {
   const { data: escolas, isLoading } = useEscolas()
   const updateStatus = useUpdateEscolaStatus()
   const suspenderEscola = useSuspenderEscola()
+  const { data: escolasDevedoras, isLoading: isLoadingDevedoras } = useEscolasDevedoras()
+  const confirmarPagamento = useConfirmarPagamentoEscola()
+  const enviarCobranca = useEnviarCobranca()
+  const cancelarAcesso = useCancelarAcessoEscola()
+  const { authUser } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [escolaSelecionada, setEscolaSelecionada] = useState<string | null>(null)
+  const [escolaDevedoraSelecionada, setEscolaDevedoraSelecionada] = useState<any>(null)
   const [dialogDetalhesAberto, setDialogDetalhesAberto] = useState(false)
   const [dialogSuspensaoAberto, setDialogSuspensaoAberto] = useState(false)
   const [dialogPagamentosAberto, setDialogPagamentosAberto] = useState(false)
+  const [dialogDevedorAberto, setDialogDevedorAberto] = useState(false)
   const [motivoSuspensao, setMotivoSuspensao] = useState('')
 
   const { data: detalhesEscola } = useEscolaDetalhes(escolaSelecionada)
@@ -115,6 +132,37 @@ export function EscolasPageWeb() {
       setEscolaSelecionada(null)
     } catch {
       toast.error('Erro ao suspender escola.')
+    }
+  }
+
+  const handleVerDetalhesDevedor = (devedor: any) => {
+    setEscolaDevedoraSelecionada(devedor)
+    setDialogDevedorAberto(true)
+  }
+
+  const handleDarBaixa = async () => {
+    if (!escolaDevedoraSelecionada?.escola?.id || !authUser?.id) return
+    try {
+      await confirmarPagamento.mutateAsync({ 
+        tenantId: escolaDevedoraSelecionada.escola.id, 
+        adminId: authUser.id 
+      })
+      toast.success('Pagamento confirmado com sucesso!')
+      setDialogDevedorAberto(false)
+    } catch {
+      toast.error('Erro ao confirmar pagamento.')
+    }
+  }
+
+  const handleEnviarCobrancaDevedor = async () => {
+    if (!escolaDevedoraSelecionada?.escola?.id) return
+    try {
+      await enviarCobranca.mutateAsync({ 
+        tenantId: escolaDevedoraSelecionada.escola.id 
+      })
+      toast.success('Cobrança enviada para a escola!')
+    } catch {
+      toast.error('Erro ao enviar cobrança.')
     }
   }
 
@@ -170,7 +218,7 @@ export function EscolasPageWeb() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white">
           <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Aguardando Aprovação</CardTitle>
@@ -183,7 +231,22 @@ export function EscolasPageWeb() {
           <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Instituições Ativas</CardTitle>
              <div className="text-2xl font-bold text-emerald-600">
-              {escolas?.filter(e => e.status_assinatura === 'ativa').length}
+               {escolas?.filter(e => e.status_assinatura === 'ativa').length}
+             </div>
+          </CardHeader>
+        </Card>
+        <Card 
+          className="border-0 shadow-xl shadow-zinc-200/50 bg-white cursor-pointer hover:shadow-2xl transition-all group"
+          onClick={() => {
+            if (escolasDevedoras && escolasDevedoras.length > 0) {
+              handleVerDetalhesDevedor(escolasDevedoras[0])
+            }
+          }}
+        >
+          <CardHeader className="pt-[30px] pb-2 gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-red-600 transition-colors">Pagamentos em Atraso</CardTitle>
+            <div className="text-2xl font-bold text-red-600">
+              {isLoadingDevedoras ? '...' : escolasDevedoras?.length || 0}
             </div>
           </CardHeader>
         </Card>
@@ -549,7 +612,7 @@ export function EscolasPageWeb() {
               onClick={handleConfirmarSuspensao}
               disabled={suspenderEscola.isPending || !motivoSuspensao.trim()}
             >
-              {suspenderEscola.isPending && <Building2 className="h-4 w-4 animate-spin mr-2" />}
+              {suspenderEscola.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Confirmar Suspensão
             </Button>
           </DialogFooter>
@@ -557,7 +620,97 @@ export function EscolasPageWeb() {
       </Dialog>
 
       {/* Dialog de Histórico de Pagamentos */}
-      <DialogPagamentos escolaId={escolaSelecionada} open={dialogPagamentosAberto} onOpenChange={setDialogPagamentosAberto} />
+      <DialogPagamentos 
+        escolaId={escolaSelecionada} 
+        open={dialogPagamentosAberto} 
+        onOpenChange={setDialogPagamentosAberto} 
+      />
+
+      {/* Dialog de Detalhes do Devedor */}
+      <Dialog open={dialogDevedorAberto} onOpenChange={setDialogDevedorAberto}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Pagamentos em Atraso
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Escola com faturas pendentes ou atrasadas.
+            </DialogDescription>
+          </DialogHeader>
+
+          {escolaDevedoraSelecionada && (
+            <div className="space-y-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-red-900">{escolaDevedoraSelecionada.escola?.razao_social}</h3>
+                    <p className="text-xs text-red-700">Débito Total Estimado</p>
+                  </div>
+                  <div className="ml-auto text-right">
+                    <span className="text-xl font-black text-red-600">
+                      R$ {Number(escolaDevedoraSelecionada.total_devido).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-medium text-zinc-900">Ações</h4>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    onClick={handleDarBaixa}
+                    disabled={confirmarPagamento.isPending}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {confirmarPagamento.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Dar Baixa
+                  </Button>
+                  <Button 
+                    onClick={handleEnviarCobrancaDevedor}
+                    disabled={enviarCobranca.isPending}
+                    variant="outline"
+                  >
+                    {enviarCobranca.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Cobrança
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setMotivoSuspensao('')
+                      setDialogDevedorAberto(false)
+                      setEscolaSelecionada(escolaDevedoraSelecionada.escola?.id)
+                      setDialogSuspensaoAberto(true)
+                    }}
+                    variant="destructive"
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Cancelar Acesso
+                  </Button>
+                </div>
+              </div>
+
+              {escolaDevedoraSelecionada.escola?.nome_gestor && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Contato: {escolaDevedoraSelecionada.escola.nome_gestor} ({escolaDevedoraSelecionada.escola.email_gestor})
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogDevedorAberto(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -565,6 +718,48 @@ export function EscolasPageWeb() {
 function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { data: faturas, isLoading } = useFaturas(escolaId ? { tenant_id: escolaId } : undefined)
   const { data: detalhesEscola } = useEscolaDetalhes(escolaId)
+  const createFatura = useCreateFatura()
+  const deleteFatura = useDeleteFatura()
+
+  const [dialogNovaFaturaAberto, setDialogNovaFaturaAberto] = useState(false)
+  const [novaFatura, setNovaFatura] = useState({
+    valor: '',
+    competencia: format(new Date(), 'yyyy-MM-01'),
+    data_vencimento: format(new Date(new Date().setDate(new Date().getDate() + 5)), 'yyyy-MM-dd'),
+    forma_pagamento: 'pix_manual'
+  })
+
+  const handleCriarFatura = async () => {
+    if (!novaFatura.valor || Number(novaFatura.valor) <= 0) {
+      toast.error('Informe um valor válido.')
+      return
+    }
+
+    try {
+      await createFatura.mutateAsync({
+        tenant_id: escolaId,
+        valor: Number(novaFatura.valor),
+        competencia: novaFatura.competencia,
+        data_vencimento: novaFatura.data_vencimento,
+        forma_pagamento: novaFatura.forma_pagamento,
+        status: 'pendente'
+      })
+      toast.success('Fatura manual gerada com sucesso!')
+      setDialogNovaFaturaAberto(false)
+    } catch {
+      toast.error('Erro ao gerar fatura manual.')
+    }
+  }
+
+  const handleExcluirFatura = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta fatura?')) return
+    try {
+      await deleteFatura.mutateAsync(id)
+      toast.success('Fatura excluída com sucesso.')
+    } catch {
+      toast.error('Erro ao excluir fatura.')
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -578,6 +773,7 @@ function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string |
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-white border-0 shadow-2xl p-0">
           <DialogHeader className="p-8 border-b bg-zinc-50/50">
@@ -592,6 +788,13 @@ function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string |
                 </DialogDescription>
               </div>
             </div>
+            <Button 
+                onClick={() => setDialogNovaFaturaAberto(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+            >
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Fatura Manual
+            </Button>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto p-8">
@@ -643,7 +846,19 @@ function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string |
                               Ver Comprovante
                             </Button>
                           ) : (
-                            <span className="text-[10px] font-bold text-zinc-300 uppercase italic">Não enviado</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-zinc-300 uppercase italic">Não enviado</span>
+                                {f.status === 'pendente' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                                        onClick={() => handleExcluirFatura(f.id)}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                )}
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -671,5 +886,74 @@ function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string |
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={dialogNovaFaturaAberto} onOpenChange={setDialogNovaFaturaAberto}>
+        <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+                <DialogTitle>Gerar Fatura Manual</DialogTitle>
+                <DialogDescription>
+                    Crie uma nova cobrança para esta instituição. A escola será notificada se o método for PIX.
+                </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-700">Valor da Fatura (R$)</label>
+                    <Input 
+                        type="number" 
+                        placeholder="0,00" 
+                        value={novaFatura.valor}
+                        onChange={(e) => setNovaFatura({ ...novaFatura, valor: e.target.value })}
+                        className="font-bold text-lg text-indigo-600"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-zinc-700">Competência</label>
+                        <Input 
+                            type="date" 
+                            value={novaFatura.competencia}
+                            onChange={(e) => setNovaFatura({ ...novaFatura, competencia: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-zinc-700">Vencimento</label>
+                        <Input 
+                            type="date" 
+                            value={novaFatura.data_vencimento}
+                            onChange={(e) => setNovaFatura({ ...novaFatura, data_vencimento: e.target.value })}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-700">Método de Pagamento</label>
+                    <select 
+                        className="w-full h-10 px-3 rounded-md border border-zinc-200 text-sm"
+                        value={novaFatura.forma_pagamento}
+                        onChange={(e) => setNovaFatura({ ...novaFatura, forma_pagamento: e.target.value })}
+                    >
+                        <option value="pix_manual">PIX Manual (Comprovante)</option>
+                        <option value="boleto">Boleto Bancário</option>
+                        <option value="mercado_pago">Cartão / MP (Automático)</option>
+                    </select>
+                </div>
+            </div>
+
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogNovaFaturaAberto(false)}>Cancelar</Button>
+                <Button 
+                    onClick={handleCriarFatura}
+                    disabled={createFatura.isPending}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                >
+                    {createFatura.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Gerar Fatura
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

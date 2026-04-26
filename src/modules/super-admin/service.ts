@@ -33,11 +33,20 @@ export const superAdminService = {
 
     const saudeFinanceiraGlobal = totalReceber - (totalDespesas + totalSalarios)
 
+    const { count: faturasPixPendentes } = await (supabase.from('faturas' as any) as any).select('*', { count: 'exact', head: true })
+      .eq('status', 'pendente_confirmacao')
+      .eq('forma_pagamento', 'pix_manual')
+
+    const { count: faturasAtrasadas } = await (supabase.from('faturas' as any) as any).select('*', { count: 'exact', head: true })
+      .eq('status', 'atrasado')
+
     return {
       totalEscolas: totalEscolas || 0,
       assinaturasAtivas: assinaturasAtivas || 0,
       totalAlunos: totalAlunos || 0,
       faturasPendentes: faturasPendentes || 0,
+      faturasPixPendentes: faturasPixPendentes || 0,
+      faturasAtrasadas: faturasAtrasadas || 0,
       escolasRecentes: (escolasRecentes as any[]) || [],
       saudeFinanceiraGlobal
     }
@@ -206,6 +215,11 @@ export const superAdminService = {
     return data
   },
 
+  async deleteAssinatura(id: string) {
+    const { error } = await (supabase.from('assinaturas' as any) as any).delete().eq('id', id)
+    if (error) throw error
+  },
+
   // ==========================================
   // FATURAS
   // ==========================================
@@ -218,6 +232,45 @@ export const superAdminService = {
     const { data, error } = await query
     if (error) throw error
     return (data as any[]) || []
+  },
+
+  async createFatura(fatura: any) {
+    const { data, error } = await (supabase.from('faturas' as any) as any)
+      .insert({
+        ...fatura,
+        created_at: new Date().toISOString(),
+        status: fatura.status || 'pendente'
+      } as any)
+      .select().maybeSingle()
+    
+    if (error) throw error
+ 
+    // Se for PIX Manual, envia notificação para a escola (tenant_id)
+    if (fatura.forma_pagamento === 'pix_manual') {
+      try {
+        await (supabase.from('notificacoes' as any) as any).insert({
+          tenant_id: fatura.tenant_id,
+          tipo: 'FINANCEIRO',
+          titulo: 'Nova Fatura Disponível (PIX)',
+          mensagem: `Uma fatura de R$ ${Number(fatura.valor).toFixed(2)} referente a ${fatura.competencia} foi gerada. Pague via PIX e envie o comprovante.`,
+          href: '/admin/financeiro',
+          categoria: 'PLATAFORMA',
+          prioridade: 1,
+          lida: false,
+          resolvida: false,
+          created_at: new Date().toISOString()
+        } as any)
+      } catch (err) {
+        console.error('Erro ao gerar notificação de fatura:', err)
+      }
+    }
+
+    return data
+  },
+
+  async deleteFatura(id: string) {
+    const { error } = await (supabase.from('faturas' as any) as any).delete().eq('id', id)
+    if (error) throw error
   },
 
   async confirmarFatura(id: string, adminId: string) {
@@ -419,5 +472,118 @@ export const superAdminService = {
       if (error) throw error
       return data
     }
+  },
+
+  // ==========================================
+  // ESCOLAS DEVEDORAS (PAGAMENTOS EM ATRASO)
+  // ==========================================
+  async getEscolasDevedoras() {
+    // Buscar faturas com status 'atrasado' ou 'pendente_confirmacao' (sem pagamento após vencimento)
+    const { data: faturasAtrasadas, error: errorAtrasadas } = await (supabase.from('faturas' as any) as any)
+      .select('*, escola:escolas(id, razao_social, cnpj, nome_gestor, email_gestor, metodo_pagamento, plano:planos(nome))')
+      .in('status', ['atrasado', 'pendente_confirmacao'])
+      .order('data_vencimento', { ascending: true })
+
+    if (errorAtrasadas) throw errorAtrasadas
+
+    // Agrupar por escola (uma escola pode ter múltiplas faturas inadimplentes)
+    const escolasMap = new Map()
+    
+    for (const fatura of (faturasAtrasadas as any[])) {
+      const escolaId = fatura.tenant_id
+      if (!escolasMap.has(escolaId)) {
+        escolasMap.set(escolaId, {
+          escola: fatura.escola,
+          faturas: [],
+          totalDevido: 0,
+          faturasAtrasadas: 0,
+          dataVencimentoMaisAntiga: fatura.data_vencimento
+        })
+      }
+      const entry = escolasMap.get(escolaId)
+      entry.faturas.push(fatura)
+      entry.totalDevido += Number(fatura.valor) || 0
+      entry.faturasAtrasadas += 1
+      if (fatura.data_vencimento < entry.dataVencimentoMaisAntiga) {
+        entry.dataVencimentoMaisAntiga = fatura.data_vencimento
+      }
+    }
+
+    return Array.from(escolasMap.values())
+  },
+
+  async confirmarPagamentoEscola(tenantId: string, adminId: string) {
+    // Busca faturas pendentes/atrasadas da escola
+    const { data: faturas, error } = await (supabase.from('faturas' as any) as any)
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .in('status', ['atrasado', 'pendente_confirmacao'])
+
+    if (error) throw error
+
+    // Confirma cada fatura
+    for (const fatura of (faturas as any[])) {
+      try {
+        await this.confirmarFatura(fatura.id, adminId)
+      } catch (err) {
+        console.error(`Erro ao confirmar fatura ${fatura.id}:`, err)
+      }
+    }
+  },
+
+  async enviarCobranca(tenantId: string, mensagem?: string) {
+    const { data: escola, error } = await (supabase.from('escolas' as any) as any)
+      .select('*, plano:planos(nome)')
+      .eq('id', tenantId)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!escola) throw new Error('Escola não encontrada')
+
+    // Criar notificação de cobrança
+    await (supabase.from('notificacoes' as any) as any).insert({
+      tenant_id: tenantId,
+      tipo: 'FINANCEIRO',
+      titulo: 'Cobrança Pendente',
+      mensagem: mensagem || `Prezados, verificamos que há faturas pendentes de pagamento referente ao plano ${escola.plano?.nome || 'ativo'}. Por favor, regularize a situação para manter o acesso ao sistema.`,
+      href: '/admin/financeiro',
+      categoria: 'PLATAFORMA',
+      prioridade: 1,
+      lida: false,
+      resolvida: false,
+      created_at: new Date().toISOString()
+    } as any)
+
+    // Buscar faturas pendentes para incluir na notificação
+    const { data: faturas } = await (supabase.from('faturas' as any) as any)
+      .select('valor, data_vencimento, competencia')
+      .eq('tenant_id', tenantId)
+      .in('status', ['atrasado', 'pendente_confirmacao'])
+
+    return {
+      escola,
+      faturasPendentes: faturas,
+      notificacaoEnviada: true
+    }
+  },
+
+  async cancelarAcessoEscola(tenantId: string, motivo: string) {
+    // Atualiza status da escola para suspensa
+    await (supabase.from('escolas' as any) as any)
+      .update({
+        status_assinatura: 'suspensa',
+        motivo_suspensao: motivo,
+        data_suspensao: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq('id', tenantId)
+
+    // Criar log de auditoria
+    await (supabase.from('audit_logs_v2' as any) as any).insert({
+      tenant_id: tenantId,
+      acao: 'CANCELAMENTO_ACESSO_SUPER_ADMIN',
+      detalhes: { motivo },
+      created_at: new Date().toISOString()
+    } as any)
   },
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useFaturas, useConfirmarFatura } from '../hooks'
+import { useFaturas, useConfirmarFatura, useEscolas, useCreateFatura } from '../hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,22 +9,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2, AlertCircle, Calendar } from 'lucide-react'
+import { Search, FileText, CheckCircle2, ExternalLink, MoreHorizontal, AlertTriangle, Clock, Loader2, AlertCircle, Calendar, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { format, isBefore, parseISO } from 'date-fns'
+import { format, isBefore, parseISO, addDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { Fatura } from '@/lib/database.types'
 
 export function FaturasPage() {
   const [tab, setTab] = useState('pendente_confirmacao')
   const { data: faturas, isLoading } = useFaturas(tab !== 'todas' ? { status: tab } : undefined)
+  const { data: escolas } = useEscolas()
   const confirmar = useConfirmarFatura()
+  const createFatura = useCreateFatura()
   const { authUser } = useAuth()
   const [search, setSearch] = useState('')
   const [isEarlyConfirmOpen, setIsEarlyConfirmOpen] = useState(false)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [faturaEarlyConfirm, setFaturaEarlyConfirm] = useState<any | null>(null)
   const [selectedFatura, setSelectedFatura] = useState<any | null>(null)
+  
+  const [isNovaFaturaOpen, setIsNovaFaturaOpen] = useState(false)
+  const [novaFatura, setNovaFatura] = useState({
+    tenant_id: '',
+    valor: '',
+    competencia: format(new Date(), 'yyyy-MM-01'),
+    data_vencimento: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
+    metodo_pagamento: 'pix_manual'
+  })
 
   const filtered = faturas?.filter((f: Fatura) =>
     (f as any).escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
@@ -60,6 +71,39 @@ export function FaturasPage() {
     }
   }
 
+  const handleCriarFatura = async () => {
+    if (!novaFatura.tenant_id) {
+      toast.error('Selecione uma escola.')
+      return
+    }
+    if (!novaFatura.valor || Number(novaFatura.valor) <= 0) {
+      toast.error('Informe um valor válido.')
+      return
+    }
+
+    try {
+      await createFatura.mutateAsync({
+        tenant_id: novaFatura.tenant_id,
+        valor: Number(novaFatura.valor),
+        competencia: novaFatura.competencia,
+        data_vencimento: novaFatura.data_vencimento,
+        forma_pagamento: novaFatura.forma_pagamento,
+        status: 'pendente'
+      })
+      toast.success('Fatura manual gerada com sucesso!')
+      setIsNovaFaturaOpen(false)
+      setNovaFatura({
+        tenant_id: '',
+        valor: '',
+        competencia: format(new Date(), 'yyyy-MM-01'),
+        data_vencimento: format(addDays(new Date(), 5), 'yyyy-MM-dd'),
+        forma_pagamento: 'pix_manual'
+      })
+    } catch {
+      toast.error('Erro ao gerar fatura manual.')
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pago': return <Badge className="bg-emerald-500 hover:bg-emerald-600">Pago</Badge>
@@ -73,9 +117,18 @@ export function FaturasPage() {
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Faturas da Plataforma</h1>
-        <p className="text-muted-foreground mt-1">Gestão de faturamento SaaS e conciliação de pagamentos.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Faturas da Plataforma</h1>
+          <p className="text-muted-foreground mt-1">Gestão de faturamento SaaS e conciliação de pagamentos.</p>
+        </div>
+        <Button 
+          onClick={() => setIsNovaFaturaOpen(true)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Fatura Manual
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -356,6 +409,98 @@ export function FaturasPage() {
                 Confirmar Agora
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Nova Fatura Manual */}
+      <Dialog open={isNovaFaturaOpen} onOpenChange={setIsNovaFaturaOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-indigo-600" />
+              Gerar Fatura Manual
+            </DialogTitle>
+            <DialogDescription>
+              Crie uma nova cobrança manual para uma escola cadastrada.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Escola / Instituição</label>
+              <select 
+                className="w-full h-11 px-4 rounded-xl border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                value={novaFatura.tenant_id}
+                onChange={(e) => setNovaFatura({ ...novaFatura, tenant_id: e.target.value })}
+              >
+                <option value="">Selecione uma escola...</option>
+                {escolas?.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.razao_social} ({e.email_gestor})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Valor da Cobrança (R$)</label>
+              <Input 
+                type="number" 
+                placeholder="0,00" 
+                value={novaFatura.valor}
+                onChange={(e) => setNovaFatura({ ...novaFatura, valor: e.target.value })}
+                className="h-11 font-bold text-lg text-indigo-600 rounded-xl"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Competência</label>
+                <Input 
+                  type="date" 
+                  value={novaFatura.competencia}
+                  onChange={(e) => setNovaFatura({ ...novaFatura, competencia: e.target.value })}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vencimento</label>
+                <Input 
+                  type="date" 
+                  value={novaFatura.data_vencimento}
+                  onChange={(e) => setNovaFatura({ ...novaFatura, data_vencimento: e.target.value })}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Método de Pagamento</label>
+              <select 
+                className="w-full h-11 px-4 rounded-xl border border-zinc-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition-all"
+                value={novaFatura.forma_pagamento}
+                onChange={(e) => setNovaFatura({ ...novaFatura, forma_pagamento: e.target.value })}
+              >
+                <option value="pix_manual">PIX Manual (Comprovante)</option>
+                <option value="boleto">Boleto Bancário</option>
+                <option value="mercado_pago">Cartão / Automático</option>
+              </select>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t pt-6">
+            <Button variant="outline" onClick={() => setIsNovaFaturaOpen(false)} className="rounded-xl h-11 font-bold">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCriarFatura}
+              disabled={createFatura.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-11 px-8"
+            >
+              {createFatura.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Gerar Cobrança
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

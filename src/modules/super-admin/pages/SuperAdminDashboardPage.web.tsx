@@ -24,7 +24,15 @@ export function SuperAdminDashboardPageWeb() {
     )
   }
 
-  const { totalEscolas, assinaturasAtivas, totalAlunos, escolasRecentes, saudeFinanceiraGlobal } = dashboard
+  const { 
+    totalEscolas, 
+    assinaturasAtivas, 
+    totalAlunos, 
+    escolasRecentes, 
+    saudeFinanceiraGlobal,
+    faturasPixPendentes,
+    faturasAtrasadas
+  } = dashboard
 
   return (
     <div className="space-y-6">
@@ -33,8 +41,40 @@ export function SuperAdminDashboardPageWeb() {
           <h1 className="text-2xl font-bold tracking-tight">Gestão da Empresa</h1>
           <p className="text-muted-foreground">Visão global da plataforma e unidades escolares</p>
         </div>
-
       </div>
+
+      {(faturasPixPendentes > 0 || faturasAtrasadas > 0) && (
+        <div className="grid gap-4 md:grid-cols-2">
+            {faturasPixPendentes > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                            <AlertCircle className="h-6 w-6 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-amber-900">{faturasPixPendentes} PIX aguardando confirmação</p>
+                            <p className="text-xs text-amber-700 font-medium">Verifique os comprovantes nas faturas.</p>
+                        </div>
+                    </div>
+                    <a href="/super-admin/faturas" className="text-xs font-black uppercase tracking-widest text-amber-600 hover:text-amber-700">Ver Todas</a>
+                </div>
+            )}
+            {faturasAtrasadas > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-red-100 rounded-xl flex items-center justify-center">
+                            <TrendingDown className="h-6 w-6 text-red-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-red-900">{faturasAtrasadas} faturas atrasadas</p>
+                            <p className="text-xs text-red-700 font-medium">Escolas com pendências financeiras.</p>
+                        </div>
+                    </div>
+                    <a href="/super-admin/faturas" className="text-xs font-black uppercase tracking-widest text-red-600 hover:text-red-700">Ver Todas</a>
+                </div>
+            )}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-md hover:shadow-lg transition-shadow duration-300">

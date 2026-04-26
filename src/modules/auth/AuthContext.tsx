@@ -81,13 +81,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // 2. GESTOR / ESCOLA (Busca por UUID ou Email)
-      const { data: escola, error: escolaErro } = await supabase
+      let escolaData = null
+      
+      // Tentativa 1: Por gestor_user_id (Mais rápido e seguro)
+      const { data: escolaById, error: errId } = await supabase
         .from('escolas')
         .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
-        .or(`gestor_user_id.eq.${user.id},email_gestor.ilike.${user.email}`)
-        .maybeSingle() as any
+        .eq('gestor_user_id', user.id)
+        .maybeSingle()
+      
+      escolaData = escolaById
 
-      if (escola && !escolaErro) {
+      // Tentativa 2: Por e-mail (Fallback para cadastros legados ou em transição)
+      if (!escolaData && user.email) {
+        const { data: escolaByEmail, error: errEmail } = await supabase
+          .from('escolas')
+          .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
+          .ilike('email_gestor', user.email)
+          .maybeSingle()
+        
+        escolaData = escolaByEmail
+      }
+
+      if (escolaData) {
+        const escola = escolaData as any
         console.log('🏫 Escola encontrada para o usuário:', escola.id)
         
         const endereco = escola?.logradouro ? {

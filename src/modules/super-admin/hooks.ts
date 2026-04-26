@@ -154,6 +154,71 @@ export function useConfirmarFatura() {
   })
 }
 
+export function useCreateFatura() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (fatura: any) => superAdminService.createFatura(fatura),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'faturas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useDeleteFatura() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => superAdminService.deleteFatura(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'faturas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+// ========== ESCOLAS DEVEDORAS ==========
+export function useEscolasDevedoras() {
+  return useQuery({
+    queryKey: ['admin', 'escolas-devedoras'],
+    queryFn: () => superAdminService.getEscolasDevedoras(),
+  })
+}
+
+export function useConfirmarPagamentoEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, adminId }: { tenantId: string; adminId: string }) =>
+      superAdminService.confirmarPagamentoEscola(tenantId, adminId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas-devedoras'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'faturas'] })
+    },
+  })
+}
+
+export function useEnviarCobranca() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, mensagem }: { tenantId: string; mensagem?: string }) =>
+      superAdminService.enviarCobranca(tenantId, mensagem),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas-devedoras'] })
+    },
+  })
+}
+
+export function useCancelarAcessoEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, motivo }: { tenantId: string; motivo: string }) =>
+      superAdminService.cancelarAcessoEscola(tenantId, motivo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas-devedoras'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas'] })
+    },
+  })
+}
+
 // ========== SOLICITAÇÕES DE UPGRADE ==========
 export function useSolicitacoesUpgrade() {
   return useQuery({

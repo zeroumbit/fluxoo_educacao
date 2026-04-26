@@ -357,6 +357,7 @@ export function AlunoCadastroPageMobile() {
           tenant_id: authUser.tenantId,
           user_id: authUser.id,
           acao: 'CRIAR_ALUNO',
+          tabela_nome: 'alunos',
           recurso_id: result.id,
           valor_anterior: null,
           valor_novo: { 

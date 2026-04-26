@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -54,6 +54,8 @@ type MatriculaFormData = z.infer<typeof matriculaSchema>
 
 export function MatriculaFormPageWeb() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const state = location.state as { aluno_id?: string; data_ingresso?: string; autoOpen?: boolean }
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
   const { authUser } = useAuth()
@@ -76,6 +78,17 @@ export function MatriculaFormPageWeb() {
       status: 'ativa'
     }
   })
+
+  // 1. Preenchimento via Estado da Rota (Vindo do cadastro de aluno)
+  useEffect(() => {
+    if (state?.aluno_id) {
+      form.setValue('alunos_ids', [state.aluno_id])
+    }
+    if (state?.data_ingresso) {
+      // Sincroniza a data da matrícula com a data de ingresso informada no cadastro
+      form.setValue('data_matricula', state.data_ingresso)
+    }
+  }, [state, form])
 
   useEffect(() => {
     if (editId && matriculas) {
@@ -273,7 +286,7 @@ export function MatriculaFormPageWeb() {
                   if (t) {
                     form.setValue('turma_id', t.id)
                     if (t.turno) {
-                      form.setValue('turno', t.turno)
+                      form.setValue('turno', t.turno.toLowerCase() as any)
                     }
 
                     // Valor da matrícula vem automaticamente da mensalidade da turma
