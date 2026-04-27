@@ -362,6 +362,60 @@ function StatusAprovacaoNotification({ status, metodo }: { status: string, metod
 }
 
 // ---------------------------------------------------------------------------
+// Sub-componente: Notificação de Expiração do Período de Teste
+// ---------------------------------------------------------------------------
+interface TrialExpirationNotificationProps {
+  assinatura: {
+    isTrial: boolean
+    diasRestantes: number
+    totalDiasTeste: number
+    valorPlano: number
+  }
+}
+
+function TrialExpirationNotification({ assinatura }: TrialExpirationNotificationProps) {
+  const navigate = useNavigate()
+  const { diasRestantes, totalDiasTeste, valorPlano } = assinatura
+  
+  const showNotification = useMemo(() => {
+    // 3 dias antes se o teste for de 7 dias
+    if (totalDiasTeste === 7) return diasRestantes <= 3
+    // 7 dias antes para 15, 30, 60 e 90 dias
+    return diasRestantes <= 7
+  }, [totalDiasTeste, diasRestantes])
+
+  if (!showNotification) return null
+
+  return (
+    <div className="rounded-[2rem] p-6 bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl mb-8 relative overflow-hidden group border-0 animate-in slide-in-from-top-4 duration-500">
+      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+        <Clock className="h-24 w-24 text-white" />
+      </div>
+      <div className="relative z-10 flex items-center gap-6">
+        <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+          <AlertOctagon className="h-7 w-7 text-white" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-black tracking-tight mb-1">
+            Seu Período de Teste está Acabando!
+          </h3>
+          <p className="text-white/80 text-sm font-medium max-w-2xl leading-relaxed">
+            Restam apenas <strong className="text-white font-black">{diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'}</strong> de acesso gratuito. 
+            Após o período de {totalDiasTeste} dias, será iniciado a cobrança do seu plano no valor de <strong className="text-white font-black">R$ {valorPlano.toFixed(2)}</strong> por aluno.
+          </p>
+        </div>
+        <Button 
+          onClick={() => navigate('/plano')}
+          className="bg-white text-orange-600 hover:bg-zinc-100 rounded-xl font-bold h-12 px-8 shadow-lg shadow-orange-900/20"
+        >
+          Ver Meu Plano
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Pagamento PIX Manual Pendente
 // ---------------------------------------------------------------------------
 function PixManualBannerNotification() {
@@ -650,6 +704,11 @@ function DashboardContent() {
 
       {/* Alerta de Aprovação */}
       <StatusAprovacaoNotification status={statusAssinatura} metodo={metodoPagamento} />
+
+      {/* Alerta de Expiração de Teste */}
+      {dashboardData?.assinatura && (
+        <TrialExpirationNotification assinatura={dashboardData.assinatura} />
+      )}
 
       {/* Notificações de Pagamentos PIX Manual Pendentes */}
       <PixManualBannerNotificationComponent />

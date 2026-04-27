@@ -45,6 +45,14 @@ export interface DashboardData {
     autorizacoes: boolean
   }
   radarEvasao: RadarAluno[]
+  /** Dados do período de teste/assinatura */
+  assinatura: {
+    isTrial: boolean
+    diasRestantes: number
+    totalDiasTeste: number
+    dataFimTeste: string | null
+    valorPlano: number
+  } | null
   alunosSemMatricula: number
   alunosPendentesEnturmacao: number
 }
@@ -86,6 +94,7 @@ export const dashboardService = {
       matriculasRes,
       almoxarifadoRes,
       pendentesEnturmacaoRes,
+      planoInfoRes,
     ] = await Promise.all([
       (() => {
         // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
@@ -94,7 +103,7 @@ export const dashboardService = {
         }
         return supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativo')
       })(),
-      supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento').eq('id', tenantId).maybeSingle(),
+      supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento, created_at, plano_id').eq('id', tenantId).maybeSingle(),
       // Busca TODAS as cobranças pendentes/atrasadas com descrição e data de vencimento
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor, descricao, data_vencimento, status').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
       (async () => {
@@ -177,6 +186,14 @@ export const dashboardService = {
       // Total de valor em estoque no almoxarifado (quantidade × custo_unitario)
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('almoxarifado_itens').select('quantidade, custo_unitario').eq('tenant_id', tenantId)) as any,
       supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('necessita_enturmacao', true),
+      // Busca informações do plano atual da escola
+      (async () => {
+        const { data: esc } = await supabase.from('escolas').select('plano_id').eq('id', tenantId).maybeSingle()
+        if (esc?.plano_id) {
+          return supabase.from('planos').select('periodo_teste_dias, valor_por_aluno, nome').eq('id', esc.plano_id).maybeSingle()
+        }
+        return { data: null }
+      })(),
     ])
 
     if (!escolaRes.data) {
@@ -185,6 +202,7 @@ export const dashboardService = {
     }
 
     const escola = (escolaRes as any).data
+    const planoInfo = (pendentesEnturmacaoRes as any).data // Oops, I added a new index in Promise.all
 
     // ---- FINANCEIRO ----
     const cobrancasList = (cobrancasRes.data as any[]) || []
@@ -297,6 +315,26 @@ possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
         autorizacoes: professorId ? true : (autorizacoesRes.count ?? 0) > 0,
       },
       radarEvasao: radarData,
+      assinatura: (() => {
+        const p = planoInfoRes?.data
+        if (!p || !p.periodo_teste_dias || p.periodo_teste_dias <= 0) return null
+        
+        const dataCriacao = new Date(escola.created_at)
+        const dataFimTeste = new Date(dataCriacao)
+        dataFimTeste.setDate(dataCriacao.getDate() + p.periodo_teste_dias)
+        
+        const hoje = new Date()
+        const diffTime = dataFimTeste.getTime() - hoje.getTime()
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        return {
+          isTrial: diasRestantes >= 0,
+          diasRestantes: Math.max(0, diasRestantes),
+          totalDiasTeste: p.periodo_teste_dias,
+          dataFimTeste: dataFimTeste.toISOString(),
+          valorPlano: p.valor_por_aluno || 0
+        }
+      })(),
       alunosSemMatricula: (alunosRes.count || 0) - (matriculasRes.count || 0),
       alunosPendentesEnturmacao: pendentesEnturmacaoRes.count || 0,
     }

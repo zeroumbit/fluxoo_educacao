@@ -167,8 +167,19 @@ export function EscolaCadastroPage() {
   ]
 
   const nextStep = async () => {
-    const ok = await trigger(fieldsPerStep[currentStep])
-    if (ok && currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
+    const fields = fieldsPerStep[currentStep]
+    logger.info(`Validando campos para o passo ${currentStep + 1}:`, fields)
+    
+    const ok = await trigger(fields)
+    
+    if (ok) {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1)
+      }
+    } else {
+      logger.warn(`Falha na validação do passo ${currentStep + 1}. Erros:`, errors)
+      toast.error('Por favor, preencha todos os campos obrigatórios corretamente para continuar.')
+    }
   }
   const prevStep = () => currentStep > 0 && setCurrentStep(currentStep - 1)
 
@@ -489,30 +500,60 @@ export function EscolaCadastroPage() {
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <Label>Escolha seu Plano *</Label>
-                    <div className="grid gap-3">
-                      {(planos as any[])?.map((p: any) => (
-                        <div key={p.id} onClick={() => setValue('plano_id', p.id, { shouldValidate: true })}
-                          className={cn("relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:border-indigo-200", watch('plano_id') === p.id ? "border-indigo-600 bg-indigo-50/50" : "border-zinc-100 bg-zinc-50/30")}>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-zinc-900">{p.nome}</span>
-                            {watch('plano_id') === p.id && <Check className="h-4 w-4 text-indigo-600" />}
-                          </div>
-                          {p.descricao_curta && <p className="text-xs text-muted-foreground mb-2">{p.descricao_curta}</p>}
-                          <p className="text-sm text-indigo-700 font-semibold">R$ {Number(p.valor_por_aluno).toFixed(2)} <span className="text-xs font-normal text-zinc-500">por aluno</span></p>
-                          {p.modulos?.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {p.modulos.map((pm: any) => (
-                                <span key={pm.modulo?.id || Math.random()} className="inline-flex items-center gap-1 text-[10px] bg-indigo-100/50 text-indigo-700 rounded-md px-1.5 py-0.5 font-medium">
-                                  <Puzzle className="h-2.5 w-2.5" />{pm.modulo?.nome}
-                                </span>
-                              ))}
+                    {!planos ? (
+                      <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-zinc-100 rounded-xl space-y-3">
+                        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+                        <p className="text-sm text-muted-foreground">Carregando planos disponíveis...</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {(planos as any[])?.map((p: any) => (
+                          <div key={p.id} onClick={() => setValue('plano_id', p.id, { shouldValidate: true })}
+                            className={cn("relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:border-indigo-200", watch('plano_id') === p.id ? "border-indigo-600 bg-indigo-50/50" : "border-zinc-100 bg-zinc-50/30")}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-bold text-zinc-900">{p.nome}</span>
+                              {watch('plano_id') === p.id && <Check className="h-4 w-4 text-indigo-600" />}
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                            {p.descricao_curta && <p className="text-xs text-muted-foreground mb-2">{p.descricao_curta}</p>}
+                            <p className="text-sm text-indigo-700 font-semibold">R$ {Number(p.valor_por_aluno).toFixed(2)} <span className="text-xs font-normal text-zinc-500">por aluno</span></p>
+                            {p.modulos?.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {p.modulos.map((pm: any) => (
+                                  <span key={pm.modulo?.id || Math.random()} className="inline-flex items-center gap-1 text-[10px] bg-indigo-100/50 text-indigo-700 rounded-md px-1.5 py-0.5 font-medium">
+                                    <Puzzle className="h-2.5 w-2.5" />{pm.modulo?.nome}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {p.periodo_teste_dias > 0 && (
+                              <div className="mt-2">
+                                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-bold">
+                                  {p.periodo_teste_dias} DIAS GRÁTIS
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {errors.plano_id && <p className="text-xs text-destructive font-medium">{errors.plano_id.message}</p>}
                   </div>
-                  <div className="space-y-2"><Label>Quantidade prevista de Alunos *</Label><Input type="number" placeholder="Ex: 100" {...register('limite_alunos_contratado')} /></div>
+                  <div className="space-y-2">
+                    <Label>Quantidade prevista de Alunos *</Label>
+                    <Input type="number" placeholder="Ex: 100" {...register('limite_alunos_contratado')} />
+                    {errors.limite_alunos_contratado && <p className="text-xs text-destructive font-medium">{errors.limite_alunos_contratado.message}</p>}
+                  </div>
+                  {selectedPlan && selectedPlan.periodo_teste_dias > 0 && (
+                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex gap-3">
+                        <Check className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          Este plano inclui um período de <strong>{selectedPlan.periodo_teste_dias} dias gratuitos</strong>. 
+                          Após este prazo, será cobrado o valor de <strong>R$ {totalMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> mensalmente.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {selectedPlan && qtdAlunos > 0 && (
                     <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 text-white shadow-lg animate-in fade-in zoom-in duration-300">
                       <div className="flex justify-between items-center opacity-80 text-xs uppercase tracking-wider font-bold mb-2"><span>Investimento Mensal</span><CreditCard className="h-4 w-4" /></div>
@@ -536,8 +577,18 @@ export function EscolaCadastroPage() {
                       <div><span className="text-muted-foreground">Plano:</span> <strong>{selectedPlan?.nome}</strong></div>
                       <div><span className="text-muted-foreground">Alunos:</span> <strong>{qtdAlunos}</strong></div>
                       <div><span className="text-muted-foreground">Valor/Aluno:</span> <strong>R$ {valorPorAluno.toFixed(2)}</strong></div>
-                      <div><span className="text-muted-foreground">Total Mensal:</span> <strong className="text-indigo-700">R$ {totalMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                      <div>
+                        <span className="text-muted-foreground">{selectedPlan?.periodo_teste_dias > 0 ? 'Após o teste:' : 'Total Mensal:'}</span> 
+                        <strong className="text-indigo-700">R$ {totalMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                      </div>
                     </div>
+                    {selectedPlan?.periodo_teste_dias > 0 && (
+                      <div className="mt-2 pt-2 border-t border-zinc-200">
+                        <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">
+                          Inicia com {selectedPlan.periodo_teste_dias} dias gratuitos
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Meio de Pagamento */}

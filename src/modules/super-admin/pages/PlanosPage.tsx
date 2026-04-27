@@ -44,10 +44,17 @@ const VALIDADE_PLANOS = [
 ] as const
 
 const TIPOS_PAGAMENTO = [
-  { value: 'gratuito', label: 'Gratuito', description: 'Sem cobrança' },
-  { value: 'pix', label: 'PIX', description: 'Pagamento automático via PIX' },
-  { value: 'mercado_pago', label: 'Mercado Pago', description: 'Pagamento via Mercado Pago' },
-  { value: 'pix_manual', label: 'PIX Manual', description: 'Chave PIX cadastrada pelo admin' },
+  { value: 'pago', label: 'Pago', description: 'Plano com cobrança recorrente' },
+  { value: 'gratuito', label: 'Gratuito', description: 'Período de teste ou 100% grátis' },
+] as const
+
+const PERIODOS_TESTE = [
+  { value: '0', label: 'Sem período de teste (Cobrança imediata)' },
+  { value: '7', label: '7 dias' },
+  { value: '15', label: '15 dias' },
+  { value: '30', label: '30 dias' },
+  { value: '60', label: '60 dias' },
+  { value: '90', label: '90 dias' },
 ] as const
 
 export function PlanosPage() {
@@ -70,7 +77,8 @@ export function PlanosPage() {
     valor_por_aluno: 0,
     status: true,
     tipo_empresa: 'escolas' as 'escolas' | 'lojistas' | 'profissionais',
-    tipo_pagamento: 'gratuito' as 'gratuito' | 'pix' | 'mercado_pago' | 'pix_manual',
+    tipo_pagamento: 'pago' as 'pago' | 'gratuito',
+    periodo_teste_dias: 0,
     validade_meses: null as number | null
   })
 
@@ -88,7 +96,8 @@ export function PlanosPage() {
         valor_por_aluno: Number(plano.valor_por_aluno),
         status: plano.status,
         tipo_empresa: plano.tipo_empresa || 'escolas',
-        tipo_pagamento: plano.tipo_pagamento || 'gratuito',
+        tipo_pagamento: plano.tipo_pagamento === 'gratuito' ? 'gratuito' : 'pago',
+        periodo_teste_dias: plano.periodo_teste_dias || 0,
         validade_meses: plano.validade_meses ?? null
       })
     } else {
@@ -99,7 +108,8 @@ export function PlanosPage() {
         valor_por_aluno: 0, 
         status: true, 
         tipo_empresa: 'escolas', 
-        tipo_pagamento: 'gratuito',
+        tipo_pagamento: 'pago',
+        periodo_teste_dias: 0,
         validade_meses: null 
       })
     }
@@ -109,9 +119,15 @@ export function PlanosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const { periodo_teste_dias, ...rest } = formData
       await upsertPlano.mutateAsync({
         ...(editingPlano?.id ? { id: editingPlano.id } : {}),
-        ...formData
+        ...rest,
+        // Mapeia para os valores suportados pelo banco de dados (Enum)
+        tipo_pagamento: formData.tipo_pagamento === 'pago' ? 'pix' : 'gratuito',
+        // Só envia o campo de dias de teste se for maior que zero 
+        // (Isso ajuda a evitar erro 400 se a coluna ainda não tiver sido criada)
+        ...(periodo_teste_dias > 0 ? { periodo_teste_dias } : {})
       })
       toast.success(editingPlano ? 'Plano atualizado!' : 'Plano criado!')
       setIsModalOpen(false)
@@ -202,6 +218,81 @@ export function PlanosPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Plano</Label>
+                  <Select
+                    value={formData.tipo_pagamento}
+                    onValueChange={(value: 'pago' | 'gratuito') =>
+                      setFormData({ ...formData, tipo_pagamento: value, periodo_teste_dias: value === 'pago' ? 0 : formData.periodo_teste_dias })
+                    }
+                  >
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                      <SelectValue placeholder="Selecione o tipo de plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_PAGAMENTO.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          <div className="flex flex-col">
+                            <span className="font-semibold">{tipo.label}</span>
+                            <span className="text-xs text-muted-foreground">{tipo.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Validade do Plano</Label>
+                  <Select
+                    value={formData.validade_meses?.toString() || 'indefinido'}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        validade_meses: value === 'indefinido' ? null : parseInt(value)
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                      <SelectValue placeholder="Selecione a validade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VALIDADE_PLANOS.map((validade) => (
+                        <SelectItem key={validade.value} value={validade.value}>
+                          {validade.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Tempo de duração do plano. "Indefinido" = sem expiração.
+                  </p>
+                </div>
+
+                {formData.tipo_pagamento === 'gratuito' && (
+                  <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Período de Teste (Trial)</Label>
+                    <Select
+                      value={formData.periodo_teste_dias.toString()}
+                      onValueChange={(value) => setFormData({ ...formData, periodo_teste_dias: parseInt(value) })}
+                    >
+                      <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
+                        <SelectValue placeholder="Selecione o período de teste" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PERIODOS_TESTE.map((periodo) => (
+                          <SelectItem key={periodo.value} value={periodo.value}>
+                            {periodo.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-indigo-600 font-medium">
+                      * Após este período, a escola será cobrada o valor normal do plano.
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
                   <Label htmlFor="desc" className="text-xs font-bold uppercase tracking-widest text-slate-400">Descrição Curta</Label>
                   <Textarea
                     id="desc"
@@ -251,62 +342,6 @@ export function PlanosPage() {
                   <p className="text-xs text-slate-500 font-medium">
                     Define quais tipos de empresas verão este plano ao pagar.
                   </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Validade do Plano</Label>
-                  <Select
-                    value={formData.validade_meses?.toString() || 'indefinido'}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        validade_meses: value === 'indefinido' ? null : parseInt(value)
-                      })
-                    }
-                  >
-                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
-                      <SelectValue placeholder="Selecione a validade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {VALIDADE_PLANOS.map((validade) => (
-                        <SelectItem key={validade.value} value={validade.value}>
-                          {validade.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Tempo de duração do plano. "Indefinido" = sem expiração.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Tipo de Pagamento</Label>
-                  <Select
-                    value={formData.tipo_pagamento}
-                    onValueChange={(value: 'gratuito' | 'pix' | 'mercado_pago' | 'pix_manual') =>
-                      setFormData({ ...formData, tipo_pagamento: value })
-                    }
-                  >
-                    <SelectTrigger className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 w-full">
-                      <SelectValue placeholder="Selecione o tipo de pagamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPOS_PAGAMENTO.map((tipo) => (
-                        <SelectItem key={tipo.value} value={tipo.value}>
-                          <div className="flex flex-col">
-                            <span className="font-semibold">{tipo.label}</span>
-                            <span className="text-xs text-muted-foreground">{tipo.description}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <p className="text-xs text-amber-800 font-medium">
-                      <strong>Regra:</strong> Apenas 1 plano ativo por combinação (tipo de empresa + tipo de pagamento).
-                    </p>
-                  </div>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -460,15 +495,16 @@ export function PlanosPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {(() => {
-                              const pagamentoConfig = TIPOS_PAGAMENTO.find(t => t.value === plano.tipo_pagamento) || TIPOS_PAGAMENTO[0]
-                              return (
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="text-xs font-bold text-slate-700">{pagamentoConfig.label}</span>
-                                  <span className="text-[10px] text-slate-500">{pagamentoConfig.description}</span>
-                                </div>
-                              )
-                            })()}
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-xs font-bold text-slate-700">
+                                {plano.tipo_pagamento === 'gratuito' ? 'Gratuito' : 'Pago'}
+                              </span>
+                              {plano.periodo_teste_dias > 0 && (
+                                <span className="text-[10px] text-indigo-600 font-bold">
+                                  {plano.periodo_teste_dias} dias de teste
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             {plano.validade_meses ? (
