@@ -1,17 +1,31 @@
 /**
- * Logger Centralizado - Segurança e Auditoria
- * 
- * Este módulo fornece uma interface segura para logging na aplicação,
- * garantindo que logs sensíveis não sejam exibidos em produção.
- * 
+ * Logger Centralizado - Segurança e Auditoria (LGPD-compliant)
+ *
+ * Em desenvolvimento: todos os logs no console.
+ * Em produção: apenas erros, enviados ao Sentry com scrubbing de PII.
+ *
  * USO:
  * import { logger } from '@/lib/logger'
- * 
+ *
  * logger.info('Mensagem informativa')
  * logger.warn('Aviso importante')
  * logger.error('Erro crítico', error)
  * logger.debug('Debug detalhado')
  */
+
+// Importação lazy do Sentry para não impactar o bundle inicial
+let _sentryCapture: ((e: unknown, ctx?: Record<string, unknown>) => void) | null = null
+
+async function getSentryCapture() {
+  if (_sentryCapture) return _sentryCapture
+  try {
+    const { captureException } = await import('@/lib/sentry')
+    _sentryCapture = captureException
+  } catch {
+    _sentryCapture = () => { /* Sentry não disponível */ }
+  }
+  return _sentryCapture
+}
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -47,20 +61,12 @@ function sanitizeData(data: any): any {
   }
 
   const sensitiveFields = [
-    'password',
-    'senha',
-    'token',
-    'accessToken',
-    'refreshToken',
-    'api_key',
-    'apiKey',
-    'secret',
-    'cpf',
-    'cnpj',
-    'cartao',
-    'cartão',
-    'cvv',
-    'codigo_seguranca',
+    'password', 'senha', 'token', 'accessToken', 'refreshToken',
+    'api_key', 'apiKey', 'secret', 'cpf', 'cnpj',
+    'cartao', 'cartão', 'cvv', 'codigo_seguranca',
+    // LGPD — dados pessoais que não devem ser logados
+    'email', 'nome', 'name', 'telefone', 'celular', 'phone',
+    'rg', 'pis', 'endereco', 'address', 'data_nascimento',
   ]
 
   const sanitized = { ...data }
@@ -110,13 +116,19 @@ export const logger: Logger = {
 
   error: (...args: any[]) => {
     if (!isLogEnabled('error')) return
-    
+
     const [message, error, ...rest] = args
-    
-    // Em produção, loga apenas mensagem genérica
+
+    // Em produção: loga mensagem genérica e envia ao Sentry
     if (import.meta.env.PROD) {
       console.error(formatMessage('error', 'Erro interno'))
-      // Opcional: enviar para serviço de monitoramento (Sentry, etc.)
+      getSentryCapture().then((capture) => {
+        if (error instanceof Error) {
+          capture(error, { action: String(message) })
+        } else {
+          capture(new Error(String(message)), { action: String(message) })
+        }
+      })
       return
     }
 

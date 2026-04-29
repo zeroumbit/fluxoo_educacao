@@ -69,6 +69,7 @@ const PerfilEscolaPage = lazy(() => import('@/modules/escola-perfil/pages/Perfil
 const MeuPerfilPage = lazy(() => import('@/modules/meu-perfil/pages/MeuPerfilPage').then(m => ({ default: m.MeuPerfilPage })))
 const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then(m => ({ default: m.PlanoPage })))
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
+const AprovacaoPage = lazy(() => import('@/modules/aprovacao/AprovacaoPage').then(m => ({ default: m.default })))
 
 // Currículos - MÓDULO EM IMPLEMENTAÇÃO (imports mantidos para reativação futura)
 // const CurriculosListPage = lazy(() => import('@/modules/curriculos/pages/CurriculosListPage').then(m => ({ default: m.CurriculosListPage })))
@@ -177,11 +178,19 @@ persistQueryClient({
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
 })
 
+import { useSessionTimeout } from '@/hooks/useSessionTimeout'
+
+function SessionManager() {
+  useSessionTimeout()
+  return null
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <SessionManager />
           <RBACProvider>
             <Suspense fallback={
               <div className="flex h-[60vh] items-center justify-center">
@@ -311,6 +320,9 @@ function App() {
 
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
+              
+              {/* Fluxo de Aprovações */}
+              <Route path="/aprovacoes" element={<AprovacaoPage />} />
             </Route>
 
             {/* Portal do Responsável V2 */}

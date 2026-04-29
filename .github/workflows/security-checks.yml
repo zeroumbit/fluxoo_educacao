@@ -1,0 +1,70 @@
+name: Security & Health Checks
+
+on:
+  push:
+    branches: [ "main", "staging" ]
+  pull_request:
+    branches: [ "main", "staging" ]
+
+jobs:
+  security-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Verify Environment Template
+      run: |
+        if [ ! -f ".env.example" ]; then
+          echo "❌ .env.example não encontrado!"
+          exit 1
+        fi
+        
+        # Verifica se as variáveis obrigatórias estão no template
+        REQUIRED_VARS=("VITE_SUPABASE_URL" "VITE_SUPABASE_ANON_KEY" "VITE_SUPER_ADMIN_EMAIL")
+        
+        for VAR in "${REQUIRED_VARS[@]}"; do
+          if ! grep -q "$VAR" .env.example; then
+            echo "❌ Variável obrigatória ausente no template: $VAR"
+            exit 1
+          fi
+        done
+        echo "✅ .env.example validado."
+        
+    - name: Check for Hardcoded Secrets
+      run: |
+        echo "Verificando chaves de API expostas no código..."
+        
+        # Evita pasta node_modules e dist
+        # Regex básico para chaves JWT anon key comuns do Supabase
+        # Regex = "ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*"
+        
+        if grep -rIEq "ey[A-Za-z0-9-_=]{20,}\.[A-Za-z0-9-_=]{20,}\.[A-Za-z0-9-_.+/=]+" src/; then
+          echo "⚠️  AVISO: Possível JWT hardcoded detectado em src/. Verifique manualmente."
+          # Não quebramos o build automaticamente pois pode haver falsos positivos
+          # Mas alertamos fortemente no log
+        else
+          echo "✅ Nenhuma chave Supabase (JWT) hardcoded encontrada em src/"
+        fi
+        
+    - name: Type Check & Lint
+      run: |
+        npm run lint || echo "⚠️ Lint encontrou avisos."
+        npx tsc --noEmit
+        
+    - name: Run Build
+      # Variáveis mockadas para o build passar no health check
+      env:
+        VITE_SUPABASE_URL: "https://mock.supabase.co"
+        VITE_SUPABASE_ANON_KEY: "ey_mock_key_with_more_than_100_characters_for_validation_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        VITE_SUPER_ADMIN_EMAIL: "admin@fluxoo.com"
+      run: npm run build

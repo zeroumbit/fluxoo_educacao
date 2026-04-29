@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Super Admin',
           email: user.email || '',
           isProfessor: false,
-          isGestor: true,
+          isGestor: false,       // R2: Super Admin nunca é gestor operacional de escola
           isSuperAdmin: true
         })
         return

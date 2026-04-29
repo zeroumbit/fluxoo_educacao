@@ -2,7 +2,13 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 import { registerSW } from 'virtual:pwa-register'
-import { toast } from 'sonner' // toast for update notification
+import { toast } from 'sonner'
+import { initSentry } from '@/lib/sentry'
+import { setupErrorHandlers } from '@/lib/logger'
+
+// Inicializar Sentry ANTES do primeiro render (captura erros desde o início)
+initSentry()
+setupErrorHandlers()
 
 // Start App Registration first
 createRoot(document.getElementById('root')!).render(<App />)
