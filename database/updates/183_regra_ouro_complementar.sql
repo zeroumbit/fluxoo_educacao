@@ -13,15 +13,26 @@ DO $$ BEGIN
   DROP POLICY IF EXISTS "Leitura livre - Escolas" ON public.escolas;
   DROP POLICY IF EXISTS "Universal_Select_Escolas" ON public.escolas;
   DROP POLICY IF EXISTS "Universal_Update_Escolas" ON public.escolas;
+  DROP POLICY IF EXISTS "Read_Escolas" ON public.escolas;
+  DROP POLICY IF EXISTS "Onboard_Insert_Escolas" ON public.escolas;
+  DROP POLICY IF EXISTS "Staff_Update_Escolas" ON public.escolas;
+  DROP POLICY IF EXISTS "SA_Manage_Escolas" ON public.escolas;
 END $$;
 
 -- Leitura livre para todos autenticados (necessário para JOINs)
 CREATE POLICY "Read_Escolas" ON public.escolas FOR SELECT TO authenticated USING (true);
 -- Onboarding: anon pode inserir escola
 CREATE POLICY "Onboard_Insert_Escolas" ON public.escolas FOR INSERT TO anon, authenticated WITH CHECK (true);
--- Staff pode editar SUA escola
+-- Staff pode editar SUA escola (evitar check_is_tenant_staff aqui para evitar recursão na tabela escolas)
 CREATE POLICY "Staff_Update_Escolas" ON public.escolas FOR UPDATE TO authenticated
-USING (public.check_is_tenant_staff(id)) WITH CHECK (public.check_is_tenant_staff(id));
+USING (
+  id = public.get_jwt_tenant_id() 
+  OR gestor_user_id = auth.uid()
+) 
+WITH CHECK (
+  id = public.get_jwt_tenant_id() 
+  OR gestor_user_id = auth.uid()
+);
 -- SuperAdmin pode criar/suspender/editar escolas (gestão de tenants)
 CREATE POLICY "SA_Manage_Escolas" ON public.escolas FOR ALL TO authenticated
 USING (public.check_is_super_admin()) WITH CHECK (public.check_is_super_admin());
@@ -34,6 +45,11 @@ DO $$ BEGIN
   DROP POLICY IF EXISTS "Leitura livre - Disciplinas" ON public.disciplinas;
   DROP POLICY IF EXISTS "RP_Filiais_Gestor" ON public.filiais;
   DROP POLICY IF EXISTS "onboarding_insert_filiais" ON public.filiais;
+  DROP POLICY IF EXISTS "Read_Filiais" ON public.filiais;
+  DROP POLICY IF EXISTS "Staff_CRUD_Filiais" ON public.filiais;
+  DROP POLICY IF EXISTS "SA_Read_Filiais" ON public.filiais;
+  DROP POLICY IF EXISTS "Onboard_Insert_Filiais" ON public.filiais;
+  DROP POLICY IF EXISTS "Read_Disciplinas" ON public.disciplinas;
 END $$;
 
 CREATE POLICY "Read_Filiais" ON public.filiais FOR SELECT TO authenticated USING (true);
@@ -74,6 +90,9 @@ USING (user_id = auth.uid());
 -- ============================================================
 DO $$ BEGIN
   DROP POLICY IF EXISTS "Permissao_usuarios_sistema" ON public.usuarios_sistema;
+  DROP POLICY IF EXISTS "Staff_CRUD_UsuariosSistema" ON public.usuarios_sistema;
+  DROP POLICY IF EXISTS "SA_Read_UsuariosSistema" ON public.usuarios_sistema;
+  DROP POLICY IF EXISTS "Self_Read_UsuariosSistema" ON public.usuarios_sistema;
 END $$;
 
 CREATE POLICY "Staff_CRUD_UsuariosSistema" ON public.usuarios_sistema FOR ALL TO authenticated
@@ -118,6 +137,8 @@ DO $$ BEGIN
   -- atividades_turmas
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'atividades_turmas' AND schemaname = 'public') THEN
     DROP POLICY IF EXISTS "tenant_acesso_atividades_turmas" ON public.atividades_turmas;
+    DROP POLICY IF EXISTS "Staff_CRUD_AtividadesTurmas" ON public.atividades_turmas;
+    DROP POLICY IF EXISTS "SA_Read_AtividadesTurmas" ON public.atividades_turmas;
     CREATE POLICY "Staff_CRUD_AtividadesTurmas" ON public.atividades_turmas FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_AtividadesTurmas" ON public.atividades_turmas FOR SELECT TO authenticated
@@ -127,6 +148,8 @@ DO $$ BEGIN
   -- planos_aula_turmas
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'planos_aula_turmas' AND schemaname = 'public') THEN
     DROP POLICY IF EXISTS "tenant_acesso_planos_aula_turmas" ON public.planos_aula_turmas;
+    DROP POLICY IF EXISTS "Staff_CRUD_PlanosAulaTurmas" ON public.planos_aula_turmas;
+    DROP POLICY IF EXISTS "SA_Read_PlanosAulaTurmas" ON public.planos_aula_turmas;
     CREATE POLICY "Staff_CRUD_PlanosAulaTurmas" ON public.planos_aula_turmas FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_PlanosAulaTurmas" ON public.planos_aula_turmas FOR SELECT TO authenticated
@@ -138,6 +161,8 @@ DO $$ BEGIN
     DROP POLICY IF EXISTS "Universal_Select_PlanosAula" ON public.planos_aula;
     DROP POLICY IF EXISTS "Universal_Update_PlanosAula" ON public.planos_aula;
     DROP POLICY IF EXISTS "Universal_Insert_PlanosAula" ON public.planos_aula;
+    DROP POLICY IF EXISTS "Staff_CRUD_PlanosAula" ON public.planos_aula;
+    DROP POLICY IF EXISTS "SA_Read_PlanosAula" ON public.planos_aula;
     CREATE POLICY "Staff_CRUD_PlanosAula" ON public.planos_aula FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_PlanosAula" ON public.planos_aula FOR SELECT TO authenticated
@@ -147,6 +172,8 @@ DO $$ BEGIN
   -- notificacoes (global)
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'notificacoes' AND schemaname = 'public') THEN
     DROP POLICY IF EXISTS "tenant_acesso_notificacoes" ON public.notificacoes;
+    DROP POLICY IF EXISTS "Staff_CRUD_Notificacoes" ON public.notificacoes;
+    DROP POLICY IF EXISTS "SA_Read_Notificacoes" ON public.notificacoes;
     CREATE POLICY "Staff_CRUD_Notificacoes" ON public.notificacoes FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_Notificacoes" ON public.notificacoes FOR SELECT TO authenticated
@@ -156,6 +183,8 @@ DO $$ BEGIN
   -- almoxarifado_itens
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'almoxarifado_itens' AND schemaname = 'public') THEN
     DROP POLICY IF EXISTS "tenant_acesso_almoxarifado_itens" ON public.almoxarifado_itens;
+    DROP POLICY IF EXISTS "Staff_CRUD_Almoxarifado" ON public.almoxarifado_itens;
+    DROP POLICY IF EXISTS "SA_Read_Almoxarifado" ON public.almoxarifado_itens;
     CREATE POLICY "Staff_CRUD_Almoxarifado" ON public.almoxarifado_itens FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_Almoxarifado" ON public.almoxarifado_itens FOR SELECT TO authenticated
@@ -165,6 +194,8 @@ DO $$ BEGIN
   -- fornecedores
   IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'fornecedores' AND schemaname = 'public') THEN
     DROP POLICY IF EXISTS "tenant_acesso_fornecedores" ON public.fornecedores;
+    DROP POLICY IF EXISTS "Staff_CRUD_Fornecedores" ON public.fornecedores;
+    DROP POLICY IF EXISTS "SA_Read_Fornecedores" ON public.fornecedores;
     CREATE POLICY "Staff_CRUD_Fornecedores" ON public.fornecedores FOR ALL TO authenticated
     USING (public.check_is_tenant_staff(tenant_id)) WITH CHECK (public.check_is_tenant_staff(tenant_id));
     CREATE POLICY "SA_Read_Fornecedores" ON public.fornecedores FOR SELECT TO authenticated

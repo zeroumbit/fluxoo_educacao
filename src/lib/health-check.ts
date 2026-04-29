@@ -34,7 +34,7 @@ const ENV_CHECKS: EnvCheck[] = [
     key: 'VITE_SUPER_ADMIN_EMAIL',
     label: 'Email do Super Admin',
     criticality: 'critical',
-    validateFn: (v) => v.includes('@') && !v.includes('gmail.com'),
+    validateFn: (v) => v.includes('@'),
   },
   {
     key: 'VITE_SENTRY_DSN',
