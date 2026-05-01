@@ -6,68 +6,54 @@ export const portalService = {
   // AUTENTICAÇÃO POR CPF
   // ==========================================
   async loginPorCpf(cpf: string, senha: string) {
-    // Busca informações de login via RPC segura (não expõe a tabela via RLS)
     const cpfLimpo = cpf.replace(/\D/g, '')
-    const { data: responsavel, error: rpcError } = await (supabase.rpc('get_portal_login_info', {
+    const { data: profiles, error: rpcError } = await (supabase.rpc('get_portal_login_info', {
       cpf_input: cpfLimpo
     }) as any)
 
-    if (rpcError || !responsavel) {
+    if (rpcError || !profiles || profiles.length === 0) {
       console.error('Erro ao buscar responsável:', rpcError)
-      throw new Error('CPF ou senha inválidos.')
+      throw new Error('CPF não cadastrado ou sem acesso ao portal.')
     }
 
-    if (responsavel.status === 'inativo') {
-      throw new Error('CPF ou senha inválidos.')
+    // Tenta encontrar um perfil ativo
+    const activeProfiles = (profiles as any[]).filter(p => p.status === 'ativo')
+    if (activeProfiles.length === 0) {
+      throw new Error('Este cadastro está inativo. Entre em contato com a escola.')
     }
 
-    // Autentica via Supabase Auth usando o email associado
-    if (!responsavel.email) {
-      throw new Error('CPF ou senha inválidos.')
-    }
-
+    // Autentica via Supabase Auth usando o email do primeiro perfil ativo
+    const profile = activeProfiles[0]
+    
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: responsavel.email,
+      email: profile.email,
       password: senha,
     })
 
     if (authError) {
-      
-      // Log de tentativa falha na auditoria
       await portalService.registrarAuditoria({
         tipo: 'login_falha',
-        responsavel_id: responsavel.id,
-        detalhes: { 
-          cpf: cpfLimpo, 
-          error_message: authError.message,
-          error_code: authError.status 
-        },
+        responsavel_id: profile.id,
+        detalhes: { cpf: cpfLimpo, error_message: authError.message },
       })
-
-      // Tratamento de erros específicos
-      if (authError.message.includes('Email not confirmed')) {
-         throw new Error('Sua conta ainda não foi confirmada. Verifique o e-mail de ativação enviado para ' + responsavel.email)
-      }
 
       if (authError.message.includes('Invalid login credentials')) {
         throw new Error('CPF ou senha inválidos.')
       }
-
-      // Se for qualquer outro erro técnico, mostramos o erro real para depuração
       throw new Error(`Erro na autenticação: ${authError.message}`)
     }
 
-    // Log de login bem-sucedido
     await portalService.registrarAuditoria({
       tipo: 'login_sucesso',
-      responsavel_id: responsavel.id,
+      responsavel_id: profile.id,
       detalhes: { cpf: cpfLimpo },
     })
 
     return {
       session: authData.session,
       user: authData.user,
-      responsavel,
+      responsavel: profile,
+      responsaveis: profiles
     }
   },
 
@@ -105,16 +91,16 @@ export const portalService = {
     const { data, error } = await supabase.from('responsaveis')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle()
 
     if (error) throw error
-    return data
+    return data || []
   },
 
   // ==========================================
   // VÍNCULO ALUNOS (Multi-aluno, Multi-escola)
   // ==========================================
-  async buscarVinculosAtivos(responsavelId: string) {
+  async buscarVinculosAtivos(responsavelId: string | string[]) {
+    const ids = Array.isArray(responsavelId) ? responsavelId : [responsavelId]
     const { data, error } = await supabase.from('aluno_responsavel')
       .select(`
         id,
@@ -135,7 +121,7 @@ export const portalService = {
           codigo_transferencia
         )
       `)
-      .eq('responsavel_id', responsavelId)
+      .in('responsavel_id', ids)
       .eq('status', 'ativo')
 
     if (error) {

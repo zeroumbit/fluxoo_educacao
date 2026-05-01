@@ -166,7 +166,12 @@ export function AlunoCadastroPageMobile() {
     if (savedDraft) {
       try {
         const parsedDraft = safeStorage.decrypt(savedDraft)
-        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && (val as any)?.length !== 0)) {
+        const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
+          if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
+          return val !== '' && val !== null && val !== undefined && (val as any)?.length !== 0;
+        });
+
+        if (isActuallyFilled) {
           setDraftStateData(parsedDraft)
           setShowDraftModal(true)
         }

@@ -174,7 +174,12 @@ export function AlunoCadastroPage() {
       try {
         const parsedDraft = safeStorage.decrypt(savedDraft)
         // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
-        if (parsedDraft && Object.values(parsedDraft).some(val => val !== '' && val !== null && (val as any)?.length !== 0)) {
+        const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
+          if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
+          return val !== '' && val !== null && val !== undefined && (val as any)?.length !== 0;
+        });
+
+        if (isActuallyFilled) {
           setDraftStateData(parsedDraft)
           setShowDraftModal(true)
         }

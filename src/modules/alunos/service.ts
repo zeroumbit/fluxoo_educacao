@@ -208,16 +208,16 @@ export const alunoService = {
     const cpfLimpo = responsavel.cpf.replace(/\D/g, '')
     const _alunoCpfLimpo = alunoDados.cpf ? alunoDados.cpf.replace(/\D/g, '') : null
 
-    // 1. Verificar se responsável já existe pelo CPF (sempre buscar pelo limpo)
+    // 1. Verificar se responsável já existe pelo CPF e TENANT (Regra de Ouro)
     const { data: respExistente, error: respCheckError } = await supabase
       .from('responsaveis')
-      .select('id, cpf, user_id, email')
+      .select('id, cpf, user_id, email, nome')
+      .eq('tenant_id', alunoDados.tenant_id)
       .or(`cpf.eq.${cpfLimpo},cpf.eq.${responsavel.cpf}`)
       .maybeSingle()
 
-    let respData: { id: string; cpf: string; user_id?: string | null } | null = null
-
     if (respCheckError) throw respCheckError
+    let respData: { id: string; cpf: string; user_id?: string | null } | null = null
 
     let authUserId = respExistente?.user_id || null
 
@@ -260,6 +260,22 @@ export const alunoService = {
     }
 
     if (respExistente) {
+      // REGRA DE OURO: Validação de Identidade
+      // Se o CPF já existe nesta escola, verificamos se o nome é compatível
+      // para evitar que um erro de digitação vincule o aluno à pessoa errada.
+      const nomeNoBanco = (respExistente.nome || '').toLowerCase().trim()
+      const nomeDigitado = (responsavel.nome || '').toLowerCase().trim()
+      const primeiroNomeBanco = nomeNoBanco.split(' ')[0]
+      const primeiroNomeDigitado = nomeDigitado.split(' ')[0]
+
+      if (primeiroNomeBanco !== primeiroNomeDigitado) {
+        logger.error('🚨 Conflito de Identidade no CPF:', { cpf: cpfLimpo, banco: nomeNoBanco, digitado: nomeDigitado })
+        throw new Error(
+          `O CPF ${responsavel.cpf} já está cadastrado para outro responsável nesta escola (${respExistente.nome}). ` +
+          `Verifique se o CPF está correto para evitar vínculos indevidos.`
+        )
+      }
+
       // 3. Responsável já existe, atualiza o user_id se ele foi gerado agora e estava nulo
       if (authUserId && !respExistente.user_id) {
         try {
@@ -273,7 +289,7 @@ export const alunoService = {
               logger.warn('⚠️ RLS impediu update do user_id no responsável existente. Continuando sem vincular auth.', {
                 responsavelId: respExistente.id,
                 authUserId,
-                hint: 'Execute a migration 150_fix_responsaveis_rls_definitivo.sql'
+                hint: 'Execute a migration 193_fix_responsaveis_insert_true.sql'
               })
             } else {
               logger.error('Erro ao atualizar user_id do responsável:', updateError)
@@ -285,10 +301,11 @@ export const alunoService = {
       }
       respData = { id: respExistente.id, cpf: respExistente.cpf, user_id: authUserId }
     } else {
-      // 4. Criar novo responsável
+      // 4. Criar novo responsável vinculado a este tenant
       const insertPayload = {
         ...responsavel,
         cpf: cpfLimpo, // Garante CPF limpo no banco
+        tenant_id: alunoDados.tenant_id,
         user_id: authUserId
       }
 
@@ -311,16 +328,16 @@ export const alunoService = {
             errorMessage: respError.message 
           })
 
-          // Se for erro 42501 (Forbidden), é quase certeza que a Migration 150 não foi aplicada
+          // Se for erro 42501 (Forbidden), é quase certeza que a Migration não foi aplicada
           if ((respError as any).code === '42501') {
             console.error('🚨 BLOQUEIO DE SEGURANÇA (RLS): O banco de dados recusou a inserção do responsável.')
-            console.error('Isso ocorre porque a política "Universal_Modify_Responsaveis" não permite que GESTORES criem novos responsáveis.')
+            console.error('Isso ocorre porque a política "Staff_Insert_Responsaveis" não permite que GESTORES criem novos responsáveis.')
             console.error('SOLUÇÃO: Execute a migration 150_fix_responsaveis_rls_definitivo.sql no Supabase.')
             
             throw new Error(
               'Erro de permissão (RLS) ao cadastrar responsável. ' +
               'A política de segurança do banco precisa ser atualizada para permitir que gestores criem responsáveis. ' +
-              'Acesse o Dashboard do Supabase e execute a Migration 150 pendente.'
+              'Acesse o Dashboard do Supabase e execute a Migration pendente correspondente.'
             )
           }
 
@@ -340,9 +357,10 @@ export const alunoService = {
     if (alunoError) throw alunoError
 
     // 4. Vincular via aluno_responsavel (N:N)
-    const vinculo: AlunoResponsavelInsert = {
+    const vinculo: any = {
       aluno_id: alunoData.id,
       responsavel_id: respData!.id,
+      tenant_id: alunoDados.tenant_id,
       grau_parentesco: grauParentesco,
       is_financeiro: isFinanceiro,
       is_academico: true,

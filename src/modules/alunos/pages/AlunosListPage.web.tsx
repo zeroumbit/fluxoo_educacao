@@ -366,17 +366,17 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                  </div>
               </Card>
 
-              <Card className="rounded-xl border border-rose-100 bg-rose-50/30 shadow-sm overflow-hidden p-6">
-                 <div className="flex items-center gap-4 text-rose-600">
-                    <div className="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center">
-                       <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                       <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600/50">Irmãos Detectados</p>
-                       <p className="text-2xl font-bold">{gruposMultiIrmaos.length} Famílias</p>
-                    </div>
-                 </div>
-              </Card>
+<Card className="rounded-xl border border-sky-100 bg-sky-50/30 shadow-sm overflow-hidden p-6">
+                  <div className="flex items-center gap-4 text-sky-600">
+                     <div className="h-12 w-12 rounded-xl bg-sky-100 flex items-center justify-center">
+                        <Users className="h-6 w-6" />
+                     </div>
+                     <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-sky-600/50">Irmãos Detectados</p>
+                        <p className="text-2xl font-bold">{gruposMultiIrmaos.length} Famílias</p>
+                     </div>
+                  </div>
+               </Card>
           </div>
 
           {/* Banner de Tarefa Ativa (Staging Area) */}

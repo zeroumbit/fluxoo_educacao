@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/lib/database.types'
@@ -57,7 +57,13 @@ function _withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const authUserRef = useRef<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Sincroniza o ref sempre que o state mudar
+  useEffect(() => {
+    authUserRef.current = authUser
+  }, [authUser])
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
     try {
@@ -367,13 +373,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return
       
       if (session?.user) {
+        // Se for apenas TOKEN_REFRESHED ou USER_UPDATED (ex: on window focus)
+        // e o usuário já estiver carregado no state (via authUserRef), 
+        // atualizamos apenas a sessão e evitamos disparar todo o recarregamento do DB.
+        if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && authUserRef.current && authUserRef.current.user.id === session.user.id) {
+          setAuthUser(prev => prev ? { ...prev, user: session.user, session } : null)
+          if (mounted) setLoading(false)
+          return
+        }
+
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           if (loadingLock) return
           loadingLock = true
           
-          // Só ativa o estado de loading se ainda não tivermos um usuário carregado.
-          // Isso evita que atualizações de background (USER_UPDATED) desmontem o app.
-          if (!authUser) {
+          if (!authUserRef.current) {
             setLoading(true)
           }
 

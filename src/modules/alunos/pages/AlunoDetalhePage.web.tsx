@@ -774,88 +774,88 @@ export function AlunoDetalhePageWeb() {
         </CardHeader>
         <CardContent className="p-10">
            <div className="space-y-4">
-              {vinculos?.map((v, i) => (
-                <div key={i} className="group p-6 rounded-3xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-xl hover:border-white transition-all duration-500 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full">
-                   <div className="flex items-start lg:items-center gap-4 w-full">
-                      <div className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center font-black text-indigo-600 shrink-0">
-                         {v.responsaveis.nome.charAt(0)}
-                      </div>
-                      <div className="space-y-2 flex-1 min-w-0">
-                         <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-black text-slate-800 text-lg leading-tight break-words">{v.responsaveis.nome}</p>
-                            {v.is_financeiro && (
-                              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black uppercase px-2 py-0 shrink-0">PAGADOR</Badge>
-                            )}
-                         </div>
-                         <div className="flex flex-wrap gap-x-4 gap-y-2">
-                           <p className="text-[10px] text-indigo-600 uppercase font-black tracking-widest">{v.grau_parentesco}</p>
-                           {v.responsaveis.email && <p className="text-[10px] text-slate-400 font-bold"><Mail size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.email}</p>}
-                           {v.responsaveis.telefone && <p className="text-[10px] text-slate-400 font-bold"><Phone size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.telefone}</p>}
-                         </div>
-                      </div>
-                   </div>
-
-                    <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:shrink-0">
-                       {/* Botão de Pagador (Switch) */}
-                       <Button
-                         variant={v.is_financeiro ? "default" : "outline"}
-                         size="sm"
-                         onClick={() => !v.is_financeiro && handleTrocarPagador(v.id)}
-                         className={cn(
-                           "rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-4",
-                           v.is_financeiro ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm" : "border-slate-200 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
-                         )}
-                         title={v.is_financeiro ? "Este é o pagador atual" : "Defenir como pagador principal"}
-                       >
-                          {v.is_financeiro ? "PAGADOR ATUAL" : "ASSUMIR FINANCEIRO"}
-                       </Button>
-
-                       <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingResp({
-                            id: v.responsaveis.id,
-                            nome: v.responsaveis.nome,
-                            cpf: v.responsaveis.cpf || '',
-                            email: v.responsaveis.email || '',
-                            telefone: v.responsaveis.telefone || ''
-                          })}
-                          className="h-10 w-10 text-indigo-600 hover:bg-indigo-50 rounded-xl"
-                          title="Editar Cadastro do Responsável"
-                       >
-                          <Edit2 size={18} />
-                       </Button>
-
-                       <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingVinculo({ id: v.id, nome: v.responsaveis.nome })
-                          }}
-                          className="h-10 w-10 text-rose-500 hover:bg-rose-50 rounded-xl"
-                          title="Desvincular Responsável"
-                       >
-                          <Trash2 size={18} />
-                       </Button>
-                       
-                       {v.responsaveis.user_id ? (
-                         <div className="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black border border-slate-200 flex items-center gap-1.5">
-                            <Lock size={12} /> ACESSO PORTAL
-                         </div>
-                       ) : (
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => setActivatingResp({id: v.responsaveis.id, nome: v.responsaveis.nome})}
-                           className="flex-1 lg:flex-none rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                         >
-                           Liberar Acesso
-                         </Button>
-                       )}
+              {vinculos?.filter(v => v.responsaveis != null)?.map((v, i) => (
+                 <div key={i} className="group p-6 rounded-3xl bg-slate-50/50 border border-slate-100/50 hover:bg-white hover:shadow-xl hover:border-white transition-all duration-500 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full">
+                    <div className="flex items-start lg:items-center gap-4 w-full">
+                       <div className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center font-black text-indigo-600 shrink-0">
+                          {v.responsaveis?.nome?.charAt(0) ?? '?'}
+                       </div>
+                       <div className="space-y-2 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                             <p className="font-black text-slate-800 text-lg leading-tight break-words">{v.responsaveis?.nome ?? 'Responsável'}</p>
+                             {v.is_financeiro && (
+                               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] font-black uppercase px-2 py-0 shrink-0">PAGADOR</Badge>
+                             )}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-2">
+                            <p className="text-[10px] text-indigo-600 uppercase font-black tracking-widest">{v.grau_parentesco}</p>
+                            {v.responsaveis?.email && <p className="text-[10px] text-slate-400 font-bold"><Mail size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.email}</p>}
+                            {v.responsaveis?.telefone && <p className="text-[10px] text-slate-400 font-bold"><Phone size={10} className="inline mr-1 shrink-0" /> {v.responsaveis.telefone}</p>}
+                          </div>
+                       </div>
                     </div>
-                </div>
-              ))}
+
+                     <div className="flex flex-wrap gap-2 w-full lg:w-auto lg:shrink-0">
+                        {/* Botão de Pagador (Switch) */}
+                        <Button
+                          variant={v.is_financeiro ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => !v.is_financeiro && handleTrocarPagador(v.id)}
+                          className={cn(
+                            "rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-4",
+                            v.is_financeiro ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm" : "border-slate-200 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                          )}
+                          title={v.is_financeiro ? "Este é o pagador atual" : "Defenir como pagador principal"}
+                        >
+                           {v.is_financeiro ? "PAGADOR ATUAL" : "ASSUMIR FINANCEIRO"}
+                        </Button>
+
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => v.responsaveis && setEditingResp({
+                             id: v.responsaveis.id,
+                             nome: v.responsaveis.nome,
+                             cpf: v.responsaveis.cpf || '',
+                             email: v.responsaveis.email || '',
+                             telefone: v.responsaveis.telefone || ''
+                           })}
+                           className="h-10 w-10 text-indigo-600 hover:bg-indigo-50 rounded-xl"
+                           title="Editar Cadastro do Responsável"
+                        >
+                           <Edit2 size={18} />
+                        </Button>
+
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             setDeletingVinculo({ id: v.id, nome: v.responsaveis?.nome ?? 'Responsável' })
+                           }}
+                           className="h-10 w-10 text-rose-500 hover:bg-rose-50 rounded-xl"
+                           title="Desvincular Responsável"
+                        >
+                           <Trash2 size={18} />
+                        </Button>
+                        
+                        {v.responsaveis?.user_id ? (
+                          <div className="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-black border border-slate-200 flex items-center gap-1.5">
+                             <Lock size={12} /> ACESSO PORTAL
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => v.responsaveis && setActivatingResp({id: v.responsaveis.id, nome: v.responsaveis.nome})}
+                            className="flex-1 lg:flex-none rounded-xl font-black text-[10px] uppercase tracking-wider h-10 px-6 border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                          >
+                            Liberar Acesso
+                          </Button>
+                        )}
+                     </div>
+                 </div>
+               ))}
            </div>
         </CardContent>
       </Card>

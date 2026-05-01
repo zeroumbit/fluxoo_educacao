@@ -147,31 +147,77 @@ export const superAdminService = {
     return (data as any[]) || []
   },
 
-  async updateEscolaStatus(id: string, status: string) {
-    const { data, error } = await (supabase.from('escolas' as any) as any)
-      .update({
-        status_assinatura: status,
-        updated_at: new Date().toISOString(),
-        data_inicio: status === 'ativa' ? new Date().toISOString() : null
-      } as any)
-      .eq('id', id).select().maybeSingle()
-    if (error) throw error
-    if (!data) throw new Error('Não foi possível atualizar o status da escola. Verifique as permissões de Super Admin.')
-    return data
+async updateEscolaStatus(id: string, status: string) {
+    // Super Admin pode ativar/desativar apenas via funções específicas
+    if (status === 'ativa') {
+      return this.aprovarEscola(id)
+    } else if (status === 'suspensa') {
+      return this.suspenderEscola(id, 'Suspensa pelo Super Admin')
+    }
+    throw new Error('Use aprovarEscola ou suspenderEscola')
+  },
+
+  async aprovarEscola(id: string) {
+    const { data, error } = await supabase.rpc('fn_aprovar_escola' as any, {
+      p_escola_id: id,
+      p_motivo: 'Aprovada pelo Super Admin via gestão'
+    })
+
+    if (error) {
+      console.error('Erro ao aprovar escola:', error)
+      throw new Error(error.message)
+    }
+    return { id, status_assinatura: 'ativa' }
   },
 
   async suspenderEscola(id: string, motivo: string) {
-    const { data, error } = await (supabase.from('escolas' as any) as any)
-      .update({
-        status_assinatura: 'suspensa',
-        motivo_suspensao: motivo,
-        data_suspensao: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as any)
-      .eq('id', id).select().maybeSingle()
-    if (error) throw error
-    if (!data) throw new Error('Não foi possível suspender a escola.')
-    return data
+    const { data, error } = await supabase.rpc('fn_suspender_escola' as any, {
+      p_escola_id: id,
+      p_motivo: motivo
+    })
+
+    if (error) {
+      console.error('Erro ao suspender escola:', error)
+      throw new Error(error.message)
+    }
+    return { id, status_assinatura: 'suspensa' }
+  },
+
+  async reativarEscola(id: string) {
+    const { data, error } = await supabase.rpc('fn_reativar_escola' as any, {
+      p_escola_id: id
+    })
+
+    if (error) {
+      console.error('Erro ao reativar escola:', error)
+      throw new Error(error.message)
+    }
+    return { id, status_assinatura: 'ativa' }
+  },
+
+  async reprovarEscola(id: string, motivo: string) {
+    // Reprovação é mesma lógica de suspensão
+    const { data, error } = await supabase.rpc('fn_suspender_escola' as any, {
+      p_escola_id: id,
+      p_motivo: motivo
+    })
+
+    if (error) {
+      console.error('Erro ao reprovar escola:', error)
+      throw new Error(error.message)
+    }
+    return { id, status_assinatura: 'suspensa' }
+  },
+
+  async getEscolasPendentes() {
+    const { data, error } = await (supabase.from('vw_escolas_pendentes_aprovacao' as any) as any)
+      .select('*')
+    
+    if (error) {
+      console.error('Erro ao buscar escolas pendentes:', error)
+      return []
+    }
+    return (data as any[]) || []
   },
 
   async getEscolaDetalhes(id: string) {

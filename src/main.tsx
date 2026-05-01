@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner'
 import { initSentry } from '@/lib/sentry'
@@ -11,7 +12,11 @@ initSentry()
 setupErrorHandlers()
 
 // Start App Registration first
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+)
 
 // Strategy: PWA Update Flow with Background Fetch
 // Registers Service Worker. Tells user there's a new version available.

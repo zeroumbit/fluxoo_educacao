@@ -99,8 +99,9 @@ export function EscolasPageWeb() {
     try {
       await updateStatus.mutateAsync({ id, status: 'ativa' })
       toast.success('Escola aprovada e ativada com sucesso!')
-    } catch {
-      toast.error('Erro ao aprovar escola.')
+    } catch (error: any) {
+      console.error('Erro ao aprovar escola:', error)
+      toast.error(error?.message || 'Erro ao aprovar escola. Verifique as permissões.')
     }
   }
 
@@ -218,7 +219,7 @@ export function EscolasPageWeb() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white">
           <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Aguardando Aprovação</CardTitle>

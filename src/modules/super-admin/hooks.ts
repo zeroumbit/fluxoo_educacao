@@ -98,6 +98,18 @@ export function useUpdateEscolaStatus() {
   })
 }
 
+export function useAprovarEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => superAdminService.aprovarEscola(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas-pendentes'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
 export function useSuspenderEscola() {
   const qc = useQueryClient()
   return useMutation({
@@ -109,6 +121,38 @@ export function useSuspenderEscola() {
     },
   })
 }
+
+export function useReativarEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => superAdminService.reativarEscola(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useReprovarEscola() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
+      superAdminService.reprovarEscola(id, motivo),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'escolas-pendentes'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useEscolasPendentes() {
+  return useQuery({
+    queryKey: ['admin', 'escolas-pendentes'],
+    queryFn: () => superAdminService.getEscolasPendentes(),
+  })
+}
+
 
 export function useEscolaDetalhes(id: string | null) {
   return useQuery({

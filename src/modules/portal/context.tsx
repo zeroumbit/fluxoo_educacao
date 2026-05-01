@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { useResponsavel, useVinculosAtivos, useDashboardFamilia } from './hooks'
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react'
+import { useResponsavel, useVinculosAtivos } from './hooks'
 import { supabase } from '@/lib/supabase'
 import { usePortalStore } from './store'
 import { useQueryClient } from '@tanstack/react-query'
@@ -7,6 +7,7 @@ import type { AlunoVinculado } from '@/types/shared'
 
 interface PortalContextType {
   responsavel: any | null
+  responsaveis: any[]
   alunoSelecionado: AlunoVinculado | null
   tenantId: string | null
   vinculos: any[]
@@ -19,9 +20,26 @@ interface PortalContextType {
 const PortalContext = createContext<PortalContextType | undefined>(undefined)
 
 export function PortalProvider({ children }: { children: ReactNode }) {
-  const { data: responsavel, isLoading: loadingResp } = useResponsavel()
+  const { data: responsaveisData, isLoading: loadingResp } = useResponsavel()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
   const { alunoSelecionado, setAlunoSelecionado, clearStore } = usePortalStore()
+
+  // Normaliza responsaveis para sempre ser um array
+  const responsaveis = useMemo(() => {
+    if (!responsaveisData) return []
+    return Array.isArray(responsaveisData) ? responsaveisData : [responsaveisData]
+  }, [responsaveisData])
+
+  // Deriva o responsável "ativo" baseado no tenant do aluno selecionado
+  const responsavel = useMemo(() => {
+    if (responsaveis.length === 0) return null
+    if (!alunoSelecionado) return responsaveis[0]
+    
+    // Tenta encontrar o perfil do responsável que pertence à mesma escola do aluno
+    const perfilLocal = responsaveis.find(r => r.tenant_id === alunoSelecionado.tenant_id)
+    return perfilLocal || responsaveis[0]
+  }, [responsaveis, alunoSelecionado])
+
   const tenantId = alunoSelecionado?.tenant_id || null
 
   useEffect(() => {
@@ -92,7 +110,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    if (!loadingResp && !responsavel) {
+    if (!loadingResp && responsaveis.length === 0) {
       clearStore()
     } else if (vinculos && vinculos.length > 0) {
       const idsVinculos = vinculos.map(v => v.aluno_id || v.aluno?.id)
@@ -107,12 +125,11 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     }
 
     return () => { active = false }
-  }, [vinculos, responsavel, loadingResp, setAlunoSelecionado, clearStore, alunoSelecionado?.id, alunoSelecionado?.turma])
+  }, [vinculos, responsaveis, loadingResp, setAlunoSelecionado, clearStore, alunoSelecionado?.id])
 
   const selecionarAluno = async (vinculo: any) => {
     if (!vinculo?.aluno) return
 
-    // 1. Atualização Imediata (UI Reflete na hora)
     setAlunoSelecionado({
       ...vinculo.aluno,
       codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
@@ -121,7 +138,6 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     })
 
     try {
-      // 2. Busca dados complementares em background
         const [resMatricula, resTurmaFallback] = await Promise.all([
           supabase.from('matriculas')
             .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
@@ -194,7 +210,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   return (
     <PortalContext.Provider
       value={{
-        responsavel: responsavel || null,
+        responsavel,
+        responsaveis,
         alunoSelecionado,
         tenantId,
         vinculos: vinculos || [],

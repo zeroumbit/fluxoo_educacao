@@ -26,11 +26,17 @@ export function useResponsavel() {
 // VÍNCULOS (Multi-aluno)
 // ==========================================
 export function useVinculosAtivos() {
-  const { data: responsavel } = useResponsavel()
+  const { data: responsaveis } = useResponsavel()
+  const ids = useMemo(() => {
+    if (!responsaveis) return []
+    // Suporta tanto o formato antigo (único) quanto o novo (array)
+    return Array.isArray(responsaveis) ? responsaveis.map(r => r.id) : [responsaveis.id]
+  }, [responsaveis])
+
   return useQuery({
-    queryKey: ['portal', 'vinculos', responsavel?.id],
-    queryFn: () => portalService.buscarVinculosAtivos(responsavel!.id),
-    enabled: !!responsavel?.id,
+    queryKey: ['portal', 'vinculos', ids],
+    queryFn: () => portalService.buscarVinculosAtivos(ids),
+    enabled: ids.length > 0,
     staleTime: 5 * 60 * 1000,
   })
 }
