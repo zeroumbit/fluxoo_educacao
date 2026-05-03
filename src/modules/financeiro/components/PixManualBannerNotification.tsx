@@ -22,8 +22,8 @@ export function PixManualBannerNotification() {
 
   if (pixNotifications.length === 0) return null
 
-  const cardsPerView = 1
-  const showArrows = pixNotifications.length > 1
+  const cardsPerView = 4
+  const showArrows = pixNotifications.length > cardsPerView
 
   const handleValidate = (n: any) => {
     navigate('/financeiro/cobrancas')
@@ -38,41 +38,46 @@ export function PixManualBannerNotification() {
 
   const goToPrev = () => {
     setCurrentIndex(prev => {
-      const next = prev - 1
-      return next < 0 ? pixNotifications.length - 1 : next
+      const next = prev - cardsPerView
+      return next < 0 ? Math.max(0, pixNotifications.length - cardsPerView) : next
     })
   }
 
   const goToNext = () => {
     setCurrentIndex(prev => {
-      const next = prev + 1
+      const next = prev + cardsPerView
       return next >= pixNotifications.length ? 0 : next
     })
   }
 
-  const currentNotifications = showArrows
-    ? pixNotifications.slice(currentIndex, currentIndex + cardsPerView)
-    : pixNotifications
+  const maxStartIndex = Math.max(0, pixNotifications.length - cardsPerView)
+  const boundedIndex = Math.min(currentIndex, maxStartIndex)
+  const cardWidth = 320
+  const gap = 12
+  const offset = -(boundedIndex * (cardWidth + gap))
 
-  const totalPages = pixNotifications.length
-  const currentPage = currentIndex
+  const totalPages = Math.ceil(pixNotifications.length / cardsPerView)
+  const currentPage = Math.floor(currentIndex / cardsPerView)
 
   return (
     <div className="relative mb-6">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Confirmação de pagamentos</h2>
-      <div className="relative flex items-center justify-center w-full px-4">
+      <div className={`relative ${pixNotifications.length === 1 ? 'flex justify-start' : 'flex items-center justify-center'} w-full px-4`}>
         {showArrows && (
           <button
             onClick={goToPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
         )}
 
-        <div className={`overflow-hidden w-full ${showArrows ? 'px-14' : 'px-4'} max-w-[1300px] mx-auto`}>
-          <div className="flex gap-3 flex-nowrap justify-center">
-            {currentNotifications.map((n) => (
+        <div className={`overflow-hidden ${pixNotifications.length === 1 ? 'w-auto' : 'w-full max-w-[1300px] mx-auto'}`}>
+          <div 
+            className="flex gap-3 flex-nowrap transition-transform duration-300 ease-in-out"
+            style={{ transform: `translateX(${offset}px)` }}
+          >
+            {pixNotifications.map((n) => (
               <div
                 key={n.id}
                 className="shrink-0 w-80 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative"
@@ -129,7 +134,7 @@ export function PixManualBannerNotification() {
         {showArrows && (
           <button
             onClick={goToNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
