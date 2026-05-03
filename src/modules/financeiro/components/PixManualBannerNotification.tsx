@@ -22,8 +22,8 @@ export function PixManualBannerNotification() {
 
   if (pixNotifications.length === 0) return null
 
-  const cardsPerView = 4
-  const showArrows = pixNotifications.length > 3
+  const cardsPerView = 1
+  const showArrows = pixNotifications.length > 1
 
   const handleValidate = (n: any) => {
     navigate('/financeiro/cobrancas')
@@ -38,14 +38,14 @@ export function PixManualBannerNotification() {
 
   const goToPrev = () => {
     setCurrentIndex(prev => {
-      const next = prev - cardsPerView
-      return next < 0 ? Math.max(0, pixNotifications.length - cardsPerView) : next
+      const next = prev - 1
+      return next < 0 ? pixNotifications.length - 1 : next
     })
   }
 
   const goToNext = () => {
     setCurrentIndex(prev => {
-      const next = prev + cardsPerView
+      const next = prev + 1
       return next >= pixNotifications.length ? 0 : next
     })
   }
@@ -54,34 +54,34 @@ export function PixManualBannerNotification() {
     ? pixNotifications.slice(currentIndex, currentIndex + cardsPerView)
     : pixNotifications
 
-  const totalPages = Math.ceil(pixNotifications.length / cardsPerView)
-  const currentPage = Math.floor(currentIndex / cardsPerView)
+  const totalPages = pixNotifications.length
+  const currentPage = currentIndex
 
   return (
     <div className="relative mb-6">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Confirmação de pagamentos</h2>
-      <div className="flex items-center gap-2">
+      <div className="relative flex items-center justify-center w-full px-4">
         {showArrows && (
           <button
             onClick={goToPrev}
-            className="shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-sm flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800 z-10"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
         )}
 
-        <div className="flex-1 overflow-hidden">
-          <div className="flex gap-3 flex-nowrap">
+        <div className={`overflow-hidden w-full ${showArrows ? 'px-14' : 'px-4'} max-w-[1300px] mx-auto`}>
+          <div className="flex gap-3 flex-nowrap justify-center">
             {currentNotifications.map((n) => (
               <div
                 key={n.id}
-                className="shrink-0 w-80 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                className="shrink-0 w-80 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative"
                 onClick={() => setSelectedNotification(n)}
               >
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <Badge className="bg-indigo-600 text-white border-0 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
-                      PIX MANUAL
+                      {n.metadata?.tipo_cobranca || 'MENSALIDADE'}
                     </Badge>
                     <span className="text-sm font-bold text-indigo-900">
                       {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -93,21 +93,21 @@ export function PixManualBannerNotification() {
                       <CreditCard className="h-5 w-5 text-indigo-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-indigo-900 text-sm truncate">
+                      <h4 className="font-bold text-indigo-900 text-sm truncate" title={n.metadata?.responsavel_nome}>
                         {n.metadata?.responsavel_nome}
                       </h4>
-                      <p className="text-xs text-indigo-700/70 truncate">
-                        {n.metadata?.aluno_nome} • {n.metadata?.turma_nome}
+                      <p className="text-xs text-indigo-700/70 truncate" title={n.metadata?.aluno_nome}>
+                        {n.metadata?.aluno_nome}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-indigo-600/60">
+                    <span className="text-[10px] text-indigo-600/60 truncate max-w-[150px]">
                       Ref: {n.metadata?.meses_referencia}
                     </span>
                     <span className="text-[10px] font-medium text-indigo-600">
-                      Clique para detalhes
+                      Detalhes
                     </span>
                   </div>
                 </div>
@@ -129,7 +129,7 @@ export function PixManualBannerNotification() {
         {showArrows && (
           <button
             onClick={goToNext}
-            className="shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-sm flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800 z-10"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 shrink-0 h-10 w-10 rounded-full bg-white border border-indigo-200 shadow-md flex items-center justify-center hover:bg-indigo-50 transition-all text-indigo-600 hover:text-indigo-800"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
