@@ -15,7 +15,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['coruja-pwa-192.png', 'coruja-pwa-512.png', 'coruja_APPLE.svg', 'coruja_favicon_32.svg'],
       manifest: {
-        name: 'Fluxoo EDU - Portal da Família',
+        name: 'Fluxoo EDU - Portal da Familia',
         short_name: 'Fluxoo EDU',
         description: 'Acompanhe a vida escolar do seu filho',
         theme_color: '#3b82f6',
@@ -35,26 +35,17 @@ export default defineConfig({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 5242880, // Aumentado para 5 MiB para suportar o bundle atual
+        maximumFileSizeToCacheInBytes: 5242880,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         runtimeCaching: [
           {
-            // Storage público (avatares, logos) — cache por 30 dias
+            // Public storage only. Supabase REST responses may contain PII and
+            // must not be cached by the service worker.
             urlPattern: /^https:\/\/.*supabase\.co\/storage\/v1\/object\/public\//i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'supabase-storage-cache',
+              cacheName: 'supabase-public-storage-cache',
               expiration: { maxEntries: 100, maxAgeSeconds: 86400 * 30 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
-          },
-          {
-            // REST API — NetworkFirst, cache máximo de 5 minutos
-            urlPattern: /^https:\/\/.*supabase\.co\/rest\/v1\//i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 300 },
               cacheableResponse: { statuses: [0, 200] }
             }
           }
@@ -67,6 +58,7 @@ export default defineConfig({
     })
   ],
   resolve: {
+    dedupe: ['react', 'react-dom', '@tanstack/react-query'],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
@@ -76,13 +68,12 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
-            if (id.includes('@react-pdf/renderer')) return 'pdf-renderer';
-            if (id.includes('date-fns')) return 'date-utils';
-            if (id.includes('framer-motion')) return 'animation-vendor';
-            if (id.includes('@tanstack/react-query')) return 'query-vendor';
-            if (id.includes('lucide-react')) return 'icons-vendor';
-            // Unimos Radix ao chunk principal 'vendor' para evitar dependência circular na Vercel
-            return 'vendor';
+            if (id.includes('@react-pdf/renderer')) return 'pdf-renderer'
+            if (id.includes('date-fns')) return 'date-utils'
+            if (id.includes('framer-motion')) return 'animation-vendor'
+            if (id.includes('@tanstack/react-query')) return 'query-vendor'
+            if (id.includes('lucide-react')) return 'icons-vendor'
+            return 'vendor'
           }
         }
       }

@@ -41,6 +41,9 @@ export const strongPasswordSchema = z
   .string()
   .min(8, 'A senha deve ter no mínimo 8 caracteres')
   .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula')
+  .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número')
+  .regex(/[^A-Za-z0-9]/, 'A senha deve conter pelo menos um símbolo')
 
 /**
  * Schema Zod para TROCA DE SENHA (Portal) - Exige senha forte
@@ -58,7 +61,10 @@ export const changePasswordSchema = strongPasswordSchema
 export const passwordValidationMessages = {
   minLength: 'A senha deve ter no mínimo 8 caracteres',
   uppercase: 'A senha deve conter pelo menos uma letra maiúscula',
-  recommendation: 'Para maior segurança, use também letras minúsculas, números e símbolos especiais.',
+  lowercase: 'A senha deve conter pelo menos uma letra minúscula',
+  number: 'A senha deve conter pelo menos um número',
+  symbol: 'A senha deve conter pelo menos um símbolo',
+  recommendation: 'Use letras maiúsculas, minúsculas, números e símbolos especiais.',
   loginError: 'Senha inválida. Verifique se está digitando corretamente.',
 }
 
@@ -88,6 +94,21 @@ export function validatePassword(password: string): {
     messages.push(passwordValidationMessages.uppercase)
   }
 
+  if (!/[a-z]/.test(password)) {
+    errors.push('lowercase')
+    messages.push(passwordValidationMessages.lowercase)
+  }
+
+  if (!/[0-9]/.test(password)) {
+    errors.push('number')
+    messages.push(passwordValidationMessages.number)
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    errors.push('symbol')
+    messages.push(passwordValidationMessages.symbol)
+  }
+
   return {
     valid: errors.length === 0,
     errors,
@@ -102,8 +123,8 @@ export function getPasswordStrengthTips(): string[] {
   return [
     'Use no mínimo 8 caracteres',
     'Inclua pelo menos uma letra maiúscula',
-    'Considere usar letras minúsculas também',
-    'Adicione números para mais segurança',
+    'Inclua pelo menos uma letra minúscula',
+    'Adicione pelo menos um número',
     'Inclua símbolos especiais (!@#$%^&*)',
   ]
 }

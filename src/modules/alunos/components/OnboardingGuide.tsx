@@ -76,7 +76,7 @@ export function OnboardingGuide({ status, isProfessor = false }: OnboardingGuide
       id: 'autorizacoes',
       title: 'Configurar Autorizações',
       description: 'Defina modelos de autorizações para saída e atividades.',
-      href: '/autorizacoes',
+      href: '/configuracoes',
       done: status.autorizacoes,
       icon: FileCheck,
     },

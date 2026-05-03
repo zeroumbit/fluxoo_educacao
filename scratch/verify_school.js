@@ -1,21 +1,28 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://phuyqtdpedfigbfsevte.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBodXlxdGRwZWRmaWdiZnNldnRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMzQ2MjAsImV4cCI6MjA4NzgxMDYyMH0.ZjQT2MG-QoV-aZe8yCuPOl7SVaMh1ihOZakoDILFATE';
+const supabaseUrl = process.env.VITE_SUPABASE_URL ?? 'https://phuyqtdpedfigbfsevte.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseKey) {
+  throw new Error('VITE_SUPABASE_ANON_KEY is required to run this scratch script.');
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkSchools() {
-  console.log('Logging in as Super Admin...');
-  // Note: We need a password, but we don't have it.
-  // However, we can check if there are ANY schools visible to anon.
-  // If count is 0, it means anon can't see anything.
-  
-  // Let's try to search for the school email directly in a way that might bypass RLS if it's public (unlikely)
-  // or just accept that we can't see it without a session.
-  
-  console.log('Note: RLS likely blocking anon access to schools count.');
+  console.log('Logging in as anonymous client...');
+  console.log('RLS should block anonymous access to protected school data.');
+
+  const { count, error } = await supabase
+    .from('escolas')
+    .select('id', { count: 'exact', head: true });
+
+  if (error) {
+    console.log('Anonymous schools query blocked or unavailable:', error.code ?? error.message);
+    return;
+  }
+
+  console.log(`Anonymous visible schools count: ${count ?? 0}`);
 }
 
 checkSchools();

@@ -5,6 +5,19 @@ export const superAdminService = {
   // DASHBOARD
   // ==========================================
   async getDashboardStats() {
+    // Função auxiliar para tratar valores monetários
+    const parseCurrency = (val: any) => {
+      if (typeof val === 'number') return val
+      if (typeof val === 'string') {
+        // Remove tudo exceto dígitos, ponto e vírgula
+        const cleaned = val.replace(/[^\d.,]/g, '')
+        // Substituir vírgula por ponto (formato brasileiro)
+        const normalized = cleaned.replace(',', '.')
+        return Number(normalized) || 0
+      }
+      return 0
+    }
+
     const { count: totalEscolas } = await (supabase.from('escolas' as any) as any).select('*', { count: 'exact', head: true })
 
     const { count: assinaturasAtivas } = await (supabase.from('assinaturas' as any) as any).select('*', { count: 'exact', head: true })
@@ -40,6 +53,37 @@ export const superAdminService = {
     const { count: faturasAtrasadas } = await (supabase.from('faturas' as any) as any).select('*', { count: 'exact', head: true })
       .eq('status', 'atrasado')
 
+    // Buscar assinaturas usando a função existente que já traz os dados corretamente
+    let assinaturasData: any[] = []
+    try {
+      assinaturasData = await this.getAssinaturas()
+    } catch (err) {
+      console.error('Erro ao buscar assinaturas via getAssinaturas:', err)
+    }
+
+    // Log para debug (ver no console do navegador)
+    console.log('[DEBUG] Assinaturas via getAssinaturas:', assinaturasData)
+
+    const faturamentoTotal = (assinaturasData as any[])?.reduce((acc, assinatura) => {
+      // Tratar plano (pode ser array ou objeto)
+      let plano = assinatura.plano as any
+      if (Array.isArray(plano)) {
+        plano = plano.length > 0 ? plano[0] : null
+      }
+      
+      if (!plano) return acc
+      
+      // O plano retornado por getAssinaturas() tem 'nome', precisamos do valor_por_aluno
+      // Vamos buscar o valor do plano diretamente da tabela planos
+      const valorPorAluno = parseCurrency(plano.valor_por_aluno)
+      const limiteAlunos = Number(assinatura.limite_alunos_contratado) || 0
+      
+      if (valorPorAluno > 0 && limiteAlunos > 0) {
+        return acc + (valorPorAluno * limiteAlunos)
+      }
+      return acc
+    }, 0) || 0
+
     return {
       totalEscolas: totalEscolas || 0,
       assinaturasAtivas: assinaturasAtivas || 0,
@@ -48,7 +92,8 @@ export const superAdminService = {
       faturasPixPendentes: faturasPixPendentes || 0,
       faturasAtrasadas: faturasAtrasadas || 0,
       escolasRecentes: (escolasRecentes as any[]) || [],
-      saudeFinanceiraGlobal
+      saudeFinanceiraGlobal,
+      faturamentoTotal
     }
   },
 
@@ -239,7 +284,7 @@ async updateEscolaStatus(id: string, status: string) {
   // ==========================================
   async getAssinaturas() {
     const { data, error } = await (supabase.from('assinaturas' as any) as any)
-      .select('*, escola:escolas(razao_social, cnpj), plano:planos(nome)')
+      .select('*, escola:escolas(razao_social, cnpj), plano:planos(nome, valor_por_aluno)')
       .order('created_at', { ascending: false })
     if (error) throw error
     return (data as any[]) || []

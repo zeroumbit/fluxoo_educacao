@@ -31,12 +31,6 @@ const ENV_CHECKS: EnvCheck[] = [
     validateFn: (v) => v.length > 100,
   },
   {
-    key: 'VITE_SUPER_ADMIN_EMAIL',
-    label: 'Email do Super Admin',
-    criticality: 'critical',
-    validateFn: (v) => v.includes('@'),
-  },
-  {
     key: 'VITE_SENTRY_DSN',
     label: 'DSN do Sentry (monitoramento)',
     criticality: 'important',

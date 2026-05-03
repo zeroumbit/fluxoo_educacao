@@ -1,5 +1,35 @@
 import { supabase } from '@/lib/supabase'
 import type { PortalConfigPix } from '@/lib/database.types'
+import { precheckLogin } from '@/lib/auth-rate-limit'
+
+const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
+const COMPROVANTE_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+])
+
+function validateComprovanteFile(file: File) {
+  if (file.size > COMPROVANTE_MAX_BYTES) {
+    throw new Error('Arquivo muito grande. Maximo 5MB.')
+  }
+
+  if (!COMPROVANTE_MIME_TYPES.has(file.type)) {
+    throw new Error('Formato invalido. Envie PDF, PNG, JPG ou WebP.')
+  }
+}
+
+function safeFileExtension(file: File): string {
+  const byMime: Record<string, string> = {
+    'application/pdf': 'pdf',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+  }
+
+  return byMime[file.type] || 'bin'
+}
 
 export const portalService = {
   // ==========================================
@@ -7,6 +37,15 @@ export const portalService = {
   // ==========================================
   async loginPorCpf(cpf: string, senha: string) {
     const cpfLimpo = cpf.replace(/\D/g, '')
+    const precheck = await precheckLogin(cpfLimpo)
+
+    if (!precheck.allowed) {
+      throw new Error(precheck.reason || 'Muitas tentativas falhas. Tente novamente mais tarde.')
+    }
+
+    if (precheck.delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, precheck.delayMs))
+    }
     const { data: profiles, error: rpcError } = await (supabase.rpc('get_portal_login_info', {
       cpf_input: cpfLimpo
     }) as any)
@@ -465,14 +504,16 @@ export const portalService = {
   // CONFIRMAÇÃO DE PAGAMENTO COM COMPROVANTE
   // ==========================================
   async uploadComprovante(file: File, tenantId: string, filename: string) {
-    const fileExt = file.name.split('.').pop()
-    const filePath = `${tenantId}/${filename}.${fileExt}`
+    validateComprovanteFile(file)
+
+    const fileExt = safeFileExtension(file)
+    const filePath = `${tenantId}/${filename}_${crypto.randomUUID()}.${fileExt}`
 
     // O bucket correto é 'publico' conforme padrão do sistema
     const { data, error } = await supabase.storage
       .from('publico' as any)
       .upload(filePath, file, { 
-        upsert: true,
+        upsert: false,
         cacheControl: '3600'
       })
 
@@ -480,7 +521,10 @@ export const portalService = {
       // Fallback para bucket de comprovantes se existir
       const { data: dataAlt, error: errorAlt } = await supabase.storage
         .from('comprovantes' as any)
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, file, {
+          upsert: false,
+          cacheControl: '3600'
+        })
       
       if (errorAlt) throw errorAlt
       const { data: urlData } = supabase.storage.from('comprovantes' as any).getPublicUrl(filePath)

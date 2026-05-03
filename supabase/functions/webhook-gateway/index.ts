@@ -168,7 +168,7 @@ serve(async (req: Request) => {
 
   } catch (err: any) {
     console.error("[webhook-gateway] Erro CRITICO nao tratado:", err.message, err.stack)
-    return jsonResponse(500, { error: "Erro interno do servidor", message: err.message })
+    return jsonResponse(500, { error: "Erro interno do servidor" })
   } finally {
     clearTimeout(timeoutId)
   }
@@ -182,7 +182,7 @@ async function handleAsaasWebhook(
   payload: any,
   rawBody: string,
   supabase: any,
-  headers: { signature: string; timestamp: string }
+  _headers: { signature: string; timestamp: string }
 ): Promise<Response> {
   try {
     // -----------------------------------------------
@@ -374,7 +374,7 @@ async function handleAsaasWebhook(
 
   } catch (err: any) {
     console.error("[asaas] Erro nao tratado:", err.message)
-    return jsonResponse(500, { error: "Erro interno no handler Asaas", message: err.message, retry: true })
+    return jsonResponse(500, { error: "Erro interno no handler Asaas", retry: true })
   }
 }
 
@@ -502,7 +502,7 @@ async function handleMercadoPagoWebhook(
     // D) Validar assinatura do webhook
     // -----------------------------------------------
     if (mpClientSecret) {
-      const signatureValida = validarAssinaturaMercadoPago(
+      const signatureValida = await validarAssinaturaMercadoPago(
         timestamp,
         rawBody,
         mpClientSecret,
@@ -578,7 +578,7 @@ async function handleMercadoPagoWebhook(
 
   } catch (err: any) {
     console.error("[mp] Erro nao tratado:", err.message)
-    return jsonResponse(500, { error: "Erro interno MP", message: err.message, retry: true })
+    return jsonResponse(500, { error: "Erro interno MP", retry: true })
   }
 }
 
@@ -640,7 +640,7 @@ async function handleAbacatePayWebhook(
     // Verificar se tem assinatura HMAC (header x-abacate-signature) - mais seguro
     const abacateSignature = headers.signature
     if (abacateSignature && storedToken) {
-      const signatureValida = validarAssinaturaAbacate(
+      const signatureValida = await validarAssinaturaAbacate(
         rawBody,
         storedToken,
         abacateSignature
@@ -704,7 +704,7 @@ async function handleAbacatePayWebhook(
 
   } catch (err: any) {
     console.error("[abacate] Erro nao tratado:", err.message)
-    return jsonResponse(500, { error: "Erro interno Abacate Pay", message: err.message, retry: true })
+    return jsonResponse(500, { error: "Erro interno Abacate Pay", retry: true })
   }
 }
 
@@ -799,7 +799,7 @@ async function validarTokenAsaas(
 
   // Verificar se e um JWT (formato: header.payload.signature)
   if (receivedToken.split(".").length === 3) {
-    return validarJwtAsaas(receivedToken, storedToken)
+    return await validarJwtAsaas(receivedToken, storedToken)
   }
 
   // Token simples - comparacao constante
@@ -809,7 +809,7 @@ async function validarTokenAsaas(
 /**
  * Valida JWT do Asaas.
  */
-function validarJwtAsaas(jwt: string, secret: string): boolean {
+async function validarJwtAsaas(jwt: string, secret: string): Promise<boolean> {
   try {
     const [headerB64, payloadB64, signatureB64] = jwt.split(".")
 
@@ -831,19 +831,8 @@ function validarJwtAsaas(jwt: string, secret: string): boolean {
 
     // Validar assinatura (HS256)
     const data = `${headerB64}.${payloadB64}`
-    const expectedSignature = await hmacSha256(secret, data)
-    const actualSignature = signatureB64.replace(/-/g, "+").replace(/_/g, "/")
-
-    // Base64 decode para comparar
-    const expectedBytes = Uint8Array.from(atob(expectedSignature), (c) => c.charCodeAt(0))
-    const actualBytes = Uint8Array.from(atob(actualSignature), (c) => c.charCodeAt(0))
-
-    if (expectedBytes.length !== actualBytes.length) return false
-    let result = 0
-    for (let i = 0; i < expectedBytes.length; i++) {
-      result |= expectedBytes[i] ^ actualBytes[i]
-    }
-    return result === 0
+    const expectedSignature = await hmacSha256Base64Url(secret, data)
+    return constantTimeCompare(expectedSignature, signatureB64)
   } catch (err) {
     console.error("[asaas] Erro ao validar JWT:", err)
     return false
@@ -914,12 +903,12 @@ function mapAsaasBillingType(billingType: string): string {
  * Formato: x-signature = "t=timestamp,v1=signature"
  * Ohash e gerado de: timestamp.payload (raw body)
  */
-function validarAssinaturaMercadoPago(
+async function validarAssinaturaMercadoPago(
   timestamp: string,
   rawBody: string,
   clientSecret: string,
   receivedSignature: string
-): boolean {
+): Promise<boolean> {
   if (!timestamp || !rawBody || !clientSecret || !receivedSignature) {
     return false
   }
@@ -977,15 +966,38 @@ async function hmacSha256(key: string, data: string): Promise<string> {
   return Array.from(hashArray, (b) => b.toString(16).padStart(2, "0")).join("")
 }
 
+async function hmacSha256Base64Url(key: string, data: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(key)
+  const dataData = encoder.encode(data)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  )
+
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, dataData)
+  const bytes = new Uint8Array(signature)
+  let binary = ""
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+}
+
 /**
  * Valida assinatura HMAC-SHA256 do Abacate Pay.
  * O Abacate pode enviar assinatura no header x-abacate-signature.
  */
-function validarAssinaturaAbacate(
+async function validarAssinaturaAbacate(
   rawBody: string,
   webhookSecret: string,
   receivedSignature: string
-): boolean {
+): Promise<boolean> {
   if (!rawBody || !webhookSecret || !receivedSignature) {
     return false
   }

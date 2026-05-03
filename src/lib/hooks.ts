@@ -1,19 +1,17 @@
 import { useAuth } from '@/modules/auth/AuthContext'
-import { SUPER_ADMIN_EMAIL } from '@/lib/config'
 
 /**
- * Hook para verificar se o usuário atual é o super admin
+ * Checks whether the current user has the server-owned Super Admin claim.
  */
 export function useIsSuperAdmin() {
   const { authUser } = useAuth()
-  
-  return authUser?.role === 'super_admin' || 
-         (authUser?.user?.email ? authUser.user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() : false)
+  return authUser?.isSuperAdmin === true || authUser?.role === 'super_admin'
 }
 
 /**
- * Hook para obter o e-mail do super admin
+ * Deprecated compatibility hook. Super Admin is intentionally not configured
+ * through a frontend email variable anymore.
  */
 export function useSuperAdminEmail() {
-  return SUPER_ADMIN_EMAIL
+  return null
 }

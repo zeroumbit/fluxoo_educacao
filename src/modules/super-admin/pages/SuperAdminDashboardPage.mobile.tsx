@@ -18,7 +18,7 @@ import {
 import { motion } from 'framer-motion'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useSuperAdminNotifications } from '@/hooks/useNotifications'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 export function SuperAdminDashboardPageMobile() {
   const navigate = useNavigate()
@@ -104,20 +104,21 @@ export function SuperAdminDashboardPageMobile() {
 
         {/* Stats Grid */}
         <motion.div variants={item} className="grid grid-cols-1 gap-4">
-           <Card 
-              onClick={() => navigate('/super-admin/escolas')}
-              className="rounded-[2.5rem] border-0 bg-white shadow-sm p-7 flex items-center gap-5 ring-1 ring-slate-100 active:scale-[0.98] transition-transform"
-           >
-              <div className="h-16 w-16 rounded-[1.5rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                 <Building2 className="h-8 w-8 text-indigo-600" />
-              </div>
-              <div className="flex-1">
-                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Instituições</p>
-                 <p className="text-2xl font-black text-slate-800 tracking-tight">{stats?.totalEscolas || 0}</p>
-                 <p className="text-[10px] font-bold text-slate-400">Escolas gerenciadas</p>
-              </div>
-              <ArrowUpRight className="h-5 w-5 text-slate-200" />
-           </Card>
+            <Card
+               onClick={() => navigate('/super-admin/escolas')}
+               className="rounded-[2.5rem] border-0 bg-white shadow-sm p-7 flex items-center gap-5 ring-1 ring-slate-100 active:scale-[0.98] transition-transform"
+            >
+               <div className="h-16 w-16 rounded-[1.5rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-indigo-600" />
+               </div>
+               <div className="flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Instituições</p>
+                  <p className="text-2xl font-black text-slate-800 tracking-tight">{stats?.totalEscolas || 0}</p>
+                  <p className="text-[10px] font-bold text-slate-400">Escolas gerenciadas</p>
+                  <p className="text-[9px] font-black text-indigo-600 mt-1">{formatCurrency(stats?.faturamentoTotal || 0)}/mês</p>
+               </div>
+               <ArrowUpRight className="h-5 w-5 text-slate-200" />
+            </Card>
 
            <Card 
               onClick={() => navigate('/super-admin/alunos')}

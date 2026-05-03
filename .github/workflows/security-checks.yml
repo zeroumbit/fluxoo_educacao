@@ -9,62 +9,50 @@ on:
 jobs:
   security-and-build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Use Node.js 20.x
+
+    - name: Use Node.js 24.x
       uses: actions/setup-node@v4
       with:
-        node-version: 20.x
+        node-version: 24.x
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
-    - name: Verify Environment Template
+
+    - name: Verify environment template
       run: |
         if [ ! -f ".env.example" ]; then
-          echo "❌ .env.example não encontrado!"
+          echo ".env.example not found"
           exit 1
         fi
-        
-        # Verifica se as variáveis obrigatórias estão no template
-        REQUIRED_VARS=("VITE_SUPABASE_URL" "VITE_SUPABASE_ANON_KEY" "VITE_SUPER_ADMIN_EMAIL")
-        
+
+        REQUIRED_VARS=("VITE_SUPABASE_URL" "VITE_SUPABASE_ANON_KEY")
+
         for VAR in "${REQUIRED_VARS[@]}"; do
           if ! grep -q "$VAR" .env.example; then
-            echo "❌ Variável obrigatória ausente no template: $VAR"
+            echo "Required variable missing from template: $VAR"
             exit 1
           fi
         done
-        echo "✅ .env.example validado."
-        
-    - name: Check for Hardcoded Secrets
+
+    - name: Check for blocked secret patterns
+      run: npm run security:secrets
+
+    - name: Gitleaks scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Type check and lint
       run: |
-        echo "Verificando chaves de API expostas no código..."
-        
-        # Evita pasta node_modules e dist
-        # Regex básico para chaves JWT anon key comuns do Supabase
-        # Regex = "ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*"
-        
-        if grep -rIEq "ey[A-Za-z0-9-_=]{20,}\.[A-Za-z0-9-_=]{20,}\.[A-Za-z0-9-_.+/=]+" src/; then
-          echo "⚠️  AVISO: Possível JWT hardcoded detectado em src/. Verifique manualmente."
-          # Não quebramos o build automaticamente pois pode haver falsos positivos
-          # Mas alertamos fortemente no log
-        else
-          echo "✅ Nenhuma chave Supabase (JWT) hardcoded encontrada em src/"
-        fi
-        
-    - name: Type Check & Lint
-      run: |
-        npm run lint || echo "⚠️ Lint encontrou avisos."
+        npm run lint || echo "Lint reported warnings."
         npx tsc --noEmit
-        
-    - name: Run Build
-      # Variáveis mockadas para o build passar no health check
+
+    - name: Run build
       env:
         VITE_SUPABASE_URL: "https://mock.supabase.co"
         VITE_SUPABASE_ANON_KEY: "ey_mock_key_with_more_than_100_characters_for_validation_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        VITE_SUPER_ADMIN_EMAIL: "admin@fluxoo.com"
       run: npm run build

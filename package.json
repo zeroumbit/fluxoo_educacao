@@ -24,6 +24,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check-env": "node scripts/check-env.js",
+    "security:secrets": "node scripts/check-secrets.mjs",
     "git:fix": "powershell scripts/fix-git-lock.ps1",
     "clean": "rimraf dist node_modules/.vite tmp .cache",
     "predev": "npm run clean",

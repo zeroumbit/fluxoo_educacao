@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import type { UserRole } from '@/lib/database.types'
-import { isSuperAdminEmail } from '@/lib/config'
 import { usePortalStore } from '@/modules/portal/store'
 import { useRBACStore } from '@/stores/rbac.store'
 import { rbacService } from '@/modules/rbac/service'
+import { clearSensitiveClientState } from '@/lib/session-cleanup'
+import { precheckLogin, recordLoginAttempt } from '@/lib/auth-rate-limit'
 import type { ResolvedPermission } from '@/modules/rbac/types'
 
 export interface Endereco {
@@ -47,6 +47,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function hasSuperAdminAppClaim(user: User): boolean {
+  return user.app_metadata?.is_super_admin === true ||
+    user.app_metadata?.role === 'super_admin'
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 /** Utilitário: Executa uma promise com timeout */
 function _withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
@@ -67,10 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserProfile = useCallback(async (user: User, session: Session) => {
     try {
-      // 1. SUPER ADMIN (Identificação por app_metadata ou e-mail de contingência)
-      const isSuper = user.app_metadata?.role === 'super_admin' || 
-                      user.user_metadata?.role === 'super_admin' ||
-                      isSuperAdminEmail(user.email || '')
+      // 1. SUPER ADMIN: only app_metadata is trusted for authorization.
+      const isSuper = hasSuperAdminAppClaim(user)
 
       if (isSuper) {
         setAuthUser({
@@ -90,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let escolaData = null
       
       // Tentativa 1: Por gestor_user_id (Mais rápido e seguro)
-      const { data: escolaById, error: errId } = await supabase
+      const { data: escolaById } = await supabase
         .from('escolas')
         .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
         .eq('gestor_user_id', user.id)
@@ -100,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Tentativa 2: Por e-mail (Fallback para cadastros legados ou em transição)
       if (!escolaData && user.email) {
-        const { data: escolaByEmail, error: errEmail } = await supabase
+        const { data: escolaByEmail } = await supabase
           .from('escolas')
           .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
           .ilike('email_gestor', user.email)
@@ -205,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           const isGestor = user.user_metadata?.role === 'gestor' // Apenas o fundador/dono recebe bypass global
-          const isSuperAdmin = user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin'
+          const isSuperAdmin = hasSuperAdminAppClaim(user)
           const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
           const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
@@ -247,8 +254,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const finalTenantId = systemUserData.tenant_id
             let perfilNome = ''
             try {
-              const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', systemUserData.perfil_id).maybeSingle()
-              perfilNome = pData?.nome?.toLowerCase() || ''
+              if (systemUserData.perfil_id) {
+                const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', systemUserData.perfil_id).maybeSingle()
+                perfilNome = pData?.nome?.toLowerCase() || ''
+              }
             } catch { /* não crítico */ }
 
             const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
@@ -263,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: user.email || '',
               isProfessor: perfilNome.includes('professor'),
               isGestor: perfilNome.includes('gestor') || perfilNome.includes('diretor') || perfilNome.includes('adm') || perfilNome.includes('contador'),
-              isSuperAdmin: user.app_metadata?.role === 'super_admin' || user.user_metadata?.role === 'super_admin',
+              isSuperAdmin: hasSuperAdminAppClaim(user),
               resolvedPermissions
             })
 
@@ -352,11 +361,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthUser({
         user, session,
         tenantId: user.user_metadata?.tenant_id || 'PENDING_TENANT',
-        role: (user.user_metadata?.role as any) || 'gestor',
+        role: (user.user_metadata?.role as any) || 'funcionario',
         nome: user.user_metadata?.full_name || 'Usuário',
         email: user.email || '',
         isProfessor: false,
-        isGestor: true,
+        isGestor: false,
         isSuperAdmin: false
       })
     } catch (err) {
@@ -417,7 +426,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const identifier = email.trim().toLowerCase()
+    const precheck = await precheckLogin(identifier)
+
+    if (!precheck.allowed) {
+      setLoading(false)
+      return { error: precheck.reason || 'Muitas tentativas falhas. Tente novamente mais tarde.' }
+    }
+
+    if (precheck.delayMs > 0) {
+      await sleep(precheck.delayMs)
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email: identifier, password })
+    await recordLoginAttempt({
+      identifier,
+      success: !error,
+      reason: error?.message,
+    })
+
     if (error) {
       setLoading(false)
       return { error: error.message }
@@ -445,6 +472,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     usePortalStore.getState().clearStore()
     // Limpar permissões RBAC cacheadas
     useRBACStore.getState().clearPermissions()
+    clearSensitiveClientState()
+    window.dispatchEvent(new Event('fluxoo:auth:signed-out'))
     window.location.href = isResponsavel ? '/portal/login' : '/login'
   }
 

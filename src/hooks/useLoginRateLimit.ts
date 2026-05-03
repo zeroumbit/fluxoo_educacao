@@ -14,8 +14,10 @@
 
 import { useCallback } from 'react'
 
-const MAX_ATTEMPTS = 5
-const WINDOW_MS = 60 * 60 * 1000 // 1 hora em milissegundos
+const MAX_ATTEMPTS = 30
+const WARNING_ATTEMPTS = 20
+const WINDOW_MS = 15 * 60 * 1000 // 15 minutos
+const LOCK_MS = 15 * 60 * 1000
 const STORAGE_KEY = 'fluxoo_login_attempts'
 
 interface AttemptData {
@@ -73,15 +75,12 @@ export function useLoginRateLimit() {
 
     // Primeira tentativa
     if (!data) {
-      saveAttempts({ attempts: 1, lastAttempt: now })
       return true
     }
 
     // Verifica se está dentro da janela de tempo
     const windowStart = now - WINDOW_MS
     if (data.lastAttempt < windowStart) {
-      // Janela expirou, reseta
-      saveAttempts({ attempts: 1, lastAttempt: now })
       return true
     }
 
@@ -92,14 +91,11 @@ export function useLoginRateLimit() {
 
     // Verifica se excedeu limite
     if (data.attempts >= MAX_ATTEMPTS) {
-      // Bloqueia por 1 hora
-      const lockedUntil = now + WINDOW_MS
+      const lockedUntil = now + LOCK_MS
       saveAttempts({ attempts: data.attempts, lastAttempt: now, lockedUntil })
       return false
     }
 
-    // Incrementa tentativa
-    saveAttempts({ attempts: data.attempts + 1, lastAttempt: now })
     return true
   }, [getAttempts, saveAttempts])
 
@@ -125,7 +121,7 @@ export function useLoginRateLimit() {
         saveAttempts({
           attempts: newAttempts,
           lastAttempt: now,
-          lockedUntil: now + WINDOW_MS
+          lockedUntil: now + LOCK_MS
         })
       } else {
         saveAttempts({ attempts: newAttempts, lastAttempt: now })
@@ -167,11 +163,21 @@ export function useLoginRateLimit() {
     return Math.max(0, MAX_ATTEMPTS - data.attempts)
   }, [getAttempts])
 
+  const shouldDelayAttempt = useCallback((): boolean => {
+    const data = getAttempts()
+    if (!data) return false
+
+    const now = Date.now()
+    const windowStart = now - WINDOW_MS
+    return data.lastAttempt >= windowStart && data.attempts >= WARNING_ATTEMPTS
+  }, [getAttempts])
+
   return {
     checkAttempt,
     resetAttempts,
     recordFailedAttempt,
     getWaitTime,
     getRemainingAttempts,
+    shouldDelayAttempt,
   }
 }

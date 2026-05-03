@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react"
+import { Suspense, lazy, useEffect } from "react"
 import { Package, Wallet, FileUser, Search } from 'lucide-react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -6,13 +6,10 @@ import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider, useAuth } from '@/modules/auth/AuthContext'
 import { ProtectedRoute } from '@/modules/auth/ProtectedRoute'
 import { RBACProvider } from '@/providers/RBACProvider'
-import { persistQueryClient } from '@tanstack/react-query-persist-client'
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { setupCacheHandlers } from '@/lib/cache-handlers'
 import { LoginPage } from '@/modules/auth/LoginPage'
 import { AdminLayout } from '@/layout/AdminLayout'
 import { SuperAdminLayout } from '@/layout/SuperAdminLayout'
-import { PortalLayout } from '@/layout/PortalLayout'
 import { ProfessorLayout } from '@/layout/ProfessorLayout'
 import { CookieConsent } from '@/components/shared/CookieConsent'
 import { PortalLayoutV2 } from '@/modules/portal/v2/PortalLayoutV2'
@@ -166,22 +163,17 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: 'fluxoo_rbac_cache',
-  throttleTime: 2000,
-})
-
-persistQueryClient({
-  queryClient,
-  persister,
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
-})
-
 import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 
 function SessionManager() {
   useSessionTimeout()
+
+  useEffect(() => {
+    const clearQueryCache = () => queryClient.clear()
+    window.addEventListener('fluxoo:auth:signed-out', clearQueryCache)
+    return () => window.removeEventListener('fluxoo:auth:signed-out', clearQueryCache)
+  }, [])
+
   return null
 }
 

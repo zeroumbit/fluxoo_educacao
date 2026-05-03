@@ -772,7 +772,7 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
           "relative cursor-pointer flex flex-col items-center justify-center gap-1 p-4 border-2 border-dashed rounded-[16px] transition-all",
           arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100"
         )}>
-          <input type="file" className="hidden" accept="image/png,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
+          <input type="file" className="hidden" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
           {arquivo ? (
             <>
               <FileText className="text-teal-500" size={24} />

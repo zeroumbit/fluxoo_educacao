@@ -6,36 +6,55 @@ import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner'
 import { initSentry } from '@/lib/sentry'
 import { setupErrorHandlers } from '@/lib/logger'
+import '@/lib/config'
 
-// Inicializar Sentry ANTES do primeiro render (captura erros desde o início)
 initSentry()
 setupErrorHandlers()
 
-// Start App Registration first
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <App />
   </ErrorBoundary>
 )
 
-// Strategy: PWA Update Flow with Background Fetch
-// Registers Service Worker. Tells user there's a new version available.
-const updateSW = registerSW({
-  onNeedRefresh() {
-    toast('🚀 Nova versão do app disponível!', {
-      description: 'A atualização melhora a performance e traz novos recursos.',
-      action: {
-        label: 'Atualizar Agora',
-        onClick: () => updateSW(true) // will update and location.reload()
-      },
-      duration: 10000,
-      position: 'top-center'
-    });
-  },
-  onOfflineReady() {
-    toast.success('App pronto para uso offline', {
-      description: 'Você pode acessar os dados carregados mesmo sem internet.',
-      position: 'top-center'
-    });
-  },
-})
+async function clearDevelopmentServiceWorkers() {
+  if (!('serviceWorker' in navigator)) return
+
+  const registrations = await navigator.serviceWorker.getRegistrations()
+  await Promise.all(registrations.map((registration) => registration.unregister()))
+
+  if ('caches' in window) {
+    const keys = await caches.keys()
+    await Promise.all(
+      keys
+        .filter((key) => key.startsWith('workbox-') || key.includes('precache') || key.includes('fluxoo'))
+        .map((key) => caches.delete(key))
+    )
+  }
+}
+
+if (import.meta.env.DEV) {
+  clearDevelopmentServiceWorkers().catch((error) => {
+    console.warn('Falha ao limpar service worker de desenvolvimento:', error)
+  })
+} else {
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      toast('Nova versao do app disponivel!', {
+        description: 'A atualizacao melhora a performance e traz novos recursos.',
+        action: {
+          label: 'Atualizar Agora',
+          onClick: () => updateSW(true),
+        },
+        duration: 10000,
+        position: 'top-center',
+      })
+    },
+    onOfflineReady() {
+      toast.success('App pronto para uso offline', {
+        description: 'Voce pode acessar os dados carregados mesmo sem internet.',
+        position: 'top-center',
+      })
+    },
+  })
+}

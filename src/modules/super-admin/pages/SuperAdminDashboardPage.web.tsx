@@ -3,18 +3,13 @@ import { Building2, CreditCard, Users, Loader2 } from 'lucide-react'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useSuperAdminDashboard } from '../hooks'
 import { Badge } from '@/components/ui/badge'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { useTenantHealthScores } from '../hooks'
 import { Progress } from '@/components/ui/progress'
 import { AlertCircle, TrendingDown, TrendingUp, CheckCircle2 } from 'lucide-react'
-import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useSuperAdminNotifications } from '@/hooks/useNotifications'
 
 export function SuperAdminDashboardPageWeb() {
   const { data: dashboard, isLoading } = useSuperAdminDashboard()
   const { data: healthScores, isLoading: loadingHealth } = useTenantHealthScores()
-  const { data: notifications } = useSuperAdminNotifications()
 
   if (isLoading || !dashboard) {
     return (
@@ -31,7 +26,8 @@ export function SuperAdminDashboardPageWeb() {
     escolasRecentes, 
     saudeFinanceiraGlobal,
     faturasPixPendentes,
-    faturasAtrasadas
+    faturasAtrasadas,
+    faturamentoTotal
   } = dashboard
 
   return (
@@ -89,6 +85,10 @@ export function SuperAdminDashboardPageWeb() {
           <CardContent>
             <div className="text-3xl font-bold">{totalEscolas}</div>
             <p className="text-xs text-muted-foreground mt-1">Instituições cadastradas</p>
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-muted-foreground">Faturamento mensal</p>
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(faturamentoTotal || 0)}</p>
+            </div>
           </CardContent>
         </Card>
 

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+npm run security:secrets -- --staged
+npx lint-staged

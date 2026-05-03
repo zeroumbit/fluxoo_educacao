@@ -20,6 +20,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useEffect } from 'react'
 import { strongPasswordSchema, getPasswordStrengthTips } from '@/lib/password-validation'
 
+const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
+const COMPROVANTE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
+
+function validarComprovanteCadastro(file: File) {
+  if (file.size > COMPROVANTE_MAX_BYTES) {
+    throw new Error('Arquivo muito grande. Maximo 5MB.')
+  }
+
+  if (!COMPROVANTE_MIME_TYPES.has(file.type)) {
+    throw new Error('Formato invalido. Envie PDF, PNG, JPG ou WebP.')
+  }
+}
+
+function extensaoComprovante(file: File): string {
+  const byMime: Record<string, string> = {
+    'application/pdf': 'pdf',
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+  }
+
+  return byMime[file.type] || 'bin'
+}
+
 // ========== SCHEMA ==========
 const cadastroSchema = z.object({
   email: z.string().email('E-mail de acesso inválido'),
@@ -287,8 +311,9 @@ export function EscolaCadastroPage() {
 
       let comprovanteUrl: string | undefined
       if (data.metodo_pagamento === 'pix_manual' && comprovante) {
-        const ext = comprovante.name.split('.').pop()
-        const path = `comprovantes/${escola.id}/${Date.now()}.${ext}`
+        validarComprovanteCadastro(comprovante)
+        const ext = extensaoComprovante(comprovante)
+        const path = `comprovantes/${escola.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`
         await supabase.storage.from('comprovantes').upload(path, comprovante)
         const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(path)
         comprovanteUrl = urlData.publicUrl
@@ -641,8 +666,23 @@ export function EscolaCadastroPage() {
                         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Upload className="h-3 w-3" /> Comprovante (Obrigatório)</Label>
                         <Input
                           type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => setComprovante(e.target.files?.[0] || null)}
+                          accept="image/png,image/jpeg,image/webp,application/pdf"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null
+                            if (!file) {
+                              setComprovante(null)
+                              return
+                            }
+
+                            try {
+                              validarComprovanteCadastro(file)
+                              setComprovante(file)
+                            } catch (error: any) {
+                              e.target.value = ''
+                              setComprovante(null)
+                              toast.error(error.message || 'Arquivo invalido.')
+                            }
+                          }}
                           className="file:mr-3 file:text-xs file:font-bold file:border-0 file:bg-emerald-100 file:text-emerald-700 file:rounded-lg file:px-3 file:py-1"
                         />
                         {!comprovante && <p className="text-[10px] text-amber-700 font-medium">* Upload obrigatório para PIX Manual</p>}
