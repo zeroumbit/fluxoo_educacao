@@ -11,7 +11,7 @@ export function PixManualBannerNotification() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data } = useEscolaNotifications(authUser?.tenantId)
-  const { marcarComoLida } = useNotificacoesActions()
+  const { marcarComoLida, marcarComoResolvida } = useNotificacoesActions()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedNotification, setSelectedNotification] = useState<any>(null)
 
@@ -26,7 +26,7 @@ export function PixManualBannerNotification() {
   const showArrows = pixNotifications.length > cardsPerView
 
   const handleValidate = (n: any) => {
-    navigate('/financeiro/cobrancas')
+    navigate('/financeiro')
   }
 
   const handleWhatsApp = (n: any) => {
@@ -221,6 +221,7 @@ export function PixManualBannerNotification() {
                   className="flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                   onClick={() => {
                     marcarComoLida.mutate(selectedNotification.id)
+                    marcarComoResolvida.mutate(selectedNotification.id)
                     setSelectedNotification(null)
                   }}
                 >
