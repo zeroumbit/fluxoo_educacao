@@ -33,7 +33,7 @@ const ENV_CHECKS: EnvCheck[] = [
   {
     key: 'VITE_SENTRY_DSN',
     label: 'DSN do Sentry (monitoramento)',
-    criticality: 'important',
+    criticality: 'optional',
     validateFn: (v) => v.startsWith('https://') && v.includes('sentry.io'),
   },
   {

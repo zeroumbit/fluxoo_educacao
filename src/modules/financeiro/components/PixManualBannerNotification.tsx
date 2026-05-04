@@ -1,11 +1,149 @@
 import { useNavigate } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
+import { supabase } from '@/lib/supabase'
 import { CreditCard, ExternalLink, CheckCircle2, MessageCircle, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
+/**
+ * Enriquece notificações com metadata incompleto buscando dados das cobranças.
+ * Resolve o problema onde a criação da notificação no portal falha silenciosamente
+ * e o metadata fica sem responsavel_nome, aluno_nome, valor_total etc.
+ */
+function useEnrichedPixNotifications(rawNotifications: any[]) {
+  const [enriched, setEnriched] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!rawNotifications || rawNotifications.length === 0) {
+      setEnriched([])
+      return
+    }
+
+    const needsEnrichment = rawNotifications.some(
+      n => !n.metadata?.responsavel_nome || !n.metadata?.aluno_nome || !n.metadata?.valor_total
+    )
+
+    if (!needsEnrichment) {
+      setEnriched(rawNotifications)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+
+    async function enrich() {
+      const results = await Promise.all(
+        rawNotifications.map(async (n) => {
+          const meta = n.metadata || {}
+
+          // Skip if metadata already complete
+          if (meta.responsavel_nome && meta.aluno_nome && meta.valor_total) {
+            return n
+          }
+
+          const cobrancaIds = meta.cobranca_ids || []
+          if (cobrancaIds.length === 0) return n
+
+          try {
+            // Fetch cobrança data to fill missing fields
+            const { data: cobData } = await supabase
+              .from('cobrancas')
+              .select(`
+                id, valor, descricao, tipo_cobranca, aluno_id,
+                alunos:aluno_id (
+                  nome_completo,
+                  matriculas (
+                    status,
+                    turma:turma_id (nome)
+                  )
+                )
+              `)
+              .in('id', cobrancaIds)
+
+            if (!cobData || cobData.length === 0) return n
+
+            const totalValor = cobData.reduce((acc, c) => acc + Number(c.valor || 0), 0)
+
+            const alunosTurmasInfo = cobData.map(c => {
+              const aluno = c.alunos as any
+              const matriculaAtiva = aluno?.matriculas?.find((m: any) => m.status === 'ativa')
+              return {
+                nome: aluno?.nome_completo || '',
+                turma: matriculaAtiva?.turma?.nome || 'Sem Turma'
+              }
+            })
+
+            const alunosNomes = [...new Set(alunosTurmasInfo.map(a => a.nome).filter(Boolean))].join(', ')
+            const turmasNomes = [...new Set(alunosTurmasInfo.map(a => a.turma))].join(', ')
+            const meses = [...new Set(cobData.map(c => c.descricao).filter(Boolean))].join('; ')
+            const tipos = [...new Set(cobData.map(c => c.tipo_cobranca).filter(Boolean))]
+              .map(t => t === 'mensalidade' ? 'Mensalidade' : t === 'matricula' ? 'Matrícula' : String(t))
+              .join(', ') || 'Mensalidade'
+
+            // Fetch responsavel name if missing
+            let responsavelNome = meta.responsavel_nome || ''
+            if (!responsavelNome && meta.responsavel_id) {
+              const { data: respData } = await supabase
+                .from('responsaveis')
+                .select('nome')
+                .eq('id', meta.responsavel_id)
+                .maybeSingle()
+              responsavelNome = respData?.nome || ''
+            }
+            if (!responsavelNome) {
+              // Fallback: buscar via aluno_responsavel
+              const alunoId = cobData[0]?.aluno_id
+              if (alunoId) {
+                const { data: arData } = await (supabase
+                  .from('aluno_responsavel') as any)
+                  .select('responsaveis(nome)')
+                  .eq('aluno_id', alunoId)
+                  .limit(1)
+                  .maybeSingle()
+                responsavelNome = (arData as any)?.responsaveis?.nome || 'Responsável'
+              }
+            }
+
+            const enrichedMeta = {
+              ...meta,
+              responsavel_nome: responsavelNome || meta.responsavel_nome || 'Responsável',
+              aluno_nome: alunosNomes || meta.aluno_nome || '',
+              turma_nome: turmasNomes || meta.turma_nome || '',
+              valor_total: totalValor || meta.valor_total || 0,
+              meses_referencia: meses || meta.meses_referencia || '',
+              tipo_cobranca: tipos || meta.tipo_cobranca || 'Mensalidade'
+            }
+
+            // Persist the enriched metadata back to DB (fire-and-forget)
+            supabase
+              .from('notificacoes')
+              .update({ metadata: enrichedMeta })
+              .eq('id', n.id)
+              .then(() => {})
+
+            return { ...n, metadata: enrichedMeta }
+          } catch {
+            return n
+          }
+        })
+      )
+
+      if (!cancelled) {
+        setEnriched(results)
+        setLoading(false)
+      }
+    }
+
+    enrich()
+    return () => { cancelled = true }
+  }, [rawNotifications])
+
+  return { enrichedNotifications: enriched, loading }
+}
 
 export function PixManualBannerNotification() {
   const navigate = useNavigate()
@@ -15,10 +153,12 @@ export function PixManualBannerNotification() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedNotification, setSelectedNotification] = useState<any>(null)
 
-  const pixNotifications = useMemo(() => {
+  const rawPixNotifications = useMemo(() => {
     if (!data?.notificacoes) return []
     return data.notificacoes.filter(n => n.tipo === 'PAGAMENTO_PIX_MANUAL' && !n.resolvida && !n.lida)
   }, [data?.notificacoes])
+
+  const { enrichedNotifications: pixNotifications } = useEnrichedPixNotifications(rawPixNotifications)
 
   if (pixNotifications.length === 0) return null
 
@@ -99,17 +239,17 @@ export function PixManualBannerNotification() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-indigo-900 text-sm truncate" title={n.metadata?.responsavel_nome}>
-                        {n.metadata?.responsavel_nome}
+                        {n.metadata?.responsavel_nome || '...'}
                       </h4>
                       <p className="text-xs text-indigo-700/70 truncate" title={n.metadata?.aluno_nome}>
-                        {n.metadata?.aluno_nome}
+                        {n.metadata?.aluno_nome || '...'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-indigo-600/60 truncate max-w-[150px]">
-                      Ref: {n.metadata?.meses_referencia}
+                      Ref: {n.metadata?.meses_referencia || '—'}
                     </span>
                     <span className="text-[10px] font-medium text-indigo-600">
                       Detalhes
