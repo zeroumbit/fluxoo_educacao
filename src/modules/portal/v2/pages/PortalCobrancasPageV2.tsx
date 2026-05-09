@@ -47,6 +47,7 @@ import { useQueries } from '@tanstack/react-query'
 import { portalService } from '../../service'
 import { portalFinanceiroService } from '../../financeiro.service'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -588,8 +589,10 @@ function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggl
   )
 }
 
+
 function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const isMobile = useIsMobile()
+  const [activeTab, setActiveTab] = useState<'chave' | 'qrcode'>('qrcode')
 
   // ISOLAMENTO DE CONTEXTO: Buscar configuração da escola do aluno ESPECÍFICO da cobrança
   const { data: configPix } = useQuery({
@@ -632,14 +635,10 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
     vibrate(30)
     
     try {
-      // 1. Upload do arquivo
       const filename = `comprovante_${cobranca?.id}_${Date.now()}`
       const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
-
-      // 2. Registra no banco (suporta ID único ou array de IDs para pagamento unificado)
       await portalService.registrarPagamentoComComprovante(cobranca?.ids || cobranca?.id!, url, responsavel?.id!)
 
-      // 3. Envia WhatsApp
       const numeroRaw = configRecados?.whatsapp_contato || ''
       const numero = numeroRaw.replace(/\D/g, '')
       const msg = encodeURIComponent(`Olá, confirmo o pagamento de ${formatCurrency(cobranca?.valor || 0)} (${cobranca?.descricao} - ${cobranca?.alunoNome}). Comprovante: ${url}`)
@@ -659,162 +658,187 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
   }
 
   const ModalContent = (
-    <div className="flex flex-col gap-3 sm:gap-4">
-      {/* Header - Compacto */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-teal-500 text-white flex items-center justify-center shadow-lg shrink-0">
-          <TrendingDown size={20} />
-        </div>
-        <div className="flex flex-col min-w-0">
-          <h3 className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-none truncate">Pagamento PIX</h3>
-          <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest">Fluxo de Segurança</p>
-        </div>
+    <div className="flex flex-col gap-6">
+      {/* Header com Título e Fechar */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-black text-slate-800 tracking-tight">Pagar com pix manual</h3>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <X size={24} />
+        </button>
       </div>
 
-      {/* Card de Valor - Mais compacto */}
-      <div className="flex flex-col items-center justify-center py-3 sm:py-4 bg-slate-900 rounded-[18px] sm:rounded-[22px] text-white shadow-lg relative overflow-hidden mx-1 sm:mx-0">
-        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-teal-400 mb-1 relative z-10">Total a Pagar</span>
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tighter relative z-10 leading-none">
+      {/* Seletor de Abas Estilizado */}
+      <div className="flex bg-slate-50 p-1.5 rounded-[24px] h-14 relative">
+        <button
+          onClick={() => { vibrate(10); setActiveTab('chave'); }}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-3 rounded-[18px] text-[11px] font-black uppercase tracking-widest transition-all z-10",
+            activeTab === 'chave' ? "bg-white text-teal-600 shadow-xl" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          <div className={cn("w-2 h-2 rounded-full", activeTab === 'chave' ? "bg-teal-500" : "bg-slate-200")} />
+          Copiar chave
+        </button>
+        <button
+          onClick={() => { vibrate(10); setActiveTab('qrcode'); }}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-3 rounded-[18px] text-[11px] font-black uppercase tracking-widest transition-all z-10",
+            activeTab === 'qrcode' ? "bg-white text-teal-600 shadow-xl" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          <div className={cn("w-2 h-2 rounded-full", activeTab === 'qrcode' ? "bg-teal-500" : "bg-slate-200")} />
+          Ler QRcode
+        </button>
+      </div>
+
+      {/* Banner de Valor */}
+      <div className="bg-[#0c1322] rounded-[24px] p-6 flex flex-col gap-1 shadow-2xl overflow-hidden relative group">
+        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+          <TrendingDown size={80} className="text-white" />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[3px] text-teal-400/70">Total à pagar</span>
+        <h2 className="text-3xl font-black text-white tracking-tighter">
           {formatCurrency(cobranca?.valor_total_projetado || cobranca?.valor_original || cobranca?.valor || 0)}
         </h2>
-        <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1 relative z-10 truncate max-w-full px-2">{cobranca?.descricao || ''}</p>
       </div>
 
-      {/* PIX Content - Otimizado para caber */}
-      {configPix ? (
-        <div className="flex flex-col gap-3">
-          {/* QR Code - Reduzido */}
-          {(configPix?.qr_code_url || configPix?.qr_code_auto) && (
-            <div className="p-3 rounded-[16px] bg-slate-50 border border-slate-200 flex flex-col items-center gap-2">
-              <div className="p-2 bg-white rounded-[12px] shadow-md flex items-center justify-center">
+      {/* Conteúdo Dinâmico (Chave vs QR Code) */}
+      <div className="min-h-[220px] flex items-center justify-center overflow-hidden">
+        <AnimatePresence mode="wait">
+          {activeTab === 'qrcode' ? (
+            <motion.div 
+              key="qrcode"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="flex flex-col items-center gap-4 w-full"
+            >
+              <div className="p-4 bg-white rounded-[32px] shadow-2xl border border-slate-50 flex items-center justify-center group hover:scale-[1.02] transition-transform">
                 {configPix?.qr_code_url ? (
                   configPix.qr_code_url.toLowerCase().endsWith('.pdf') ? (
-                    <div 
-                      onClick={() => window.open(configPix.qr_code_url, '_blank')}
-                      className="flex flex-col items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-all rounded-xl border border-dashed border-rose-200"
-                    >
-                      <FileText size={40} className="text-rose-500" />
-                      <span className="text-[8px] font-black text-rose-600 uppercase tracking-widest text-center">Ver QR Code (PDF)</span>
+                    <div onClick={() => window.open(configPix.qr_code_url, '_blank')} className="flex flex-col items-center gap-3 p-6 cursor-pointer border border-dashed border-teal-200 rounded-3xl bg-teal-50/30 hover:bg-teal-50 transition-colors">
+                      <FileText size={64} className="text-teal-500" />
+                      <span className="text-[10px] font-black text-teal-600 uppercase tracking-widest">Abrir QR Code (PDF)</span>
                     </div>
                   ) : (
-                    <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-32 h-32 sm:w-40 sm:h-40 object-contain" />
+                    <img src={configPix.qr_code_url} alt="QR Code PIX" className="w-48 h-48 sm:w-56 sm:h-56 object-contain" />
                   )
                 ) : (
-                  <div className="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center text-slate-300">
-                    <QrCode size={48} className="opacity-30" />
+                  <div className="w-48 h-48 sm:w-56 sm:h-56 flex flex-col items-center justify-center text-slate-200 gap-4">
+                    <QrCode size={80} className="opacity-20" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">QR Code não disponível</span>
                   </div>
                 )}
               </div>
-              <span className="text-[9px] font-black text-teal-600 uppercase tracking-widest">QR Code Ativo</span>
-            </div>
-          )}
-
-          {/* Favorecido e Instruções - Adicionado */}
-          {(configPix?.favorecido || configPix?.instrucoes_pix) && (
-            <div className="flex flex-col gap-1 px-1">
-              {configPix?.favorecido && (
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-slate-400 uppercase tracking-tight">Favorecido:</span>
-                  <span className="font-black text-slate-700">{configPix.favorecido}</span>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Posicione a câmera no QR Code acima</p>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="chave"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full flex flex-col gap-4"
+            >
+              <div className="bg-teal-50/50 border border-teal-100 rounded-[28px] p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/20">
+                    <ShoppingBag size={20} />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-teal-600/70">Chave pix - {configPix?.tipo_chave_pix || 'Chave'}</span>
+                    <div className="flex items-center gap-3">
+                       <span className="text-lg font-black text-slate-800 tracking-tight truncate">{configPix?.chave_pix || configPix?.pix_chave || 'Não configurada'}</span>
+                       <button onClick={handleCopy} className="text-teal-500 hover:text-teal-600 transition-colors active:scale-90 transform shrink-0">
+                         <Copy size={20} />
+                       </button>
+                    </div>
+                  </div>
                 </div>
-              )}
-              {configPix?.instrucoes_pix && (
-                <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-2 mt-1">
-                  <p className="text-[9px] font-bold text-amber-700 leading-tight">
-                    {configPix.instrucoes_pix}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Chave PIX - Reduzida */}
-          {(configPix?.chave_pix || configPix?.pix_chave) && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mt-1">
-                <div className="h-px bg-slate-100 flex-1" />
-                <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest">Ou copie e cole</span>
-                <div className="h-px bg-slate-100 flex-1" />
+                
+                {configPix?.favorecido && (
+                  <div className="flex flex-col border-t border-teal-100 pt-4">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Quem vai receber</span>
+                    <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight truncate">{configPix.favorecido}</span>
+                  </div>
+                )}
               </div>
-              <div className="p-2 rounded-[12px] bg-white border border-slate-100 font-mono text-[9px] text-slate-500 break-all leading-relaxed text-center max-h-16 overflow-y-auto">
-                {configPix.chave_pix || configPix.pix_chave}
-              </div>
-              <Button onClick={handleCopy} className="w-full h-10 sm:h-12 bg-slate-900 hover:bg-black text-white rounded-[16px] font-black text-[9px] sm:text-[10px] uppercase tracking-widest gap-2 shadow-lg active:scale-95 transition-all">
-                {copiado ? <CheckCircle2 size={14} className="text-teal-400" /> : <Copy size={14} />}
-                {copiado ? 'Copiado!' : 'Copiar PIX'}
-              </Button>
-            </div>
+            </motion.div>
           )}
-        </div>
-      ) : (
-        <div className="p-4 text-center space-y-2 bg-rose-50 rounded-[20px] border border-rose-100 mx-1">
-          <AlertCircle size={28} className="text-rose-500 mx-auto" />
-          <p className="text-sm font-black text-rose-900 uppercase">PIX Não Configurado</p>
-          <p className="text-[9px] font-semibold text-rose-700/60">Esta escola ainda não cadastrou os dados para pagamento via PIX.</p>
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
 
-      {/* Upload - Fluxo de Segurança */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-px bg-slate-100 flex-1" />
-          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fluxo de Segurança</span>
-          <div className="h-px bg-slate-100 flex-1" />
-        </div>
-
-        <div className="px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-center">
-          <p className="text-[10px] font-bold text-indigo-900 leading-tight">
-            Após o pagamento com pix, envie o comprovante para a escola logo abaixo.
-          </p>
-        </div>
-
+      {/* Área de Upload */}
+      <div className="flex flex-col gap-4">
         <label className={cn(
-          "relative cursor-pointer flex flex-col items-center justify-center gap-1 p-4 border-2 border-dashed rounded-[16px] transition-all",
-          arquivo ? "bg-teal-50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+          "relative cursor-pointer flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed rounded-[32px] transition-all min-h-[160px]",
+          arquivo ? "bg-teal-50/50 border-teal-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100/80"
         )}>
           <input type="file" className="hidden" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={handleFileChange} disabled={enviando} />
           {arquivo ? (
-            <>
-              <FileText className="text-teal-500" size={24} />
-              <span className="text-[10px] font-bold text-teal-700 truncate max-w-full">{arquivo.name}</span>
-              <span className="text-[8px] text-teal-600/60 uppercase font-black">Trocar Arquivo</span>
-            </>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-xl shadow-teal-500/30">
+                 <CheckCircle2 size={32} />
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[12px] font-black text-teal-700 text-center px-4 truncate max-w-[280px]">{arquivo.name}</span>
+                <span className="text-[9px] font-black text-teal-500 uppercase tracking-widest mt-1">Clique para trocar o arquivo</span>
+              </div>
+            </div>
           ) : (
-            <>
-              <Upload className="text-slate-400" size={24} />
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Selecionar Comprovante</span>
-              <span className="text-[8px] text-slate-400 uppercase font-black">PDF, PNG ou WebP</span>
-            </>
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-[13px] font-black text-slate-500 uppercase tracking-tight text-center">Selecione o comprovante para envio</span>
+              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 group-hover:border-teal-200 transition-colors">
+                <Upload size={24} />
+              </div>
+              <span className="text-[9px] font-black text-slate-300 uppercase tracking-[2px]">PDF, PNG OU WEBP</span>
+            </div>
           )}
         </label>
-
-        {/* Chave para conferência logo abaixo do upload */}
-        {(configPix?.chave_pix || configPix?.pix_chave) && (
-          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Chave PIX da Escola</p>
-              <p className="text-[10px] font-mono text-slate-700 truncate font-bold">{configPix.chave_pix || configPix.pix_chave}</p>
-            </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-indigo-600 shrink-0" onClick={handleCopy}>
-              {copiado ? <CheckCircle2 size={16} className="text-teal-500" /> : <Copy size={16} />}
-            </Button>
-          </div>
-        )}
       </div>
 
-      {/* Botão Confirmar - Sempre visível */}
+      {/* Accordion de Instruções */}
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="instrucoes" className="border-0">
+          <AccordionTrigger className="hover:no-underline py-4 px-6 bg-slate-50 rounded-[20px] text-slate-700 font-black uppercase text-[10px] tracking-widest transition-all hover:bg-slate-100">
+            Instruções
+          </AccordionTrigger>
+          <AccordionContent className="pt-4 px-6">
+            <ul className="flex flex-col gap-3">
+              {[
+                "Clique para copiar a chave pix",
+                "Abra seu app de banco preferido",
+                "Finalize o pagamento no banco",
+                "Anexe o comprovante de pagamento",
+                "Clique no botão FINALIZAR PAGAMENTO abaixo"
+              ].map((step, i) => (
+                <li key={i} className="flex items-center gap-3 text-[11px] font-semibold text-slate-500 leading-relaxed">
+                  <div className="w-5 h-5 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-[10px] font-black shrink-0">
+                    {i + 1}
+                  </div>
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* Botão Finalizar */}
       <Button 
         onClick={handleComprovante} 
         disabled={!arquivo || enviando}
         className={cn(
-          "w-full h-11 sm:h-12 rounded-[14px] text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95",
+          "w-full h-16 rounded-[28px] text-[13px] font-black uppercase tracking-[3px] transition-all shadow-2xl active:scale-95",
           arquivo 
-            ? "bg-teal-600 text-white hover:bg-teal-700 shadow-teal-500/20" 
-            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+            ? "bg-[#00c59e] text-white hover:bg-[#00b08d] shadow-[#00c59e]/20" 
+            : "bg-slate-100 text-slate-300 cursor-not-allowed"
         )}
       >
-        {enviando ? <Loader2 className="animate-spin mr-2" size={14} /> : null}
-        {enviando ? 'Processando...' : 'Confirmar Pagamento'}
+        {enviando ? <Loader2 className="animate-spin mr-3" size={20} /> : null}
+        {enviando ? 'ENVIANDO...' : 'FINALIZAR PAGAMENTO'}
       </Button>
     </div>
   )
@@ -822,8 +846,8 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[32px] p-4 sm:p-8 pb-6 sm:pb-12 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white">
-          <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6" />
+        <SheetContent showCloseButton={false} side="bottom" className="rounded-t-[40px] p-8 pb-10 focus:outline-none ring-0 h-auto max-h-[95vh] overflow-y-auto bg-white border-t border-slate-100">
+          <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8" />
           {ModalContent}
         </SheetContent>
       </Sheet>
@@ -832,14 +856,12 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[340px] max-h-[85vh] p-0 overflow-hidden border-0 rounded-[24px] bg-white gap-0">
+      <DialogContent className="max-w-[480px] max-h-[90vh] p-8 overflow-y-auto border-0 rounded-[48px] bg-white gap-0 hide-scrollbar shadow-[0_32px_80px_rgba(0,0,0,0.1)]">
         <DialogTitle className="sr-only">Pagamento PIX - {formatCurrency(cobranca?.valor || 0)}</DialogTitle>
         <DialogDescription className="sr-only">
           Página de pagamento PIX com QR Code e instrução para upload de comprovante.
         </DialogDescription>
-        <div className="p-4">
-          {ModalContent}
-        </div>
+        {ModalContent}
       </DialogContent>
     </Dialog>
   )
