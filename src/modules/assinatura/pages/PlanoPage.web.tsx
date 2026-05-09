@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useEscola, useSolicitacoesUpgrade, useCriarSolicitacaoUpgrade, useAssinaturaAtiva } from '../hooks'
+import { useEscola, useSolicitacoesUpgrade, useCriarSolicitacaoUpgrade, useAssinaturaAtiva, usePlanos } from '../hooks'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,7 @@ export function PlanoPage() {
   const { data: escola, isLoading: loadingEscola } = useEscola()
   const { data: assinatura, isLoading: loadingAssinatura } = useAssinaturaAtiva()
   const { data: solicitacoes } = useSolicitacoesUpgrade()
+  const { data: planosBase, isLoading: loadingPlanos } = usePlanos()
   const criarUpgrade = useCriarSolicitacaoUpgrade()
 
   const [novoLimite, setNovoLimite] = useState<number>(0)
@@ -267,6 +268,80 @@ export function PlanoPage() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+      {/* Nossos Planos - Ofertas da Plataforma */}
+      <Card className="border-0 shadow-lg mt-8 bg-gradient-to-br from-indigo-50 to-white">
+        <CardHeader className="pt-8">
+          <CardTitle className="text-xl font-black text-indigo-950 flex items-center gap-2">
+            <Trophy className="h-6 w-6 text-indigo-600" />
+            Nossos Planos
+          </CardTitle>
+          <CardDescription className="text-indigo-900/60 font-medium">
+            Conheça as opções disponíveis e escolha a que melhor se adapta ao tamanho e às necessidades da sua escola.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingPlanos ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {planosBase?.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).map((p: any) => {
+                const isActive = activePlan?.id === p.id;
+                return (
+                  <div 
+                    key={p.id} 
+                    className={cn(
+                      "relative p-6 rounded-2xl border transition-all duration-300",
+                      isActive 
+                        ? "border-indigo-500 bg-white shadow-xl shadow-indigo-100 ring-2 ring-indigo-500/20" 
+                        : "border-zinc-200 bg-white/50 hover:bg-white hover:border-indigo-200 hover:shadow-lg"
+                    )}
+                  >
+                    {isActive && (
+                      <Badge className="absolute -top-3 right-6 bg-indigo-500 uppercase tracking-widest text-[10px] font-black">
+                        Seu Plano
+                      </Badge>
+                    )}
+                    <h3 className="text-lg font-black text-zinc-900 mb-2">{p.nome}</h3>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-sm font-bold text-zinc-400">R$</span>
+                      <span className="text-3xl font-black text-indigo-600">{Number(p.valor_por_aluno).toFixed(2)}</span>
+                      <span className="text-sm font-medium text-zinc-500">/aluno</span>
+                    </div>
+                    
+                    <p className="text-sm text-zinc-600 mb-6 min-h-[40px]">
+                      {p.descricao_curta || 'Acesso completo às ferramentas essenciais para sua gestão escolar.'}
+                    </p>
+
+                    <Button 
+                      variant={isActive ? "outline" : "default"} 
+                      className={cn(
+                        "w-full font-bold", 
+                        !isActive && "bg-indigo-600 hover:bg-indigo-700"
+                      )}
+                      disabled={isActive}
+                      onClick={() => {
+                        if (!isActive) {
+                          toast.info('Para mudar de plano base, entre em contato com nosso suporte comercial.');
+                        }
+                      }}
+                    >
+                      {isActive ? 'Plano Atual' : 'Tenho Interesse'}
+                    </Button>
+                  </div>
+                )
+              })}
+              
+              {(!planosBase || planosBase.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).length === 0) && (
+                <div className="col-span-full py-8 text-center text-zinc-500">
+                  Nenhum plano cadastrado no momento.
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

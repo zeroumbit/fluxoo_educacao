@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAgendaDiaria } from '@/modules/professor/hooks'
@@ -18,7 +18,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Loader2,
   CheckCircle,
@@ -37,12 +37,13 @@ type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
 
 export function ProfessorFrequenciaPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { authUser } = useAuth()
   const { data: agenda, isLoading: loadingAgenda } = useAgendaDiaria()
   const { data: minhasTurmas, isLoading: loadingTurmas } = useTurmas()
   
-  const [turmaId, setTurmaId] = useState('')
-  const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
+  const [turmaId, setTurmaId] = useState(() => searchParams.get('turma') || '')
+  const [dataAula, setDataAula] = useState(() => searchParams.get('data') || new Date().toISOString().split('T')[0])
   
   // Modal de Justificativa
   const [modalOpen, setModalOpen] = useState(false)
@@ -75,6 +76,25 @@ export function ProfessorFrequenciaPage() {
     
     return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome))
   }, [agenda, minhasTurmas])
+
+  useEffect(() => {
+    const turmaFromUrl = searchParams.get('turma')
+    const dataFromUrl = searchParams.get('data')
+
+    if (dataFromUrl && dataFromUrl !== dataAula) {
+      setDataAula(dataFromUrl)
+    }
+
+    if (turmaFromUrl && turmaFromUrl !== turmaId) {
+      setTurmaId(turmaFromUrl)
+      return
+    }
+
+    if (!turmaId && agenda?.length) {
+      const pendente = agenda.find((a: any) => !a.chamada_realizada) || agenda[0]
+      if (pendente?.turma_id) setTurmaId(pendente.turma_id)
+    }
+  }, [agenda, dataAula, searchParams, turmaId])
 
   // Dados Reais do Supabase
   const { data: alunosTurma = [], isLoading: loadingAlunos } = useAlunosDaTurma(turmaId)

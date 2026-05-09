@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { AgendaAula, AlertaProfessor, Pendencia, SaudeTurma } from './types'
+import { logger } from '@/lib/logger'
 
 export const professorService = {
   /**
@@ -15,7 +16,7 @@ export const professorService = {
       .order('hora_inicio', { ascending: true })
 
     if (error) {
-      console.error('[professorService] Erro ao buscar agenda:', error)
+      logger.error('[professorService] Erro ao buscar agenda', error)
       return []
     }
     return (data as AgendaAula[]) || []
@@ -34,7 +35,7 @@ export const professorService = {
       .order('data_referencia', { ascending: true }) // mais atrasado primeiro
 
     if (error) {
-      console.error('[professorService] Erro ao buscar pendências:', error)
+      logger.error('[professorService] Erro ao buscar pendencias', error)
       return []
     }
     return (data as Pendencia[]) || []
@@ -53,7 +54,7 @@ export const professorService = {
       .order('turma_nome', { ascending: true })
 
     if (error) {
-      console.error('[professorService] Erro ao buscar saúde das turmas:', error)
+      logger.error('[professorService] Erro ao buscar saude das turmas', error)
       return []
     }
     return (data as SaudeTurma[]) || []
@@ -73,7 +74,7 @@ export const professorService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('[professorService] Erro ao buscar alertas:', error)
+      logger.error('[professorService] Erro ao buscar alertas', error)
       return []
     }
     return (data as AlertaProfessor[]) || []
@@ -89,7 +90,7 @@ export const professorService = {
     })
 
     if (error) {
-      console.error('[professorService] Erro ao concluir alerta:', error)
+      logger.error('[professorService] Erro ao concluir alerta', error)
       return false
     }
     return true
@@ -124,7 +125,7 @@ export const professorService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[professorService] Erro ao buscar alunos:', error);
+      logger.error('[professorService] Erro ao buscar alunos', error);
       return [];
     }
 

@@ -12,6 +12,13 @@ export function useEscola() {
   })
 }
 
+export function usePlanos() {
+  return useQuery({
+    queryKey: ['planos-disponiveis'],
+    queryFn: () => assinaturaService.buscarPlanos(),
+  })
+}
+
 export function useAssinaturaAtiva() {
   const { authUser } = useAuth()
   return useQuery({

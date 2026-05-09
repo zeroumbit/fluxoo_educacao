@@ -413,11 +413,13 @@ export function ProfessorLayout() {
 
 function ProfessorSmartAssistantWrapper() {
   const { authUser } = useAuth()
-  const { insights } = useDailyInsights()
+  const { insights, summary, isLoading } = useDailyInsights()
   
   return (
     <SmartAssistant 
       insights={insights} 
+      summary={summary}
+      isLoading={isLoading}
       professorName={authUser?.nome || 'Professor'} 
     />
   )

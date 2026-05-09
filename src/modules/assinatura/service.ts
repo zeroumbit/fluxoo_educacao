@@ -13,6 +13,16 @@ export const assinaturaService = {
     return data
   },
 
+  async buscarPlanos() {
+    const { data, error } = await supabase
+      .from('planos')
+      .select('*')
+      .order('valor_por_aluno', { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+
   async buscarAssinaturaAtiva(tenantId: string) {
     const { data, error } = await supabase
       .from('assinaturas')

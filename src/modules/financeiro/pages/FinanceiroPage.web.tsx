@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import {
   Plus,
   Loader2,
@@ -34,12 +35,15 @@ import {
   Eye,
   X,
   Phone,
-  CreditCard
+  CreditCard,
+  History
 } from 'lucide-react'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { useGestorGuard } from '@/hooks/useGestorGuard'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   detectarTipoCobranca,
   getLabelTipoCobranca,
@@ -233,6 +237,35 @@ export function FinanceiroPageWeb() {
       atrasados: list.filter(isAtrasada).reduce((acc, c) => acc + Number(c.valor_total_projetado || c.valor), 0),
     }
   }, [cobrancas])
+
+  const groupedCobrancas = useMemo(() => {
+    const groups: Record<string, any[]> = {}
+    filteredCobrancas.forEach((c: any) => {
+      const data = new Date(c.data_vencimento + 'T12:00:00')
+      const key = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(c)
+    })
+
+    const today = new Date()
+    const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+    const allEntries = Object.entries(groups).map(([key, items]) => {
+      const [year, month] = key.split('-')
+      const dataRef = new Date(Number(year), Number(month) - 1, 1)
+      const labelStr = format(dataRef, "MMMM 'de' yyyy", { locale: ptBR })
+      const label = labelStr.charAt(0).toUpperCase() + labelStr.slice(1)
+      return { key, label, items }
+    })
+
+    const past = allEntries.filter(e => e.key < currentKey).sort((a, b) => b.key.localeCompare(a.key))
+    const current = allEntries.find(e => e.key === currentKey)
+    const future = allEntries.filter(e => e.key > currentKey).sort((a, b) => a.key.localeCompare(b.key))
+
+    return { past, current, future, currentKey }
+  }, [filteredCobrancas])
+
+  const currentMonthKey = groupedCobrancas.currentKey
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
@@ -719,28 +752,131 @@ export function FinanceiroPageWeb() {
         </Dialog>
       </div>
 
-      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
+      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white p-2">
+        {!groupedCobrancas.current && groupedCobrancas.past.length === 0 && groupedCobrancas.future.length === 0 ? (
+          <div className="text-center py-20 text-slate-400 italic bg-white">
+            Nenhuma cobrança encontrada.
+          </div>
+        ) : (
+          <Accordion type="multiple" defaultValue={[currentMonthKey]} className="w-full">
+            {/* 1. MESES ANTERIORES */}
+            {groupedCobrancas.past.length > 0 && (
+              <AccordionItem value="past-months" className="border-b border-slate-100">
+                <AccordionTrigger className="hover:no-underline px-4 py-3 hover:bg-slate-50 rounded-lg transition-colors opacity-70">
+                  <div className="flex items-center gap-3">
+                    <History className="h-5 w-5 text-slate-400" />
+                    <span className="font-bold text-slate-600">Ver meses anteriores</span>
+                    <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-200">
+                      {groupedCobrancas.past.length} meses
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-4 bg-slate-50/30">
+                  <div className="space-y-8 px-4">
+                    {groupedCobrancas.past.map((group) => (
+                      <div key={group.key} className="space-y-3">
+                        <div className="flex items-center gap-2 border-l-4 border-slate-300 pl-3">
+                          <span className="font-black text-slate-500 uppercase text-xs tracking-widest">{group.label}</span>
+                        </div>
+                        {renderMonthTable(group.items)}
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* 2. MÊS ATUAL */}
+            {groupedCobrancas.current && (
+              <AccordionItem value={currentMonthKey} className="border-b border-slate-100">
+                <AccordionTrigger className="hover:no-underline px-4 py-5 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-6 w-6 text-emerald-500 fill-emerald-50" />
+                      <div className="flex flex-col items-start">
+                        <span className="font-black text-slate-900 text-xl leading-none">{groupedCobrancas.current.label}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Mês Atual</span>
+                      </div>
+                    </div>
+                    {renderGroupSummary(groupedCobrancas.current)}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-6 px-4">
+                  {renderMonthTable(groupedCobrancas.current.items)}
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* 3. MESES FUTUROS (ORDEM CRESCENTE) */}
+            {groupedCobrancas.future.map((group) => (
+              <AccordionItem key={group.key} value={group.key} className="border-b last:border-0 border-slate-100">
+                <AccordionTrigger className="hover:no-underline px-4 py-4 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-indigo-500" />
+                      <span className="font-black text-slate-900 text-lg">{group.label}</span>
+                    </div>
+                    {renderGroupSummary(group)}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-6 px-4">
+                  {renderMonthTable(group.items)}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
+      </Card>
+    </div>
+  )
+
+  // Helpers de renderização para evitar repetição
+  function renderGroupSummary(group: any) {
+    const groupTotal = group.items.reduce((acc: number, c: any) => acc + Number(c.valor_total_projetado || c.valor), 0)
+    const groupAtrasados = group.items.filter((c: any) => {
+      const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+      return (c.status === 'a_vencer' || c.status === 'atrasado' || c.status === 'pendente') && 
+             new Date(c.data_vencimento + 'T12:00:00') < hoje
+    }).length
+
+    return (
+      <div className="flex items-center gap-4">
+        {groupAtrasados > 0 && (
+          <Badge variant="outline" className="bg-rose-50 text-rose-600 border-rose-200 rounded-md shadow-sm hidden sm:inline-flex">
+            {groupAtrasados} em atraso
+          </Badge>
+        )}
+        <span className="font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
+          {formatCurrency(groupTotal)}
+        </span>
+      </div>
+    )
+  }
+
+  function renderMonthTable(items: any[]) {
+    return (
+      <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="font-bold text-slate-500 pl-8 h-12 uppercase text-[10px] tracking-widest">Aluno / Responsável</TableHead>
-              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Descrição</TableHead>
-              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Vencimento</TableHead>
-              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Valor</TableHead>
-              <TableHead className="font-bold text-slate-500 px-6 h-12 uppercase text-[10px] tracking-widest">Status</TableHead>
-              <TableHead className="text-right pr-8 h-12"></TableHead>
+              <TableHead className="font-bold text-slate-500 pl-6 h-10 uppercase text-[10px] tracking-widest">Aluno / Responsável</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-10 uppercase text-[10px] tracking-widest">Descrição</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-10 uppercase text-[10px] tracking-widest">Vencimento</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-10 uppercase text-[10px] tracking-widest">Valor</TableHead>
+              <TableHead className="font-bold text-slate-500 px-6 h-10 uppercase text-[10px] tracking-widest">Status</TableHead>
+              <TableHead className="text-right pr-6 h-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCobrancas.map((c: any) => (
+            {items.map((c: any) => (
               <TableRow key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                <TableCell className="pl-8 py-4">
+                <TableCell className="pl-6 py-3">
                   <p className="font-bold text-slate-900">{c.alunos?.nome_completo}</p>
-                  <p className="text-xs text-slate-400 font-medium">{c.alunos?.email_acesso}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{c.alunos?.email_acesso}</p>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-6 py-3">
                   <div className="flex flex-col gap-1">
-                    <span className="text-slate-600 font-medium">{c.descricao}</span>
+                    <span className="text-sm text-slate-600 font-medium">{c.descricao}</span>
                     {(() => {
                       const tipoVisual = detectarTipoCobranca(c)
                       return (
@@ -754,13 +890,13 @@ export function FinanceiroPageWeb() {
                     })()}
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4">
-                  <div className="flex items-center gap-2 text-slate-500 font-medium">
+                <TableCell className="px-6 py-3">
+                  <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     {formatDate(c.data_vencimento)}
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4 font-bold text-indigo-700">
+                <TableCell className="px-6 py-3 font-bold text-indigo-700 text-sm">
                   <div className="flex flex-col">
                     <span>{formatCurrency(getValorExibicao(c))}</span>
                     {extrairDiasProporcionais(c.descricao) && (
@@ -771,28 +907,27 @@ export function FinanceiroPageWeb() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-6 py-3">
                   {(() => {
                     const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-                    // Regra de Ouro da Plataforma: Vencimento < Hoje é ATRASADO, independente do status do banco (Zero Trust)
                     const vencida = (c.status === 'a_vencer' || c.status === 'atrasado' || c.status === 'pendente') && 
                                    new Date(c.data_vencimento + 'T12:00:00') < hoje
                     
                     if (c.status === 'pago') return (
-                      <Badge variant="outline" className="rounded-md px-3 py-1 font-bold border-0 bg-emerald-50 text-emerald-600">
+                      <Badge variant="outline" className="rounded-md px-2.5 py-0.5 font-bold border-0 bg-emerald-50 text-emerald-600 text-[10px]">
                         RECEBIDO
                       </Badge>
                     )
                     
                     if (c.status === 'cancelado') return (
-                      <Badge variant="outline" className="rounded-md px-3 py-1 font-bold border-0 bg-slate-100 text-slate-400">
+                      <Badge variant="outline" className="rounded-md px-2.5 py-0.5 font-bold border-0 bg-slate-100 text-slate-400 text-[10px]">
                         CANCELADO
                       </Badge>
                     )
 
                     return (
                       <Badge variant="outline" className={cn(
-                        "rounded-md px-3 py-1 font-bold border-0",
+                        "rounded-md px-2.5 py-0.5 font-bold border-0 text-[10px]",
                         vencida ? "bg-rose-100 text-rose-700 animate-pulse border border-rose-200" : "bg-amber-50 text-amber-500"
                       )}>
                         {vencida ? '⚠️ ATRASADO' : 'EM ABERTO'}
@@ -800,14 +935,16 @@ export function FinanceiroPageWeb() {
                     )
                   })()}
                 </TableCell>
-                <TableCell className="text-right pr-8">
+                <TableCell className="text-right pr-6">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600"><MoreHorizontal className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl p-2 border-slate-100">
                       <DropdownMenuItem onClick={() => handleVisualizar(c)} className="text-indigo-600 font-bold focus:bg-indigo-50 rounded-lg">
-                        <Eye className="mr-2 h-4 w-4" /> Visualizar Detalhes
+                        <Eye className="mr-2 h-4 w-4" /> Visualizar
                       </DropdownMenuItem>
                       {canPay && (
                         c.status !== 'pago' ? (
@@ -816,33 +953,23 @@ export function FinanceiroPageWeb() {
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={() => handleEstornar(c.id)} className="text-amber-600 font-bold focus:bg-amber-50 rounded-lg">
-                            <Undo2 className="mr-2 h-4 w-4" /> Estornar Pagamento
+                            <Undo2 className="mr-2 h-4 w-4" /> Estornar
                           </DropdownMenuItem>
                         )
                       )}
                       {canDelete && (
                         <DropdownMenuItem onClick={() => handleExcluir(c.id)} className="text-rose-600 font-bold focus:bg-rose-50 rounded-lg">
-                          <Trash2 className="mr-2 h-4 w-4" /> Excluir Cobrança
+                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
                         </DropdownMenuItem>
-                      )}
-                      {!canPay && !canDelete && (
-                         <DropdownMenuItem disabled className="text-slate-400 text-xs">Sem permissão de edição</DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
-            {filteredCobrancas.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-20 text-slate-400 italic bg-white">
-                  Nenhuma cobrança encontrada.
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
-      </Card>
-    </div>
-  )
+      </div>
+    )
+  }
 }

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
@@ -33,7 +34,8 @@ import {
   AlertCircle,
   LayoutGrid,
   User,
-  X
+  X,
+  History
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -154,6 +156,35 @@ export function FinanceiroPageMobile() {
     })
   }, [cobrancas, filtroTab, busca])
 
+  const groupedList = useMemo(() => {
+    const groups: Record<string, any[]> = {}
+    filteredList.forEach((c: any) => {
+      const data = new Date(c.data_vencimento + 'T12:00:00')
+      const key = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
+      if (!groups[key]) groups[key] = []
+      groups[key].push(c)
+    })
+
+    const today = new Date()
+    const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+
+    const allEntries = Object.entries(groups).map(([key, items]) => {
+      const [year, month] = key.split('-')
+      const dataRef = new Date(Number(year), Number(month) - 1, 1)
+      const labelStr = dataRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      const label = labelStr.charAt(0).toUpperCase() + labelStr.slice(1)
+      return { key, label, items }
+    })
+
+    const past = allEntries.filter(e => e.key < currentKey).sort((a, b) => b.key.localeCompare(a.key))
+    const current = allEntries.find(e => e.key === currentKey)
+    const future = allEntries.filter(e => e.key > currentKey).sort((a, b) => a.key.localeCompare(b.key))
+
+    return { past, current, future, currentKey }
+  }, [filteredList])
+
+  const currentMonthKey = groupedList.currentKey
+
   const totals = useMemo(() => {
     if (!cobrancas) return { pagos: 0, pendentes: 0, atrasados: 0 }
     const list = cobrancas as any[]
@@ -253,90 +284,84 @@ export function FinanceiroPageMobile() {
             </div>
           </div>
 
-          {/* Lista de Cobranças */}
+          {/* Lista de Cobranças Agrupadas (Lógica de Três Blocos) */}
           <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {filteredList.map((c: any, idx) => (
-                <motion.div
-                  key={c.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <NativeCard 
-                    swipeable={true}
-                    onDelete={() => handleExcluir(c.id)}
-                    onClick={() => { setSelectedCobranca(c); setDetailOpen(true); }}
-                    className="p-5"
-                  >
-                    <div className="flex items-start gap-4 w-full overflow-hidden">
-                      {/* Ícone - Design Destacado */}
-                      <div className={cn(
-                        "h-16 w-16 rounded-[20px] flex items-center justify-center shrink-0 shadow-sm transition-colors",
-                        (() => {
-                          const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-                          const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
-                          
-                          if (c.status === 'pago') return "bg-emerald-50 text-emerald-600"
-                          if (isVencida) return "bg-rose-100 text-rose-700 animate-pulse"
-                          return "bg-indigo-50 text-indigo-500"
-                        })()
-                      )}>
-                        {(() => {
-                          const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-                          const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
-                          
-                          if (c.status === 'pago') return <CheckCircle2 size={32} />
-                          if (isVencida) return <AlertCircle size={32} />
-                          return <Calendar size={32} />
-                        })()}
-                      </div>
-
-                      {/* Info Centralizada Verticalmente */}
-                      <div className="flex-1 min-w-0 pt-1">
-                        <h3 className="font-black text-slate-900 dark:text-white leading-tight truncate text-base">
-                          {c.descricao}
-                        </h3>
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider mt-1 truncate">
-                          {c.alunos?.nome_completo || 'Lançamento Avulso'}
-                        </p>
-                        
-                        {/* Preço em Destaque abaixo do nome */}
-                        <div className="mt-3 flex items-center gap-1.5">
-                           <span className="text-[10px] font-black text-slate-300 uppercase">Valor:</span>
-                           <p className="font-black text-indigo-600 dark:text-indigo-400 text-lg tracking-tighter">
-                            {getValorExibicao(c).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </p>
-                          {extrairDiasProporcionais(c.descricao) && (
-                            <span className="text-[9px] text-emerald-500 font-bold uppercase mt-0.5">Proporcional</span>
-                          )}
-                          {isTaxaMatricula(c) && (
-                            <span className="text-[9px] text-orange-500 font-bold uppercase mt-0.5">Matrícula</span>
-                          )}
-                          {(c.valor_multa_projetado > 0 || c.valor_juros_projetado > 0) && c.status !== 'pago' && (
-                            <span className="text-[9px] text-rose-500 font-bold uppercase mt-0.5">Com Encargos</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Status à Direita */}
-                      <div className="shrink-0 flex flex-col justify-start pt-1">
-                        <div className={cn(
-                          "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
-                          c.status === 'pago' ? "bg-emerald-500 text-white" : 
-                          (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
-                        )}>
-                          {c.status === 'pago' ? 'PAGO' : (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? 'VENCIDO' : 'ABERTO'}
-                        </div>
-                      </div>
-                    </div>
-                  </NativeCard>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {filteredList.length === 0 && (
+            {!groupedList.current && groupedList.past.length === 0 && groupedList.future.length === 0 ? (
               <div className="text-center py-10 opacity-30 italic font-medium">Nenhum registro encontrado</div>
+            ) : (
+              <Accordion type="multiple" defaultValue={[currentMonthKey]} className="w-full space-y-4">
+                
+                {/* 1. MESES ANTERIORES */}
+                {groupedList.past.length > 0 && (
+                  <AccordionItem value="past-months" className="border-none bg-white dark:bg-slate-900 rounded-[24px] shadow-sm overflow-hidden opacity-80">
+                    <AccordionTrigger className="hover:no-underline px-5 py-4 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <History className="h-5 w-5 text-slate-400" />
+                        <span className="font-bold text-slate-600">Ver meses anteriores</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4 px-3 space-y-6 bg-slate-50/50 dark:bg-slate-950/50">
+                      {groupedList.past.map((group) => (
+                        <div key={group.key} className="space-y-3">
+                          <div className="px-2 border-l-4 border-slate-200">
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{group.label}</span>
+                          </div>
+                          {renderMobileGroup(group.items)}
+                        </div>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                {/* 2. MÊS ATUAL */}
+                {groupedList.current && (
+                  <AccordionItem value={currentMonthKey} className="border-none bg-white dark:bg-slate-900 rounded-[28px] shadow-lg shadow-indigo-100/50 dark:shadow-none overflow-hidden border-2 border-indigo-50 dark:border-indigo-900/30">
+                    <AccordionTrigger className="hover:no-underline px-5 py-5 transition-colors">
+                      <div className="flex items-center justify-between w-full pr-2">
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
+                            <Calendar className="h-6 w-6 text-emerald-500" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-900 dark:text-white text-lg leading-none">{groupedList.current.label}</span>
+                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1">Mês Atual</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                           <span className="font-black text-indigo-600 dark:text-indigo-400 text-lg">
+                            {groupedList.current.items.reduce((acc, c) => acc + getValorExibicao(c), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </span>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-0 pb-6 px-3 bg-slate-50/50 dark:bg-slate-950/50">
+                      {renderMobileGroup(groupedList.current.items)}
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                {/* 3. MESES FUTUROS */}
+                {groupedList.future.map((group) => (
+                  <AccordionItem key={group.key} value={group.key} className="border-none bg-white dark:bg-slate-900 rounded-[24px] shadow-sm overflow-hidden">
+                    <AccordionTrigger className="hover:no-underline px-5 py-4 transition-colors">
+                      <div className="flex items-center justify-between w-full pr-2 text-left">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="font-black text-slate-900 dark:text-white text-base">{group.label}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                            {group.items.length} reg.
+                          </span>
+                        </div>
+                        <span className="font-black text-indigo-600 dark:text-indigo-400">
+                          {group.items.reduce((acc, c) => acc + getValorExibicao(c), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-0 pb-4 px-3 bg-slate-50/50 dark:bg-slate-950/50">
+                      {renderMobileGroup(group.items)}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             )}
           </div>
         </div>
@@ -562,4 +587,74 @@ export function FinanceiroPageMobile() {
       </div>
     </PullToRefresh>
   )
+
+  function renderMobileGroup(items: any[]) {
+    return (
+      <div className="space-y-3">
+        <AnimatePresence mode="popLayout">
+          {items.map((c: any, idx: number) => (
+            <motion.div
+              key={c.id}
+              layout
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.05 }}
+            >
+              <NativeCard 
+                swipeable={true}
+                onDelete={() => handleExcluir(c.id)}
+                onClick={() => { setSelectedCobranca(c); setDetailOpen(true); }}
+                className="p-4"
+              >
+                <div className="flex items-start gap-3 w-full overflow-hidden">
+                  <div className={cn(
+                    "h-12 w-12 rounded-[16px] flex items-center justify-center shrink-0 shadow-sm transition-colors",
+                    (() => {
+                      const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                      const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
+                      if (c.status === 'pago') return "bg-emerald-50 text-emerald-600"
+                      if (isVencida) return "bg-rose-100 text-rose-700 animate-pulse"
+                      return "bg-indigo-50 text-indigo-500"
+                    })()
+                  )}>
+                    {(() => {
+                      const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                      const isVencida = (c.status === 'a_vencer' || c.status === 'atrasado') && new Date(c.data_vencimento + 'T12:00:00') < hoje
+                      if (c.status === 'pago') return <CheckCircle2 size={24} />
+                      if (isVencida) return <AlertCircle size={24} />
+                      return <Calendar size={24} />
+                    })()}
+                  </div>
+
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <h3 className="font-black text-slate-900 dark:text-white leading-tight truncate text-sm">
+                      {c.descricao}
+                    </h3>
+                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider mt-0.5 truncate">
+                      {c.alunos?.nome_completo || 'Avulso'}
+                    </p>
+                    <div className="mt-2">
+                       <p className="font-black text-indigo-600 dark:text-indigo-400 text-base tracking-tighter leading-none">
+                        {getValorExibicao(c).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 flex flex-col justify-start pt-1">
+                    <div className={cn(
+                      "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm",
+                      c.status === 'pago' ? "bg-emerald-500 text-white" : 
+                      (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                    )}>
+                      {c.status === 'pago' ? 'PAGO' : (c.status === 'atrasado' || new Date(c.data_vencimento + 'T12:00:00') < new Date()) ? 'VENCIDO' : 'ABERTO'}
+                    </div>
+                  </div>
+                </div>
+              </NativeCard>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    )
+  }
 }

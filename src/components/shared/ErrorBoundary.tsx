@@ -23,6 +23,18 @@ function isRecoverableChunkLoadError(error: Error): boolean {
     || message.includes('loading chunk');
 }
 
+function getChunkRetryKey(error: Error): string {
+  const message = `${error.name || ''}:${error.message || ''}:${window.location.pathname}`.toLowerCase();
+  let hash = 0;
+
+  for (let index = 0; index < message.length; index += 1) {
+    hash = ((hash << 5) - hash) + message.charCodeAt(index);
+    hash |= 0;
+  }
+
+  return `fluxoo:chunk-reload-retried:${Math.abs(hash)}`;
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false
@@ -37,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
     captureException(error, { action: 'global-error-boundary' });
 
     if (isRecoverableChunkLoadError(error)) {
-      const retryKey = 'fluxoo:chunk-reload-retried';
+      const retryKey = getChunkRetryKey(error);
       const alreadyRetried = (() => {
         try {
           return sessionStorage.getItem(retryKey) === 'true';
@@ -56,7 +68,9 @@ export class ErrorBoundary extends Component<Props, State> {
       }
     } else {
       try {
-        sessionStorage.removeItem('fluxoo:chunk-reload-retried');
+        Object.keys(sessionStorage)
+          .filter(key => key.startsWith('fluxoo:chunk-reload-retried:'))
+          .forEach(key => sessionStorage.removeItem(key));
       } catch {
         // Sem acao: alguns browsers podem bloquear sessionStorage.
       }
@@ -69,7 +83,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleReload = () => {
     try {
-      sessionStorage.removeItem('fluxoo:chunk-reload-retried');
+      Object.keys(sessionStorage)
+        .filter(key => key.startsWith('fluxoo:chunk-reload-retried:'))
+        .forEach(key => sessionStorage.removeItem(key));
     } catch {
       // Sem acao: recarregar ainda e a melhor recuperacao.
     }

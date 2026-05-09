@@ -430,109 +430,94 @@ export function AdminLayout() {
 
       {/* Bottom Navigation para Mobile (App Style) - escondida em /meu-perfil */}
       {!hideBottomNav && (
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
-        <div className="mx-auto w-full flex items-stretch justify-between h-20 px-6 relative">
-          {/* Lado Esquerdo */}
-          <div className="flex items-center gap-3 flex-1 justify-start">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.06)] rounded-t-[32px]">
+        <div className="mx-auto w-full flex items-center justify-around h-20 px-2">
+          {/* Home */}
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              cn(
+                "flex flex-col items-center justify-center gap-1.5 flex-1 transition-all duration-300",
+                isActive ? "text-indigo-600" : "text-slate-400"
+              )
+            }
+          >
+            <Home className="h-6 w-6" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold tracking-tight lowercase">home</span>
+          </NavLink>
+
+          {/* Alunos */}
+          {(isGestor || isProfessor || hasPermission('academico.alunos.view')) && (
             <NavLink
-              to="/dashboard"
+              to="/alunos"
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                  isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
+                  "flex flex-col items-center justify-center gap-1.5 flex-1 transition-all duration-300",
+                  isActive ? "text-indigo-600" : "text-slate-400"
                 )
               }
             >
-              <Home className="h-6 w-6" />
-              <span className="text-[10px] font-bold tracking-tight">Home</span>
+              <User className="h-6 w-6" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-tight lowercase">alunos</span>
             </NavLink>
+          )}
 
-            {(isGestor || isProfessor || hasPermission('academico.alunos.view')) && (
-              <NavLink
-                to="/alunos"
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-                  )
-                }
-              >
-                <Users className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Alunos</span>
-              </NavLink>
-            )}
-          </div>
-
-          {/* Botão Central de Menu */}
+          {/* Menu Central */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-indigo-600 to-blue-700 h-16 w-16 rounded-2xl shadow-lg shadow-indigo-200 active:scale-90 transition-transform flex items-center justify-center z-10"
+            className="flex flex-col items-center justify-center gap-1.5 flex-1 text-slate-400 active:scale-90 transition-transform"
           >
-            <Menu className="h-7 w-7 text-white" />
+            <Menu className="h-6 w-6" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold tracking-tight lowercase">menu</span>
           </button>
 
-          {/* Lado Direito */}
-          <div className="flex items-center gap-3 flex-1 justify-end">
-            {isProfessor && (
-              <NavLink
-                to="/frequencia"
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-                  )
-                }
-              >
-                <CalendarCheck className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Frequência</span>
-              </NavLink>
-            )}
+          {/* Financeiro / Cobranças */}
+          {(!isProfessor && (isGestor || hasPermission('financeiro.cobrancas.view'))) && (
+            <NavLink
+              to="/financeiro"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1.5 flex-1 transition-all duration-300",
+                  isActive ? "text-indigo-600" : "text-slate-400"
+                )
+              }
+            >
+              <CreditCard className="h-6 w-6" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-tight lowercase">cobranças</span>
+            </NavLink>
+          )}
 
-            {(!isProfessor && (isGestor || hasPermission('financeiro.cobrancas.view'))) && (
-              <NavLink
-                to="/financeiro"
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-                  )
-                }
-              >
-                <CreditCard className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Cobranças</span>
-              </NavLink>
-            )}
+          {/* Escola / Perfil Escola */}
+          {isGestor && hasPermission('gestao.perfil_escola.view') && (
+            <NavLink
+              to="/perfil-escola"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1.5 flex-1 transition-all duration-300",
+                  isActive ? "text-indigo-600" : "text-slate-400"
+                )
+              }
+            >
+              <UserCog className="h-6 w-6" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-tight lowercase">escola</span>
+            </NavLink>
+          )}
 
-            {(isProfessor || (authUser?.role === 'funcionario' && !isGestor)) && (
-              <NavLink
-                to="/meu-perfil"
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-                  )
-                }
-              >
-                <User className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Perfil</span>
-              </NavLink>
-            )}
-
-            {isGestor && hasPermission('gestao.perfil_escola.view') && (
-              <NavLink
-                to="/perfil-escola"
-                className={({ isActive }) =>
-                  cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[56px] transition-all duration-300",
-                    isActive ? "text-indigo-600 scale-110" : "text-zinc-400"
-                  )
-                }
-              >
-                <UserCog className="h-6 w-6" />
-                <span className="text-[10px] font-bold tracking-tight">Escola</span>
-              </NavLink>
-            )}
-          </div>
+          {/* Perfil (Fallback se não for gestor) */}
+          {!isGestor && (isProfessor || (authUser?.role === 'funcionario')) && (
+             <NavLink
+              to="/meu-perfil"
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1.5 flex-1 transition-all duration-300",
+                  isActive ? "text-indigo-600" : "text-slate-400"
+                )
+              }
+            >
+              <User className="h-6 w-6" strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-tight lowercase">perfil</span>
+            </NavLink>
+          )}
         </div>
       </nav>
       )}
