@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -236,7 +237,7 @@ export function MarketplaceCadastroPage() {
         if (savedStep) setCurrentStep(Number(savedStep))
         if (savedTipo) setTipoAtivo(savedTipo as any)
         
-        console.log('Cadastro do Marketplace recuperado do LocalStorage')
+        logger.info('Cadastro do Marketplace recuperado do LocalStorage')
       } catch (e) {
         console.error('Erro ao restaurar dados salvos:', e)
       }

@@ -86,8 +86,12 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, tenantId, queryClient]);
 
   const hasPermission = useMemo(
-    () => (perm: string) => permissions.includes(perm) && !deniedKeys.has(perm),
-    [permissions, deniedKeys]
+    () => (perm: string) => {
+      // Gestor da escola tem permissão total dentro do seu tenant
+      if (authUser?.role === 'gestor') return true;
+      return permissions.includes(perm) && !deniedKeys.has(perm);
+    },
+    [permissions, deniedKeys, authUser?.role]
   );
 
   const hasRole = useMemo(

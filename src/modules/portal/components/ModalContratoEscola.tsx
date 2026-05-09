@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, FileText, CheckCircle2, Loader2, Download, Printer } from 'lucide-react'
-import DOMPurify from 'dompurify'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
-import { portalService } from '../service'
 import { toast } from 'sonner'
 import { usePortalContext } from '../context'
 import { useAceitarTermos } from '../hooks'
-import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 
 interface ModalContratoEscolaProps {
   open: boolean
@@ -42,29 +41,28 @@ export function ModalContratoEscola({
     async function loadContrato() {
       if (!open) return
       
-      console.log('ModalContrato: Carregando para tenantId:', tenantId)
-      console.log('ModalContrato: Responsável:', responsavel?.id)
+      logger.debug('ModalContrato: carregando contrato')
 
       // Tenta obter o tenantId das props ou do responsável/vínculos
       let currentTenantId = tenantId
       if (!currentTenantId && responsavel?.tenant_id) {
         currentTenantId = responsavel.tenant_id
-        console.log('ModalContrato: Usando tenantId do responsável:', currentTenantId)
+        logger.debug('ModalContrato: usando tenantId do responsavel')
       }
       
       // Se ainda não tem tenantId, tenta pegar do primeiro vínculo (caso multi-escola)
       if (!currentTenantId && responsavel?.id) {
-        console.log('ModalContrato: Buscando tenantId via vínculos...')
+        logger.debug('ModalContrato: buscando tenantId via vinculos')
         const { data: vinculos, error: vError } = await supabase.from('aluno_responsavel').select('aluno:alunos(tenant_id)').eq('responsavel_id', responsavel.id).limit(1).maybeSingle() as any
-        if (vError) console.error('ModalContrato: Erro ao buscar vínculos:', vError)
+        if (vError) logger.error('ModalContrato: erro ao buscar vinculos', vError)
         if (vinculos?.aluno?.tenant_id) {
           currentTenantId = vinculos.aluno.tenant_id
-          console.log('ModalContrato: TenantId encontrado via vínculos:', currentTenantId)
+          logger.debug('ModalContrato: tenantId encontrado via vinculos')
         }
       }
 
       if (!currentTenantId) {
-        console.warn('ModalContrato: Nenhum tenantId encontrado!')
+        logger.warn('ModalContrato: nenhum tenantId encontrado')
         setLoading(false)
         return
       }
@@ -75,7 +73,7 @@ export function ModalContratoEscola({
         const { data: school } = await supabase.from('escolas').select('*').eq('id', currentTenantId).maybeSingle()
         if (school) setEscolaInfo(school)
 
-        console.log('ModalContrato: Buscando config para tenant:', currentTenantId)
+        logger.debug('ModalContrato: buscando configuracao de contrato')
         const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
           .select('config_financeira')
           .eq('tenant_id', currentTenantId)
@@ -84,15 +82,14 @@ export function ModalContratoEscola({
           .maybeSingle() as any
 
         if (error) {
-          console.error('ModalContrato: Erro na query de config:', error)
+          logger.error('ModalContrato: erro na query de config', error)
           throw error
         }
 
-        console.log('ModalContrato: Resultado da query:', data)
         const modelo = data?.config_financeira?.contrato_modelo
 
         if (modelo) {
-          console.log('ModalContrato: Modelo encontrado, aplicando variáveis...')
+          logger.debug('ModalContrato: modelo encontrado, aplicando variaveis')
           // Replace variables
           let html = modelo
           const replacements: Record<string, string> = {
@@ -113,11 +110,11 @@ export function ModalContratoEscola({
           
           setContratoHtml(html)
         } else {
-            console.warn('ModalContrato: modelo de contrato é nulo ou vazio')
+            logger.warn('ModalContrato: modelo de contrato vazio')
             setContratoHtml('<div class="p-20 text-center"><p class="text-slate-400 font-medium">O modelo de contrato ainda não foi configurado pela instituição.</p></div>')
         }
       } catch (err) {
-        console.error('Erro ao carregar contrato:', err)
+        logger.error('Erro ao carregar contrato:', err)
         setContratoHtml('<div class="p-20 text-center text-red-500 font-medium">Erro ao carregar o contrato. Por favor, tente novamente mais tarde.</div>')
       } finally {
         setLoading(false)
@@ -135,7 +132,7 @@ export function ModalContratoEscola({
       toast.success('Contrato aceito com sucesso!')
       onClose()
     } catch (err) {
-      console.error('Erro ao aceitar contrato:', err)
+      logger.error('Erro ao aceitar contrato:', err)
       toast.error('Não foi possível registrar o aceite. Tente novamente.')
     } finally {
       setAccepting(false)
@@ -158,7 +155,7 @@ export function ModalContratoEscola({
             </style>
           </head>
           <body>
-            ${contratoHtml}
+            ${sanitizeHtml(contratoHtml)}
             <script>window.print();</script>
           </body>
         </html>
@@ -223,11 +220,11 @@ export function ModalContratoEscola({
               ) : (
                 <div 
                   className="contract-display font-serif text-zinc-800 leading-[1.4] text-sm md:text-base selection:bg-indigo-50"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contratoHtml) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(contratoHtml) }}
                 />
               )}
 
-              <style dangerouslySetInnerHTML={{ __html: `
+              <style>{`
                 .contract-display p { margin-bottom: 0.5em; }
                 .contract-display h1 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.8em; margin-top: 1em; line-height: 1.2; text-align: center; text-transform: uppercase; }
                 .contract-display h2 { font-size: 1.25em; font-weight: bold; margin-bottom: 0.6em; margin-top: 0.8em; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.2em; }
@@ -235,7 +232,7 @@ export function ModalContratoEscola({
                 .contract-display ul, .contract-display ol { margin-bottom: 1em; padding-left: 1.5em; }
                 .contract-display table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
                 .contract-display td, .contract-display th { border: 1px solid #e2e8f0; padding: 8px; }
-              `}} />
+              `}</style>
             </div>
 
             {/* Footer / Accept */}

@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger'
+
 /**
  * Dicionário de eventos do sistema e seus payloads.
  * Garantia em tempo de compilação de que não esqueceremos dados cruciais.
@@ -50,7 +52,7 @@ class TypedCacheEventBus {
     
     // Opcional: Console log para dev mode ajuda a debugar "invalidações fantasmas"
     if (import.meta.env.DEV) {
-      console.log(`[CacheEventBus] 🚀 Evento Disparado: ${type}`, payload)
+      logger.debug(`[CacheEventBus] Evento disparado: ${type}`, payload)
     }
 
     this.listeners.get(type)?.forEach(cb => cb(eventMessage))

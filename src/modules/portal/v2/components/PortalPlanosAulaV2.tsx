@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookMarked, Calendar, ChevronRight, Clock, MapPin, X, Info } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { usePlanosAulaPortal } from '../../hooks';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 export function PortalPlanosAulaV2() {
   const { data: planos, isLoading } = usePlanosAulaPortal();
@@ -148,7 +148,7 @@ export function PortalPlanosAulaV2() {
                     <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Conteúdo Programático</h5>
                       <div className="text-base font-semibold text-slate-500 leading-relaxed prose prose-slate max-w-none">
                         {selectedPlano.conteudo ? (
-                          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPlano.conteudo) }} />
+                          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedPlano.conteudo) }} />
                         ) : 'Nenhum conteúdo adicional cadastrado.'}
                       </div>
                  </section>

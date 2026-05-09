@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 export const superAdminService = {
   // ==========================================
@@ -62,7 +63,7 @@ export const superAdminService = {
     }
 
     // Log para debug (ver no console do navegador)
-    console.log('[DEBUG] Assinaturas via getAssinaturas:', assinaturasData)
+    logger.debug('[SuperAdmin] Assinaturas carregadas', { total: (assinaturasData as any[])?.length || 0 })
 
     const faturamentoTotal = (assinaturasData as any[])?.reduce((acc, assinatura) => {
       // Tratar plano (pode ser array ou objeto)

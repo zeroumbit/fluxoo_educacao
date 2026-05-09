@@ -2,6 +2,7 @@ import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { captureException } from "@/lib/sentry";
+import { logger } from "@/lib/logger";
 
 interface Props {
   children?: ReactNode;
@@ -11,6 +12,15 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+}
+
+function isRecoverableChunkLoadError(error: Error): boolean {
+  const message = `${error.name || ''} ${error.message || ''}`.toLowerCase();
+  return message.includes('failed to fetch dynamically imported module')
+    || message.includes('outdated optimize dep')
+    || message.includes('importing a module script failed')
+    || message.includes('chunkloaderror')
+    || message.includes('loading chunk');
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,8 +33,34 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    logger.error("Uncaught error", error, errorInfo);
     captureException(error, { action: 'global-error-boundary' });
+
+    if (isRecoverableChunkLoadError(error)) {
+      const retryKey = 'fluxoo:chunk-reload-retried';
+      const alreadyRetried = (() => {
+        try {
+          return sessionStorage.getItem(retryKey) === 'true';
+        } catch {
+          return true;
+        }
+      })();
+
+      if (!alreadyRetried) {
+        try {
+          sessionStorage.setItem(retryKey, 'true');
+        } catch {
+          // Se storage estiver indisponivel, mantem o fallback visual.
+        }
+        window.location.reload();
+      }
+    } else {
+      try {
+        sessionStorage.removeItem('fluxoo:chunk-reload-retried');
+      } catch {
+        // Sem acao: alguns browsers podem bloquear sessionStorage.
+      }
+    }
   }
 
   private handleBackToHome = () => {
@@ -32,6 +68,11 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleReload = () => {
+    try {
+      sessionStorage.removeItem('fluxoo:chunk-reload-retried');
+    } catch {
+      // Sem acao: recarregar ainda e a melhor recuperacao.
+    }
     window.location.reload();
   };
 
@@ -69,11 +110,13 @@ export class ErrorBoundary extends Component<Props, State> {
             </Button>
           </div>
 
-          <div className="mt-12 p-4 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
-            <p className="text-[10px] font-mono text-slate-400 text-left line-clamp-3 overflow-hidden break-all">
-              {this.state.error?.toString()}
-            </p>
-          </div>
+          {!import.meta.env.PROD && (
+            <div className="mt-12 p-4 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">
+              <p className="text-[10px] font-mono text-slate-400 text-left line-clamp-3 overflow-hidden break-all">
+                {this.state.error?.toString()}
+              </p>
+            </div>
+          )}
         </div>
       );
     }

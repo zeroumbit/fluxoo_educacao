@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { logger } from '@/lib/logger'
 import { usePlanosAula, useCriarPlanoAula, useAtualizarPlanoAula, useExcluirPlanoAula } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
@@ -71,7 +72,7 @@ export function PlanoAulaPage() {
     }
 
     const payload = { ...data, tenant_id: authUser.tenantId }
-    console.log('📝 [PlanoAula] Salvando plano de aula:', payload)
+    logger.debug('[PlanoAula] Salvando plano de aula', payload)
 
     try {
       if (editingId) {

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { logger } from '@/lib/logger'
 import {
   useFuncionarios,
   useCriarFuncionario,
@@ -222,7 +223,7 @@ export function FuncionariosPage() {
         const parsedData = JSON.parse(savedData)
         funcForm.reset({ ...funcForm.getValues(), ...parsedData })
         setSalarioInput(parsedData.salario_bruto ? parsedData.salario_bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '')
-        console.log('Dados de funcionário recuperados do LocalStorage')
+        logger.info('Dados de funcionario recuperados do LocalStorage')
       } catch (e) {
         console.error('Erro ao restaurar dados salvos:', e)
       }

@@ -59,6 +59,12 @@ const ASAAS_PROCESSED_STATUSES = ["CONFIRMED", "RECEIVED", "CREDIT_CARD_CAPTURE_
 const GATEWAY_TIMEOUT_MS = 25000
 const RATE_LIMIT_WINDOW_MS = 60000 // 1 minuto
 const RATE_LIMIT_MAX_REQUESTS = 30 // max 30 requests por minuto por IP
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": Deno.env.get("WEBHOOK_ALLOWED_ORIGIN") || "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "content-type, accessToken, x-request-id, x-signature, x-abacate-signature, user-agent",
+  "Access-Control-Max-Age": "86400",
+}
 
 // =====================================================
 // RATE LIMITING (in-memory)
@@ -83,21 +89,99 @@ function checkRateLimit(clientIp: string): { allowed: boolean; remaining: number
   return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - entry.count, resetAt: entry.resetAt }
 }
 
+async function checkPersistentRateLimit(
+  supabase: any,
+  clientIp: string
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  try {
+    const { data, error } = await supabase.rpc("check_webhook_rate_limit", {
+      p_client_ip: clientIp,
+      p_window_seconds: Math.floor(RATE_LIMIT_WINDOW_MS / 1000),
+      p_max_requests: RATE_LIMIT_MAX_REQUESTS,
+    })
+
+    if (error || !data) {
+      return checkRateLimit(clientIp)
+    }
+
+    const result = Array.isArray(data) ? data[0] : data
+    return {
+      allowed: Boolean(result.allowed),
+      remaining: Number(result.remaining ?? 0),
+      resetAt: result.reset_at ? new Date(result.reset_at).getTime() : Date.now() + RATE_LIMIT_WINDOW_MS,
+    }
+  } catch {
+    return checkRateLimit(clientIp)
+  }
+}
+
+function logInfo(scope: string, message: string, context?: Record<string, unknown>) {
+  console.info(`[${scope}] ${message}`, sanitizeLogContext(context))
+}
+
+function logWarn(scope: string, message: string, context?: Record<string, unknown>) {
+  console.warn(`[${scope}] ${message}`, sanitizeLogContext(context))
+}
+
+function logError(scope: string, message: string, error?: unknown) {
+  const err = error instanceof Error
+    ? { name: error.name, message: error.message }
+    : sanitizeLogContext(error)
+
+  console.error(`[${scope}] ${message}`, err)
+}
+
+function sanitizeLogContext(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value
+  if (Array.isArray(value)) return value.map(sanitizeLogContext)
+
+  const sensitive = new Set([
+    "accessToken",
+    "token",
+    "secret",
+    "webhookSecret",
+    "cpf",
+    "cnpj",
+    "email",
+    "nome",
+    "name",
+    "telefone",
+    "phone",
+  ])
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+      key,
+      sensitive.has(key) ? "[REDACTED]" : sanitizeLogContext(entry),
+    ])
+  )
+}
+
 // =====================================================
 // HANDLER PRINCIPAL
 // =====================================================
 
 serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(405, { error: "Metodo nao permitido" })
+  }
+
   const timeoutId = setTimeout(() => {
-    console.error("[webhook-gateway] TIMEOUT: processamento excedeu limite")
+    logError("webhook-gateway", "TIMEOUT: processamento excedeu limite")
   }, GATEWAY_TIMEOUT_MS)
 
   try {
+    const supabase = createSupabaseClient()
+
     // -----------------------------------------------
     // Rate Limiting - pegar IP do cliente
     // -----------------------------------------------
     const clientIp = getClientIp(req)
-    const rateLimit = checkRateLimit(clientIp)
+    const rateLimit = await checkPersistentRateLimit(supabase, clientIp)
 
     // Header de rate limit sempre presente (para debug)
     const responseHeaders = new Headers({
@@ -105,10 +189,11 @@ serve(async (req: Request) => {
       "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
       "X-RateLimit-Remaining": String(rateLimit.remaining),
       "X-RateLimit-Reset": new Date(rateLimit.resetAt).toISOString(),
+      ...CORS_HEADERS,
     })
 
     if (!rateLimit.allowed) {
-      console.warn("[webhook-gateway] Rate limit excedido para IP:", clientIp)
+      logWarn("webhook-gateway", "Rate limit excedido", { clientIp })
       return new Response(JSON.stringify({ error: "Too many requests" }), {
         status: 429,
         headers: responseHeaders,
@@ -128,7 +213,7 @@ serve(async (req: Request) => {
     const isAbacatePay = req.headers.get("user-agent")?.includes("Abacate") || req.headers.has("x-abacate-signature")
 
     if (!isAsaas && !isMercadoPago && !isAbacatePay) {
-      console.warn("[webhook-gateway] Tentativa de acesso com gateway nao identificado")
+      logWarn("webhook-gateway", "Tentativa de acesso com gateway nao identificado")
       return jsonResponse(400, { error: "Gateway nao identificado" })
     }
 
@@ -136,7 +221,7 @@ serve(async (req: Request) => {
     try {
       rawBody = await req.text()
     } catch {
-      console.warn("[webhook-gateway] Falha ao ler corpo da requisicao")
+      logWarn("webhook-gateway", "Falha ao ler corpo da requisicao")
       return jsonResponse(400, { error: "Falha ao ler corpo da requisicao" })
     }
 
@@ -144,11 +229,9 @@ serve(async (req: Request) => {
     try {
       payload = JSON.parse(rawBody)
     } catch {
-      console.warn("[webhook-gateway] JSON invalido recebido")
+      logWarn("webhook-gateway", "JSON invalido recebido")
       return jsonResponse(400, { error: "JSON invalido" })
     }
-
-    const supabase = createSupabaseClient()
 
     // Headers para validacao
     const headers = {
@@ -167,7 +250,7 @@ serve(async (req: Request) => {
     return jsonResponse(400, { error: "Gateway nao suportado" })
 
   } catch (err: any) {
-    console.error("[webhook-gateway] Erro CRITICO nao tratado:", err.message, err.stack)
+    logError("webhook-gateway", "Erro CRITICO nao tratado", err)
     return jsonResponse(500, { error: "Erro interno do servidor" })
   } finally {
     clearTimeout(timeoutId)
@@ -208,12 +291,12 @@ async function handleAsaasWebhook(
       .maybeSingle()
 
     if (cobrancaErr) {
-      console.error("[asaas] Erro ao buscar cobranca no banco:", cobrancaErr.message)
+      logError("asaas", "Erro ao buscar cobranca no banco", cobrancaErr)
       return jsonResponse(500, { error: "Erro interno", retry: true })
     }
 
     if (!cobranca) {
-      console.warn("[asaas] Cobranca nao encontrada para id:", cobrancaId)
+      logWarn("asaas", "Cobranca nao encontrada", { cobrancaId })
       return jsonResponse(404, { error: "Cobranca nao encontrada", cobranca_id: cobrancaId })
     }
 
@@ -223,7 +306,7 @@ async function handleAsaasWebhook(
     // -----------------------------------------------
     const gatewayCheck = await verificarGatewayAtivo(supabase, cobranca.tenant_id, "asaas")
     if (!gatewayCheck.disponivel) {
-      console.warn("[asaas] Gateway nao disponivel para tenant:", cobranca.tenant_id, gatewayCheck.motivo)
+      logWarn("asaas", "Gateway nao disponivel", { tenant_id: cobranca.tenant_id, motivo: gatewayCheck.motivo })
       return jsonResponse(403, {
         error: "Gateway nao disponivel para esta escola",
         motivo: gatewayCheck.motivo,
@@ -236,7 +319,7 @@ async function handleAsaasWebhook(
     // -----------------------------------------------
     const tokenValido = await validarTokenAsaas(supabase, cobranca.tenant_id, receivedToken)
     if (!tokenValido) {
-      console.warn("[asaas] Token invalido para tenant:", cobranca.tenant_id)
+      logWarn("asaas", "Token invalido", { tenant_id: cobranca.tenant_id })
       return jsonResponse(401, { error: "Token de autenticacao invalido" })
     }
 
@@ -250,7 +333,7 @@ async function handleAsaasWebhook(
     const eventData: AsaasPaymentEvent = payload
 
     if (!ASAAS_PROCESSED_STATUSES.includes(eventData.payment.status)) {
-      console.log("[asaas] Evento ignorado (status nao processavel):", eventData.payment.status)
+      logInfo("asaas", "Evento ignorado por status nao processavel", { status: eventData.payment.status })
       return jsonResponse(200, { status: "ignored", reason: `Status ${eventData.payment.status} nao requer acao` })
     }
 
@@ -261,7 +344,7 @@ async function handleAsaasWebhook(
     const valorPago = eventData.payment.value
     const billingType = eventData.payment.billingType
 
-    console.log("[asaas] Evento recebido:", {
+    logInfo("asaas", "Evento recebido", {
       gatewayEventId, cobrancaId, valorPago, billingType,
       tenant_id: cobranca.tenant_id
     })
@@ -277,7 +360,7 @@ async function handleAsaasWebhook(
       .maybeSingle()
 
     if (existingEvent?.processing_status === "processed") {
-      console.log("[asaas] Idempotencia: evento ja processado:", gatewayEventId)
+      logInfo("asaas", "Idempotencia: evento ja processado", { gatewayEventId })
       return jsonResponse(200, {
         status: "ignored_duplicate",
         message: "Evento ja processado anteriormente",
@@ -332,7 +415,7 @@ async function handleAsaasWebhook(
       })
 
     if (rpcError) {
-      console.error("[asaas] Erro na RPC:", rpcError.message)
+      logError("asaas", "Erro na RPC", rpcError)
       await logWebhookEvent(supabase, {
         gateway_event_id: gatewayEventId, gateway: "asaas",
         tenant_id: cobranca.tenant_id, event_type: eventData.event,
@@ -349,7 +432,7 @@ async function handleAsaasWebhook(
     }
 
     if (!rpcResult?.success) {
-      console.error("[asaas] RPC sem sucesso:", rpcResult)
+      logError("asaas", "RPC sem sucesso", rpcResult)
 
       if (rpcResult.error?.includes("ja foi paga")) {
         return jsonResponse(200, { status: "ignored", message: rpcResult.error })
@@ -365,7 +448,7 @@ async function handleAsaasWebhook(
       return jsonResponse(422, { error: rpcResult.error || "Erro ao processar", retry: rpcResult.retry === true })
     }
 
-    console.log("[asaas] Sucesso:", { cobranca_id: cobrancaId, valor_pago: rpcResult.valor_pago })
+    logInfo("asaas", "Sucesso", { cobranca_id: cobrancaId, valor_pago: rpcResult.valor_pago })
     return jsonResponse(200, {
       status: "success", cobranca_id: cobrancaId,
       valor_original: rpcResult.valor_original, valor_pago: rpcResult.valor_pago,
@@ -373,7 +456,7 @@ async function handleAsaasWebhook(
     })
 
   } catch (err: any) {
-    console.error("[asaas] Erro nao tratado:", err.message)
+    logError("asaas", "Erro nao tratado", err)
     return jsonResponse(500, { error: "Erro interno no handler Asaas", retry: true })
   }
 }
@@ -1042,7 +1125,8 @@ function jsonResponse(status: number, body: Record<string, any>): Response {
     status,
     headers: {
       "Content-Type": "application/json",
-      "X-Webhook-Processed-At": new Date().toISOString()
+      "X-Webhook-Processed-At": new Date().toISOString(),
+      ...CORS_HEADERS,
     }
   })
 }

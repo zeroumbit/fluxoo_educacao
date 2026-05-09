@@ -11,9 +11,9 @@ import {
   Underline,
   type LucideIcon,
 } from 'lucide-react'
-import DOMPurify from 'dompurify'
 import { Button } from './button'
 import { cn } from '@/lib/utils'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 
 interface RichTextEditorProps {
   value: string
@@ -56,7 +56,7 @@ export function RichTextEditor({ value, onChange, className }: RichTextEditorPro
     const editor = editorRef.current
     if (!editor) return
 
-    const sanitizedValue = DOMPurify.sanitize(value)
+    const sanitizedValue = sanitizeHtml(value)
     if (sanitizedValue !== editor.innerHTML) {
       editor.innerHTML = sanitizedValue
     }
@@ -65,7 +65,7 @@ export function RichTextEditor({ value, onChange, className }: RichTextEditorPro
   const emitChange = () => {
     const editor = editorRef.current
     if (editor) {
-      onChange(DOMPurify.sanitize(editor.innerHTML))
+      onChange(sanitizeHtml(editor.innerHTML))
     }
   }
 
@@ -114,17 +114,13 @@ export function RichTextEditor({ value, onChange, className }: RichTextEditorPro
         spellCheck={false}
       />
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+      <style>{`
             [contenteditable] p { margin-bottom: 0.5em; }
             [contenteditable] h1 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.8em; margin-top: 1em; line-height: 1.2; }
             [contenteditable] h2 { font-size: 1.25em; font-weight: bold; margin-bottom: 0.6em; margin-top: 0.8em; }
             [contenteditable] h3 { font-size: 1.1em; font-weight: bold; margin-bottom: 0.4em; }
             [contenteditable] ul, [contenteditable] ol { margin-bottom: 1em; padding-left: 1.5em; }
-          `,
-        }}
-      />
+      `}</style>
 
       <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-100 flex justify-between items-center">
         <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider italic">

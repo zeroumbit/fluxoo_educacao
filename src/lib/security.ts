@@ -1,72 +1,119 @@
 /**
- * Utilitários de Segurança para o Fluxoo Edu
- * Focado em conformidade com LGPD para dados sensíveis em cache local.
+ * Utilitarios de seguranca para o Fluxoo Edu.
+ * Focado em reduzir exposicao de dados sensiveis em cache local.
  */
 
-// Chave interna para ofuscação (Base para o XOR)
-const INTERNAL_SALT = 'fluxoo-edu-2026-secure-vault'
+const STORAGE_VERSION = 'v2'
+const LEGACY_INTERNAL_SALT = 'fluxoo-edu-2026-secure-vault'
+const KEY_CONTEXT = 'fluxoo-edu-local-drafts'
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
+async function getDraftCryptoKey(): Promise<CryptoKey> {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'server'
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'local'
+  const material = new TextEncoder().encode(`${KEY_CONTEXT}:${origin}:${projectUrl}`)
+  const digest = await crypto.subtle.digest('SHA-256', material)
+
+  return crypto.subtle.importKey(
+    'raw',
+    digest,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt']
+  )
+}
+
+function decryptLegacyDraft(cipherText: string): any {
+  try {
+    const cleanText = cipherText
+      .replace(/%[0-9A-F]{2}/gi, '')
+      .replace(/[^A-Za-z0-9+/=]/g, '')
+      .trim()
+
+    if (!cleanText) return null
+
+    const encrypted = base64ToBytes(cleanText)
+    const salt = new TextEncoder().encode(LEGACY_INTERNAL_SALT)
+    const decrypted = new Uint8Array(encrypted.length)
+    for (let i = 0; i < encrypted.length; i++) {
+      decrypted[i] = encrypted[i] ^ salt[i % salt.length]
+    }
+
+    return JSON.parse(new TextDecoder().decode(decrypted))
+  } catch {
+    return null
+  }
+}
 
 /**
- * Criptografia simples (Síncrona) para rascunhos.
- * Nota: Protege contra leitura acidental e acesso físico casual.
- * Para segurança máxima em produção, recomenda-se Web Crypto API (Assíncrona).
+ * Criptografia de rascunhos locais com Web Crypto API.
+ * Mantem leitura do formato legado para nao descartar rascunhos existentes.
  */
 export const safeStorage = {
-  encrypt: (data: any): string => {
+  encrypt: async (data: any): Promise<string> => {
     try {
-      const text = JSON.stringify(data)
-      const encoded = new TextEncoder().encode(text)
-      const salt = new TextEncoder().encode(INTERNAL_SALT)
-      
-      const encrypted = encoded.map((byte, i) => byte ^ salt[i % salt.length])
-      
-      // Converte para Base64 de forma segura para rascunhos grandes
-      let binary = ''
-      for (let i = 0; i < encrypted.length; i++) {
-        binary += String.fromCharCode(encrypted[i])
-      }
-      return btoa(binary)
-    } catch (error) {
-      console.error('Erro ao criptografar rascunho:', error)
+      if (!crypto?.subtle) return ''
+
+      const iv = crypto.getRandomValues(new Uint8Array(12))
+      const key = await getDraftCryptoKey()
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        new TextEncoder().encode(JSON.stringify(data))
+      )
+
+      return `${STORAGE_VERSION}:${bytesToBase64(iv)}:${bytesToBase64(new Uint8Array(encrypted))}`
+    } catch {
       return ''
     }
   },
 
-  decrypt: (cipherText: string): any => {
+  decrypt: async (cipherText: string): Promise<any> => {
     if (!cipherText) return null
+
     try {
-      // Limpa caracteres inválidos antes de decodificar
-      const cleanText = cipherText
-        .replace(/%[0-9A-F]{2}/gi, '') // Remove sequências URL-encoded
-        .replace(/[^A-Za-z0-9+/=]/g, '') // Remove caracteres não-base64
-        .trim()
-      
-      if (!cleanText) return null
-      
-      const binaryString = atob(cleanText)
-      const encrypted = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        encrypted[i] = binaryString.charCodeAt(i)
+      if (!cipherText.startsWith(`${STORAGE_VERSION}:`)) {
+        return decryptLegacyDraft(cipherText)
       }
-      
-      const salt = new TextEncoder().encode(INTERNAL_SALT)
-      const decrypted = new Uint8Array(encrypted.length)
-      for (let i = 0; i < encrypted.length; i++) {
-        decrypted[i] = encrypted[i] ^ salt[i % salt.length]
-      }
-      
-      const text = new TextDecoder().decode(decrypted)
-      return JSON.parse(text)
-    } catch (error) {
-      // Retorna null em vez de logar erro para dados corrompidos
+
+      if (!crypto?.subtle) return null
+
+      const [, ivText, payloadText] = cipherText.split(':')
+      if (!ivText || !payloadText) return null
+
+      const key = await getDraftCryptoKey()
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: base64ToBytes(ivText) },
+        key,
+        base64ToBytes(payloadText)
+      )
+
+      return JSON.parse(new TextDecoder().decode(decrypted))
+    } catch {
       return null
     }
   }
 }
 
 /**
- * Validador de Rate Limit Client-side
- * Evita disparos acidentais múltiplos.
+ * Validador de Rate Limit Client-side.
+ * Evita disparos acidentais multiplos.
  */
 const lastExecution: Record<string, number> = {}
 

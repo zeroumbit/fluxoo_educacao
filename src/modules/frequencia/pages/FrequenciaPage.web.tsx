@@ -40,6 +40,7 @@ import {
 import type { FrequenciaStatus } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAlertasProfessor } from '@/modules/professor/hooks'
+import { useGestorGuard } from '@/hooks/useGestorGuard'
 
 const _statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
   presente: {
@@ -67,6 +68,7 @@ const _statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color:
 
 export function FrequenciaPageWeb() {
   const { authUser } = useAuth()
+  const { requireConfirmation, GestorGuardModal } = useGestorGuard()
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -162,37 +164,43 @@ export function FrequenciaPageWeb() {
   }
 
   const handleSalvar = async () => {
-    if (!authUser || !turmaId) return
+    requireConfirmation(
+      'Salvar Frequência',
+      'Você é gestor da escola e está iniciando o processo de lançar frequências e faltas. Quer mesmo fazer isso ou deixar para um professor ou funcionário da área pedagógica?',
+      async () => {
+        if (!authUser || !turmaId) return
 
-    if (!authUser.tenantId) {
-      toast.error('O seu usuário não possui uma escola (tenant) vinculada. Entre em contato com o suporte.')
-      logger.error('❌ [FrequenciaPage] Tentativa de salvar sem tenant_id:', authUser)
-      return
-    }
+        if (!authUser.tenantId) {
+          toast.error('O seu usuário não possui uma escola (tenant) vinculada. Entre em contato com o suporte.')
+          logger.error('❌ [FrequenciaPage] Tentativa de salvar sem tenant_id:', authUser)
+          return
+        }
 
-    if (alunosDaTurma.length === 0) {
-      toast.error('Nenhum aluno com matrícula ativa encontrado nesta turma')
-      return
-    }
+        if (alunosDaTurma.length === 0) {
+          toast.error('Nenhum aluno com matrícula ativa encontrado nesta turma')
+          return
+        }
 
-    const dados = alunosDaTurma.map((a) => ({
-      tenant_id: authUser.tenantId,
-      turma_id: turmaId,
-      aluno_id: a.id,
-      data_aula: dataAula,
-      status: statusMap[a.id] || 'presente',
-      justificativa: statusMap[a.id] === 'justificada' ? (justificativaMap[a.id]?.trim() || null) : null,
-    }))
+        const dados = alunosDaTurma.map((a) => ({
+          tenant_id: authUser.tenantId,
+          turma_id: turmaId,
+          aluno_id: a.id,
+          data_aula: dataAula,
+          status: statusMap[a.id] || 'presente',
+          justificativa: statusMap[a.id] === 'justificada' ? (justificativaMap[a.id]?.trim() || null) : null,
+        }))
 
-    logger.info('🚀 [FrequenciaPage] Salvando dados:', dados)
+        logger.info('🚀 [FrequenciaPage] Salvando dados:', dados)
 
-    try {
-      await salvarFrequencias.mutateAsync(dados)
-      toast.success('Frequência salva com sucesso!')
-    } catch (err: any) {
-      logger.error('❌ [FrequenciaPage] Erro ao salvar:', err)
-      toast.error(err.message || 'Erro ao salvar frequência')
-    }
+        try {
+          await salvarFrequencias.mutateAsync(dados)
+          toast.success('Frequência salva com sucesso!')
+        } catch (err: any) {
+          logger.error('❌ [FrequenciaPage] Erro ao salvar:', err)
+          toast.error(err.message || 'Erro ao salvar frequência')
+        }
+      }
+    )
   }
 
   const contagens = {
@@ -207,6 +215,7 @@ export function FrequenciaPageWeb() {
 
   return (
     <div className="space-y-6">
+      <GestorGuardModal />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Frequência Escolar</h1>

@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
 const professorNavGroups = [
   {
@@ -398,7 +399,9 @@ export function ProfessorLayout() {
 
         {/* Content */}
         <div className={cn("lg:p-8 max-w-7xl mx-auto flex-1 w-full overflow-y-auto", !hideBottomNav && "pb-36 lg:pb-0")}>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 

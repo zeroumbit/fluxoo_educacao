@@ -8,7 +8,8 @@ import { Loader2, Save, FileText, Eye, EyeOff, LayoutPanelLeft, Download, Printe
 import { cn } from '@/lib/utils'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { useTenantSettings } from '@/modules/escolas/hooks/useTenantSettings'
-import DOMPurify from 'dompurify'
+import { sanitizeHtml } from '@/lib/sanitize-html'
+import { logger } from '@/lib/logger'
 
 const CONTRATO_PADRAO = `
 <div class="contract-container">
@@ -147,7 +148,7 @@ export function ContratoTab() {
         }
       })
     } catch (err) {
-      console.error('Erro ao salvar contrato:', err)
+      logger.error('Erro ao salvar contrato:', err)
       toast.error('Erro ao salvar contrato.')
     }
   }
@@ -226,15 +227,15 @@ export function ContratoTab() {
                 <CardContent className="p-0 overflow-y-auto max-h-[800px] bg-white">
                   <div 
                     className="contract-review-preview font-serif text-zinc-800 leading-[1.4] p-12 text-base bg-white"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contrato) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(contrato) }}
                   />
-                  <style dangerouslySetInnerHTML={{ __html: `
+                  <style>{`
                     .contract-review-preview p { margin-bottom: 0.5em; }
                     .contract-review-preview h1 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.8em; margin-top: 1em; line-height: 1.2; text-align: center; text-transform: uppercase; }
                     .contract-review-preview h2 { font-size: 1.25em; font-weight: bold; margin-bottom: 0.6em; margin-top: 0.8em; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.2em; }
                     .contract-review-preview h3 { font-size: 1.1em; font-weight: bold; margin-bottom: 0.4em; }
                     .contract-review-preview ul, .contract-review-preview ol { margin-bottom: 1em; padding-left: 1.5em; }
-                  `}} />
+                  `}</style>
                 </CardContent>
             </Card>
           </div>

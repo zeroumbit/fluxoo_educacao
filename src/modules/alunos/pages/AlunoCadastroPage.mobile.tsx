@@ -162,22 +162,32 @@ export function AlunoCadastroPageMobile() {
 
   // 1. Interceptar rascunho do localStorage ao montar (Descriptografado)
   useEffect(() => {
-    const savedDraft = localStorage.getItem('aluno_cadastro_draft_mobile')
-    if (savedDraft) {
+    let isMounted = true
+
+    async function loadDraft() {
+      const savedDraft = localStorage.getItem('aluno_cadastro_draft_mobile')
+      if (!savedDraft) return
+
       try {
-        const parsedDraft = safeStorage.decrypt(savedDraft)
+        const parsedDraft = await safeStorage.decrypt(savedDraft)
         const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
           if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
           return val !== '' && val !== null && val !== undefined && (val as any)?.length !== 0;
         });
 
-        if (isActuallyFilled) {
+        if (isMounted && isActuallyFilled) {
           setDraftStateData(parsedDraft)
           setShowDraftModal(true)
         }
       } catch (_e) {
         localStorage.removeItem('aluno_cadastro_draft_mobile')
       }
+    }
+
+    loadDraft()
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
@@ -202,12 +212,24 @@ export function AlunoCadastroPageMobile() {
   // 2. Salvar rascunho e passo atual no localStorage (Criptografado)
   const watchAllFields = watch()
   useEffect(() => {
-    const draftContent = { ...watchAllFields }
-    delete (draftContent as any).responsavel_senha
-    
-    const encryptedDraft = safeStorage.encrypt(draftContent)
-    localStorage.setItem('aluno_cadastro_draft_mobile', encryptedDraft)
+    let isCancelled = false
+
+    async function saveDraft() {
+      const draftContent = { ...watchAllFields }
+      delete (draftContent as any).responsavel_senha
+
+      const encryptedDraft = await safeStorage.encrypt(draftContent)
+      if (!isCancelled && encryptedDraft) {
+        localStorage.setItem('aluno_cadastro_draft_mobile', encryptedDraft)
+      }
+    }
+
+    saveDraft()
     localStorage.setItem('aluno_cadastro_step_mobile', currentStep.toString())
+
+    return () => {
+      isCancelled = true
+    }
   }, [watchAllFields, currentStep])
 
   const resetForm = () => {

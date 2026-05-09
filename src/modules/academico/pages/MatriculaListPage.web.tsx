@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { logger } from '@/lib/logger'
 import { useMatriculas, useCriarMatricula, useMatriculaAtivaDoAluno, useAtualizarMatricula, useExcluirMatricula } from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -120,7 +121,7 @@ export function MatriculaListPageWeb() {
   // Debug logs in component body (to avoid JSX void errors)
   useEffect(() => {
     if (dialogOpen) {
-      console.log('[ Enrollment Modal ] Data State:', {
+      logger.debug('[Enrollment Modal] Data State', {
         turmasLoaded: !!turmas,
         turmasCount: turmas?.length || 0,
         serieSelecionada,
