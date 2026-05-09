@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -116,7 +117,7 @@ export function MeuPerfilPageMobile() {
           throw error
         }
 
-        console.log('Funcionário atualizado com sucesso:', data)
+        logger.info('Funcionario atualizado com sucesso', { funcionarioId: data?.id })
       } else if (authUser?.funcionarioId) {
         // Fallback: usa funcionarioId do authUser
         const { data, error } = await supabase
@@ -127,7 +128,7 @@ export function MeuPerfilPageMobile() {
           .single()
 
         if (error) throw error
-        console.log('Funcionário atualizado via authUser:', data)
+        logger.info('Funcionario atualizado via authUser', { funcionarioId: data?.id })
       }
 
       toast.success('Perfil atualizado com sucesso!')

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { logger } from '@/lib/logger'
 import { useAtividades, useCriarAtividade, useAtualizarAtividade, useExcluirAtividade } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useItensAlmoxarifado } from '@/modules/almoxarifado/hooks'
@@ -90,7 +91,7 @@ export function AtividadesPage() {
   }
 
   const abrirEdicao = (atividade: any) => {
-    console.log('✏️ [Atividades] Editando atividade:', atividade)
+    logger.debug('[Atividades] Editando atividade', { atividadeId: atividade?.id })
     setEditandoId(atividade.id)
     form.reset({
       titulo: atividade.titulo,

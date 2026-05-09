@@ -6,6 +6,7 @@ import { useRBACStore } from '@/stores/rbac.store'
 import { rbacService } from '@/modules/rbac/service'
 import { clearSensitiveClientState } from '@/lib/session-cleanup'
 import { precheckLogin, recordLoginAttempt } from '@/lib/auth-rate-limit'
+import { logger } from '@/lib/logger'
 import type { ResolvedPermission } from '@/modules/rbac/types'
 
 export interface Endereco {
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (escolaData) {
         const escola = escolaData as any
-        console.log('🏫 Escola encontrada para o usuário:', escola.id)
+        logger.debug('Escola encontrada para o usuario', { escolaId: escola.id })
         
         const endereco = escola?.logradouro ? {
           logradouro: escola.logradouro,
@@ -132,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Sincronização de Segurança: Garante que o gestor_user_id esteja preenchido para RLS legados
         if (!escola.gestor_user_id) {
-          console.log('🔄 Sincronizando gestor_user_id na tabela escolas...')
+          logger.debug('Sincronizando gestor_user_id na tabela escolas')
           const { error: syncError } = await supabase
             .from('escolas')
             .update({ gestor_user_id: user.id })
@@ -146,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentRole = user.user_metadata?.role || user.app_metadata?.role || 'gestor'
         
         if (currentTenantId !== escola.id) {
-          console.log(`🔄 Atualizando tenant_id nos metadados: ${currentTenantId} -> ${escola.id}`)
+          logger.debug('Atualizando tenant_id nos metadados', { from: currentTenantId, to: escola.id })
           const { error: updateMetaError } = await supabase.auth.updateUser({
             data: { 
               tenant_id: escola.id, 
@@ -157,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (updateMetaError) {
             console.error('⚠️ Falha ao atualizar metadados do usuário:', updateMetaError.message)
           } else {
-            console.log('✅ Metadados atualizados. Atualizando sessão para refletir no JWT...')
+            logger.debug('Metadados atualizados. Atualizando sessao para refletir no JWT')
             // O RLS depende do JWT, então precisamos de um novo token com o tenant_id correto
             await supabase.auth.refreshSession()
           }

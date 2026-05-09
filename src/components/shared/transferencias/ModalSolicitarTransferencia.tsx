@@ -8,6 +8,7 @@ import { Search, UserCheck, FileText, CheckCircle2, AlertCircle, Loader2 } from 
 import { toast } from "sonner"
 
 import { supabase } from "@/lib/supabase"
+import { logger } from "@/lib/logger"
 import {
   Dialog,
   DialogContent,
@@ -83,7 +84,7 @@ export function ModalSolicitarTransferencia({
         setRpcStatus('loading')
         setRpcErrorDetail(null)
         try {
-          console.log('[TRANSFERENCIA] Buscando código:', codigoValue.toUpperCase())
+          logger.debug('[TRANSFERENCIA] Buscando codigo')
           const { data, error } = await (supabase as any)
             .rpc('buscar_aluno_transferencia', { p_codigo: codigoValue.toUpperCase() })
 
@@ -95,7 +96,7 @@ export function ModalSolicitarTransferencia({
             return
           }
 
-          console.log('[TRANSFERENCIA] Dados recebidos:', data)
+          logger.debug('[TRANSFERENCIA] Dados recebidos')
 
           if (data && (Array.isArray(data) ? data.length > 0 : data)) {
             // A RPC retorna um array (SET OF) ou JSONB direto, pegamos o primeiro
@@ -104,7 +105,7 @@ export function ModalSolicitarTransferencia({
             // Se o retorno for string JSON (caso do Supabase RPC com JSONB), fazemos parse
             const parsedAluno = typeof aluno === 'string' ? JSON.parse(aluno) : aluno
 
-            console.log('[TRANSFERENCIA] Aluno parseado:', parsedAluno)
+            logger.debug('[TRANSFERENCIA] Aluno parseado', { alunoId: parsedAluno?.id })
 
             // Remapeamos para manter compatibilidade com o resto do código
             setAlunoData({

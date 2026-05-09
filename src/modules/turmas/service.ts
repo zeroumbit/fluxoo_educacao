@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 import type { Professor, Disciplina } from './types'
 
@@ -147,7 +148,7 @@ export const turmaService = {
     }
 
     const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
-    console.log('[listarDisciplinas] IDs ocultos:', idsOcultos.length, idsOcultos)
+    logger.debug('[listarDisciplinas] IDs ocultos', { total: idsOcultos.length, idsOcultos })
 
     const query = supabase
       .from('disciplinas')
@@ -171,7 +172,7 @@ export const turmaService = {
         return true;
       })
     
-    console.log(`[listarDisciplinas] Total do banco: ${total}, Após filtro: ${filtered.length}, Removidas: ${total - filtered.length}`)
+    logger.debug('[listarDisciplinas] Resultado do filtro', { total, filtradas: filtered.length, removidas: total - filtered.length })
     
     return filtered.map((d: any) => this.formatarDisciplina(d, idsOcultos))
   },

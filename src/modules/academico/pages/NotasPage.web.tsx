@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { TipoAvaliacao } from '../service.v2'
+import { useGestorGuard } from '@/hooks/useGestorGuard'
 
 const TIPOS_AVALIACAO: { value: TipoAvaliacao; label: string }[] = [
   { value: 'prova', label: 'Prova' },
@@ -197,6 +198,7 @@ function PainelLancamentoNotas({
   tenantId: string
   onDeleted: () => void
   faltasPorAluno?: Record<string, number>
+  requireConfirmation: (title: string, desc: string, onConfirm: () => void) => void
 }) {
   const { data: notasExistentes } = useNotasPorAvaliacao(avaliacao.id)
   const { mutateAsync: salvarEmLote, isPending: isSaving } = useSalvarNotasEmLote()
@@ -225,20 +227,26 @@ function PainelLancamentoNotas({
   }, [])
 
   const handleSalvar = async () => {
-    const payload = alunos.map(aluno => {
-      const local = notas[aluno.id]
-      const ausente = local?.ausente ?? false
-      const notaRaw = local?.nota ?? ''
-      const nota = ausente ? null : (notaRaw === '' ? null : parseFloat(notaRaw.replace(',', '.')))
-      return { aluno_id: aluno.id, nota, ausente }
-    })
+    requireConfirmation(
+      'Salvar Notas',
+      'Você é gestor da escola e está iniciando o processo de adicionar notas aos alunos. Quer mesmo fazer isso ou deixar para um professor ou funcionário da área pedagógica?',
+      async () => {
+        const payload = alunos.map(aluno => {
+          const local = notas[aluno.id]
+          const ausente = local?.ausente ?? false
+          const notaRaw = local?.nota ?? ''
+          const nota = ausente ? null : (notaRaw === '' ? null : parseFloat(notaRaw.replace(',', '.')))
+          return { aluno_id: aluno.id, nota, ausente }
+        })
 
-    try {
-      await salvarEmLote({ tenantId, avaliacaoId: avaliacao.id, notas: payload })
-      toast.success(`Notas de "${avaliacao.titulo}" salvas!`)
-    } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message)
-    }
+        try {
+          await salvarEmLote({ tenantId, avaliacaoId: avaliacao.id, notas: payload })
+          toast.success(`Notas de "${avaliacao.titulo}" salvas!`)
+        } catch (e: any) {
+          toast.error('Erro ao salvar: ' + e.message)
+        }
+      }
+    )
   }
 
   const handleExcluir = async () => {
@@ -356,6 +364,7 @@ function PainelLancamentoNotas({
 // --------------------------------------------------------------------------
 export function NotasPageWeb() {
   const { authUser } = useAuth()
+  const { requireConfirmation, GestorGuardModal } = useGestorGuard()
   const { data: turmas } = useTurmas()
   const location = useLocation()
   const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
@@ -440,6 +449,7 @@ export function NotasPageWeb() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      <GestorGuardModal />
       {/* Modal */}
       {showModal && turmaId && disciplinaId && (
         <ModalNovaAvaliacao
@@ -657,6 +667,7 @@ export function NotasPageWeb() {
                     tenantId={authUser!.tenantId}
                     onDeleted={() => refetchAvaliacoes()}
                     faltasPorAluno={faltasResumo}
+                    requireConfirmation={requireConfirmation}
                   />
                 ))
               )}

@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/NotificationBell'
 import { useSuperAdminNotifications } from '@/hooks/useNotifications'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
 const superAdminNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: House },
@@ -235,7 +236,9 @@ export function SuperAdminLayout() {
         </header>
 
         <div className="p-6 lg:p-8 max-w-7xl mx-auto flex-1 w-full pb-24 lg:pb-0">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

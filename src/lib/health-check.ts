@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger'
+
 /**
  * Health Check — Validação de variáveis de ambiente críticas
  *
@@ -107,7 +109,7 @@ export function runHealthCheck(): HealthCheckResult {
       console.warn('🟡 Health Check — Avisos:', warnings)
     }
     if (errors.length === 0 && warnings.length === 0) {
-      console.log('✅ Health Check OK — Todas as variáveis configuradas')
+      logger.info('Health Check OK - Todas as variaveis configuradas')
     }
   }
 

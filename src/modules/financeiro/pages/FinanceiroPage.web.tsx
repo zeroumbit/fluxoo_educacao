@@ -39,6 +39,7 @@ import {
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { useNavigate } from 'react-router-dom'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
+import { useGestorGuard } from '@/hooks/useGestorGuard'
 import {
   detectarTipoCobranca,
   getLabelTipoCobranca,
@@ -63,6 +64,7 @@ import { PixManualBannerNotification } from '../components/PixManualBannerNotifi
 
 export function FinanceiroPageWeb() {
   const { authUser } = useAuth()
+  const { requireConfirmation, GestorGuardModal } = useGestorGuard()
   const { data: cobrancas, isLoading, refetch } = useCobrancasComEncargos()
   const { data: alunos } = useAlunos()
   const criarCobranca = useCriarCobranca()
@@ -99,21 +101,27 @@ export function FinanceiroPageWeb() {
   const alunoIdSelecionado = watch('aluno_id')
 
   const onSubmit = async (data: CobrancaFormValues) => {
-    if (!authUser) return
-    try {
-      await criarCobranca.mutateAsync({
-        ...data,
-        tenant_id: authUser.tenantId,
-        status: 'a_vencer',
-        tipo_cobranca: 'avulso'
-      })
-      toast.success('Cobrança criada com sucesso!')
-      setDialogOpen(false)
-      reset()
-      refetch()
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar cobrança')
-    }
+    requireConfirmation(
+      'Criar Nova Cobrança',
+      'Você é gestor da escola e está iniciando o processo de criar uma cobrança manual para um aluno. Quer mesmo fazer isso ou deixar para um funcionário financeiro?',
+      async () => {
+        if (!authUser) return
+        try {
+          await criarCobranca.mutateAsync({
+            ...data,
+            tenant_id: authUser.tenantId,
+            status: 'a_vencer',
+            tipo_cobranca: 'avulso'
+          })
+          toast.success('Cobrança criada com sucesso!')
+          setDialogOpen(false)
+          reset()
+          refetch()
+        } catch (error: any) {
+          toast.error(error.message || 'Erro ao criar cobrança')
+        }
+      }
+    )
   }
 
   const handleBaixar = (id: string) => {
@@ -123,14 +131,20 @@ export function FinanceiroPageWeb() {
 
   const handleConfirmarBaixa = async () => {
     if (!cobrancaPagando) return
-    try {
-      await baixarCobranca.mutateAsync({ id: cobrancaPagando })
-      toast.success('Cobrança baixada!')
-      setPayDialogOpen(false)
-      setCobrancaPagando(null)
-    } catch {
-      toast.error('Erro ao baixar.')
-    }
+    requireConfirmation(
+      'Confirmar Pagamento',
+      'Você é gestor da escola e está confirmando o recebimento manual de uma cobrança. Quer mesmo fazer isso ou deixar para um funcionário financeiro?',
+      async () => {
+        try {
+          await baixarCobranca.mutateAsync({ id: cobrancaPagando })
+          toast.success('Cobrança baixada!')
+          setPayDialogOpen(false)
+          setCobrancaPagando(null)
+        } catch {
+          toast.error('Erro ao baixar.')
+        }
+      }
+    )
   }
 
   const handleEstornar = (id: string) => {
@@ -226,6 +240,7 @@ export function FinanceiroPageWeb() {
 
   return (
     <div className="space-y-6">
+      <GestorGuardModal />
       {/* Título e Subtítulo */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Gestão Financeira</h1>

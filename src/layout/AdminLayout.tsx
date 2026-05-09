@@ -45,6 +45,8 @@ import {
 import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useEscolaNotifications } from '@/hooks/useNotifications'
+import { TrialEndingModal } from '@/components/shared/TrialEndingModal'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 
 interface NavItem {
   name: string
@@ -393,6 +395,7 @@ export function AdminLayout() {
   const hideBottomNav = location.pathname === '/meu-perfil' || location.pathname === '/alunos/novo'
 
   const isGestor = authUser?.isGestor || isSuperAdmin
+  const isGestorOrFinanceiro = isGestor || hasPermission('financeiro.config.view') || hasPermission('financeiro.cobrancas.view')
   const isProfessor = authUser?.isProfessor
   const status = dashboard?.statusAssinatura
   const metodo = dashboard?.metodoPagamento
@@ -403,6 +406,10 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-zinc-50/50 dark:bg-slate-950">
+      <TrialEndingModal 
+        assinatura={dashboard?.assinatura ?? null} 
+        isGestorOrFinanceiro={isGestorOrFinanceiro} 
+      />
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 border-r bg-white/80 backdrop-blur-sm lg:block">
         <SidebarContent dashboardData={dashboard} isLoadingDashboard={isLoadingDashboard} />
@@ -569,7 +576,9 @@ export function AdminLayout() {
             </div>
           ) : (
             <div className={cn("lg:pb-0 overflow-y-auto", !hideBottomNav && "pb-36")}>
-               <Outlet />
+               <ErrorBoundary>
+                 <Outlet />
+               </ErrorBoundary>
             </div>
           )}
         </div>

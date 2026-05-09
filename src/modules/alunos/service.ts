@@ -269,10 +269,10 @@ export const alunoService = {
       const primeiroNomeDigitado = nomeDigitado.split(' ')[0]
 
       if (primeiroNomeBanco !== primeiroNomeDigitado) {
-        logger.error('🚨 Conflito de Identidade no CPF:', { cpf: cpfLimpo, banco: nomeNoBanco, digitado: nomeDigitado })
+        logger.error('Conflito de identidade no CPF do responsavel:', { cpf: cpfLimpo })
         throw new Error(
-          `O CPF ${responsavel.cpf} já está cadastrado para outro responsável nesta escola (${respExistente.nome}). ` +
-          `Verifique se o CPF está correto para evitar vínculos indevidos.`
+          'O CPF informado ja esta cadastrado para outro responsavel nesta escola. ' +
+          'Verifique se o CPF esta correto para evitar vinculos indevidos.'
         )
       }
 
@@ -328,16 +328,10 @@ export const alunoService = {
             errorMessage: respError.message 
           })
 
-          // Se for erro 42501 (Forbidden), é quase certeza que a Migration não foi aplicada
           if ((respError as any).code === '42501') {
-            console.error('🚨 BLOQUEIO DE SEGURANÇA (RLS): O banco de dados recusou a inserção do responsável.')
-            console.error('Isso ocorre porque a política "Staff_Insert_Responsaveis" não permite que GESTORES criem novos responsáveis.')
-            console.error('SOLUÇÃO: Execute a migration 150_fix_responsaveis_rls_definitivo.sql no Supabase.')
-            
             throw new Error(
-              'Erro de permissão (RLS) ao cadastrar responsável. ' +
-              'A política de segurança do banco precisa ser atualizada para permitir que gestores criem responsáveis. ' +
-              'Acesse o Dashboard do Supabase e execute a Migration pendente correspondente.'
+              'Nao foi possivel cadastrar o responsavel por uma restricao de permissao. ' +
+              'Tente novamente ou acione o suporte.'
             )
           }
 
