@@ -214,7 +214,7 @@ export function FinanceiroPageMobile() {
             <div className="flex items-center gap-3">
               <motion.button 
                 whileTap={{ scale: 0.9 }} 
-                onClick={() => navigate('/alunos')}
+                onClick={() => navigate('/home')}
                 className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
               >
                 <ArrowLeft className="h-4 w-4 text-slate-500" />
@@ -390,7 +390,7 @@ export function FinanceiroPageMobile() {
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setSheetOpen(true)}
-          className="fixed bottom-8 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+          className="fixed bottom-[17px] right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
         >
           <Plus className="h-6 w-6" />
         </motion.button>
@@ -505,8 +505,8 @@ export function FinanceiroPageMobile() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
+                <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
                       <LayoutGrid size={18} className="text-slate-400" />
                     </div>
@@ -515,8 +515,8 @@ export function FinanceiroPageMobile() {
                   <span className="text-sm font-black text-slate-900 dark:text-white">{selectedCobranca.descricao}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
+                <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
                       <Calendar size={18} className="text-slate-400" />
                     </div>
@@ -527,8 +527,8 @@ export function FinanceiroPageMobile() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3">
+                <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center">
                       <User size={18} className="text-slate-400" />
                     </div>

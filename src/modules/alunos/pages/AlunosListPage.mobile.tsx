@@ -45,7 +45,7 @@ import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalA
 
 const CACHE_KEY = 'alunos_list_cache'
 
-export function AlunosListPageMobile() {
+export function AlunosListPageMobile({ hideBottomNav = false }: { hideBottomNav?: boolean }) {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data: alunos, isLoading, refetch } = useAlunos()
@@ -301,7 +301,7 @@ export function AlunosListPageMobile() {
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/alunos/novo')}
-          className="fixed bottom-24 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+          className="fixed bottom-5 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
         >
           <Plus className="h-6 w-6" />
         </motion.button>

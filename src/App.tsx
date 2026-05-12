@@ -266,7 +266,7 @@ function App() {
               <Route path="/dashboard" element={
                 <DashboardRouter />
               } />
-              <Route path="/alunos" element={<AlunosListPage />} />
+              <Route path="/alunos" element={<AlunosListPage hideBottomNav />} />
               <Route path="/alunos/novo" element={<AlunoCadastroPage />} />
               <Route path="/alunos/importar" element={<AlunosImportarPage />} />
               <Route path="/alunos/:id" element={<AlunoDetalhePage />} />
