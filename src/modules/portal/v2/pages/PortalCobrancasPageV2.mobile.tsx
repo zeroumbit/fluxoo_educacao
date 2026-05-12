@@ -8,7 +8,7 @@ import {
   Sheet,
   SheetContent,
 } from '@/components/ui/sheet'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard,
   Copy,
@@ -679,6 +679,7 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico, exibirTodas, o
 
 function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const [activeTab, setActiveTab] = useState<'chave' | 'qrcode'>('qrcode')
+  const queryClient = useQueryClient()
   const { data: configPix } = useQuery({
     queryKey: ['portal', 'config-pix', cobranca?.tenant_id],
     queryFn: () => portalService.buscarConfigPixEscola(cobranca?.tenant_id!),
@@ -722,6 +723,7 @@ function PagamentoPixManualMobile({ isOpen, onClose, cobranca, copiado, setCopia
       const filename = `comprovante_${cobranca?.id}_${Date.now()}`
       const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
       await portalService.registrarPagamentoComComprovante(cobranca?.ids || cobranca?.id!, url, responsavel?.id!)
+      await queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
 
       const numeroRaw = configRecados?.whatsapp_contato || ''
       const numero = numeroRaw.replace(/\D/g, '')

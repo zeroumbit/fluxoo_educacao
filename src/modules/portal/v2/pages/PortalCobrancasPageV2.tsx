@@ -16,7 +16,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard,
   Copy,
@@ -593,6 +593,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggl
 function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: any) {
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<'chave' | 'qrcode'>('qrcode')
+  const queryClient = useQueryClient()
 
   // ISOLAMENTO DE CONTEXTO: Buscar configuração da escola do aluno ESPECÍFICO da cobrança
   const { data: configPix } = useQuery({
@@ -638,6 +639,7 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
       const filename = `comprovante_${cobranca?.id}_${Date.now()}`
       const url = await portalService.uploadComprovante(arquivo, cobranca?.tenant_id!, filename)
       await portalService.registrarPagamentoComComprovante(cobranca?.ids || cobranca?.id!, url, responsavel?.id!)
+      await queryClient.invalidateQueries({ queryKey: ['portal', 'cobrancas'] })
 
       const numeroRaw = configRecados?.whatsapp_contato || ''
       const numero = numeroRaw.replace(/\D/g, '')

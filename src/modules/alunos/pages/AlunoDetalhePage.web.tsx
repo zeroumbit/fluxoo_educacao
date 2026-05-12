@@ -16,12 +16,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search, Copy } from 'lucide-react'
+import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search, Copy, FileText, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro, useDesvincularResponsavel, useAtualizarResponsavel, useVincularResponsavel, useCriarAlunoComResponsavel, useCriarResponsavelAndVincular } from '../hooks'
 import { cn } from '@/lib/utils'
 import { mascaraCPF, mascaraTelefone, validarCPF } from '@/lib/validacoes'
 import { supabase } from '@/lib/supabase'
+import { useCobrancasComEncargosPorAluno } from '@/modules/financeiro/hooks'
 
 export function AlunoDetalhePageWeb() {
   const { id } = useParams<{ id: string }>()
@@ -30,6 +31,7 @@ export function AlunoDetalhePageWeb() {
   const isEditingInitial = searchParams.get('edit') === 'true'
 
   const { data: aluno, isLoading, error } = useAluno(id || '')
+  const { data: cobrancasAluno = [], isLoading: loadingCobrancasAluno } = useCobrancasComEncargosPorAluno(id || '')
   const atualizarAluno = useAtualizarAluno()
   const ativarAcesso = useAtivarAcessoPortal()
   const alternarFinanceiro = useAlternarFinanceiro()
@@ -761,6 +763,105 @@ export function AlunoDetalhePageWeb() {
         </Card>
 
       {/* Responsáveis Section */}
+      <Card className="rounded-[2.5rem] border-0 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden mt-4">
+        <CardHeader className="pt-10 pb-6 px-10 border-b border-slate-50">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                 <CardTitle className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                   <CreditCard className="h-6 w-6 text-teal-500" /> Financeiro do Aluno
+                 </CardTitle>
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Cobrancas, pagamentos manuais e comprovantes enviados pela familia</p>
+              </div>
+              {cobrancasAluno.some((c: any) => c.comprovante_url) && (
+                <Badge className="bg-teal-100 text-teal-700 border-teal-200 font-black uppercase tracking-wider">
+                  {cobrancasAluno.filter((c: any) => c.comprovante_url).length} comprovante(s)
+                </Badge>
+              )}
+           </div>
+        </CardHeader>
+        <CardContent className="p-10">
+          {loadingCobrancasAluno ? (
+            <div className="flex items-center justify-center py-12 text-slate-400 font-bold">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Carregando cobrancas...
+            </div>
+          ) : cobrancasAluno.length === 0 ? (
+            <div className="py-12 text-center rounded-3xl bg-slate-50 border border-slate-100">
+              <CreditCard className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-400">Nenhuma cobranca encontrada para este aluno.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {cobrancasAluno.map((cobranca: any) => {
+                const valor = Number(cobranca.valor_total_projetado || cobranca.valor_original || cobranca.valor || 0)
+                const status = cobranca.status || (cobranca.pago ? 'pago' : 'pendente')
+                const statusLabel = status === 'pago'
+                  ? 'Pago'
+                  : status === 'pendente_confirmacao'
+                    ? 'Aguardando validacao'
+                    : status === 'atrasado'
+                      ? 'Atrasado'
+                      : status === 'cancelado'
+                        ? 'Cancelado'
+                        : 'Em aberto'
+
+                return (
+                  <div key={cobranca.id} className="p-5 rounded-3xl bg-slate-50/70 border border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4 min-w-0">
+                      <div className={cn(
+                        "h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border",
+                        cobranca.comprovante_url ? "bg-teal-50 text-teal-600 border-teal-100" : "bg-white text-slate-400 border-slate-100"
+                      )}>
+                        {cobranca.comprovante_url ? <FileText size={22} /> : <CreditCard size={22} />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <p className="font-black text-slate-800 text-base leading-tight">{cobranca.descricao || 'Cobranca'}</p>
+                          <Badge className={cn(
+                            "text-[10px] font-black uppercase border",
+                            status === 'pago'
+                              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                              : status === 'atrasado'
+                                ? "bg-rose-100 text-rose-700 border-rose-200"
+                                : cobranca.comprovante_url
+                                  ? "bg-amber-100 text-amber-800 border-amber-200"
+                                  : "bg-slate-100 text-slate-600 border-slate-200"
+                          )}>
+                            {cobranca.comprovante_url && status !== 'pago' ? 'Comprovante enviado' : statusLabel}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                          <span>Vencimento: {cobranca.data_vencimento ? new Date(cobranca.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}</span>
+                          <span>{valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                          {cobranca.forma_pagamento && <span>{String(cobranca.forma_pagamento).replace('_', ' ')}</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 xl:justify-end">
+                      {cobranca.comprovante_url ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => window.open(cobranca.comprovante_url, '_blank', 'noopener,noreferrer')}
+                          className="h-11 rounded-xl border-teal-100 bg-white text-teal-700 hover:bg-teal-50 font-black text-[10px] uppercase tracking-widest gap-2"
+                        >
+                          <ExternalLink size={15} />
+                          Ver comprovante
+                        </Button>
+                      ) : (
+                        <div className="h-11 px-4 rounded-xl bg-white border border-slate-100 text-slate-300 flex items-center justify-center font-black text-[10px] uppercase tracking-widest">
+                          Sem comprovante
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="rounded-[2.5rem] border-0 shadow-2xl shadow-slate-200/40 bg-white overflow-hidden mt-4">
         <CardHeader className="pt-10 pb-6 px-10 border-b border-slate-50">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
