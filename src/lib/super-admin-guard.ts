@@ -9,7 +9,21 @@
  */
 
 import type { AuthUser } from '@/modules/auth/AuthContext'
-import { captureException } from '@/lib/sentry'
+
+let _captureException: ((error: unknown, context?: Record<string, unknown>) => void) | null = null
+
+async function getCaptureException() {
+  if (_captureException) return _captureException
+
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    const { captureException } = await import('@/lib/sentry')
+    _captureException = captureException
+  } else {
+    _captureException = () => {}
+  }
+
+  return _captureException
+}
 
 /** Ações que o Super Admin JAMAIS pode executar */
 const SA_BLOCKED_ACTIONS = [
@@ -41,15 +55,16 @@ type SABlockedAction = typeof SA_BLOCKED_ACTIONS[number]
  * Verifica se a ação é permitida para o Super Admin.
  * Lança erro em produção, loga aviso em desenvolvimento.
  */
-export function assertNotSuperAdmin(
+export async function assertNotSuperAdmin(
   authUser: AuthUser | null,
   action: SABlockedAction,
   context?: string
-): void {
+): Promise<void> {
   if (!authUser?.isSuperAdmin) return
 
   const message = `[SuperAdminGuard] Super Admin tentou executar ação operacional bloqueada: ${action}${context ? ` — ${context}` : ''}`
 
+  const captureException = await getCaptureException()
   captureException(new Error(message), {
     action,
     role: 'super_admin',
@@ -86,6 +101,6 @@ export async function withSuperAdminGuard<T>(
   action: SABlockedAction,
   fn: () => Promise<T>
 ): Promise<T> {
-  assertNotSuperAdmin(authUser, action)
+  await assertNotSuperAdmin(authUser, action)
   return fn()
 }

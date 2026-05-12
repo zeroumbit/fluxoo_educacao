@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -35,7 +36,8 @@ import {
   LayoutGrid,
   User,
   X,
-  History
+  History,
+  ArrowLeft
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -59,6 +61,7 @@ const cobrancaSchema = z.object({
 type CobrancaFormValues = z.infer<typeof cobrancaSchema>
 
 export function FinanceiroPageMobile() {
+  const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data: cobrancas, isLoading, refetch } = useCobrancasComEncargos()
   const { data: alunos } = useAlunos()
@@ -204,14 +207,27 @@ export function FinanceiroPageMobile() {
 
   return (
     <PullToRefresh onRefresh={async () => { await refetch() }}>
-      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32 w-full overflow-x-hidden">
-        <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-6">
-          {/* Título e Subtítulo */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestão Financeira</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Controle de cobranças, recebimentos e fluxo de caixa</p>
+      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-20 w-full overflow-x-hidden">
+        {/* Sticky Header Standard */}
+        <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
+          <div className="mx-auto w-full max-w-[640px] px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <motion.button 
+                whileTap={{ scale: 0.9 }} 
+                onClick={() => navigate('/alunos')}
+                className="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
+              >
+                <ArrowLeft className="h-4 w-4 text-slate-500" />
+              </motion.button>
+              <div>
+                <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">Gestão Financeira</h1>
+                <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">Controle de cobranças e recebimentos</p>
+              </div>
+            </div>
           </div>
+        </div>
 
+        <div className="mx-auto w-full max-w-[640px] px-4 pt-6 space-y-6">
           {/* Header de Saldo - Design Nativo */}
           <div className="bg-indigo-600 p-8 rounded-[32px] text-white shadow-2xl shadow-indigo-100 dark:shadow-none relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
@@ -317,18 +333,20 @@ export function FinanceiroPageMobile() {
                 {groupedList.current && (
                   <AccordionItem value={currentMonthKey} className="border-none bg-white dark:bg-slate-900 rounded-[28px] shadow-lg shadow-indigo-100/50 dark:shadow-none overflow-hidden border-2 border-indigo-50 dark:border-indigo-900/30">
                     <AccordionTrigger className="hover:no-underline px-5 py-5 transition-colors">
-                      <div className="flex items-center justify-between w-full pr-2">
-                        <div className="flex items-center gap-3 text-left">
-                          <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
-                            <Calendar className="h-6 w-6 text-emerald-500" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-black text-slate-900 dark:text-white text-lg leading-none">{groupedList.current.label}</span>
-                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1">Mês Atual</span>
-                          </div>
+                      <div className="flex items-center gap-3 text-left w-full">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center shrink-0">
+                          <Calendar className="h-6 w-6 text-emerald-500" />
                         </div>
-                        <div className="flex flex-col items-end">
-                           <span className="font-black text-indigo-600 dark:text-indigo-400 text-lg">
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-slate-900 dark:text-white text-lg leading-none truncate">
+                              {groupedList.current.label}
+                            </span>
+                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest shrink-0">
+                              MÊS ATUAL
+                            </span>
+                          </div>
+                          <span className="font-black text-indigo-600 dark:text-indigo-400 text-lg mt-1">
                             {groupedList.current.items.reduce((acc, c) => acc + getValorExibicao(c), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </span>
                         </div>
@@ -368,13 +386,13 @@ export function FinanceiroPageMobile() {
 
         {/* FAB */}
         <motion.button
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          whileTap={{ scale: 0.8 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setSheetOpen(true)}
-          className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+          className="fixed bottom-8 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
         >
-          <Plus className="h-8 w-8" strokeWidth={3} />
+          <Plus className="h-6 w-6" />
         </motion.button>
 
         {/* BottomSheet: Nova Cobrança */}

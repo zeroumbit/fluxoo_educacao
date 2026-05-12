@@ -1,8 +1,22 @@
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { captureException } from "@/lib/sentry";
 import { logger } from "@/lib/logger";
+
+let _captureException: ((error: unknown, context?: Record<string, unknown>) => void) | null = null
+
+async function getCaptureException() {
+  if (_captureException) return _captureException
+
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+    const { captureException } = await import("@/lib/sentry")
+    _captureException = captureException
+  } else {
+    _captureException = () => {}
+  }
+
+  return _captureException
+}
 
 interface Props {
   children?: ReactNode;
@@ -46,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.error("Uncaught error", error, errorInfo);
-    captureException(error, { action: 'global-error-boundary' });
+    getCaptureException().then(capture => capture(error, { action: 'global-error-boundary' }))
 
     if (isRecoverableChunkLoadError(error)) {
       const retryKey = getChunkRetryKey(error);

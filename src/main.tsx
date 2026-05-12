@@ -4,12 +4,14 @@ import App from './App'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { registerSW } from 'virtual:pwa-register'
 import { toast } from 'sonner'
-import { initSentry } from '@/lib/sentry'
 import { setupErrorHandlers } from '@/lib/logger'
 import '@/lib/config'
 
-initSentry()
 setupErrorHandlers()
+
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+  import('@/lib/sentry').then(({ initSentry }) => initSentry())
+}
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>

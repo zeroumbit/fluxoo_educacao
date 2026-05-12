@@ -392,7 +392,7 @@ export function AdminLayout() {
   const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
   const navigate = useNavigate()
   const location = useLocation()
-  const hideBottomNav = location.pathname === '/meu-perfil' || location.pathname === '/alunos/novo'
+  const hideBottomNav = ['/meu-perfil', '/alunos/novo', '/financeiro'].some(p => location.pathname === p || location.pathname === p + '/')
 
   const isGestor = authUser?.isGestor || isSuperAdmin
   const isGestorOrFinanceiro = isGestor || hasPermission('financeiro.config.view') || hasPermission('financeiro.cobrancas.view')
