@@ -2,11 +2,11 @@
  * PermissionMatrix V2.2
  * Visualização da matriz Perfil ↔ Permissões para o Dashboard de Governança.
  */
-import { useState, useMemo } from 'react'
-import { usePerfis, usePermissions, usePerfilPermissions } from '@/modules/rbac/hooks'
-import { SCOPE_LABELS } from '@/modules/rbac/types'
+import { usePerfilPermissions,usePerfis,usePermissions } from '@/modules/rbac/hooks'
 import type { ScopeType } from '@/modules/rbac/types'
-import { Check, X, ChevronDown, ChevronRight, Shield, Eye } from 'lucide-react'
+import { SCOPE_LABELS } from '@/modules/rbac/types'
+import { Check,ChevronDown,ChevronRight,Eye,Shield,X } from 'lucide-react'
+import { useMemo,useState } from 'react'
 
 export function PermissionMatrix() {
   const { data: perfis, isLoading: loadingPerfis } = usePerfis()

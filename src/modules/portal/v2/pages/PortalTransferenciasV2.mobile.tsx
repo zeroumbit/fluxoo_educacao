@@ -1,26 +1,26 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { usePortalContext } from '../../context'
-import { NativeHeader } from '../components/NativeHeader'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
+Sheet,
+SheetContent,
+SheetDescription,
+SheetFooter,
+SheetHeader,
+SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import { useTransferenciasPortal, useResponderTransferencia } from '../../hooks'
-import { formatDistanceToNow, format } from 'date-fns'
+import { cn } from '@/lib/utils'
+import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { type LucideIcon, Send, Clock, CheckCircle2, XCircle, School, User, FileText, Loader2, AlertTriangle, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { type TransferenciaEscolarStatus, type TransferenciaRow } from '../../service'
+import { AnimatePresence,motion } from 'framer-motion'
+import { AlertTriangle,CheckCircle2,ChevronRight,Clock,FileText,Loader2,type LucideIcon,School,Send,ThumbsDown,ThumbsUp,User,XCircle } from 'lucide-react'
+import React,{ useState } from 'react'
+import { toast } from 'sonner'
+import { usePortalContext } from '../../context'
+import { useResponderTransferencia,useTransferenciasPortal } from '../../hooks'
+import { type TransferenciaEscolarStatus,type TransferenciaRow } from '../../service'
+import { NativeHeader } from '../components/NativeHeader'
 
 const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
   aguardando_responsavel: { label: 'Aguardando sua Aprovação', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },

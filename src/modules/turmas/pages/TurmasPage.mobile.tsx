@@ -1,60 +1,52 @@
 
-import { useState, useMemo, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, 
-  Loader2, 
-  BookOpen, 
-  Pencil, 
-  Trash2, 
-  AlertTriangle,
-  Search,
-  ArrowLeft,
-  MapPin,
-  Users,
-  Clock,
-  DollarSign,
-  School,
-  Calendar,
-  ChevronRight,
-  Building2,
-  X,
-  Settings,
-  CalendarDays,
-  GraduationCap
-} from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { get, set } from 'idb-keyval'
-
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { cn } from '@/lib/utils'
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
 import {
-  useTurmas,
-  useCriarTurma,
-  useAtualizarTurma,
-  useExcluirTurma,
-  useGradeTurma,
-  useDisciplinas,
-  useProfessoresTurma,
-  useAlunosCountByTurmas
-} from '../hooks'
-import { useFiliais } from '@/modules/filiais/hooks'
+AlertTriangle,
+ArrowLeft,
+BookOpen,
+CalendarDays,
+ChevronRight,
+DollarSign,
+GraduationCap,
+Loader2,
+MapPin,
+Plus,
+Search,
+Settings,
+Users
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
+
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Turma } from '@/lib/database.types'
+import { cn } from '@/lib/utils'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useFiliais } from '@/modules/filiais/hooks'
 import { TurmaDetalhesModalMobile } from '../components/TurmaDetalhesModalMobile'
+import {
+useAlunosCountByTurmas,
+useAtualizarTurma,
+useCriarTurma,
+useDisciplinas,
+useExcluirTurma,
+useProfessoresTurma,
+useTurmas
+} from '../hooks'
 
 const CACHE_KEY = 'turmas_mobile_v3'
 

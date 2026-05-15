@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger'
+import { logger } from '@/lib/logger';
 
 /**
  * Dicionário de eventos do sistema e seus payloads.

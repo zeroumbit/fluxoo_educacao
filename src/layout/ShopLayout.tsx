@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react'
-import { Outlet, useNavigate, NavLink, useSearchParams } from 'react-router-dom'
-import { 
-  Search, 
-  User, 
-  ShoppingBag, 
-  Heart, 
-  ShoppingCart, 
-  MapPin,
-  ChevronDown,
-  GraduationCap
-} from 'lucide-react'
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PortalProvider } from '@/modules/portal/context'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+ChevronDown,
+GraduationCap,
+Heart,
+MapPin,
+Search,
+ShoppingBag,
+ShoppingCart,
+User
+} from 'lucide-react'
+import { useState } from 'react'
+import { NavLink,Outlet,useNavigate,useSearchParams } from 'react-router-dom'
 
 export function ShopLayout() {
   const { authUser, signOut } = useAuth()

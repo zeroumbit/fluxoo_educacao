@@ -1,22 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogTitle } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import { useAutorizacoesPortal,useResponderAutorizacao } from '@/modules/autorizacoes/hooks'
+import { CATEGORIA_CORES,CATEGORIA_LABELS } from '@/modules/autorizacoes/service'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import {
+AlertTriangle,
+BookOpen,
+CheckCircle2,
+ChevronDown,
+Clock,Loader2,
+Shield,
+ShieldCheck,ShieldOff,
+X
+} from 'lucide-react'
+import { useEffect,useRef,useState } from 'react'
+import { toast } from 'sonner'
+import { BotaoVoltar } from '../components/BotaoVoltar'
 import { usePortalContext } from '../context'
 import { useResponsavel } from '../hooks'
-import { useAutorizacoesPortal, useResponderAutorizacao } from '@/modules/autorizacoes/hooks'
-import { CATEGORIA_LABELS, CATEGORIA_CORES } from '@/modules/autorizacoes/service'
-import {
-  ShieldCheck, ShieldOff, Shield, ChevronDown, ChevronUp,
-  AlertTriangle, CheckCircle2, Clock, Loader2, ScrollText,
-  BookOpen, ChevronRight, X
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { BotaoVoltar } from '../components/BotaoVoltar'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {

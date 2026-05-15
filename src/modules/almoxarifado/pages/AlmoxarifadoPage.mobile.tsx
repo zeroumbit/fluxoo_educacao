@@ -1,34 +1,34 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Package, 
-  Search, 
-  Plus, 
-  Trash2, 
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Wallet,
-  Loader2
-} from 'lucide-react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { 
-  useItensAlmoxarifado, 
-  useMovimentacoes, 
-  useCriarMovimentacao, 
-  useDeletarItemAlmoxarifado,
-  useCriarItemAlmoxarifado
-} from '../hooks'
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowDownCircle,
+ArrowUpCircle,
+Loader2,
+Package,
+Plus,
+Search,
+Trash2,
+Wallet
+} from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { Checkbox } from '@/components/ui/checkbox'
+import {
+useCriarItemAlmoxarifado,
+useCriarMovimentacao,
+useDeletarItemAlmoxarifado,
+useItensAlmoxarifado,
+useMovimentacoes
+} from '../hooks'
 
 export function AlmoxarifadoPageMobile() {
   const { authUser } = useAuth()

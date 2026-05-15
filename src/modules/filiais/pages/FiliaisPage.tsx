@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { FiliaisPageWeb } from './FiliaisPage.web'
 import { FiliaisPageMobile } from './FiliaisPage.mobile'
+import { FiliaisPageWeb } from './FiliaisPage.web'
 
 export function FiliaisPage() {
   return (

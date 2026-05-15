@@ -1,5 +1,5 @@
+import type { AlertasHistoricoInsert,AlertasTratamentoInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { AlertasTratamentoInsert, AlertasHistoricoInsert } from '@/lib/database.types'
 
 export interface AlertaStatusUpdate {
   aluno_id: string

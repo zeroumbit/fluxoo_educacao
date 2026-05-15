@@ -1,15 +1,14 @@
-import { useFilaVirtual, useEntrarNaFila, useCancelarFila } from '../hooks'
-import { usePortalContext } from '../context'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, CarFront, CheckCircle, XCircle, ChevronRight, MapPin, Clock } from 'lucide-react'
+import { Card,CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import { CarFront,CheckCircle,ChevronRight,Clock,Loader2,MapPin,XCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
 import { BotaoVoltar } from '../components/BotaoVoltar'
+import { usePortalContext } from '../context'
+import { useCancelarFila,useEntrarNaFila,useFilaVirtual } from '../hooks'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {

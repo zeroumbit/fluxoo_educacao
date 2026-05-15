@@ -1,17 +1,16 @@
-import React from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  Info,
-  Users,
-  GraduationCap,
-  CalendarDays
+CalendarDays,
+GraduationCap,
+Info,
+Users
 } from 'lucide-react'
 import { useTurmaStore } from '../store'
-import { TabDadosGerais } from './TabDadosGerais'
 import { TabAlunos } from './TabAlunos'
-import { TabProfessores } from './TabProfessores'
+import { TabDadosGerais } from './TabDadosGerais'
 import { TabGradeHoraria } from './TabGradeHoraria'
-import { useAuth } from '@/modules/auth/AuthContext'
+import { TabProfessores } from './TabProfessores'
 
 interface TurmaDetailProps {
   turmaId: string;

@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { DashboardPageWeb } from './DashboardPage.web'
 import { DashboardPageMobile } from './DashboardPage.mobile'
+import { DashboardPageWeb } from './DashboardPage.web'
 
 export function DashboardPage() {
   return (

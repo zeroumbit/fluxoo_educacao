@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, XCircle, Cake, Save, Loader2, Search, UserCheck, UserX, MessageSquare, Info } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { AnimatePresence,motion } from 'framer-motion'
+import { Cake,CheckCircle2,Info,Loader2,MessageSquare,Save,Search,UserCheck,UserX,XCircle } from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
 
 interface Student {
   id: string

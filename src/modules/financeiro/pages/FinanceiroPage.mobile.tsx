@@ -1,54 +1,43 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useCobrancasComEncargos, useCriarCobranca, useRegistrarPagamentoManual, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Plus, 
-  Loader2, 
-  Search, 
-  MoreHorizontal, 
-  CheckCircle2, 
-  Trash2, 
-  Undo2, 
-  Calendar,
-  Filter,
-  IndianRupee,
-  ChevronRight,
-  Wallet,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  AlertCircle,
-  LayoutGrid,
-  User,
-  X,
-  History,
-  ArrowLeft
-} from 'lucide-react'
+import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from '@/components/ui/accordion'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { AnimatePresence,motion } from 'framer-motion'
 import {
-  detectarTipoCobranca,
-  getLabelTipoCobranca,
-  getBadgeTipoCobranca,
-  getValorExibicao,
-  extrairDiasProporcionais,
-  isTaxaMatricula,
+AlertCircle,
+ArrowDownCircle,
+ArrowLeft,
+Calendar,
+CheckCircle2,
+History,
+LayoutGrid,
+Loader2,
+Plus,
+Search,
+User,
+Wallet
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { useCobrancasComEncargos,useCriarCobranca,useDesfazerPagamento,useExcluirCobranca,useRegistrarPagamentoManual } from '../hooks'
+import {
+detectarTipoCobranca,
+extrairDiasProporcionais,
+getLabelTipoCobranca,
+getValorExibicao,
+isTaxaMatricula
 } from '../utils/cobranca-utils'
-import { motion, AnimatePresence } from 'framer-motion'
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().min(1, 'Selecione o aluno'),

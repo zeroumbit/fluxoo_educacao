@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Save, MapPin, Building2, Upload, X, Image as ImageIcon } from 'lucide-react'
-import { mascaraCPF, mascaraCNPJ } from '@/lib/validacoes'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useViaCEP } from '@/hooks/use-viacep'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { supabase } from '@/lib/supabase'
+import { mascaraCNPJ,mascaraCPF } from '@/lib/validacoes'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { Building2,Image as ImageIcon,Loader2,MapPin,Save,Upload,X } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { toast } from 'sonner'
 
 export function PerfilEscolaPageWeb() {
   const { authUser } = useAuth()

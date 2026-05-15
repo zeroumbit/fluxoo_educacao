@@ -1,8 +1,8 @@
+import type { TransferenciaEscolarIniciador,TransferenciaEscolarStatus } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { TransferenciaEscolarStatus, TransferenciaEscolarIniciador } from '@/lib/database.types'
 
 // Re-exportar tipos do database.types para uso externo
-export type { TransferenciaEscolarStatus, TransferenciaEscolarIniciador }
+export type { TransferenciaEscolarIniciador,TransferenciaEscolarStatus }
 
 // ─── Interface enriquecida para o frontend ────────────────────
 

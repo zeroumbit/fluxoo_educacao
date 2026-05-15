@@ -1,20 +1,20 @@
+import { Badge } from '@/components/ui/badge'
+import { MobileSelect } from '@/components/ui/mobile-select'
+import type { DisciplinaBoletim } from '@/lib/database.types'
+import { cn } from '@/lib/utils'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Activity,Award,
+FileText,
+GraduationCap,
+Info,
+TrendingUp
+} from 'lucide-react'
 import { useState } from 'react'
+import { BotaoVoltar } from '../components/BotaoVoltar'
+import { SeletorAluno } from '../components/SeletorAluno'
 import { usePortalContext } from '../context'
 import { useBoletins } from '../hooks'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { MobileSelect } from '@/components/ui/mobile-select'
-import {
-  GraduationCap, TrendingUp, Activity, Award, Info, Calendar, Layers, FileText
-} from 'lucide-react'
-import type { DisciplinaBoletim } from '@/lib/database.types'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { SeletorAluno } from '../components/SeletorAluno'
-import { BotaoVoltar } from '../components/BotaoVoltar'
 
 const _vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);

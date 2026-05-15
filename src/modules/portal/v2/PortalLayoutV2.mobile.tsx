@@ -1,9 +1,8 @@
-import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { BottomNavV2 } from './components/BottomNavV2';
 import { useOnlineStatus } from '@/hooks/use-online-status';
+import { AnimatePresence,motion } from 'framer-motion';
 import { WifiOff } from 'lucide-react';
+import { Outlet,useLocation } from 'react-router-dom';
+import { BottomNavV2 } from './components/BottomNavV2';
 
 export function PortalLayoutV2Mobile() {
   const location = useLocation();

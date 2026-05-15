@@ -1,33 +1,32 @@
-import { useState } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useEscola, useSolicitacoesUpgrade, useCriarSolicitacaoUpgrade, useAssinaturaAtiva, usePlanos } from '../hooks'
-import { 
-  CreditCard, 
-  ArrowUpCircle, 
-  CheckCircle2, 
-  Clock, 
-  Loader2, 
-  Trophy,
-  Plus,
-  ArrowLeft,
-  Sparkles,
-  Zap,
-  ChevronRight,
-  TrendingUp,
-  X
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { cn, formatCurrency } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn,formatCurrency } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowLeft,
+ArrowUpCircle,
+CheckCircle2,
+ChevronRight,
+Clock,
+CreditCard,
+Loader2,
+Plus,
+Sparkles,
+TrendingUp,
+Trophy,
+Zap
+} from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useAssinaturaAtiva,useCriarSolicitacaoUpgrade,useEscola,usePlanos,useSolicitacoesUpgrade } from '../hooks'
 
 export function PlanoPageMobile() {
   const { authUser } = useAuth()

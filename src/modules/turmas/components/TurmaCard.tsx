@@ -1,20 +1,19 @@
-import React from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Users,
-  Calendar,
-  Settings,
-  BookOpen,
-  Clock,
-  DollarSign,
-  ChevronRight,
-  GraduationCap
-} from 'lucide-react'
-import type { Turma } from '../types'
+import { Card,CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
+import {
+BookOpen,
+Calendar,
+ChevronRight,
+Clock,
+DollarSign,
+GraduationCap,
+Settings,
+Users
+} from 'lucide-react'
+import type { Turma } from '../types'
 
 interface TurmaCardProps {
   turma: Turma;

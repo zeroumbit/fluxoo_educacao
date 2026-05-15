@@ -2,17 +2,25 @@
  * Página de Perfis de Acesso (RBAC V2.2)
  * /configuracoes/perfis
  */
-import { useState } from 'react'
-import { usePerfis, useCriarPerfil, useExcluirPerfil, usePermissions, usePerfilPermissions, useDefinirPermissoesPerfil, useOverrides } from '@/modules/rbac/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PermissionMatrix } from '@/modules/rbac/components/PermissionMatrix'
-import { SCOPE_LABELS } from '@/modules/rbac/types'
+import { useCriarPerfil,useDefinirPermissoesPerfil,useExcluirPerfil,useOverrides,usePerfilPermissions,usePerfis,usePermissions } from '@/modules/rbac/hooks'
 import type { ScopeType } from '@/modules/rbac/types'
-import { toast } from 'sonner'
+import { SCOPE_LABELS } from '@/modules/rbac/types'
 import {
-  Shield, Plus, Trash2, Edit3, ChevronRight, Users, AlertTriangle,
-  Save, X, Eye, Settings2, Lock
+AlertTriangle,
+ChevronRight,
+Eye,
+Lock,
+Plus,
+Save,
+Settings2,
+Shield,
+Trash2,
+Users
 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 export function PerfisPage() {
   const { authUser } = useAuth()

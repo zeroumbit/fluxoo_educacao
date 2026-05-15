@@ -1,48 +1,48 @@
-import { useState, useMemo } from 'react'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useTransferenciasEscola,
-  useConcluirTransferencia,
-  useCheckPermissaoTransferencia,
-  useAceitarTransferenciaDestino,
-  useRecusarTransferenciaDestino
-} from '../hooks'
-import { STATUS_LABEL, STATUS_COLOR, type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table'
+import {
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger,
+} from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { differenceInDays,format,formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { type LucideIcon, ArrowRightLeft, Plus, Search, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, TrendingDown, FileText, CalendarClock, Unlock, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { AlertTriangle,ArrowRightLeft,CalendarClock,CheckCircle2,Clock,Eye,FileText,Plus,School,Search,ShieldCheck,ThumbsDown,ThumbsUp,TrendingDown,Unlock,User,XCircle,type LucideIcon } from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { toast } from 'sonner'
+import {
+useAceitarTransferenciaDestino,
+useCheckPermissaoTransferencia,
+useConcluirTransferencia,
+useRecusarTransferenciaDestino,
+useTransferenciasEscola
+} from '../hooks'
+import { STATUS_COLOR,STATUS_LABEL,type TransferenciaEscolarStatus,type TransferenciaRow } from '../transferencias.service'
 
-import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
 import { EmitirHistoricoModal } from '@/components/shared/transferencias/EmitirHistoricoModal'
+import { ModalSolicitarTransferencia } from '@/components/shared/transferencias/ModalSolicitarTransferencia'
 
 // Mapa de ícones para cada status
 const STATUS_ICON: Record<string, LucideIcon> = {

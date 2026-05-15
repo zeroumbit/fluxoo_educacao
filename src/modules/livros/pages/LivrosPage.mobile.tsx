@@ -1,47 +1,40 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Library, 
-  Plus, 
-  BookOpen, 
-  Edit2, 
-  Trash2, 
-  Loader2, 
-  ChevronRight, 
-  X, 
-  Upload, 
-  CheckCircle,
-  GraduationCap,
-  Image as ImageIcon,
-  MoreVertical,
-  ArrowLeft,
-  Package
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
+import {
+ArrowLeft,
+BookOpen,
+CheckCircle,
+Edit2,
+Loader2,
+Package,
+Plus,
+Trash2,
+Upload,
+X
 } from 'lucide-react'
-import { get, set } from 'idb-keyval'
+import { useEffect,useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useLivros, useCriarLivro, useExcluirLivro, useEditarLivro, useDisciplinas, useCriarDisciplina, useMateriais, useCriarMaterial, useEditarMaterial, useExcluirMaterial } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import { CATEGORIAS_MATERIAIS, SUBCATEGORIAS_POR_CATEGORIA, UNIDADES_MEDIDA } from '../constants'
-import type { Livro, MaterialEscolar } from '../types'
+import { CATEGORIAS_MATERIAIS,UNIDADES_MEDIDA } from '../constants'
+import { useCriarDisciplina,useCriarLivro,useCriarMaterial,useDisciplinas,useEditarLivro,useEditarMaterial,useExcluirLivro,useExcluirMaterial,useLivros,useMateriais } from '../hooks'
 import { livrosService } from '../service'
+import type { Livro,MaterialEscolar } from '../types'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 const CACHE_KEY_LIVROS = 'mobile_livros_cache_v2'

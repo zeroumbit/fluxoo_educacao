@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { AlunoDetalhePageWeb } from './AlunoDetalhePage.web'
 import { AlunoDetalhePageMobile } from './AlunoDetalhePage.mobile'
+import { AlunoDetalhePageWeb } from './AlunoDetalhePage.web'
 
 export function AlunoDetalhePage() {
   return (

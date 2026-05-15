@@ -2,10 +2,10 @@
  * Hooks React para RBAC V2.2
  * Conecta o Zustand Store de permissões com componentes React.
  */
-import { useEffect, useMemo } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useRBACStore, subscribeToRBACChanges, unsubscribeFromRBACChanges } from '@/stores/rbac.store'
 import type { ScopeType } from '@/modules/rbac/types'
+import { subscribeToRBACChanges,unsubscribeFromRBACChanges,useRBACStore } from '@/stores/rbac.store'
+import { useEffect,useMemo } from 'react'
 
 /**
  * Hook principal: inicializa o RBAC e configura Realtime.

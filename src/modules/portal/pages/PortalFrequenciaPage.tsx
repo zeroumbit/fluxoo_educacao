@@ -1,15 +1,14 @@
-import { useFrequenciaAluno } from '../hooks'
-import { usePortalContext } from '../context'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { CalendarCheck, Check, X, AlertCircle, TrendingUp, UserMinus, ChevronRight, Activity } from 'lucide-react'
+import { Card,CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { SeletorAluno } from '../components/SeletorAluno'
+import { AnimatePresence,motion } from 'framer-motion'
+import { Activity,AlertCircle,CalendarCheck,Check,ChevronRight,TrendingUp,UserMinus,X } from 'lucide-react'
 import { BotaoVoltar } from '../components/BotaoVoltar'
+import { SeletorAluno } from '../components/SeletorAluno'
+import { usePortalContext } from '../context'
+import { useFrequenciaAluno } from '../hooks'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);

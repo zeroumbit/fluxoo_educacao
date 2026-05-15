@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { TurmasPageWeb } from './TurmasPage.web'
 import { TurmasPageMobile } from './TurmasPage.mobile'
+import { TurmasPageWeb } from './TurmasPage.web'
 
 export function TurmasPage() {
   return (

@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { format, addDays, startOfWeek, parseISO } from 'date-fns';
+import { addDays,format,startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { usePlanosAulaPortal } from '../../hooks';
+import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
+import { useMemo,useState } from 'react';
+import { usePlanosAulaPortal } from '../../hooks';
 
 const DAYS_TO_SHOW = 14; 
 const START_DATE = startOfWeek(new Date(), { weekStartsOn: 1 });

@@ -1,24 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  Briefcase,
-  FileUser,
-  Search,
-  CheckCircle2,
-  Calendar,
-  MessageSquare,
-  ArrowUpRight,
-  TrendingUp,
-  Star,
-  Users,
-  Settings,
-  Bell,
-  Sparkles
+Briefcase,
+CheckCircle2,
+FileUser,
+MessageSquare,
+Search,
+Sparkles,
+Star,
+Users
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useNavigate } from 'react-router-dom'
 
 interface MetricCardProps {
   label: string

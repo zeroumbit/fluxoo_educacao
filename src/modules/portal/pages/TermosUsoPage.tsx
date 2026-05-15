@@ -1,8 +1,7 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { GraduationCap, ShieldCheck, FileText, ChevronLeft, Printer } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import { FileText,GraduationCap,Printer,ShieldCheck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export function TermosUsoPage() {
   const navigate = useNavigate()

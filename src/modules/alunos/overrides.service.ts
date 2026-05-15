@@ -1,5 +1,5 @@
+import type { OverrideFinanceiroInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { OverrideFinanceiroInsert, OverrideFinanceiroUpdate } from '@/lib/database.types'
 
 export const overrideService = {
   async listarAtivosPorAluno(alunoId: string, tenantId: string) {

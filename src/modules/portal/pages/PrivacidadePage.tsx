@@ -1,8 +1,7 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { GraduationCap, Lock, ShieldCheck, FileText, ChevronLeft, Printer, Eye, Share2, User, Building2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import { Building2,Eye,GraduationCap,Lock,Printer,Share2,ShieldCheck,User } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export function PrivacidadePage() {
   const navigate = useNavigate()

@@ -1,9 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Trophy, Star, Calendar } from 'lucide-react';
-import { useSelosPortal } from '../../hooks';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { motion } from 'framer-motion';
+import { Calendar,Star,Trophy } from 'lucide-react';
+import { useSelosPortal } from '../../hooks';
 
 export function PortalSelosV2() {
   const { data: selos, isLoading } = useSelosPortal();

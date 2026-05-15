@@ -1,7 +1,7 @@
-import React, { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
+import { AlertTriangle,Home,RefreshCcw } from "lucide-react";
+import { Component,type ErrorInfo,type ReactNode } from "react";
 
 let _captureException: ((error: unknown, context?: Record<string, unknown>) => void) | null = null
 

@@ -1,48 +1,47 @@
-import React, { useState, useEffect } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { logger } from '@/lib/logger'
-import { useMatriculas, useCriarMatricula, useMatriculaAtivaDoAluno, useAtualizarMatricula, useExcluirMatricula } from '../hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { useTurmas } from '@/modules/turmas/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import { logger } from '@/lib/logger'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription
-} from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Plus,
-  Loader2,
-  GraduationCap,
-  User,
-  Pencil,
-  Trash2,
-  AlertTriangle,
-  ChevronLeft,
-  Eye,
-  Calendar,
-  Clock,
-  BookOpen,
-  DollarSign,
-  ChevronDown,
-  ChevronRight
+AlertTriangle,
+BookOpen,
+Calendar,
+ChevronDown,
+ChevronRight,
+Clock,
+DollarSign,
+Eye,
+GraduationCap,
+Loader2,
+Pencil,
+Plus,
+Trash2,
+User
 } from 'lucide-react'
+import React,{ useEffect,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useLocation,useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { useAtualizarMatricula,useCriarMatricula,useExcluirMatricula,useMatriculaAtivaDoAluno,useMatriculas } from '../hooks'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),

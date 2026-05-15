@@ -1,5 +1,5 @@
+import type { FilialInsert,FilialUpdate } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { FilialInsert, FilialUpdate } from '@/lib/database.types'
 
 export const filialService = {
   async listar(tenantId: string) {

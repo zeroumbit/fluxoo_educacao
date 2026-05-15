@@ -1,50 +1,49 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm, useFieldArray } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { supabase } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Loader2,
-  User,
-  ShoppingBag,
-  Briefcase,
-  GraduationCap,
-  Building2,
-  Phone,
-  Mail,
-  Lock,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  MapPin,
-  CreditCard,
-  Calendar,
-  Target,
-  History,
-  Palette,
-  Eye,
-  EyeOff,
-  Check,
-  Upload,
-  Gift
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
-import { DISPONIBILIDADE_TIPOS, AREAS_INTERESSE } from '@/modules/curriculos/types'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useViaCEP } from '@/hooks/use-viacep'
-import { mascaraCNPJ, mascaraTelefone, mascaraCEP, validarCNPJ, mascaraCPF, validarCPF } from '@/lib/validacoes'
-import { strongPasswordSchema, getPasswordStrengthTips } from '@/lib/password-validation'
+import { logger } from '@/lib/logger'
+import { getPasswordStrengthTips,strongPasswordSchema } from '@/lib/password-validation'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { mascaraCEP,mascaraCNPJ,mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
+import { AREAS_INTERESSE,DISPONIBILIDADE_TIPOS } from '@/modules/curriculos/types'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+AlertCircle,
+Briefcase,
+Building2,
+Calendar,
+Check,
+CheckCircle2,
+CreditCard,
+Eye,
+EyeOff,
+FileText,
+Gift,
+GraduationCap,
+History,
+Loader2,
+Lock,
+Mail,
+MapPin,
+Palette,
+Phone,
+Plus,
+ShoppingBag,
+Target,
+Trash2,
+User
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useFieldArray,useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
 // Categorias pré-definidas para Lojistas
 const CATEGORIAS_LOJISTA = [

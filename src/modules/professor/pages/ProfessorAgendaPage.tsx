@@ -1,16 +1,24 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Badge } from '@/components/ui/badge'
+import { Card,CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useAgendaDiaria } from '@/modules/professor/hooks'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Loader2, Calendar, Search, Clock, Check, X, MapPin, ChevronRight, Filter
-} from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Calendar,
+Check,
+ChevronRight,
+Clock,
+Filter,
+Loader2,
+MapPin,
+Search,
+X
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function ProfessorAgendaPage() {
   const { authUser } = useAuth()

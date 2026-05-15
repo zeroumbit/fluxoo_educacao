@@ -1,10 +1,10 @@
-import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, Users, Receipt, Bell, ShoppingBag, User, LogOut, WifiOff } from 'lucide-react';
-import { useAuth } from '@/modules/auth/AuthContext';
 import CorujaIcon from '@/assets/coruja_APPLE.svg';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { AnimatePresence,motion } from 'framer-motion';
+import { Bell,Home,LogOut,Receipt,ShoppingBag,User,Users,WifiOff } from 'lucide-react';
+import React from 'react';
+import { NavLink,Outlet,useNavigate } from 'react-router-dom';
 
 export function PortalLayoutV2Web() {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ export function PortalLayoutV2Web() {
       </AnimatePresence>
 
       {/* Sidebar Vertical */}
-      <aside className="w-80 h-screen sticky top-0 bg-white border-r border-slate-200 flex flex-col p-8 z-50 shrink-0">
+      <aside className="w-80 h-screen fixed left-0 top-0 bg-white border-r border-slate-200 flex flex-col p-8 z-50 shrink-0">
         {/* Brand/Logo */}
         <div className="flex items-center gap-4 mb-12 cursor-pointer" onClick={() => navigate('/portal')}>
           <div className="w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/20 transition-transform hover:scale-105 active:scale-95">
@@ -121,7 +121,7 @@ export function PortalLayoutV2Web() {
       </aside>
 
       {/* Área de Conteúdo Principal */}
-      <main className="flex-1 min-h-screen overflow-y-auto">
+      <main className="flex-1 min-h-screen overflow-y-auto ml-80">
         <div className="max-w-[1400px] mx-auto p-12 relative">
           <Outlet />
         </div>

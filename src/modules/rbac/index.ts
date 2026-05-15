@@ -12,9 +12,9 @@ export { rbacService } from './service'
 export * from './hooks'
 
 // Components
-export { PermissionGate, PermissionGateWithTooltip } from './components/PermissionGate'
+export { PermissionGate,PermissionGateWithTooltip } from './components/PermissionGate'
 export { PermissionMatrix } from './components/PermissionMatrix'
 
 // Pages
-export { PerfisPage } from './pages/PerfisPage'
 export { AuditoriaPage } from './pages/AuditoriaPage'
+export { PerfisPage } from './pages/PerfisPage'

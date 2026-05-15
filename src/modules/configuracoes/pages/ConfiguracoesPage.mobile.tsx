@@ -1,33 +1,44 @@
-import { useState, useEffect, useCallback } from 'react'
-import {
-  BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
-  Save, Info, Banknote, ChevronRight, Check, ShieldCheck,
-  Loader2, AlertTriangle, BadgeAlert, ArrowLeft, RefreshCw,
-  LayoutGrid, Settings2, Bell, Building,
-  CreditCard, QrCode, HandCoins, Upload, X, FileText
-} from 'lucide-react'
-import { MobileSelect } from '@/components/ui/mobile-select'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MobileSelect } from '@/components/ui/mobile-select'
 import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
-import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { useAuth } from '@/modules/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  useTenantSettings,
-  useTenantSettingsHistory,
-  type ConfigAcademica,
-  type ConfigFinanceira,
-  type ConfigOperacional,
-  type ConfigConduta,
-  type ConfigCalendario,
+useTenantSettings,
+useTenantSettingsHistory,
+type ConfigAcademica,
+type ConfigCalendario,
+type ConfigConduta,
+type ConfigFinanceira,
+type ConfigOperacional,
 } from '@/modules/escolas/hooks/useTenantSettings'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+BookOpen,
+Building,
+CalendarDays,
+ChevronRight,
+CreditCard,
+FileText,
+HandCoins,
+History,
+Loader2,
+QrCode,
+Save,
+Scale,
+ShieldAlert,
+ShieldCheck,
+Upload,
+Wallet,
+X
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { toast } from 'sonner'
 
 export function ConfiguracoesPageMobile() {
   const { authUser } = useAuth()

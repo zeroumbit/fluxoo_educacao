@@ -1,23 +1,22 @@
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import {
+AlertCircle,
+ChevronRight,
+Clock,
+DollarSign,
+FileUser,
+Search
+} from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCurriculosPublicos } from '../hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Search,
-  MapPin,
-  Clock,
-  DollarSign,
-  ChevronRight,
-  FileUser,
-  AlertCircle,
-} from 'lucide-react'
-import { AREAS_INTERESSE, DISPONIBILIDADE_TIPOS } from '../types'
-import { cn } from '@/lib/utils'
+import { AREAS_INTERESSE,DISPONIBILIDADE_TIPOS } from '../types'
 
 export function CurriculosListPage() {
   const navigate = useNavigate()

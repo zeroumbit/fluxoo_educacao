@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase'
 import type { FrequenciaInsert } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
 
 export const frequenciaService = {
   async listarPorTurmaData(turmaId: string, dataAula: string, tenantId: string) {

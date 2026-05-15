@@ -1,19 +1,19 @@
-import React, { useEffect, useRef } from 'react'
-import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Type,
-  Underline,
-  type LucideIcon,
-} from 'lucide-react'
-import { Button } from './button'
-import { cn } from '@/lib/utils'
 import { sanitizeHtml } from '@/lib/sanitize-html'
+import { cn } from '@/lib/utils'
+import {
+AlignCenter,
+AlignLeft,
+AlignRight,
+Bold,
+Italic,
+List,
+ListOrdered,
+Type,
+Underline,
+type LucideIcon,
+} from 'lucide-react'
+import { useEffect,useRef } from 'react'
+import { Button } from './button'
 
 interface RichTextEditorProps {
   value: string

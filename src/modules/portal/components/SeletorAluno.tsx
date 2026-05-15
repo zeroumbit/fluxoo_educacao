@@ -1,7 +1,7 @@
-import { usePortalContext } from '../context'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card,CardContent } from '@/components/ui/card'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Users } from 'lucide-react'
+import { usePortalContext } from '../context'
 
 export function SeletorAluno() {
   const { vinculos, alunoSelecionado, selecionarAluno } = usePortalContext()

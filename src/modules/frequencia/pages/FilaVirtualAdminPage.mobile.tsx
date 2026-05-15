@@ -1,30 +1,28 @@
-import * as React from "react"
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  CarFront, 
-  Clock, 
-  UserCheck, 
-  CheckCircle2, 
-  Loader2, 
-  AlertTriangle, 
-  ArrowLeft,
-  ChevronRight,
-  History,
-  Timer
-} from 'lucide-react'
-import { format } from 'date-fns'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+ArrowLeft,
+CarFront,
+CheckCircle2,
+Clock,
+History,
+Loader2,
+Timer,
+UserCheck
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
 import { toast } from 'sonner'
 
 // Components Mobile
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 type Tab = 'fila' | 'historico'

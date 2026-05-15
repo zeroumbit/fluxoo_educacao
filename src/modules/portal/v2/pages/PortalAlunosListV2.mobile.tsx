@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { AlertCircle,ArrowRightLeft,ChevronRight,Copy } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, AlertCircle, Copy, ArrowRightLeft } from 'lucide-react';
 import { usePortalContext } from '../../context';
-import { NativeHeader } from '../components/NativeHeader';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { ModalSolicitarTransferenciaPortal } from '../components/ModalSolicitarTransferenciaPortal';
-import { Button } from '@/components/ui/button';
+import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
 const getInitials = (name: string) => {

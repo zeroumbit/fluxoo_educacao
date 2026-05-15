@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, ArrowRight, X, Building2, BookOpen, Users, UserCog, Wallet, FileCheck, UserPlus } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { ArrowRight,BookOpen,Building2,CheckCircle2,FileCheck,UserCog,UserPlus,Users,Wallet,X } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 interface OnboardingGuideProps {
   status: {

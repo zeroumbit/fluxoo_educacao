@@ -1,13 +1,13 @@
-import { useSolicitacoesUpgrade, useAprovarUpgrade, useRecusarUpgrade } from '../hooks'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { CheckCircle2, XCircle, MoreHorizontal, ArrowUpCircle, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { ArrowUpCircle,CheckCircle2,Loader2,MoreHorizontal,XCircle } from 'lucide-react'
+import { toast } from 'sonner'
+import { useAprovarUpgrade,useRecusarUpgrade,useSolicitacoesUpgrade } from '../hooks'
 
 export function UpgradesPage() {
   const { data: upgrades, isLoading } = useSolicitacoesUpgrade()

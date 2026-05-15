@@ -1,5 +1,5 @@
-import { Document, Page, View, Text } from '@react-pdf/renderer'
-import { baseStyles, SignatureBlock } from '@/lib/pdf'
+import { baseStyles,SignatureBlock } from '@/lib/pdf'
+import { Document,Page,Text,View } from '@react-pdf/renderer'
 
 interface FichaMatriculaData {
   nome: string

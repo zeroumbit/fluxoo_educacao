@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { BookMarked, Calendar, ChevronRight, Clock, MapPin, X, Info } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { usePlanosAulaPortal } from '../../hooks';
 import { sanitizeHtml } from '@/lib/sanitize-html';
+import { format,parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { AnimatePresence,motion } from 'framer-motion';
+import { BookMarked,ChevronRight,Clock,Info,X } from 'lucide-react';
+import { useState } from 'react';
+import { usePlanosAulaPortal } from '../../hooks';
 
 export function PortalPlanosAulaV2() {
   const { data: planos, isLoading } = usePlanosAulaPortal();

@@ -1,29 +1,26 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  BookOpen,
-  Filter,
-  CheckCircle2,
-  User,
-  ArrowLeft,
-  Search,
-  ChevronRight,
-  Lock,
-  Plus
-} from 'lucide-react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useTurmas } from '@/modules/turmas/hooks'
-import {
-  useAvaliacoesByTurmaDisciplina,
-  useNotasPorAvaliacao,
-  useSalvarNotasEmLote,
-  useStatusFechamento,
-  useDisciplinasPorTurma,
-} from '../hooks/hooks.v2'
-import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { toast } from 'sonner'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { useQuery } from '@tanstack/react-query'
+import {
+ArrowLeft,
+BookOpen,
+ChevronRight,
+Filter,
+Lock,
+Search
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import {
+useAvaliacoesByTurmaDisciplina,
+useDisciplinasPorTurma,
+useNotasPorAvaliacao,
+useSalvarNotasEmLote,
+useStatusFechamento,
+} from '../hooks/hooks.v2'
 
 const PERIODOS_BIMESTRE: Record<string, { inicio: string, fim: string }> = {
   '1': { inicio: '2024-02-01', fim: '2024-04-30' },
@@ -33,15 +30,15 @@ const PERIODOS_BIMESTRE: Record<string, { inicio: string, fim: string }> = {
 }
 
 // Componentes Mobile conforme MOBILE_FIRST_RULES.md
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 export function NotasPageMobile() {
   const navigate = useNavigate()

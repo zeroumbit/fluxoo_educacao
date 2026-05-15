@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { EscolasPageWeb } from './EscolasPage.web'
 import { EscolasPageMobile } from './EscolasPage.mobile'
+import { EscolasPageWeb } from './EscolasPage.web'
 
 export function EscolasPage() {
   return (

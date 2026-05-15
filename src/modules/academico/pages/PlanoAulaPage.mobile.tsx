@@ -1,45 +1,36 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, 
-  BookOpen, 
-  Edit2, 
-  Trash2, 
-  Calendar, 
-  Clock, 
-  Eye, 
-  Loader2, 
-  ArrowLeft,
-  Search,
-  CheckCircle,
-  X,
-  Printer,
-  ChevronRight,
-  MoreVertical,
-  ClipboardList
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
+import {
+ArrowLeft,
+BookOpen,
+Calendar,
+ClipboardList,
+Edit2,
+Loader2,
+Plus,
+Trash2
 } from 'lucide-react'
-import { get, set } from 'idb-keyval'
+import { useEffect,useMemo,useState } from 'react'
+import { useFieldArray,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
 import { useAuth } from '@/modules/auth/AuthContext'
-import { usePlanosAula, useCriarPlanoAula, useAtualizarPlanoAula, useExcluirPlanoAula } from '../hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
+import { useAtualizarPlanoAula,useCriarPlanoAula,useExcluirPlanoAula,usePlanosAula } from '../hooks'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 const CACHE_KEY_PLANOS = 'mobile_planos_aula_cache'

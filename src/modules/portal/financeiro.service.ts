@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
 import { financeiroService as adminFinanceiroService } from '@/modules/financeiro/service'
 
 export const portalFinanceiroService = {

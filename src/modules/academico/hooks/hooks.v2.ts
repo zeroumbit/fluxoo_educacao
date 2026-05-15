@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { academicoV2Service } from '../service.v2'
-import { QueryKeys } from '@/lib/query-keys'
 import { cacheEvents } from '@/lib/cache-events'
+import { QueryKeys } from '@/lib/query-keys'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { academicoV2Service } from '../service.v2'
 
 // ==================================================================================
 // AVALIAÇÕES

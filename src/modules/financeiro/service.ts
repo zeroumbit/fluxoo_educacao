@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
 import type { CobrancaInsert } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
+import { supabase } from '@/lib/supabase'
 
 export const financeiroService = {
   /**

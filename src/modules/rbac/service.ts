@@ -4,25 +4,24 @@
  */
 import { supabase } from '@/lib/supabase'
 import type {
-  PerfilAcesso,
-  PerfilAcessoInsert,
-  PerfilAcessoUpdate,
-  Permission,
-  PerfilPermissionInsert,
-  SystemModule,
-  CargoV2,
-  CargoV2Insert,
-  UsuarioSistema,
-  UsuarioSistemaInsert,
-  UsuarioSistemaUpdate,
-  UserPermissionOverrideInsert,
-  UserPermissionOverride,
-  ApprovalWorkflow,
-  ApprovalWorkflowInsert,
-  AuditLogV2,
-  AuditLogV2Insert,
-  ResolvedPermission,
-  ScopeType,
+ApprovalWorkflow,
+ApprovalWorkflowInsert,
+AuditLogV2Insert,
+CargoV2,
+CargoV2Insert,
+PerfilAcesso,
+PerfilAcessoInsert,
+PerfilAcessoUpdate,
+PerfilPermissionInsert,
+Permission,
+ResolvedPermission,
+ScopeType,
+SystemModule,
+UserPermissionOverride,
+UserPermissionOverrideInsert,
+UsuarioSistema,
+UsuarioSistemaInsert,
+UsuarioSistemaUpdate
 } from './types'
 
 export const rbacService = {

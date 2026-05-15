@@ -1,7 +1,7 @@
-import React, { type ReactNode } from 'react'
-import { motion, type PanInfo, useMotionValue, useTransform } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { Trash2, Edit2 } from 'lucide-react'
+import { motion,type PanInfo,useMotionValue,useTransform } from 'framer-motion'
+import { Edit2,Trash2 } from 'lucide-react'
+import { type ReactNode } from 'react'
 
 interface NativeCardProps {
   children: ReactNode

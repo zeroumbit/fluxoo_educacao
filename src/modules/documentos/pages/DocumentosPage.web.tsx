@@ -1,39 +1,59 @@
-import { useState, useMemo } from 'react'
-import { logger } from '@/lib/logger'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useTemplates, useCriarTemplate, useAtualizarTemplate, useExcluirTemplate, useDocumentosEmitidos, useEmitirDocumento, useSolicitacoesDocumento, useAtualizarSolicitacao, useVincularDocumentoSolicitacao } from '../hooks'
-import { useAlunos, useAluno } from '@/modules/alunos/hooks'
-import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
-import { useBoletimV2PorAluno } from '@/modules/academico/hooks/hooks.v2'
-import { useEscola } from '@/modules/escolas/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
-import {
-  Plus, Loader2, FileText, FileOutput, Pencil, Trash2, Search,
-  FileCheck, GraduationCap, Scale, HeartPulse, LogOut,
-  Image as ImageIcon, ClipboardCheck, ArrowRight, UserCircle, Activity,
-  Printer, Download, Eye, X, Inbox, CheckCircle2, Clock, Package, ShieldCheck,
-  AlertTriangle
-} from 'lucide-react'
-import * as Docs from '../DocumentEngineComponents'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { usePdf } from '@/hooks/usePdf'
+import { logger } from '@/lib/logger'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
+import { cn } from '@/lib/utils'
+import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
+import { useBoletimV2PorAluno } from '@/modules/academico/hooks/hooks.v2'
+import { useAluno,useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { AutorizacoesAdminTab } from '@/modules/autorizacoes/components/AutorizacoesAdminTab'
+import { useEscola } from '@/modules/escolas/hooks'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+Activity,
+AlertTriangle,
+ArrowRight,
+CheckCircle2,
+ClipboardCheck,
+Download,Eye,
+FileCheck,
+FileOutput,
+FileText,
+GraduationCap,
+HeartPulse,
+Image as ImageIcon,
+Inbox,
+Loader2,
+LogOut,
+Package,
+Pencil,
+Plus,
+Printer,
+Scale,
+Search,
+ShieldCheck,
+Trash2,
+UserCircle,
+X
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 import { ContratoTab } from '../components/ContratoTab'
+import * as Docs from '../DocumentEngineComponents'
+import { useAtualizarSolicitacao,useAtualizarTemplate,useCriarTemplate,useDocumentosEmitidos,useEmitirDocumento,useExcluirTemplate,useSolicitacoesDocumento,useTemplates,useVincularDocumentoSolicitacao } from '../hooks'
 
 const templateSchema = z.object({
   tipo: z.string().min(1),

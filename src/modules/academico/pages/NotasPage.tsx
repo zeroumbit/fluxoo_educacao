@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { NotasPageWeb } from './NotasPage.web'
 import { NotasPageMobile } from './NotasPage.mobile'
+import { NotasPageWeb } from './NotasPage.web'
 
 export function NotasPage() {
   return (

@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils'
 
 /**
  * Tipo visual da cobrança para exibição na UI

@@ -1,13 +1,12 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Check, Copy } from 'lucide-react'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogTitle
+} from '@/components/ui/dialog'
+import { Check,Copy } from 'lucide-react'
 
 interface ModalCopyConfirmProps {
   isOpen: boolean

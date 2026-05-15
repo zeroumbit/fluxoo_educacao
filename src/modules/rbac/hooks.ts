@@ -2,10 +2,10 @@
  * React Query Hooks para RBAC V2.2
  * Hooks para gerenciar perfis, permissões, cargos e auditoria via TanStack Query.
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { rbacService } from './service'
 import { useAuth } from '@/modules/auth/AuthContext'
-import type { PerfilAcessoInsert, PerfilAcessoUpdate, ScopeType } from './types'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { rbacService } from './service'
+import type { PerfilAcessoInsert,PerfilAcessoUpdate,ScopeType } from './types'
 
 // ========== MÓDULOS ==========
 export function useSystemModules() {

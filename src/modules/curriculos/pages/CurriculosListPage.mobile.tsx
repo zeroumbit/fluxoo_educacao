@@ -2,4 +2,4 @@
 // Por enquanto, usa o mesmo componente da versão web
 // Pode ser customizada futuramente para melhor UX mobile
 
-export { CurriculosListPage as CurriculosListPage } from './CurriculosListPage.web'
+export { CurriculosListPage as CurriculosListPage } from './CurriculosListPage.web';

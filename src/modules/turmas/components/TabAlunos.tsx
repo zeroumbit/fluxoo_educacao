@@ -1,37 +1,37 @@
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/ui/table'
-import {
-  Search,
-  BarChart3,
-  FileText,
-  Eye,
-  Pencil,
-  Loader2,
-  Users,
-  ShieldCheck,
-  X,
-  User
-} from 'lucide-react'
-import { useTurmaStore } from '../store'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useAtualizarMatricula,useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
+import {
+BarChart3,
+Eye,
+FileText,
+Loader2,
+Pencil,
+Search,
+ShieldCheck,
+User,
+Users,
+X
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTurmas } from '../hooks'
-import { useMatriculaAtivaDoAluno, useAtualizarMatricula } from '@/modules/academico/hooks'
+import { useTurmaStore } from '../store'
 
 interface TabAlunosProps {
   turmaId: string;

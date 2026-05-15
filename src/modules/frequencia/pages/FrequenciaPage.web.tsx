@@ -1,46 +1,44 @@
-import { useState, useMemo, useEffect } from 'react'
-import { logger } from '@/lib/logger'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useTurmas } from '@/modules/turmas/hooks'
-import { useSalvarFrequencias, useFrequenciasPorTurmaData } from '../hooks'
-import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
-import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card,CardContent } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import {
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Save,
-  Users,
-  FileX,
-  MessageSquare,
-  CheckCheck,
-  FileText,
-  Heart,
-  Brain,
-  Cake,
-} from 'lucide-react'
-import type { FrequenciaStatus } from '@/lib/database.types'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { useAlertasProfessor } from '@/modules/professor/hooks'
 import { useGestorGuard } from '@/hooks/useGestorGuard'
+import type { FrequenciaStatus } from '@/lib/database.types'
+import { logger } from '@/lib/logger'
+import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useAlertasProfessor } from '@/modules/professor/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
+import {
+AlertCircle,
+Brain,
+Cake,
+CheckCheck,
+CheckCircle,
+FileText,
+Heart,
+Loader2,
+MessageSquare,
+Save,
+Users,
+XCircle
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useLocation,useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useFrequenciasPorTurmaData,useSalvarFrequencias } from '../hooks'
 
 const _statusConfig: Record<FrequenciaStatus, { label: string; icon: any; color: string; bgColor: string; borderColor: string }> = {
   presente: {

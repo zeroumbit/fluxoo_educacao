@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, CreditCard, Clock } from 'lucide-react'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog'
+import { Clock,CreditCard } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface TrialEndingModalProps {
   assinatura: {

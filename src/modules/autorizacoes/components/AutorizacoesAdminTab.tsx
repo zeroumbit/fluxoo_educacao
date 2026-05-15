@@ -1,35 +1,44 @@
-import React, { useState, useMemo } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useModelosAutorizacaoAdmin,
-  useCriarModeloAutorizacao,
-  useAtualizarModeloAutorizacao,
-  useToggleAtivoAutorizacao,
-} from '@/modules/autorizacoes/hooks'
-import { CATEGORIA_LABELS, CATEGORIA_CORES } from '@/modules/autorizacoes/service'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+Dialog,DialogContent,
+DialogDescription,DialogFooter,
+DialogHeader,DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from '@/components/ui/dialog'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { toast } from 'sonner'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  Plus, Search, Pencil, ShieldCheck, ShieldOff, Shield,
-  Globe, Building2, Eye, EyeOff, Loader2, AlertTriangle, CheckCircle2, Copy
+useAtualizarModeloAutorizacao,
+useCriarModeloAutorizacao,
+useModelosAutorizacaoAdmin,
+useToggleAtivoAutorizacao,
+} from '@/modules/autorizacoes/hooks'
+import { CATEGORIA_CORES,CATEGORIA_LABELS } from '@/modules/autorizacoes/service'
+import {
+AlertTriangle,
+Building2,
+CheckCircle2,Copy,
+Eye,
+Globe,
+Loader2,
+Pencil,
+Plus,Search,
+Shield,
+ShieldCheck,ShieldOff
 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 const CATEGORIAS = [
   'matricula', 'saude', 'imagem', 'conduta', 'tecnologia',
   'transporte', 'alimentacao', 'inclusao', 'religiosidade', 'projetos', 'eventos',
 ]
 
-import { MODELOS_SISTEMA_PADRAO } from '@/modules/autorizacoes/constants'
 
 type Modelo = {
   id: string

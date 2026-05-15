@@ -1,37 +1,36 @@
-import { useState, useEffect, useCallback } from 'react'
-import {
-  KeyRound,
-  CheckCircle2,
-  AlertTriangle,
-  ExternalLink,
-  ShieldCheck,
-  Settings2,
-  Trash2,
-  Signal,
-  SignalZero,
-  Loader2,
-  ArrowLeft,
-  RefreshCw,
-  Save,
-  X,
-  ChevronRight
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
-  useGatewaysDisponiveis,
-  useGatewayTenantConfig,
-  useSalvarGatewayTenantConfig,
-  useDesativarGatewayTenant
+useDesativarGatewayTenant,
+useGatewaysDisponiveis,
+useGatewayTenantConfig,
+useSalvarGatewayTenantConfig
 } from '@/modules/financeiro/hooks-avancado'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+ArrowLeft,
+CheckCircle2,
+ChevronRight,
+ExternalLink,
+KeyRound,
+Loader2,
+Save,
+Settings2,
+ShieldCheck,
+Signal,
+SignalZero,
+Trash2,
+X
+} from 'lucide-react'
+import { useCallback,useEffect,useState } from 'react'
 import { toast } from 'sonner'
 
 export function GatewayTenantConfigPageMobile() {

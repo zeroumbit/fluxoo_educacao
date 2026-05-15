@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 
 export const welcomeService = {
   /**

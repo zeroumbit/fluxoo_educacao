@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
+import type { TurmaInsert,TurmaUpdate } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
-import type { TurmaInsert, TurmaUpdate } from '@/lib/database.types'
-import type { Professor, Disciplina } from './types'
+import { supabase } from '@/lib/supabase'
+import type { Disciplina,Professor } from './types'
 
 export const turmaService = {
   async listar(tenantId: string, professorId?: string) {

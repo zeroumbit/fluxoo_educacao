@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { MuralPage as MuralPageWeb } from './MuralPage.web'
 import { MuralPageMobile } from './MuralPage.mobile'
+import { MuralPage as MuralPageWeb } from './MuralPage.web'
 
 export function MuralPage() {
   return (

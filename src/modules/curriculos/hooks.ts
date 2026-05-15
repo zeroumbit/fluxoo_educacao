@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { CurriculoInsert } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { curriculosService } from './service'
-import type { CurriculoInsert, Curriculo } from '@/lib/database.types'
 import type { CurriculoLista } from './types'
 
 /**

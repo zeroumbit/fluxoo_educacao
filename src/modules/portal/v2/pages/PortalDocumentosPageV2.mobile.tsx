@@ -1,42 +1,40 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
-  FileText,
-  Plus,
-  CheckCircle2,
-  Clock,
-  Package,
-  XCircle,
-  AlertCircle,
-  Send,
-  Download,
-  Eye,
-  Loader2,
-  ChevronRight,
-  Info
-} from 'lucide-react'
+Sheet,
+SheetContent,
+SheetDescription,
+SheetFooter,
+SheetHeader,
+SheetTitle
+} from '@/components/ui/sheet'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import {
+AlertCircle,
+CheckCircle2,
+Clock,
+Download,
+Eye,
+FileText,
+Info,
+Loader2,
+Package,
+Send,
+XCircle
+} from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { usePortalContext } from '../../context'
 import {
-  useSolicitacoesDocumento,
-  useCriarSolicitacaoDocumento,
-  useResponsavel,
-  useTemplatesDocumento
+useCriarSolicitacaoDocumento,
+useResponsavel,
+useSolicitacoesDocumento,
+useTemplatesDocumento
 } from '../../hooks'
 import { NativeHeader } from '../components/NativeHeader'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter
-} from '@/components/ui/sheet'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'sonner'
 
 const DOCUMENT_TYPE_ICONS: Record<string, any> = {
   ficha_matricula: FileText,

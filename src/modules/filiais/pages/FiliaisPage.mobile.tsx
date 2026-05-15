@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Building2, 
-  MapPin, 
-  Plus, 
-  Search,
-  ChevronRight,
-  Loader2
-} from 'lucide-react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useFiliais, useCriarFilial, useAtualizarFilial, useExcluirFilial } from '../hooks'
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
-import { mascaraCNPJ, mascaraCEP } from '@/lib/validacoes'
 import { useViaCEP } from '@/hooks/use-viacep'
+import { cn } from '@/lib/utils'
+import { mascaraCEP,mascaraCNPJ } from '@/lib/validacoes'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Building2,
+ChevronRight,
+Loader2,
+MapPin,
+Plus,
+Search
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { toast } from 'sonner'
+import { useAtualizarFilial,useCriarFilial,useExcluirFilial,useFiliais } from '../hooks'
 
 export function FiliaisPageMobile() {
   const { authUser } = useAuth()

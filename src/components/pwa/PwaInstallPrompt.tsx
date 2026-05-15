@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Download, 
-  X, 
-  Zap, 
-  Bell, 
-  ShieldCheck, 
-  Share, 
-  PlusSquare, 
-  Smartphone,
-  ArrowDown
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+ArrowDown,
+Bell,
+Download,
+PlusSquare,
+Share,
+ShieldCheck,
+Smartphone,
+X,
+Zap
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React,{ useEffect,useState } from 'react';
 
 interface PwaInstallPromptProps {
   onDismiss?: () => void;

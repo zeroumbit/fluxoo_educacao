@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { assinaturaService } from './service'
 import type { SolicitacaoUpgradeInsert } from '@/lib/database.types'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { assinaturaService } from './service'
 
 export function useEscola() {
   const { authUser } = useAuth()

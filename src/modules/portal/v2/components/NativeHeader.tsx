@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown, Bell, Users, Copy } from 'lucide-react';
-import { usePortalContext } from '../../context';
 import { NotificationBell } from '@/components/ui/NotificationBell';
-import { usePortalNotifications } from '@/hooks/useNotifications';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle,
-  SheetTrigger 
+import {
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
+SheetTrigger
 } from '@/components/ui/sheet';
+import { usePortalNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { ArrowLeft,ChevronDown,Copy,Users } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePortalContext } from '../../context';
 
 interface NativeHeaderProps {
   title: string;

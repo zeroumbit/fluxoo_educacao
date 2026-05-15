@@ -1,66 +1,60 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  FileText, 
-  GraduationCap, 
-  Scale, 
-  HeartPulse, 
-  Search, 
-  Plus, 
-  History, 
-  Clock, 
-  CheckCircle2, 
-  X, 
-  Printer, 
-  Eye, 
-  Download,
-  ArrowLeft,
-  ChevronRight,
-  UserCircle,
-  ClipboardCheck,
-  FileCheck,
-  FileOutput,
-  LogOut,
-  ArrowRight,
-  Image as ImageIcon,
-  Activity,
-  Inbox,
-  ShieldCheck,
-  Package,
-  Loader2,
-  Settings2,
-  Shield,
-  Pencil,
-  Copy,
-  Globe,
-  Building2,
-  EyeOff,
-  SwitchCamera
+import { motion } from 'framer-motion'
+import {
+Activity,
+ArrowLeft,
+ArrowRight,
+CheckCircle2,
+ChevronRight,
+ClipboardCheck,
+Clock,
+Copy,
+Eye,
+FileCheck,
+FileOutput,
+FileText,
+GraduationCap,
+HeartPulse,
+History,
+Image as ImageIcon,
+Inbox,
+Loader2,
+LogOut,
+Pencil,
+Plus,
+Printer,
+Scale,
+Search,
+Settings2,
+Shield,
+ShieldCheck,
+UserCircle,
+X
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
 import { toast } from 'sonner'
 
-import { useAuth } from '@/modules/auth/AuthContext'
-import { 
-  useTemplates, 
-  useDocumentosEmitidos, 
-  useEmitirDocumento, 
-  useSolicitacoesDocumento, 
-  useAtualizarSolicitacao 
-} from '../hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { useModelosAutorizacaoAdmin } from '@/modules/autorizacoes/hooks'
 import { ContratoTab } from '../components/ContratoTab'
+import {
+useAtualizarSolicitacao,
+useDocumentosEmitidos,
+useEmitirDocumento,
+useSolicitacoesDocumento,
+useTemplates
+} from '../hooks'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 const CATEGORIES = [

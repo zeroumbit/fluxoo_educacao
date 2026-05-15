@@ -1,25 +1,32 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { ProfessorTurmasPageMobile } from './ProfessorTurmasPage.mobile'
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useSaudeTurmas } from '@/modules/professor/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Search, Loader2, Users, Eye, School, TrendingUp, TrendingDown, Clock
+Clock,
+Eye,
+Loader2,
+School,
+Search,
+TrendingDown,
+TrendingUp,
+Users
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ProfessorTurmasPageMobile } from './ProfessorTurmasPage.mobile'
 
 export function ProfessorTurmasPage() {
   const { authUser } = useAuth()

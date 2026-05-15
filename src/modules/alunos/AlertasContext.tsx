@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { RadarAluno } from './dashboard.service';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import React,{ createContext,useCallback,useContext,useEffect,useMemo,useRef } from 'react';
 import { alertasService } from './alertas.service';
+import type { RadarAluno } from './dashboard.service';
 
 export type AlertaStatus = 'ativo' | 'tratado' | 'arquivado';
 export type AlertaGravidade = 'alta' | 'media' | 'baixa';

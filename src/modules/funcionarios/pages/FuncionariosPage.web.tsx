@@ -1,32 +1,32 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { logger } from '@/lib/logger'
-import {
-  useFuncionarios,
-  useCriarFuncionario,
-  useAtualizarFuncionario,
-  useExcluirFuncionario,
-  useCriarUsuarioEscola,
-  useFuncoes,
-  useCriarFuncaoCustom,
-  useGerarFolhaPagamento,
-} from '../hooks'
-import { usePerfis } from '@/modules/rbac/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MultiSelect } from '@/components/ui/multi-select'
-import { Plus, Loader2, UserPlus, KeyRound, Eye, EyeOff, PlusCircle, Wallet, Calendar, Shield } from 'lucide-react'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { logger } from '@/lib/logger'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { usePerfis } from '@/modules/rbac/hooks'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Calendar,Eye,EyeOff,KeyRound,Loader2,Plus,PlusCircle,Shield,UserPlus,Wallet } from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { Controller,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import {
+useAtualizarFuncionario,
+useCriarFuncaoCustom,
+useCriarFuncionario,
+useCriarUsuarioEscola,
+useExcluirFuncionario,
+useFuncionarios,
+useFuncoes,
+useGerarFolhaPagamento,
+} from '../hooks'
 
 // ---------------------------------------------------------------------------
 // Schemas

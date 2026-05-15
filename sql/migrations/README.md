@@ -32,14 +32,14 @@ psql -h <host> -U <user> -d <database> -f sql/migrations/001_rls_gestor_full_acc
 - `gestor_config_insert` - Gestor pode criar configurações
 - `gestor_config_update` - Gestor pode atualizar configurações
 - `gestor_config_delete` - Gestor pode excluir configurações
-- `super_admin_all_config` - Super admin tem acesso total
+- `super_admin_all_config` - Super admin pode consultar para auditoria
 
 ### `configuracoes_escola_historico`
 - `gestor_historico_select` - Gestor pode ver histórico
 
 ### `filiais`
 - `gestor_filiais_all` - Gestor tem acesso total às filiais
-- `super_admin_all_filiais` - Super admin tem acesso total
+- `super_admin_all_filiais` - Super admin pode consultar para auditoria
 
 ## Funções Auxiliares
 
@@ -49,6 +49,9 @@ Verifica se o usuário autenticado é gestor da escola através do `gestor_user_
 ```sql
 SELECT is_gestor_da_escola('uuid-da-escola');
 ```
+
+### `is_super_admin_app_metadata()`
+Verifica Super Admin somente por `app_metadata`, sem depender de email ou metadados editáveis pelo usuário.
 
 ## Rollback
 
@@ -64,4 +67,5 @@ DROP POLICY IF EXISTS "gestor_filiais_all" ON filiais;
 DROP POLICY IF EXISTS "super_admin_all_config" ON configuracoes_escola;
 DROP POLICY IF EXISTS "super_admin_all_filiais" ON filiais;
 DROP FUNCTION IF EXISTS is_gestor_da_escola(uuid);
+DROP FUNCTION IF EXISTS is_super_admin_app_metadata();
 ```

@@ -1,47 +1,37 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
-import { useMatriculasAtivas } from '@/modules/academico/hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  Search,
-  Plus,
-  User,
-  ChevronRight,
-  Filter,
-  ArrowLeft,
-  X,
-  MoreVertical,
-  Percent,
-  Shield,
-  Eye,
-  Edit2,
-  UserMinus,
-  Trash2,
-  AlertCircle,
-  Loader2
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
-} from '@/components/ui/dialog'
-import { toast } from 'sonner'
-import { get, set } from 'idb-keyval'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
+import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
+import {
+AlertCircle,
+ArrowLeft,
+Edit2,
+Eye,
+Filter,
+MoreVertical,
+Percent,
+Plus,
+Search,
+Shield,
+Trash2,
+User,
+UserMinus,
+X
+} from 'lucide-react'
+import React,{ useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
+import { useAlunos,useAtualizarAluno,useExcluirAluno } from '../hooks'
 
 const CACHE_KEY = 'alunos_list_cache'
 

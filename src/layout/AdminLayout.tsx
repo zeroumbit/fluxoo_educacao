@@ -1,52 +1,50 @@
-import { useState } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useIsSuperAdmin } from '@/lib/hooks'
-import { useDashboard } from '@/modules/alunos/dashboard.hooks'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import {
-  House,
-  User,
-  Users,
-  BookOpen,
-  BookType,
-  CalendarCheck,
-  Megaphone,
-  CreditCard,
-  Menu,
-  LogOut,
-  GraduationCap,
-  ChevronRight,
-  X,
-  Building2,
-  Shield,
-  Briefcase,
-  ClipboardList,
-  FileText,
-  Calendar,
-  Settings,
-  Wallet,
-  Package,
-  UserCog,
-  Lock,
-  TrendingUp,
-  CarFront,
-  Home,
-  Bell,
-  FileUser,
-  Search,
-  Pencil,
-  KeyRound,
-  ArrowRightLeft,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications } from '@/hooks/useNotifications'
-import { TrialEndingModal } from '@/components/shared/TrialEndingModal'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { TrialEndingModal } from '@/components/shared/TrialEndingModal'
+import { Avatar,AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { Separator } from '@/components/ui/separator'
+import { Sheet,SheetContent,SheetDescription,SheetTitle } from '@/components/ui/sheet'
+import { useEscolaNotifications } from '@/hooks/useNotifications'
+import { useIsSuperAdmin } from '@/lib/hooks'
+import { cn } from '@/lib/utils'
+import { useDashboard } from '@/modules/alunos/dashboard.hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import {
+ArrowRightLeft,
+BookOpen,
+BookType,
+Briefcase,
+Building2,
+Calendar,
+CalendarCheck,
+CarFront,
+ChevronRight,
+ClipboardList,
+CreditCard,
+FileText,
+FileUser,
+GraduationCap,
+Home,
+House,
+Lock,
+LogOut,
+Megaphone,
+Menu,
+Package,
+Pencil,
+Search,
+Settings,
+Shield,
+TrendingUp,
+User,
+UserCog,
+Users,
+Wallet,
+X
+} from 'lucide-react'
+import { useState } from 'react'
+import { NavLink,Outlet,useLocation,useNavigate } from 'react-router-dom'
 
 interface NavItem {
   name: string
@@ -60,11 +58,11 @@ interface NavGroup {
   items: NavItem[]
 }
 
-import { usePermissions } from '@/providers/RBACProvider'
 import CorujaIcon from '@/assets/coruja_ANDROID.svg'
-import { useEscola } from '@/modules/escolas/hooks'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useEscola } from '@/modules/escolas/hooks'
 import { useMarketplaceCategorias } from '@/modules/super-admin/marketplace.hooks'
+import { usePermissions } from '@/providers/RBACProvider'
 
 // Itens fixos na parte inferior da sidebar (sempre por último)
 const bottomNavigationItems = [

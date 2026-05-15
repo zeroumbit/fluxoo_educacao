@@ -1,8 +1,7 @@
-import { QueryKeys } from "@/lib/query-keys"
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { FilialInsert,FilialUpdate } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { filialService } from './service'
-import type { FilialInsert, FilialUpdate } from '@/lib/database.types'
 
 export function useFiliais() {
   const { authUser } = useAuth()

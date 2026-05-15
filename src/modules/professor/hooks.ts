@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { professorService } from './service'
-import type { AlertaProfessor } from './types'
 
 /** Agenda de aulas de hoje. StaleTime: 5 minutos. */
 export function useAgendaDiaria() {
@@ -130,6 +129,5 @@ export function useDetalhesAluno(alunoId: string | undefined) {
 
 // Re-export de notificações
 export {
-  useProfessorNotifications,
-  useProfessorNotificacoesActions
+useProfessorNotificacoesActions,useProfessorNotifications
 } from './hooks/useProfessorNotifications'

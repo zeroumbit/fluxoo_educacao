@@ -1,22 +1,32 @@
-import React from 'react';
-import { 
-  UserCircle, Phone, Mail, CheckCircle2, 
-  Archive, RefreshCcw, AlertTriangle, Info, Calendar, DollarSign, Users, Eye
+import { BottomSheet } from '@/components/mobile/BottomSheet';
+import { BadgeGravidade } from '@/components/ui/BadgeGravidade';
+import { Button } from '@/components/ui/button';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import {
+AlertTriangle,
+Archive,
+Calendar,
+CheckCircle2,
+DollarSign,
+Info,
+Mail,
+Phone,
+RefreshCcw,
+UserCircle,
+Users
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { BadgeGravidade } from '@/components/ui/BadgeGravidade';
-import { useAlertas } from '../AlertasContext';
 import type { RadarAlunoComStatus } from '../AlertasContext';
-import { cn } from '@/lib/utils';
-import { BottomSheet } from '@/components/mobile/BottomSheet';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from '@/components/ui/dialog';
+import { useAlertas } from '../AlertasContext';
+import { useState, useEffect } from 'react';
 
 interface RadarEvasaoModalProps {
   aluno: RadarAlunoComStatus | null;
@@ -28,8 +38,39 @@ interface RadarEvasaoModalProps {
 function RadarEvasaoDetailsContent({ aluno, onClose, isProfessor = false }: { aluno: RadarAlunoComStatus; onClose: () => void; isProfessor?: boolean }) {
   const navigate = useNavigate();
   const { mudarStatusAlerta } = useAlertas();
+  const [responsavel, setResponsavel] = useState<{ telefone: string; email: string } | null>(null);
 
-  if (!aluno) return null;
+  useEffect(() => {
+    async function buscarResponsavel() {
+      if (!aluno.aluno_id) return;
+      
+      const { data } = await supabase
+        .from('aluno_responsavel')
+        .select('responsaveis(telefone, email)')
+        .eq('aluno_id', aluno.aluno_id)
+        .limit(1)
+        .maybeSingle();
+      
+      if (data && (data as any).responsaveis) {
+        setResponsavel((data as any).responsaveis);
+      }
+    }
+    
+    buscarResponsavel();
+  }, [aluno.aluno_id]);
+
+  const handleLigar = () => {
+    if (responsavel?.telefone) {
+      const telefone = responsavel.telefone.replace(/\D/g, '');
+      window.open(`tel:${telefone}`, '_self');
+    }
+  };
+
+  const handleEnviarEmail = () => {
+    if (responsavel?.email) {
+      window.open(`mailto:${responsavel.email}`, '_self');
+    }
+  };
 
   const nivel = aluno.gravidade === 'alta' ? 'CRÍTICO' : aluno.gravidade === 'media' ? 'ALERTA' : 'ATENÇÃO';
 
@@ -130,80 +171,80 @@ function RadarEvasaoDetailsContent({ aluno, onClose, isProfessor = false }: { al
       </div>
 
       {/* Ações */}
-      <div className="flex items-center justify-between gap-3 pt-6 border-t border-zinc-100">
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-100">
         <Button
           variant="outline"
           onClick={() => {
             navigate(`/alunos/${aluno.aluno_id}`)
             onClose()
           }}
-          className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600 shrink-0"
+          className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
           title="Ver Perfil Completo"
         >
           <UserCircle className="h-6 w-6" />
         </Button>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
-            title="Ligar"
-          >
-            <Phone className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600"
-            title="Enviar E-mail"
-          >
-            <Mail className="h-5 w-5" />
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={handleLigar}
+          disabled={!responsavel?.telefone}
+          className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={responsavel?.telefone ? `Ligar para ${responsavel.telefone}` : "Telefone não disponível"}
+        >
+          <Phone className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleEnviarEmail}
+          disabled={!responsavel?.email}
+          className="h-12 w-12 rounded-xl border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={responsavel?.email ? `Enviar e-mail para ${responsavel.email}` : "E-mail não disponível"}
+        >
+          <Mail className="h-5 w-5" />
+        </Button>
 
-        <div className="flex items-center gap-3">
-           {aluno.status === 'ativo' ? (
-             <Button
-              variant="outline"
-              onClick={() => {
-                mudarStatusAlerta(aluno, 'tratado')
-                onClose()
-              }}
-              className="h-12 w-12 rounded-xl border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-              title="Marcar como Tratado"
-            >
-              <CheckCircle2 className="h-6 w-6" />
-            </Button>
-           ) : (
-             <Button
-              variant="outline"
-              onClick={() => {
-                mudarStatusAlerta(aluno, 'ativo')
-                onClose()
-              }}
-              className="h-12 w-12 rounded-xl border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100"
-              title="Reverter para Ativo"
-            >
-              <RefreshCcw className="h-5 w-5" />
-            </Button>
-           )}
-
+        {aluno.status === 'ativo' ? (
           <Button
             variant="outline"
             onClick={() => {
-              mudarStatusAlerta(aluno, aluno.status === 'arquivado' ? 'ativo' : 'arquivado')
+              mudarStatusAlerta(aluno, 'tratado')
               onClose()
             }}
-            className={cn(
-              "h-12 w-12 rounded-xl",
-              aluno.status === 'arquivado' 
-                ? "border-amber-100 bg-amber-50 text-amber-600 hover:bg-amber-100" 
-                : "border-zinc-200 text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600"
-            )}
-            title={aluno.status === 'arquivado' ? "Desarquivar" : "Arquivar Alerta"}
+            className="h-12 w-12 rounded-xl border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            title="Marcar como Tratado"
           >
-            <Archive className="h-5 w-5" />
+            <CheckCircle2 className="h-6 w-6" />
           </Button>
-        </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => {
+              mudarStatusAlerta(aluno, 'ativo')
+              onClose()
+            }}
+            className="h-12 w-12 rounded-xl border-blue-100 bg-blue-50 text-blue-600 hover:bg-blue-100"
+            title="Reverter para Ativo"
+          >
+            <RefreshCcw className="h-5 w-5" />
+          </Button>
+        )}
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            mudarStatusAlerta(aluno, aluno.status === 'arquivado' ? 'ativo' : 'arquivado')
+            onClose()
+          }}
+          className={cn(
+            "h-12 w-12 rounded-xl",
+            aluno.status === 'arquivado' 
+              ? "border-amber-100 bg-amber-50 text-amber-600 hover:bg-amber-100" 
+              : "border-zinc-200 text-zinc-400 hover:bg-zinc-50 hover:text-zinc-600"
+          )}
+          title={aluno.status === 'arquivado' ? "Desarquivar" : "Arquivar Alerta"}
+        >
+          <Archive className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );

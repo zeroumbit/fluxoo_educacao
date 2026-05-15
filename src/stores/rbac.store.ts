@@ -2,12 +2,12 @@
  * Zustand Store para RBAC V2.2
  * Cache de permissões com expiração e invalidação via Supabase Realtime.
  */
-import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { rbacService } from '@/modules/rbac/service'
-import type { ResolvedPermission, ScopeType } from '@/modules/rbac/types'
-import { logger } from '@/lib/logger'
+import type { ResolvedPermission,ScopeType } from '@/modules/rbac/types'
+import { create } from 'zustand'
+import { createJSONStorage,persist } from 'zustand/middleware'
 
 const CACHE_DURATION_MS = 30 * 60 * 1000 // 30 minutos
 

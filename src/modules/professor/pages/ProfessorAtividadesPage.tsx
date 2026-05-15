@@ -1,19 +1,24 @@
-import { useState, useMemo } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/ui/table'
+import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  Search, Loader2, FileText, Calendar, Users, Eye, Edit, ClipboardList
+Calendar,
+ClipboardList,
+Edit,
+Eye,
+Search,
+Users
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
 
 export function ProfessorAtividadesPage() {
   const { authUser } = useAuth()

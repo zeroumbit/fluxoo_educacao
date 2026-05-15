@@ -1,26 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { logger } from '@/lib/logger';
+import { Button } from '@/components/ui/button';
 import {
-  User, MapPin, Activity, Save, Camera,
-  Loader2, Plus, X, Trash2, RefreshCw, AlertTriangle
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog';
+import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+Activity,
+AlertTriangle,
+Camera,
+Loader2,
+MapPin,
+Plus,
+RefreshCw,
+Save,
+Trash2,
+User,
+X
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { usePortalContext } from '../../context';
 import { useUpdateAlunoPortal } from '../../hooks';
-import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 
 const alunoCadastroSchema = z.object({
   nome_social: z.string().optional().nullable(),

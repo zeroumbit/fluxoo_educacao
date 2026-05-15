@@ -1,24 +1,23 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useNavigate } from 'react-router-dom'
-import { useSuperAdminDashboard, useTenantHealthScores } from '../hooks'
-import {
-  Building2,
-  AlertTriangle,
-  Loader2,
-  TrendingUp,
-  ArrowUpRight,
-  ShieldCheck,
-  Globe,
-  Plus,
-  Users,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Card,CardContent } from '@/components/ui/card'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useSuperAdminNotifications } from '@/hooks/useNotifications'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn,formatCurrency } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import {
+AlertCircle,
+AlertTriangle,
+ArrowUpRight,
+Building2,
+CheckCircle2,
+Loader2,
+Plus,
+ShieldCheck,
+TrendingUp,
+Users
+} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useSuperAdminDashboard,useTenantHealthScores } from '../hooks'
 
 export function SuperAdminDashboardPageMobile() {
   const navigate = useNavigate()

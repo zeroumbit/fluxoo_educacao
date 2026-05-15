@@ -1,5 +1,5 @@
+import type { EscolaInsert,EscolaUpdate } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { EscolaInsert, EscolaUpdate } from '@/lib/database.types'
 
 export const escolaService = {
   async listar() {

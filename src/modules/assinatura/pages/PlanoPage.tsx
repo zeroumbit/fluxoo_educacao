@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { PlanoPage as PlanoPageWeb } from './PlanoPage.web'
 import { PlanoPageMobile } from './PlanoPage.mobile'
+import { PlanoPage as PlanoPageWeb } from './PlanoPage.web'
 
 export function PlanoPage() {
   return (

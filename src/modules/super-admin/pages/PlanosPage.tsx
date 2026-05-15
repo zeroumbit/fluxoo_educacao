@@ -1,25 +1,29 @@
-import { useState } from 'react'
-import { usePlanos, useUpsertPlano, useDeletePlano, useModulos, usePlanoModulos, useSetPlanoModulos } from '../hooks'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+Dialog,DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,DialogTitle,
+DialogTrigger
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, Search, CheckCircle2, XCircle, Puzzle, Building2, Store, UserCircle } from 'lucide-react'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+import { Building2,CheckCircle2,Loader2,Pencil,Plus,Puzzle,Search,Store,Trash2,UserCircle,XCircle } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
+import { useDeletePlano,useModulos,usePlanoModulos,usePlanos,useSetPlanoModulos,useUpsertPlano } from '../hooks'
 
 const TIPOS_EMPRESA = [
   { value: 'escolas', label: 'Escolas', icon: Building2 },

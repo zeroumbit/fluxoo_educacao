@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase'
-import type { PortalConfigPix } from '@/lib/database.types'
 import { precheckLogin } from '@/lib/auth-rate-limit'
+import type { PortalConfigPix } from '@/lib/database.types'
+import { supabase } from '@/lib/supabase'
 
 const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
 const COMPROVANTE_MIME_TYPES = new Set([

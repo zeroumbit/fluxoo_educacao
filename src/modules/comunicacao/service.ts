@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase'
 import type { MuralAvisoInsert } from '@/lib/database.types'
+import { supabase } from '@/lib/supabase'
 
 /** Retorna true se o aviso ainda está dentro do período de vigência */
 export function isAvisoAtivo(aviso: { data_fim?: string | null }): boolean {

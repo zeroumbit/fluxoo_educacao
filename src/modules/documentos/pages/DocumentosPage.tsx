@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { DocumentosPage as DocumentosPageWeb } from './DocumentosPage.web'
 import { DocumentosPageMobile } from './DocumentosPage.mobile'
+import { DocumentosPage as DocumentosPageWeb } from './DocumentosPage.web'
 
 export function DocumentosPage() {
   return (

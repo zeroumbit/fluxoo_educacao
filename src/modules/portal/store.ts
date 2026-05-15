@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
 import type { AlunoVinculado } from '@/types/shared'
+import { create } from 'zustand'
+import { createJSONStorage,persist } from 'zustand/middleware'
 
 interface PortalState {
   alunoSelecionado: AlunoVinculado | null

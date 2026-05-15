@@ -1,5 +1,5 @@
+import type { NotificacaoInsert as DBNotificacaoInsert,Notificacao } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { Notificacao, NotificacaoInsert as DBNotificacaoInsert } from '@/lib/database.types'
 
 export interface NotificacaoInsert {
   tenant_id: string

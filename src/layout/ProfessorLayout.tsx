@@ -1,39 +1,38 @@
-import { useState, useEffect } from 'react'
-import { Link, useLocation, Outlet, Navigate, NavLink } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { cn } from '@/lib/utils'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { NotificationBell } from '@/components/NotificationBell'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { Avatar,AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import {
-  BookOpen,
-  Users,
-  Calendar,
-  ClipboardCheck,
-  FileText,
-  AlertTriangle,
-  House,
-  GraduationCap,
-  Menu,
-  X,
-  User,
-  LogOut,
-  ChevronRight,
-  Home,
-} from 'lucide-react'
+Sheet,
+SheetContent,
+SheetDescription,
+SheetTitle
+} from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { SmartAssistant } from '@/modules/professor/components/SmartAssistant'
 import { useDailyInsights } from '@/modules/professor/hooks/useDailyInsights'
 import { useProfessorNotifications } from '@/modules/professor/hooks/useProfessorNotifications'
-import { NotificationBell } from '@/components/NotificationBell'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import CorujaIcon from '@/assets/coruja_ANDROID.svg'
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+AlertTriangle,
+BookOpen,
+Calendar,
+ChevronRight,
+ClipboardCheck,
+FileText,
+GraduationCap,
+Home,
+House,
+LogOut,
+Menu,
+User,
+Users,
+X,
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { Navigate,NavLink,Outlet,useLocation } from 'react-router-dom'
 
 const professorNavGroups = [
   {

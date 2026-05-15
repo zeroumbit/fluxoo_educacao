@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { EscolaInsert,EscolaUpdate } from '@/lib/database.types'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { escolaService } from './service'
-import type { EscolaInsert, EscolaUpdate } from '@/lib/database.types'
 
 export function useEscolas() {
   return useQuery({

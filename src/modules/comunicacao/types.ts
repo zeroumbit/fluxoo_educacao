@@ -1,1 +1,1 @@
-export type { MuralAviso, MuralAvisoInsert } from '@/lib/database.types'
+export type { MuralAviso,MuralAvisoInsert } from '@/lib/database.types';

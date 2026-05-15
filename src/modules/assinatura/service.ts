@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase'
 import type { SolicitacaoUpgradeInsert } from '@/lib/database.types'
+import { supabase } from '@/lib/supabase'
 
 export const assinaturaService = {
   async buscarEscola(tenantId: string) {

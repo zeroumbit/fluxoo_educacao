@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react'
-import { useResponsavel, useVinculosAtivos } from './hooks'
 import { supabase } from '@/lib/supabase'
-import { usePortalStore } from './store'
-import { useQueryClient } from '@tanstack/react-query'
 import type { AlunoVinculado } from '@/types/shared'
+import { useQueryClient } from '@tanstack/react-query'
+import { createContext,useContext,useEffect,useMemo,type ReactNode } from 'react'
+import { useResponsavel,useVinculosAtivos } from './hooks'
+import { usePortalStore } from './store'
 
 interface PortalContextType {
   responsavel: any | null

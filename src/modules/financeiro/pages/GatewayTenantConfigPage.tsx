@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { GatewayTenantConfigPageWeb } from './GatewayTenantConfigPage.web'
 import { GatewayTenantConfigPageMobile } from './GatewayTenantConfigPage.mobile'
+import { GatewayTenantConfigPageWeb } from './GatewayTenantConfigPage.web'
 
 export function GatewayTenantConfigPage() {
   return (

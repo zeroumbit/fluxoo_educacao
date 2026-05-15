@@ -1,28 +1,23 @@
-import { useFechamentoMensal } from '../hooks-avancado'
-import { 
-  Loader2, 
-  TrendingUp, 
-  Wallet, 
-  CreditCard, 
-  PiggyBank, 
-  RotateCw,
-  ArrowLeft,
-  ChevronRight,
-  TrendingDown,
-  DollarSign,
-  Calendar,
-  Sparkles,
-  Download
-} from 'lucide-react'
-import { cn, formatCurrency } from '@/lib/utils'
-import { useState, useMemo } from 'react'
-import { usePermissions } from '@/providers/RBACProvider'
-import { motion, AnimatePresence } from 'framer-motion'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
+import { cn,formatCurrency } from '@/lib/utils'
+import { usePermissions } from '@/providers/RBACProvider'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowLeft,
+ChevronRight,
+Download,
+Loader2,
+PiggyBank,
+RotateCw,
+Sparkles,
+TrendingUp
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useFechamentoMensal } from '../hooks-avancado'
 
 export function FinanceiroRelatoriosPageMobile() {
   const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()

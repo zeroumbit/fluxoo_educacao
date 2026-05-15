@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
+import { supabase } from '@/lib/supabase'
 
 type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
 type AlunoUpdate = Database['public']['Tables']['alunos']['Update']

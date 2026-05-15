@@ -1,21 +1,24 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useSaudeTurmas, useAlunosProfessor } from '@/modules/professor/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/ui/table'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useAlunosProfessor,useSaudeTurmas } from '@/modules/professor/hooks'
 import {
-  Search, Loader2, UserCheck, Eye
+Eye,
+Loader2,
+Search,
+UserCheck
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function ProfessorAlunosPage() {
   const { authUser } = useAuth()

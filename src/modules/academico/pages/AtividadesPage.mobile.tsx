@@ -1,46 +1,46 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
 import {
-  Plus,
-  FileText,
-  Edit2,
-  Trash2,
-  ExternalLink,
-  Loader2,
-  ArrowLeft,
-  Video,
-  Image as ImageIcon,
-  FileDown,
-  MoreVertical
+ArrowLeft,
+Edit2,
+ExternalLink,
+FileDown,
+FileText,
+Image as ImageIcon,
+Loader2,
+MoreVertical,
+Plus,
+Trash2,
+Video
 } from 'lucide-react'
-import { get, set } from 'idb-keyval'
+import { useEffect,useMemo,useState } from 'react'
+import { useFieldArray,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAtividades, useCriarAtividade, useAtualizarAtividade, useExcluirAtividade } from '../hooks'
-import { useTurmas } from '@/modules/turmas/hooks'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { useAtividades,useAtualizarAtividade,useCriarAtividade,useExcluirAtividade } from '../hooks'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 const CACHE_KEY_ATIVIDADES = 'mobile_atividades_cache'

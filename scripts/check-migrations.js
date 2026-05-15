@@ -1,18 +1,47 @@
 import { createClient } from '@supabase/supabase-js';
 import { readdir, readFile } from 'fs/promises';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 // Carregar variáveis de ambiente
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+function loadLocalEnv() {
+  const envPath = join(process.cwd(), '.env');
+  if (!existsSync(envPath)) return;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  const envContent = readFileSync(envPath, 'utf8');
+  for (const line of envContent.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+
+    const separatorIndex = trimmed.indexOf('=');
+    if (separatorIndex === -1) continue;
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim().replace(/^["']|["']$/g, '');
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadLocalEnv();
+
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_API_KEY) {
   console.error('❌ Erro: Variáveis de ambiente não configuradas');
-  console.error('Copie .env.example para .env e preencha com suas credenciais do Supabase');
+  console.error('Configure VITE_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no .env local para validar migrations com segurança.');
+  console.error('Nunca versione SUPABASE_SERVICE_ROLE_KEY.');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_API_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
 async function getAppliedMigrations() {
   console.log('🔍 Consultando migrations aplicadas no banco de dados...\n');
@@ -32,7 +61,7 @@ async function getAppliedMigrations() {
     console.log('     name VARCHAR(255) UNIQUE NOT NULL,');
     console.log('     applied_at TIMESTAMP DEFAULT NOW()');
     console.log('   );');
-    return [];
+    return null;
   }
 
   return data || [];
@@ -65,6 +94,12 @@ async function analyzeMigrations() {
     getAppliedMigrations(),
     getLocalMigrations()
   ]);
+
+  if (appliedMigrations === null) {
+    console.error('\n❌ Não foi possível validar migrations no banco.');
+    console.error('   Corrija a conexão/acesso ao Supabase ou crie a tabela de controle antes do deploy.\n');
+    process.exit(1);
+  }
 
   const appliedNames = new Set(appliedMigrations.map(m => m.name));
   const localNames = new Set(localMigrations.map(m => m.name));

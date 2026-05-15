@@ -9,9 +9,9 @@
  * LGPD: Limita exposição de dados sensíveis em sessões abandonadas.
  */
 
-import { useEffect, useRef, useCallback } from 'react'
-import { toast } from 'sonner'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useCallback,useEffect,useRef } from 'react'
+import { toast } from 'sonner'
 
 const TIMEOUT_MS      = 60 * 60 * 1000  // 60 minutos
 const WARNING_BEFORE  = 5  * 60 * 1000  // avisar 5 min antes

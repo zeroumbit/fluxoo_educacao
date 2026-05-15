@@ -1,37 +1,29 @@
-import { useEffect, useState, useMemo } from 'react'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAgendaDiaria } from '@/modules/professor/hooks'
-import { useTurmas } from '@/modules/turmas/hooks'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Save,
-  Users,
-  ArrowLeft,
-} from 'lucide-react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { useAlunosDaTurma, useFrequenciaOptimistic, useFrequenciasPorTurmaData } from '@/modules/frequencia/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { FrequenciaMobileList } from '@/modules/frequencia/components/FrequenciaMobileList'
+import { useAlunosDaTurma,useFrequenciaOptimistic,useFrequenciasPorTurmaData } from '@/modules/frequencia/hooks'
+import { useAgendaDiaria } from '@/modules/professor/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
+import {
+ArrowLeft,
+Loader2,
+Users
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate,useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 type FrequenciaStatus = 'presente' | 'falta' | 'justificada'
 

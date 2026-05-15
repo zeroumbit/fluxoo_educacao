@@ -1,35 +1,38 @@
-import React, { useEffect, useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { mascaraCEP,mascaraCPF,mascaraTelefone,validarCPF } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePortalContext } from '@/modules/portal/context'
 import { useUpdatePerfil } from '@/modules/portal/hooks'
-import {
-  User,
-  Mail,
-  Smartphone,
-  Hash,
-  X,
-  Shield,
-  Settings,
-  MapPin,
-  Loader2,
-  Save
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Download,
+Eye,
+FileText,
+Hash,
+Loader2,
+Mail,
+MapPin,
+Printer,
+Save,
+Settings,
+Shield,
+Smartphone,
+User,
+X
+} from 'lucide-react'
+import React,{ useEffect,useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { mascaraCPF, mascaraTelefone, validarCPF, mascaraCEP } from '@/lib/validacoes'
-import { useViaCEP } from '@/hooks/use-viacep'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { z } from 'zod'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 import { ModalContratoEscola } from '../components/ModalContratoEscola'
-import { supabase } from '@/lib/supabase'
-import { FileText, Eye, Download, Printer } from 'lucide-react'
 
 // Helper de vibração
 const vibrate = (pattern: number | number[] = 20) => {
@@ -83,6 +86,7 @@ export function PortalPerfilPage() {
   } = useForm<PerfilFormValues>({
     resolver: zodResolver(perfilSchema),
   })
+  const { fetchAddressByCEP } = useViaCEP()
 
   useEffect(() => {
     if (responsavel) {
@@ -128,8 +132,6 @@ export function PortalPerfilPage() {
       </div>
     )
   }
-
-  const { fetchAddressByCEP } = useViaCEP()
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = mascaraCEP(e.target.value)

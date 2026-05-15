@@ -1,50 +1,46 @@
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Calendar, 
-  MessageSquare, 
-  Plus, 
-  Trash2, 
-  Pencil, 
-  ArrowLeft,
-  ChevronRight,
-  CheckCircle2,
-  AlertTriangle,
-  Loader2,
-  Clock,
-  Globe,
-  Users,
-  GraduationCap,
-  Sparkles,
-  Timer,
-  X,
-  Save,
-  Megaphone,
-  MapPin,
-  Eye
-} from 'lucide-react'
 import { muralService } from '@/modules/comunicacao/service'
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { toast } from 'sonner'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { format,parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+ArrowLeft,
+Calendar,
+Clock,
+Eye,
+Globe,
+GraduationCap,
+Loader2,
+MapPin,
+Megaphone,
+MessageSquare,
+Pencil,
+Plus,
+Save,
+Sparkles,
+Timer,
+Trash2,
+Users
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useEventos, useCriarEvento, useConfigRecados, useUpsertConfigRecados, useExcluirEvento } from '../hooks'
+import { useConfigRecados,useCriarEvento,useEventos,useExcluirEvento,useUpsertConfigRecados } from '../hooks'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 const eventoSchema = z.object({

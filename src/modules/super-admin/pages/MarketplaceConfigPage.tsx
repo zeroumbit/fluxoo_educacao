@@ -1,81 +1,79 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-  DialogDescription
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger
 } from '@/components/ui/dialog'
 import {
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  Search,
-  ShoppingBag,
-  Tag,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Package,
-  BookOpen,
-  Users,
-  Settings2,
-  MoreHorizontal,
-  Mail,
-  Phone,
-  Calendar,
-  Eye,
-  Briefcase,
-  ExternalLink,
-  MapPin,
-  AlertTriangle,
-  FileText,
-  User,
-  Power
-} from 'lucide-react'
-import {
-  useMarketplaceCategorias,
-  useCriarCategoria,
-  useAtualizarCategoria,
-  useExcluirCategoria,
-  useLojistas,
-  useProfissionais
-} from '../marketplace.hooks'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { cn } from '@/lib/utils'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow
+} from '@/components/ui/table'
+import {
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger
+} from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import {
+AlertCircle,
+AlertTriangle,
+BookOpen,
+Briefcase,
+Calendar,
+CheckCircle2,
+Eye,
+FileText,
+Loader2,
+Mail,
+MoreHorizontal,
+Package,
+Pencil,
+Phone,
+Plus,
+Power,
+Search,
+Settings2,
+ShoppingBag,
+Tag,
+Trash2,
+User,
+Users,
+X,
+XCircle
+} from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { X } from 'lucide-react'
+import {
+useAtualizarCategoria,
+useCriarCategoria,
+useExcluirCategoria,
+useLojistas,
+useMarketplaceCategorias,
+useProfissionais
+} from '../marketplace.hooks'
 
 const ICON_OPTIONS = [
   { name: 'Package', icon: Package },

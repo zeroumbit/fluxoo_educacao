@@ -1,34 +1,34 @@
 "use client"
 
-import React, { useState } from "react"
-import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Search, UserCheck, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle,CheckCircle2,Loader2,Search,UserCheck } from 'lucide-react'
+import React,{ useState } from "react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { z } from "zod"
 
-import { supabase } from "@/lib/supabase"
-import { logger } from "@/lib/logger"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Alert,AlertDescription,AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from "@/components/ui/dialog"
+import {
+Form,
+FormControl,
+FormField,
+FormItem,
+FormLabel,
+FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { logger } from "@/lib/logger"
+import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/modules/auth/AuthContext"
 
 const solicitacaoSchema = z.object({

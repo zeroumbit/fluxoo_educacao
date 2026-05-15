@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutList, Clock, ChevronRight, X, Info, FileText, AlertCircle, ExternalLink } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useAtividadesPortal } from '../../hooks';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle
 } from '@/components/ui/dialog';
+import { format,parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { AnimatePresence,motion } from 'framer-motion';
+import { ChevronRight,Clock,ExternalLink,FileText,Info,LayoutList,X } from 'lucide-react';
+import React,{ useState } from 'react';
+import { useAtividadesPortal } from '../../hooks';
 
 export function PortalAtividadesV2() {
   const { data: atividades, isLoading } = useAtividadesPortal();

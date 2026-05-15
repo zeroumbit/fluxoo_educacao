@@ -1,44 +1,38 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Megaphone, 
-  Clock, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  ArrowLeft,
-  ChevronRight,
-  CheckCircle2,
-  AlertTriangle,
-  Loader2,
-  Calendar,
-  Users,
-  Building2,
-  X
-} from 'lucide-react'
-import { format, parseISO, isAfter, startOfDay } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { toast } from 'sonner'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { format,isAfter,parseISO,startOfDay } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowLeft,
+Calendar,
+Clock,
+Edit2,
+Loader2,
+Megaphone,
+Plus,
+Trash2
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAvisos, useCriarAviso, useExcluirAviso, useEditarAviso } from '../hooks'
-import { useTurmas } from '@/modules/turmas/hooks'
 import type { MuralAviso } from '@/lib/database.types'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { useAvisos,useCriarAviso,useEditarAviso,useExcluirAviso } from '../hooks'
 
 // Components Mobile
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 const avisoSchema = z.object({

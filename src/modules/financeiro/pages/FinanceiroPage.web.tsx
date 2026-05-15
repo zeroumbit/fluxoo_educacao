@@ -1,58 +1,50 @@
-import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
+import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from '@/components/ui/accordion'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog'
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import { useGestorGuard } from '@/hooks/useGestorGuard'
+import { cn,formatCurrency,formatDate } from '@/lib/utils'
+import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePermissions } from '@/providers/RBACProvider'
-import { useCobrancasComEncargos, useCriarCobranca, useRegistrarPagamentoManual, useExcluirCobranca, useDesfazerPagamento } from '../hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
-import {
-  Plus,
-  Loader2,
-  Search,
-  MoreHorizontal,
-  CheckCircle2,
-  Trash2,
-  Undo2,
-  Calendar,
-  Filter,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  AlertCircle,
-  Banknote,
-  FileDown,
-  Eye,
-  X,
-  Phone,
-  CreditCard,
-  History
-} from 'lucide-react'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { useNavigate } from 'react-router-dom'
-import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
-import { useGestorGuard } from '@/hooks/useGestorGuard'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  detectarTipoCobranca,
-  getLabelTipoCobranca,
-  getBadgeTipoCobranca,
-  getIconeTipoCobranca,
-  getSubtextoTipoCobranca,
-  getValorExibicao,
-  extrairDiasProporcionais,
-  isTaxaMatricula,
+AlertCircle,
+ArrowDownCircle,
+ArrowUpCircle,
+Banknote,
+Calendar,
+CheckCircle2,
+Eye,
+Filter,
+History,
+Loader2,
+MoreHorizontal,
+Plus,
+Search,
+Trash2,
+Undo2
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { useCobrancasComEncargos,useCriarCobranca,useDesfazerPagamento,useExcluirCobranca,useRegistrarPagamentoManual } from '../hooks'
+import {
+detectarTipoCobranca,
+extrairDiasProporcionais,
+getBadgeTipoCobranca,
+getLabelTipoCobranca,
+getSubtextoTipoCobranca,
+getValorExibicao,
+isTaxaMatricula
 } from '../utils/cobranca-utils'
 
 const cobrancaSchema = z.object({

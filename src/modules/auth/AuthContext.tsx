@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
-import type { User, Session } from '@supabase/supabase-js'
+import { precheckLogin,recordLoginAttempt } from '@/lib/auth-rate-limit'
+import { logger } from '@/lib/logger'
+import { clearSensitiveClientState } from '@/lib/session-cleanup'
 import { supabase } from '@/lib/supabase'
 import { usePortalStore } from '@/modules/portal/store'
-import { useRBACStore } from '@/stores/rbac.store'
 import { rbacService } from '@/modules/rbac/service'
-import { clearSensitiveClientState } from '@/lib/session-cleanup'
-import { precheckLogin, recordLoginAttempt } from '@/lib/auth-rate-limit'
-import { logger } from '@/lib/logger'
 import type { ResolvedPermission } from '@/modules/rbac/types'
+import { useRBACStore } from '@/stores/rbac.store'
+import type { Session,User } from '@supabase/supabase-js'
+import { createContext,useCallback,useContext,useEffect,useRef,useState,type ReactNode } from 'react'
 
 export interface Endereco {
   logradouro?: string

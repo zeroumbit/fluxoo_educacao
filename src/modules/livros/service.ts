@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Livro, MaterialEscolar, VwItemEscolar } from './types'
+import type { Livro,MaterialEscolar } from './types'
 
 export const livrosService = {
   // LER DISCIPLINAS

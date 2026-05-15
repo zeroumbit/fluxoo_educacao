@@ -1,28 +1,26 @@
-import React, { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
 import {
-  Plus,
-  Search,
-  GraduationCap,
-  Trash2,
-  Eye,
-  AlertTriangle,
-  Clock,
-  ChevronRight,
-  BookOpen,
-  Loader2,
-  CheckCircle2
+AlertTriangle,
+BookOpen,
+ChevronRight,
+Clock,
+Eye,
+GraduationCap,
+Loader2,
+Search,
+Trash2
 } from 'lucide-react'
+import React,{ useState } from 'react'
 
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog,DialogContent,DialogHeader,DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { toast } from 'sonner'
-import { useProfessoresTurma, useDisciplinas, useAtribuicoes, useAtribuirProfessor, useRemoverAtribuicao, useTurma } from '../hooks'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { toast } from 'sonner'
+import { useAtribuicoes,useAtribuirProfessor,useDisciplinas,useProfessoresTurma,useRemoverAtribuicao,useTurma } from '../hooks'
 
 interface TabProfessoresProps {
   turmaId: string;

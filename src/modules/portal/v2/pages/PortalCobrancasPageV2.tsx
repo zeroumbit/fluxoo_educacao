@@ -1,53 +1,48 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useVinculosAtivos } from '../../hooks'
-import { usePortalContext } from '../../context'
-import { Card, CardContent } from '@/components/ui/card'
+import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
 import {
-  Sheet,
-  SheetContent,
-} from '@/components/ui/sheet'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogTitle,
 } from '@/components/ui/dialog'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  CreditCard,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  Calendar,
-  DollarSign,
-  ChevronRight,
-  X,
-  ShoppingBag,
-  Download,
-  AlertTriangle,
-  Receipt,
-  TrendingDown,
-  ArrowLeft,
-  QrCode,
-  Upload,
-  FileText,
-  Loader2
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
+Sheet,
+SheetContent,
+} from '@/components/ui/sheet'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn,formatCurrency,formatDate } from '@/lib/utils'
+import { useQueries,useQuery,useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+ArrowLeft,
+CheckCircle2,
+ChevronRight,
+Copy,
+CreditCard,
+FileText,
+Loader2,
+QrCode,
+Receipt,
+ShoppingBag,
+TrendingDown,
+Upload,
+X
+} from 'lucide-react'
+import { useEffect,useMemo,useRef,useState } from 'react'
+import { useLocation,useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
-import { useQueries } from '@tanstack/react-query'
-import { portalService } from '../../service'
+import { usePortalContext } from '../../context'
 import { portalFinanceiroService } from '../../financeiro.service'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { useVinculosAtivos } from '../../hooks'
+import { portalService } from '../../service'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {

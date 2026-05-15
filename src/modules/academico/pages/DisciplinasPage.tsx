@@ -1,7 +1,7 @@
 
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { DisciplinasPageWeb } from './DisciplinasPage.web'
 import { DisciplinasPageMobile } from './DisciplinasPage.mobile'
+import { DisciplinasPageWeb } from './DisciplinasPage.web'
 
 export function DisciplinasPage() {
   return (

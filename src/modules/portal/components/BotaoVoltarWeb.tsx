@@ -1,7 +1,7 @@
+import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
 
 interface BotaoVoltarWebProps {
   className?: string

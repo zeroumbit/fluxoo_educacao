@@ -1,48 +1,38 @@
-import { useState, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useFuncionarios,
-  useCriarFuncionario,
-  useAtualizarFuncionario,
-  useExcluirFuncionario,
-  useCriarUsuarioEscola,
-  useFuncoes,
-  useGerarFolhaPagamento,
-} from '../hooks'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Plus, 
-  Loader2, 
-  UserPlus, 
-  KeyRound, 
-  Eye, 
-  Wallet, 
-  Calendar, 
-  ArrowLeft,
-  Search,
-  Users,
-  MoreVertical,
-  Briefcase,
-  Phone,
-  CheckCircle2,
-  Trash2,
-  ShieldCheck,
-  Building
-} from 'lucide-react'
-import { cn, formatCurrency } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
-import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { cn,formatCurrency } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+KeyRound,
+Loader2,
+MoreVertical,
+Plus,
+Search,
+ShieldCheck,
+Trash2,
+Users,
+Wallet
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { Controller,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import {
+useAtualizarFuncionario,
+useCriarFuncionario,
+useExcluirFuncionario,
+useFuncionarios,
+useFuncoes,
+useGerarFolhaPagamento
+} from '../hooks'
 
 // Schemas
 const funcSchema = z.object({

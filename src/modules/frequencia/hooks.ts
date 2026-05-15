@@ -1,8 +1,8 @@
-import { QueryKeys } from "@/lib/query-keys"
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { frequenciaService } from './service'
 import type { FrequenciaInsert } from '@/lib/database.types'
+import { QueryKeys } from "@/lib/query-keys"
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { frequenciaService } from './service'
 
 export function useFrequenciasPorTurmaData(turmaId: string, data: string) {
   const { authUser } = useAuth()

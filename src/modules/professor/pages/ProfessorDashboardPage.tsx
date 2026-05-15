@@ -1,35 +1,35 @@
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useAgendaDiaria,
-  usePendenciasProfessor,
-  useSaudeTurmas,
-  useAlertasProfessor,
-  useConcluirAlerta
-} from '@/modules/professor/hooks'
-import type { AgendaAula, Pendencia, SaudeTurma, AlertaProfessor } from '@/modules/professor/types'
 import { Greeting } from '@/components/ui/Greeting'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  BookOpen,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  ClipboardCheck,
-  FileText,
-  GraduationCap,
-  Heart,
-} from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Component, type ReactNode } from 'react'
+import { useAuth } from '@/modules/auth/AuthContext'
+import {
+useAgendaDiaria,
+useAlertasProfessor,
+useConcluirAlerta,
+usePendenciasProfessor,
+useSaudeTurmas
+} from '@/modules/professor/hooks'
+import type { AgendaAula,AlertaProfessor,Pendencia,SaudeTurma } from '@/modules/professor/types'
+import {
+AlertTriangle,
+BookOpen,
+Calendar,
+CheckCircle2,
+ClipboardCheck,
+Clock,
+FileText,
+GraduationCap,
+Heart,
+TrendingDown,
+TrendingUp,
+Users,
+XCircle,
+} from 'lucide-react'
+import { Component,type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 // ─── Error Boundary por Widget ─────────────────────────────────────────────

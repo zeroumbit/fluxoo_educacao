@@ -1,27 +1,24 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useCurriculo } from '../hooks'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import {
-  ArrowLeft,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Clock,
-  DollarSign,
-  FileText,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react'
-import { AREAS_INTERESSE, DISPONIBILIDADE_TIPOS } from '../types'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+AlertCircle,
+ArrowLeft,
+Award,
+Briefcase,
+CheckCircle2,
+Clock,
+DollarSign,
+FileText,
+GraduationCap,
+Mail
+} from 'lucide-react'
+import { useNavigate,useParams } from 'react-router-dom'
+import { useCurriculo } from '../hooks'
+import { AREAS_INTERESSE,DISPONIBILIDADE_TIPOS } from '../types'
 
 export function CurriculoDetalhePage() {
   const { id } = useParams<{ id: string }>()

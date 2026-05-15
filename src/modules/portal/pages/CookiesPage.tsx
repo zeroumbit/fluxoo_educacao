@@ -1,8 +1,7 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { GraduationCap, Cookie, ShieldCheck, FileText, ChevronLeft, Printer, Info, Settings } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import { Cookie,FileText,GraduationCap,Info,Printer,Settings,ShieldCheck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export function CookiesPage() {
   const navigate = useNavigate()

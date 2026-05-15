@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { autorizacoesService } from './service'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePortalContext } from '@/modules/portal/context'
 import { useResponsavel } from '@/modules/portal/hooks'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { autorizacoesService } from './service'
 
 // ==========================================
 // HOOKS ADMIN (Escola)

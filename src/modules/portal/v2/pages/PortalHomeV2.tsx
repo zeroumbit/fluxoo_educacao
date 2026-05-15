@@ -1,4 +1,3 @@
-import React from 'react';
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView';
 import { PortalHomeV2Mobile } from './PortalHomeV2.mobile';
 import { PortalHomeV2Web } from './PortalHomeV2.web';

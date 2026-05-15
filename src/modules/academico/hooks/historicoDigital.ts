@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { 
-  emitirHistoricoOficial, 
-  listarHistoricosAluno,
-  buscarHistoricoPorHash,
-  type EmitirHistoricoResult 
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import {
+buscarHistoricoPorHash,
+emitirHistoricoOficial,
+listarHistoricosAluno,
+type EmitirHistoricoResult
 } from '../services/historicoDigitalService'
 
 export function useEmitirHistorico() {

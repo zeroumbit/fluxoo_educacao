@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { FilaVirtualAdminPage as FilaVirtualAdminPageWeb } from './FilaVirtualAdminPage.web'
 import { FilaVirtualAdminPageMobile } from './FilaVirtualAdminPage.mobile'
+import { FilaVirtualAdminPage as FilaVirtualAdminPageWeb } from './FilaVirtualAdminPage.web'
 
 export function FilaVirtualAdminPage() {
   return (

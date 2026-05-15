@@ -17,9 +17,9 @@
  * </PermissionGate>
  * ```
  */
-import type { ReactNode } from 'react'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useRBACStore } from '@/stores/rbac.store'
+import type { ReactNode } from 'react'
 
 interface PermissionGateProps {
   /** Permissão única a ser verificada */

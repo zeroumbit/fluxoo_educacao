@@ -1,46 +1,45 @@
-import React, { useState } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { PortalProvider, usePortalContext } from '@/modules/portal/context'
-import { useDashboardFamilia } from '@/modules/portal/hooks'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Home,
-  Activity,
-  Megaphone,
-  DollarSign,
-  FileText,
-  LogOut,
-  ShoppingCart,
-  Calendar,
-  ChevronDown,
-  Menu,
-  User,
-  ShieldCheck,
-  Globe,
-  Lock,
-  MessageSquare,
-  ShoppingBag,
-  Cookie,
-  Bell
-} from 'lucide-react'
+import CorujaIcon from '@/assets/coruja_APPLE.svg'
 import { NotificationBell } from '@/components/NotificationBell'
-import { usePortalNotifications } from '@/hooks/useNotifications'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
+SheetTrigger,
 } from "@/components/ui/sheet"
-import CorujaIcon from '@/assets/coruja_APPLE.svg'
+import { usePortalNotifications } from '@/hooks/useNotifications'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { PortalProvider,usePortalContext } from '@/modules/portal/context'
+import { useDashboardFamilia } from '@/modules/portal/hooks'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Activity,
+Calendar,
+ChevronDown,
+Cookie,
+DollarSign,
+FileText,
+Globe,
+Home,
+Lock,
+LogOut,
+Megaphone,
+Menu,
+MessageSquare,
+ShieldCheck,
+ShoppingBag,
+ShoppingCart,
+User
+} from 'lucide-react'
+import { useState } from 'react'
+import { NavLink,Outlet,useLocation,useNavigate } from 'react-router-dom'
 
 // Helper de Vibração Tátil Subtil (Haptic Feedback)
 const vibrate = (ms: number = 30) => {

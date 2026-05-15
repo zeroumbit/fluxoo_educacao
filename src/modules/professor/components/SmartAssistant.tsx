@@ -1,32 +1,32 @@
-import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
-  Sparkles,
-  AlertCircle,
-  TrendingDown,
-  Stethoscope,
-  Cake,
-  ChevronRight,
-  BookOpen,
-  Award,
-  AlertTriangle,
-  X,
-  CalendarCheck,
-  ClipboardList,
-  Users,
-  Activity,
-} from 'lucide-react'
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
+} from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Activity,
+AlertCircle,
+AlertTriangle,
+Award,
+BookOpen,
+Cake,
+CalendarCheck,
+ChevronRight,
+ClipboardList,
+Sparkles,
+Stethoscope,
+TrendingDown,
+Users,
+X,
+} from 'lucide-react'
+import { useState } from 'react'
 
 export type InsightType = 'urgent' | 'anomaly' | 'update' | 'positive' | 'bncc' | 'pos-reinforcement' | 'pedagogic-alert'
 export type InsightGroup = 'now' | 'pending' | 'alert' | 'class-health' | 'done'

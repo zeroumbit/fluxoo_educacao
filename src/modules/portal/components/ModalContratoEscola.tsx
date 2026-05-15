@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, FileText, CheckCircle2, Loader2, Download, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { logger } from '@/lib/logger'
+import { sanitizeHtml } from '@/lib/sanitize-html'
 import { supabase } from '@/lib/supabase'
+import { AnimatePresence,motion } from 'framer-motion'
+import { CheckCircle2,Download,FileText,Loader2,Printer,X } from 'lucide-react'
+import { useEffect,useState } from 'react'
 import { toast } from 'sonner'
 import { usePortalContext } from '../context'
 import { useAceitarTermos } from '../hooks'
-import { logger } from '@/lib/logger'
-import { sanitizeHtml } from '@/lib/sanitize-html'
 
 interface ModalContratoEscolaProps {
   open: boolean

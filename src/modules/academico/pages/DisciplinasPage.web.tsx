@@ -1,45 +1,45 @@
-import { useState } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useCatalogoDisciplinas, useToggleDisciplinaAtiva, useCriarDisciplina } from '@/modules/turmas/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Library, 
-  Plus, 
-  Search, 
-  Settings2, 
-  CheckCircle2, 
-  AlertCircle,
-  BookOpen
-} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useCatalogoDisciplinas,useCriarDisciplina,useToggleDisciplinaAtiva } from '@/modules/turmas/hooks'
+import {
+AlertCircle,
+BookOpen,
+CheckCircle2,
+Library,
+Plus,
+Search,
+Settings2
+} from 'lucide-react'
+import { useState } from 'react'
 
 export function DisciplinasPageWeb() {
   const { authUser } = useAuth()

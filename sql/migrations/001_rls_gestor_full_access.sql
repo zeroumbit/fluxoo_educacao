@@ -12,12 +12,21 @@ CREATE OR REPLACE FUNCTION is_gestor_da_escola(p_tenant_id uuid)
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM escolas 
+    SELECT 1 FROM public.escolas 
     WHERE id = p_tenant_id 
     AND gestor_user_id = auth.uid()
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
+
+CREATE OR REPLACE FUNCTION is_super_admin_app_metadata()
+RETURNS boolean AS $$
+BEGIN
+  RETURN
+    COALESCE((auth.jwt()->'app_metadata'->>'is_super_admin')::boolean, false)
+    OR auth.jwt()->'app_metadata'->>'role' = 'super_admin';
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ============================================================
 -- 2. POLÍTICAS PARA CONFIGURACOES_ESCOLA
@@ -68,21 +77,19 @@ FOR ALL USING (
 );
 
 -- ============================================================
--- 5. SUPER ADMIN (acesso total)
+-- 5. SUPER ADMIN (consulta/auditoria)
 -- ============================================================
 
 DROP POLICY IF EXISTS "super_admin_all_config" ON configuracoes_escola;
 CREATE POLICY "super_admin_all_config" ON configuracoes_escola
-FOR ALL USING (
-  auth.jwt()->>'email' LIKE '%fluxoo.com%' OR 
-  auth.jwt()->>'role' = 'super_admin'
+FOR SELECT USING (
+  is_super_admin_app_metadata()
 );
 
 DROP POLICY IF EXISTS "super_admin_all_filiais" ON filiais;
 CREATE POLICY "super_admin_all_filiais" ON filiais
-FOR ALL USING (
-  auth.jwt()->>'email' LIKE '%fluxoo.com%' OR 
-  auth.jwt()->>'role' = 'super_admin'
+FOR SELECT USING (
+  is_super_admin_app_metadata()
 );
 
 -- ============================================================

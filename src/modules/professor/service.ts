@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase'
-import type { AgendaAula, AlertaProfessor, Pendencia, SaudeTurma } from './types'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
+import type { AgendaAula,AlertaProfessor,Pendencia,SaudeTurma } from './types'
 
 export const professorService = {
   /**

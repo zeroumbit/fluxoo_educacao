@@ -1,24 +1,24 @@
-import React, { useEffect, useState } from 'react'
 import { AdaptiveModal } from '@/components/adaptive/AdaptiveModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/ui/select"
 import { Switch } from '@/components/ui/switch'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { useOverrideAtivo, useCriarOverride, useRevogarOverrides } from '../hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { Loader2, Percent, DollarSign, Calendar, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Calendar,DollarSign,Info,Loader2,Percent } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { Controller,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { useCriarOverride,useOverrideAtivo,useRevogarOverrides } from '../hooks'
 
 const overrideSchema = z.object({
   tipo: z.enum(['desconto_pontual', 'desconto_permanente', 'acordo', 'negociacao'], { required_error: 'Selecione o tipo' }),

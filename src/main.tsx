@@ -1,11 +1,11 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
-import { registerSW } from 'virtual:pwa-register'
-import { toast } from 'sonner'
-import { setupErrorHandlers } from '@/lib/logger'
 import '@/lib/config'
+import { setupErrorHandlers } from '@/lib/logger'
+import { createRoot } from 'react-dom/client'
+import { toast } from 'sonner'
+import { registerSW } from 'virtual:pwa-register'
+import App from './App'
+import './index.css'
 
 setupErrorHandlers()
 

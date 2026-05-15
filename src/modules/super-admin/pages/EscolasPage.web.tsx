@@ -1,74 +1,73 @@
-import { useState } from 'react'
-import type { Fatura } from '@/lib/database.types'
-import {
-  useEscolas,
-  useUpdateEscolaStatus,
-  useSuspenderEscola,
-  useEscolaDetalhes,
-  useFaturas,
-  useCreateFatura,
-  useDeleteFatura,
-  useEscolasDevedoras,
-  useConfirmarPagamentoEscola,
-  useEnviarCobranca,
-  useCancelarAcessoEscola
-} from '../hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import {
-  Search,
-  Building2,
-  CheckCircle2,
-  XCircle,
-  ExternalLink,
-  MoreHorizontal,
-  Mail,
-  User,
-  Calendar,
-  CreditCard,
-  QrCode,
-  FileText,
-  Eye,
-  Ban,
-  AlertTriangle,
-  MapPin,
-  Plus,
-  Trash2,
-  DollarSign,
-  Send,
-  Loader2
-} from 'lucide-react'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog'
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow
+} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'sonner'
+import type { Fatura } from '@/lib/database.types'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+AlertTriangle,
+Ban,
+Building2,
+Calendar,
+CheckCircle2,
+CreditCard,
+DollarSign,
+ExternalLink,
+Eye,
+FileText,
+Loader2,
+Mail,
+MapPin,
+MoreHorizontal,
+Plus,
+QrCode,
+Search,
+Send,
+Trash2,
+User
+} from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import {
+useCancelarAcessoEscola,
+useConfirmarPagamentoEscola,
+useCreateFatura,
+useDeleteFatura,
+useEnviarCobranca,
+useEscolaDetalhes,
+useEscolas,
+useEscolasDevedoras,
+useFaturas,
+useSuspenderEscola,
+useUpdateEscolaStatus
+} from '../hooks'
 
 export function EscolasPageWeb() {
   const { data: escolas, isLoading } = useEscolas()

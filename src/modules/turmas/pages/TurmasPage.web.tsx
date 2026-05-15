@@ -1,33 +1,30 @@
-import { useState, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import {
-  Plus,
-  ArrowLeft,
-  LayoutGrid,
-  Search,
-  Loader2
-} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import { useTurmaStore } from '../store'
-import { TurmaDetail } from '../components/TurmaDetail'
-import { TurmaCard } from '../components/TurmaCard'
-import { useTurmas, useCriarTurma, useDisciplinas, useProfessoresTurma, useAlunosCountByTurmas } from '../hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
+import { Input } from '@/components/ui/input'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useAlunos } from '@/modules/alunos/hooks'
-import { useEffect } from 'react'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+ArrowLeft,
+LayoutGrid,
+Loader2,
+Plus,
+Search
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { Controller,useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { TurmaCard } from '../components/TurmaCard'
+import { TurmaDetail } from '../components/TurmaDetail'
+import { useAlunosCountByTurmas,useCriarTurma,useDisciplinas,useProfessoresTurma,useTurmas } from '../hooks'
+import { useTurmaStore } from '../store'
 
 const turmaSchema = z.object({
   nome: z.string().min(2, 'Nome é obrigatório'),

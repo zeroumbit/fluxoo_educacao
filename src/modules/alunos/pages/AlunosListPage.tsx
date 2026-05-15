@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { AlunosListPageWeb } from './AlunosListPage.web'
 import { AlunosListPageMobile } from './AlunosListPage.mobile'
+import { AlunosListPageWeb } from './AlunosListPage.web'
 
 export function AlunosListPage() {
   return (

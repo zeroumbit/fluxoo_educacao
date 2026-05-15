@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { AlmoxarifadoPageWeb } from './AlmoxarifadoPage.web'
 import { AlmoxarifadoPageMobile } from './AlmoxarifadoPage.mobile'
+import { AlmoxarifadoPageWeb } from './AlmoxarifadoPage.web'
 
 export function AlmoxarifadoPage() {
   return (

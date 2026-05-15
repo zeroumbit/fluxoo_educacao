@@ -1,14 +1,14 @@
-import React from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from "@/components/ui/dialog"
 import { useIsMobile } from '@/hooks/use-mobile'
+import React from 'react'
 
 interface AdaptiveModalProps {
   open: boolean

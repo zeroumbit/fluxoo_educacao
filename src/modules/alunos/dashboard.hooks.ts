@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useQuery } from '@tanstack/react-query'
 import { dashboardService } from './dashboard.service'
 
 export function useDashboard() {

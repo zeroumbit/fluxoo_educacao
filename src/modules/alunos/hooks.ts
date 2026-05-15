@@ -1,11 +1,11 @@
 import { cacheEvents } from "@/lib/cache-events"
+import type { AlunoInsert,AlunoUpdate,OverrideFinanceiroInsert,ResponsavelInsert } from '@/lib/database.types'
 import { QueryKeys } from "@/lib/query-keys"
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { alunoService } from './service'
-import { overrideService } from './overrides.service'
-import type { AlunoInsert, AlunoUpdate, ResponsavelInsert, OverrideFinanceiroInsert } from '@/lib/database.types'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { overrideService } from './overrides.service'
+import { alunoService } from './service'
 
 /**
  * Hook utilitário para centralizar a invalidação de queries de Alunos

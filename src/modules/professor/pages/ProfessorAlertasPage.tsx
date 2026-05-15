@@ -1,24 +1,31 @@
-import { useState, useMemo } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAlertasProfessor, useConcluirAlerta } from '@/modules/professor/hooks'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogFooter,
+DialogHeader,
+DialogTitle
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Loader2, AlertTriangle, Search, Check, Clock, TrendingDown, Stethoscope, User, GraduationCap, ChevronRight
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useAlertasProfessor,useConcluirAlerta } from '@/modules/professor/hooks'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+Check,
+ChevronRight,
+Clock,
+GraduationCap,
+Loader2,
+Search,
+Stethoscope,
+TrendingDown,
+User
+} from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { toast } from 'sonner'
 
 export function ProfessorAlertasPage() {
   const { data: alertas, isLoading, refetch, isFetching } = useAlertasProfessor()

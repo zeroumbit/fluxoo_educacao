@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
 import type { FuncaoEscolaInsert } from '@/lib/database.types'
-import { validarPermissao } from '@/lib/rbac-validation'
 import { logger } from '@/lib/logger'
+import { validarPermissao } from '@/lib/rbac-validation'
+import { supabase } from '@/lib/supabase'
 
 export const funcionariosService = {
   async listar(tenantId: string) {

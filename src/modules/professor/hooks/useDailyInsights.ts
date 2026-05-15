@@ -1,12 +1,12 @@
+import {
+useAgendaDiaria,
+useAlertasProfessor,
+usePendenciasProfessor,
+useSaudeTurmas,
+} from '@/modules/professor/hooks'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { AssistantSummary, DailyInsight, InsightType } from '../components/SmartAssistant'
-import {
-  useAgendaDiaria,
-  usePendenciasProfessor,
-  useAlertasProfessor,
-  useSaudeTurmas,
-} from '@/modules/professor/hooks'
+import type { AssistantSummary,DailyInsight,InsightType } from '../components/SmartAssistant'
 
 function normalize(value?: string | null) {
   return String(value || '')

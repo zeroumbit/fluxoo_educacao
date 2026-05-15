@@ -1,40 +1,40 @@
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { useEscolas } from '@/modules/escolas/hooks'
-import {
-  useTransferenciasEscola,
-  useSolicitarTransferencia,
-  useCheckPermissaoTransferencia,
-  useAceitarTransferenciaDestino,
-  useRecusarTransferenciaDestino,
-  useConcluirTransferencia
-} from '@/modules/academico/hooks'
-import { supabase } from '@/lib/supabase'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Button } from '@/components/ui/button'
+import { Alert,AlertDescription,AlertTitle } from "@/components/ui/alert"
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select'
-import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
+import { Textarea } from '@/components/ui/textarea'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import {
+useAceitarTransferenciaDestino,
+useCheckPermissaoTransferencia,
+useConcluirTransferencia,
+useRecusarTransferenciaDestino,
+useSolicitarTransferencia,
+useTransferenciasEscola
+} from '@/modules/academico/hooks'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useEscolas } from '@/modules/escolas/hooks'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { type LucideIcon, ArrowRightLeft, Plus, Search, Loader2, Eye, AlertTriangle, CheckCircle2, XCircle, Clock, User, School, ShieldCheck, FileText, ArrowLeft, ChevronRight, UserCheck, SearchCode, ArrowUpRight, ArrowDownLeft, ThumbsUp, ThumbsDown, Unlock } from 'lucide-react'
+import { AnimatePresence,motion } from 'framer-motion'
+import { type LucideIcon,ArrowDownLeft,ArrowLeft,ArrowRightLeft,ArrowUpRight,CheckCircle2,ChevronRight,Clock,FileText,Loader2,Plus,School,Search,SearchCode,ShieldCheck,ThumbsDown,ThumbsUp,Unlock,User,UserCheck,XCircle } from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
 import { toast } from 'sonner'
-import { type TransferenciaRow, type TransferenciaEscolarStatus } from '../transferencias.service'
+import { type TransferenciaEscolarStatus,type TransferenciaRow } from '../transferencias.service'
 
 const statusConfig: Record<TransferenciaEscolarStatus, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
   aguardando_responsavel: { label: 'Aguardando Responsável', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', icon: Clock },

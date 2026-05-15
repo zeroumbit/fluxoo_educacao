@@ -1,28 +1,28 @@
-import { useState, useEffect } from 'react'
-import { logger } from '@/lib/logger'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Loader2, UserCircle, MapPin, Heart, Users, Edit2, Save, X, Phone, Mail, Fingerprint, Calendar, Building2, Lock, CheckCircle2, CreditCard, Info, Trash2, PlusCircle, Search, Copy, FileText, ExternalLink } from 'lucide-react'
-import { toast } from 'sonner'
-import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro, useDesvincularResponsavel, useAtualizarResponsavel, useVincularResponsavel, useCriarAlunoComResponsavel, useCriarResponsavelAndVincular } from '../hooks'
-import { cn } from '@/lib/utils'
-import { mascaraCPF, mascaraTelefone, validarCPF } from '@/lib/validacoes'
+import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
 import { useCobrancasComEncargosPorAluno } from '@/modules/financeiro/hooks'
+import { ArrowLeft,Building2,Calendar,CheckCircle2,Copy,CreditCard,Edit2,ExternalLink,FileText,Fingerprint,Heart,Info,Loader2,Lock,Mail,MapPin,Phone,PlusCircle,Save,Search,Trash2,UserCircle,Users,X } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate,useParams,useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useAlternarFinanceiro,useAluno,useAtivarAcessoPortal,useAtualizarAluno,useAtualizarResponsavel,useCriarResponsavelAndVincular,useDesvincularResponsavel,useVincularResponsavel } from '../hooks'
 
 export function AlunoDetalhePageWeb() {
   const { id } = useParams<{ id: string }>()

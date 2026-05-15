@@ -1,25 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  Package,
-  TrendingUp,
-  Wallet,
-  Users,
-  ShoppingCart,
-  ArrowUpRight,
-  Clock,
-  Star,
-  Plus,
-  BarChart3,
-  Search,
-  Box,
-  Settings
+BarChart3,
+Box,
+Package,
+Plus,
+Settings,
+ShoppingCart,
+Star,
+TrendingUp,
+Wallet
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { useNavigate } from 'react-router-dom'
 
 interface MetricCardProps {
   label: string

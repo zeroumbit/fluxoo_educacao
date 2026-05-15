@@ -1,11 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, CreditCard, Users, Loader2 } from 'lucide-react'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { useSuperAdminDashboard } from '../hooks'
 import { Badge } from '@/components/ui/badge'
-import { useTenantHealthScores } from '../hooks'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { AlertCircle, TrendingDown, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { cn,formatCurrency,formatDate } from '@/lib/utils'
+import { AlertCircle,Building2,CheckCircle2,CreditCard,Loader2,TrendingDown,TrendingUp,Users } from 'lucide-react'
+import { useSuperAdminDashboard,useTenantHealthScores } from '../hooks'
 
 export function SuperAdminDashboardPageWeb() {
   const { data: dashboard, isLoading } = useSuperAdminDashboard()

@@ -1,45 +1,40 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useVinculosAtivos } from '../../hooks'
-import { usePortalContext } from '../../context'
+import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Sheet,
-  SheetContent,
+Sheet,
+SheetContent,
 } from '@/components/ui/sheet'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  CreditCard,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  Calendar,
-  DollarSign,
-  ChevronRight,
-  X,
-  ShoppingBag,
-  Download,
-  AlertTriangle,
-  Receipt,
-  TrendingDown,
-  ArrowLeft,
-  QrCode,
-  Upload,
-  FileText,
-  Loader2
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
-import { useQueries } from '@tanstack/react-query'
-import { portalService } from '../../service'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { cn,formatCurrency,formatDate } from '@/lib/utils'
+import { useQueries,useQuery,useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { motion, AnimatePresence } from 'framer-motion'
-import { NativeHeader } from '../components/NativeHeader'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertTriangle,
+ArrowLeft,
+Calendar,
+CheckCircle2,
+ChevronRight,
+Copy,
+FileText,
+Loader2,
+QrCode,
+Receipt,
+ShoppingBag,
+TrendingDown,
+Upload,
+X
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useLocation,useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { usePortalContext } from '../../context'
 import { portalFinanceiroService } from '../../financeiro.service'
+import { useVinculosAtivos } from '../../hooks'
+import { portalService } from '../../service'
+import { NativeHeader } from '../components/NativeHeader'
 
 // Helper de vibração (Haptic Feedback - padrão nativo)
 const vibrate = (ms: number | number[] = 20) => {

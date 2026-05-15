@@ -1,26 +1,22 @@
-import { useState, useMemo } from 'react'
-import { usePortalContext } from '../context'
-import { useQuery } from '@tanstack/react-query'
-import { portalService } from '../service'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar as CalendarIcon, Users, Clock, Info, Heart, MapPin, CalendarDays, ExternalLink, CheckCircle2 } from 'lucide-react'
-import { format, parseISO, startOfMonth, endOfMonth, isSameDay, startOfDay } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
-import { SeletorAluno } from '../components/SeletorAluno'
-import { BotaoVoltar } from '../components/BotaoVoltar'
 import { Calendar } from '@/components/ui/calendar'
+import { Card,CardContent } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+Dialog,
+DialogContent
 } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { endOfMonth,format,isSameDay,parseISO,startOfDay,startOfMonth } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { AnimatePresence,motion } from 'framer-motion'
+import { CalendarDays,Calendar as CalendarIcon,CheckCircle2,Clock,ExternalLink,Heart,Info,MapPin } from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { BotaoVoltar } from '../components/BotaoVoltar'
+import { SeletorAluno } from '../components/SeletorAluno'
+import { usePortalContext } from '../context'
+import { portalService } from '../service'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);

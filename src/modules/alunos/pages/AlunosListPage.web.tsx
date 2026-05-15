@@ -1,47 +1,66 @@
-import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAlunos, useExcluirAluno, useAtualizarAluno } from '../hooks'
-import { useMatriculasAtivas } from '@/modules/academico/hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  Plus, Search, Loader2, UserCircle, Eye, Trash2, Edit2,
-  AlertCircle, FileX, Shield, Percent, Users, UserMinus,
-  AlertTriangle, History, TrendingDown, CheckCircle2, Archive, RefreshCcw, FileUp, CloudUpload, Trash, X, ArrowUpRight
-} from 'lucide-react'
-import { useImportacoesPendentes, useDeletarLoteImportacao, useAlunosPendentesEnturmacao } from '../hooks'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
-import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
-import { AlertasProvider, useAlertas } from '../AlertasContext'
-import type { RadarAlunoComStatus } from '../AlertasContext'
-import { useRadarCompleto, useAlertasProfessor } from '../dashboard.hooks'
-import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardTitle } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from '@/components/ui/input'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
+import { useMatriculasAtivas } from '@/modules/academico/hooks'
+import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import {
+AlertCircle,
+AlertTriangle,
+Archive,
+ArrowUpRight,
+CheckCircle2,
+CloudUpload,
+Edit2,
+Eye,
+FileUp,
+FileX,
+History,
+Loader2,
+Percent,
+Plus,
+RefreshCcw,
+Search,
+Shield,
+Trash,
+Trash2,
+UserCircle,
+UserMinus,
+Users,
+X
+} from 'lucide-react'
+import React,{ useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import type { RadarAlunoComStatus } from '../AlertasContext'
+import { AlertasProvider,useAlertas } from '../AlertasContext'
+import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
+import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
+import { useAlertasProfessor,useRadarCompleto } from '../dashboard.hooks'
+import { useAlunos,useAlunosPendentesEnturmacao,useAtualizarAluno,useDeletarLoteImportacao,useExcluirAluno,useImportacoesPendentes } from '../hooks'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Pendentes de Enturmação

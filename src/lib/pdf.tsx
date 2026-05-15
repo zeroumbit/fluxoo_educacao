@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font, pdf, type DocumentProps } from '@react-pdf/renderer'
+import { Font,pdf,StyleSheet,Text,View,type DocumentProps } from '@react-pdf/renderer';
 
 // Registrar fonte customizada (opcional - usa fontes do sistema por padrão)
 Font.register({

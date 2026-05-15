@@ -1,6 +1,5 @@
-import React from 'react';
-import { AlertTriangle, AlertOctagon, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AlertOctagon,AlertTriangle,CheckCircle2 } from 'lucide-react';
 
 interface BadgeGravidadeProps {
   gravidade: 'alta' | 'media' | 'baixa'

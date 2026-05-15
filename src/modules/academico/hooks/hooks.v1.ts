@@ -1,16 +1,16 @@
 import { cacheEvents } from "@/lib/cache-events"
+import type {
+Matricula,
+MatriculaInsert,
+MatriculaUpdate,
+SeloInsert
+} from '@/lib/database.types'
 import { QueryKeys } from "@/lib/query-keys"
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { academicoService } from '../services/academico.service.v1'
 import { transferenciasService } from '../transferencias.service'
-import type { 
-  Matricula,
-  MatriculaInsert, 
-  MatriculaUpdate, 
-  SeloInsert 
-} from '@/lib/database.types'
-import type { PlanoAulaComTurmas, AtividadeComTurmas } from '../types'
+import type { AtividadeComTurmas,PlanoAulaComTurmas } from '../types'
 
 export function useMatriculas() {
   const { authUser } = useAuth()

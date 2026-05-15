@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase'
-import type { Curriculo, CurriculoInsert } from '@/lib/database.types'
+import type { Curriculo,CurriculoInsert } from '@/lib/database.types';
+import { supabase } from '@/lib/supabase';
 
 export const curriculosService = {
   /**

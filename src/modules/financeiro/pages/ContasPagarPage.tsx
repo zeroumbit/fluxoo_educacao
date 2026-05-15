@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { ContasPagarPage as ContasPagarPageWeb } from './ContasPagarPage.web'
 import { ContasPagarPageMobile } from './ContasPagarPage.mobile'
+import { ContasPagarPage as ContasPagarPageWeb } from './ContasPagarPage.web'
 
 export function ContasPagarPage() {
   return (

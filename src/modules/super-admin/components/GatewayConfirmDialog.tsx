@@ -1,13 +1,13 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, ShieldCheck, ShieldOff, Info, CheckCircle2, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+Dialog,
+DialogContent,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog'
+import { AlertTriangle,CheckCircle2,Info,Loader2,ShieldCheck,ShieldOff } from 'lucide-react'
 import { useState } from 'react'
 
 interface GatewayConfirmDialogProps {

@@ -1,11 +1,11 @@
-import { QueryKeys } from "@/lib/query-keys"
-import { useMemo, useEffect, useRef } from 'react'
-import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
-import { portalService } from './service'
-import { usePortalContext } from './context'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { transferenciasService } from '@/modules/academico/transferencias.service'
 import type { PortalConfigPix } from '@/lib/database.types'
+import { QueryKeys } from "@/lib/query-keys"
+import { transferenciasService } from '@/modules/academico/transferencias.service'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useMutation,useQueries,useQuery,useQueryClient } from '@tanstack/react-query'
+import { useEffect,useMemo,useRef } from 'react'
+import { usePortalContext } from './context'
+import { portalService } from './service'
 // import alertaSom from '@/assets/alerta.mp3'
 const alertaSom = '/alerta_v3.mp3'
 

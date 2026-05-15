@@ -4,9 +4,9 @@
  * 
  * Log inalterável para defesa jurídica e Procon.
  */
-import { useState } from 'react'
 import { useAuditLogs } from '@/modules/rbac/hooks'
-import { FileText, Search, ChevronLeft, ChevronRight, Clock, User, Activity, Filter } from 'lucide-react'
+import { Activity,ChevronLeft,ChevronRight,Clock,FileText,Filter,Search,User } from 'lucide-react'
+import { useState } from 'react'
 
 const PAGE_SIZE = 25
 

@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, ExternalLink, X, Check, Trash2, BellRing } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
-import { useNotificacoesActions } from '@/hooks/useNotifications';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle,
-  SheetTrigger 
+import {
+Sheet,
+SheetContent,
+SheetTrigger
 } from '@/components/ui/sheet';
+import { useNotificacoesActions } from '@/hooks/useNotifications';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { Bell,BellRing,ExternalLink,Trash2,X } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface NotificationItem {
   id: string;
@@ -240,6 +238,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
         ) : (
           <SheetContent 
             side="right" 
+            showCloseButton={false}
             className="w-[400px] p-0 overflow-hidden flex flex-col bg-white outline-none"
           >
             <NotificationContent />

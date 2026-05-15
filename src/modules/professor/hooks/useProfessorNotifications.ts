@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { notificacoesService } from '@/modules/notificacoes/notificacoes.service'
+import { useQuery,useQueryClient } from '@tanstack/react-query'
 
 /**
  * Hook para notificações do Professor

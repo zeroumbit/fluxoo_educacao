@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase'
-import { muralService } from '@/modules/comunicacao/service'
 
 export interface RadarAluno {
   aluno_id: string

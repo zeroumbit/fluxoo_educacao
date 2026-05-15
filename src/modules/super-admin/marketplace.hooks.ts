@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { marketplaceService, type MarketplaceCategory } from './marketplace.service'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { marketplaceService,type MarketplaceCategory } from './marketplace.service'
 
 export function useMarketplaceCategorias() {
     return useQuery({

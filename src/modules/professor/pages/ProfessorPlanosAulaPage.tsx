@@ -1,20 +1,25 @@
-import { useState, useMemo } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useAgendaDiaria } from '@/modules/professor/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/ui/table'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useAgendaDiaria } from '@/modules/professor/hooks'
 import {
-  Plus, Search, Loader2, BookOpen, Calendar, FileText, Clock, Check, Edit
+BookOpen,Calendar,
+Check,
+Clock,
+Edit,
+Loader2,
+Search
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
 
 export function ProfessorPlanosAulaPage() {
   const { authUser } = useAuth()

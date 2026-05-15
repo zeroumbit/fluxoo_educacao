@@ -7,12 +7,12 @@
 
 import { supabase } from '@/lib/supabase'
 import type {
-  ConfigAcademica,
-  ConfigFinanceira,
-  ConfigOperacional,
-  ConfigConduta,
-  ConfigCalendario,
-  TenantSettings,
+ConfigAcademica,
+ConfigCalendario,
+ConfigConduta,
+ConfigFinanceira,
+ConfigOperacional,
+TenantSettings,
 } from '@/modules/escolas/hooks/useTenantSettings'
 import { DEFAULT_CONFIG } from '@/modules/escolas/hooks/useTenantSettings'
 

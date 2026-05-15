@@ -1,9 +1,9 @@
-import type { 
-  Matricula, 
-  Aluno, 
-  MatriculaInsert, 
-  PlanoAulaInsert, 
-  AtividadeInsert
+import type {
+Aluno,
+AtividadeInsert,
+Matricula,
+MatriculaInsert,
+PlanoAulaInsert
 } from '@/lib/database.types';
 
 export interface MatriculaComAluno extends Matricula {

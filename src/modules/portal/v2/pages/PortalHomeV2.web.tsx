@@ -1,15 +1,14 @@
+import { NotificationBell } from '@/components/ui/NotificationBell';
+import { usePortalNotifications } from '@/hooks/useNotifications';
+import { cn } from '@/lib/utils';
+import { AnimatePresence,motion } from 'framer-motion';
+import { ArrowRight,Clock,FileSignature,Info,Receipt } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FileSignature, Receipt, Clock, Info, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { usePortalContext } from '../../context';
-import { usePortalNotifications } from '@/hooks/useNotifications';
-import { NotificationBell } from '@/components/ui/NotificationBell';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
-import { useFilaVirtual } from '../../hooks';
+import { usePortalContext } from '../../context';
+import { useAvisosPortal,useConfigPix,useDashboardFamilia,useFilaVirtual } from '../../hooks';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
-import { useDashboardFamilia, useAvisosPortal, useConfigPix } from '../../hooks';
 
 // Helper to get initials
 const getInitials = (name: string) => {

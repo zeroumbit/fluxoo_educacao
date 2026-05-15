@@ -1,33 +1,43 @@
-import React, { useState, useMemo } from 'react'
-import { 
-  Users, CalendarDays, GraduationCap, Info,
-  MapPin, DollarSign, BookOpen, AlertTriangle, ShieldCheck,
-  BarChart3, FileText, UserCircle, Printer, Save, Pencil, X,
-  Plus, Calendar, Search, Loader2, Trash2, ChevronRight, Eye, Clock,
-  Calculator, CalendarCheck, TrendingUp
-} from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import {
+AlertTriangle,
+BarChart3,
+BookOpen,
+Calculator,CalendarCheck,
+CalendarDays,
+Clock,
+Eye,
+FileText,
+GraduationCap,Info,
+Loader2,
+MapPin,
+Search,
+Trash2,
+TrendingUp,
+UserCircle,
+Users
+} from 'lucide-react'
+import React,{ useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import type { Turma } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { 
-  useGradeTurma, 
-  useDisciplinas,
-  useProfessoresTurma,
-  useAtribuicoes,
-  useAtribuirProfessor,
-  useRemoverAtribuicao,
-  useTurmaBilling
-} from '../hooks'
 import { toast } from 'sonner'
+import {
+useAtribuicoes,
+useAtribuirProfessor,
+useDisciplinas,
+useProfessoresTurma,
+useRemoverAtribuicao,
+useTurmaBilling
+} from '../hooks'
 
 interface TurmaDetalhesModalMobileProps {
   turma: Turma | null;

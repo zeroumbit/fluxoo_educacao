@@ -1,45 +1,36 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { useForm, useWatch } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-import {
-  ArrowLeft,
-  Check,
-  Loader2,
-  User,
-  GraduationCap,
-  Calendar,
-  Clock,
-  CreditCard,
-  Building2,
-  ChevronRight,
-  Search,
-  X
-} from 'lucide-react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  useMatriculas,
-  useCriarMatricula,
-  useMatriculaAtivaDoAluno,
-  useMatricula,
-  useAtualizarMatricula
-} from '../hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
-import { useTurmas } from '@/modules/turmas/hooks'
-import { supabase } from '@/lib/supabase'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Command,CommandEmpty,CommandGroup,CommandInput,CommandItem,CommandList } from '@/components/ui/command'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
+import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover'
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { motion } from 'framer-motion'
+import {
+ArrowLeft,
+Check,
+Loader2,
+X
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useForm,useWatch } from 'react-hook-form'
+import { useLocation,useNavigate,useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import {
+useAtualizarMatricula,
+useCriarMatricula,
+useMatricula,
+useMatriculas
+} from '../hooks'
 
 const matriculaSchema = z.object({
   tipo: z.enum(['nova', 'rematricula']),

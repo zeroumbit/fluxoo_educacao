@@ -1,26 +1,37 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, CalendarDays, LineChart, BookOpen, 
-  MapPin, ShieldCheck, Car, Settings, PencilLine, LayoutList, Calendar, Activity, Library, Trophy, Copy
+import { cn } from '@/lib/utils';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+Activity,
+ArrowLeft,
+Calendar,
+CalendarDays,
+Car,
+Copy,
+LayoutList,
+Library,
+LineChart,
+PencilLine,
+Settings,
+ShieldCheck,
+Trophy
 } from 'lucide-react';
-import { GradeCurricularV2 } from '../components/GradeCurricularV2';
-import { PortalSelosV2 } from '../components/PortalSelosV2';
-import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
-import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
-import { PortalPlanosAulaPage } from '../../pages/PortalPlanosAulaPage';
-import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
-import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
+import React,{ useState } from 'react';
+import { useNavigate,useParams } from 'react-router-dom';
 import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
 import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
+import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
 import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
-import { cn } from '@/lib/utils';
+import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
+import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
+import { PortalPlanosAulaPage } from '../../pages/PortalPlanosAulaPage';
+import { GradeCurricularV2 } from '../components/GradeCurricularV2';
+import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
+import { PortalSelosV2 } from '../components/PortalSelosV2';
 
 import { usePortalContext } from '../../context';
-import { useDashboardAluno, useSelosPortal } from '../../hooks';
-import { NativeHeader } from '../components/NativeHeader';
+import { useDashboardAluno,useSelosPortal } from '../../hooks';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
+import { NativeHeader } from '../components/NativeHeader';
 
 // Helper to get initials
 const getInitials = (name: string) => {

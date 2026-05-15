@@ -1,57 +1,47 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useDashboard } from '../dashboard.hooks'
-import {
-  Users,
-  CreditCard,
-  AlertTriangle,
-  Megaphone,
-  Loader2,
-  TrendingUp,
-  ArrowUpRight,
-  X,
-  Info,
-  Eye,
-  Phone,
-  Mail,
-  DollarSign,
-  Calendar,
-  Shield,
-  Clock,
-  AlertOctagon,
-  CheckCircle2,
-  RefreshCcw,
-  Archive,
-  UserCircle,
-} from 'lucide-react'
 import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
-import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
-import type { AlertaStatus, RadarAlunoComStatus } from '../AlertasContext'
-import { AlertasProvider, useAlertas } from '../AlertasContext'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle
+} from '@/components/ui/dialog'
+import { Greeting } from '@/components/ui/Greeting'
+import { useEscolaNotifications,useNotificacoesActions } from '@/hooks/useNotifications'
+import { cn } from '@/lib/utils'
+import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { PixManualBannerNotification as PixManualBannerNotificationComponent } from '@/modules/financeiro/components/PixManualBannerNotification'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+AlertOctagon,
+AlertTriangle,
+Archive,
+ArrowUpRight,
+Calendar,
+Clock,
+CreditCard,
+Loader2,
+Megaphone,
+Phone,
+Shield,
+TrendingUp,
+UserCircle,
+Users,
+X
+} from 'lucide-react'
+import React,{ useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { RadarAlunoComStatus } from '../AlertasContext'
+import { AlertasProvider,useAlertas } from '../AlertasContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
-import { cn } from '@/lib/utils'
-import type { AvisoRecente, RadarAluno } from '../dashboard.service'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
-import CorujaIcon from '@/assets/coruja_ANDROID.svg'
-import { Greeting } from '@/components/ui/Greeting'
-import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
-import { PixManualBannerNotification as PixManualBannerNotificationComponent } from '@/modules/financeiro/components/PixManualBannerNotification'
+import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
+import { useDashboard } from '../dashboard.hooks'
+import type { RadarAluno } from '../dashboard.service'
 
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Alunos Sem Matrícula

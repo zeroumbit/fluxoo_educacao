@@ -1,39 +1,33 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  ArrowLeft,
-  UserCircle,
-  MapPin,
-  Heart,
-  Users,
-  Edit2,
-  Phone,
-  Mail,
-  Fingerprint,
-  Calendar,
-  Building2,
-  Lock,
-  CheckCircle2,
-  CreditCard,
-  ChevronRight,
-  MoreVertical,
-  Save,
-  ShieldCheck,
-  GraduationCap,
-  Percent,
-  Trash2
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useAluno, useAtualizarAluno, useAtivarAcessoPortal, useAlternarFinanceiro, useDesvincularResponsavel, useAtualizarResponsavel } from '../hooks'
-import { cn } from '@/lib/utils'
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { Button } from '@/components/ui/button'
+import { NativeCard } from '@/components/mobile/NativeCard'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import {
+ArrowLeft,
+Calendar,
+CheckCircle2,
+Edit2,
+Fingerprint,
+Heart,
+Lock,
+Mail,
+MapPin,
+MoreVertical,
+Percent,
+Phone,
+Trash2,
+UserCircle,
+Users
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate,useParams } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useAlternarFinanceiro,useAluno,useAtivarAcessoPortal,useAtualizarAluno,useAtualizarResponsavel,useDesvincularResponsavel } from '../hooks'
 
 export function AlunoDetalhePageMobile() {
   const { id } = useParams<{ id: string }>()

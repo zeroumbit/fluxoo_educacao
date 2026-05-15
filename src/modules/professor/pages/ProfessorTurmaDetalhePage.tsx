@@ -1,28 +1,27 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useDetalhesTurma } from '../hooks'
-import { useAuth } from '@/modules/auth/AuthContext'
-import {
-  ArrowLeft,
-  Loader2,
-  Users,
-  Clock,
-  BookOpen,
-  Calendar,
-  Eye,
-  GraduationCap
-} from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from '@/components/ui/table'
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/modules/auth/AuthContext'
+import {
+ArrowLeft,
+BookOpen,
+Calendar,
+Clock,
+Eye,
+Loader2,
+Users
+} from 'lucide-react'
+import { useNavigate,useParams } from 'react-router-dom'
+import { useDetalhesTurma } from '../hooks'
 
 export function ProfessorTurmaDetalhePage() {
   const { id } = useParams<{ id: string }>()

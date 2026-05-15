@@ -1,24 +1,33 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  ArrowLeft, CalendarDays, LineChart, BookOpen, 
-  MapPin, ShieldCheck, Car, Settings, Trophy, BookMarked, LayoutList,
-  Activity, Calendar, Copy
+import {
+Activity,
+ArrowLeft,
+BookMarked,
+Calendar,
+CalendarDays,
+Car,
+Copy,
+LayoutList,
+LineChart,
+MapPin,
+Settings,
+ShieldCheck,
+Trophy
 } from 'lucide-react';
-import { GradeCurricularV2 } from '../components/GradeCurricularV2';
-import { PortalSelosV2 } from '../components/PortalSelosV2';
-import { PortalPlanosAulaV2 } from '../components/PortalPlanosAulaV2';
-import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
-import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
-import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
-import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
-import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
-import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
-import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
+import React,{ useState } from 'react';
+import { useNavigate,useParams } from 'react-router-dom';
 import { usePortalContext } from '../../context';
 import { useDashboardAluno } from '../../hooks';
+import { PortalAgendaPage } from '../../pages/PortalAgendaPage';
+import { PortalAutorizacoesPage } from '../../pages/PortalAutorizacoesPage';
+import { PortalBoletimPage } from '../../pages/PortalBoletimPage';
+import { PortalFilaVirtualPage } from '../../pages/PortalFilaVirtualPage';
+import { PortalFrequenciaPage } from '../../pages/PortalFrequenciaPage';
+import { PortalLivrosPage } from '../../pages/PortalLivrosPage';
+import { GradeCurricularV2 } from '../components/GradeCurricularV2';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
-import { cn } from '@/lib/utils';
+import { PortalAtividadesV2 } from '../components/PortalAtividadesV2';
+import { PortalPlanosAulaV2 } from '../components/PortalPlanosAulaV2';
+import { PortalSelosV2 } from '../components/PortalSelosV2';
 
 // Helper to get initials
 const getInitials = (name: string) => {

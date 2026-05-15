@@ -1,21 +1,21 @@
-import React, { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useEscolas } from '../hooks'
-import { 
-  Building2, 
-  Search, 
-  ChevronRight, 
-  Loader2,
-  Calendar,
-  Layers,
-  Info,
-  Plus,
-  Filter
+import { Button } from '@/components/ui/button'
+import { Card,CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Building2,
+Calendar,
+ChevronRight,
+Filter,
+Info,
+Layers,
+Loader2,
+Plus,
+Search
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { useEscolas } from '../hooks'
 
 export function EscolasPageMobile() {
   const { data: escolas, isLoading } = useEscolas()

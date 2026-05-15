@@ -1,22 +1,29 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
 import {
-  useGatewaysDisponiveis,
-  useGatewayTenantConfig,
-  useSalvarGatewayTenantConfig,
-  useDesativarGatewayTenant
+useDesativarGatewayTenant,
+useGatewaysDisponiveis,
+useGatewayTenantConfig,
+useSalvarGatewayTenantConfig
 } from '@/modules/financeiro/hooks-avancado'
 import {
-  Loader2, Key, CheckCircle2, AlertTriangle, Info, ExternalLink,
-  ShieldCheck, Settings2, Trash2, Signal, SignalZero
+AlertTriangle,
+CheckCircle2,
+ExternalLink,
+Key,
+Loader2,
+Settings2,
+ShieldCheck,
+Signal,SignalZero,
+Trash2
 } from 'lucide-react'
+import { useEffect,useState } from 'react'
 import { toast } from 'sonner'
 
 /**

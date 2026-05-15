@@ -1,19 +1,19 @@
-import { useFechamentoMensal } from '../hooks-avancado'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, TrendingUp, AlertCircle, Wallet, DollarSign, CreditCard, PiggyBank, RotateCw } from 'lucide-react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { cn, formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useMemo } from 'react'
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table'
+import { cn,formatCurrency } from '@/lib/utils'
 import { usePermissions } from '@/providers/RBACProvider'
+import { AlertCircle,CreditCard,DollarSign,Loader2,PiggyBank,RotateCw,TrendingUp,Wallet } from 'lucide-react'
+import { useMemo } from 'react'
+import { useFechamentoMensal } from '../hooks-avancado'
 
 interface FechamentoMensal {
   mes: string

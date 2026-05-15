@@ -1,16 +1,15 @@
-import { motion } from 'framer-motion'
-import { CheckCircle2, AlertCircle, Calendar, Banknote } from 'lucide-react'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { Button } from '@/components/ui/button'
+import { cn,formatCurrency,formatDate } from '@/lib/utils'
+import { AlertCircle,Calendar,CheckCircle2 } from 'lucide-react'
 import type { CobrancaComEncargos } from '../types'
 import {
-  detectarTipoCobranca,
-  getLabelTipoCobranca,
-  getBadgeTipoCobranca,
-  getValorExibicao,
-  extrairDiasProporcionais,
-  isTaxaMatricula,
+detectarTipoCobranca,
+extrairDiasProporcionais,
+getBadgeTipoCobranca,
+getLabelTipoCobranca,
+getValorExibicao,
+isTaxaMatricula,
 } from '../utils/cobranca-utils'
 
 interface CardCobrancaProps {

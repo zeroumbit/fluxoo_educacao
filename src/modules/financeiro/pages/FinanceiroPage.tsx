@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { FinanceiroPageWeb } from './FinanceiroPage.web'
 import { FinanceiroPageMobile } from './FinanceiroPage.mobile'
+import { FinanceiroPageWeb } from './FinanceiroPage.web'
 
 export function FinanceiroPage() {
   return (

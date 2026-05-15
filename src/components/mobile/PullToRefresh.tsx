@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react"
 import { RefreshCw } from "lucide-react"
+import React,{ useCallback,useState } from "react"
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>

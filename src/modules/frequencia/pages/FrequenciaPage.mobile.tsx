@@ -1,43 +1,34 @@
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { toast } from 'sonner'
-import { 
-  ArrowLeft, 
-  CheckCheck, 
-  Save, 
-  Loader2, 
-  Search, 
-  Filter, 
-  User, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle,
-  MessageSquare,
-  AlertTriangle,
-  Users,
-  Calendar,
-  Layers,
-  Check,
-  ChevronRight
-} from 'lucide-react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useTurmas } from '@/modules/turmas/hooks'
-import { useSalvarFrequencias, useFrequenciasPorTurmaData } from '../hooks'
-import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
-import { useAlunos } from '@/modules/alunos/hooks'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-import { useNavigate } from 'react-router-dom'
+import { Textarea } from '@/components/ui/textarea'
 import type { FrequenciaStatus } from '@/lib/database.types'
+import { cn } from '@/lib/utils'
+import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
+import { useAlunos } from '@/modules/alunos/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertCircle,
+ArrowLeft,
+Check,
+CheckCheck,
+Loader2,
+MessageSquare,
+Search,
+User,
+Users
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useFrequenciasPorTurmaData,useSalvarFrequencias } from '../hooks'
 
 export function FrequenciaPageMobile() {
   const navigate = useNavigate()

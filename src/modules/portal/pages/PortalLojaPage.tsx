@@ -1,46 +1,43 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { usePortalContext } from '../context'
-import { useIsMobile } from '@/hooks/use-mobile'
-import {
-  Search,
-  Package,
-  Users,
-  ShoppingBag,
-  MapPin,
-  ChevronDown,
-  Heart,
-  Plus,
-  Star,
-  Truck,
-  Tag,
-  Store,
-  Briefcase
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  useMarketplaceCategorias, 
-  useLojistas, 
-  useProfissionais 
-} from '@/modules/super-admin/marketplace.hooks'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Card,CardContent,CardHeader } from '@/components/ui/card'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import {
+Sheet,
+SheetContent,
+SheetDescription,
+SheetHeader,
+SheetTitle,
+} from '@/components/ui/sheet'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/utils'
+import {
+useLojistas,
+useMarketplaceCategorias,
+useProfissionais
+} from '@/modules/super-admin/marketplace.hooks'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+Briefcase,
+ChevronDown,
+Heart,
+MapPin,
+Package,
+Plus,
+Search,
+ShoppingBag,
+Star,
+Store,
+Truck,
+Users
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate,useSearchParams } from 'react-router-dom'
+import { usePortalContext } from '../context'
 
 const vibrate = (ms: number | number[] = 20) => {
   if (typeof navigator !== 'undefined' && navigator.vibrate) {

@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { LivrosPage as LivrosPageWeb } from './LivrosPage.web'
 import { LivrosPageMobile } from './LivrosPage.mobile'
+import { LivrosPage as LivrosPageWeb } from './LivrosPage.web'
 
 export function LivrosPage() {
   return (

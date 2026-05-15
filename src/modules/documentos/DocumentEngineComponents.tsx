@@ -1,4 +1,3 @@
-import React from 'react';
 
 // ==========================================
 // 1. Ficha de Matrícula

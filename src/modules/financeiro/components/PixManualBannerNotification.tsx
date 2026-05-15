@@ -1,12 +1,12 @@
-import { useNavigate } from 'react-router-dom'
-import { useMemo, useState, useEffect } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
-import { supabase } from '@/lib/supabase'
-import { CreditCard, ExternalLink, CheckCircle2, MessageCircle, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog,DialogContent,DialogHeader,DialogTitle } from '@/components/ui/dialog'
+import { useEscolaNotifications,useNotificacoesActions } from '@/hooks/useNotifications'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { CheckCircle2,ChevronLeft,ChevronRight,CreditCard,ExternalLink,MessageCircle,X } from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 /**
  * Enriquece notificações com metadata incompleto buscando dados das cobranças.

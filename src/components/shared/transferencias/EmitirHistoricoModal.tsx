@@ -1,26 +1,22 @@
 "use client"
 
-import React, { useState } from "react"
-import { FileText, Download, Eye, Printer, Calendar, User, School, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
-import { motion, AnimatePresence } from "framer-motion"
+import { AlertCircle,CheckCircle,Download,FileText,Loader2,User } from 'lucide-react'
+import { useState } from "react"
 import { toast } from "sonner"
 
-import { useAuth } from "@/modules/auth/AuthContext"
-import { useEmitirHistorico, useListarHistoricosAluno } from "@/modules/academico/hooks/historicoDigital"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter 
-} from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useEmitirHistorico,useListarHistoricosAluno } from "@/modules/academico/hooks/historicoDigital"
 
 interface EmitirHistoricoModalProps {
   isOpen: boolean

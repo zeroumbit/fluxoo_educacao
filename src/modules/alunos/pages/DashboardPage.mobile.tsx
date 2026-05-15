@@ -1,50 +1,48 @@
-import { useNavigate } from 'react-router-dom'
-import { useDashboard } from '../dashboard.hooks'
-import {
-  Users,
-  CreditCard,
-  AlertTriangle,
-  Megaphone,
-  ArrowUpRight,
-  TrendingUp,
-  ChevronRight,
-  Plus,
-  Calendar,
-  Zap,
-  Bell,
-  Info,
-  Eye,
-  Phone,
-  Mail,
-  DollarSign,
-  X,
-  Shield,
-  Clock,
-  CheckCircle2,
-  Archive,
-  RefreshCcw,
-  UserCircle,
-} from 'lucide-react'
+import CorujaIcon from '@/assets/coruja_ANDROID.svg'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
+import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
+import { Button } from '@/components/ui/button'
+import { Greeting } from '@/components/ui/Greeting'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useEscolaNotifications } from '@/hooks/useNotifications'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { AvisoRecente, RadarAluno } from '../dashboard.service'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
-import { useEffect, useState, useMemo } from 'react'
-import { get, set } from 'idb-keyval'
-import { NotificationBell } from '@/components/ui/NotificationBell'
-import { useEscolaNotifications } from '@/hooks/useNotifications'
-import { useAuth } from '@/modules/auth/AuthContext'
+import { motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
+import {
+AlertTriangle,
+Archive,
+Calendar,
+CheckCircle2,
+ChevronRight,
+Clock,
+CreditCard,
+DollarSign,
+Eye,
+Info,
+Mail,
+Megaphone,
+Phone,
+Plus,
+RefreshCcw,
+Shield,
+TrendingUp,
+UserCircle,
+Users,
+X,
+Zap
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AlertasProvider,useAlertas,type RadarAlunoComStatus } from '../AlertasContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
-import { cn } from '@/lib/utils'
-import CorujaIcon from '@/assets/coruja_ANDROID.svg'
-import { AlertasProvider, useAlertas, type RadarAlunoComStatus } from '../AlertasContext'
-import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
-import { Greeting } from '@/components/ui/Greeting'
+import { useDashboard } from '../dashboard.hooks'
+import type { AvisoRecente } from '../dashboard.service'
 
 const CACHE_KEY = 'dashboard_cache'
 

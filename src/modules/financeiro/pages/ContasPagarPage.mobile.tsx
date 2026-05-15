@@ -1,40 +1,36 @@
-import { useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, 
-  Loader2, 
-  Search, 
-  Calendar, 
-  CheckCircle2, 
-  Trash2, 
-  Edit2, 
-  AlertCircle, 
-  ArrowLeft,
-  Filter,
-  Wallet,
-  ArrowUpCircle,
-  Receipt,
-  Repeat,
-  ChevronRight,
-  Sparkles
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+AlertCircle,
+ArrowLeft,
+CheckCircle2,
+Edit2,
+Loader2,
+Plus,
+Receipt,
+Repeat,
+Search,
+Sparkles,
+Trash2,
+Wallet
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { z } from 'zod'
 
-import { useAuth } from '@/modules/auth/AuthContext'
-import { usePermissions } from '@/providers/RBACProvider'
-import { useContasPagar, useCriarContaPagar, useAtualizarContaPagar, useDeletarContaPagar } from '../hooks-avancado'
+import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
-import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { usePermissions } from '@/providers/RBACProvider'
+import { useAtualizarContaPagar,useContasPagar,useCriarContaPagar,useDeletarContaPagar } from '../hooks-avancado'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome obrigatório'),

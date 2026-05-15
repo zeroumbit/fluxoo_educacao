@@ -1,24 +1,24 @@
-import { useState } from 'react'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useEscola, useSolicitacoesUpgrade, useCriarSolicitacaoUpgrade, useAssinaturaAtiva, usePlanos } from '../hooks'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { 
-  CreditCard, 
-  ArrowUpCircle, 
-  CheckCircle2, 
-  Clock, 
-  Loader2, 
-  Trophy,
-  Plus
-} from 'lucide-react'
-import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import {
+ArrowUpCircle,
+CheckCircle2,
+Clock,
+CreditCard,
+Loader2,
+Plus,
+Trophy
+} from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useAssinaturaAtiva,useCriarSolicitacaoUpgrade,useEscola,usePlanos,useSolicitacoesUpgrade } from '../hooks'
 
 export function PlanoPage() {
   const { authUser } = useAuth()

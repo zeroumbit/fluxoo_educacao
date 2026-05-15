@@ -1,6 +1,6 @@
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
-import { AlunoCadastroPage as AlunoCadastroPageWeb } from './AlunoCadastroPage.web'
 import { AlunoCadastroPageMobile } from './AlunoCadastroPage.mobile'
+import { AlunoCadastroPage as AlunoCadastroPageWeb } from './AlunoCadastroPage.web'
 
 export function AlunoCadastroPage() {
   return (

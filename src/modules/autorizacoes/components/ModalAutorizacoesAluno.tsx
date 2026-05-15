@@ -1,11 +1,10 @@
-import React from 'react'
-import { useResumoAutorizacoesPorAluno } from '@/modules/autorizacoes/hooks'
-import { CATEGORIA_LABELS, CATEGORIA_CORES } from '@/modules/autorizacoes/service'
 import { AdaptiveModal } from '@/components/adaptive/AdaptiveModal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Shield, Clock, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useResumoAutorizacoesPorAluno } from '@/modules/autorizacoes/hooks'
+import { CATEGORIA_CORES,CATEGORIA_LABELS } from '@/modules/autorizacoes/service'
+import { CheckCircle2,Clock,Loader2,XCircle } from 'lucide-react'
 
 type Props = {
   alunoId: string | null

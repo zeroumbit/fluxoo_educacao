@@ -1,13 +1,13 @@
-import { useState } from 'react'
-import Papa, { type ParseResult } from 'papaparse'
-import { toast } from 'sonner'
-import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Upload, CheckCircle, FileDown, Loader2, ArrowLeft, FileUp } from 'lucide-react'
+import { ArrowLeft,CheckCircle,FileDown,FileUp,Loader2,Upload } from 'lucide-react'
+import Papa,{ type ParseResult } from 'papaparse'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 
 export function AlunosImportarPage() {
   const navigate = useNavigate()

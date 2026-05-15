@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
 
 export function useGestorGuard() {
   const { authUser } = useAuth();

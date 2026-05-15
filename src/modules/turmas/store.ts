@@ -1,5 +1,5 @@
-import { create } from 'zustand'
-import type { Turma, Disciplina, Professor, GradeHoraria, ProfessorTurma, AlunoCompacto, TurmaStoreState } from './types'
+import { create } from 'zustand';
+import type { AlunoCompacto,Disciplina,GradeHoraria,Professor,ProfessorTurma,Turma,TurmaStoreState } from './types';
 
 interface TurmaStore extends TurmaStoreState {
   // Setters para sincronização com Query hooks

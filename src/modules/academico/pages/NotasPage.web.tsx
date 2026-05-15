@@ -1,46 +1,44 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useTurmas } from '@/modules/turmas/hooks'
-import { cn } from '@/lib/utils'
-import {
-  useAvaliacoesByTurmaDisciplina,
-  useCriarAvaliacao,
-  useExcluirAvaliacao,
-  useNotasPorAvaliacao,
-  useSalvarNotasEmLote,
-  useStatusFechamento,
-  useFecharBimestre,
-  useReabrirBimestre,
-  useDisciplinasPorTurma,
-} from '../hooks/hooks.v2'
-import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import {
-  GraduationCap,
-  Save,
-  Plus,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  User,
-  LayoutGrid,
-  BookOpen,
-  Lock,
-  Unlock,
-  Trash2,
-  Award,
-  X,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import type { TipoAvaliacao } from '../service.v2'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useGestorGuard } from '@/hooks/useGestorGuard'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
+import { useTurmas } from '@/modules/turmas/hooks'
+import { useQuery } from '@tanstack/react-query'
+import {
+Award,
+BookOpen,
+CheckCircle2,
+LayoutGrid,
+Loader2,
+Lock,
+Plus,
+Save,
+Trash2,
+Unlock,
+User,
+X
+} from 'lucide-react'
+import { useCallback,useEffect,useRef,useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { toast } from 'sonner'
+import {
+useAvaliacoesByTurmaDisciplina,
+useCriarAvaliacao,
+useDisciplinasPorTurma,
+useExcluirAvaliacao,
+useFecharBimestre,
+useNotasPorAvaliacao,
+useReabrirBimestre,
+useSalvarNotasEmLote,
+useStatusFechamento,
+} from '../hooks/hooks.v2'
+import type { TipoAvaliacao } from '../service.v2'
 
 const TIPOS_AVALIACAO: { value: TipoAvaliacao; label: string }[] = [
   { value: 'prova', label: 'Prova' },

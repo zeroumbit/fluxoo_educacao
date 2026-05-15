@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react'
-import { useConfiguracaoRecebimento, useUpdateConfiguracaoRecebimento } from '../hooks'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { QrCode, Save, Loader2, ShieldCheck } from 'lucide-react'
+import { Loader2,QrCode,Save,ShieldCheck } from 'lucide-react'
+import { useEffect,useState } from 'react'
 import { toast } from 'sonner'
+import { useConfiguracaoRecebimento,useUpdateConfiguracaoRecebimento } from '../hooks'
 
 export function ConfigRecebimentoPage() {
   const { data: config, isLoading } = useConfiguracaoRecebimento()

@@ -1,5 +1,5 @@
-import { supabase } from '@/lib/supabase'
 import { validarPermissao } from '@/lib/rbac-validation'
+import { supabase } from '@/lib/supabase'
 
 export const almoxarifadoService = {
   async listarItens(tenantId: string) {

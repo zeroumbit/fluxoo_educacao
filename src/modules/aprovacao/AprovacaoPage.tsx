@@ -1,16 +1,15 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
-import { toast } from 'sonner'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { AlertCircle,CheckCircle,Clock,XCircle } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { AprovacaoService, type AprovacaoPendente } from './AprovacaoService'
+import { AprovacaoService,type AprovacaoPendente } from './AprovacaoService'
 
 export function AprovacaoPage() {
   const queryClient = useQueryClient()

@@ -1,26 +1,26 @@
-import { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  ArrowLeft,
-  Users,
-  Clock,
-  TrendingUp,
-  Search,
-  BookOpen,
-  ChevronRight,
-  School,
-  Eye
-} from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { NativeCard } from '@/components/mobile/NativeCard'
+import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useSaudeTurmas } from '@/modules/professor/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { NativeCard } from '@/components/mobile/NativeCard'
-import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowLeft,
+BookOpen,
+ChevronRight,
+Clock,
+Eye,
+School,
+Search,
+TrendingUp,
+Users
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const CACHE_KEY = 'professor_turmas_mobile_v1'
 

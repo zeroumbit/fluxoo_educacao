@@ -9,8 +9,8 @@
  * Este módulo garante que o frontend colete a justificativa antes de agir.
  */
 
-import type { AuthUser } from '@/modules/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
+import type { AuthUser } from '@/modules/auth/AuthContext'
 
 /** Ações que requerem justificativa obrigatória quando feitas pelo Gestor */
 export const GESTOR_EXCEPTIONAL_ACTIONS = {

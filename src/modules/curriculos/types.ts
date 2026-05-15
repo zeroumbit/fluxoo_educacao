@@ -1,4 +1,4 @@
-import type { Curriculo, FormacaoAcademica, ExperienciaProfissional, Certificacao } from '@/lib/database.types'
+import type { Certificacao,Curriculo,ExperienciaProfissional,FormacaoAcademica } from '@/lib/database.types'
 
 export interface CurriculoLista extends Omit<Curriculo, 'formacao' | 'experiencia' | 'certificacoes'> {
   formacao: FormacaoAcademica[]

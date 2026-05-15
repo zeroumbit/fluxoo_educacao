@@ -1,12 +1,12 @@
-import { supabase } from '@/lib/supabase'
+import type {
+MatriculaInsert,
+MatriculaUpdate,
+SeloInsert
+} from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
-import type { 
-  MatriculaInsert, 
-  MatriculaUpdate, 
-  SeloInsert 
-} from '@/lib/database.types'
-import type { PlanoAulaComTurmas, AtividadeComTurmas } from '../types'
+import { supabase } from '@/lib/supabase'
+import type { AtividadeComTurmas,PlanoAulaComTurmas } from '../types'
 
 export const academicoService = {
   // MATRÍCULAS

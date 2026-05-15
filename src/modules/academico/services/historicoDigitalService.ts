@@ -1,7 +1,6 @@
-import crypto from 'crypto';
 import { supabase } from '@/lib/supabase';
-import { getExitTranscriptHtmlTemplate } from './historicoPdfService';
 import type { HistoricoRpcResponse } from '../types';
+import { getExitTranscriptHtmlTemplate } from './historicoPdfService';
 
 export interface HistoricoDisciplina {
   disciplina: string;
@@ -51,10 +50,19 @@ export interface BuildTranscriptOpts {
   includeHealthData: boolean;
 }
 
-export function generateValidationHash(alunoId: string, tenantId: string): string {
+async function generateSha256Hex(rawData: string): Promise<string> {
+  const bytes = new TextEncoder().encode(rawData);
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export async function generateValidationHash(alunoId: string, tenantId: string): Promise<string> {
   const timestamp = Date.now().toString();
   const rawData = `${alunoId}:${tenantId}:${timestamp}`;
-  return crypto.createHash('sha256').update(rawData).digest('hex');
+  return generateSha256Hex(rawData);
 }
 
 export async function buildExitTranscriptPayload(
@@ -132,7 +140,7 @@ export async function buildExitTranscriptPayload(
     }];
   }
 
-  const validationHash = generateValidationHash(alunoId, tenantId);
+  const validationHash = await generateValidationHash(alunoId, tenantId);
 
   const payload: ExitTranscriptPayload = {
     aluno: {

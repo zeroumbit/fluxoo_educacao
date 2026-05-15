@@ -1,31 +1,28 @@
 
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, 
-  Search, 
-  ArrowLeft, 
-  Library, 
-  BookOpen, 
-  CheckCircle2, 
-  AlertCircle,
-  Settings2,
-  X
+import { AnimatePresence,motion } from 'framer-motion'
+import {
+ArrowLeft,
+BookOpen,
+Library,
+Plus,
+Search,
+Settings2
 } from 'lucide-react'
+import { useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useCatalogoDisciplinas, useToggleDisciplinaAtiva, useCriarDisciplina } from '@/modules/turmas/hooks'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useCatalogoDisciplinas,useCriarDisciplina,useToggleDisciplinaAtiva } from '@/modules/turmas/hooks'
 
 export function DisciplinasPageMobile() {
   const navigate = useNavigate()

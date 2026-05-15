@@ -1,31 +1,49 @@
-import { useState, useEffect, useCallback } from 'react'
-import {
-  BookOpen, Wallet, ShieldAlert, Scale, CalendarDays, History,
-  UploadCloud, Save, Info, Banknote, ChevronDown, Check, ShieldCheck,
-  Loader2, AlertTriangle, BadgeAlert, BadgeCheck, ChevronRight, Clock,
-  RefreshCw, Settings2, AlertCircle, QrCode, Upload, X, FileText
-} from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
-  useTenantSettings,
-  useTenantSettingsHistory,
-  type ConfigAcademica,
-  type ConfigFinanceira,
-  type ConfigOperacional,
-  type ConfigConduta,
-  type ConfigCalendario,
+useTenantSettings,
+useTenantSettingsHistory,
+type ConfigAcademica,
+type ConfigCalendario,
+type ConfigConduta,
+type ConfigFinanceira,
+type ConfigOperacional,
 } from '@/modules/escolas/hooks/useTenantSettings'
+import {
+AlertCircle,
+AlertTriangle,BadgeAlert,
+Banknote,
+BookOpen,
+CalendarDays,
+Check,
+ChevronDown,
+ChevronRight,Clock,
+FileText,
+History,
+Info,
+Loader2,
+QrCode,
+RefreshCw,
+Save,
+Scale,
+Settings2,
+ShieldAlert,
+Upload,
+UploadCloud,
+Wallet,
+X
+} from 'lucide-react'
+import { useCallback,useEffect,useState } from 'react'
+import { toast } from 'sonner'
 
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
 
@@ -219,7 +237,7 @@ export function ConfiguracoesPage() {
       setConduta(config.config_conduta)
       setCalendario(config.config_calendario)
     }
-  }, [isLoading]) // eslint-disable-line
+  }, [isLoading])
 
   // Carrega histórico campo-a-campo quando acessa a aba Auditoria
   const loadHistoricoDetalhado = useCallback(async () => {

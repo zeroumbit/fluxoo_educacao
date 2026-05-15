@@ -1,36 +1,34 @@
 
-import React, { useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home,
-  Users,
-  Receipt,
-  Bell,
-  Megaphone,
-  ShoppingBag,
-  Menu,
-  User,
-  LogOut,
-  ChevronRight,
-  Shield,
-  CreditCard,
-  MessageSquare,
-  ClipboardList,
-  Send,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
+SheetTrigger,
 } from "@/components/ui/sheet";
+import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { usePortalContext } from '@/modules/portal/context';
-import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import {
+ChevronRight,
+ClipboardList,
+CreditCard,
+Home,
+LogOut,
+Megaphone,
+Menu,
+Receipt,
+Send,
+Shield,
+ShoppingBag,
+User,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
+import { NavLink,useLocation,useNavigate } from 'react-router-dom';
 
 // Verifica se existem lojistas ou profissionais cadastrados no marketplace
 // NOTA: Tabelas 'lojistas' e 'curriculos' podem ter RLS restritivo para role 'responsavel'.

@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { API_URLS } from '@/lib/constants'
+import { useState } from 'react'
 
 export const ESTADOS_BRASIL = [
   { value: 'AC', label: 'Acre' },

@@ -1,51 +1,50 @@
-import { useState, useEffect } from 'react'
-import { logger } from '@/lib/logger'
-import { useViaCEP } from '@/hooks/use-viacep'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/modules/auth/AuthContext'
-import { useCriarAlunoComResponsavel, useAlunosAtivos } from '../hooks'
-import { useLimiteAlunos } from '@/modules/assinatura/hooks'
-import { useFiliais } from '@/modules/filiais/hooks'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Loader2,
-  User,
-  Heart,
-  Users,
-  Building2,
-  Eye,
-  EyeOff,
-  CreditCard,
-  MapPin,
-  Percent,
-  PlusCircle,
-  X
-} from 'lucide-react'
+import { useViaCEP } from '@/hooks/use-viacep'
+import { logger } from '@/lib/logger'
+import { checkRateLimit,safeStorage } from '@/lib/security'
+import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import { mascaraCPF, mascaraTelefone, validarCPF, validarEmail, mascaraCEP, getProximoDiaUtil, formatDateISO } from '@/lib/validacoes'
-import { safeStorage, checkRateLimit } from '@/lib/security'
+import { formatDateISO,getProximoDiaUtil,mascaraCEP,mascaraCPF,mascaraTelefone,validarCPF,validarEmail } from '@/lib/validacoes'
+import { useLimiteAlunos } from '@/modules/assinatura/hooks'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { useFiliais } from '@/modules/filiais/hooks'
 import { rbacService } from '@/modules/rbac/service'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+ArrowLeft,
+ArrowRight,
+Building2,
+Check,
+CreditCard,
+Eye,
+EyeOff,
+Heart,
+Loader2,
+Percent,
+PlusCircle,
+User,
+Users,
+X
+} from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { z } from 'zod'
+import { useAlunosAtivos,useCriarAlunoComResponsavel } from '../hooks'
 
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, 'Nome é obrigatório'),

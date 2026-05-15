@@ -1,9 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { superAdminService } from '@/modules/super-admin/service'
-import { escolaService } from '@/modules/escolas/service'
-import { portalService } from '@/modules/portal/service'
-import { notificacoesService } from '@/modules/notificacoes/notificacoes.service'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { notificacoesService } from '@/modules/notificacoes/notificacoes.service'
+import { portalService } from '@/modules/portal/service'
+import { superAdminService } from '@/modules/super-admin/service'
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 
 /**
  * Hook para notificações do Super Admin

@@ -1,6 +1,6 @@
+import { AlertCircle,ArrowRightLeft,ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, AlertCircle, ArrowRightLeft } from 'lucide-react';
 import { usePortalContext } from '../../context';
 import { ModalSolicitarTransferenciaPortal } from '../components/ModalSolicitarTransferenciaPortal';
 

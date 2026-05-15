@@ -1,36 +1,34 @@
-import { useState, useMemo, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Search,
-  Plus,
-  User,
-  ChevronRight,
-  Filter,
-  X,
-  GraduationCap,
-  Layers,
-  Calendar,
-  ArrowLeft,
-  Trash2,
-  AlertTriangle,
-  MoreVertical,
-  Pencil,
-  Eye,
-  DollarSign,
-  Clock,
-  BookOpen
-} from 'lucide-react'
-import { NativeCard } from '@/components/mobile/NativeCard'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
+import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useMatriculas, useExcluirMatricula } from '../hooks'
-import { get, set } from 'idb-keyval'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { AnimatePresence,motion } from 'framer-motion'
+import { get,set } from 'idb-keyval'
+import {
+ArrowLeft,
+BookOpen,
+Calendar,
+Clock,
+DollarSign,
+Eye,
+Filter,
+GraduationCap,
+Layers,
+MoreVertical,
+Pencil,
+Plus,
+Search,
+Trash2,
+User,
+X
+} from 'lucide-react'
+import { useEffect,useMemo,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useExcluirMatricula,useMatriculas } from '../hooks'
 
 const CACHE_KEY = 'matriculas_list_cache'
 
