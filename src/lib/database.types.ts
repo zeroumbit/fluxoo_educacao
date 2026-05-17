@@ -1648,6 +1648,21 @@ export type Database = {
     Functions: {
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
       get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
+      fn_portal_aluno_enriquecimento: {
+        Args: { p_aluno_id: string };
+        Returns: {
+          aluno_id: string;
+          tenant_id: string;
+          turma_id: string | null;
+          turma_nome: string | null;
+          turma_turno: string | null;
+          turma_valor_mensalidade: number | null;
+          valor_matricula: number | null;
+          valor_mensalidade: number | null;
+          serie_ano: string | null;
+          matricula_turno: string | null;
+        }[];
+      };
       marcar_notificacao_lida: { Args: { notificacao_id: string }; Returns: void };
       marcar_notificacao_resolvida: { Args: { notificacao_id: string }; Returns: void };
       registrar_pagamento_cobranca: {

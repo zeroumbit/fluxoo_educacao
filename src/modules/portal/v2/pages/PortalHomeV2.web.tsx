@@ -35,7 +35,7 @@ export function PortalHomeV2Web() {
   const { data: transferenciasPortal } = useTransferenciasPortal();
   const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
   const transferenciaPendente = React.useMemo(
-    () => (transferenciasPortal as any[] | undefined)?.find((t) => t.status === 'aguardando_responsavel'),
+    () => (transferenciasPortal as any[] | undefined)?.find((t) => ['aguardando_responsavel', 'aguardando_aceite_destino'].includes(t.status)),
     [transferenciasPortal]
   );
   
@@ -109,17 +109,17 @@ export function PortalHomeV2Web() {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full">
+    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
       <ModalCopyConfirm isOpen={showCopyModal} onClose={() => setShowCopyModal(false)} value={copyId} />
-      <header className="flex items-end justify-between border-b border-slate-200 pb-8 mt-2">
+      <header className="flex items-center justify-between gap-6 mt-2">
         <div className="flex flex-col">
-          <span className="text-base font-medium text-slate-500 mb-1">Visão Geral da Família</span>
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight">Bom dia, {responsavel?.nome?.split(' ')[0] || 'Responsável'}</h1>
+          <span className="text-sm font-medium text-slate-500 mb-1">Visão Geral da Família</span>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Bom dia, {responsavel?.nome?.split(' ')[0] || 'Responsável'}</h1>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-slate-400 tracking-wider">ACESSAR PERFIL:</span>
-            <div className="flex -space-x-2">
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">ACESSAR PERFIL:</span>
+            <div className="flex items-center gap-2">
               {vinculos.map((v: any, index: number) => (
                 <div
                   key={v.aluno?.id || `vinculo-${index}`}
@@ -127,8 +127,8 @@ export function PortalHomeV2Web() {
                     selecionarAluno(v);
                     navigate(`/portal/alunos/${v.aluno?.id}`);
                   }}
-                  className={`w-14 h-14 rounded-full border-4 border-white flex items-center justify-center font-bold shadow-md cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all ${
-                    alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white' : 'bg-slate-200 text-slate-600'
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center text-sm font-bold shadow-sm cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all ${
+                    alunoSelecionado?.id === v.aluno?.id ? 'bg-teal-500 text-white border-teal-500 ring-2 ring-white ring-offset-2 ring-offset-slate-50' : 'bg-white text-slate-500 border-slate-200'
                   }`}
                 >
                   {getInitials(v.aluno?.nome_completo || 'A')}
@@ -136,6 +136,7 @@ export function PortalHomeV2Web() {
               ))}
             </div>
           </div>
+          <div className="h-8 w-px bg-slate-200" />
           <NotificationBell
             total={notifications?.total || 0}
             items={notifications?.items || []}
@@ -148,9 +149,9 @@ export function PortalHomeV2Web() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-[40px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex items-center gap-6"
+          className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-between gap-5"
         >
-          <div className="w-20 h-20 rounded-[28px] bg-teal-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-teal-500/10 overflow-hidden shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-xl font-bold shadow-inner overflow-hidden shrink-0">
              {alunoSelecionado.foto_url ? (
                <img src={alunoSelecionado.foto_url} alt="" className="w-full h-full object-cover" />
              ) : (
@@ -158,11 +159,11 @@ export function PortalHomeV2Web() {
              )}
           </div>
           <div className="flex flex-col flex-1 gap-1">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-none">
               {alunoSelecionado.nome_completo}
             </h2>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-teal-50 text-teal-600 rounded-xl text-sm font-bold uppercase tracking-widest">
+              <span className="px-2.5 py-0.5 bg-teal-50 text-teal-600 rounded-md text-xs font-semibold uppercase">
                 {alunoSelecionado.turma?.nome || 'Sem Turma'}
               </span>
               {alunoSelecionado.codigo_transferencia && (
@@ -171,7 +172,7 @@ export function PortalHomeV2Web() {
                     setCopyId(alunoSelecionado.codigo_transferencia || '');
                     setShowCopyModal(true);
                   }}
-                  className="flex items-center gap-2 font-mono font-bold text-xs uppercase tracking-tight bg-amber-50 text-amber-700 px-3 py-1 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors"
+                  className="flex items-center gap-1.5 font-mono font-semibold text-xs uppercase tracking-tight bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-md border border-amber-100 hover:bg-amber-100 transition-colors"
                 >
                    ID: {alunoSelecionado.codigo_transferencia}
                    <ArrowRight size={14} className="text-amber-400 rotate-[-45deg]" />
@@ -181,7 +182,7 @@ export function PortalHomeV2Web() {
           </div>
           <button 
             onClick={() => navigate(`/portal/alunos/${alunoSelecionado.id}`)}
-            className="px-8 py-4 bg-slate-50 text-slate-600 rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors"
+            className="px-5 py-2.5 bg-slate-50 text-slate-700 rounded-xl border border-slate-200 font-semibold text-xs uppercase tracking-wide hover:bg-slate-100 transition-colors"
           >
             Ver Perfil Completo
           </button>
@@ -189,13 +190,13 @@ export function PortalHomeV2Web() {
       )}
 
       {/* Cards Dinâmicos: Contrato e Fila (Absorção V1) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col gap-4">
         {transferenciaPendente && showTransferenciaCard && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate('/portal/transferencias')}
-            className="relative bg-orange-600 p-8 rounded-[40px] text-white shadow-xl shadow-orange-100 flex items-center justify-between cursor-pointer group hover:bg-orange-700 transition-all"
+            className="relative bg-gradient-to-r from-orange-500 to-orange-600 p-5 rounded-2xl text-white shadow-sm flex items-center justify-between cursor-pointer group hover:from-orange-600 hover:to-orange-700 transition-all overflow-hidden"
           >
             <button
               onClick={(e) => {
@@ -207,8 +208,8 @@ export function PortalHomeV2Web() {
             >
               <X size={16} />
             </button>
-            <div className="flex items-center gap-6 pr-8">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
+            <div className="flex items-center gap-5 pr-8">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Send size={28} />
               </div>
               <div>
@@ -227,18 +228,18 @@ export function PortalHomeV2Web() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => setShowContrato(true)}
-            className="bg-amber-600 p-8 rounded-[40px] text-white shadow-xl shadow-amber-100 flex items-center justify-between cursor-pointer group hover:bg-amber-700 transition-all"
+            className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 shadow-sm flex items-center justify-between cursor-pointer group hover:bg-amber-100 transition-all"
           >
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
-                <FileSignature size={28} />
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-full bg-white text-amber-600 shadow-sm flex items-center justify-center">
+                <FileSignature size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-black mb-1">Contrato Pendente</h3>
-                <p className="text-xs font-medium text-amber-100 italic">Toque aqui para assinar eletronicamente.</p>
+                <h3 className="text-sm font-bold mb-1">Contrato Pendente</h3>
+                <p className="text-xs font-medium text-amber-700">Toque aqui para assinar eletronicamente.</p>
               </div>
             </div>
-            <ArrowRight className="w-6 h-6 text-amber-200 group-hover:translate-x-2 transition-transform" />
+            <ArrowRight className="w-5 h-5 text-amber-600 group-hover:translate-x-1 transition-transform" />
           </motion.div>
         )}
 
@@ -247,31 +248,31 @@ export function PortalHomeV2Web() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate('/portal/fila')}
-            className="bg-indigo-600 p-8 rounded-[40px] text-white shadow-xl shadow-indigo-100 flex items-center justify-between cursor-pointer group hover:bg-indigo-700 transition-all"
+            className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl text-indigo-900 shadow-sm flex items-center justify-between cursor-pointer group hover:bg-indigo-100 transition-all"
           >
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center relative">
-                <Clock size={28} />
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-full bg-white text-indigo-600 shadow-sm flex items-center justify-center relative">
+                <Clock size={24} />
                 {filaAtiva.status === 'aguardando' && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-teal-400 rounded-full animate-ping" />
                 )}
               </div>
               <div>
-                <h3 className="text-xl font-black mb-1">Fila Virtual</h3>
-                <p className="text-xs font-medium text-indigo-100 italic">
+                <h3 className="text-sm font-bold mb-1">Fila Virtual</h3>
+                <p className="text-xs font-medium text-indigo-700">
                   Status: <span className="font-bold uppercase tracking-wider">{filaAtiva.status || 'Inativa'}</span>
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-6 h-6 text-indigo-200 group-hover:translate-x-2 transition-transform" />
+            <ArrowRight className="w-5 h-5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
           </motion.div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 flex flex-col gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 flex flex-col gap-6">
           {/* Alertas */}
-          <section className="flex flex-col gap-4 max-w-[800px]">
+          <section className="flex flex-col gap-3">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">Alertas e Pendências</h2>
             <div className="grid grid-cols-1 gap-4">
               {alerts.length === 0 ? (
@@ -282,7 +283,7 @@ export function PortalHomeV2Web() {
                     key={alert.id}
                     onClick={alert.action}
                     className={cn(
-                      "flex items-start gap-4 p-5 rounded-3xl border shadow-sm transition-all cursor-pointer hover:shadow-md",
+                      "flex items-start gap-4 p-4 rounded-2xl border shadow-sm transition-all cursor-pointer hover:shadow-md",
                       alert.type === 'error' && "bg-orange-50 border-orange-100 text-orange-800",
                       alert.type === 'success' && "bg-emerald-50 border-emerald-100 text-emerald-800",
                       alert.type === 'danger' && "bg-rose-50 border-rose-100 text-rose-800"
@@ -304,10 +305,10 @@ export function PortalHomeV2Web() {
           </section>
 
           {/* Mural Desktop */}
-          <section className="flex flex-col gap-4 bg-white p-8 rounded-[40px] border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                <Info className="w-8 h-8 text-teal-500" />
+          <section className="flex flex-col bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <Info className="w-5 h-5 text-teal-500" />
                 Mural Direto
               </h2>
               <button
@@ -317,7 +318,7 @@ export function PortalHomeV2Web() {
                 Abrir Central de Notificações
               </button>
             </div>
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-4 p-6">
               {activeAvisos.length === 0 ? (
                 <>
                   {[0].map((offset) => {
@@ -328,7 +329,7 @@ export function PortalHomeV2Web() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: offset * 0.1 }}
-                        className="bg-white border border-slate-100 p-8 rounded-[32px] shadow-sm flex flex-col items-center text-center justify-center min-h-[220px] relative overflow-hidden group hover:border-teal-200 transition-all duration-500"
+                        className="bg-slate-50/50 border-2 border-dashed border-slate-200 p-8 rounded-2xl shadow-sm flex flex-col items-center text-center justify-center min-h-[220px] relative overflow-hidden group hover:border-teal-200 transition-all duration-500"
                       >
                         <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
                           <Icon className="w-24 h-24" />
@@ -356,7 +357,7 @@ export function PortalHomeV2Web() {
                 </>
               ) : (
                 activeAvisos.slice(0, 1).map((news: any) => (
-                  <div key={news.id} className="bg-slate-50 border border-slate-100 p-6 rounded-3xl hover:border-teal-200 transition-colors cursor-pointer group">
+                  <div key={news.id} className="bg-slate-50 border border-slate-100 p-5 rounded-2xl hover:border-teal-200 transition-colors cursor-pointer group">
                     <span className="inline-block px-3 py-1.5 bg-white text-slate-600 rounded-lg text-[11px] font-black uppercase tracking-widest mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                       {news.turma?.nome || 'Geral'}
                     </span>
@@ -372,14 +373,14 @@ export function PortalHomeV2Web() {
         </div>
 
         {/* Sidebar: Agenda Consolidada */}
-        <div className="lg:col-span-1">
-          <section className="flex flex-col bg-white p-8 rounded-[40px] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 h-full">
-            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3 mb-8">
-              <Clock className="w-7 h-7 text-teal-500" />
+        <div className="lg:col-span-4">
+          <section className="flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200/60 h-full overflow-hidden">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 p-6 border-b border-slate-100 mb-0">
+              <Clock className="w-5 h-5 text-slate-400" />
               Hoje na Escola
             </h2>
             
-            <div className="flex flex-col gap-8 relative before:absolute before:inset-y-2 before:left-[19px] before:w-[2px] before:bg-slate-100">
+            <div className="p-6 flex flex-col gap-6 relative before:absolute before:inset-y-8 before:left-[43px] before:w-[2px] before:bg-slate-100">
               {!dashboard?.avisosRecentes || dashboard.avisosRecentes.length === 0 ? (
                 <div className="flex flex-col gap-2 pl-8">
                   <p className="text-sm font-bold text-slate-500 italic">Dia tranquilo!</p>
@@ -397,7 +398,7 @@ export function PortalHomeV2Web() {
                       <span className="text-sm font-black text-slate-400 mb-2">
                         {new Date(item.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 hover:border-teal-200 transition-colors">
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 hover:border-teal-200 transition-colors">
                         <span className="text-[10px] uppercase font-black text-teal-600 tracking-widest mb-2 flex items-center gap-1">
                           {item.turma?.nome || 'Geral'}
                         </span>
@@ -422,3 +423,5 @@ export function PortalHomeV2Web() {
     </div>
   );
 }
+
+

@@ -14,7 +14,7 @@ export const escolaService = {
   async listarParaTransferencia() {
     const { data, error } = await (supabase.rpc('fn_listar_escolas_para_transferencia' as any) as any)
     if (error) throw error
-    return (data as Array<{ id: string; razao_social: string | null; nome_fantasia: string | null }>) || []
+    return (data as Array<{ id: string; razao_social: string | null }>) || []
   },
 
   async buscarPorId(id: string) {
@@ -25,6 +25,26 @@ export const escolaService = {
       .single()
     if (error) throw error
     return data
+  },
+
+  async buscarDadosContratoPortal(id: string) {
+    const { data, error } = await supabase
+      .from('escolas')
+      .select('id, razao_social, cnpj, logradouro, numero, bairro, cidade, estado, email_gestor, telefone')
+      .eq('id', id)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  },
+
+  async buscarResumoVinculadas(ids: string[]) {
+    if (ids.length === 0) return []
+    const { data, error } = await supabase
+      .from('escolas')
+      .select('id, razao_social, status_assinatura')
+      .in('id', ids)
+    if (error) throw error
+    return data || []
   },
 
   async criar(escola: EscolaInsert) {

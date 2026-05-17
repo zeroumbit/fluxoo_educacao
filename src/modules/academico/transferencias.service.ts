@@ -193,21 +193,23 @@ export const transferenciasService = {
     alunoId: string
     origemId: string
     responsavelId: string
+    destinoId?: string | null
     destinoNome?: string
     destinoCnpj?: string
     motivo: string
   }) {
+    const destinoId = payload.destinoId || null
     const { data, error } = await supabase
       .from('transferencias_escolares')
       .insert({
         aluno_id: payload.alunoId,
         escola_origem_id: payload.origemId,
-        escola_destino_id: null,
+        escola_destino_id: destinoId,
         escola_destino_nome_manual: payload.destinoNome || null,
         escola_destino_cnpj_manual: payload.destinoCnpj || null,
         responsavel_id: payload.responsavelId,
         iniciado_por: 'responsavel' as const,
-        status: 'aguardando_liberacao_origem' as const, // Responsável já é o aprovador implícito
+        status: destinoId ? 'aguardando_aceite_destino' as const : 'aguardando_liberacao_origem' as const,
         motivo_solicitacao: payload.motivo,
         aprovado_em: new Date().toISOString(),
       } as any)
@@ -336,3 +338,4 @@ export const transferenciasService = {
     return data as unknown as { permissao_solicitacao_ativa: boolean; reputacao_rede: number }
   }
 }
+

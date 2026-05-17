@@ -6,16 +6,20 @@ SheetHeader,
 SheetTitle,
 SheetTrigger,
 } from "@/components/ui/sheet";
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { usePortalContext } from '@/modules/portal/context';
+import { portalService } from '@/modules/portal/service';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
 ChevronRight,
+BookOpen,
+CalendarDays,
+CarFront,
 ClipboardList,
 CreditCard,
+GraduationCap,
 Home,
 LogOut,
 Megaphone,
@@ -23,6 +27,7 @@ Menu,
 Receipt,
 Send,
 Shield,
+ShieldCheck,
 ShoppingBag,
 User,
 Users
@@ -34,28 +39,7 @@ import { NavLink,useLocation,useNavigate } from 'react-router-dom';
 // NOTA: Tabelas 'lojistas' e 'curriculos' podem ter RLS restritivo para role 'responsavel'.
 // Por isso tratamos erros 403/PGRST silenciosamente e cacheamos o resultado.
 const fetchLojaStatus = async (): Promise<number> => {
-  try {
-    let total = 0;
-    
-    // Consulta lojistas (count)
-    const { count: lojistasCount, error: lojistasError } = await supabase
-      .from('lojistas' as any)
-      .select('id', { count: 'exact' })
-      .limit(1);
-    if (!lojistasError && lojistasCount !== null) total += lojistasCount;
-
-    // Consulta currículos (count)
-    const { count: currCount, error: currError } = await supabase
-      .from('curriculos' as any)
-      .select('id', { count: 'exact' })
-      .or('busca_vaga.eq.true,presta_servico.eq.true')
-      .limit(1);
-    if (!currError && currCount !== null) total += currCount;
-
-    return total;
-  } catch {
-    return 0;
-  }
+  return portalService.buscarMarketplaceStatusPortal();
 };
 
 export const BottomNavV2 = () => {
@@ -98,6 +82,12 @@ export const BottomNavV2 = () => {
     { label: 'Alunos', icon: Users, path: '/portal/alunos', desc: 'Dados e boletins' },
     { label: 'Mural de Avisos', icon: Megaphone, path: '/portal/avisos', desc: 'Notificações da escola' },
     { label: 'Financeiro', icon: CreditCard, path: '/portal/financeiro', desc: 'Faturas e pagamentos' },
+    { label: 'FrequÃªncia', icon: ClipboardList, path: '/portal/frequencia', desc: 'PresenÃ§as e faltas' },
+    { label: 'Boletim', icon: GraduationCap, path: '/portal/boletim', desc: 'Notas e desempenho' },
+    { label: 'Agenda', icon: CalendarDays, path: '/portal/agenda', desc: 'Eventos e datas importantes' },
+    { label: 'Fila Virtual', icon: CarFront, path: '/portal/fila', desc: 'Avisar chegada na escola' },
+    { label: 'Livros e Materiais', icon: BookOpen, path: '/portal/livros', desc: 'Acervo e materiais da turma' },
+    { label: 'AutorizaÃ§Ãµes', icon: ShieldCheck, path: '/portal/autorizacoes', desc: 'Termos e consentimentos' },
     ...(showLoja ? [{ label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja', desc: 'Marketplace da escola' }] : []),
     { label: 'Meu Perfil', icon: User, path: '/portal/perfil', desc: 'Dados cadastrais' },
     { label: 'Documentos', icon: ClipboardList, path: '/portal/documentos', desc: 'Contratos e arquivos' },

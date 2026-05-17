@@ -8,7 +8,6 @@ DialogHeader,
 DialogTitle,
 } from '@/components/ui/dialog';
 import { logger } from '@/lib/logger';
-import { supabase } from '@/lib/supabase';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
@@ -30,6 +29,7 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { usePortalContext } from '../../context';
 import { useUpdateAlunoPortal } from '../../hooks';
+import { portalService } from '../../service';
 
 const alunoCadastroSchema = z.object({
   nome_social: z.string().optional().nullable(),
@@ -118,14 +118,7 @@ export function PortalAlunoCadastroV2() {
     
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${alunoSelecionado.id}_${Date.now()}.${fileExt}`;
-      const filePath = `alunos/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage.from('alunos_fotos').upload(filePath, file);
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.from('alunos_fotos').getPublicUrl(filePath);
+      const publicUrl = await portalService.uploadFotoAlunoPortal(alunoSelecionado.id, file);
 
       await mutation.mutateAsync({
         alunoId: alunoSelecionado.id,

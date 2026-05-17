@@ -1,14 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { logger } from '@/lib/logger'
 import { sanitizeHtml } from '@/lib/sanitize-html'
-import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
+import { escolaService } from '@/modules/escolas/service'
 import { AnimatePresence,motion } from 'framer-motion'
 import { CheckCircle2,Download,FileText,Loader2,Printer,X } from 'lucide-react'
 import { useEffect,useState } from 'react'
 import { toast } from 'sonner'
 import { usePortalContext } from '../context'
 import { useAceitarTermos } from '../hooks'
+import { portalService } from '../service'
 
 interface ModalContratoEscolaProps {
   open: boolean
@@ -54,10 +55,12 @@ export function ModalContratoEscola({
       // Se ainda não tem tenantId, tenta pegar do primeiro vínculo (caso multi-escola)
       if (!currentTenantId && responsavel?.id) {
         logger.debug('ModalContrato: buscando tenantId via vinculos')
-        const { data: vinculos, error: vError } = await supabase.from('aluno_responsavel').select('aluno:alunos(tenant_id)').eq('responsavel_id', responsavel.id).limit(1).maybeSingle() as any
-        if (vError) logger.error('ModalContrato: erro ao buscar vinculos', vError)
-        if (vinculos?.aluno?.tenant_id) {
-          currentTenantId = vinculos.aluno.tenant_id
+        try {
+          currentTenantId = await portalService.buscarTenantPrincipalResponsavel(responsavel.id)
+        } catch (error) {
+          logger.error('ModalContrato: erro ao buscar vinculos', error)
+        }
+        if (currentTenantId) {
           logger.debug('ModalContrato: tenantId encontrado via vinculos')
         }
       }
@@ -70,12 +73,8 @@ export function ModalContratoEscola({
       
       try {
         setLoading(true)
-        // Busca dados da escola primeiro
-        const { data: school } = await supabase
-          .from('escolas')
-          .select('id, razao_social, cnpj, logradouro, numero, bairro, cidade, estado, email_gestor, telefone')
-          .eq('id', currentTenantId)
-          .maybeSingle()
+        // Busca dados mÃ­nimos da escola para preencher o contrato
+        const school = await escolaService.buscarDadosContratoPortal(currentTenantId)
         if (school) setEscolaInfo(school)
 
         logger.debug('ModalContrato: buscando configuracao de contrato')

@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog,DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence,motion } from 'framer-motion'
@@ -11,6 +10,7 @@ import { useState } from 'react'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { usePortalContext } from '../context'
+import { portalService } from '../service'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -39,17 +39,7 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
 
   const { data: itens, isLoading } = useQuery({
     queryKey: ['portal', 'itens-escolares', tenantId, alunoSelecionado?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vw_itens_escolares_aluno' as any)
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .eq('aluno_id', alunoSelecionado!.id)
-        .order('ano_letivo', { ascending: false })
-      
-      if (error) throw error
-      return data || []
-    },
+    queryFn: () => portalService.buscarItensEscolaresAluno(alunoSelecionado!.id, tenantId!),
     enabled: !!tenantId && !!alunoSelecionado?.id,
   })
 

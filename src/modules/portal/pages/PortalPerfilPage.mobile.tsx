@@ -4,10 +4,10 @@ import { Card,CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useViaCEP } from '@/hooks/use-viacep'
-import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { mascaraCEP,mascaraCPF,mascaraTelefone,validarCPF } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { escolaService } from '@/modules/escolas/service'
 import { usePortalContext } from '@/modules/portal/context'
 import { useUpdatePerfil } from '@/modules/portal/hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -74,8 +74,8 @@ export function PortalPerfilPageMobile() {
   useEffect(() => {
     async function fetchEscola() {
       if (!alunoSelecionado?.tenant_id) return
-      const { data } = await supabase.from('escolas').select('id, razao_social, cnpj, logradouro, numero, bairro, cidade, estado, email_gestor, telefone').eq('id', alunoSelecionado.tenant_id).maybeSingle()
-      if (data) setEscolaInfo(data)
+      const escola = await escolaService.buscarDadosContratoPortal(alunoSelecionado.tenant_id)
+      if (escola) setEscolaInfo(escola)
     }
     fetchEscola()
   }, [alunoSelecionado?.tenant_id])

@@ -2,6 +2,7 @@ import { precheckLogin } from '@/lib/auth-rate-limit'
 import type { PortalConfigPix } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
+import { escolaService } from '@/modules/escolas/service'
 
 const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
 const COMPROVANTE_MIME_TYPES = new Set([
@@ -62,25 +63,45 @@ export const portalService = {
       throw new Error('Este cadastro está inativo. Entre em contato com a escola.')
     }
 
-    // Autentica via Supabase Auth usando o email do primeiro perfil ativo
-    const profile = activeProfiles[0]
-    
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: profile.email,
-      password: senha,
-    })
+    const profilesComEmail = activeProfiles.filter(
+      (profile, index, list) => !!profile.email && list.findIndex(p => p.email === profile.email) === index
+    )
+    if (profilesComEmail.length === 0) {
+      throw new Error('Este cadastro nÃ£o possui email de acesso. Entre em contato com a escola.')
+    }
 
-    if (authError) {
+    let profile = profilesComEmail[0]
+    let authData: any = null
+    let authError: any = null
+    
+    for (const candidate of profilesComEmail) {
+      profile = candidate
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: candidate.email,
+        password: senha,
+      })
+
+      if (!error) {
+        authData = data
+        authError = null
+        break
+      }
+
+      authError = error
+      if (!error.message.includes('Invalid login credentials')) break
+    }
+
+    if (authError || !authData) {
       await portalService.registrarAuditoria({
         tipo: 'login_falha',
         responsavel_id: profile.id,
-        detalhes: { cpf: cpfLimpo, error_message: authError.message },
+        detalhes: { cpf: cpfLimpo, error_message: authError?.message || 'Falha de autenticaÃ§Ã£o' },
       })
 
-      if (authError.message.includes('Invalid login credentials')) {
+      if (authError?.message?.includes('Invalid login credentials')) {
         throw new Error('CPF ou senha inválidos.')
       }
-      throw new Error(`Erro na autenticação: ${authError.message}`)
+      throw new Error(`Erro na autenticação: ${authError?.message || 'Falha desconhecida'}`)
     }
 
     await portalService.registrarAuditoria({
@@ -143,65 +164,27 @@ export const portalService = {
     if (!vinculo?.aluno?.id) return vinculo?.aluno || null
 
     const alunoId = vinculo.aluno.id
-    const tenantId = vinculo.aluno.tenant_id
 
-    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
-      .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade, turma_id')
-      .eq('aluno_id', alunoId)
-      .eq('tenant_id', tenantId)
-      .eq('status', 'ativa')
-      .order('data_matricula', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    const { data, error } = await (supabase.rpc('fn_portal_aluno_enriquecimento' as any, {
+      p_aluno_id: alunoId,
+    }) as any)
 
-    let turma = null
+    if (error) throw error
 
-    if (matricula?.turma_id) {
-      const { data: turmaPorId } = await (supabase.from('turmas' as any) as any)
-        .select('id, nome, turno, valor_mensalidade')
-        .eq('tenant_id', tenantId)
-        .eq('id', matricula.turma_id)
-        .maybeSingle()
-      turma = turmaPorId
-    }
-
-    if (!turma) {
-      const { data: turmaPorAluno } = await (supabase.from('turmas' as any) as any)
-        .select('id, nome, turno, valor_mensalidade')
-        .eq('tenant_id', tenantId)
-        .contains('alunos_ids', [alunoId])
-        .maybeSingle()
-      turma = turmaPorAluno
-    }
-
-    if (!turma && matricula?.serie_ano) {
-      const turnoAlternativo = matricula.turno === 'manha'
-        ? 'matutino'
-        : matricula.turno === 'tarde'
-          ? 'vespertino'
-          : matricula.turno
-
-      const { data: turmaPorNome } = await (supabase.from('turmas' as any) as any)
-        .select('id, nome, turno, valor_mensalidade')
-        .eq('tenant_id', tenantId)
-        .eq('nome', matricula.serie_ano)
-        .or(`turno.eq.${matricula.turno},turno.eq.${turnoAlternativo}`)
-        .maybeSingle()
-      turma = turmaPorNome
-    }
-
-    const valorMensalidadeFinal = turma?.valor_mensalidade || matricula?.valor_mensalidade || matricula?.valor_matricula || null
+    const enriquecimento = Array.isArray(data) ? data[0] : data
+    const valorMensalidadeFinal = enriquecimento?.valor_mensalidade || null
+    const turma = enriquecimento?.turma_nome ? {
+      id: enriquecimento.turma_id || '',
+      nome: enriquecimento.turma_nome,
+      turno: enriquecimento.turma_turno,
+      valor_mensalidade: enriquecimento.turma_valor_mensalidade || valorMensalidadeFinal
+    } : null
 
     return {
       ...vinculo.aluno,
       codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
-      turma: turma || (matricula ? {
-        id: '',
-        nome: matricula.serie_ano,
-        turno: matricula.turno,
-        valor_mensalidade: valorMensalidadeFinal
-      } : null),
-      valor_matricula: matricula?.valor_matricula || null,
+      turma,
+      valor_matricula: enriquecimento?.valor_matricula || null,
       valor_mensalidade: valorMensalidadeFinal,
     }
   },
@@ -244,14 +227,61 @@ export const portalService = {
     return vinculos
   },
 
+  async buscarTenantPrincipalResponsavel(responsavelId: string) {
+    const { data, error } = await supabase
+      .from('aluno_responsavel')
+      .select('aluno:alunos(tenant_id)')
+      .eq('responsavel_id', responsavelId)
+      .eq('status', 'ativo')
+      .limit(1)
+      .maybeSingle() as any
+
+    if (error) throw error
+    return data?.aluno?.tenant_id || null
+  },
+
   async buscarEscolasVinculadas(tenantIds: string[]) {
-    if (tenantIds.length === 0) return []
-    const { data, error } = await supabase.from('escolas')
-      .select('id, razao_social, status_assinatura')
-      .in('id', tenantIds)
+    return escolaService.buscarResumoVinculadas(tenantIds)
+  },
+
+  async buscarItensEscolaresAluno(alunoId: string, tenantId: string) {
+    const { data, error } = await (supabase.from('vw_itens_escolares_aluno' as any) as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('aluno_id', alunoId)
+      .order('ano_letivo', { ascending: false })
 
     if (error) throw error
     return data || []
+  },
+
+  async buscarMarketplaceStatusPortal() {
+    const [lojistasRes, curriculosRes] = await Promise.all([
+      (supabase.from('lojistas' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .limit(1),
+      (supabase.from('curriculos' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .or('busca_vaga.eq.true,presta_servico.eq.true')
+        .limit(1),
+    ])
+
+    let total = 0
+    if (!lojistasRes.error && lojistasRes.count !== null) total += lojistasRes.count
+    if (!curriculosRes.error && curriculosRes.count !== null) total += curriculosRes.count
+    return total
+  },
+
+  async uploadFotoAlunoPortal(alunoId: string, file: File) {
+    const fileExt = file.name.split('.').pop() || 'jpg'
+    const fileName = `${alunoId}_${Date.now()}.${fileExt}`
+    const filePath = `alunos/${fileName}`
+
+    const { error } = await supabase.storage.from('alunos_fotos').upload(filePath, file)
+    if (error) throw error
+
+    const { data: { publicUrl } } = supabase.storage.from('alunos_fotos').getPublicUrl(filePath)
+    return publicUrl
   },
 
   // ==========================================
@@ -521,12 +551,7 @@ export const portalService = {
   },
 
   async buscarConfigRecados(tenantId: string) {
-    const { data, error } = await supabase.from('escolas')
-      .select('telefone, email_gestor')
-      .eq('id', tenantId)
-      .maybeSingle()
-
-    if (error) throw error
+    const data = await escolaService.buscarDadosContratoPortal(tenantId)
     return {
       whatsapp_contato: data?.telefone || null,
       email_contato: data?.email_gestor || null

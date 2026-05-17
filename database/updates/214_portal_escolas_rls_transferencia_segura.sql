@@ -38,17 +38,16 @@ USING (
 CREATE OR REPLACE FUNCTION public.fn_listar_escolas_para_transferencia()
 RETURNS TABLE (
     id UUID,
-    razao_social TEXT,
-    nome_fantasia TEXT
+    razao_social TEXT
 )
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    SELECT e.id, e.razao_social, e.nome_fantasia
+    SELECT e.id, e.razao_social
     FROM public.escolas e
     WHERE COALESCE(e.status_assinatura, '') NOT IN ('cancelada', 'inativa', 'bloqueada')
-    ORDER BY e.razao_social NULLS LAST, e.nome_fantasia NULLS LAST;
+    ORDER BY e.razao_social NULLS LAST;
 $$;
 
 REVOKE ALL ON FUNCTION public.fn_listar_escolas_para_transferencia() FROM PUBLIC;

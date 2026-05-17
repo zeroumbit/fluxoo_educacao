@@ -2,7 +2,7 @@ import CorujaIcon from '@/assets/coruja_APPLE.svg';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { AnimatePresence,motion } from 'framer-motion';
-import { Bell,Home,LogOut,Receipt,ShoppingBag,User,Users,WifiOff } from 'lucide-react';
+import { Bell,BookOpen,CalendarDays,CarFront,ClipboardCheck,GraduationCap,Home,LogOut,Receipt,ShieldCheck,ShoppingBag,User,Users,WifiOff } from 'lucide-react';
 import React from 'react';
 import { NavLink,Outlet,useNavigate } from 'react-router-dom';
 
@@ -28,6 +28,12 @@ export function PortalLayoutV2Web() {
     { label: 'Alunos', icon: Users, path: '/portal/alunos' },
     { label: 'Financeiro', icon: Receipt, path: '/portal/financeiro' },
     { label: 'Notificações', icon: Bell, path: '/portal/avisos' },
+    { label: 'FrequÃªncia', icon: ClipboardCheck, path: '/portal/frequencia' },
+    { label: 'Boletim', icon: GraduationCap, path: '/portal/boletim' },
+    { label: 'Agenda', icon: CalendarDays, path: '/portal/agenda' },
+    { label: 'Fila Virtual', icon: CarFront, path: '/portal/fila' },
+    { label: 'Livros', icon: BookOpen, path: '/portal/livros' },
+    { label: 'AutorizaÃ§Ãµes', icon: ShieldCheck, path: '/portal/autorizacoes' },
     { label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja' },
   ];
 
@@ -47,9 +53,9 @@ export function PortalLayoutV2Web() {
       </AnimatePresence>
 
       {/* Sidebar Vertical */}
-      <aside className="w-80 h-screen fixed left-0 top-0 bg-white border-r border-slate-200 flex flex-col p-8 z-50 shrink-0">
+      <aside className="w-80 h-screen fixed left-0 top-0 bg-white border-r border-slate-200 flex flex-col p-6 z-50 shrink-0">
         {/* Brand/Logo */}
-        <div className="flex items-center gap-4 mb-12 cursor-pointer" onClick={() => navigate('/portal')}>
+        <div className="flex items-center gap-4 mb-8 cursor-pointer" onClick={() => navigate('/portal')}>
           <div className="w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/20 transition-transform hover:scale-105 active:scale-95">
             <img src={CorujaIcon} alt="Fluxoo" className="w-7 h-7" />
           </div>
@@ -62,7 +68,7 @@ export function PortalLayoutV2Web() {
         </div>
 
         {/* Menu Principal */}
-        <nav className="flex flex-col gap-3 flex-1">
+        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-4">Menu Principal</span>
           {navItems.map((item) => (
             <NavLink
@@ -70,7 +76,7 @@ export function PortalLayoutV2Web() {
               to={item.path}
               end={item.exact}
               className={({ isActive }) =>
-                `flex items-center gap-4 px-5 py-4 rounded-[20px] font-bold tracking-wide text-sm transition-all duration-300 group ${
+                `flex items-center gap-4 px-5 py-3.5 rounded-[20px] font-bold tracking-wide text-sm transition-all duration-300 group ${
                   isActive 
                     ? 'bg-teal-500 text-white shadow-xl shadow-teal-500/20 translate-x-2' 
                     : 'text-slate-500 hover:text-teal-600 hover:bg-teal-50 hover:translate-x-1'
@@ -91,10 +97,10 @@ export function PortalLayoutV2Web() {
         </nav>
 
         {/* Footer Sidebar - Perfil e Logout */}
-        <div className="pt-8 border-t border-slate-100 flex flex-col gap-4">
+        <div className="pt-5 border-t border-slate-100 flex flex-col gap-3">
           <button
             onClick={() => navigate('/portal/perfil')}
-            className="flex items-center gap-4 px-5 py-4 rounded-[20px] text-slate-600 hover:text-teal-600 hover:bg-teal-50 transition-all font-bold text-sm group"
+            className="flex items-center gap-4 px-5 py-3.5 rounded-[20px] text-slate-600 hover:text-teal-600 hover:bg-teal-50 transition-all font-bold text-sm group"
             disabled={isLoggingOut}
           >
             <div className="p-2 bg-slate-100 rounded-xl group-hover:bg-teal-100 transition-colors">
@@ -106,7 +112,7 @@ export function PortalLayoutV2Web() {
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center gap-4 px-5 py-4 rounded-[20px] text-rose-500 hover:bg-rose-50 transition-all font-bold text-sm group disabled:opacity-50"
+            className="flex items-center gap-4 px-5 py-3.5 rounded-[20px] text-rose-500 hover:bg-rose-50 transition-all font-bold text-sm group disabled:opacity-50"
           >
             <div className="p-2 bg-rose-50 rounded-xl group-hover:bg-rose-100 transition-colors">
               {isLoggingOut ? (

@@ -88,7 +88,7 @@ export function ModalSolicitarTransferenciaPortal({
                 {escolas?.map((e) => (
                   e.id !== aluno?.tenant_id && (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.razao_social || e.nome_fantasia}
+                      {e.razao_social}
                     </SelectItem>
                   )
                 ))}

@@ -83,15 +83,9 @@ const ConfigRecebimentoPage = lazy(() => import('@/modules/super-admin/pages/Con
 const MarketplaceConfigPage = lazy(() => import('@/modules/super-admin/pages/MarketplaceConfigPage').then(m => ({ default: m.MarketplaceConfigPage })))
 
 // Pages - Portal
-const PortalFrequenciaPage = lazy(() => import('@/modules/portal/pages/PortalFrequenciaPage').then(m => ({ default: m.PortalFrequenciaPage })))
-const PortalFilaVirtualPage = lazy(() => import('@/modules/portal/pages/PortalFilaVirtualPage').then(m => ({ default: m.PortalFilaVirtualPage })))
 const PortalLoginPage = lazy(() => import('@/modules/portal/pages/PortalLoginPage').then(m => ({ default: m.PortalLoginPage })))
-const PortalBoletimPage = lazy(() => import('@/modules/portal/pages/PortalBoletimPage').then(m => ({ default: m.PortalBoletimPage })))
-const PortalLivrosPage = lazy(() => import('@/modules/portal/pages/PortalLivrosPage').then(m => ({ default: m.PortalLivrosPage })))
-const PortalAgendaPage = lazy(() => import('@/modules/portal/pages/PortalAgendaPage').then(m => ({ default: m.PortalAgendaPage })))
 const PortalLojaPage = lazy(() => import('@/modules/portal/pages/PortalLojaPage').then(m => ({ default: m.PortalLojaPage })))
 const PortalPerfilPage = lazy(() => import('@/modules/portal/pages/PortalPerfilPage').then(m => ({ default: m.PortalPerfilPage })))
-const PortalAutorizacoesPage = lazy(() => import('@/modules/portal/pages/PortalAutorizacoesPage').then(m => ({ default: m.PortalAutorizacoesPage })))
 const TermosUsoPage = lazy(() => import('@/modules/portal/pages/TermosUsoPage').then(m => ({ default: m.TermosUsoPage })))
 const PrivacidadePage = lazy(() => import('@/modules/portal/pages/PrivacidadePage').then(m => ({ default: m.PrivacidadePage })))
 const CookiesPage = lazy(() => import('@/modules/portal/pages/CookiesPage').then(m => ({ default: m.CookiesPage })))
@@ -104,6 +98,12 @@ const PortalAvisosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAvisos
 const PortalFinanceiroV2 = lazy(() => import('@/modules/portal/v2/pages/PortalFinanceiroV2').then(m => ({ default: m.PortalFinanceiroV2 })))
 const PortalDocumentosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalDocumentosPageV2').then(m => ({ default: m.default })))
 const PortalTransferenciasV2 = lazy(() => import('@/modules/portal/v2/pages/PortalTransferenciasV2').then(m => ({ default: m.default })))
+const PortalFrequenciaV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalFrequenciaV2 })))
+const PortalFilaVirtualV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalFilaVirtualV2 })))
+const PortalBoletimV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalBoletimV2 })))
+const PortalLivrosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalLivrosV2 })))
+const PortalAgendaV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalAgendaV2 })))
+const PortalAutorizacoesV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalAutorizacoesV2 })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -333,15 +333,14 @@ function App() {
               <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/perfil" element={<PortalPerfilPage />} />
               
-              {/* Páginas Antigas e Outras Funcionalidades que não ganharam V2 ainda */}
-              <Route path="/portal/frequencia" element={<PortalFrequenciaPage />} />
-              <Route path="/portal/fila" element={<PortalFilaVirtualPage />} />
-              <Route path="/portal/boletim" element={<PortalBoletimPage />} />
-              <Route path="/portal/livros" element={<PortalLivrosPage />} />
-              <Route path="/portal/agenda" element={<PortalAgendaPage />} />
+              <Route path="/portal/frequencia" element={<PortalFrequenciaV2 />} />
+              <Route path="/portal/fila" element={<PortalFilaVirtualV2 />} />
+              <Route path="/portal/boletim" element={<PortalBoletimV2 />} />
+              <Route path="/portal/livros" element={<PortalLivrosV2 />} />
+              <Route path="/portal/agenda" element={<PortalAgendaV2 />} />
               <Route path="/portal/documentos" element={<PortalDocumentosV2 />} />
               <Route path="/portal/transferencias" element={<PortalTransferenciasV2 />} />
-              <Route path="/portal/autorizacoes" element={<PortalAutorizacoesPage />} />
+              <Route path="/portal/autorizacoes" element={<PortalAutorizacoesV2 />} />
             </Route>
 
             {/* Fallback */}
