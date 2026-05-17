@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { logger } from '@/lib/logger'
 import { sanitizeHtml } from '@/lib/sanitize-html'
 import { supabase } from '@/lib/supabase'
+import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 import { AnimatePresence,motion } from 'framer-motion'
 import { CheckCircle2,Download,FileText,Loader2,Printer,X } from 'lucide-react'
 import { useEffect,useState } from 'react'
@@ -70,23 +71,16 @@ export function ModalContratoEscola({
       try {
         setLoading(true)
         // Busca dados da escola primeiro
-        const { data: school } = await supabase.from('escolas').select('*').eq('id', currentTenantId).maybeSingle()
+        const { data: school } = await supabase
+          .from('escolas')
+          .select('id, razao_social, cnpj, logradouro, numero, bairro, cidade, estado, email_gestor, telefone')
+          .eq('id', currentTenantId)
+          .maybeSingle()
         if (school) setEscolaInfo(school)
 
         logger.debug('ModalContrato: buscando configuracao de contrato')
-        const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
-          .select('config_financeira')
-          .eq('tenant_id', currentTenantId)
-          .eq('contexto', 'escola')
-          .is('vigencia_fim', null)
-          .maybeSingle() as any
-
-        if (error) {
-          logger.error('ModalContrato: erro na query de config', error)
-          throw error
-        }
-
-        const modelo = data?.config_financeira?.contrato_modelo
+        const configFinanceira = await getConfiguracoesFinanceiras(currentTenantId)
+        const modelo = configFinanceira?.contrato_modelo
 
         if (modelo) {
           logger.debug('ModalContrato: modelo encontrado, aplicando variaveis')

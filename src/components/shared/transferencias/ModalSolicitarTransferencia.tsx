@@ -78,7 +78,14 @@ export function ModalSolicitarTransferencia({
 
   // Busca o aluno e seus responsáveis quando o código de 8 dígitos é preenchido
   React.useEffect(() => {
-    if (codigoValue?.length === 8) {
+    const codigoNormalizado = codigoValue?.replace(/[^A-Z0-9]/g, '') || ''
+
+    if (codigoValue && codigoValue !== codigoNormalizado) {
+      form.setValue("codigoAluno", codigoNormalizado, { shouldValidate: true })
+      return
+    }
+
+    if (codigoNormalizado.length === 8) {
       const buscarAlunoEresponsaveis = async () => {
         setIsSearching(true)
         setRpcStatus('loading')
@@ -86,7 +93,7 @@ export function ModalSolicitarTransferencia({
         try {
           logger.debug('[TRANSFERENCIA] Buscando codigo')
           const { data, error } = await (supabase as any)
-            .rpc('buscar_aluno_transferencia', { p_codigo: codigoValue.toUpperCase() })
+            .rpc('buscar_aluno_transferencia', { p_codigo: codigoNormalizado })
 
           if (error) {
             console.error('[TRANSFERENCIA] Erro na RPC:', error)
@@ -187,6 +194,14 @@ export function ModalSolicitarTransferencia({
       // 2. Inserir solicitação (v2 com Destino Híbrido)
       const responsavelAlvoId = responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id;
       const escolaOrigemId = alunoData.tenant_id;
+
+      if (!responsavelAlvoId) {
+        form.setError("verificacaoResponsavel", {
+          message: "Responsável não identificado para este aluno."
+        })
+        setIsSearching(false)
+        return
+      }
       
       const { error: insertError } = await supabase
         .from('transferencias_escolares')
@@ -208,7 +223,7 @@ export function ModalSolicitarTransferencia({
       })
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao processar solicitação. Tente novamente.")
+      toast.error(error instanceof Error ? error.message : "Erro ao processar solicitação. Tente novamente.")
     } finally {
       setIsSearching(false)
     }
@@ -262,7 +277,7 @@ export function ModalSolicitarTransferencia({
                           className="uppercase font-mono tracking-widest text-lg h-12"
                           maxLength={8}
                           {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                         />
                         {isSearching ? (
                           <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-muted-foreground" />
@@ -299,7 +314,7 @@ export function ModalSolicitarTransferencia({
                     {responsavelEncontrado && (
                       <p className="text-xs font-bold text-green-600 mt-1.5 flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
-                        Confere: {responsavelEncontrado.nome}
+                        Responsável: {responsavelEncontrado.nome}
                       </p>
                     )}
                     {cpfErro && (

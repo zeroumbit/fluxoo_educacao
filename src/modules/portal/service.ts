@@ -1,6 +1,7 @@
 import { precheckLogin } from '@/lib/auth-rate-limit'
 import type { PortalConfigPix } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
+import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 
 const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
 const COMPROVANTE_MIME_TYPES = new Set([
@@ -138,6 +139,72 @@ export const portalService = {
   // ==========================================
   // VÍNCULO ALUNOS (Multi-aluno, Multi-escola)
   // ==========================================
+  async enriquecerVinculoAluno(vinculo: any) {
+    if (!vinculo?.aluno?.id) return vinculo?.aluno || null
+
+    const alunoId = vinculo.aluno.id
+    const tenantId = vinculo.aluno.tenant_id
+
+    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+      .select('turno, serie_ano, ano_letivo, valor_matricula, valor_mensalidade, turma_id')
+      .eq('aluno_id', alunoId)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'ativa')
+      .order('data_matricula', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    let turma = null
+
+    if (matricula?.turma_id) {
+      const { data: turmaPorId } = await (supabase.from('turmas' as any) as any)
+        .select('id, nome, turno, valor_mensalidade')
+        .eq('tenant_id', tenantId)
+        .eq('id', matricula.turma_id)
+        .maybeSingle()
+      turma = turmaPorId
+    }
+
+    if (!turma) {
+      const { data: turmaPorAluno } = await (supabase.from('turmas' as any) as any)
+        .select('id, nome, turno, valor_mensalidade')
+        .eq('tenant_id', tenantId)
+        .contains('alunos_ids', [alunoId])
+        .maybeSingle()
+      turma = turmaPorAluno
+    }
+
+    if (!turma && matricula?.serie_ano) {
+      const turnoAlternativo = matricula.turno === 'manha'
+        ? 'matutino'
+        : matricula.turno === 'tarde'
+          ? 'vespertino'
+          : matricula.turno
+
+      const { data: turmaPorNome } = await (supabase.from('turmas' as any) as any)
+        .select('id, nome, turno, valor_mensalidade')
+        .eq('tenant_id', tenantId)
+        .eq('nome', matricula.serie_ano)
+        .or(`turno.eq.${matricula.turno},turno.eq.${turnoAlternativo}`)
+        .maybeSingle()
+      turma = turmaPorNome
+    }
+
+    const valorMensalidadeFinal = turma?.valor_mensalidade || matricula?.valor_mensalidade || matricula?.valor_matricula || null
+
+    return {
+      ...vinculo.aluno,
+      codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
+      turma: turma || (matricula ? {
+        id: '',
+        nome: matricula.serie_ano,
+        turno: matricula.turno,
+        valor_mensalidade: valorMensalidadeFinal
+      } : null),
+      valor_matricula: matricula?.valor_matricula || null,
+      valor_mensalidade: valorMensalidadeFinal,
+    }
+  },
   async buscarVinculosAtivos(responsavelId: string | string[]) {
     const ids = Array.isArray(responsavelId) ? responsavelId : [responsavelId]
     const { data, error } = await supabase.from('aluno_responsavel')
@@ -170,29 +237,9 @@ export const portalService = {
 
     const vinculos = (data as any[]) || []
 
-    // Enriquecer cada aluno com dados de turma via matriculas (a relação alunos->turmas é via matriculas)
-    if (vinculos.length > 0) {
-      const alunoIds = vinculos.map(v => v.aluno?.id).filter(Boolean)
-      
-      if (alunoIds.length > 0) {
-        const { data: matriculas } = await (supabase.from('matriculas' as any) as any)
-          .select('aluno_id, turma_id, turmas(id, nome, turno)')
-          .in('aluno_id', alunoIds)
-          .eq('status', 'ativa')
-        
-        if (matriculas && matriculas.length > 0) {
-          for (const vinculo of vinculos) {
-            if (vinculo.aluno) {
-              const matricula = matriculas.find((m: any) => m.aluno_id === vinculo.aluno.id)
-              if (matricula) {
-                const turmaRaw = matricula.turmas
-                vinculo.aluno.turma = Array.isArray(turmaRaw) ? turmaRaw[0] : turmaRaw
-              }
-            }
-          }
-        }
-      }
-    }
+    await Promise.all(vinculos.map(async (vinculo: any) => {
+      vinculo.aluno = await this.enriquecerVinculoAluno(vinculo)
+    }))
 
     return vinculos
   },
@@ -237,7 +284,7 @@ export const portalService = {
       ,
       // Cobranças pendentes (todas)
       (supabase.from('cobrancas' as any) as any)
-        .select('id, valor, status, data_vencimento, descricao')
+        .select('id, valor, status, data_vencimento, descricao, subtipo_cobranca, origem_cobranca')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
         .in('status', ['a_vencer', 'atrasado', 'pago'])
@@ -283,12 +330,12 @@ export const portalService = {
       })
     }
 
-    // Separa cobranças de matrícula das demais (mensalidades)
+    // Separa cobrancas pela classificacao oficial do banco.
     const cobrancasMatricula = cobrancas.filter((c: any) =>
-      c.descricao?.toLowerCase().includes('matrícula') || c.descricao?.toLowerCase().includes('matricula')
+      c.subtipo_cobranca === 'matricula_rematricula'
     )
     const cobrancasMensalidade = cobrancas.filter((c: any) =>
-      !c.descricao?.toLowerCase().includes('matrícula') && !c.descricao?.toLowerCase().includes('matricula')
+      c.subtipo_cobranca === 'mensalidade'
     )
 
     // Total pendente considera mensalidades E matrícula (se estiver pendente)
@@ -394,14 +441,8 @@ export const portalService = {
   // COBRANÇAS
   // ==========================================
   async buscarCobrancasPorAluno(alunoId: string, tenantId: string) {
-    // 1. Busca a configuração para saber se habilitamos multa/juros automática
-    const { data: globalConfig } = await (supabase.from('configuracoes_escola' as any) as any)
-      .select('config_financeira')
-      .eq('tenant_id', tenantId)
-      .is('vigencia_fim', null)
-      .maybeSingle();
-
-    const config = globalConfig?.config_financeira;
+    // 1. Busca a configuracao vigente para saber se habilitamos multa/juros automatica
+    const config = await getConfiguracoesFinanceiras(tenantId);
     const usarViewEncargos = config?.multa_juros_habilitado !== false; 
 
     // 2. Decide qual view/tabela usar
@@ -443,15 +484,7 @@ export const portalService = {
     if (!tenantId) return null
 
     try {
-      // Busca a configuração mais recente para o tenant sem restrição excessiva de contexto
-      const { data, error } = await (supabase.from('configuracoes_escola' as any) as any)
-        .select('config_financeira')
-        .eq('tenant_id', tenantId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      
-      const config = data?.config_financeira
+      const config = await getConfiguracoesFinanceiras(tenantId)
       
       if (!config) {
         console.warn('Nenhuma configuração financeira encontrada para o tenant:', tenantId)
@@ -1063,7 +1096,7 @@ export const portalService = {
     }, {})
 
     // 3. Busca contagens em paralelo
-    const [cobrancasFin, avisosRes, atividadesRes, boletinsRes, faltasRes] = await Promise.all([
+    const [cobrancasFin, avisosRes, atividadesRes, boletinsRes, faltasRes, transferenciasRes] = await Promise.all([
       (supabase.from('cobrancas' as any) as any)
         .select('status, data_vencimento')
         .in('aluno_id', alunoIds)
@@ -1087,7 +1120,12 @@ export const portalService = {
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
         .eq('status', 'falta')
-        .gte('data_aula', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+        .gte('data_aula', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]),
+      (supabase.from('transferencias_escolares' as any) as any)
+        .select('id', { count: 'exact', head: true })
+        .in('aluno_id', alunoIds)
+        .eq('responsavel_id', responsavelId)
+        .eq('status', 'aguardando_responsavel')
     ])
 
     const notifications: any[] = []
@@ -1157,7 +1195,16 @@ export const portalService = {
       })
     }
 
-    const total = financeiroDisplayCount + (avisosRes.count || 0) + (atividadesRes.count || 0) + (boletinsRes.count || 0) + (faltasRes.count || 0)
+    if (transferenciasRes.count && transferenciasRes.count > 0) {
+      notifications.push({
+        id: 'transferencias',
+        label: `${transferenciasRes.count} ${transferenciasRes.count === 1 ? 'pedido de transferência aguardando sua resposta' : 'pedidos de transferência aguardando sua resposta'}`,
+        href: '/portal/transferencias',
+        category: 'ESCOLAS'
+      })
+    }
+
+    const total = financeiroDisplayCount + (avisosRes.count || 0) + (atividadesRes.count || 0) + (boletinsRes.count || 0) + (faltasRes.count || 0) + (transferenciasRes.count || 0)
 
     return {
       total,

@@ -21,6 +21,7 @@ import {
 useAceitarTransferenciaDestino,
 useCheckPermissaoTransferencia,
 useConcluirTransferencia,
+useSolicitarSaida,
 useRecusarTransferenciaDestino,
 useSolicitarTransferencia,
 useTransferenciasEscola
@@ -55,6 +56,7 @@ export function TransferenciasPageMobile() {
   const { data: permissao } = useCheckPermissaoTransferencia()
   
   const solicitar = useSolicitarTransferencia()
+  const solicitarSaida = useSolicitarSaida()
   const aceitarDestino = useAceitarTransferenciaDestino()
   const recusarDestino = useRecusarTransferenciaDestino()
   const concluirTransferencia = useConcluirTransferencia()
@@ -112,12 +114,19 @@ export function TransferenciasPageMobile() {
 
   // Busca de Aluno por Código (Inbound)
   useEffect(() => {
-    if (formMode === 'inbound' && codigoAluno.length === 8) {
+    const codigoNormalizado = codigoAluno.replace(/[^A-Z0-9]/g, '')
+
+    if (codigoAluno !== codigoNormalizado) {
+      setCodigoAluno(codigoNormalizado)
+      return
+    }
+
+    if (formMode === 'inbound' && codigoNormalizado.length === 8) {
       const buscar = async () => {
         setIsSearchingCode(true)
         try {
           const { data, error } = await (supabase as any)
-            .rpc('buscar_aluno_transferencia', { p_codigo: codigoAluno.toUpperCase() })
+            .rpc('buscar_aluno_transferencia', { p_codigo: codigoNormalizado })
           
           if (error) throw error
           
@@ -194,7 +203,7 @@ export function TransferenciasPageMobile() {
         return
       }
       try {
-        await solicitar.mutateAsync({
+        await solicitarSaida.mutateAsync({
           alunoId: selectedAlunoId,
           origemId: tenantId!,
           destinoId,
@@ -491,7 +500,7 @@ export function TransferenciasPageMobile() {
                       <Input
                         placeholder="ABC12345"
                         value={codigoAluno}
-                        onChange={(e) => setCodigoAluno(e.target.value.toUpperCase())}
+                        onChange={(e) => setCodigoAluno(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                         maxLength={8}
                         className="h-16 rounded-[22px] border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-mono text-xl tracking-[0.3em] uppercase pl-6"
                       />
@@ -533,7 +542,7 @@ export function TransferenciasPageMobile() {
                              )}
                            />
                            {responsavelEncontrado && (
-                             <p className="text-[10px] font-black text-emerald-600 ml-1 uppercase">✓ Confere: {responsavelEncontrado.nome}</p>
+                             <p className="text-[10px] font-black text-emerald-600 ml-1 uppercase">Responsável: {responsavelEncontrado.nome}</p>
                            )}
                            {cpfErro && (
                               <p className="text-[10px] font-black text-rose-600 ml-1 uppercase">⚠ {cpfErro}</p>
@@ -589,10 +598,10 @@ export function TransferenciasPageMobile() {
 
           <Button
             onClick={handleSolicitar}
-            disabled={solicitar.isPending}
+            disabled={solicitar.isPending || solicitarSaida.isPending}
             className="w-full h-16 rounded-[24px] bg-indigo-600 hover:bg-indigo-700 text-lg font-black shadow-xl shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
           >
-            {solicitar.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar Solicitação'}
+            {solicitar.isPending || solicitarSaida.isPending ? <Loader2 className="animate-spin" /> : 'Confirmar Solicitação'}
           </Button>
         </div>
       </BottomSheet>

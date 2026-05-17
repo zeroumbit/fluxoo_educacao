@@ -212,9 +212,7 @@ export const dashboardService = {
     // Mensalidades do mês corrente: filtra por data_vencimento no mês atual,
     // exclui taxas de matrícula e materiais
     const isMensalidade = (c: any) => {
-      const desc = (c.descricao || '').toLowerCase()
-      const isTaxa = desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa') || desc.includes('material') || desc.includes('item')
-      return !isTaxa
+      return c.subtipo_cobranca === 'mensalidade'
     }
 
     const cobrancasMesAtual = cobrancasList.filter(c => {

@@ -78,7 +78,10 @@ export function FinanceiroPageMobile() {
       await criarCobranca.mutateAsync({
         ...data,
         tenant_id: authUser.tenantId,
-        aluno_id: data.aluno_id === 'avulso' ? null : data.aluno_id
+        aluno_id: data.aluno_id === 'avulso' ? null : data.aluno_id,
+        tipo_cobranca: 'avulso',
+        subtipo_cobranca: 'avulso',
+        origem_cobranca: 'manual'
       })
       toast.success('Lançamento realizado!')
       setSheetOpen(false)

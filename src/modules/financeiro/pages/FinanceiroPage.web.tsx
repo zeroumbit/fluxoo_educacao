@@ -107,7 +107,9 @@ export function FinanceiroPageWeb() {
             ...data,
             tenant_id: authUser.tenantId,
             status: 'a_vencer',
-            tipo_cobranca: 'avulso'
+            tipo_cobranca: 'avulso',
+            subtipo_cobranca: 'avulso',
+            origem_cobranca: 'manual'
           })
           toast.success('Cobrança criada com sucesso!')
           setDialogOpen(false)

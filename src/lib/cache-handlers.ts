@@ -49,4 +49,12 @@ export function setupCacheHandlers(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: QueryKeys.PORTAL.COBRANCAS(alunoId) })
     queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD }) // Dashboard admin financeiro
   })
+
+  cacheEvents.subscribe('COBRANCA_ATUALIZADA', (event) => {
+    const { alunoId } = event.payload
+    queryClient.invalidateQueries({ queryKey: QueryKeys.PORTAL.COBRANCAS(alunoId) })
+    queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
+    queryClient.invalidateQueries({ queryKey: ['financeiro'] })
+    queryClient.invalidateQueries({ queryKey: ['notifications'] })
+  })
 }

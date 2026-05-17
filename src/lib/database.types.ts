@@ -613,6 +613,24 @@ export type MuralAvisoInsert = Omit<MuralAviso, 'id' | 'created_at' | 'updated_a
 export type MuralAvisoUpdate = Partial<MuralAvisoInsert>
 
 // ========== COBRANCAS ==========
+export type CobrancaSubtipo =
+  | 'matricula_rematricula'
+  | 'mensalidade'
+  | 'material_didatico'
+  | 'fardamento_uniforme'
+  | 'eventos_passeios'
+  | 'taxas_administrativas'
+  | 'atividades_extracurriculares'
+  | 'avulso'
+  | 'multa_juros'
+
+export type CobrancaOrigem =
+  | 'matricula'
+  | 'recorrencia'
+  | 'manual'
+  | 'evento'
+  | 'negociacao'
+
 export type Cobranca = {
   id: string
   tenant_id: string | null
@@ -628,6 +646,8 @@ export type Cobranca = {
   data_pagamento: string | null
   status: string
   tipo_cobranca: 'mensalidade' | 'avulso'
+  subtipo_cobranca: CobrancaSubtipo
+  origem_cobranca: CobrancaOrigem
   turma_id?: string | null
   ano_letivo?: number | null
   dias_atraso_calculado: number | null
@@ -646,8 +666,8 @@ export type Cobranca = {
   created_at: string
   updated_at: string
 }
-export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca' | 'pago' | 'valor_original' | 'valor_pago' | 'valor_multa' | 'valor_juros' | 'dias_atraso_calculado' | 'taxa_multa_aplicada' | 'taxa_juros_aplicada' | 'override_manual' | 'motivo_override' | 'forma_pagamento' | 'comprovante_url' | 'deleted_at' | 'deleted_by' | 'data_pagamento' | 'gateway_event_id' | 'gateway_origem' | 'webhook_payload' | 'codigo_transacao'> & {
-  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; pago?: boolean; valor_original?: number | null; override_manual?: boolean; gateway_event_id?: string | null; gateway_origem?: string | null; webhook_payload?: Record<string, unknown> | null; codigo_transacao?: string | null; created_at?: string; updated_at?: string
+export type CobrancaInsert = Omit<Cobranca, 'id' | 'created_at' | 'updated_at' | 'tipo_cobranca' | 'subtipo_cobranca' | 'origem_cobranca' | 'pago' | 'valor_original' | 'valor_pago' | 'valor_multa' | 'valor_juros' | 'dias_atraso_calculado' | 'taxa_multa_aplicada' | 'taxa_juros_aplicada' | 'override_manual' | 'motivo_override' | 'forma_pagamento' | 'comprovante_url' | 'deleted_at' | 'deleted_by' | 'data_pagamento' | 'gateway_event_id' | 'gateway_origem' | 'webhook_payload' | 'codigo_transacao'> & {
+  id?: string; tipo_cobranca?: 'mensalidade' | 'avulso'; subtipo_cobranca?: CobrancaSubtipo; origem_cobranca?: CobrancaOrigem; pago?: boolean; valor_original?: number | null; override_manual?: boolean; gateway_event_id?: string | null; gateway_origem?: string | null; webhook_payload?: Record<string, unknown> | null; codigo_transacao?: string | null; created_at?: string; updated_at?: string
 }
 export type CobrancaUpdate = Partial<CobrancaInsert>
 
@@ -666,6 +686,8 @@ export type CobrancaComEncargos = {
   override_manual: boolean
   motivo_override: string | null
   tipo_cobranca: 'mensalidade' | 'avulso'
+  subtipo_cobranca: CobrancaSubtipo
+  origem_cobranca: CobrancaOrigem
   turma_id: string | null
   ano_letivo: number | null
   forma_pagamento: string | null

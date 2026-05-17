@@ -16,7 +16,7 @@ SelectTrigger,
 SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { useEscolas } from '@/modules/escolas/hooks'
+import { useEscolasParaTransferencia } from '@/modules/escolas/hooks'
 import { useSolicitarTransferenciaResponsavel } from '@/modules/portal/hooks'
 import { Loader2,Send } from 'lucide-react'
 import { useState } from 'react'
@@ -37,7 +37,7 @@ export function ModalSolicitarTransferenciaPortal({
   onClose,
   aluno
 }: ModalSolicitarTransferenciaPortalProps) {
-  const { data: escolas } = useEscolas()
+  const { data: escolas } = useEscolasParaTransferencia()
   const solicitar = useSolicitarTransferenciaResponsavel()
   const [destinoId, setDestinoId] = useState('')
   const [motivo, setMotivo] = useState('')
@@ -88,7 +88,7 @@ export function ModalSolicitarTransferenciaPortal({
                 {escolas?.map((e) => (
                   e.id !== aluno?.tenant_id && (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.razao_social || e.nome}
+                      {e.razao_social || e.nome_fantasia}
                     </SelectItem>
                   )
                 ))}

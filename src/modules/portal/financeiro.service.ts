@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
-import { financeiroService as adminFinanceiroService } from '@/modules/financeiro/service'
+import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 
 export const portalFinanceiroService = {
   /**
@@ -61,16 +61,17 @@ export const portalFinanceiroService = {
 
         if (countError) throw countError
 
-        // 4. Auto-Reparo Condicional (Blindado)
+        // 4. O portal do responsável não cria/repara cobranças.
+        // Reparos financeiros devem rodar por rotina/admin com permissão explícita.
         if (count !== null && count < totalEsperado) {
-          try {
-            logger.info(`[portalFinanceiroService] Reparando mensalidades: esperado ${totalEsperado}, atual ${count}`, { alunoId })
-            await adminFinanceiroService.repararMensalidadesAluno(alunoId, tenantId, anoLetivo)
-          } catch (rpcError) {
-             logger.warn('[portalFinanceiroService] Falha silenciosa no reparo de mensalidades:', rpcError)
-             // Não propaga o erro para permitir visualização do que já existe no banco
-          }
-      }
+          logger.warn('[portalFinanceiroService] Mensalidades incompletas detectadas no portal. Reparo deve ser executado por rotina/admin.', {
+            alunoId,
+            tenantId,
+            anoLetivo,
+            esperado: totalEsperado,
+            atual: count,
+          })
+        }
 
 
       // 5. Retorno dos Dados Ordenados
@@ -85,14 +86,8 @@ export const portalFinanceiroService = {
    * Busca as cobranças base no banco
    */
   async buscarCobrancasBase(alunoId: string, tenantId: string, anoLetivo: number) {
-    // 1. Busca configuração para encargos
-    const { data: globalConfig } = await (supabase.from('configuracoes_escola' as any) as any)
-      .select('config_financeira')
-      .eq('tenant_id', tenantId)
-      .is('vigencia_fim', null)
-      .maybeSingle();
-
-    const config = (globalConfig as any)?.config_financeira;
+    // 1. Busca configuração centralizada para encargos
+    const config = await getConfiguracoesFinanceiras(tenantId);
     const usarViewEncargos = config?.multa_juros_habilitado !== false;
     const target = usarViewEncargos ? 'vw_cobrancas_com_encargos' : 'cobrancas';
 

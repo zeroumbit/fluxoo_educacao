@@ -90,18 +90,8 @@ export const academicoService = {
     const data = insertedData
 
     logger.info('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
-    
-    // Tenta gerar cobranças iniciais (proporcional, etc)
-    try {
-      const { financeiroService } = await import('@/modules/financeiro/service')
-      await financeiroService.gerarCobrancasIniciaisMatricula(data)
-    } catch (error) {
-      const finError = error as Error & { code?: string };
-      logger.error('⚠️ [academicoService.criarMatricula] Erro ao gerar cobranças automáticas:', finError)
-      if (finError.message?.includes('violates foreign key') || finError.code === '23503') {
-        throw new Error('Erro de integridade ao gerar cobranças. Verifique as configurações da turma.')
-      }
-    }
+    // A geração financeira automática fica no banco via trigger
+    // trg_gerar_financeiro_pos_matricula, evitando dupla geração no service.
 
     // Tenta sincronizar o valor da mensalidade no cadastro do aluno para reflexão no portal/listagem
     try {

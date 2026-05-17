@@ -478,9 +478,8 @@ function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggl
   const sorted = exibirTodas ? rawSorted : rawSorted.slice(0, 3)
   const temMais = !exibirTodas && rawSorted.length > 3
 
-  const getTipoBadge = (descricao: string) => {
-    const desc = descricao?.toLowerCase() || ''
-    if (desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa')) {
+  const getTipoBadge = (fatura: any) => {
+    if (fatura.subtipo_cobranca === 'matricula_rematricula') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[9px] font-black uppercase tracking-widest text-amber-600">
           🎓 Taxa de Matrícula
@@ -516,7 +515,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggl
                  <div className="flex flex-col flex-1 min-w-0">
                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                      <h5 className="font-black text-slate-800 tracking-tight leading-none">{labelMes}</h5>
-                     {!isHistorico && getTipoBadge(fat.descricao)}
+                     {!isHistorico && getTipoBadge(fat)}
                      {fat.comprovante_url && (
                        <Button 
                          variant="outline" 

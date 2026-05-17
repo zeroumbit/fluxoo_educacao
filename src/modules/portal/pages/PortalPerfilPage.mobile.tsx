@@ -74,7 +74,7 @@ export function PortalPerfilPageMobile() {
   useEffect(() => {
     async function fetchEscola() {
       if (!alunoSelecionado?.tenant_id) return
-      const { data } = await supabase.from('escolas').select('*').eq('id', alunoSelecionado.tenant_id).maybeSingle()
+      const { data } = await supabase.from('escolas').select('id, razao_social, cnpj, logradouro, numero, bairro, cidade, estado, email_gestor, telefone').eq('id', alunoSelecionado.tenant_id).maybeSingle()
       if (data) setEscolaInfo(data)
     }
     fetchEscola()

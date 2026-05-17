@@ -9,6 +9,13 @@ export function useEscolas() {
   })
 }
 
+export function useEscolasParaTransferencia() {
+  return useQuery({
+    queryKey: ['escolas', 'transferencia'],
+    queryFn: () => escolaService.listarParaTransferencia(),
+  })
+}
+
 export function useEscola(id: string) {
   return useQuery({
     queryKey: ['escolas', id],

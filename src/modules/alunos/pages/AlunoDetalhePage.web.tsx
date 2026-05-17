@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
+import { useAlunosEmTransferenciaOrigem } from '@/modules/academico/hooks/hooks.v1'
 import { useCobrancasComEncargosPorAluno } from '@/modules/financeiro/hooks'
 import { ArrowLeft,Building2,Calendar,CheckCircle2,Copy,CreditCard,Edit2,ExternalLink,FileText,Fingerprint,Heart,Info,Loader2,Lock,Mail,MapPin,Phone,PlusCircle,Save,Search,Trash2,UserCircle,Users,X } from 'lucide-react'
 import { useEffect,useState } from 'react'
@@ -31,6 +32,7 @@ export function AlunoDetalhePageWeb() {
   const isEditingInitial = searchParams.get('edit') === 'true'
 
   const { data: aluno, isLoading, error } = useAluno(id || '')
+  const alunosEmTransferenciaOrigem = useAlunosEmTransferenciaOrigem()
   const { data: cobrancasAluno = [], isLoading: loadingCobrancasAluno } = useCobrancasComEncargosPorAluno(id || '')
   const atualizarAluno = useAtualizarAluno()
   const ativarAcesso = useAtivarAcessoPortal()
@@ -321,6 +323,7 @@ export function AlunoDetalhePageWeb() {
 
   const vinculos = (aluno as any).aluno_responsavel as any[]
   const filial = (aluno as any).filiais as { nome_unidade: string } | null
+  const emTransferencia = !!id && alunosEmTransferenciaOrigem.has(id)
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-24 px-4 sm:px-6">
@@ -436,9 +439,11 @@ export function AlunoDetalhePageWeb() {
              <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
                 <Badge className={cn(
                   "px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest border-0",
-                  aluno.status === 'ativo' ? 'bg-emerald-100 text-emerald-700 shadow-sm shadow-emerald-50' : 'bg-slate-100 text-slate-500'
+                  emTransferencia
+                    ? 'bg-blue-100 text-blue-700 shadow-sm shadow-blue-50'
+                    : aluno.status === 'ativo' ? 'bg-emerald-100 text-emerald-700 shadow-sm shadow-emerald-50' : 'bg-slate-100 text-slate-500'
                 )}>
-                  {aluno.status}
+                  {emTransferencia ? 'em transferência' : aluno.status}
                 </Badge>
                 {(aluno as any).serie_ano && (
                   <Badge className="px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest bg-indigo-100 text-indigo-700 border-0 shadow-sm shadow-indigo-50">

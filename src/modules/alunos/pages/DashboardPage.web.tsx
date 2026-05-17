@@ -2,42 +2,42 @@ import CorujaIcon from '@/assets/coruja_ANDROID.svg'
 import { Badge } from '@/components/ui/badge'
 import { BadgeGravidade } from '@/components/ui/BadgeGravidade'
 import { Button } from '@/components/ui/button'
-import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-Dialog,
-DialogContent,
-DialogHeader,
-DialogTitle
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog'
 import { Greeting } from '@/components/ui/Greeting'
-import { useEscolaNotifications,useNotificacoesActions } from '@/hooks/useNotifications'
+import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
-import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import { useTransferenciasEscola, useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { PixManualBannerNotification as PixManualBannerNotificationComponent } from '@/modules/financeiro/components/PixManualBannerNotification'
+import { PixManualBannerNotification as PixManualBannerExternal } from '@/modules/financeiro/components/PixManualBannerNotification'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-AlertOctagon,
-AlertTriangle,
-Archive,
-ArrowUpRight,
-Calendar,
-Clock,
-CreditCard,
-Loader2,
-Megaphone,
-Phone,
-Shield,
-TrendingUp,
-UserCircle,
-Users,
-X
+  AlertOctagon,
+  AlertTriangle,
+  Archive,
+  ArrowUpRight,
+  Calendar,
+  Clock,
+  CreditCard,
+  Loader2,
+  Megaphone,
+  Phone,
+  Shield,
+  TrendingUp,
+  UserCircle,
+  Users,
+  X
 } from 'lucide-react'
-import React,{ useMemo,useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { RadarAlunoComStatus } from '../AlertasContext'
-import { AlertasProvider,useAlertas } from '../AlertasContext'
+import { AlertasProvider, useAlertas } from '../AlertasContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
 import { useDashboard } from '../dashboard.hooks'
@@ -53,7 +53,7 @@ interface AlunosSemMatriculaNotificationProps {
 
 function AlunosSemMatriculaNotification({ count, onDismiss }: AlunosSemMatriculaNotificationProps) {
   const navigate = useNavigate()
-  
+
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm">
       <button
@@ -62,7 +62,7 @@ function AlunosSemMatriculaNotification({ count, onDismiss }: AlunosSemMatricula
       >
         <X className="h-4 w-4" />
       </button>
-      
+
       <div className="p-6 pr-14">
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
@@ -101,7 +101,7 @@ interface AlunosPendentesEnturmacaoNotificationProps {
 
 function AlunosPendentesEnturmacaoNotification({ count, onDismiss }: AlunosPendentesEnturmacaoNotificationProps) {
   const navigate = useNavigate()
-  
+
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-sm mb-8">
       <button
@@ -110,7 +110,7 @@ function AlunosPendentesEnturmacaoNotification({ count, onDismiss }: AlunosPende
       >
         <X className="h-4 w-4" />
       </button>
-      
+
       <div className="p-6 pr-14">
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
@@ -150,7 +150,7 @@ interface TransferenciasPendentesAceiteNotificationProps {
 
 function TransferenciasPendentesAceiteNotification({ count, onDismiss }: TransferenciasPendentesAceiteNotificationProps) {
   const navigate = useNavigate()
-  
+
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm mb-8">
       <button
@@ -159,7 +159,7 @@ function TransferenciasPendentesAceiteNotification({ count, onDismiss }: Transfe
       >
         <X className="h-4 w-4" />
       </button>
-      
+
       <div className="p-6 pr-14">
         <div className="flex items-start gap-4">
           <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
@@ -188,6 +188,47 @@ function TransferenciasPendentesAceiteNotification({ count, onDismiss }: Transfe
     </div>
   )
 }
+
+function TransferenciasLiberacaoNotification({ count, onDismiss }: TransferenciasPendentesAceiteNotificationProps) {
+  const navigate = useNavigate()
+
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm mb-8">
+      <button
+        onClick={onDismiss}
+        className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/50 hover:bg-white flex items-center justify-center transition-all text-blue-600 hover:text-blue-700"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      <div className="p-6 pr-14">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-blue-100 flex items-center justify-center shrink-0">
+             <Shield className="h-6 w-6 text-blue-600" />
+          </div>
+
+          <div className="flex-1">
+            <h3 className="font-black text-blue-900 text-lg tracking-tight mb-1">
+              Transferência Aprovada pela Família
+            </h3>
+            <p className="text-sm font-medium text-blue-700 mb-4">
+              {count} {count === 1 ? 'aluno precisa' : 'alunos precisam'} de liberação pela escola de origem.
+              <br />
+              <span className="text-xs opacity-80 italic">Você tem até 30 dias para preparar a documentação e liberar o aluno.</span>
+            </p>
+
+            <Button
+              onClick={() => navigate('/transferencias')}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm px-6 h-10 shadow-sm shadow-blue-200"
+            >
+              Ver Transferências
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 interface MetricCardProps {
   label: string
   value: number | string
@@ -205,15 +246,15 @@ interface MetricCardProps {
   cardSubColor?: string
 }
 
-function MetricCard({ 
-  label, 
-  value, 
-  sub, 
-  icon: Icon, 
-  iconBg, 
-  iconColor, 
-  warning, 
-  children, 
+function MetricCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  iconBg,
+  iconColor,
+  warning,
+  children,
   onClick,
   cardBg = 'bg-white',
   cardBorder = 'border-zinc-100',
@@ -272,44 +313,49 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
       : 'bg-yellow-400 text-yellow-900'
 
   return (
-    <div className="p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-3">
-      <div className="flex justify-between items-start gap-2">
+    <div className="p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-4 flex flex-col justify-between w-[280px] shrink-0 min-h-[220px]">
+      <div className="space-y-3">
+        <div className="flex justify-start">
+          <BadgeGravidade gravidade={
+            aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 7 ? 'alta' :
+            aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3 ? 'media' : 'baixa'
+          } />
+        </div>
+
         <button
           onClick={() => onOpenDetails(aluno)}
-          className="font-bold text-sm text-zinc-900 leading-tight hover:text-rose-600 hover:underline transition-colors text-left"
+          className="font-bold text-sm text-zinc-900 leading-tight hover:text-rose-600 hover:underline transition-colors text-left block w-full truncate"
         >
           {aluno.nome_completo}
         </button>
-        <BadgeGravidade gravidade={
-          aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 7 ? 'alta' :
-          aluno.cobrancas_atrasadas >= 1 && aluno.faltas_consecutivas >= 3 ? 'media' : 'baixa'
-        } />
-      </div>
-      <div className="space-y-2">
-        {aluno.faltas_consecutivas > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-              <Users className="h-3.5 w-3.5 text-red-500" />
+
+        <div className="space-y-2 pt-1">
+          {aluno.faltas_consecutivas > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                <Users className="h-3.5 w-3.5 text-red-500" />
+              </div>
+              <p className="text-[11px] text-red-600 font-semibold">
+                {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} nos últimos 21 dias
+              </p>
             </div>
-            <p className="text-[11px] text-red-600 font-semibold">
-              {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} nos últimos 21 dias
-            </p>
-          </div>
-        )}
-        {aluno.cobrancas_atrasadas > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
-              <CreditCard className="h-3.5 w-3.5 text-rose-500" />
+          )}
+          {aluno.cobrancas_atrasadas > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+                <CreditCard className="h-3.5 w-3.5 text-rose-500" />
+              </div>
+              <p className="text-[11px] text-rose-600 font-semibold">
+                {aluno.cobrancas_atrasadas} cobrança{aluno.cobrancas_atrasadas > 1 ? 's' : ''} em atraso
+              </p>
             </div>
-            <p className="text-[11px] text-rose-600 font-semibold">
-              {aluno.cobrancas_atrasadas} cobrança{aluno.cobrancas_atrasadas > 1 ? 's' : ''} em atraso
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
       <button
         onClick={() => onOpenDetails(aluno)}
-        className="w-full py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-xl transition-all flex items-center justify-center gap-2 group/btn"
+        className="w-full py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-xl transition-all flex items-center justify-center gap-2 group/btn border border-transparent mt-auto"
       >
         Ver Detalhes
         <ArrowUpRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
@@ -320,7 +366,7 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
 
 function StatusAprovacaoNotification({ status, metodo }: { status: string, metodo: string }) {
   if (status === 'ativa') return null
-  
+
   const isPix = metodo === 'pix_manual' || metodo === 'pix'
 
   return (
@@ -340,7 +386,7 @@ function StatusAprovacaoNotification({ status, metodo }: { status: string, metod
             {isPix ? 'Cadastro em Processamento' : 'Plano Pendente'}
           </h3>
           <p className="text-white/80 text-sm font-medium max-w-2xl leading-relaxed">
-            {isPix 
+            {isPix
               ? 'Recebemos seu comprovante e estamos revisando os dados para liberar seu acesso total. Isso levará pouco tempo.'
               : 'Seu plano ainda não foi ativado. Conclua o pagamento via Mercado Pago para liberar todas as funcionalidades.'
             }
@@ -366,7 +412,7 @@ interface TrialExpirationNotificationProps {
 function TrialExpirationNotification({ assinatura }: TrialExpirationNotificationProps) {
   const navigate = useNavigate()
   const { diasRestantes, totalDiasTeste, valorPlano } = assinatura
-  
+
   const showNotification = useMemo(() => {
     // 3 dias antes se o teste for de 7 dias
     if (totalDiasTeste === 7) return diasRestantes <= 3
@@ -390,11 +436,11 @@ function TrialExpirationNotification({ assinatura }: TrialExpirationNotification
             Seu Período de Teste está Acabando!
           </h3>
           <p className="text-white/80 text-sm font-medium max-w-2xl leading-relaxed">
-            Restam apenas <strong className="text-white font-black">{diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'}</strong> de acesso gratuito. 
+            Restam apenas <strong className="text-white font-black">{diasRestantes} {diasRestantes === 1 ? 'dia' : 'dias'}</strong> de acesso gratuito.
             Após o período de {totalDiasTeste} dias, será iniciado a cobrança do seu plano no valor de <strong className="text-white font-black">R$ {valorPlano.toFixed(2)}</strong> por aluno.
           </p>
         </div>
-        <Button 
+        <Button
           onClick={() => navigate('/plano')}
           className="bg-white text-orange-600 hover:bg-zinc-100 rounded-xl font-bold h-12 px-8 shadow-lg shadow-orange-900/20"
         >
@@ -408,25 +454,25 @@ function TrialExpirationNotification({ assinatura }: TrialExpirationNotification
 // ---------------------------------------------------------------------------
 // Sub-componente: Notificação de Pagamento PIX Manual Pendente
 // ---------------------------------------------------------------------------
-function PixManualBannerNotification() {
+function PixManualBannerNotificationComponent() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data } = useEscolaNotifications(authUser?.tenantId)
   const { marcarComoLida } = useNotificacoesActions()
-  
+
   // Filtra apenas notificações de pix manual que não foram resolvidas
   const pixNotifications = useMemo(() => {
     if (!data?.notificacoes) return []
     return data.notificacoes.filter(n => n.tipo === 'PAGAMENTO_PIX_MANUAL' && !n.resolvida && !n.lida)
   }, [data?.notificacoes])
-  
+
   if (pixNotifications.length === 0) return null
 
   return (
     <div className="space-y-4 mb-8">
       {pixNotifications.map((n) => (
-        <div 
-          key={n.id} 
+        <div
+          key={n.id}
           className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-50 via-white to-blue-50 border border-indigo-200 shadow-lg shadow-indigo-100/50 transition-all hover:shadow-xl hover:-translate-y-0.5"
         >
           {/* Badge Flutuante */}
@@ -440,21 +486,21 @@ function PixManualBannerNotification() {
             <div className="h-16 w-16 rounded-[2rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
                <CreditCard className="h-8 w-8 text-indigo-600" />
             </div>
-            
+
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-black text-indigo-900 text-xl tracking-tight">
                   Validação de Pagamento Pendente
                 </h3>
               </div>
-              
+
               <p className="text-base font-medium text-indigo-700/80 mb-6 leading-relaxed max-w-3xl">
-                <strong className="text-indigo-900 font-extrabold">{n.metadata?.responsavel_nome}</strong> enviou comprovante para 
+                <strong className="text-indigo-900 font-extrabold">{n.metadata?.responsavel_nome}</strong> enviou comprovante para
                 o aluno <strong className="text-indigo-900 font-extrabold">{n.metadata?.aluno_nome}</strong> ({n.metadata?.turma_nome}).
                 <br />
                 <span className="text-sm">
-                  Valor: <strong className="text-indigo-600 font-black text-lg">R$ {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> 
-                  <span className="mx-2 opacity-30">|</span> 
+                  Valor: <strong className="text-indigo-600 font-black text-lg">R$ {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                  <span className="mx-2 opacity-30">|</span>
                   Ref: {n.metadata?.meses_referencia} ({n.metadata?.tipo_cobranca})
                 </span>
               </p>
@@ -466,7 +512,7 @@ function PixManualBannerNotification() {
                 >
                   VALIDAR AGORA
                 </Button>
-                
+
                 <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
                   <Phone className="h-4 w-4 text-indigo-500" />
                   <p className="text-xs font-bold text-indigo-600">
@@ -509,14 +555,23 @@ function DashboardContent() {
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)
   const [showAlunosPendentesEnturmacaoNotification, setShowAlunosPendentesEnturmacaoNotification] = useState(true)
   const [showTransferenciasPendentesAceiteNotification, setShowTransferenciasPendentesAceiteNotification] = useState(true)
+  const [showTransferenciasLiberacaoNotification, setShowTransferenciasLiberacaoNotification] = useState(true)
   const pendentesAceiteCount = useTransferenciasPendentesAceite()
+  const { data: transferenciasEscola } = useTransferenciasEscola()
+  const pendentesLiberacaoCount = useMemo(
+    () => (transferenciasEscola || []).filter((t) =>
+      t.origem_id === authUser?.tenantId &&
+      t.status === 'aguardando_liberacao_origem'
+    ).length,
+    [transferenciasEscola, authUser?.tenantId]
+  )
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAluno | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
   const [showAllRadares, setShowAllRadares] = useState(false)
-  
+
   // Filtra apenas alertas ativos para a visualização principal
   const radarEvasaoAtivo = useMemo(() => alertas.filter(a => a.status === 'ativo'), [alertas])
-  const visibleRadarCount = 2
+  const visibleRadarCount = 4
   const radarExibir = showAllRadares ? radarEvasaoAtivo : radarEvasaoAtivo.slice(0, visibleRadarCount)
   const totalRadar = radarEvasaoAtivo.length
   const temMaisRadar = totalRadar > visibleRadarCount
@@ -564,7 +619,7 @@ function DashboardContent() {
         <AlertTriangle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
         <h2 className="text-xl font-black text-rose-900 tracking-tight">Ops! Algo deu errado.</h2>
         <p className="text-rose-600 mt-2 font-medium">Não conseguimos carregar as informações do painel.</p>
-        <button 
+        <button
           onClick={() => refreshDashboard()}
           className="mt-6 px-6 py-2.5 bg-rose-600 text-white rounded-full font-bold hover:bg-rose-700 transition-all text-sm"
         >
@@ -711,6 +766,13 @@ function DashboardContent() {
         />
       )}
 
+      {pendentesLiberacaoCount > 0 && showTransferenciasLiberacaoNotification && (
+        <TransferenciasLiberacaoNotification
+          count={pendentesLiberacaoCount}
+          onDismiss={() => setShowTransferenciasLiberacaoNotification(false)}
+        />
+      )}
+
       {/* Notificação de Alunos Transferidos Pendentes de Enturmação */}
       {(dashboardData?.alunosPendentesEnturmacao ?? 0) > 0 && showAlunosPendentesEnturmacaoNotification && (
         <AlunosPendentesEnturmacaoNotification
@@ -754,79 +816,83 @@ function DashboardContent() {
         ))}
       </div>
 
-      {/* Seção: Comunicados e Radar de Evasão */}
-      {avisosRecentes.length > 0 || radarEvasao.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Lado Esquerdo: Radar de Evasão */}
-          {radarEvasao.length > 0 && (
-            <section className="flex justify-start">
-              <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden w-full">
-                <CardHeader className="p-8 pb-4 pt-[30px]">
-                  <div className="flex items-center justify-between mb-2">
-                     <div className="h-10 w-10 rounded-2xl bg-rose-100 flex items-center justify-center">
-                        <AlertTriangle className="h-5 w-5 text-rose-600" />
-                     </div>
-                     <ArrowUpRight className="h-5 w-5 text-rose-300" />
-                  </div>
-                  <CardTitle className="text-xl font-black text-rose-900 tracking-tight">Radar de Evasão</CardTitle>
-                  <p className="text-xs font-semibold text-rose-600/70 mt-1 uppercase tracking-widest">Alunos em Risco Crítico</p>
-                </CardHeader>
-                <CardContent className="p-4 space-y-3">
-                  {radarExibir.map((aluno) => (
-                    <RadarCard key={aluno.aluno_id} aluno={aluno} onOpenDetails={handleOpenRadarDetails} />
-                  ))}
-                  {temMaisRadar && (
-                    <button
-                      onClick={() => setShowAllRadares(true)}
-                      className="w-full py-3 text-center text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline transition-colors"
-                    >
-                      Ver todos os {totalRadar} alertas
-                    </button>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
-          )}
+      {/* Radar de Evasão - Fora do grid de comunicados, ocupando largura total horizontal */}
+      {radarEvasao.length > 0 && (
+        <section className="w-full animate-in fade-in duration-300">
+          <Card className="rounded-[2.5rem] border-0 bg-rose-50/30 overflow-hidden w-full">
+            <CardHeader className="p-8 pb-4 pt-[30px]">
+              <div className="flex items-center justify-between w-full">
+                 <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                       <AlertTriangle className="h-6 w-6 text-rose-600" />
+                    </div>
+                    <div>
+                       <CardTitle className="text-xl font-black text-rose-900 tracking-tight">Radar de Evasão</CardTitle>
+                       <p className="text-xs font-semibold text-rose-600/70 mt-1 uppercase tracking-widest">Alunos em Risco Crítico</p>
+                    </div>
+                 </div>
+                 <ArrowUpRight className="h-5 w-5 text-rose-300" />
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 pt-0 space-y-6">
+              <p className="text-[11px] font-black text-zinc-800 uppercase tracking-wider mb-2">
+                VERIFIQUE COM MÁXIMO DE ATENÇÃO A SITUAÇÃO DE CADA UM DOS ALUNOS DO ALERTA ABAIXO
+              </p>
+              <div className="flex flex-nowrap overflow-x-auto gap-4 justify-start pb-2 w-full scrollbar-thin">
+                {radarExibir.map((aluno) => (
+                  <RadarCard key={aluno.aluno_id} aluno={aluno} onOpenDetails={handleOpenRadarDetails} />
+                ))}
+              </div>
+              {temMaisRadar && (
+                <button
+                  onClick={() => setShowAllRadares(true)}
+                  className="w-full py-3 text-center text-sm font-bold text-rose-600 hover:text-rose-700 hover:underline transition-colors"
+                >
+                  Ver todos os {totalRadar} alertas
+                </button>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
-          {/* Lado Direito: Mural de Comunicados */}
-          {avisosRecentes.length > 0 && (
-            <section className={`flex ${radarEvasao.length > 0 ? 'justify-end' : 'justify-start'}`}>
-              <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white overflow-hidden w-full">
-                <CardHeader className="p-8 flex flex-row items-center justify-between pt-[30px]">
-                  <div>
-                    <CardTitle className="text-2xl font-black text-zinc-900 tracking-tight">Mural de Comunicados</CardTitle>
-                    <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-widest flex items-center gap-2">
-                       <Megaphone className="h-3 w-3" /> Últimos avisos da escola
-                    </p>
+      {/* Mural de Comunicados - Exibido de forma independente, abaixo do Radar de Evasão */}
+      {avisosRecentes.length > 0 && (
+        <section className="w-full animate-in fade-in duration-300">
+          <Card className="rounded-[2.5rem] border shadow-sm border-zinc-100 bg-white overflow-hidden w-full">
+            <CardHeader className="p-8 flex flex-row items-center justify-between pt-[30px]">
+              <div>
+                <CardTitle className="text-2xl font-black text-zinc-900 tracking-tight">Mural de Comunicados</CardTitle>
+                <p className="text-xs font-semibold text-zinc-500 mt-1 uppercase tracking-widest flex items-center gap-2">
+                   <Megaphone className="h-3 w-3" /> Últimos avisos da escola
+                </p>
+              </div>
+              <ArrowUpRight className="h-6 w-6 text-zinc-200" />
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {avisosRecentes.map((aviso, idx) => (
+                  <div key={idx} className="group p-6 rounded-[2rem] bg-zinc-50/50 border border-zinc-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
+                    <div className="flex justify-between items-start mb-4">
+                       <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-zinc-200 text-zinc-500 bg-white">
+                          {'AVISO'}
+                       </Badge>
+                       <span className="text-[10px] font-bold text-zinc-400">
+                         {format(new Date(aviso.created_at), "d 'de' MMM", { locale: ptBR })}
+                       </span>
+                    </div>
+                    <h4 className="font-black text-zinc-800 text-lg mb-2 tracking-tight line-clamp-1">{aviso.titulo}</h4>
+                    <p className="text-sm font-medium text-zinc-500 leading-relaxed line-clamp-3 mb-4">{aviso.conteudo}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                       Ler na íntegra <ArrowUpRight className="h-3 w-3" />
+                    </div>
                   </div>
-                  <ArrowUpRight className="h-6 w-6 text-zinc-200" />
-                </CardHeader>
-                <CardContent className="px-8 pb-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {avisosRecentes.map((aviso, idx) => (
-                      <div key={idx} className="group p-6 rounded-[2rem] bg-zinc-50/50 border border-zinc-100 transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1">
-                        <div className="flex justify-between items-start mb-4">
-                           <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-zinc-200 text-zinc-500 bg-white">
-                              {'AVISO'}
-                           </Badge>
-                           <span className="text-[10px] font-bold text-zinc-400">
-                             {format(new Date(aviso.created_at), "d 'de' MMM", { locale: ptBR })}
-                           </span>
-                        </div>
-                        <h4 className="font-black text-zinc-800 text-lg mb-2 tracking-tight line-clamp-1">{aviso.titulo}</h4>
-                        <p className="text-sm font-medium text-zinc-500 leading-relaxed line-clamp-3 mb-4">{aviso.conteudo}</p>
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                           Ler na íntegra <ArrowUpRight className="h-3 w-3" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-        </div>
-      ) : null}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Modal de Detalhes do Radar */}
       <RadarEvasaoModal
@@ -846,14 +912,14 @@ function DashboardContent() {
           </DialogHeader>
           <div className="space-y-3 mt-4">
             {radarEvasaoAtivo.map((aluno) => (
-              <RadarCard 
-                key={aluno.aluno_id} 
-                aluno={aluno} 
+              <RadarCard
+                key={aluno.aluno_id}
+                aluno={aluno}
                 onOpenDetails={(a) => {
                   setSelectedRadarAluno(a)
                   setIsRadarSheetOpen(true)
                   setShowAllRadares(false)
-                }} 
+                }}
               />
             ))}
           </div>

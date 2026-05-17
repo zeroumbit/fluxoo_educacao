@@ -120,11 +120,12 @@ export function TransferenciasPageWeb() {
     [recebidas]
   )
 
-  const pendentesTotal = useMemo(() =>
-    transferenciasList.filter((t) =>
+  const processosPendentes = useMemo(() =>
+    (transferencias || []).filter((t) =>
+      (t.origem_id === tenantId || t.destino_id === tenantId) &&
       !['concluido', 'recusado', 'cancelado', 'expirado'].includes(t.status)
-    ).length,
-    [transferenciasList]
+    ),
+    [transferencias, tenantId]
   )
 
   const handleConcluirTransferencia = async () => {
@@ -211,7 +212,7 @@ export function TransferenciasPageWeb() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pendentes</p>
-                <p className="text-2xl font-bold text-slate-900">{pendentesTotal}</p>
+                <p className="text-2xl font-bold text-slate-900">{processosPendentes.length}</p>
               </div>
             </div>
           </CardContent>

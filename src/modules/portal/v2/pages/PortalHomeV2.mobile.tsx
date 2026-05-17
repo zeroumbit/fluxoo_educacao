@@ -1,12 +1,12 @@
 import { usePortalNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import { AnimatePresence,motion } from 'framer-motion';
-import { ArrowRight,ChevronRight,Clock,Copy,FileSignature,Info,Receipt } from 'lucide-react';
+import { ArrowRight,ChevronRight,Clock,Copy,FileSignature,Info,Receipt,Send,X } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
 import { usePortalContext } from '../../context';
-import { useAvisosPortal,useConfigPix,useDashboardFamilia,useFilaVirtual } from '../../hooks';
+import { useAvisosPortal,useConfigPix,useDashboardFamilia,useFilaVirtual,useTransferenciasPortal } from '../../hooks';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { NativeHeader } from '../components/NativeHeader';
 
@@ -14,6 +14,15 @@ import { NativeHeader } from '../components/NativeHeader';
 const _getInitials = (name: string) => {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 };
+
+function getEscolaNome(value: unknown): string {
+  if (!value) return 'Não informada'
+  if (typeof value === 'string') return value
+  if (typeof value === 'object' && 'razao_social' in value) {
+    return String((value as { razao_social?: unknown }).razao_social || 'Não informada')
+  }
+  return String(value)
+}
 
 export function PortalHomeV2Mobile() {
   const navigate = useNavigate();
@@ -23,11 +32,17 @@ export function PortalHomeV2Mobile() {
   const { data: configPix } = useConfigPix();
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   const { data: historicoFila } = useFilaVirtual();
+  const { data: transferenciasPortal } = useTransferenciasPortal();
   const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
+  const transferenciaPendente = React.useMemo(
+    () => (transferenciasPortal as any[] | undefined)?.find((t) => t.status === 'aguardando_responsavel'),
+    [transferenciasPortal]
+  );
   
   const [showContrato, setShowContrato] = React.useState(false);
   const [showCopyModal, setShowCopyModal] = React.useState(false);
   const [copyId, setCopyId] = React.useState('');
+  const [showTransferenciaCard, setShowTransferenciaCard] = React.useState(true);
 
   // Auto-trigger de contrato pendente
   React.useEffect(() => {
@@ -194,6 +209,38 @@ export function PortalHomeV2Mobile() {
 
       {/* Cards Dinâmicos: Contrato e Fila (Absorção V1) */}
       <section className="flex flex-col gap-3 px-1">
+        {transferenciaPendente && showTransferenciaCard && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={() => navigate('/portal/transferencias')}
+            className="relative bg-orange-600 p-6 rounded-[32px] text-white shadow-xl shadow-orange-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all"
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTransferenciaCard(false);
+              }}
+              className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/15 flex items-center justify-center"
+              aria-label="Fechar aviso de transferência"
+            >
+              <X size={15} />
+            </button>
+            <div className="flex items-center gap-4 pr-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Send size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-black leading-none mb-1">Pedido de Transferência</h3>
+                <p className="text-[10px] font-medium text-orange-100 italic">
+                  {transferenciaPendente.aluno?.nome_completo || transferenciaPendente.aluno_nome || 'Aluno'}: {getEscolaNome(transferenciaPendente.escola_origem)} → {getEscolaNome(transferenciaPendente.escola_destino)}
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-orange-200" />
+          </motion.div>
+        )}
+
         {responsavel && !responsavel.termos_aceitos && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}

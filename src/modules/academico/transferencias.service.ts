@@ -132,17 +132,23 @@ function enrichTransferencia(
 
 export const transferenciasService = {
   /** ESCOLA DESTINO inicia pedido de transferência pelo código do aluno */
-  async solicitar(alunoId: string, origemId: string, destinoId: string, motivo: string) {
+  async solicitar(payload: {
+    alunoId: string
+    origemId: string
+    destinoId: string
+    motivo: string
+    responsavelId: string
+  }) {
     const { data, error } = await supabase
       .from('transferencias_escolares')
       .insert({
-        aluno_id: alunoId,
-        escola_origem_id: origemId,
-        escola_destino_id: destinoId,
+        aluno_id: payload.alunoId,
+        escola_origem_id: payload.origemId,
+        escola_destino_id: payload.destinoId,
         iniciado_por: 'destino' as const,
         status: 'aguardando_responsavel' as const,
-        motivo_solicitacao: motivo,
-        responsavel_id: null,
+        motivo_solicitacao: payload.motivo,
+        responsavel_id: payload.responsavelId,
       } as any)
       .select()
       .single()

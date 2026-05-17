@@ -8,6 +8,7 @@ SeloInsert
 import { QueryKeys } from "@/lib/query-keys"
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { academicoService } from '../services/academico.service.v1'
 import { transferenciasService } from '../transferencias.service'
 import type { AtividadeComTurmas,PlanoAulaComTurmas } from '../types'
@@ -269,10 +270,22 @@ export function useTransferenciasEscola() {
 export function useSolicitarTransferencia() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ alunoId, origemId, destinoId, motivo, responsavelId, iniciadoPor }: {
+    mutationFn: ({ alunoId, origemId, destinoId, motivo, responsavelId }: {
       alunoId: string; origemId: string; destinoId: string; motivo: string
       responsavelId?: string | null; iniciadoPor?: string
-    }) => transferenciasService.solicitar(alunoId, origemId, destinoId, motivo),
+    }) => {
+      if (!responsavelId) {
+        throw new Error('Responsável não identificado para esta transferência.')
+      }
+
+      return transferenciasService.solicitar({
+        alunoId,
+        origemId,
+        destinoId,
+        motivo,
+        responsavelId,
+      })
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transferencias', 'escola'] })
     }
@@ -345,4 +358,22 @@ export function useTransferenciasPendentesAceite() {
     t.status === 'aguardando_aceite_destino' && 
     t.escola_destino_id === authUser?.tenantId
   ).length
+}
+
+export function useAlunosEmTransferenciaOrigem() {
+  const { data: transferencias } = useTransferenciasEscola()
+  const { authUser } = useAuth()
+
+  return useMemo(() => {
+    if (!transferencias || !authUser?.tenantId) return new Set<string>()
+
+    return new Set(
+      transferencias
+        .filter((t) =>
+          t.status === 'aguardando_liberacao_origem' &&
+          t.escola_origem_id === authUser.tenantId
+        )
+        .map((t) => t.aluno_id)
+    )
+  }, [transferencias, authUser?.tenantId])
 }

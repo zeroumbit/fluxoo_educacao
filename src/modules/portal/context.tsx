@@ -3,6 +3,7 @@ import type { AlunoVinculado } from '@/types/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { createContext,useContext,useEffect,useMemo,type ReactNode } from 'react'
 import { useResponsavel,useVinculosAtivos } from './hooks'
+import { portalService } from './service'
 import { usePortalStore } from './store'
 
 interface PortalContextType {
@@ -41,6 +42,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   }, [responsaveis, alunoSelecionado])
 
   const tenantId = alunoSelecionado?.tenant_id || null
+  const alunoId = alunoSelecionado?.id || null
 
   useEffect(() => {
     let active = true
@@ -49,60 +51,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       if (!vinculo?.aluno || !vinculo?.aluno?.id) return
 
       try {
-        const [resMatricula, resTurmaFallback] = await Promise.all([
-          supabase.from('matriculas')
-            .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
-            .eq('aluno_id', vinculo.aluno.id)
-            .eq('status', 'ativa')
-            .maybeSingle(),
-          supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .contains('alunos_ids', [vinculo.aluno.id])
-            .maybeSingle()
-        ])
-
-        if (!active) return
-
-        const matricula = resMatricula.data
-        let turma = resTurmaFallback.data
-
-        if (matricula?.turma_id) {
-          const { data: turmaData } = await supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('id', matricula.turma_id)
-            .maybeSingle()
-          if (active && turmaData) turma = turmaData
-        }
-
-        if (!active) return
-
-        if (!turma && matricula) {
-          const { data: turmaNome } = await supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .eq('nome', matricula.serie_ano)
-            .or(`turno.eq.${matricula.turno},turno.eq.${matricula.turno === 'manha' ? 'matutino' : matricula.turno === 'tarde' ? 'vespertino' : matricula.turno}`)
-            .maybeSingle()
-          if (active) turma = turmaNome
-        }
-
-        if (!active) return
-
-        const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
-
-        const alunoCompleto = {
-          ...vinculo.aluno,
-          codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
-          turma: turma || (matricula ? {
-            id: '',
-            nome: matricula.serie_ano,
-            turno: matricula.turno,
-            valor_mensalidade: valorMensalidadeFinal
-          } : null),
-          valor_matricula: matricula?.valor_matricula || null
-        }
-
+        const alunoCompleto = await portalService.enriquecerVinculoAluno(vinculo)
         if (active) setAlunoSelecionado(alunoCompleto)
       } catch (err) {
         console.error('PortalContext: Erro crítico ao carregar dados do aluno:', err)
@@ -138,54 +87,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     })
 
     try {
-        const [resMatricula, resTurmaFallback] = await Promise.all([
-          supabase.from('matriculas')
-            .select('turno, serie_ano, ano_letivo, valor_matricula, turma_id')
-            .eq('aluno_id', vinculo.aluno.id)
-            .eq('status', 'ativa')
-            .maybeSingle(),
-          supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .contains('alunos_ids', [vinculo.aluno.id])
-            .maybeSingle()
-        ])
-
-        const matricula = resMatricula.data
-        let turma = resTurmaFallback.data
-
-        if (matricula?.turma_id) {
-          const { data: turmaData } = await supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('id', matricula.turma_id)
-            .maybeSingle()
-          if (turmaData) turma = turmaData
-        }
-
-        if (!turma && matricula) {
-          const { data: turmaNome } = await supabase.from('turmas')
-            .select('id, nome, turno, valor_mensalidade')
-            .eq('tenant_id', vinculo.aluno.tenant_id)
-            .eq('nome', matricula.serie_ano)
-            .or(`turno.eq.${matricula.turno},turno.eq.${matricula.turno === 'manha' ? 'matutino' : matricula.turno === 'tarde' ? 'vespertino' : matricula.turno}`)
-            .maybeSingle()
-          turma = turmaNome
-        }
-
-        const valorMensalidadeFinal = turma?.valor_mensalidade || (matricula ? matricula.valor_matricula : null)
-
-        const alunoCompleto = {
-          ...vinculo.aluno,
-          codigo_transferencia: vinculo.aluno?.codigo_transferencia || null,
-          turma: turma || (matricula ? {
-            id: '',
-            nome: matricula.serie_ano,
-            turno: matricula.turno,
-            valor_mensalidade: valorMensalidadeFinal
-          } : null),
-          valor_matricula: matricula?.valor_matricula || null
-        }
-
+        const alunoCompleto = await portalService.enriquecerVinculoAluno(vinculo)
         setAlunoSelecionado(alunoCompleto)
       } catch (err) {
         console.error('PortalContext: Erro ao selecionar aluno:', err)
@@ -197,6 +99,32 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   const contextLoading = !!(loadingResp || loadingVinculos || isInitializing)
 
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!tenantId || !alunoId) return
+
+    const invalidatePortalData = () => {
+      queryClient.invalidateQueries({ queryKey: ['portal'] })
+    }
+
+    const channel = supabase
+      .channel(`portal-realtime-${tenantId}-${alunoId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'frequencias', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'boletins', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'avaliacoes_notas', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobrancas', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transferencias_escolares', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notificacoes', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mural_avisos', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'atividades', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos_emitidos', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [tenantId, alunoId, queryClient])
+
   const refreshData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] }),

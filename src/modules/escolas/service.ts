@@ -11,6 +11,12 @@ export const escolaService = {
     return data
   },
 
+  async listarParaTransferencia() {
+    const { data, error } = await (supabase.rpc('fn_listar_escolas_para_transferencia' as any) as any)
+    if (error) throw error
+    return (data as Array<{ id: string; razao_social: string | null; nome_fantasia: string | null }>) || []
+  },
+
   async buscarPorId(id: string) {
     const { data, error } = await supabase
       .from('escolas')

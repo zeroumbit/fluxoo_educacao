@@ -1,7 +1,9 @@
 import type { CobrancaInsert } from '@/lib/database.types'
+import { cacheEvents } from '@/lib/cache-events'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
+import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 
 export const financeiroService = {
   /**
@@ -10,13 +12,8 @@ export const financeiroService = {
    */
   async repararStatusAtrasados(tenantId: string) {
     // 0. Busca configuração de carência via Motor de Configurações Tenant
-    const { data: config } = await (supabase.from('configuracoes_escola' as any) as any)
-      .select('config_financeira')
-      .eq('tenant_id', tenantId)
-      .is('vigencia_fim', null)
-      .maybeSingle()
-
-    const carencia = config?.config_financeira?.dias_carencia || 0
+    const configFinanceira = await getConfiguracoesFinanceiras(tenantId)
+    const carencia = configFinanceira?.dias_carencia || 0
     const hoje = new Date()
     
     // Data limite: vencimento < (hoje - carencia) => atrasado
@@ -47,7 +44,7 @@ export const financeiroService = {
 
     let query = supabase
       .from('cobrancas')
-      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, turma_id, ano_letivo, created_at, alunos(nome_completo)')
+      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, subtipo_cobranca, origem_cobranca, turma_id, ano_letivo, created_at, alunos(nome_completo)')
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
 
@@ -73,6 +70,13 @@ export const financeiroService = {
       .single()
 
     if (error) throw error
+    if (data) {
+      cacheEvents.publish('COBRANCA_CRIADA', {
+        cobrancaId: data.id,
+        tenantId: data.tenant_id,
+        alunoId: data.aluno_id,
+      })
+    }
     return data
   },
 
@@ -93,6 +97,13 @@ export const financeiroService = {
       .single()
 
     if (error) throw error
+    if (data) {
+      cacheEvents.publish('COBRANCA_ATUALIZADA', {
+        cobrancaId: data.id,
+        tenantId: data.tenant_id,
+        alunoId: data.aluno_id,
+      })
+    }
     return data
   },
 
@@ -103,13 +114,22 @@ export const financeiroService = {
 
     if (!tenantId) throw new Error('ID do tenant é obrigatório.')
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cobrancas')
       .update({ status: 'pago' })
       .eq('id', id)
       .eq('tenant_id', tenantId)
+      .select('id, tenant_id, aluno_id')
+      .single()
 
     if (error) throw error
+    if (data) {
+      cacheEvents.publish('COBRANCA_ATUALIZADA', {
+        cobrancaId: data.id,
+        tenantId: data.tenant_id,
+        alunoId: data.aluno_id,
+      })
+    }
   },
 
   async contarAbertas(tenantId: string) {
@@ -130,7 +150,7 @@ export const financeiroService = {
 
     const { data, error } = await supabase
       .from('cobrancas')
-      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, turma_id, ano_letivo, created_at')
+      .select('id, aluno_id, tenant_id, descricao, valor, status, data_vencimento, tipo_cobranca, subtipo_cobranca, origem_cobranca, turma_id, ano_letivo, created_at')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
       .order('data_vencimento', { ascending: false })
@@ -164,13 +184,22 @@ export const financeiroService = {
 
     if (!tenantId) throw new Error('ID do tenant é obrigatório.')
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cobrancas')
       .update({ status: 'a_vencer' })
       .eq('id', id)
       .eq('tenant_id', tenantId)
+      .select('id, tenant_id, aluno_id')
+      .single()
 
     if (error) throw error
+    if (data) {
+      cacheEvents.publish('COBRANCA_ATUALIZADA', {
+        cobrancaId: data.id,
+        tenantId: data.tenant_id,
+        alunoId: data.aluno_id,
+      })
+    }
   },
 
   async gerarCobrancasIniciaisGenerico(params: {
@@ -195,13 +224,28 @@ export const financeiroService = {
     const sufixo = unidade ? ` - ${unidade}` : ''
 
     // Buscamos a configuração via Motor de Configurações Tenant para verificar se deve cobrar matrícula
-    const { data: config } = await (supabase.from('configuracoes_escola' as any) as any)
-      .select('config_financeira')
-      .eq('tenant_id', tenant_id)
-      .is('vigencia_fim', null)
-      .maybeSingle()
+    if (params.ano_letivo) {
+      const { count, error: existingError } = await supabase
+        .from('cobrancas')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenant_id)
+        .eq('aluno_id', aluno_id)
+        .eq('ano_letivo', params.ano_letivo)
+        .eq('tipo_cobranca', 'mensalidade')
+        .neq('status', 'cancelado')
 
-    const configFinanceira = config?.config_financeira || {}
+      if (existingError) throw existingError
+      if ((count || 0) > 0) {
+        logger.info('[gerarCobrancasIniciaisGenerico] Cobranças iniciais já existem. Geração ignorada para evitar duplicidade.', {
+          aluno_id,
+          tenant_id,
+          ano_letivo: params.ano_letivo,
+        })
+        return
+      }
+    }
+
+    const configFinanceira = await getConfiguracoesFinanceiras(tenant_id)
     const deveCobrarMatricula = configFinanceira.cobrar_matricula === true
 
     // Se a escola habilitou cobrança de matrícula, precisa ter um valor definido
@@ -239,6 +283,8 @@ export const financeiroService = {
         data_vencimento: data_inicio,
         status: 'a_vencer',
         tipo_cobranca: 'mensalidade',
+        subtipo_cobranca: 'matricula_rematricula',
+        origem_cobranca: 'matricula',
         turma_id: params.turma_id || null,
         ano_letivo: params.ano_letivo || null
       })
@@ -246,7 +292,7 @@ export const financeiroService = {
 
     // 2. Gerar PRIMEIRA MENSALIDADE Proporcional
     if (valor_mensalidade && Number(valor_mensalidade) > 0) {
-      const _diaVencimento = config?.config_financeira?.dia_vencimento_padrao || 10
+      const _diaVencimento = configFinanceira?.dia_vencimento_padrao || 10
       const dataInicioObj = new Date(data_inicio + 'T12:00:00')
       
       const ultimoDiaMes = new Date(dataInicioObj.getFullYear(), dataInicioObj.getMonth() + 1, 0).getDate()
@@ -277,7 +323,7 @@ export const financeiroService = {
       }
 
       // 2.2 Buscar desconto de irmãos (Regra de Negócio via Motor de Configurações Tenant)
-      const descontoIrmaosPerc = config?.config_financeira?.desconto_irmaos_perc || 0
+      const descontoIrmaosPerc = configFinanceira?.desconto_irmaos_perc || 0
       if (descontoIrmaosPerc > 0) {
         // Busca responsáveis deste aluno
         const { data: meusResponsaveis } = await (supabase.from('aluno_responsavel' as any) as any)
@@ -306,7 +352,7 @@ export const financeiroService = {
       // ============================================================
       // REGRA: Gerar mensalidades até DEZEMBRO sempre
       // ============================================================
-      const diaVencimentoPadrao = config?.config_financeira?.dia_vencimento_padrao || 10
+      const diaVencimentoPadrao = configFinanceira?.dia_vencimento_padrao || 10
 
       // 1. Gerar PRIMEIRA mensalidade proporcional (dias restantes do mês)
       // Vence no dia padrão do mês seguinte
@@ -321,6 +367,8 @@ export const financeiroService = {
           data_vencimento: dataVencimentoProporcional.toISOString().split('T')[0],
           status: 'a_vencer',
           tipo_cobranca: 'mensalidade',
+          subtipo_cobranca: 'mensalidade',
+          origem_cobranca: 'recorrencia',
           turma_id: params.turma_id || null,
           ano_letivo: params.ano_letivo || null
         })
@@ -352,6 +400,8 @@ export const financeiroService = {
           data_vencimento: dataVencimentoMensalidade.toISOString().split('T')[0],
           status: 'a_vencer',
           tipo_cobranca: 'mensalidade',
+          subtipo_cobranca: 'mensalidade',
+          origem_cobranca: 'recorrencia',
           turma_id: params.turma_id || null,
           ano_letivo: params.ano_letivo || null
         })
@@ -397,17 +447,17 @@ export const financeiroService = {
       .eq('aluno_id', matricula.aluno_id)
       .eq('tenant_id', matricula.tenant_id)
       .eq('tipo_cobranca', 'mensalidade') // Sincroniza apenas o que é mensalidade/matrícula base
+      .in('subtipo_cobranca', ['matricula_rematricula', 'mensalidade'])
       .in('status', ['a_vencer', 'atrasado'])
 
     if (error || !cobrancas) return
 
     for (const cobranca of cobrancas) {
-      const desc = cobranca.descricao.toLowerCase()
-      const isMatricula = desc.includes('matrícula') || desc.includes('matricula')
-      const isMensalidade = desc.includes('mensalidade')
+      const isMatricula = cobranca.subtipo_cobranca === 'matricula_rematricula'
+      const isMensalidade = cobranca.subtipo_cobranca === 'mensalidade'
 
       // Sincroniza valor da taxa de matrícula
-      if (isMatricula && !isMensalidade) {
+      if (isMatricula) {
         if (Number(cobranca.valor) !== Number(matricula.valor_matricula)) {
           await this.atualizar(cobranca.id, { valor: Number(matricula.valor_matricula) })
         }

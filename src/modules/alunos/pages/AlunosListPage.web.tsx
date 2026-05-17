@@ -22,7 +22,7 @@ TableRow,
 import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { useMatriculasAtivas } from '@/modules/academico/hooks'
-import { useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
+import { useAlunosEmTransferenciaOrigem,useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { ModalAutorizacoesAluno } from '@/modules/autorizacoes/components/ModalAutorizacoesAluno'
 import { format } from 'date-fns'
@@ -171,6 +171,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
   const [showPendentesBanner, setShowPendentesBanner] = useState(true)
   const [showTransferenciasBanner, setShowTransferenciasBanner] = useState(true)
   const countAceite = useTransferenciasPendentesAceite()
+  const alunosEmTransferenciaOrigem = useAlunosEmTransferenciaOrigem()
   const deletarLote = useDeletarLoteImportacao()
 
   // Cria um Map com IDs de alunos com matrícula ativa
@@ -499,6 +500,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                 <TableBody>
                   {alunosFiltrados?.map((aluno) => {
                     const temIrmao = gruposMultiIrmaos.some(g => g.cpf === aluno.financeiroCpf);
+                    const emTransferencia = alunosEmTransferenciaOrigem.has(aluno.id)
                     
                     return (
                       <TableRow 
@@ -516,7 +518,14 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                                )}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-700">{aluno.nome_completo}</p>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-bold text-slate-700">{aluno.nome_completo}</p>
+                                {emTransferencia && (
+                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-[8px] font-black border-0 rounded px-1.5 h-4 uppercase">
+                                    Em transferência
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-[10px] font-medium text-slate-400">{aluno.cpf || '—'}</p>
                             </div>
                           </div>
@@ -551,9 +560,11 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                         <TableCell className="text-center">
                           <Badge className={cn(
                             "rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
-                            aluno.status === 'ativo' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-500 border-slate-200"
+                            emTransferencia
+                              ? "bg-blue-50 text-blue-700 border-blue-100"
+                              : aluno.status === 'ativo' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-slate-100 text-slate-500 border-slate-200"
                           )}>
-                            {aluno.status}
+                            {emTransferencia ? 'em transferência' : aluno.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right pr-8">

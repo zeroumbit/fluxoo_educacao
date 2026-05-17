@@ -548,9 +548,8 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico, exibirTodas, o
   const sorted = exibirTodas ? rawSorted : rawSorted.slice(0, 3)
   const temMais = !exibirTodas && rawSorted.length > 3
 
-  const getTipoBadge = (descricao: string) => {
-    const desc = descricao?.toLowerCase() || ''
-    if (desc.includes('matrícula') || desc.includes('matricula') || desc.includes('taxa')) {
+  const getTipoBadge = (fatura: any) => {
+    if (fatura.subtipo_cobranca === 'matricula_rematricula') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[9px] font-black uppercase tracking-widest text-amber-600 shrink-0">
           🎓 Matrícula
@@ -602,7 +601,7 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico, exibirTodas, o
                   <h5 className="text-[14px] font-bold text-slate-800 tracking-tight leading-tight line-clamp-2">
                     {fat.descricao}
                   </h5>
-                  {!isHistorico && getTipoBadge(fat.descricao)}
+                  {!isHistorico && getTipoBadge(fat)}
                   {!isHistorico && isVencida && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 border border-rose-200 text-[9px] font-black uppercase tracking-widest text-rose-700 shrink-0">
                       ⚠️ Atrasada
