@@ -51,8 +51,6 @@ AFTER INSERT OR UPDATE OR DELETE ON public.matriculas
 FOR EACH ROW EXECUTE FUNCTION fn_sincronizar_alunos_ids();
 
 -- 2. CONSOLIDAÇÃO DO RADAR DE EVASÃO (VIEW ÚNICA)
--- Removemos definições antigas se existirem para evitar conflitos de cache do Supabase
-DROP VIEW IF EXISTS vw_radar_evasao;
 CREATE OR REPLACE VIEW vw_radar_evasao WITH (security_invoker = on) AS
 SELECT
     a.id AS aluno_id,
@@ -62,9 +60,9 @@ SELECT
     COALESCE(c.cobrancas_atrasadas, 0) AS cobrancas_atrasadas,
     COALESCE(r.cobrancas_atrasadas_recorrentes, 0) AS cobrancas_recorrentes,
     CASE
-        WHEN COALESCE(f.faltas_consecutivas, 0) > 7 
+        WHEN COALESCE(f.faltas_consecutivas, 0) >= 5 
              AND COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3 THEN 'FALTAS + INADIMPLÊNCIA RECORRENTE'
-        WHEN COALESCE(f.faltas_consecutivas, 0) > 7 THEN 'FALTAS CONSECUTIVAS'
+        WHEN COALESCE(f.faltas_consecutivas, 0) >= 5 THEN 'FALTAS CONSECUTIVAS'
         WHEN COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3 THEN 'INADIMPLÊNCIA RECORRENTE'
         WHEN COALESCE(c.cobrancas_atrasadas, 0) > 0 THEN 'FINANCEIRO EM ATRASO'
         ELSE 'OUTROS'
@@ -74,7 +72,7 @@ LEFT JOIN vw_aluno_faltas_consecutivas f ON f.aluno_id = a.id
 LEFT JOIN vw_aluno_financeiro_atrasado c ON c.aluno_id = a.id
 LEFT JOIN vw_aluno_financeiro_recorrente r ON r.aluno_id = a.id
 WHERE (
-    COALESCE(f.faltas_consecutivas, 0) > 7 
+    COALESCE(f.faltas_consecutivas, 0) >= 5 
     OR COALESCE(c.cobrancas_atrasadas, 0) > 0 
     OR COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3
 );

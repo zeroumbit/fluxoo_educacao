@@ -336,7 +336,7 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
                 <Users className="h-3.5 w-3.5 text-red-500" />
               </div>
               <p className="text-[11px] text-red-600 font-semibold">
-                {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} nos últimos 21 dias
+                {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} nos últimos 15 dias
               </p>
             </div>
           )}

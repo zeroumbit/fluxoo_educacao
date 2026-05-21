@@ -147,7 +147,7 @@ function RadarEvasaoDetailsContent({ aluno, onClose, isProfessor = false }: { al
                   {aluno.faltas_consecutivas} falta{aluno.faltas_consecutivas > 1 ? 's' : ''} consecutiva{aluno.faltas_consecutivas > 1 ? 's' : ''}
                 </p>
                 <p className="text-sm text-red-600 font-medium mt-0.5">
-                  Registradas nos últimos 21 dias
+                  Registradas nos últimos 15 dias
                 </p>
               </div>
             </div>

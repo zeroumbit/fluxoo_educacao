@@ -2,15 +2,16 @@
 -- 🚨 RADAR DE EVASÃO 2.0 - MELHORIAS
 -- ==============================================================================
 -- Alterações:
--- 1. Faltas consecutivas: aumentado de > 3 para > 7 dias
--- 2. Adicionado critério: Múltiplos Atrasos Financeiros (3+ cobranças)
+-- 1. Faltas consecutivas: >= 5 nos últimos 15 dias
+-- 2. Inadimplência recorrente: 3+ cobranças atrasadas nos últimos 6 meses
+-- 3. Inadimplência simples: 1+ cobrança em atraso (mantido)
 -- ==============================================================================
 
 -- ==============================================================================
 -- 1. VIEW — FALTAS CONSECUTIVAS (ATUALIZADA)
 -- ==============================================================================
--- Aumentado período de análise de 15 para 30 dias
--- Alterado threshold de 3 para 7 faltas
+-- Reduzido período de análise de 30 para 15 dias
+-- Alterado threshold de 7 para 5 faltas
 CREATE OR REPLACE VIEW vw_aluno_faltas_consecutivas WITH (security_invoker = on) AS
 SELECT
     aluno_id,
@@ -18,7 +19,7 @@ SELECT
     COUNT(*) AS faltas_consecutivas
 FROM frequencias
 WHERE status = 'falta'
-  AND data_aula >= current_date - interval '30 days'
+  AND data_aula >= current_date - interval '15 days'
 GROUP BY aluno_id, tenant_id;
 
 
@@ -39,7 +40,7 @@ GROUP BY aluno_id, tenant_id;
 -- ==============================================================================
 -- 3. 🆕 VIEW — MÚLTIPLOS ATRASOS FINANCEIROS (NOVA)
 -- ==============================================================================
--- Identifica alunos com inadimplência recorrente (3 ou mais cobranças)
+-- Identifica alunos com inadimplência recorrente (3 ou mais cobranças nos últimos 6 meses)
 CREATE OR REPLACE VIEW vw_aluno_financeiro_recorrente WITH (security_invoker = on) AS
 SELECT
     aluno_id,
@@ -47,6 +48,7 @@ SELECT
     COUNT(*) AS cobrancas_atrasadas_recorrentes
 FROM cobrancas
 WHERE status = 'atrasado'
+  AND data_vencimento >= current_date - interval '6 months'
 GROUP BY aluno_id, tenant_id
 HAVING COUNT(*) >= 3;
 
@@ -55,7 +57,7 @@ HAVING COUNT(*) >= 3;
 -- 4. 🆕 VIEW FINAL — RADAR DE EVASÃO 2.0 (ATUALIZADA)
 -- ==============================================================================
 -- Novo critério de entrada:
--- - Faltas consecutivas > 7
+-- - Faltas consecutivas >= 5
 -- - OU 1+ cobrança atrasada (critério geral)
 -- - OU 3+ cobranças atrasadas (inadimplência recorrente)
 CREATE OR REPLACE VIEW vw_radar_evasao WITH (security_invoker = on) AS
@@ -68,9 +70,9 @@ SELECT
     COALESCE(r.cobrancas_atrasadas_recorrentes, 0) AS cobrancas_recorrentes,
     -- Campo calculado: indica o motivo principal do alerta
     CASE
-        WHEN COALESCE(f.faltas_consecutivas, 0) > 7 
+        WHEN COALESCE(f.faltas_consecutivas, 0) >= 5 
              AND COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3 THEN 'FALTAS + INADIMPLÊNCIA RECORRENTE'
-        WHEN COALESCE(f.faltas_consecutivas, 0) > 7 THEN 'FALTAS CONSECUTIVAS'
+        WHEN COALESCE(f.faltas_consecutivas, 0) >= 5 THEN 'FALTAS CONSECUTIVAS'
         WHEN COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3 THEN 'INADIMPLÊNCIA RECORRENTE'
         WHEN COALESCE(c.cobrancas_atrasadas, 0) > 0 THEN 'FINANCEIRO EM ATRASO'
         ELSE 'OUTROS'
@@ -80,7 +82,7 @@ LEFT JOIN vw_aluno_faltas_consecutivas f ON f.aluno_id = a.id
 LEFT JOIN vw_aluno_financeiro_atrasado c ON c.aluno_id = a.id
 LEFT JOIN vw_aluno_financeiro_recorrente r ON r.aluno_id = a.id
 WHERE (
-    COALESCE(f.faltas_consecutivas, 0) > 7 
+    COALESCE(f.faltas_consecutivas, 0) >= 5 
     OR COALESCE(c.cobrancas_atrasadas, 0) > 0 
     OR COALESCE(r.cobrancas_atrasadas_recorrentes, 0) >= 3
 );
@@ -100,10 +102,10 @@ CREATE INDEX IF NOT EXISTS idx_cobrancas_status_aluno ON cobrancas(status, aluno
 -- 6. COMENTÁRIOS NAS VIEWS (DOCUMENTAÇÃO)
 -- ==============================================================================
 COMMENT ON VIEW vw_aluno_faltas_consecutivas IS 
-'Radar de Evasão 2.0: Alunos com mais de 7 faltas consecutivas nos últimos 30 dias';
+'Radar de Evasão 2.0: Alunos com 5 ou mais faltas consecutivas nos últimos 15 dias';
 
 COMMENT ON VIEW vw_aluno_financeiro_recorrente IS 
-'Radar de Evasão 2.0: Alunos com 3 ou mais cobranças atrasadas (inadimplência recorrente)';
+'Radar de Evasão 2.0: Alunos com 3 ou mais cobranças atrasadas nos últimos 6 meses (inadimplência recorrente)';
 
 COMMENT ON VIEW vw_radar_evasao IS 
-'Radar de Evasão 2.0 - Gestor Escolar: Alunos em risco de evasão por faltas (>7) e/ou financeiro (1+) e/ou inadimplência recorrente (3+)';
+'Radar de Evasão 2.0 - Gestor Escolar: Alunos em risco de evasão por faltas (>=5) e/ou financeiro (1+) e/ou inadimplência recorrente (3+)';
