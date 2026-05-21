@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
@@ -295,9 +296,10 @@ function MetricCard({
 interface RadarCardProps {
   aluno: RadarAlunoComStatus
   onOpenDetails: (aluno: RadarAlunoComStatus) => void
+  className?: string
 }
 
-function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
+function RadarCard({ aluno, onOpenDetails, className }: RadarCardProps) {
   const nivel =
     aluno.cobrancas_atrasadas >= 2 && aluno.faltas_consecutivas >= 5
       ? 'CRÍTICO'
@@ -313,7 +315,7 @@ function RadarCard({ aluno, onOpenDetails }: RadarCardProps) {
       : 'bg-yellow-400 text-yellow-900'
 
   return (
-    <div className="p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-4 flex flex-col justify-between w-[280px] shrink-0 min-h-[220px]">
+    <div className={cn("p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-4 flex flex-col justify-between w-[280px] shrink-0 min-h-[220px]", className)}>
       <div className="space-y-3">
         <div className="flex justify-start">
           <BadgeGravidade gravidade={
@@ -903,25 +905,53 @@ function DashboardContent() {
 
       {/* Modal com Todos os Radares de Evasão */}
       <Dialog open={showAllRadares && !isRadarSheetOpen} onOpenChange={(open) => setShowAllRadares(open)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-[2rem] p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-rose-900 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Todos os Alertas de Evasão ({totalRadar})
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 mt-4">
-            {radarEvasaoAtivo.map((aluno) => (
-              <RadarCard
-                key={aluno.aluno_id}
-                aluno={aluno}
-                onOpenDetails={(a) => {
-                  setSelectedRadarAluno(a)
-                  setIsRadarSheetOpen(true)
-                  setShowAllRadares(false)
-                }}
-              />
-            ))}
+        <DialogContent className="max-w-5xl max-h-[86vh] overflow-hidden rounded-[2rem] border-0 bg-white p-0 shadow-2xl">
+          <div className="relative overflow-hidden bg-gradient-to-br from-rose-950 via-rose-900 to-zinc-950 px-7 py-6 text-white">
+            <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-rose-400/20 blur-3xl" />
+            <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+            <DialogHeader className="relative pr-10">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/15">
+                <AlertTriangle className="h-6 w-6 text-rose-100" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight text-white">
+                Todos os alertas de evasão
+              </DialogTitle>
+              <DialogDescription className="max-w-2xl text-sm font-medium leading-relaxed text-rose-100/80">
+                Visão consolidada dos alunos que exigem acompanhamento imediato por faltas recentes, cobranças em atraso ou combinação dos dois fatores.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="relative mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-rose-100/70">Total</p>
+                <p className="mt-1 text-2xl font-black text-white">{totalRadar}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-rose-100/70">Com faltas</p>
+                <p className="mt-1 text-2xl font-black text-white">{radarEvasaoAtivo.filter((aluno) => aluno.faltas_consecutivas > 0).length}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-rose-100/70">Financeiro</p>
+                <p className="mt-1 text-2xl font-black text-white">{radarEvasaoAtivo.filter((aluno) => aluno.cobrancas_atrasadas > 0).length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-h-[52vh] overflow-y-auto bg-rose-50/35 p-5 sm:p-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {radarEvasaoAtivo.map((aluno) => (
+                <RadarCard
+                  key={aluno.aluno_id}
+                  aluno={aluno}
+                  className="w-full min-h-[210px] border-rose-100/80 shadow-sm shadow-rose-100/60 transition-all hover:-translate-y-0.5 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-100"
+                  onOpenDetails={(a) => {
+                    setSelectedRadarAluno(a)
+                    setIsRadarSheetOpen(true)
+                    setShowAllRadares(false)
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
