@@ -315,7 +315,7 @@ function RadarCard({ aluno, onOpenDetails, className }: RadarCardProps) {
       : 'bg-yellow-400 text-yellow-900'
 
   return (
-    <div className={cn("p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-4 flex flex-col justify-between w-[220px] shrink-0 min-h-[220px]", className)}>
+    <div className={cn("p-5 rounded-[1.5rem] bg-white border border-red-100 shadow-sm space-y-4 flex flex-col justify-between w-[180px] shrink-0 min-h-[220px]", className)}>
       <div className="space-y-3">
         <div className="flex justify-start">
           <BadgeGravidade gravidade={
@@ -573,7 +573,7 @@ function DashboardContent() {
 
   // Filtra apenas alertas ativos para a visualização principal
   const radarEvasaoAtivo = useMemo(() => alertas.filter(a => a.status === 'ativo'), [alertas])
-  const visibleRadarCount = 4
+  const visibleRadarCount = 5
   const radarExibir = showAllRadares ? radarEvasaoAtivo : radarEvasaoAtivo.slice(0, visibleRadarCount)
   const totalRadar = radarEvasaoAtivo.length
   const temMaisRadar = totalRadar > visibleRadarCount
