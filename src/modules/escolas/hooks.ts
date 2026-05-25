@@ -1,4 +1,5 @@
 import type { EscolaInsert,EscolaUpdate } from '@/lib/database.types'
+import { precificacaoService } from '@/modules/precificacao/service'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { escolaService } from './service'
 
@@ -35,6 +36,13 @@ export function useConfigRecebimento() {
   return useQuery({
     queryKey: ['config-recebimento'],
     queryFn: () => escolaService.getConfiguracaoRecebimento(),
+  })
+}
+
+export function usePrecoGlobal() {
+  return useQuery({
+    queryKey: ['precificacao', 'global'],
+    queryFn: () => precificacaoService.getPrecoGlobal(),
   })
 }
 

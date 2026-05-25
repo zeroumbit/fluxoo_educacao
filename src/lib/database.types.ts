@@ -995,6 +995,95 @@ export type SolicitacaoUpgradeInsert = Omit<SolicitacaoUpgrade, 'id' | 'created_
 export type SolicitacaoUpgradeUpdate = Partial<SolicitacaoUpgradeInsert>
 
 // ========== CONFIGURAÇÃO DE RECEBIMENTO (PIX MANUAL) ==========
+// ========== PRECOS (NOVO MODELO DE PRECIFICAÇÃO) ==========
+export type Preco = {
+  id: string
+  tipo: 'global' | 'cliente'
+  tenant_id: string | null
+  valor_matriz: number
+  valor_filial: number
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+export type PrecoInsert = Omit<Preco, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type PrecoUpdate = Partial<PrecoInsert>
+
+export type PrecoModulo = {
+  id: string
+  tipo: 'global' | 'cliente'
+  tenant_id: string | null
+  modulo_id: string
+  valor: number
+  trial_dias: number
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+export type PrecoModuloInsert = Omit<PrecoModulo, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type PrecoModuloUpdate = Partial<PrecoModuloInsert>
+
+export type AssinaturaModulo = {
+  id: string
+  tenant_id: string
+  modulo_id: string
+  status: 'trial' | 'ativo' | 'cancelado' | 'expirado'
+  data_ativacao: string
+  data_fim_trial: string
+  data_cancelamento: string | null
+  created_at: string
+  updated_at: string
+}
+export type AssinaturaModuloInsert = Omit<AssinaturaModulo, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string; created_at?: string; updated_at?: string
+}
+export type AssinaturaModuloUpdate = Partial<AssinaturaModuloInsert>
+
+export type FaturaItem = {
+  id: string
+  fatura_id: string
+  tipo: 'matriz' | 'filial' | 'modulo'
+  filial_id: string | null
+  modulo_id: string | null
+  quantidade: number
+  valor_unitario: number
+  subtotal: number
+  created_at: string
+}
+export type FaturaItemInsert = Omit<FaturaItem, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type FaturaItemUpdate = Partial<FaturaItemInsert>
+
+export type PrecoVigente = {
+  tenant_id: string
+  valor_matriz: number
+  valor_filial: number
+  tipo_preco: 'global' | 'cliente'
+}
+
+export type PrecoModuloVigente = {
+  tenant_id: string
+  modulo_id: string
+  modulo_nome: string
+  modulo_codigo: string
+  valor: number
+  trial_dias: number
+  tipo_preco: 'global' | 'cliente'
+}
+
+export type AlunosPorFilial = {
+  tenant_id: string
+  unidade_id: string
+  is_matriz: boolean | null
+  alunos_ativos: number
+}
+
+// ========== CONFIGURAÇÃO DE RECEBIMENTO (PIX MANUAL) ==========
 export type ConfiguracaoRecebimento = {
   id: string
   pix_manual_ativo: boolean
@@ -1733,6 +1822,31 @@ export type Database = {
         Args: { p_transferencia_id: string; p_justificativa: string };
         Returns: void
       };
+      fn_calcular_fatura: {
+        Args: {
+          p_tenant_id: string
+          p_competencia?: string
+          p_dia_vencimento?: number
+        }
+        Returns: {
+          tenant_id: string
+          valor_total: number
+          itens: unknown
+        }
+      }
+      fn_ativar_modulo: {
+        Args: {
+          p_tenant_id: string
+          p_modulo_codigo: string
+        }
+        Returns: string
+      }
+      fn_recalcular_fatura: {
+        Args: {
+          p_fatura_id: string
+        }
+        Returns: number
+      }
     }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }

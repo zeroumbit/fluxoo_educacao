@@ -50,9 +50,11 @@ Plus,
 QrCode,
 Search,
 Send,
+Tag,
 Trash2,
 User
 } from 'lucide-react'
+import { PrecoClienteDialog } from '@/modules/super-admin/components/PrecoClienteDialog'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -85,6 +87,9 @@ export function EscolasPageWeb() {
   const [dialogSuspensaoAberto, setDialogSuspensaoAberto] = useState(false)
   const [dialogPagamentosAberto, setDialogPagamentosAberto] = useState(false)
   const [dialogDevedorAberto, setDialogDevedorAberto] = useState(false)
+  const [dialogPrecosAberto, setDialogPrecosAberto] = useState(false)
+  const [escolaPrecosSelecionada, setEscolaPrecosSelecionada] = useState<string | null>(null)
+  const [escolaPrecosNome, setEscolaPrecosNome] = useState('')
   const [motivoSuspensao, setMotivoSuspensao] = useState('')
 
   const { data: detalhesEscola } = useEscolaDetalhes(escolaSelecionada)
@@ -344,6 +349,17 @@ export function EscolasPageWeb() {
                         <DropdownMenuItem onClick={() => handleVerPagamentos(escola.id)}>
                           <CreditCard className="mr-2 h-4 w-4" />
                           Pagamentos
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEscolaPrecosSelecionada(escola.id)
+                            setEscolaPrecosNome(escola.razao_social)
+                            setDialogPrecosAberto(true)
+                          }}
+                        >
+                          <DollarSign className="mr-2 h-4 w-4" />
+                          Preços
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
@@ -711,6 +727,13 @@ export function EscolasPageWeb() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PrecoClienteDialog
+        tenantId={escolaPrecosSelecionada}
+        escolaNome={escolaPrecosNome}
+        open={dialogPrecosAberto}
+        onOpenChange={setDialogPrecosAberto}
+      />
     </div>
   )
 }
@@ -954,6 +977,7 @@ function DialogPagamentos({ escolaId, open, onOpenChange }: { escolaId: string |
             </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </>
   )
 }

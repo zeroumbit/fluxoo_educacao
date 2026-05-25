@@ -17,7 +17,8 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { useConfigRecebimento,useCriarAssinatura,useCriarEscola,useCriarFaturaInicial,usePlanos } from '../hooks'
+import { precificacaoService } from '@/modules/precificacao/service'
+import { useConfigRecebimento,useCriarAssinatura,useCriarEscola,useCriarFaturaInicial,usePlanos,usePrecoGlobal } from '../hooks'
 
 const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
 const COMPROVANTE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
@@ -86,6 +87,7 @@ export function EscolaCadastroPage() {
   const criarFatura = useCriarFaturaInicial()
   const criarFilial = useCriarFilial()
   const { data: planos } = usePlanos()
+  const { data: precoGlobal } = usePrecoGlobal()
   const { data: configPix } = useConfigRecebimento()
 
   const form = useForm<FormValues>({
@@ -136,7 +138,7 @@ export function EscolaCadastroPage() {
 
   const selectedPlan = (planos as any[])?.find((p: any) => p.id === watch('plano_id'))
   const qtdAlunos = Number(watch('limite_alunos_contratado')) || 0
-  const valorPorAluno = selectedPlan ? Number(selectedPlan.valor_por_aluno) : 0
+  const valorPorAluno = Number(precoGlobal?.valor_matriz) || Number(selectedPlan?.valor_por_aluno) || 5
   const totalMensal = valorPorAluno * qtdAlunos
   const metodoPgto = watch('metodo_pagamento')
   const pixAtivo = configPix?.pix_manual_ativo === true
@@ -295,7 +297,7 @@ export function EscolaCadastroPage() {
         estado: data.estado,
       })
 
-      // 4. Assinatura e Fatura
+       // 4. Assinatura
       const hoje = new Date().toISOString().split('T')[0]
       const assinatura = await criarAssinatura.mutateAsync({
         tenant_id: escola.id,
@@ -318,16 +320,27 @@ export function EscolaCadastroPage() {
         comprovanteUrl = urlData.publicUrl
       }
 
-      await criarFatura.mutateAsync({
-        tenant_id: escola.id,
-        assinatura_id: assinatura.id,
-        competencia: hoje,
-        valor: totalMensal,
-        data_vencimento: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: data.metodo_pagamento === 'mercado_pago' ? 'pendente' : 'pendente_confirmacao',
-        forma_pagamento: data.metodo_pagamento,
-        comprovante_url: comprovanteUrl,
-      })
+      // 5. Calcular fatura com o novo modelo de precificação
+      const faturaCalc = await precificacaoService.calcularFatura(
+        escola.id,
+        new Date().getDate() > 28 ? 28 : new Date().getDate()
+      )
+
+      // Atualizar forma de pagamento e comprovante na fatura gerada
+      if (data.metodo_pagamento === 'pix_manual' || comprovanteUrl) {
+        const faturaId = faturaCalc?.tenant_id
+        if (faturaId) {
+          await supabase
+            .from('faturas' as any)
+            .update({
+              forma_pagamento: data.metodo_pagamento,
+              comprovante_url: comprovanteUrl,
+              status: data.metodo_pagamento === 'mercado_pago' ? 'pendente' : 'pendente_confirmacao',
+            })
+            .eq('tenant_id', escola.id)
+            .eq('status', 'pendente')
+        }
+      }
 
       toast.success('Escola registrada com sucesso!')
       

@@ -226,147 +226,148 @@ export function MarketplaceConfigPage() {
         {/* ABA CATEGORIAS */}
         <TabsContent value="categorias">
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="relative w-72">
+            <div className="flex items-center gap-4 w-full">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Buscar categoria..."
-                  className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium"
+                  className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium w-full"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => handleOpenModal()} className="bg-indigo-600 hover:bg-indigo-700 h-11 px-6 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95">
-                    <Plus className="mr-2 h-5 w-5" /> Nova Categoria
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl">
-                  <form onSubmit={handleSubmit}>
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold">{editingCat ? 'Editar Categoria' : 'Criar Categoria'}</DialogTitle>
-                      <DialogDescription className="font-medium text-slate-500">
-                        Categorias mandatórias para lojistas do ecossistema.
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="space-y-5 py-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="nome" className="text-xs font-bold uppercase tracking-widest text-slate-400">Nome da Categoria</Label>
-                        <Input
-                          id="nome"
-                          placeholder="Ex: Material Escolar"
-                          value={formData.nome}
-                          onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                          required
-                          className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="icone" className="text-xs font-bold uppercase tracking-widest text-slate-400">Ícone Representativo</Label>
-                        <div className="grid grid-cols-6 gap-2">
-                          {ICON_OPTIONS.map((item) => (
-                            <button
-                              key={item.name}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, icone: item.name })}
-                              className={cn(
-                                "h-10 w-10 flex items-center justify-center rounded-lg border transition-all",
-                                formData.icone === item.name
-                                  ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm"
-                                  : "bg-white border-slate-100 text-slate-400 hover:bg-slate-50"
-                              )}
-                            >
-                              <item.icon className="h-5 w-5" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="desc" className="text-xs font-bold uppercase tracking-widest text-slate-400">Descrição (Opcional)</Label>
-                        <Textarea
-                          id="desc"
-                          value={formData.descricao}
-                          onChange={e => setFormData({ ...formData, descricao: e.target.value })}
-                          rows={3}
-                          placeholder="Para que serve esta categoria..."
-                          className="rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                        <Label className="text-sm font-bold text-slate-700">Categoria Ativa</Label>
-                        <Badge
-                          variant={formData.ativo ? 'default' : 'secondary'}
-                          className={cn(
-                            "cursor-pointer px-3 py-1 rounded-md font-bold uppercase text-[10px]",
-                            formData.ativo ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-300"
-                          )}
-                          onClick={() => setFormData({ ...formData, ativo: !formData.ativo })}
-                        >
-                          {formData.ativo ? 'Sim' : 'Não'}
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-3 pt-2 border-t border-slate-100">
-                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Subcategorias</Label>
-                        <div className="flex gap-2">
-                           <Input 
-                             placeholder="Ex: Livros de Arte, Uniforme de Inverno..." 
-                             value={newSubcat}
-                             onChange={e => setNewSubcat(e.target.value)}
-                             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSubcat())}
-                             className="h-10 rounded-xl border-slate-200"
-                           />
-                           <Button type="button" onClick={addSubcat} className="bg-slate-900 h-10 w-10 p-0 rounded-xl shrink-0"><Plus size={18}/></Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.subcategorias.map(sc => (
-                            <Badge key={sc} variant="secondary" className="pl-3 pr-1 py-1 gap-1 border-slate-200 rounded-lg bg-white text-slate-600 font-bold uppercase text-[9px]">
-                              {sc}
-                              <button 
-                                type="button" 
-                                onClick={() => removeSubcat(sc)}
-                                className="h-4 w-4 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400"
-                              >
-                                <X size={10} />
-                              </button>
-                            </Badge>
-                          ))}
-                          {formData.subcategorias.length === 0 && (
-                            <p className="text-[10px] text-slate-400 italic">Nenhuma subcategoria adicionada.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <DialogFooter>
-                      <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold h-11 text-slate-500">
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={criarCategoria.isPending || atualizarCategoria.isPending}
-                        className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold h-11 px-8 shadow-lg shadow-indigo-100"
-                      >
-                        {(criarCategoria.isPending || atualizarCategoria.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Salvar Categoria
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
             </div>
 
             <Card className="border-0 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden bg-white">
               <CardHeader className="border-b border-slate-50 p-8 pt-10 bg-slate-50/30">
-                <div>
-                  <CardTitle className="text-2xl font-black tracking-tighter text-slate-900">Categorias Permitidas</CardTitle>
-                  <CardDescription className="font-medium">Define as opções que estarão disponíveis para os lojistas.</CardDescription>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-2xl font-black tracking-tighter text-slate-900">Categorias Permitidas</CardTitle>
+                    <CardDescription className="font-medium">Define as opções que estarão disponíveis para os lojistas.</CardDescription>
+                  </div>
+                  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => handleOpenModal()} className="bg-indigo-600 hover:bg-indigo-700 h-11 px-6 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 shrink-0">
+                        <Plus className="mr-2 h-5 w-5" /> Nova Categoria
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md rounded-2xl border-0 shadow-2xl">
+                      <form onSubmit={handleSubmit}>
+                        <DialogHeader>
+                          <DialogTitle className="text-xl font-bold">{editingCat ? 'Editar Categoria' : 'Criar Categoria'}</DialogTitle>
+                          <DialogDescription className="font-medium text-slate-500">
+                            Categorias mandatórias para lojistas do ecossistema.
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-5 py-6">
+                          <div className="space-y-2">
+                            <Label htmlFor="nome" className="text-xs font-bold uppercase tracking-widest text-slate-400">Nome da Categoria</Label>
+                            <Input
+                              id="nome"
+                              placeholder="Ex: Material Escolar"
+                              value={formData.nome}
+                              onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                              required
+                              className="h-11 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="icone" className="text-xs font-bold uppercase tracking-widest text-slate-400">Ícone Representativo</Label>
+                            <div className="grid grid-cols-6 gap-2">
+                              {ICON_OPTIONS.map((item) => (
+                                <button
+                                  key={item.name}
+                                  type="button"
+                                  onClick={() => setFormData({ ...formData, icone: item.name })}
+                                  className={cn(
+                                    "h-10 w-10 flex items-center justify-center rounded-lg border transition-all",
+                                    formData.icone === item.name
+                                      ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm"
+                                      : "bg-white border-slate-100 text-slate-400 hover:bg-slate-50"
+                                  )}
+                                >
+                                  <item.icon className="h-5 w-5" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="desc" className="text-xs font-bold uppercase tracking-widest text-slate-400">Descrição (Opcional)</Label>
+                            <Textarea
+                              id="desc"
+                              value={formData.descricao}
+                              onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                              rows={3}
+                              placeholder="Para que serve esta categoria..."
+                              className="rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <Label className="text-sm font-bold text-slate-700">Categoria Ativa</Label>
+                            <Badge
+                              variant={formData.ativo ? 'default' : 'secondary'}
+                              className={cn(
+                                "cursor-pointer px-3 py-1 rounded-md font-bold uppercase text-[10px]",
+                                formData.ativo ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-300"
+                              )}
+                              onClick={() => setFormData({ ...formData, ativo: !formData.ativo })}
+                            >
+                              {formData.ativo ? 'Sim' : 'Não'}
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-3 pt-2 border-t border-slate-100">
+                            <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Subcategorias</Label>
+                            <div className="flex gap-2">
+                               <Input 
+                                 placeholder="Ex: Livros de Arte, Uniforme de Inverno..." 
+                                 value={newSubcat}
+                                 onChange={e => setNewSubcat(e.target.value)}
+                                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSubcat())}
+                                 className="h-10 rounded-xl border-slate-200"
+                               />
+                               <Button type="button" onClick={addSubcat} className="bg-slate-900 h-10 w-10 p-0 rounded-xl shrink-0"><Plus size={18}/></Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {formData.subcategorias.map(sc => (
+                                <Badge key={sc} variant="secondary" className="pl-3 pr-1 py-1 gap-1 border-slate-200 rounded-lg bg-white text-slate-600 font-bold uppercase text-[9px]">
+                                  {sc}
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeSubcat(sc)}
+                                    className="h-4 w-4 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400"
+                                  >
+                                    <X size={10} />
+                                  </button>
+                                </Badge>
+                              ))}
+                              {formData.subcategorias.length === 0 && (
+                                <p className="text-[10px] text-slate-400 italic">Nenhuma subcategoria adicionada.</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <DialogFooter>
+                          <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold h-11 text-slate-500">
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={criarCategoria.isPending || atualizarCategoria.isPending}
+                            className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold h-11 px-8 shadow-lg shadow-indigo-100"
+                          >
+                            {(criarCategoria.isPending || atualizarCategoria.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Salvar Categoria
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -490,8 +491,8 @@ export function MarketplaceConfigPage() {
         <TabsContent value="lojistas">
           <Card className="border-0 shadow-xl shadow-zinc-200/50 overflow-hidden bg-white">
             <CardHeader className="pt-[30px] border-b bg-zinc-50/30">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center gap-4 w-full">
+                <div className="flex-shrink-0">
                   <CardTitle className="text-xl font-black text-zinc-900 flex items-center gap-2">
                     Lojistas Ativos
                     <Badge className="bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-50 text-[10px] uppercase font-bold py-0 h-5">
@@ -502,13 +503,13 @@ export function MarketplaceConfigPage() {
                     Parceiros comerciais que oferecem produtos no ecossistema Fluxoo.
                   </CardDescription>
                 </div>
-                <div className="relative w-80">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder="Buscar lojista por nome ou CNPJ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium"
+                    className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium w-full"
                   />
                 </div>
               </div>
@@ -594,8 +595,8 @@ export function MarketplaceConfigPage() {
         <TabsContent value="profissionais">
           <Card className="border-0 shadow-xl shadow-zinc-200/50 overflow-hidden bg-white">
             <CardHeader className="pt-[30px] border-b bg-zinc-50/30">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center gap-4 w-full">
+                <div className="flex-shrink-0">
                   <CardTitle className="text-xl font-black text-zinc-900 flex items-center gap-2">
                     Profissionais Disponíveis
                     <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-50 text-[10px] uppercase font-bold py-0 h-5">
@@ -606,13 +607,13 @@ export function MarketplaceConfigPage() {
                     Currículos ativos para vagas ou prestadores de serviços autônomos.
                   </CardDescription>
                 </div>
-                <div className="relative w-80">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder="Buscar profissional por e-mail ou CPF..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium"
+                    className="pl-10 h-10 rounded-xl bg-white border-slate-200 shadow-sm focus:border-indigo-500 transition-all font-medium w-full"
                   />
                 </div>
               </div>
