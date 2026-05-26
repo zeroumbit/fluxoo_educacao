@@ -17,6 +17,7 @@ SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useEscolasParaTransferencia } from '@/modules/escolas/hooks'
+import { usePortalContext } from '@/modules/portal/context'
 import { useSolicitarTransferenciaResponsavel } from '@/modules/portal/hooks'
 import { Loader2,Send } from 'lucide-react'
 import { useState } from 'react'
@@ -37,13 +38,14 @@ export function ModalSolicitarTransferenciaPortal({
   onClose,
   aluno
 }: ModalSolicitarTransferenciaPortalProps) {
+  const { responsavel } = usePortalContext()
   const { data: escolas } = useEscolasParaTransferencia()
   const solicitar = useSolicitarTransferenciaResponsavel()
   const [destinoId, setDestinoId] = useState('')
   const [motivo, setMotivo] = useState('')
 
   const handleSolicitar = async () => {
-    if (!aluno || !destinoId || !motivo.trim()) {
+    if (!aluno || !responsavel?.id || !destinoId || !motivo.trim()) {
       toast.error('Preencha todos os campos')
       return
     }
@@ -52,6 +54,7 @@ export function ModalSolicitarTransferenciaPortal({
       await solicitar.mutateAsync({
         alunoId: aluno.id,
         origemId: aluno.tenant_id,
+        responsavelId: responsavel.id,
         destinoId,
         motivo
       })

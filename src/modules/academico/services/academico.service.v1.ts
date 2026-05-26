@@ -324,8 +324,7 @@ export const academicoService = {
 
       if (batchError) {
         console.error('❌ [academicoService] Erro ao vincular turmas:', batchError)
-        // Opcionalmente: deletar o plano de aula se falhar no vínculo?
-        // Por enquanto vamos apenas logar, o plano ainda foi criado.
+        throw batchError
       }
     }
 
@@ -421,7 +420,7 @@ export const academicoService = {
       await validarPermissao(userId, atividadeComTurmas.tenant_id, 'academico.atividades.create')
     }
 
-    const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
+    const { turmas: turmasToBatch, materiais, ...atividadeData } = atividadeComTurmas
 
     // 1. Criar a atividade
     const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
@@ -444,6 +443,7 @@ export const academicoService = {
 
       if (batchError) {
         console.error('❌ [academicoService] Erro ao vincular turmas na atividade:', batchError)
+        throw batchError
       }
     }
 
@@ -455,7 +455,7 @@ export const academicoService = {
       await validarPermissao(userId, tenantId, 'academico.atividades.update')
     }
 
-    const { turmas: turmasToBatch, ...atividadeData } = atividadeComTurmas
+    const { turmas: turmasToBatch, materiais, ...atividadeData } = atividadeComTurmas
 
     // 1. Atualizar a atividade
     const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)

@@ -50,7 +50,8 @@ const AgendaSkeleton = () => (
 )
 
 export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean }) {
-  const { tenantId, isMultiAluno } = usePortalContext()
+  const { tenantId, alunoSelecionado, isMultiAluno } = usePortalContext()
+  const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
@@ -61,9 +62,9 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
     end: format(endOfMonth(currentMonth), 'yyyy-MM-dd'),
   }), [currentMonth])
 
-  const { data: eventos, isLoading } = useQuery({
-    queryKey: ['portal', 'eventos', tenantId, dateRange.start, dateRange.end],
-    queryFn: () => portalService.buscarEventos(tenantId!, dateRange.start, dateRange.end),
+  const { data: eventos, isLoading, isError } = useQuery({
+    queryKey: ['portal', 'eventos', tenantId, turmaId, dateRange.start, dateRange.end],
+    queryFn: () => portalService.buscarEventos(tenantId!, dateRange.start, dateRange.end, turmaId),
     enabled: !!tenantId
   })
 
@@ -130,6 +131,16 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
   }
 
   if (isLoading) return <AgendaSkeleton />
+
+  if (isError) {
+    return (
+      <div className="bg-rose-50 border border-rose-100 rounded-3xl p-8 text-center text-rose-700">
+        <Info className="h-8 w-8 mx-auto mb-3" />
+        <h3 className="font-bold">Nao foi possivel carregar a agenda</h3>
+        <p className="text-sm text-rose-600 mt-1">Tente novamente em instantes.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500 font-sans">

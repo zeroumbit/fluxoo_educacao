@@ -43,6 +43,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
   const tenantId = alunoSelecionado?.tenant_id || null
   const alunoId = alunoSelecionado?.id || null
+  const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
+  const responsavelIds = useMemo(() => responsaveis.map((r) => r.id).filter(Boolean), [responsaveis])
 
   useEffect(() => {
     let active = true
@@ -103,27 +105,46 @@ export function PortalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!tenantId || !alunoId) return
 
-    const invalidatePortalData = () => {
-      queryClient.invalidateQueries({ queryKey: ['portal'] })
+    const invalidatePortalData = (...queryKeys: unknown[][]) => {
+      queryKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }))
     }
 
     const channel = supabase
       .channel(`portal-realtime-${tenantId}-${alunoId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'frequencias', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'boletins', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'avaliacoes_notas', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobrancas', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transferencias_escolares', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notificacoes', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mural_avisos', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'atividades', filter: `tenant_id=eq.${tenantId}` }, invalidatePortalData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos_emitidos', filter: `aluno_id=eq.${alunoId}` }, invalidatePortalData)
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'frequencias', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'frequencia'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'boletins', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'boletins'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'avaliacoes_notas', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'boletins'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'recuperacoes', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'boletins'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cobrancas', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'cobrancas'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transferencias_escolares', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'transferencias']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notificacoes', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'notificacoes-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mural_avisos', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'avisos']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'atividades', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'atividades']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'eventos']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'planos_aula', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'planos-aula']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'livros', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'itens-escolares']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'materiais_escolares', filter: `tenant_id=eq.${tenantId}` }, () => invalidatePortalData(['portal', 'itens-escolares']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'aluno_responsavel', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'vinculos'], ['portal', 'aluno-completo'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documentos_emitidos', filter: `aluno_id=eq.${alunoId}` }, () => invalidatePortalData(['portal', 'documentos']))
+
+    if (turmaId) {
+      channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'avaliacoes_config', filter: `turma_id=eq.${turmaId}` }, () => invalidatePortalData(['portal', 'boletins'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'planos_aula_turmas', filter: `turma_id=eq.${turmaId}` }, () => invalidatePortalData(['portal', 'planos-aula']))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'livros_turmas', filter: `turma_id=eq.${turmaId}` }, () => invalidatePortalData(['portal', 'itens-escolares']))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'materiais_turmas', filter: `turma_id=eq.${turmaId}` }, () => invalidatePortalData(['portal', 'itens-escolares']))
+    }
+
+    responsavelIds.forEach((responsavelId) => {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table: 'aluno_responsavel', filter: `responsavel_id=eq.${responsavelId}` }, () => invalidatePortalData(['portal', 'vinculos'], ['portal', 'aluno-completo'], ['portal', 'dashboard'], ['portal', 'dashboard-familia']))
+    })
+
+    channel.subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [tenantId, alunoId, queryClient])
+  }, [tenantId, alunoId, turmaId, responsavelIds, queryClient])
 
   const refreshData = async () => {
     await Promise.all([

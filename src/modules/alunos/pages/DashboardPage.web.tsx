@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { Greeting } from '@/components/ui/Greeting'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
@@ -24,10 +25,13 @@ import {
   Archive,
   ArrowUpRight,
   Calendar,
+  CheckCircle2,
   Clock,
   CreditCard,
+  ExternalLink,
   Loader2,
   Megaphone,
+  MessageCircle,
   Phone,
   Shield,
   TrendingUp,
@@ -42,6 +46,7 @@ import { AlertasProvider, useAlertas } from '../AlertasContext'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
 import { useDashboard } from '../dashboard.hooks'
+import { useRegistrarPagamentoManual } from '@/modules/financeiro/hooks'
 import type { RadarAluno } from '../dashboard.service'
 
 // ---------------------------------------------------------------------------
@@ -460,81 +465,214 @@ function PixManualBannerNotificationComponent() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const { data } = useEscolaNotifications(authUser?.tenantId)
-  const { marcarComoLida } = useNotificacoesActions()
+  const { marcarComoLida, marcarComoResolvida } = useNotificacoesActions()
 
-  // Filtra apenas notificações de pix manual que não foram resolvidas
+  const [selectedNotification, setSelectedNotification] = useState<any>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const baixarCobranca = useRegistrarPagamentoManual()
+
   const pixNotifications = useMemo(() => {
     if (!data?.notificacoes) return []
     return data.notificacoes.filter(n => n.tipo === 'PAGAMENTO_PIX_MANUAL' && !n.resolvida && !n.lida)
   }, [data?.notificacoes])
 
+  const handleValidateNow = (n: any) => {
+    setSelectedNotification(n)
+    setDialogOpen(true)
+  }
+
+  const handleConfirmPayment = async (n: any) => {
+    const cobrancaIds = n.metadata?.cobranca_ids || []
+    if (cobrancaIds.length === 0) {
+      toast.error('Nenhuma cobrança associada a esta notificação.')
+      return
+    }
+
+    try {
+      for (const id of cobrancaIds) {
+        await baixarCobranca.mutateAsync({
+          id,
+          formaPagamento: 'pix',
+          comprovanteUrl: n.metadata?.comprovante_url
+        })
+      }
+      toast.success('Pagamento confirmado com sucesso!')
+      marcarComoResolvida.mutate(n.id)
+      marcarComoLida.mutate(n.id)
+      setDialogOpen(false)
+      setSelectedNotification(null)
+    } catch {
+      toast.error('Erro ao confirmar pagamento.')
+    }
+  }
+
+  const handleWhatsApp = (n: any) => {
+    const phone = n.metadata?.responsavel_telefone || n.metadata?.telefone
+    if (phone) {
+      window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank')
+    }
+  }
+
   if (pixNotifications.length === 0) return null
 
   return (
-    <div className="space-y-4 mb-8">
-      {pixNotifications.map((n) => (
-        <div
-          key={n.id}
-          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-50 via-white to-blue-50 border border-indigo-200 shadow-lg shadow-indigo-100/50 transition-all hover:shadow-xl hover:-translate-y-0.5"
-        >
-          {/* Badge Flutuante */}
-          <div className="absolute top-6 left-6 z-10">
-            <Badge className="bg-indigo-600 text-white border-0 text-[10px] uppercase font-black px-3 py-1 rounded-full shadow-sm shadow-indigo-200">
-              PIX MANUAL
-            </Badge>
-          </div>
-
-          <div className="p-8 pt-14 flex items-start gap-6">
-            <div className="h-16 w-16 rounded-[2rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
-               <CreditCard className="h-8 w-8 text-indigo-600" />
+    <>
+      <div className="space-y-4 mb-8">
+        {pixNotifications.map((n) => (
+          <div
+            key={n.id}
+            className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-50 via-white to-blue-50 border border-indigo-200 shadow-lg shadow-indigo-100/50 transition-all hover:shadow-xl hover:-translate-y-0.5"
+          >
+            <div className="absolute top-6 left-6 z-10">
+              <Badge className="bg-indigo-600 text-white border-0 text-[10px] uppercase font-black px-3 py-1 rounded-full shadow-sm shadow-indigo-200">
+                PIX MANUAL
+              </Badge>
             </div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-black text-indigo-900 text-xl tracking-tight">
-                  Validação de Pagamento Pendente
-                </h3>
+            <div className="p-8 pt-14 flex items-start gap-6">
+              <div className="h-16 w-16 rounded-[2rem] bg-indigo-100 flex items-center justify-center shrink-0 shadow-inner">
+                 <CreditCard className="h-8 w-8 text-indigo-600" />
               </div>
 
-              <p className="text-base font-medium text-indigo-700/80 mb-6 leading-relaxed max-w-3xl">
-                <strong className="text-indigo-900 font-extrabold">{n.metadata?.responsavel_nome}</strong> enviou comprovante para
-                o aluno <strong className="text-indigo-900 font-extrabold">{n.metadata?.aluno_nome}</strong> ({n.metadata?.turma_nome}).
-                <br />
-                <span className="text-sm">
-                  Valor: <strong className="text-indigo-600 font-black text-lg">R$ {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
-                  <span className="mx-2 opacity-30">|</span>
-                  Ref: {n.metadata?.meses_referencia} ({n.metadata?.tipo_cobranca})
-                </span>
-              </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-black text-indigo-900 text-xl tracking-tight">
+                    Validação de Pagamento Pendente
+                  </h3>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <Button
-                  onClick={() => navigate(n.href || '/financeiro/cobrancas')}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm px-8 h-12 shadow-md shadow-indigo-200 transition-all active:scale-95"
-                >
-                  VALIDAR AGORA
-                </Button>
+                <p className="text-base font-medium text-indigo-700/80 mb-6 leading-relaxed max-w-3xl">
+                  <strong className="text-indigo-900 font-extrabold">{n.metadata?.responsavel_nome}</strong> enviou comprovante para
+                  o aluno <strong className="text-indigo-900 font-extrabold">{n.metadata?.aluno_nome}</strong> ({n.metadata?.turma_nome}).
+                  <br />
+                  <span className="text-sm">
+                    Valor: <strong className="text-indigo-600 font-black text-lg">R$ {Number(n.metadata?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    <span className="mx-2 opacity-30">|</span>
+                    Ref: {n.metadata?.meses_referencia} ({n.metadata?.tipo_cobranca})
+                  </span>
+                </p>
 
-                <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
-                  <Phone className="h-4 w-4 text-indigo-500" />
-                  <p className="text-xs font-bold text-indigo-600">
-                    Por favor, valide se o pagamento foi feito e verifique o WhatsApp.
-                  </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <Button
+                    onClick={() => handleValidateNow(n)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm px-8 h-12 shadow-md shadow-indigo-200 transition-all active:scale-95"
+                  >
+                    VALIDAR AGORA
+                  </Button>
+
+                  <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
+                    <Phone className="h-4 w-4 text-indigo-500" />
+                    <p className="text-xs font-bold text-indigo-600">
+                      Por favor, valide se o pagamento foi feito e verifique o WhatsApp.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Botão de Fechar Silencioso */}
-          <button
-            onClick={() => marcarComoLida.mutate(n.id)}
-            className="absolute top-6 right-6 h-10 w-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-all text-indigo-400 hover:text-indigo-600 border border-indigo-50 shadow-sm"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      ))}
-    </div>
+            <button
+              onClick={() => marcarComoLida.mutate(n.id)}
+              className="absolute top-6 right-6 h-10 w-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-all text-indigo-400 hover:text-indigo-600 border border-indigo-50 shadow-sm"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-indigo-900">
+              <CreditCard className="h-5 w-5" />
+              Validar Pagamento
+            </DialogTitle>
+          </DialogHeader>
+          {selectedNotification && (
+            <div className="space-y-4">
+              <div className="bg-indigo-50 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-bold text-indigo-900">
+                      {selectedNotification.metadata?.responsavel_nome}
+                    </p>
+                    <p className="text-xs text-indigo-700">
+                      {selectedNotification.metadata?.aluno_nome} • {selectedNotification.metadata?.turma_nome}
+                    </p>
+                  </div>
+                  <Badge className="bg-indigo-600 text-white border-0 text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full">
+                    PIX MANUAL
+                  </Badge>
+                </div>
+                <div className="pt-2 border-t border-indigo-100">
+                  <p className="text-xs text-indigo-700">
+                    <strong>Valor:</strong> {Number(selectedNotification.metadata?.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    <br />
+                    <strong>Ref:</strong> {selectedNotification.metadata?.meses_referencia}
+                    <br />
+                    <strong>Tipo:</strong> <span className="capitalize">{selectedNotification.metadata?.tipo_cobranca || 'mensalidade'}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => handleConfirmPayment(selectedNotification)}
+                  disabled={baixarCobranca.isPending}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11"
+                >
+                  {baixarCobranca.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
+                  Confirmar Pagamento
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigate('/financeiro')
+                    setDialogOpen(false)
+                  }}
+                  className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold h-11"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Validar no Financeiro
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
+                {selectedNotification.metadata?.responsavel_telefone && (
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                    onClick={() => handleWhatsApp(selectedNotification)}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  onClick={() => {
+                    marcarComoLida.mutate(selectedNotification.id)
+                    marcarComoResolvida.mutate(selectedNotification.id)
+                    setDialogOpen(false)
+                    setSelectedNotification(null)
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Marcar lida
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

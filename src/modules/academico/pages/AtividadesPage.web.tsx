@@ -9,12 +9,11 @@ import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/comp
 import { Textarea } from '@/components/ui/textarea'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
-import { useItensAlmoxarifado } from '@/modules/almoxarifado/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertTriangle,ExternalLink,FileText,Loader2,Pencil,Plus,Trash2 } from 'lucide-react'
-import { useEffect,useState } from 'react'
+import { AlertTriangle,ExternalLink,FileText,Loader2,Pencil,Plus,Trash2,Upload } from 'lucide-react'
+import { useCallback,useEffect,useRef,useState } from 'react'
 import { useFieldArray,useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -32,7 +31,6 @@ const schema = z.object({
   tipo_material: z.string().optional(),
   anexo_url: z.string().optional(),
   descricao: z.string().optional(),
-  materiais: z.array(z.string()).optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -46,7 +44,6 @@ export function AtividadesPage() {
   const criar = useCriarAtividade()
   const atualizar = useAtualizarAtividade()
   const excluir = useExcluirAtividade()
-  const { data: itensAlmoxarifado } = useItensAlmoxarifado()
 
   const [open, setOpen] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -271,39 +268,11 @@ export function AtividadesPage() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="anexo_url" className="text-sm font-medium">Anexo ou Link</Label>
-                  <Input id="anexo_url" type="url" placeholder="https://exemplo.com/material.pdf" {...form.register('anexo_url')} />
-                </div>
-                
+                <FileUploadField form={form} />
+
                 <div className="space-y-2">
                   <Label htmlFor="descricao" className="text-sm font-medium">Descrição</Label>
                   <Textarea id="descricao" placeholder="Descreva a atividade ou material..." className="min-h-[80px]" {...form.register('descricao')} />
-                </div>
-
-                <div className="space-y-3 pt-4 border-t">
-                  <Label className="text-sm font-bold flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    Requisição de Materiais (Almoxarifado)
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {itensAlmoxarifado?.map((item: any) => (
-                      <Badge
-                        key={item.id}
-                        variant={form.watch('materiais')?.includes(item.id) ? 'default' : 'outline'}
-                        className="cursor-pointer hover:bg-indigo-100 transition-colors"
-                        onClick={() => {
-                          const current = form.getValues('materiais') || []
-                          const updated = current.includes(item.id) 
-                            ? current.filter(id => id !== item.id) 
-                            : [...current, item.id]
-                          form.setValue('materiais', updated)
-                        }}
-                      >
-                        {item.nome} ({item.quantidade} {item.unidade})
-                      </Badge>
-                    ))}
-                  </div>
                 </div>
               </form>
             </div>
@@ -404,6 +373,92 @@ export function AtividadesPage() {
           </Table>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function FileUploadField({ form: _form }: { form: any }) {
+  const tipo = _form.watch('tipo_material')
+  const { authUser } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const handleUpload = useCallback(async (file: File) => {
+    if (!authUser?.tenantId) return
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${authUser.tenantId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { data, error } = await supabase.storage
+        .from('atividades')
+        .upload(path, file, { upsert: false })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage
+        .from('atividades')
+        .getPublicUrl(data.path)
+      _form.setValue('anexo_url', publicUrl)
+      toast.success('Arquivo enviado com sucesso!')
+    } catch (err: any) {
+      toast.error('Erro ao enviar arquivo: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }, [authUser?.tenantId, _form])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleUpload(file)
+  }
+
+  if (tipo === 'link_video') {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="anexo_url" className="text-sm font-medium">Link do Vídeo</Label>
+        <Input id="anexo_url" type="url" placeholder="https://youtube.com/..." {..._form.register('anexo_url')} />
+      </div>
+    )
+  }
+
+  if (!tipo) {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="anexo_url" className="text-sm font-medium">Anexo ou Link</Label>
+        <Input id="anexo_url" type="url" placeholder="https://exemplo.com/material.pdf" {..._form.register('anexo_url')} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">Arquivo</Label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={tipo === 'imagem' ? 'image/*' : tipo === 'pdf' ? '.pdf' : undefined}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="border-dashed"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+          {uploading ? 'Enviando...' : 'Selecionar Arquivo'}
+        </Button>
+        {_form.watch('anexo_url') && (
+          <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+            ✓ {_form.watch('anexo_url').split('/').pop()}
+          </span>
+        )}
+      </div>
+      <div className="space-y-2 pt-2">
+        <Label className="text-xs text-muted-foreground">Ou cole um link externo</Label>
+        <Input type="url" placeholder="https://..." {..._form.register('anexo_url')} />
+      </div>
     </div>
   )
 }

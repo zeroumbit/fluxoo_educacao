@@ -12,9 +12,10 @@ Loader2,
 MoreVertical,
 Plus,
 Trash2,
+Upload,
 Video
 } from 'lucide-react'
-import { useEffect,useMemo,useState } from 'react'
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react'
 import { useFieldArray,useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -419,10 +420,7 @@ export function AtividadesPageMobile() {
                   </div>
                </div>
 
-               <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Link ou URL do Anexo</Label>
-                  <Input type="url" placeholder="https://..." className="h-14 rounded-2xl text-base border-slate-200" {...form.register('anexo_url')} />
-               </div>
+               <FileUploadFieldMobile form={form} authUser={authUser} />
 
                {/* Múltiplas Turmas */}
                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -504,6 +502,91 @@ export function AtividadesPageMobile() {
             </div>
          </form>
       </BottomSheet>
-    </MobilePageLayout>
+     </MobilePageLayout>
+  )
+}
+
+function FileUploadFieldMobile({ form, authUser }: { form: any; authUser: any }) {
+  const tipo = form.watch('tipo_material')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const handleUpload = useCallback(async (file: File) => {
+    if (!authUser?.tenantId) return
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${authUser.tenantId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { data, error } = await supabase.storage
+        .from('atividades')
+        .upload(path, file, { upsert: false })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage
+        .from('atividades')
+        .getPublicUrl(data.path)
+      form.setValue('anexo_url', publicUrl)
+      toast.success('Arquivo enviado com sucesso!')
+    } catch (err: any) {
+      toast.error('Erro ao enviar arquivo: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }, [authUser?.tenantId, form])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) handleUpload(file)
+  }
+
+  if (tipo === 'link_video') {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Link do Vídeo</Label>
+        <Input type="url" placeholder="https://youtube.com/..." className="h-14 rounded-2xl text-base border-slate-200" {...form.register('anexo_url')} />
+      </div>
+    )
+  }
+
+  if (!tipo) {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Link ou URL do Anexo</Label>
+        <Input type="url" placeholder="https://..." className="h-14 rounded-2xl text-base border-slate-200" {...form.register('anexo_url')} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Arquivo</Label>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={tipo === 'imagem' ? 'image/*' : tipo === 'pdf' ? '.pdf' : undefined}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="h-14 rounded-2xl border-dashed border-slate-200 flex-1"
+        >
+          {uploading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Upload className="h-5 w-5 mr-2" />}
+          {uploading ? 'Enviando...' : 'Selecionar Arquivo'}
+        </Button>
+        {form.watch('anexo_url') && (
+          <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+            ✓ {form.watch('anexo_url').split('/').pop()}
+          </span>
+        )}
+      </div>
+      <div className="space-y-1 pt-2">
+        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Ou cole um link externo</Label>
+        <Input type="url" placeholder="https://..." className="h-14 rounded-2xl text-base border-slate-200" {...form.register('anexo_url')} />
+      </div>
+    </div>
   )
 }

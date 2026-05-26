@@ -57,6 +57,7 @@ const cobrancaSchema = z.object({
 type CobrancaFormValues = z.infer<typeof cobrancaSchema>
 
 import { PixManualBannerNotification } from '../components/PixManualBannerNotification'
+import { SearchableAlunoSelect } from '../components/SearchableAlunoSelect'
 
 export function FinanceiroPageWeb() {
   const { authUser } = useAuth()
@@ -367,22 +368,12 @@ export function FinanceiroPageWeb() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 py-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
-                    <Select 
-                      value={alunoIdSelecionado} 
+                    <SearchableAlunoSelect
+                      alunos={alunos as any[]}
+                      value={alunoIdSelecionado || ''}
                       onValueChange={(val) => setValue('aluno_id', val)}
                       disabled={!!cobrancaEditando}
-                    >
-                      <SelectTrigger className="w-full bg-white border-slate-200 h-11 rounded-xl">
-                        <SelectValue placeholder="Selecione o aluno" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {alunos?.map((aluno) => (
-                          <SelectItem key={aluno.id} value={aluno.id}>
-                            {aluno.nome_completo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                     {errors.aluno_id && <p className="text-xs text-rose-500 font-bold">{errors.aluno_id.message}</p>}
                   </div>
 
@@ -403,6 +394,7 @@ export function FinanceiroPageWeb() {
                         type="number"
                         step="0.01"
                         {...register('valor')}
+                        placeholder="100,00"
                         className="w-full h-11 border-slate-200 rounded-xl"
                       />
                       {errors.valor && <p className="text-xs text-rose-500 font-bold">{errors.valor.message}</p>}

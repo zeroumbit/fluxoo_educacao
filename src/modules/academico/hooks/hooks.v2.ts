@@ -80,7 +80,9 @@ export function useSalvarNotasEmLote() {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.NOTAS(variables.avaliacaoId) })
       qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM }) // Invalida genérico para garantir atualização
-      qc.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
+      qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
       cacheEvents.publish('NOTAS_LANCADAS', { avaliacaoId: variables.avaliacaoId })
       toast.success('Notas salvas com sucesso!')
     },
@@ -120,7 +122,9 @@ export function useSalvarRecuperacao() {
       academicoV2Service.salvarRecuperacao(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
-      qc.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
+      qc.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+      qc.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
       toast.success('Recuperação salva com sucesso!')
     },
   })

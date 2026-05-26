@@ -29,9 +29,19 @@ const FrequenciaSkeleton = () => (
 
 export function PortalFrequenciaPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
-  const { data: frequencias, isLoading } = useFrequenciaAluno()
+  const { data: frequencias, isLoading, isError } = useFrequenciaAluno()
 
   if (isLoading) return <FrequenciaSkeleton />
+
+  if (isError) {
+    return (
+      <div className="bg-rose-50 border border-rose-100 rounded-3xl p-8 text-center text-rose-700">
+        <AlertCircle className="h-8 w-8 mx-auto mb-3" />
+        <h3 className="font-bold">Nao foi possivel carregar a frequencia</h3>
+        <p className="text-sm text-rose-600 mt-1">Tente novamente em instantes.</p>
+      </div>
+    )
+  }
 
   if (!alunoSelecionado) {
     return (

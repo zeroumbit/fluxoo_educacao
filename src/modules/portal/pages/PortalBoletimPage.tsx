@@ -10,7 +10,7 @@ GraduationCap,
 Info,
 TrendingUp
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect,useMemo,useState } from 'react'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 import { SeletorAluno } from '../components/SeletorAluno'
 import { usePortalContext } from '../context'
@@ -31,10 +31,8 @@ const BoletimSkeleton = () => (
 )
 
 const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
-  const disc = disciplina as any
-  // V2: usa resultado; legado: usa nota para calcular
-  const resultado = disc.resultado as string | undefined
-  const notaFinal = disc.nota ?? disc.media_final ?? 0
+  const resultado = disciplina.resultado || undefined
+  const notaFinal = disciplina.nota ?? disciplina.media_final ?? 0
   
   const isAprovado = resultado === 'aprovado' || resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 7)
   const isRecuperacao = resultado === 'aprovado_recuperacao' || (!resultado && notaFinal >= 5 && notaFinal < 7)
@@ -73,11 +71,11 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
           </div>
           <div className="flex items-center gap-3 mt-0.5">
             <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
-              <Activity size={10} /> {disc.faltas ?? disciplina.faltas} faltas
-              {disc.total_aulas ? ` / ${disc.total_aulas}` : ''}
+              <Activity size={10} /> {disciplina.faltas} faltas
+              {disciplina.total_aulas ? ` / ${disciplina.total_aulas}` : ''}
             </span>
-            {disc.nota_recuperacao != null && (
-              <span className="text-[9px] font-semibold text-amber-600">Rec: {disc.nota_recuperacao}</span>
+            {disciplina.nota_recuperacao != null && (
+              <span className="text-[9px] font-semibold text-amber-600">Rec: {disciplina.nota_recuperacao}</span>
             )}
           </div>
         </div>
@@ -97,12 +95,31 @@ const DisciplinaCard = ({ disciplina }: { disciplina: DisciplinaBoletim }) => {
 
 export function PortalBoletimPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, isMultiAluno } = usePortalContext()
-  const { data: boletins, isLoading } = useBoletins()
+  const { data: boletins, isLoading, isError } = useBoletins()
   
   const [anoSelecionado, setAnoSelecionado] = useState<string>(new Date().getFullYear().toString())
   const [bimestreSelecionado, setBimestreSelecionado] = useState<string>('todos')
+  const anosDisponiveis = useMemo(() => {
+    return [...new Set((boletins || []).map((b) => String(b.ano_letivo)))].sort((a, b) => Number(b) - Number(a))
+  }, [boletins])
+
+  useEffect(() => {
+    if (anosDisponiveis.length > 0 && !anosDisponiveis.includes(anoSelecionado)) {
+      setAnoSelecionado(anosDisponiveis[0])
+    }
+  }, [anosDisponiveis, anoSelecionado])
 
   if (isLoading) return <BoletimSkeleton />
+
+  if (isError) {
+    return (
+      <div className="bg-rose-50 border border-rose-100 rounded-3xl p-8 text-center text-rose-700">
+        <Info className="h-8 w-8 mx-auto mb-3" />
+        <h3 className="font-bold">Nao foi possivel carregar o boletim</h3>
+        <p className="text-sm text-rose-600 mt-1">Tente novamente em instantes.</p>
+      </div>
+    )
+  }
 
   if (!alunoSelecionado) {
     return (
@@ -156,11 +173,7 @@ export function PortalBoletimPage({ hideHeader = false }: { hideHeader?: boolean
                 value={anoSelecionado} 
                 onValueChange={setAnoSelecionado}
                 title="Selecionar Ano"
-                options={[
-                  { value: '2026', label: '2026' },
-                  { value: '2025', label: '2025' },
-                  { value: '2024', label: '2024' },
-                ]}
+                options={(anosDisponiveis.length ? anosDisponiveis : [anoSelecionado]).map((ano) => ({ value: ano, label: ano }))}
                 className="w-24"
               />
 

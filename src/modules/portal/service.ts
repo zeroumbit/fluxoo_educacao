@@ -787,26 +787,28 @@ export const portalService = {
         .order('bimestre', { ascending: true })
 
       if (!v2Error && v2Data && v2Data.length > 0) {
-        // Agrupa por bimestre para manter compatibilidade com a UI do portal
-        const anoAtual = new Date().getFullYear()
-        const porBimestre: Record<number, any> = {}
+        // Agrupa por ano/bimestre para manter compatibilidade com a UI do portal
+        const porBimestre: Record<string, any> = {}
         ;(v2Data as any[]).forEach((row: any) => {
           const bim = row.bimestre
-          if (!porBimestre[bim]) {
-            porBimestre[bim] = {
-              id: `v2-${alunoId}-${bim}`,
+          const anoLetivo = Number(row.ano_letivo) || new Date().getFullYear()
+          const key = `${anoLetivo}-${bim}`
+          if (!porBimestre[key]) {
+            porBimestre[key] = {
+              id: `v2-${alunoId}-${anoLetivo}-${bim}`,
               aluno_id: alunoId,
               tenant_id: tenantId,
               bimestre: bim,
-              ano_letivo: anoAtual,
+              ano_letivo: anoLetivo,
               disciplinas: [],
               _v2: true,
             }
           }
-          porBimestre[bim].disciplinas.push({
+          porBimestre[key].disciplinas.push({
             disciplina: row.nome_disciplina,
             disciplina_id: row.disciplina_id,
             nota: row.media_final ?? 0,
+            media_final: row.media_final,
             media_parcial: row.media_parcial,
             nota_recuperacao: row.nota_recuperacao,
             faltas: row.total_faltas ?? 0,
@@ -815,7 +817,9 @@ export const portalService = {
             observacoes: null,
           })
         })
-        return Object.values(porBimestre).sort((a: any, b: any) => a.bimestre - b.bimestre)
+        return Object.values(porBimestre).sort((a: any, b: any) =>
+          b.ano_letivo - a.ano_letivo || a.bimestre - b.bimestre
+        )
       }
     } catch (error) {
       // Silencia erros mas loga para depuração (view pode não existir em ambientes antigos)
@@ -837,10 +841,14 @@ export const portalService = {
   // ==========================================
   // EVENTOS / AGENDA
   // ==========================================
-  async buscarEventos(tenantId: string, inicio?: string, fim?: string) {
-    let query = supabase.from('eventos')
+  async buscarEventos(tenantId: string, inicio?: string, fim?: string, turmaId?: string | null) {
+    let query = (supabase.from('eventos' as any) as any)
       .select('*')
       .eq('tenant_id', tenantId)
+
+    query = turmaId
+      ? query.or(`publico_alvo.eq.toda_escola,turma_id.is.null,turma_id.eq.${turmaId}`)
+      : query.or('publico_alvo.eq.toda_escola,turma_id.is.null')
 
     if (inicio && fim) {
       query = query.gte('data_inicio', inicio).lte('data_inicio', fim)
@@ -1086,6 +1094,8 @@ export const portalService = {
         titulo: item.titulo,
         descricao: item.descricao,
         disciplina: item.disciplina,
+        tipo: item.tipo_material,
+        anexo_url: item.anexo_url,
         created_at: item.created_at
       }
     }))

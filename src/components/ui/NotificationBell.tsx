@@ -106,7 +106,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
 
       {/* List */}
       <div className={cn(
-        "flex-1 overflow-y-auto p-4 space-y-4 pb-12",
+        "flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-12",
         isMobile ? "" : "max-h-[400px]"
       )}>
         {items.length > 0 ? (
@@ -133,10 +133,10 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                           <BellRing size={20} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight truncate">
+                          <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight break-words whitespace-normal">
                             {notif.titulo || item.label}
                           </p>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1">
+                          <p className="text-[11px] text-slate-400 font-medium mt-1 break-words whitespace-normal leading-relaxed">
                             {notif.mensagem || 'Clique para ver detalhes'}
                           </p>
                         </div>
@@ -168,8 +168,8 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                         <BellRing size={20} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight truncate">{item.label}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">
+                        <p className="text-[14px] font-black text-slate-800 leading-tight group-hover:text-slate-900 italic uppercase tracking-tight break-words whitespace-normal">{item.label}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1.5">
                           Ver Detalhes <ExternalLink size={10} />
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
           <SheetContent 
             side="right" 
             showCloseButton={false}
-            className="w-[400px] p-0 overflow-hidden flex flex-col bg-white outline-none"
+            className="w-full sm:max-w-[480px] p-0 overflow-hidden flex flex-col bg-white outline-none"
           >
             <NotificationContent />
           </SheetContent>

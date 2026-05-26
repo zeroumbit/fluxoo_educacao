@@ -1,4 +1,5 @@
 import CorujaIcon from '@/assets/coruja_APPLE.svg';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { AnimatePresence,motion } from 'framer-motion';
@@ -27,13 +28,13 @@ export function PortalLayoutV2Web() {
     { label: 'Visão Geral', icon: Home, path: '/portal', exact: true },
     { label: 'Alunos', icon: Users, path: '/portal/alunos' },
     { label: 'Financeiro', icon: Receipt, path: '/portal/financeiro' },
-    { label: 'Notificações', icon: Bell, path: '/portal/avisos' },
-    { label: 'FrequÃªncia', icon: ClipboardCheck, path: '/portal/frequencia' },
+    { label: 'Frequencia', icon: ClipboardCheck, path: '/portal/frequencia' },
     { label: 'Boletim', icon: GraduationCap, path: '/portal/boletim' },
     { label: 'Agenda', icon: CalendarDays, path: '/portal/agenda' },
-    { label: 'Fila Virtual', icon: CarFront, path: '/portal/fila' },
     { label: 'Livros', icon: BookOpen, path: '/portal/livros' },
-    { label: 'AutorizaÃ§Ãµes', icon: ShieldCheck, path: '/portal/autorizacoes' },
+    { label: 'Notificações', icon: Bell, path: '/portal/avisos' },
+    { label: 'Fila Virtual', icon: CarFront, path: '/portal/fila' },
+    { label: 'Autorizações', icon: ShieldCheck, path: '/portal/autorizacoes' },
     { label: 'Loja Online', icon: ShoppingBag, path: '/portal/loja' },
   ];
 
@@ -68,7 +69,7 @@ export function PortalLayoutV2Web() {
         </div>
 
         {/* Menu Principal */}
-        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
+        <nav className="flex flex-col gap-2 flex-1 overflow-y-auto overflow-x-hidden pr-1 scrollbar-hide">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-4">Menu Principal</span>
           {navItems.map((item) => (
             <NavLink
@@ -129,7 +130,9 @@ export function PortalLayoutV2Web() {
       {/* Área de Conteúdo Principal */}
       <main className="flex-1 min-h-screen overflow-y-auto ml-80">
         <div className="max-w-[1400px] mx-auto p-12 relative">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

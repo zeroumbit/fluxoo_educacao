@@ -244,17 +244,46 @@ export const transferenciasService = {
   },
 
   /** Lista transferências por responsável (portal família) */
-  async listarPorResponsavel(alunoIds: string[]) {
-    if (!alunoIds.length) return []
+  async listarPorResponsavel(params: { alunoIds?: string[]; responsavelIds?: string[] }) {
+    const alunoIds = [...new Set((params.alunoIds || []).filter(Boolean))]
+    const responsavelIds = [...new Set((params.responsavelIds || []).filter(Boolean))]
+    if (!alunoIds.length && !responsavelIds.length) return []
 
-    const { data, error } = await supabase
-      .from('transferencias_escolares')
-      .select('*')
-      .in('aluno_id', alunoIds)
-      .order('created_at', { ascending: false })
+    const queries: PromiseLike<{ data: unknown[] | null; error: unknown }>[] = []
 
-    if (error) throw error
-    const rows = (data || []) as unknown as TransferenciaRaw[]
+    if (alunoIds.length) {
+      queries.push(
+        supabase
+          .from('transferencias_escolares')
+          .select('*')
+          .in('aluno_id', alunoIds)
+          .order('created_at', { ascending: false }) as any
+      )
+    }
+
+    if (responsavelIds.length) {
+      queries.push(
+        supabase
+          .from('transferencias_escolares')
+          .select('*')
+          .in('responsavel_id', responsavelIds)
+          .order('created_at', { ascending: false }) as any
+      )
+    }
+
+    const results = await Promise.all(queries)
+    const firstError = results.find((result) => result.error)?.error
+    if (firstError) throw firstError
+
+    const rowsById = new Map<string, TransferenciaRaw>()
+    results.forEach((result) => {
+      ;((result.data || []) as unknown as TransferenciaRaw[]).forEach((row) => {
+        rowsById.set(row.id, row)
+      })
+    })
+
+    const rows = Array.from(rowsById.values())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     if (!rows.length) return []
 
     const [escolasMap, alunosMap] = await Promise.all([
@@ -265,21 +294,22 @@ export const transferenciasService = {
       fetchAlunosMap(rows.map((t) => t.aluno_id)),
     ])
 
-    return rows.map((t) => ({
-      ...t,
-      data_solicitacao: t.created_at,
-      origem_tenant_id: t.escola_origem_id,
-      destino_tenant_id: t.escola_destino_id,
-      solicitante_tipo: t.iniciado_por,
-      aprovacao_responsavel: t.status !== 'aguardando_responsavel' && t.status !== 'recusado' && t.status !== 'cancelado',
-      aluno: { nome_completo: alunosMap[t.aluno_id] || 'Aluno' },
-      escola_origem: { razao_social: escolasMap[t.escola_origem_id] || 'Escola de Origem' },
-      escola_destino: {
-        razao_social: (t.escola_destino_id ? escolasMap[t.escola_destino_id] : null)
-          || t.escola_destino_nome_manual
-          || 'Escola de Destino'
-      },
-    }))
+    return rows.map((t) => {
+      const enriched = enrichTransferencia(t, escolasMap, alunosMap)
+      return {
+        ...enriched,
+        origem_tenant_id: t.escola_origem_id,
+        destino_tenant_id: t.escola_destino_id,
+        aprovacao_responsavel: t.status !== 'aguardando_responsavel' && t.status !== 'recusado' && t.status !== 'cancelado',
+        aluno: { nome_completo: alunosMap[t.aluno_id] || 'Aluno' },
+        escola_origem: { razao_social: escolasMap[t.escola_origem_id] || 'Escola de Origem' },
+        escola_destino: {
+          razao_social: (t.escola_destino_id ? escolasMap[t.escola_destino_id] : null)
+            || t.escola_destino_nome_manual
+            || 'Escola de Destino'
+        },
+      }
+    })
   },
 
   /** Responsável aprova ou recusa transferência */

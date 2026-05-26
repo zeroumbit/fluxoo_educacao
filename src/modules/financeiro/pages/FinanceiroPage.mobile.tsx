@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { useCobrancasComEncargos,useCriarCobranca,useDesfazerPagamento,useExcluirCobranca,useRegistrarPagamentoManual } from '../hooks'
+import { SearchableAlunoSelect } from '../components/SearchableAlunoSelect'
 import {
 detectarTipoCobranca,
 extrairDiasProporcionais,
@@ -392,19 +393,12 @@ export function FinanceiroPageMobile() {
           <form id="new-charge-mobile" onSubmit={handleSubmit(onSubmit)} className="px-1 pb-12 space-y-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Vincular a</Label>
-              <Select value={formAlunoId} onValueChange={(v) => setValue('aluno_id', v)}>
-                <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none font-bold text-base px-5">
-                  <SelectValue placeholder="Selecione o aluno" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl max-h-[300px]">
-                  <SelectItem value="avulso" className="font-bold py-3">Cobrança Avulsa (Sem Aluno)</SelectItem>
-                  {(alunos as any[] || [])?.map(aluno => (
-                    <SelectItem key={aluno.id} value={aluno.id} className="font-medium py-3">
-                      {aluno.nome_completo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableAlunoSelect
+                alunos={alunos as any[]}
+                value={formAlunoId || ''}
+                onValueChange={(v) => setValue('aluno_id', v)}
+                extraOptions={[{ value: 'avulso', label: 'Cobrança Avulsa (Sem Aluno)' }]}
+              />
               {errors.aluno_id && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.aluno_id.message}</p>}
             </div>
 
@@ -424,7 +418,7 @@ export function FinanceiroPageMobile() {
                   <Input 
                     {...register('valor')}
                     className="h-14 rounded-xl bg-slate-50 dark:bg-slate-800 border-none px-5 text-base font-bold text-indigo-600 w-full"
-                    placeholder="0,00"
+                    placeholder="100,00"
                   />
                   {errors.valor && <p className="text-[10px] text-rose-500 font-bold ml-2">{errors.valor.message}</p>}
                 </div>

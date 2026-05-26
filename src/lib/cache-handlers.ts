@@ -22,7 +22,9 @@ export function setupCacheHandlers(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: ['alunos'] }) // TODO: Levar para QueryKeys tb
 
     // 3. Atualiza o Portal do Aluno
-    queryClient.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
   })
 
   cacheEvents.subscribe('MATRICULA_ATUALIZADA', (event) => {
@@ -36,7 +38,9 @@ export function setupCacheHandlers(queryClient: QueryClient) {
     const { tenantId, alunoId } = event.payload
     // Invalida detalhe do aluno onde quer que ele esteja sendo cacheado
     queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ALUNO(alunoId, tenantId) })
-    queryClient.invalidateQueries({ queryKey: QueryKeys.PORTAL.ROOT })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo', alunoId] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
   })
 
   cacheEvents.subscribe('VINCULO_CRIADO', (event) => {
@@ -56,5 +60,36 @@ export function setupCacheHandlers(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: QueryKeys.DASHBOARD })
     queryClient.invalidateQueries({ queryKey: ['financeiro'] })
     queryClient.invalidateQueries({ queryKey: ['notifications'] })
+  })
+
+  cacheEvents.subscribe('AVALIACAO_CRIADA', (event) => {
+    const { turmaId, disciplinaId } = event.payload
+    queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_AVALIACOES_CONFIG })
+    queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
+    queryClient.invalidateQueries({ queryKey: ['avaliacoes_config', turmaId, disciplinaId] })
+  })
+
+  cacheEvents.subscribe('NOTAS_LANCADAS', () => {
+    queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
+  })
+
+  cacheEvents.subscribe('BIMESTRE_FECHADO', () => {
+    queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
+  })
+
+  cacheEvents.subscribe('BIMESTRE_REABERTO', () => {
+    queryClient.invalidateQueries({ queryKey: QueryKeys.TURMAS.ROOT_BOLETIM })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'boletins'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard'] })
+    queryClient.invalidateQueries({ queryKey: ['portal', 'dashboard-familia'] })
   })
 }

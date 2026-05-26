@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { AnimatePresence,motion } from 'framer-motion';
 import { WifiOff } from 'lucide-react';
@@ -40,7 +41,9 @@ export function PortalLayoutV2Mobile() {
             transition={{ type: 'spring', stiffness: 450, damping: 38, mass: 1 }}
             className="flex flex-col min-h-full pb-24"
           >
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>

@@ -1126,8 +1126,14 @@ export type UpgradeStatus = 'pendente' | 'aprovado' | 'recusado'
 // ========== BOLETIM ==========
 export type DisciplinaBoletim = {
   disciplina: string
+  disciplina_id?: string
   nota: number
+  media_parcial?: number | null
+  media_final?: number | null
+  nota_recuperacao?: number | null
   faltas: number
+  total_aulas?: number | null
+  resultado?: string | null
   observacoes?: string
 }
 
@@ -1666,6 +1672,8 @@ export type Database = {
         Row: {
           aluno_id: string
           tenant_id: string
+          turma_id: string | null
+          ano_letivo: number | null
           bimestre: number
           nome_disciplina: string
           disciplina_id: string

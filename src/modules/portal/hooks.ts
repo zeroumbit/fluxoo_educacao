@@ -305,12 +305,24 @@ export function useTemplatesDocumento() {
 // ==========================================
 export function useTransferenciasPortal() {
   const { data: vinculosRaw } = useVinculosAtivos()
+  const { data: responsaveisRaw } = useResponsavel()
+  const { authUser } = useAuth()
   const alunoIds = vinculosRaw?.map((v) => v.aluno_id) || []
+  const responsavelIds = useMemo(() => {
+    const ids = Array.isArray(responsaveisRaw)
+      ? responsaveisRaw.map((r) => r.id)
+      : responsaveisRaw?.id
+        ? [responsaveisRaw.id]
+        : []
+
+    if (authUser?.user.id) ids.push(authUser.user.id)
+    return [...new Set(ids.filter(Boolean))]
+  }, [responsaveisRaw, authUser?.user.id])
   
   return useQuery({
-    queryKey: ['portal', 'transferencias', alunoIds],
-    queryFn: () => transferenciasService.listarPorResponsavel(alunoIds),
-    enabled: alunoIds.length > 0,
+    queryKey: ['portal', 'transferencias', alunoIds, responsavelIds],
+    queryFn: () => transferenciasService.listarPorResponsavel({ alunoIds, responsavelIds }),
+    enabled: alunoIds.length > 0 || responsavelIds.length > 0,
     staleTime: 30 * 1000,
   })
 }
@@ -396,6 +408,7 @@ export function usePlanosAulaPortal() {
     queryKey: ['portal', 'planos-aula', alunoSelecionado?.id, tenantId],
     queryFn: () => portalService.buscarPlanosAula(alunoSelecionado!.id, tenantId!),
     enabled: !!alunoSelecionado?.id && !!tenantId,
+    staleTime: 60 * 1000,
   })
 }
 
