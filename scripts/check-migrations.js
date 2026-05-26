@@ -5,8 +5,11 @@ import { join } from 'path';
 
 // Carregar variáveis de ambiente
 function loadLocalEnv() {
-  const envPath = join(process.cwd(), '.env');
-  if (!existsSync(envPath)) return;
+  const envPath = ['.env.local', '.env']
+    .map((file) => join(process.cwd(), file))
+    .find((file) => existsSync(file));
+
+  if (!envPath) return;
 
   const envContent = readFileSync(envPath, 'utf8');
   for (const line of envContent.split(/\r?\n/)) {

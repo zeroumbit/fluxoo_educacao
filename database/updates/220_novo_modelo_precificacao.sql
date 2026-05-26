@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.precos (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_precos_updated ON public.precos;
 CREATE TRIGGER trg_precos_updated
 BEFORE UPDATE ON public.precos
 FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.precos_modulos (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_precos_modulos_updated ON public.precos_modulos;
 CREATE TRIGGER trg_precos_modulos_updated
 BEFORE UPDATE ON public.precos_modulos
 FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
@@ -95,6 +97,7 @@ CREATE TABLE IF NOT EXISTS public.assinatura_modulos (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_assinatura_modulos_updated ON public.assinatura_modulos;
 CREATE TRIGGER trg_assinatura_modulos_updated
 BEFORE UPDATE ON public.assinatura_modulos
 FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
@@ -486,18 +489,25 @@ ALTER TABLE public.precos_modulos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.assinatura_modulos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fatura_itens ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "SA_All_Precos" ON public.precos;
+DROP POLICY IF EXISTS "SA_All_PrecosModulos" ON public.precos_modulos;
+DROP POLICY IF EXISTS "SA_All_AssinaturaModulos" ON public.assinatura_modulos;
+DROP POLICY IF EXISTS "Tenant_Select_AssinaturaModulos" ON public.assinatura_modulos;
+DROP POLICY IF EXISTS "Tenant_Select_FaturaItens" ON public.fatura_itens;
+DROP POLICY IF EXISTS "SA_All_FaturaItens" ON public.fatura_itens;
+
 -- Super Admin tem acesso total
 CREATE POLICY "SA_All_Precos" ON public.precos FOR ALL TO authenticated
-USING (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com');
+USING (public.check_is_super_admin())
+WITH CHECK (public.check_is_super_admin());
 
 CREATE POLICY "SA_All_PrecosModulos" ON public.precos_modulos FOR ALL TO authenticated
-USING (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com');
+USING (public.check_is_super_admin())
+WITH CHECK (public.check_is_super_admin());
 
 CREATE POLICY "SA_All_AssinaturaModulos" ON public.assinatura_modulos FOR ALL TO authenticated
-USING (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com');
+USING (public.check_is_super_admin())
+WITH CHECK (public.check_is_super_admin());
 
 -- Escola vê apenas seus próprios módulos
 CREATE POLICY "Tenant_Select_AssinaturaModulos" ON public.assinatura_modulos FOR SELECT TO authenticated
@@ -508,5 +518,5 @@ USING (fatura_id IN (SELECT id FROM public.faturas WHERE tenant_id = (auth.jwt()
 
 -- Super Admin vê todos os itens de fatura
 CREATE POLICY "SA_All_FaturaItens" ON public.fatura_itens FOR ALL TO authenticated
-USING (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com')
-WITH CHECK (auth.jwt() ->> 'email' = 'zeroumbit@gmail.com');
+USING (public.check_is_super_admin())
+WITH CHECK (public.check_is_super_admin());

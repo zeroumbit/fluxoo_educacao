@@ -413,12 +413,12 @@ export function DocumentosPageMobile() {
                          {notificacaoDetalhe.mensagem || 'Esta notificacao nao possui mensagem detalhada.'}
                        </p>
                        <div className="grid grid-cols-1 gap-2 mt-3">
-                         {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
-                           <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
-                             <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
-                             <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id}</p>
-                           </div>
-                         )}
+                          {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
+                            <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
+                              <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
+                              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: any) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
+                            </div>
+                          )}
                          {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome || notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome) && (
                            <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
                              <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Transferencia</p>

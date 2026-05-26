@@ -25,10 +25,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview",
     "check-env": "node scripts/check-env.js",
+    "check-production": "node scripts/check-production.js",
     "check:migrations": "node scripts/check-migrations.js",
     "security:secrets": "node scripts/check-secrets.mjs",
+    "typegen:supabase": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts",
     "quality": "npm run check-env && npm run security:secrets && npm run typecheck && npm run lint",
-    "predeploy": "npm run quality && npm run build",
+    "predeploy": "npm run quality && npm run check-production && npm run build",
     "git:fix": "powershell scripts/fix-git-lock.ps1",
     "clean": "rimraf dist tmp .cache",
     "clean:vite": "rimraf node_modules/.vite",
@@ -104,6 +106,6 @@
     "tailwindcss": "^4.2.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.48.0",
-    "vite": "^7.3.1"
+    "vite": "7.3.2"
   }
 }

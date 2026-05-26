@@ -13,6 +13,8 @@ DROP POLICY IF EXISTS "Acesso público limitado às escolas" ON public.escolas;
 DROP POLICY IF EXISTS "Portal_Escolas_Select" ON public.escolas;
 DROP POLICY IF EXISTS "Portal_Read_Pendente_Escola" ON public.escolas;
 DROP POLICY IF EXISTS "Universal_Select_Escolas" ON public.escolas;
+DROP POLICY IF EXISTS "Staff_Read_Escolas" ON public.escolas;
+DROP POLICY IF EXISTS "Responsavel_Read_Escola_Dos_Filhos" ON public.escolas;
 
 CREATE POLICY "Staff_Read_Escolas" ON public.escolas
 FOR SELECT TO authenticated

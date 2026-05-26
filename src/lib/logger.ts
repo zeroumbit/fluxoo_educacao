@@ -30,10 +30,10 @@ async function getSentryCapture() {
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 interface Logger {
-  debug: (...args: any[]) => void
-  info: (...args: any[]) => void
-  warn: (...args: any[]) => void
-  error: (...args: any[]) => void
+  debug: (...args: unknown[]) => void
+  info: (...args: unknown[]) => void
+  warn: (...args: unknown[]) => void
+  error: (...args: unknown[]) => void
 }
 
 /**
@@ -55,7 +55,7 @@ function isLogEnabled(level: LogLevel): boolean {
  * Sanitiza dados sensíveis antes de logar
  * Remove ou mascara informações sensíveis
  */
-function sanitizeData(data: any): any {
+function sanitizeData(data: unknown): unknown {
   if (!data || typeof data !== 'object') {
     return data
   }
@@ -69,7 +69,7 @@ function sanitizeData(data: any): any {
     'rg', 'pis', 'endereco', 'address', 'data_nascimento',
   ]
 
-  const sanitized = { ...data }
+  const sanitized = { ...(data as Record<string, unknown>) }
 
   for (const field of sensitiveFields) {
     if (field in sanitized) {
@@ -93,28 +93,28 @@ function formatMessage(level: LogLevel, message: string): string {
  * Logger centralizado
  */
 export const logger: Logger = {
-  debug: (...args: any[]) => {
+  debug: (...args: unknown[]) => {
     if (!isLogEnabled('debug')) return
     
     const [message, ...rest] = args
     console.debug(formatMessage('debug', String(message)), ...rest.map(sanitizeData))
   },
 
-  info: (...args: any[]) => {
+  info: (...args: unknown[]) => {
     if (!isLogEnabled('info')) return
     
     const [message, ...rest] = args
     console.info(formatMessage('info', String(message)), ...rest.map(sanitizeData))
   },
 
-  warn: (...args: any[]) => {
+  warn: (...args: unknown[]) => {
     if (!isLogEnabled('warn')) return
     
     const [message, ...rest] = args
     console.warn(formatMessage('warn', String(message)), ...rest.map(sanitizeData))
   },
 
-  error: (...args: any[]) => {
+  error: (...args: unknown[]) => {
     if (!isLogEnabled('error')) return
 
     const [message, error, ...rest] = args

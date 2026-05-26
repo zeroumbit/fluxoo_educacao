@@ -153,17 +153,27 @@ export const autorizacoesService = {
         .eq('aluno_id', alunoId)
     ])
 
-    // Se houver erro na busca dos modelos da escola, falha
-    if (modelosEscolaRes.error) throw modelosEscolaRes.error
+    // Trata erros de forma grace: loga e continua com array vazio
+    // para sempre exibir ao menos os modelos virtuais do sistema
+    const dbModelosEscola = !modelosEscolaRes.error ? (modelosEscolaRes.data as any[]) || [] : []
+    const dbModelosGlobais = !modelosGlobaisRes.error ? (modelosGlobaisRes.data as any[]) || [] : []
 
-    // Modelos globais podem falhar ou vir vazios se RLS for restrito, tratamos como opcional
-    const dbModelosEscola = (modelosEscolaRes.data as any[]) || []
-    const dbModelosGlobais = (modelosGlobaisRes.data as any[]) || []
-    
+    if (modelosEscolaRes.error) {
+      console.warn('[Autorizações] Erro ao buscar modelos da escola:', modelosEscolaRes.error)
+    }
+    if (modelosGlobaisRes.error) {
+      console.warn('[Autorizações] Erro ao buscar modelos globais:', modelosGlobaisRes.error)
+    }
+
     const dbModelos = [...dbModelosEscola, ...dbModelosGlobais]
     const modelos = this.mesclarComPadroesSistema(dbModelos)
-    
-    const respostas = (respostasRes.data as any[]) || []
+
+    // Respostas podem falhar, tratamos como opcionais
+    const respostas = !respostasRes.error ? (respostasRes.data as any[]) || [] : []
+
+    if (respostasRes.error) {
+      console.warn('[Autorizações] Erro ao buscar respostas:', respostasRes.error)
+    }
 
     return modelos.map((modelo: any) => {
       const resposta = respostas.find((r: any) => r.modelo_id === modelo.id)

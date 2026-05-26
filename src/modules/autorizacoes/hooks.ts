@@ -86,8 +86,7 @@ export function useRespostasPorAluno(alunoId: string | null) {
 // ==========================================
 
 export function useAutorizacoesPortal(alunoId: string | null) {
-  const { tenantId } = usePortalContext()
-  const { data: responsavel } = useResponsavel()
+  const { responsavel, tenantId } = usePortalContext()
   return useQuery({
     queryKey: ['autorizacoes', 'portal', responsavel?.id, alunoId, tenantId],
     queryFn: () => autorizacoesService.buscarRespostasResponsavel(responsavel!.id, alunoId!, tenantId!),

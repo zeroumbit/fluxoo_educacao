@@ -99,11 +99,8 @@ const PortalAvisosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalAvisos
 const PortalFinanceiroV2 = lazy(() => import('@/modules/portal/v2/pages/PortalFinanceiroV2').then(m => ({ default: m.PortalFinanceiroV2 })))
 const PortalDocumentosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalDocumentosPageV2').then(m => ({ default: m.default })))
 const PortalTransferenciasV2 = lazy(() => import('@/modules/portal/v2/pages/PortalTransferenciasV2').then(m => ({ default: m.default })))
-const PortalFrequenciaV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalFrequenciaV2 })))
 const PortalFilaVirtualV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalFilaVirtualV2 })))
-const PortalBoletimV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalBoletimV2 })))
 const PortalLivrosV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalLivrosV2 })))
-const PortalAgendaV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalAgendaV2 })))
 const PortalAutorizacoesV2 = lazy(() => import('@/modules/portal/v2/pages/PortalLegacyPagesV2').then(m => ({ default: m.PortalAutorizacoesV2 })))
 
 const queryClient = new QueryClient({
@@ -334,12 +331,8 @@ function App() {
               <Route path="/portal/avisos" element={<PortalAvisosV2 />} />
               <Route path="/portal/loja" element={<PortalLojaPage />} />
               <Route path="/portal/perfil" element={<PortalPerfilPage />} />
-              
-              <Route path="/portal/frequencia" element={<PortalFrequenciaV2 />} />
               <Route path="/portal/fila" element={<PortalFilaVirtualV2 />} />
-              <Route path="/portal/boletim" element={<PortalBoletimV2 />} />
               <Route path="/portal/livros" element={<PortalLivrosV2 />} />
-              <Route path="/portal/agenda" element={<PortalAgendaV2 />} />
               <Route path="/portal/documentos" element={<PortalDocumentosV2 />} />
               <Route path="/portal/transferencias" element={<PortalTransferenciasV2 />} />
               <Route path="/portal/autorizacoes" element={<PortalAutorizacoesV2 />} />

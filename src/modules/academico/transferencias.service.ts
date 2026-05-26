@@ -1,4 +1,8 @@
-import type { TransferenciaEscolarIniciador,TransferenciaEscolarStatus } from '@/lib/database.types'
+import type {
+  TransferenciaEscolarIniciador,
+  TransferenciaEscolarInsert,
+  TransferenciaEscolarStatus,
+} from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 
 // Re-exportar tipos do database.types para uso externo
@@ -149,7 +153,7 @@ export const transferenciasService = {
         status: 'aguardando_responsavel' as const,
         motivo_solicitacao: payload.motivo,
         responsavel_id: payload.responsavelId,
-      } as any)
+      } satisfies TransferenciaEscolarInsert)
       .select()
       .single()
 
@@ -180,7 +184,7 @@ export const transferenciasService = {
         iniciado_por: payload.iniciadoPor,
         status: 'aguardando_responsavel' as const,
         motivo_solicitacao: payload.motivo,
-      } as any)
+      } satisfies TransferenciaEscolarInsert)
       .select()
       .single()
 
@@ -212,7 +216,7 @@ export const transferenciasService = {
         status: destinoId ? 'aguardando_aceite_destino' as const : 'aguardando_liberacao_origem' as const,
         motivo_solicitacao: payload.motivo,
         aprovado_em: new Date().toISOString(),
-      } as any)
+      } satisfies TransferenciaEscolarInsert)
       .select()
       .single()
 
@@ -249,7 +253,7 @@ export const transferenciasService = {
     const responsavelIds = [...new Set((params.responsavelIds || []).filter(Boolean))]
     if (!alunoIds.length && !responsavelIds.length) return []
 
-    const queries: PromiseLike<{ data: unknown[] | null; error: unknown }>[] = []
+    const queries: PromiseLike<{ data: TransferenciaRaw[] | null; error: unknown }>[] = []
 
     if (alunoIds.length) {
       queries.push(
@@ -257,7 +261,7 @@ export const transferenciasService = {
           .from('transferencias_escolares')
           .select('*')
           .in('aluno_id', alunoIds)
-          .order('created_at', { ascending: false }) as any
+          .order('created_at', { ascending: false }) as PromiseLike<{ data: TransferenciaRaw[] | null; error: unknown }>
       )
     }
 
@@ -267,7 +271,7 @@ export const transferenciasService = {
           .from('transferencias_escolares')
           .select('*')
           .in('responsavel_id', responsavelIds)
-          .order('created_at', { ascending: false }) as any
+          .order('created_at', { ascending: false }) as PromiseLike<{ data: TransferenciaRaw[] | null; error: unknown }>
       )
     }
 
@@ -332,7 +336,7 @@ export const transferenciasService = {
   async aceitarTransferenciaDestino(id: string) {
     const { error } = await supabase.rpc('aceitar_transferencia_destino', {
       p_transferencia_id: id
-    } as any)
+    })
     if (error) throw error
     return { status: 'aguardando_liberacao_origem' as const }
   },
@@ -342,7 +346,7 @@ export const transferenciasService = {
     const { error } = await supabase.rpc('recusar_transferencia_destino', {
       p_transferencia_id: id,
       p_justificativa: justificativa
-    } as any)
+    })
     if (error) throw error
     return { status: 'recusado' as const }
   },
@@ -351,7 +355,7 @@ export const transferenciasService = {
   async concluirTransferencia(id: string) {
     const { error } = await supabase.rpc('concluir_transferencia_integrar', {
       p_transferencia_id: id
-    } as any)
+    })
     if (error) throw error
     return { status: 'concluido' as const }
   },

@@ -1,5 +1,6 @@
 import { precheckLogin } from '@/lib/auth-rate-limit'
 import type { PortalConfigPix } from '@/lib/database.types'
+import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 import { escolaService } from '@/modules/escolas/service'
@@ -33,6 +34,21 @@ function safeFileExtension(file: File): string {
   return byMime[file.type] || 'bin'
 }
 
+type PortalLoginInfo = {
+  id: string
+  email: string | null
+  status: string | null
+  [key: string]: unknown
+}
+
+type PortalAlunoVinculo = {
+  aluno?: {
+    id: string
+    codigo_transferencia?: string | null
+    [key: string]: unknown
+  } | null
+}
+
 export const portalService = {
   // ==========================================
   // AUTENTICAÇÃO POR CPF
@@ -48,17 +64,17 @@ export const portalService = {
     if (precheck.delayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, precheck.delayMs))
     }
-    const { data: profiles, error: rpcError } = await (supabase.rpc('get_portal_login_info', {
+    const { data: profiles, error: rpcError } = await supabase.rpc('get_portal_login_info', {
       cpf_input: cpfLimpo
-    }) as any)
+    })
 
     if (rpcError || !profiles || profiles.length === 0) {
-      console.error('Erro ao buscar responsável:', rpcError)
+      logger.error('Erro ao buscar responsavel no login do portal', rpcError)
       throw new Error('CPF não cadastrado ou sem acesso ao portal.')
     }
 
     // Tenta encontrar um perfil ativo
-    const activeProfiles = (profiles as any[]).filter(p => p.status === 'ativo')
+    const activeProfiles = (profiles as PortalLoginInfo[]).filter(p => p.status === 'ativo')
     if (activeProfiles.length === 0) {
       throw new Error('Este cadastro está inativo. Entre em contato com a escola.')
     }
@@ -71,8 +87,8 @@ export const portalService = {
     }
 
     let profile = profilesComEmail[0]
-    let authData: any = null
-    let authError: any = null
+    let authData: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'] | null = null
+    let authError: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['error'] | null = null
     
     for (const candidate of profilesComEmail) {
       profile = candidate
@@ -160,14 +176,14 @@ export const portalService = {
   // ==========================================
   // VÍNCULO ALUNOS (Multi-aluno, Multi-escola)
   // ==========================================
-  async enriquecerVinculoAluno(vinculo: any) {
+  async enriquecerVinculoAluno(vinculo: PortalAlunoVinculo) {
     if (!vinculo?.aluno?.id) return vinculo?.aluno || null
 
     const alunoId = vinculo.aluno.id
 
-    const { data, error } = await (supabase.rpc('fn_portal_aluno_enriquecimento' as any, {
+    const { data, error } = await supabase.rpc('fn_portal_aluno_enriquecimento', {
       p_aluno_id: alunoId,
-    }) as any)
+    })
 
     if (error) throw error
 

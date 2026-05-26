@@ -20,8 +20,6 @@ import { PortalProvider,usePortalContext } from '@/modules/portal/context'
 import { useDashboardFamilia } from '@/modules/portal/hooks'
 import { AnimatePresence,motion } from 'framer-motion'
 import {
-Activity,
-Calendar,
 ChevronDown,
 Cookie,
 DollarSign,
@@ -181,10 +179,7 @@ function InnerPortalLayout() {
   }
 
   const menuItems = [
-    { label: 'Agenda', icon: Calendar, to: '/portal/agenda' },
-    { label: 'Boletim', icon: FileText, to: '/portal/boletim' },
     { label: 'Documentos', icon: FileText, to: '/portal/documentos' },
-    { label: 'Frequência', icon: Activity, to: '/portal/frequencia' },
     { label: 'Autorizações', icon: ShieldCheck, to: '/portal/autorizacoes' },
     { label: 'Avisos', icon: Megaphone, to: '/portal/avisos' },
     { label: 'Financeiro', icon: DollarSign, to: '/portal/cobrancas' },
@@ -233,12 +228,6 @@ function InnerPortalLayout() {
                 <NavLinkDesktop icon={User} label="Aluno" hasDropdown />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 p-2 rounded-2xl shadow-xl border-slate-100">
-                <DropdownMenuItem onClick={() => navigate('/portal/agenda')} className="flex items-center gap-2 p-3 font-medium rounded-xl focus:bg-teal-50 focus:text-teal-600 cursor-pointer">
-                  <Calendar size={16} /> Agenda
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/portal/boletim')} className="flex items-center gap-2 p-3 font-medium rounded-xl focus:bg-teal-50 focus:text-teal-600 cursor-pointer">
-                  <FileText size={16} /> Boletim
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/portal/documentos')} className="flex items-center gap-2 p-3 font-medium rounded-xl focus:bg-teal-50 focus:text-teal-600 cursor-pointer">
                   <FileText size={16} /> Documentos
                 </DropdownMenuItem>

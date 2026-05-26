@@ -314,8 +314,41 @@ export type TransferenciaEscolar = {
   concluido_em: string | null
   updated_at: string
 }
-export type TransferenciaEscolarInsert = Omit<TransferenciaEscolar, 'id' | 'created_at' | 'updated_at'> & {
+export type TransferenciaEscolarInsert = Omit<
+  TransferenciaEscolar,
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'escola_destino_id'
+  | 'escola_destino_nome_manual'
+  | 'escola_destino_cnpj_manual'
+  | 'responsavel_id'
+  | 'justificativa_recusa'
+  | 'prazo_liberacao'
+  | 'prazo_responsavel'
+  | 'prazo_aceite_destino'
+  | 'aceite_destino_em'
+  | 'recusado_por'
+  | 'recusado_em'
+  | 'cancelado_em'
+  | 'aprovado_em'
+  | 'concluido_em'
+> & {
   id?: string
+  escola_destino_id?: string | null
+  escola_destino_nome_manual?: string | null
+  escola_destino_cnpj_manual?: string | null
+  responsavel_id?: string | null
+  justificativa_recusa?: string | null
+  prazo_liberacao?: string | null
+  prazo_responsavel?: string | null
+  prazo_aceite_destino?: string | null
+  aceite_destino_em?: string | null
+  recusado_por?: 'responsavel' | 'escola_origem' | 'escola_destino' | null
+  recusado_em?: string | null
+  cancelado_em?: string | null
+  aprovado_em?: string | null
+  concluido_em?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -1523,6 +1556,17 @@ export type AuditLogV2Update = Partial<AuditLogV2Insert>
 // ========== AUTH TYPES ==========
 export type UserRole = 'super_admin' | 'gestor' | 'professor' | 'funcionario' | 'responsavel' | 'lojista' | 'profissional'
 
+export type PortalLoginInfo = {
+  id: string
+  email: string | null
+  status: string | null
+  nome?: string | null
+  cpf?: string | null
+  telefone?: string | null
+  user_id?: string | null
+  tenant_id?: string | null
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -1744,7 +1788,7 @@ export type Database = {
     }
     Functions: {
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
-      get_portal_login_info: { Args: { cpf_input: string }; Returns: any };
+      get_portal_login_info: { Args: { cpf_input: string }; Returns: PortalLoginInfo[] };
       fn_portal_aluno_enriquecimento: {
         Args: { p_aluno_id: string };
         Returns: {
@@ -1828,6 +1872,18 @@ export type Database = {
       };
       recusar_transferencia: {
         Args: { p_transferencia_id: string; p_justificativa: string };
+        Returns: void
+      };
+      aceitar_transferencia_destino: {
+        Args: { p_transferencia_id: string };
+        Returns: void
+      };
+      recusar_transferencia_destino: {
+        Args: { p_transferencia_id: string; p_justificativa: string };
+        Returns: void
+      };
+      concluir_transferencia_integrar: {
+        Args: { p_transferencia_id: string };
         Returns: void
       };
       fn_calcular_fatura: {

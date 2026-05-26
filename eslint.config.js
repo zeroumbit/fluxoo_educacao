@@ -20,18 +20,18 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['off', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
         ignoreRestSiblings: true,
       }],
-      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       'react-refresh/only-export-components': 'off',
-      'react-hooks/exhaustive-deps': 'off', // O projeto pode já ter ignorado muito por enquanto, mantendo consistente como antes
+      'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/incompatible-library': 'off',
       'react-hooks/immutability': 'off',

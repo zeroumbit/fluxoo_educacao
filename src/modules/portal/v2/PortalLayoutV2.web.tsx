@@ -3,7 +3,7 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { AnimatePresence,motion } from 'framer-motion';
-import { Bell,BookOpen,CalendarDays,CarFront,ClipboardCheck,GraduationCap,Home,LogOut,Receipt,ShieldCheck,ShoppingBag,User,Users,WifiOff } from 'lucide-react';
+import { Bell,BookOpen,CarFront,Home,LogOut,Receipt,ShieldCheck,ShoppingBag,User,Users,WifiOff } from 'lucide-react';
 import React from 'react';
 import { NavLink,Outlet,useNavigate } from 'react-router-dom';
 
@@ -28,9 +28,6 @@ export function PortalLayoutV2Web() {
     { label: 'Visão Geral', icon: Home, path: '/portal', exact: true },
     { label: 'Alunos', icon: Users, path: '/portal/alunos' },
     { label: 'Financeiro', icon: Receipt, path: '/portal/financeiro' },
-    { label: 'Frequencia', icon: ClipboardCheck, path: '/portal/frequencia' },
-    { label: 'Boletim', icon: GraduationCap, path: '/portal/boletim' },
-    { label: 'Agenda', icon: CalendarDays, path: '/portal/agenda' },
     { label: 'Livros', icon: BookOpen, path: '/portal/livros' },
     { label: 'Notificações', icon: Bell, path: '/portal/avisos' },
     { label: 'Fila Virtual', icon: CarFront, path: '/portal/fila' },

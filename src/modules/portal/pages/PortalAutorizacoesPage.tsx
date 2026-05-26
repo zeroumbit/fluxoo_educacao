@@ -20,7 +20,6 @@ import { useEffect,useRef,useState } from 'react'
 import { toast } from 'sonner'
 import { BotaoVoltar } from '../components/BotaoVoltar'
 import { usePortalContext } from '../context'
-import { useResponsavel } from '../hooks'
 
 // Helper de vibração
 const vibrate = (ms: number | number[] = 20) => {
@@ -149,9 +148,8 @@ function LeitorAutorizacao({ item, acao, onLeituraConcluida }: {
 
 export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: boolean }) {
 
-  const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
-  const { data: responsavel } = useResponsavel()
-  const { data: autorizacoes = [], isLoading } = useAutorizacoesPortal(alunoSelecionado?.id || null)
+  const { alunoSelecionado, responsavel, tenantId, isMultiAluno } = usePortalContext()
+  const { data: autorizacoes = [], isLoading, isError, error } = useAutorizacoesPortal(alunoSelecionado?.id || null)
   const responder = useResponderAutorizacao()
 
   const [modalItem, setModalItem] = useState<AutorizacaoModelo | null>(null)
@@ -234,6 +232,16 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <Shield className="h-16 w-16 text-red-200" />
+        <p className="font-bold text-red-600">Erro ao carregar autorizações.</p>
+        <p className="text-sm text-slate-500 max-w-md">{(error as any)?.message || 'Tente novamente mais tarde.'}</p>
       </div>
     )
   }

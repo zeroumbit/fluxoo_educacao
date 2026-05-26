@@ -775,7 +775,7 @@ export function DocumentosPage() {
                           {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
                             <div className="rounded-xl bg-white/80 border border-teal-100 p-3">
                               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
-                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id}</p>
+                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: any) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
                             </div>
                           )}
                           {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome) && (
