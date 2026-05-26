@@ -31,10 +31,12 @@ UserCircle,
 X
 } from 'lucide-react'
 import { useMemo,useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { useNotificacaoDetail } from '@/hooks/useNotifications'
 import { useModelosAutorizacaoAdmin } from '@/modules/autorizacoes/hooks'
 import { ContratoTab } from '../components/ContratoTab'
 import {
@@ -80,8 +82,11 @@ const DOCUMENT_TYPES = [
 type Tab = 'central' | 'contrato' | 'historico' | 'solicitacoes' | 'autorizacoes' | 'modelos'
 
 export function DocumentosPageMobile() {
+  const [searchParams] = useSearchParams()
   const { authUser } = useAuth()
-  const [activeTab, setActiveTab] = useState<Tab>('central')
+  const initialTab = (searchParams.get('tab') as Tab | null) || 'central'
+  const notificacaoId = searchParams.get('notificacao_id') || undefined
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -89,9 +94,11 @@ export function DocumentosPageMobile() {
   const { data: solicitacoes, isLoading: loadingSolicitacoes, refetch: refetchSolicitacoes } = useSolicitacoesDocumento()
   const { data: templates, isLoading: loadingTemplates, refetch: refetchTemplates } = useTemplates()
   const { data: modelosAutorizacao, isLoading: loadingAutorizacoes, refetch: refetchAutorizacoes } = useModelosAutorizacaoAdmin()
+  const { data: notificacaoDetalhe, isLoading: loadingNotificacaoDetalhe } = useNotificacaoDetail(notificacaoId)
   const { data: alunos } = useAlunos()
   const atualizarSolicitacao = useAtualizarSolicitacao()
   const emitir = useEmitirDocumento()
+  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, any>
 
   // Emission states
   const [isEmitModalOpen, setIsEmitModalOpen] = useState(false)
@@ -385,17 +392,58 @@ export function DocumentosPageMobile() {
 
           {activeTab === 'solicitacoes' && (
             <div className="space-y-4">
+               {loadingNotificacaoDetalhe && notificacaoId && (
+                 <div className="h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+               )}
+
+               {notificacaoDetalhe && (
+                 <NativeCard className="p-4 border border-teal-100 bg-teal-50/70 dark:bg-teal-500/10 dark:border-teal-500/20">
+                   <div className="flex items-start gap-3">
+                     <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shrink-0">
+                       <Inbox className="h-5 w-5 text-teal-600" />
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <Badge className="bg-teal-600 text-white border-none text-[8px] font-black uppercase tracking-widest mb-2">
+                         Notificacao do sino
+                       </Badge>
+                       <h4 className="font-black text-slate-900 dark:text-white leading-tight">
+                         {notificacaoDetalhe.titulo || 'Detalhes da notificacao'}
+                       </h4>
+                       <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+                         {notificacaoDetalhe.mensagem || 'Esta notificacao nao possui mensagem detalhada.'}
+                       </p>
+                       <div className="grid grid-cols-1 gap-2 mt-3">
+                         {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
+                           <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
+                             <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
+                             <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id}</p>
+                           </div>
+                         )}
+                         {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome || notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome) && (
+                           <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
+                             <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Transferencia</p>
+                             <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                               {notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome || 'Origem'} para {notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome || 'destino'}
+                             </p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+                 </NativeCard>
+               )}
+
                {loadingSolicitacoes ? (
                  <div className="space-y-4">
                     {[1,2,3].map(i => <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
                  </div>
-               ) : !solicitacoes?.length ? (
+               ) : !solicitacoes?.length && !notificacaoDetalhe ? (
                  <div className="py-20 text-center flex flex-col items-center">
                     <Inbox className="h-12 w-12 text-slate-200 mb-4" />
                     <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Sem solicitações</h3>
                     <p className="text-slate-500 text-sm mt-2">Novas solicitações de documentos aparecerão aqui.</p>
                  </div>
-               ) : (
+               ) : solicitacoes?.length ? (
                  solicitacoes.map((sol: any, idx: number) => (
                     <motion.div key={sol.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
                     <div className="relative group">
@@ -450,7 +498,7 @@ export function DocumentosPageMobile() {
                     </div>
                   </motion.div>
                  ))
-               )}
+               ) : null}
             </div>
           )}
 

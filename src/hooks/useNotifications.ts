@@ -51,7 +51,8 @@ export function useEscolaNotifications(tenantId?: string) {
           id: item.id,
           label: item.label,
           href: item.href,
-          category: item.category
+          category: item.category,
+          notifications: item.notifications
         })),
         notificacoes
       }
@@ -122,12 +123,9 @@ export function useNotificacoesActions() {
 export function useNotificacaoDetail(notificacaoId?: string) {
   return useQuery({
     queryKey: ['notification', notificacaoId],
-    queryFn: async () => {
-      if (!notificacaoId) return null
-      // Implementar busca de notificação única se necessário
-      return null
-    },
+    queryFn: () => notificacaoId ? notificacoesService.buscarNotificacaoPorId(notificacaoId) : null,
     enabled: !!notificacaoId,
     staleTime: 5000,
   })
 }
+

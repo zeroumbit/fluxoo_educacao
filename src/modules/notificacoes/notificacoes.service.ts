@@ -1,4 +1,4 @@
-import type { NotificacaoInsert as DBNotificacaoInsert,Notificacao } from '@/lib/database.types'
+import type { Notificacao, NotificacaoInsert as DBNotificacaoInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 
 export interface NotificacaoInsert {
@@ -14,9 +14,6 @@ export interface NotificacaoInsert {
 }
 
 export const notificacoesService = {
-  /**
-   * Busca todas as notificações não resolvidas do tenant
-   */
   async buscarNotificacoes(tenantId: string, userId?: string, limit = 50) {
     let query = (supabase.from('notificacoes') as any)
       .select('*')
@@ -25,7 +22,6 @@ export const notificacoesService = {
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    // Se tiver userId, filtra também (notificações do usuário ou globais)
     if (userId) {
       query = query.or(`user_id.is.null,user_id.eq.${userId}`)
     }
@@ -35,9 +31,16 @@ export const notificacoesService = {
     return data as Notificacao[]
   },
 
-  /**
-   * Busca contagem de notificações não lidas e não resolvidas
-   */
+  async buscarNotificacaoPorId(notificacaoId: string) {
+    const { data, error } = await (supabase.from('notificacoes') as any)
+      .select('*')
+      .eq('id', notificacaoId)
+      .maybeSingle()
+
+    if (error) throw error
+    return data as Notificacao | null
+  },
+
   async buscarContagemNaoLidas(tenantId: string, userId?: string) {
     let query = (supabase.from('notificacoes') as any)
       .select('id', { count: 'exact', head: true })
@@ -54,70 +57,47 @@ export const notificacoesService = {
     return count || 0
   },
 
-  /**
-   * Marca notificação como lida
-   */
   async marcarComoLida(notificacaoId: string) {
-    const { error } = await supabase
-      .rpc('marcar_notificacao_lida', { notificacao_id: notificacaoId })
-    
+    const { error } = await supabase.rpc('marcar_notificacao_lida', { notificacao_id: notificacaoId })
     if (error) throw error
   },
 
-  /**
-   * Marca notificação como resolvida (remove do sino)
-   */
   async marcarComoResolvida(notificacaoId: string) {
-    const { error } = await supabase
-      .rpc('marcar_notificacao_resolvida', { notificacao_id: notificacaoId })
-    
+    const { error } = await supabase.rpc('marcar_notificacao_resolvida', { notificacao_id: notificacaoId })
     if (error) throw error
   },
 
-  /**
-   * Marca múltiplas notificações como lidas
-   */
   async marcarMultiplasComoLidas(notificacaoIds: string[]) {
     if (notificacaoIds.length === 0) return
 
     const { error } = await supabase
       .from('notificacoes')
-      .update({ 
-        lida: true, 
-        lida_em: new Date().toISOString() 
+      .update({
+        lida: true,
+        lida_em: new Date().toISOString()
       })
       .in('id', notificacaoIds)
-    
+
     if (error) throw error
   },
 
-  /**
-   * Cria nova notificação
-   */
   async criarNotificacao(notificacao: NotificacaoInsert) {
     const { data, error } = await supabase
       .from('notificacoes')
       .insert({
         ...notificacao,
+        href: this.getTipoHref(notificacao.tipo, notificacao.href),
         lida: false,
         resolvida: false
       } as DBNotificacaoInsert)
       .select()
       .single()
-    
+
     if (error) throw error
     return data as Notificacao
   },
 
-  /**
-   * Cria notificação de radar de evasão (automática)
-   */
-  async criarNotificacaoRadarEvasao(
-    tenantId: string,
-    alunoId: string,
-    alunoNome: string
-  ) {
-    // Verifica se já existe notificação ativa para este aluno
+  async criarNotificacaoRadarEvasao(tenantId: string, alunoId: string, alunoNome: string) {
     const { data: existente } = await (supabase.from('notificacoes') as any)
       .select('id')
       .eq('tenant_id', tenantId)
@@ -128,15 +108,14 @@ export const notificacoesService = {
 
     if (existente) return existente
 
-    // Cria nova notificação
     const { data, error } = await supabase
       .from('notificacoes')
       .insert({
         tenant_id: tenantId,
         user_id: null,
         tipo: 'RADAR_EVASAO',
-        titulo: 'Aluno em risco de evasão',
-        mensagem: `${alunoNome} apresenta sinais de risco de evasão.`,
+        titulo: 'Aluno em risco de evasao',
+        mensagem: `${alunoNome} apresenta sinais de risco de evasao.`,
         href: '/dashboard',
         categoria: 'ESCOLAS',
         prioridade: 1,
@@ -151,9 +130,6 @@ export const notificacoesService = {
     return data as Notificacao
   },
 
-  /**
-   * Remove notificações resolvidas (limpeza)
-   */
   async limparNotificacoesResolvidas(tenantId: string, diasAntigos = 30) {
     const dataLimite = new Date()
     dataLimite.setDate(dataLimite.getDate() - diasAntigos)
@@ -168,29 +144,26 @@ export const notificacoesService = {
     if (error) throw error
   },
 
-  /**
-   * Busca notificações agrupadas por tipo para exibição no sino
-   */
   async buscarNotificacoesAgrupadas(tenantId: string, userId?: string) {
     const notificacoes = await this.buscarNotificacoes(tenantId, userId)
 
-    // Agrupa por tipo
     const agrupadas = notificacoes.reduce((acc, notif) => {
-      if (!acc[notif.tipo]) {
-        acc[notif.tipo] = []
-      }
+      if (!acc[notif.tipo]) acc[notif.tipo] = []
       acc[notif.tipo].push(notif)
       return acc
     }, {} as Record<string, Notificacao[]>)
 
-    // Formata para o padrão do NotificationBell
-    const items = Object.entries(agrupadas).map(([tipo, notifs]) => ({
-      id: tipo,
-      label: `${notifs.length} ${this.getTipoLabel(tipo, notifs.length)}`,
-      href: notifs[0]?.href || '/dashboard',
-      category: notifs[0]?.categoria || 'ESCOLAS',
-      notifications: notifs
-    }))
+    const items = Object.entries(agrupadas).map(([tipo, notifs]) => {
+      const href = this.getTipoHref(tipo, notifs[0]?.href || '/dashboard')
+
+      return {
+        id: tipo,
+        label: `${notifs.length} ${this.getTipoLabel(tipo, notifs.length)}`,
+        href,
+        category: notifs[0]?.categoria || 'ESCOLAS',
+        notifications: notifs.map((notif) => ({ ...notif, href }))
+      }
+    })
 
     return {
       total: notificacoes.length,
@@ -199,17 +172,30 @@ export const notificacoesService = {
     }
   },
 
-  /**
-   * Helper para label do tipo
-   */
   getTipoLabel(tipo: string, count: number): string {
     const labels: Record<string, string> = {
-      RADAR_EVASAO: count === 1 ? 'Perigo de evasão' : 'Perigo de evasão',
-      DOCUMENTO: count === 1 ? 'Pedido de documento' : 'Pedidos de documentação',
+      RADAR_EVASAO: count === 1 ? 'Perigo de evasao' : 'Perigo de evasao',
+      DOCUMENTO: count === 1 ? 'Pedido de documento' : 'Pedidos de documentacao',
       FINANCEIRO: count === 1 ? 'Alerta financeiro' : 'Alertas financeiros',
-      MATRICULA: count === 1 ? 'Matrícula pendente' : 'Matrículas pendentes',
+      MATRICULA: count === 1 ? 'Matricula pendente' : 'Matriculas pendentes',
       PAGAMENTO_PIX_MANUAL: count === 1 ? 'Comprovante PIX' : 'Comprovantes PIX'
     }
-    return labels[tipo] || 'Notificações'
+    return labels[tipo] || 'Notificacoes'
+  },
+
+  getTipoHref(tipo: string, fallback: string): string {
+    const hrefs: Record<string, string> = {
+      DOCUMENTO: '/documentos?tab=solicitacoes',
+      RADAR_EVASAO: '/dashboard',
+      FINANCEIRO: '/financeiro',
+      MATRICULA: '/matriculas',
+      PAGAMENTO_PIX_MANUAL: '/financeiro',
+      TRANSFERENCIA_DESTINO: '/transferencias',
+      TRANSFERENCIA_ORIGEM: '/transferencias',
+      TRANSFERENCIA_CONCLUIDA: '/transferencias',
+      TRANSFERENCIA_RECUSADA: '/transferencias',
+    }
+
+    return hrefs[tipo] || fallback
   }
 }

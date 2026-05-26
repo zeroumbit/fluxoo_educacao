@@ -51,10 +51,26 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
     setIsOpen(!isOpen);
   };
 
+  const buildNavigationHref = (href: string, notificacoes?: any[]) => {
+    const notificacao = notificacoes?.[0];
+    if (!notificacao?.id) return href;
+
+    const [pathname, query = ''] = href.split('?');
+    const params = new URLSearchParams(query);
+    params.set('notificacao_id', notificacao.id);
+
+    const metadata = notificacao.metadata || {};
+    if (metadata.transferencia_id) params.set('transferencia_id', metadata.transferencia_id);
+    if (metadata.aluno_id) params.set('aluno_id', metadata.aluno_id);
+
+    const queryString = params.toString();
+    return queryString ? `${pathname}?${queryString}` : pathname;
+  };
+
   const handleItemClick = (href: string, notificacoes?: any[]) => {
     vibrate(10);
     setIsOpen(false);
-    navigate(href);
+    navigate(buildNavigationHref(href, notificacoes));
     
     // Marca todas as notificações deste grupo como lidas
     if (notificacoes && notificacoes.length > 0) {
@@ -72,6 +88,13 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
     e.stopPropagation();
     vibrate(30);
     marcarComoResolvida.mutate(notificacaoId);
+  };
+
+  const handleKeyboardActivate = (event: React.KeyboardEvent, action: () => void) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
   };
 
   // Agrupa notificações por categoria
@@ -121,12 +144,15 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                   // Se tiver notificações individuais, renderiza cada uma
                   if (item.notifications && item.notifications.length > 0) {
                     return item.notifications.map((notif, notifIdx) => (
-                      <motion.button
+                      <motion.div
                         key={notif.id || `${item.id}-${notifIdx}`}
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleItemClick(item.href, [notif])}
+                        onKeyDown={(event) => handleKeyboardActivate(event, () => handleItemClick(item.href, [notif]))}
                         className="w-full flex items-center gap-3 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98] relative"
                       >
                         <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 transition-all border border-slate-100 group-hover:border-teal-500/20 shrink-0">
@@ -150,18 +176,21 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                             <Trash2 size={16} />
                           </button>
                         </div>
-                      </motion.button>
+                      </motion.div>
                     ))
                   }
                   
                   // Renderização padrão (sem notificações individuais)
                   return (
-                    <motion.button
+                    <motion.div
                       key={item.id}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleItemClick(item.href, [])}
+                      onKeyDown={(event) => handleKeyboardActivate(event, () => handleItemClick(item.href, []))}
                       className="w-full flex items-center gap-4 p-4 rounded-[20px] bg-slate-50/50 hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all text-left border border-transparent hover:border-slate-100 group active:scale-[0.98]"
                     >
                       <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-teal-500 transition-all border border-slate-100 group-hover:border-teal-500/20 shrink-0">
@@ -173,7 +202,7 @@ export function NotificationBell({ total, items, className, onItemClick, tenantI
                           Ver Detalhes <ExternalLink size={10} />
                         </div>
                       </div>
-                    </motion.button>
+                    </motion.div>
                   )
                 })}
               </div>

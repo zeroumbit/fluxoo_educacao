@@ -9,6 +9,7 @@ import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/com
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { useNotificacaoDetail } from '@/hooks/useNotifications'
 import { usePdf } from '@/hooks/usePdf'
 import { logger } from '@/lib/logger'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
@@ -49,6 +50,7 @@ X
 } from 'lucide-react'
 import { useMemo,useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { ContratoTab } from '../components/ContratoTab'
@@ -86,10 +88,13 @@ const turnoLabels: Record<string, string> = { manha: 'Manhã', tarde: 'Tarde', i
 
 export function DocumentosPage() {
   const { authUser } = useAuth()
+  const [searchParams] = useSearchParams()
   const { data: templates, isLoading: loadingTemplates } = useTemplates()
   const { data: emitidos, isLoading: loadingEmitidos } = useDocumentosEmitidos()
   const { data: alunos, isLoading: loadingAlunos } = useAlunos()
   const { data: solicitacoes, isLoading: loadingSolicitacoes } = useSolicitacoesDocumento()
+  const notificacaoId = searchParams.get('notificacao_id') || undefined
+  const { data: notificacaoDetalhe, isLoading: loadingNotificacaoDetalhe } = useNotificacaoDetail(notificacaoId)
   const atualizarSolicitacao = useAtualizarSolicitacao()
   const _vincularDocumento = useVincularDocumentoSolicitacao()
   const criarTemplate = useCriarTemplate()
@@ -103,7 +108,7 @@ export function DocumentosPage() {
   const { data: boletimV2 } = useBoletimV2PorAluno(selectedAluno)
   const { data: escola } = useEscola(authUser?.tenantId || '')
 
-  const [activeTab, setActiveTab] = useState('central')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'central')
   const [openTemplate, setOpenTemplate] = useState(false)
   const [openEmitir, setOpenEmitir] = useState(false)
   const [openVisualizar, setOpenVisualizar] = useState(false)
@@ -116,6 +121,7 @@ export function DocumentosPage() {
   const form = useForm({ resolver: zodResolver(templateSchema) })
 
   const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos || loadingSolicitacoes
+  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, any>
 
   // Desduplicação de Histórico (Mantém apenas o mais recente se forem idênticos)
   const dedupedEmitidos = useMemo(() => {
@@ -740,6 +746,56 @@ export function DocumentosPage() {
           <Card className="rounded-[32px] border-slate-100 shadow-xl overflow-hidden">
             <CardContent className="p-6">
               <div className="space-y-4">
+                {loadingNotificacaoDetalhe && notificacaoId && (
+                  <div className="h-28 rounded-2xl bg-slate-50 animate-pulse" />
+                )}
+
+                {notificacaoDetalhe && (
+                  <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center border border-teal-100">
+                        <AlertTriangle className="h-6 w-6 text-teal-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <Badge className="bg-teal-600 text-white border-none text-[9px] uppercase tracking-wider font-black">
+                            Notificacao do sino
+                          </Badge>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            {notificacaoDetalhe.created_at ? new Date(notificacaoDetalhe.created_at).toLocaleString('pt-BR') : ''}
+                          </span>
+                        </div>
+                        <h4 className="font-black text-slate-900 leading-tight">
+                          {notificacaoDetalhe.titulo || 'Detalhes da notificacao'}
+                        </h4>
+                        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                          {notificacaoDetalhe.mensagem || 'Esta notificacao nao possui mensagem detalhada.'}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                          {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
+                            <div className="rounded-xl bg-white/80 border border-teal-100 p-3">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
+                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id}</p>
+                            </div>
+                          )}
+                          {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome) && (
+                            <div className="rounded-xl bg-white/80 border border-teal-100 p-3">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Origem</p>
+                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome}</p>
+                            </div>
+                          )}
+                          {(notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome) && (
+                            <div className="rounded-xl bg-white/80 border border-teal-100 p-3">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Destino</p>
+                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {solicitacoes && solicitacoes.length > 0 ? (
                   solicitacoes.map((sol: any) => {
                     const statusColors: Record<string, string> = {
@@ -838,7 +894,7 @@ export function DocumentosPage() {
                       </div>
                     )
                   })
-                ) : (
+                ) : !notificacaoDetalhe ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                     <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center">
                       <Inbox className="h-10 w-10 text-slate-300" />
@@ -850,7 +906,7 @@ export function DocumentosPage() {
                       </p>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </CardContent>
           </Card>
