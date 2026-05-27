@@ -122,7 +122,7 @@ export function AtividadesPage() {
       }
       refetch()
       setOpen(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [Atividades] Erro ao salvar:', error)
       toast.error('Erro ao salvar atividade')
     }
@@ -399,8 +399,9 @@ function FileUploadField({ form: _form }: { form: any }) {
         .getPublicUrl(data.path)
       _form.setValue('anexo_url', publicUrl)
       toast.success('Arquivo enviado com sucesso!')
-    } catch (err: any) {
-      toast.error('Erro ao enviar arquivo: ' + err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao enviar arquivo: ' + message)
     } finally {
       setUploading(false)
     }

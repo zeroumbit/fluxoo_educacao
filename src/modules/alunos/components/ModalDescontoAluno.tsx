@@ -122,8 +122,9 @@ export function ModalDescontoAluno({ aluno, open, onClose }: ModalDescontoAlunoP
       })
       toast.success('Desconto (Override) aplicado com sucesso e auditado!')
       onClose()
-    } catch (err: any) {
-      toast.error('Erro ao aplicar desconto: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao aplicar desconto: ' + errMsg)
     }
   }
 
@@ -132,8 +133,9 @@ export function ModalDescontoAluno({ aluno, open, onClose }: ModalDescontoAlunoP
       await revogarOverrides.mutateAsync(aluno.id)
       toast.success('Descontos ativos foram revogados!')
       onClose()
-    } catch (err: any) {
-      toast.error('Erro ao revogar desconto: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao revogar desconto: ' + errMsg)
     }
   }
 

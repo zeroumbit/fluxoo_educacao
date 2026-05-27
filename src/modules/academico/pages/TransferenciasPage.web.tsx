@@ -136,8 +136,9 @@ export function TransferenciasPageWeb() {
       toast.success('Aluno liberado com sucesso! Dados integrados na escola destino.')
       setConfirmLiberar(null)
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao concluir transferência')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao concluir transferência'
+      toast.error(message)
     }
   }
 
@@ -146,8 +147,9 @@ export function TransferenciasPageWeb() {
       await aceitarDestino.mutateAsync(id)
       toast.success('Transferência aceita! Agora aguarde a liberação da escola de origem.')
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao aceitar transferência')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao aceitar transferência'
+      toast.error(message)
     }
   }
 
@@ -165,8 +167,9 @@ export function TransferenciasPageWeb() {
       setRecusarDestinoDialog(null)
       setJustificativaRecusa('')
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao recusar transferência')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao recusar transferência'
+      toast.error(message)
     }
   }
 

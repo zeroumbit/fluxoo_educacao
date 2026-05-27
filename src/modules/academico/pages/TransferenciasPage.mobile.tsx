@@ -194,8 +194,9 @@ export function TransferenciasPageMobile() {
         toast.success('Solicitação enviada com sucesso!')
         resetForm()
         refetch()
-      } catch (error: any) {
-        toast.error(error.message || 'Erro ao processar solicitação')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro ao processar solicitação'
+        toast.error(message)
       }
     } else {
       // Outbound Logic
@@ -215,8 +216,9 @@ export function TransferenciasPageMobile() {
         toast.success('Transferência iniciada!')
         resetForm()
         refetch()
-      } catch (error: any) {
-        toast.error(error.message || 'Erro ao iniciar transferência')
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro ao iniciar transferência'
+        toast.error(message)
       }
     }
   }
@@ -226,8 +228,9 @@ export function TransferenciasPageMobile() {
       await aceitarDestino.mutateAsync(id)
       toast.success('Transferência aceita!')
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao aceitar')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao aceitar'
+      toast.error(message)
     }
   }
 
@@ -242,8 +245,9 @@ export function TransferenciasPageMobile() {
       setRecusarDestinoDialog(null)
       setJustificativaRecusa('')
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao recusar')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao recusar'
+      toast.error(message)
     }
   }
 
@@ -252,8 +256,8 @@ export function TransferenciasPageMobile() {
       await concluirTransferencia.mutateAsync(id)
       toast.success('Concluído com sucesso! Dados integrados.')
       setDetailTransferencia(null)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao concluir')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao concluir'
     }
   }
 

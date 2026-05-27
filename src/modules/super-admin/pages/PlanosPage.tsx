@@ -136,10 +136,11 @@ export function PlanosPage() {
       })
       toast.success(editingPlano ? 'Plano atualizado!' : 'Plano criado!')
       setIsModalOpen(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       // Mostra mensagem específica para conflito de plano único
-      if (error.message?.includes('Já existe um plano ativo')) {
-        toast.error(error.message)
+      if (errMsg?.includes('Já existe um plano ativo')) {
+        toast.error(errMsg)
       } else {
         toast.error('Erro ao salvar plano')
       }

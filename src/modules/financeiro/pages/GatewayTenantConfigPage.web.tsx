@@ -121,8 +121,9 @@ export function GatewayTenantConfigPageWeb() {
           ? `${getGatewayNome(gateway)} ativado. Outros gateways foram desativados.`
           : `Configuração salva. Gateway desativado.`
       })
-    } catch (err: any) {
-      toast.error('Erro ao salvar:', { description: err.message })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao salvar:', { description: errMsg })
     }
   }
 
@@ -132,8 +133,9 @@ export function GatewayTenantConfigPageWeb() {
       await refetch()
       toast.success('Gateway desativado.')
       setExpandedGateway(null)
-    } catch (err: any) {
-      toast.error('Erro ao desativar:', { description: err.message })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao desativar:', { description: errMsg })
     }
   }
 

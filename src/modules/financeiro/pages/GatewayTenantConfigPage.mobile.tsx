@@ -127,8 +127,9 @@ export function GatewayTenantConfigPageMobile() {
           : `Configuração salva. Gateway desativado.`
       })
       handleCloseGateway()
-    } catch (err: any) {
-      toast.error('Erro ao salvar:', { description: err.message })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao salvar:', { description: errMsg })
     }
   }
 
@@ -139,8 +140,9 @@ export function GatewayTenantConfigPageMobile() {
       toast.success('Gateway desativado.')
       setConfirmDesativacao(null)
       handleCloseGateway()
-    } catch (err: any) {
-      toast.error('Erro ao desativar:', { description: err.message })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao desativar:', { description: errMsg })
     }
   }
 

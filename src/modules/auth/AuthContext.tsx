@@ -459,9 +459,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { portalService } = await import('@/modules/portal/service')
       await portalService.loginPorCpf(cpf, password)
       return { error: null }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoading(false)
-      return { error: error.message }
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      return { error: errMsg }
     }
   }
 

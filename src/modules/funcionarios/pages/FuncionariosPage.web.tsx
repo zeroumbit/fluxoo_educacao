@@ -113,8 +113,9 @@ function NovaFuncaoDialog({ tenantId, categorias, onCreated }: NovaFuncaoDialogP
       onCreated(data.nome.trim())
       reset()
       setOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar função')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao criar função'
+      toast.error(errMsg)
     }
   }
 
@@ -370,8 +371,9 @@ export function FuncionariosPage() {
       funcForm.reset()
       setDialogOpen(false)
       setEditFunc(null)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao processar')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao processar'
+      toast.error(errMsg)
     }
   }
 
@@ -387,8 +389,9 @@ export function FuncionariosPage() {
       toast.success('Usuário criado com sucesso!')
       userForm.reset()
       setUserDialogOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar usuário')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao criar usuário'
+      toast.error(errMsg)
     }
   }
 
@@ -413,8 +416,9 @@ export function FuncionariosPage() {
         if (res.pulados > 0) toast.info(`${res.pulados} já existiam e foram puladas.`)
       }
       setFolhaDialogOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao gerar folha')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao gerar folha'
+      toast.error(errMsg)
     }
   }
 

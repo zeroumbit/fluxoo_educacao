@@ -134,8 +134,9 @@ export function FrequenciaPageMobile() {
     try {
       await salvarFrequencias.mutateAsync(dados)
       toast.success('Frequência salva com sucesso!')
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar frequência')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao salvar frequência'
+      toast.error(errMsg)
     }
   }
 

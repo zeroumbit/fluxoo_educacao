@@ -101,8 +101,9 @@ export function FiliaisPageMobile() {
         toast.success('Unidade criada!')
       }
       setIsEditOpen(false)
-    } catch (e: any) {
-      toast.error('Erro ao salvar: ' + e.message)
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : 'Erro ao salvar'
+      toast.error('Erro ao salvar: ' + errMsg)
     }
   }
 

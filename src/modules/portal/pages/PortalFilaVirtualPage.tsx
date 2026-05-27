@@ -73,8 +73,9 @@ export function PortalFilaVirtualPage({ hideHeader = false }: { hideHeader?: boo
       })
       vibrate(60)
       toast.success('Você entrou na Fila Virtual!')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao entrar na fila.')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao entrar na fila.')
     }
   }
 

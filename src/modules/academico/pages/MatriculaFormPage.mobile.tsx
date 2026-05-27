@@ -188,7 +188,7 @@ export function MatriculaFormPageMobile() {
         toast.success(alunosIds.length > 1 ? `${alunosIds.length} Matrículas realizadas!` : 'Matrícula realizada!')
       }
       navigate('/matriculas')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao salvar matrícula:', err)
       toast.error('Erro ao salvar matrícula')
     }

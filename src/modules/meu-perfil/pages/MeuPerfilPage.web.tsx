@@ -138,9 +138,10 @@ export function MeuPerfilPageWeb() {
       }
 
       toast.success('Perfil atualizado com sucesso!')
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       console.error('Erro ao salvar perfil:', error)
-      toast.error(error.message || 'Erro ao salvar perfil')
+      toast.error(errMsg || 'Erro ao salvar perfil')
     } finally {
       setSaving(false)
     }
@@ -164,8 +165,9 @@ export function MeuPerfilPageWeb() {
       setSenhaAtual('')
       setNovaSenha('')
       setConfirmSenha('')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao alterar senha')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao alterar senha')
     } finally {
       setAlterandoSenha(false)
     }

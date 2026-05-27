@@ -403,8 +403,9 @@ export function AlunoCadastroPageMobile() {
       localStorage.removeItem('aluno_cadastro_draft_mobile')
       localStorage.removeItem('aluno_cadastro_step_mobile')
       setShowPostCadastroModal(true)
-    } catch (err: any) {
-      toast.error('Erro: ' + (err?.message || 'Verifique os campos.'), { id: toastId })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro: ' + (errMsg || 'Verifique os campos.'), { id: toastId })
     }
   }
 

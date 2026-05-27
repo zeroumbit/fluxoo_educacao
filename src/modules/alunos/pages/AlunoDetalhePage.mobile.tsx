@@ -99,8 +99,9 @@ export function AlunoDetalhePageMobile() {
     try {
       await alternarFinanceiro.mutateAsync({ vinculoId, isFinanceiro: true, alunoId: id })
       toast.success('Pagador atualizado!')
-    } catch (err: any) {
-      toast.error('Erro ao trocar pagador: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao trocar pagador: ' + errMsg)
     }
   }
   
@@ -111,8 +112,9 @@ export function AlunoDetalhePageMobile() {
       await atualizarResponsavel.mutateAsync({ id, responsavel: payload })
       setEditingResp(null)
       toast.success('Responsável atualizado!')
-    } catch (err: any) {
-      toast.error('Erro ao atualizar: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao atualizar: ' + errMsg)
     }
   }
   
@@ -122,8 +124,9 @@ export function AlunoDetalhePageMobile() {
       await desvincularResponsavel.mutateAsync(deletingVinculo.id)
       toast.success('Responsável desvinculado!')
       setDeletingVinculo(null)
-    } catch (err: any) {
-      toast.error('Erro ao desvincular: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao desvincular: ' + errMsg)
     }
   }
 

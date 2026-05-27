@@ -128,8 +128,9 @@ export function NotasPageMobile() {
       toast.success('Notas salvas!')
       refetchNotas()
       setIsEditOpen(false)
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido'
+      toast.error('Erro: ' + message)
     }
   }
 

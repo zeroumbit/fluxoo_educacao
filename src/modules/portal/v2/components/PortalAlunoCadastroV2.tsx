@@ -128,8 +128,9 @@ export function PortalAlunoCadastroV2() {
 
       toast.success('Foto atualizada!');
       await refreshData();
-    } catch (err: any) {
-      toast.error('Erro ao subir foto: ' + err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao subir foto: ' + errMsg);
     } finally {
       setIsUploading(false);
     }
@@ -150,7 +151,7 @@ export function PortalAlunoCadastroV2() {
       toast.success('Foto removida!');
       await refreshData();
       setShowDeletePhotoDialog(false);
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       toast.error('Erro ao remover foto.');
     } finally {
       setIsUploading(false);
@@ -169,8 +170,9 @@ export function PortalAlunoCadastroV2() {
       });
       toast.success('Dados salvos com sucesso!');
       await refreshData();
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar dados.');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao salvar dados.');
     } finally {
       setIsSubmitting(false);
     }

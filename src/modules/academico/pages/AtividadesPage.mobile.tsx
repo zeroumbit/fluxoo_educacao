@@ -527,8 +527,9 @@ function FileUploadFieldMobile({ form, authUser }: { form: any; authUser: any })
         .getPublicUrl(data.path)
       form.setValue('anexo_url', publicUrl)
       toast.success('Arquivo enviado com sucesso!')
-    } catch (err: any) {
-      toast.error('Erro ao enviar arquivo: ' + err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao enviar arquivo: ' + message)
     } finally {
       setUploading(false)
     }

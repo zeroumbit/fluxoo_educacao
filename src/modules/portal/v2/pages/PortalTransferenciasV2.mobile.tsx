@@ -69,8 +69,9 @@ export function PortalTransferenciasV2Mobile() {
       setSelectedTransf(null)
       setRecusando(false)
       setMotivoRecusa('')
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao responder transferência')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao responder transferência')
     }
   }
 

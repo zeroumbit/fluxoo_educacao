@@ -689,10 +689,11 @@ export function EscolaCadastroPage() {
                             try {
                               validarComprovanteCadastro(file)
                               setComprovante(file)
-                            } catch (error: any) {
+                            } catch (error: unknown) {
+                              const errMsg = error instanceof Error ? error.message : 'Arquivo invalido.'
                               e.target.value = ''
                               setComprovante(null)
-                              toast.error(error.message || 'Arquivo invalido.')
+                              toast.error(errMsg)
                             }
                           }}
                           className="file:mr-3 file:text-xs file:font-bold file:border-0 file:bg-emerald-100 file:text-emerald-700 file:rounded-lg file:px-3 file:py-1"

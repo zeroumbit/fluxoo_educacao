@@ -129,9 +129,10 @@ export function AlunoDetalhePageWeb() {
       await atualizarAluno.mutateAsync({ id, aluno: payload })
       toast.success('Dados atualizados com sucesso!')
       setIsEditing(false)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
       logger.error('❌ Erro ao salvar aluno:', err)
-      toast.error('Erro ao salvar alterações: ' + (err.message || 'Erro desconhecido'))
+      toast.error('Erro ao salvar alterações: ' + errMsg)
     }
   }
 
@@ -164,9 +165,10 @@ export function AlunoDetalhePageWeb() {
       await atualizarAluno.mutateAsync({ id, aluno: { foto_url: publicUrl } })
       
       toast.success('Foto atualizada com sucesso!', { id: toastId })
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
       logger.error('❌ Erro no upload:', err)
-      toast.error('Erro ao subir foto: ' + err.message, { id: toastId })
+      toast.error('Erro ao subir foto: ' + errMsg, { id: toastId })
     } finally {
       setUploadingFoto(false)
     }
@@ -179,7 +181,7 @@ export function AlunoDetalhePageWeb() {
       await atualizarAluno.mutateAsync({ id, aluno: { foto_url: null } })
       setConfirmDeleteFoto(false)
       toast.success('Foto removida com sucesso!')
-    } catch (_err: any) {
+    } catch {
       toast.error('Erro ao remover foto')
     }
   }
@@ -206,8 +208,9 @@ export function AlunoDetalhePageWeb() {
       toast.success('Senha definida e acesso liberado!')
       setActivatingResp(null)
       setNewPassword('')
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao ativar acesso')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao ativar acesso')
     }
   }
 
@@ -217,8 +220,9 @@ export function AlunoDetalhePageWeb() {
       const { id, ...payload } = editingResp
       await atualizarResponsavel.mutateAsync({ id, responsavel: payload })
       setEditingResp(null)
-    } catch (err: any) {
-      toast.error('Erro ao atualizar responsável: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao atualizar responsável: ' + errMsg)
     }
   }
 
@@ -226,8 +230,9 @@ export function AlunoDetalhePageWeb() {
     if (!id) return
     try {
       await alternarFinanceiro.mutateAsync({ vinculoId, isFinanceiro: true, alunoId: id })
-    } catch (err: any) {
-      toast.error('Erro ao trocar pagador: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao trocar pagador: ' + errMsg)
     }
   }
 
@@ -293,8 +298,9 @@ export function AlunoDetalhePageWeb() {
       setShowAddGuardian(false)
       setNewGuardianData({ cpf: '', nome: '', email: '', telefone: '', parentesco: '', isFinanceiro: false })
       setExistingResponsibleId(null)
-    } catch (err: any) {
-      toast.error('Erro ao vincular: ' + err.message)
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao vincular: ' + errMsg)
     }
   }
 

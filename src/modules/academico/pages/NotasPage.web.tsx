@@ -96,8 +96,9 @@ function ModalNovaAvaliacao({
       })
       toast.success('Avaliação criada!')
       onClose()
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido'
+      toast.error('Erro: ' + message)
     }
   }
 
@@ -241,8 +242,9 @@ function PainelLancamentoNotas({
         try {
           await salvarEmLote({ tenantId, avaliacaoId: avaliacao.id, notas: payload })
           toast.success(`Notas de "${avaliacao.titulo}" salvas!`)
-        } catch (e: any) {
-          toast.error('Erro ao salvar: ' + e.message)
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : 'Erro desconhecido'
+          toast.error('Erro ao salvar: ' + message)
         }
       }
     )
@@ -254,8 +256,9 @@ function PainelLancamentoNotas({
       await excluirAvaliacao(avaliacao.id)
       toast.success('Avaliação excluída')
       onDeleted()
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido'
+      toast.error('Erro: ' + message)
     }
   }
 
@@ -429,8 +432,9 @@ export function NotasPageWeb() {
     try {
       await fecharBimestre({ turmaId, bimestre: Number(bimestre) })
       toast.success(`${bimestre}º bimestre fechado!`)
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido'
+      toast.error('Erro: ' + message)
     }
   }
 
@@ -439,8 +443,9 @@ export function NotasPageWeb() {
     try {
       await reabrirBimestre({ turmaId, bimestre: Number(bimestre) })
       toast.success(`${bimestre}º bimestre reaberto!`)
-    } catch (e: any) {
-      toast.error('Erro: ' + e.message)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erro desconhecido'
+      toast.error('Erro: ' + message)
     }
   }
 

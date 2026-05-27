@@ -86,8 +86,9 @@ export function AlmoxarifadoPageMobile() {
       resetMovForm()
       setIsMovOpen(false)
       refetch()
-    } catch (e: any) {
-      toast.error('Erro ao registrar: ' + e.message)
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : 'Erro ao registrar'
+      toast.error('Erro ao registrar: ' + errMsg)
     } finally {
       setIsSaving(false)
     }

@@ -88,8 +88,9 @@ export function FinanceiroPageMobile() {
       toast.success('Lançamento realizado!')
       setSheetOpen(false)
       reset()
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao salvar')
     }
   }
 

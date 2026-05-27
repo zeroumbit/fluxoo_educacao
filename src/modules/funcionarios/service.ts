@@ -205,7 +205,7 @@ export const funcionariosService = {
       }
 
       return authData
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar usuário escola:', error)
       throw error
     }

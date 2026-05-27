@@ -131,9 +131,10 @@ export function AlunosImportarPage() {
          navigate('/alunos')
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       console.error('Erro na importação:', error)
-      toast.error('Falha crítica no processamento: ' + error.message)
+      toast.error('Falha crítica no processamento: ' + errMsg)
     } finally {
       setIsUploading(false)
     }

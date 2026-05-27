@@ -56,8 +56,9 @@ export function PerfisPage() {
       setNewNome('')
       setNewDescricao('')
       setNewParent('')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar perfil')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao criar perfil')
     }
   }
 
@@ -67,8 +68,9 @@ export function PerfisPage() {
     try {
       await excluirPerfil.mutateAsync(id)
       toast.success('Perfil excluído')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao excluir perfil')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao excluir perfil')
     }
   }
 
@@ -362,8 +364,9 @@ function PerfilPermissionEditor({ perfilId }: { perfilId: string }) {
       }))
       await definirPermissoes.mutateAsync({ perfilId, permissoes })
       toast.success('Permissões atualizadas!')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar permissões')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao salvar permissões')
     }
   }
 

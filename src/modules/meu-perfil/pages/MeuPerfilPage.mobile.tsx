@@ -132,9 +132,10 @@ export function MeuPerfilPageMobile() {
       }
 
       toast.success('Perfil atualizado com sucesso!')
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       console.error('Erro ao salvar perfil:', error)
-      toast.error(error.message || 'Erro ao salvar perfil')
+      toast.error(errMsg || 'Erro ao salvar perfil')
     } finally {
       setSaving(false)
     }
@@ -149,6 +150,7 @@ export function MeuPerfilPageMobile() {
       toast.error('A senha deve ter pelo menos 6 caracteres')
       return
     }
+
     setAlterandoSenha(true)
     try {
       const { error } = await supabase.auth.updateUser({ password: novaSenha })
@@ -157,8 +159,9 @@ export function MeuPerfilPageMobile() {
       setSenhaAtual('')
       setNovaSenha('')
       setConfirmSenha('')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao alterar senha')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao alterar senha')
     } finally {
       setAlterandoSenha(false)
     }

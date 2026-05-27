@@ -107,8 +107,9 @@ export function PrecoClienteDialog({ tenantId, escolaNome, open, onOpenChange }:
         await ativarModulo.mutateAsync({ tenantId, moduloCodigo: codigo })
       }
       toast.success('Módulo atualizado!')
-    } catch (err: any) {
-      toast.error(err?.message || 'Erro ao salvar módulo.')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao salvar módulo.')
     }
   }
 

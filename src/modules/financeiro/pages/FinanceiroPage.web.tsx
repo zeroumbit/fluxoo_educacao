@@ -117,8 +117,9 @@ export function FinanceiroPageWeb() {
           setDialogOpen(false)
           reset()
           refetch()
-        } catch (error: any) {
-          toast.error(error.message || 'Erro ao criar cobrança')
+        } catch (error: unknown) {
+          const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+          toast.error(errMsg || 'Erro ao criar cobrança')
         }
       }
     )
@@ -195,8 +196,9 @@ export function FinanceiroPageWeb() {
       setDeleteDialogOpen(false)
       setCobrancaExcluindo(null)
       refetch()
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao excluir cobrança')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao excluir cobrança')
     }
   }
 

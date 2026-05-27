@@ -62,8 +62,9 @@ export function ModalSolicitarTransferenciaPortal({
       onClose()
       setDestinoId('')
       setMotivo('')
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao enviar solicitação')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
+      toast.error(errMsg || 'Erro ao enviar solicitação')
     }
   }
 

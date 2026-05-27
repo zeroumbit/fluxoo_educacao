@@ -73,8 +73,9 @@ export function DisciplinasPageMobile() {
       toast.success('Disciplina criada!', { position: 'top-center' })
       setNovoNome('')
       setFormOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar disciplina', { position: 'top-center' })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar disciplina'
+      toast.error(message, { position: 'top-center' })
     }
   }
 

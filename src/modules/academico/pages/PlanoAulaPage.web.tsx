@@ -85,8 +85,9 @@ export function PlanoAulaPage() {
       }
       handleClose()
       refetch()
-    } catch (error: any) {
-      toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Tente novamente'
+      toast.error(`Erro ao salvar: ${message}`)
     }
   }
 
@@ -123,7 +124,7 @@ export function PlanoAulaPage() {
       await excluir.mutateAsync(id)
       toast.success('Plano de aula excluído com sucesso!')
       refetch()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [PlanoAula] Erro ao excluir:', error)
       toast.error('Erro ao excluir plano de aula')
     }

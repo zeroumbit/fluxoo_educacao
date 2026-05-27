@@ -172,8 +172,9 @@ export function DocumentosPage() {
       toast.success('Template excluído com sucesso!')
       setDeleteDialogOpen(false)
       setTemplateParaExcluir(null)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao excluir template')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro ao excluir template'
+      toast.error(errMsg)
     }
   }
 
@@ -189,8 +190,9 @@ export function DocumentosPage() {
       }
       setOpenTemplate(false)
       setEditando(null)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar template')
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro ao salvar template'
+      toast.error(errMsg)
     }
   }
 

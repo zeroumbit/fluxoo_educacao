@@ -105,8 +105,9 @@ export function AlunosListPageMobile({ hideBottomNav = false }: { hideBottomNav?
       toast.success('Aluno desativado!', { position: 'top-center' })
       setShowDesativarDialog(false)
       setSelectedAluno(null)
-    } catch (err: any) {
-      toast.error('Erro ao desativar: ' + err.message, { position: 'top-center' })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao desativar: ' + errMsg, { position: 'top-center' })
     }
   }
 
@@ -130,8 +131,9 @@ export function AlunosListPageMobile({ hideBottomNav = false }: { hideBottomNav?
       setShowDeleteDialog(false)
       setSelectedAluno(null)
       refetch()
-    } catch (err: any) {
-      toast.error('Erro ao excluir: ' + err.message, { position: 'top-center' })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro ao excluir: ' + errMsg, { position: 'top-center' })
     }
   }
 

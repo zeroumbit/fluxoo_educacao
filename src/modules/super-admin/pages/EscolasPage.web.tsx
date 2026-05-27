@@ -103,9 +103,10 @@ export function EscolasPageWeb() {
     try {
       await updateStatus.mutateAsync({ id, status: 'ativa' })
       toast.success('Escola aprovada e ativada com sucesso!')
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       console.error('Erro ao aprovar escola:', error)
-      toast.error(error?.message || 'Erro ao aprovar escola. Verifique as permissões.')
+      toast.error(errMsg || 'Erro ao aprovar escola. Verifique as permissões.')
     }
   }
 

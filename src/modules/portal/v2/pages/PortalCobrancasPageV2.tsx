@@ -646,7 +646,7 @@ function PagamentoPixManual({ isOpen, onClose, cobranca, copiado, setCopiado }: 
       if (numero && numero.length >= 8) {
         window.open(`https://wa.me/${numero.startsWith('55') ? numero : '55'+numero}?text=${msg}`, '_blank')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
       toast.error('Erro ao processar comprovante.')
     } finally {

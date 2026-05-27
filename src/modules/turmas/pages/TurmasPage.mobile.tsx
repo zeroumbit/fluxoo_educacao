@@ -180,8 +180,9 @@ export function TurmasPageMobile() {
         toast.success('Turma cadastrada!', { position: 'top-center' })
       }
       setFormOpen(false)
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar', { position: 'top-center' })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro ao salvar'
+      toast.error(errMsg, { position: 'top-center' })
     }
   }
 

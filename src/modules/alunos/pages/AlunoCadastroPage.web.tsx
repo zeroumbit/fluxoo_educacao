@@ -562,12 +562,13 @@ export function AlunoCadastroPage() {
       localStorage.removeItem('aluno_cadastro_step')
       
       setShowPostCadastroModal(true)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
       logger.error('Erro detalhado ao cadastrar aluno:', err)
 
       let errorMessage = 'Erro ao cadastrar aluno. '
-      if (err?.message) errorMessage += err.message
-      if (err?.details) errorMessage += ` (${err.details})`
+      if (errMsg) errorMessage += errMsg
+      if ((err as any)?.details) errorMessage += ` (${(err as any).details})`
 
       toast.error(errorMessage, { duration: 8000 })
     }
@@ -596,8 +597,9 @@ export function AlunoCadastroPage() {
 
       setValue('foto_url', publicUrl)
       toast.success('Foto processada!', { id: toastId })
-    } catch (err: any) {
-      toast.error('Erro no upload: ' + err.message, { id: toastId })
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      toast.error('Erro no upload: ' + errMsg, { id: toastId })
     } finally {
       setUploadingFoto(false)
     }

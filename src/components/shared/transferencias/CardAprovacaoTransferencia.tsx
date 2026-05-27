@@ -49,9 +49,10 @@ export function CardAprovacaoTransferencia({
       toast.success("Transferência aprovada!", {
         description: "A escola de origem foi notificada para iniciar o desligamento."
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      toast.error(err.message || "Erro ao aprovar transferência")
+      const errMsg = err instanceof Error ? err.message : "Erro ao aprovar transferência"
+      toast.error(errMsg)
     } finally {
       setIsProcessing(false)
     }
@@ -70,9 +71,10 @@ export function CardAprovacaoTransferencia({
 
       setIsStatusConcluido('recusado')
       toast.info("Transferência recusada")
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      toast.error(err.message || "Erro ao recusar transferência")
+      const errMsg = err instanceof Error ? err.message : "Erro ao recusar transferência"
+      toast.error(errMsg)
     } finally {
       setIsProcessing(false)
     }

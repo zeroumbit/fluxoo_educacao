@@ -126,9 +126,10 @@ export function ModalSolicitarTransferencia({
             setRpcStatus('not_found')
             setAlunoData(null)
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('[TRANSFERENCIA] Erro inesperado:', err)
-          setRpcErrorDetail(err.message || 'Erro inesperado')
+          const errMsg = err instanceof Error ? err.message : 'Erro inesperado'
+          setRpcErrorDetail(errMsg)
           setRpcStatus('error')
           setAlunoData(null)
         } finally {
