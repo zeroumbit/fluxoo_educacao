@@ -81,7 +81,7 @@ export function PortalCobrancasPageV2Mobile() {
   const [copiado, setCopiado] = useState(false)
 
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
-  const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
+  const queriesConfig = useMemo(() => (vinculos || []).map((v) => ({
     queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
     queryFn: () => portalFinanceiroService.obterFaturasDoAluno(v.aluno.id, v.aluno.tenant_id),
     enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
@@ -95,7 +95,7 @@ export function PortalCobrancasPageV2Mobile() {
   
   const familyData = useMemo(() => {
     if (!vinculos || isLoadingCobrancas || isLoadingCtx) return null
-    const alunosComFaturas = vinculos.map((v: any, index: number) => {
+    const alunosComFaturas = vinculos.map((v, index: number) => {
       const faturas = cobrancasQueries[index]?.data || []
       
       // Normalizar estrutura da turma (pode vir como array ou objeto)
@@ -110,20 +110,20 @@ export function PortalCobrancasPageV2Mobile() {
     })
     const allFaturas = alunosComFaturas.flatMap(a => a.faturas)
     
-    const isAtrasada = (f: any) => {
+    const isAtrasada = (f: Cobranca) => {
        const hoje = new Date()
        return f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
      }
     
     // Total Pago: Soma as faturas marcadas como 'pago' ou onde pago === true, usando valor_pago prioritariamente
     const totalPago = allFaturas
-      .filter((f: any) => f.status === 'pago' || f.pago === true)
-      .reduce((acc: number, f: any) => acc + Number(f.valor_pago || f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+      .filter((f: Cobranca) => f.status === 'pago' || f.pago === true)
+      .reduce((acc: number, f: Cobranca) => acc + Number(f.valor_pago || f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Atrasado: status 'atrasado' OU data vencida, e NAO pago
     const atrasado = allFaturas
-      .filter((f: any) => isAtrasada(f) && f.status !== 'pago' && f.pago !== true)
-      .reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+      .filter((f: Cobranca) => isAtrasada(f) && f.status !== 'pago' && f.pago !== true)
+      .reduce((acc: number, f: Cobranca) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
     
     // Materiais/Compras
     const materiais = allFaturas
@@ -177,7 +177,7 @@ export function PortalCobrancasPageV2Mobile() {
     
     // Encontra qual aluno tem essa fatura
     for (const aluno of familyData.alunos) {
-      const found = aluno.faturas?.find((f: any) => f.id === targetId)
+      const found = aluno.faturas?.find((f: Cobranca) => f.id === targetId)
       if (found) {
         setSelectedAluno(aluno)
         setCobrancaAtiva({ ...found, alunoNome: aluno.nome_completo, tenant_id: found.tenant_id || aluno.tenant_id })
@@ -277,7 +277,7 @@ export function PortalCobrancasPageV2Mobile() {
         </div>
 
         {/* Cards */}
-        {familyData?.alunos.map((aluno: any) => (
+        {familyData?.alunos.map((aluno) => (
           <AlunoCardMobile
             key={aluno.id}
             aluno={aluno}
@@ -299,7 +299,7 @@ export function PortalCobrancasPageV2Mobile() {
           <DetailDrawerMobile
             aluno={selectedAluno}
             onClose={() => setSelectedAluno(null)}
-            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
+            onPagar={(fat: Cobranca) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
           />
         </SheetContent>
       </Sheet>
@@ -367,8 +367,8 @@ function ResumoCardMobile({ label, value, icon: Icon, color, isCritical, isDate,
 
 
 function AlunoCardMobile({ aluno, onClick }: any) {
-  const pendentes = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado').length
-  const atrasadas = aluno.faturas.filter((f: any) => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < new Date())).length
+  const pendentes = aluno.faturas.filter((f: Cobranca) => f.status !== 'pago' && f.status !== 'cancelado').length
+  const atrasadas = aluno.faturas.filter((f: Cobranca) => f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < new Date())).length
 
   return (
     <motion.button
@@ -445,8 +445,8 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
   if (!aluno) return null
 
   // Total Geral de todas as faturas em aberto
-  const pendentesFaturas = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.pago !== true && f.status !== 'cancelado')
-  const totalGeral = pendentesFaturas.reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+  const pendentesFaturas = aluno.faturas.filter((f: Cobranca) => f.status !== 'pago' && f.pago !== true && f.status !== 'cancelado')
+  const totalGeral = pendentesFaturas.reduce((acc: number, f: Cobranca) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -518,7 +518,7 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
 
             <TabsContent value="pagos" className="m-0 outline-none">
               <DrawerFaturaListMobile
-                faturas={aluno.faturas.filter((f: any) => f.status === 'pago' || f.pago === true)}
+                faturas={aluno.faturas.filter((f: Cobranca) => f.status === 'pago' || f.pago === true)}
                 isHistorico
                 exibirTodas
               />
@@ -566,7 +566,7 @@ function DrawerFaturaListMobile({ faturas, onAction, isHistorico, exibirTodas, o
 
   return (
     <div className="flex flex-col gap-3 pb-safe">
-      {sorted.map((fat: any) => {
+      {sorted.map((fat: Cobranca) => {
         const isVencida = fat.status === 'atrasado' || (fat.status === 'a_vencer' && new Date(fat.data_vencimento + 'T12:00:00') < new Date())
 
         return (

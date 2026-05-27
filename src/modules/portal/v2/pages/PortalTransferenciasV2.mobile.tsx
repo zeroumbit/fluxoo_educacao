@@ -138,7 +138,7 @@ export function PortalTransferenciasV2Mobile() {
             </motion.div>
           ) : (
             <AnimatePresence mode="popLayout">
-              {transferenciasAluno.map((t: any, i: number) => {
+              {transferenciasAluno.map((t: TransferenciaRow, i: number) => {
                 const cfg = statusConfig[t.status as TransferenciaEscolarStatus] || statusConfig.aguardando_responsavel
                 const StatusIcon = cfg.icon
                 const isPendentePais = t.status === 'aguardando_responsavel'

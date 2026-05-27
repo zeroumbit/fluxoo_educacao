@@ -76,7 +76,7 @@ export function TurmasPageMobile() {
   const { data: _todosProfessores } = useProfessoresTurma()
 
   // Busca contagem dinâmica de alunos por turma
-  const turmaIds = useMemo(() => turmas?.map((t: any) => t.id) || [], [turmas])
+  const turmaIds = useMemo(() => turmas?.map((t: Turma) => t.id) || [], [turmas])
   const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [search, setSearch] = useState('')

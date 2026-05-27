@@ -268,7 +268,7 @@ export function EventosPageMobile() {
                   <p className="text-xs font-black uppercase tracking-widest">Carregando eventos...</p>
                 </div>
               ) : eventos && eventos.length > 0 ? (
-                eventos.map((evento: any, idx: number) => (
+                eventos.map((evento: Evento, idx: number) => (
                   <motion.div
                     key={evento.id}
                     initial={{ opacity: 0, y: 15 }}

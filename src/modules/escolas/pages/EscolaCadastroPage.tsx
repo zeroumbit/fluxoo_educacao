@@ -555,7 +555,7 @@ export function EscolaCadastroPage() {
                             <p className="text-sm text-indigo-700 font-semibold">R$ {Number(p.valor_por_aluno).toFixed(2)} <span className="text-xs font-normal text-zinc-500">por aluno</span></p>
                             {p.modulos?.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1">
-                                {p.modulos.map((pm: any) => (
+                                {p.modulos.map((pm: { modulo?: { id: string; nome: string } }) => (
                                   <span key={pm.modulo?.id || Math.random()} className="inline-flex items-center gap-1 text-[10px] bg-indigo-100/50 text-indigo-700 rounded-md px-1.5 py-0.5 font-medium">
                                     <Puzzle className="h-2.5 w-2.5" />{pm.modulo?.nome}
                                   </span>

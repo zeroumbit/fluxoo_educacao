@@ -83,9 +83,9 @@ export function FuncionariosPageMobile() {
   // Filtros
   const filtered = useMemo(() => {
     let list = funcionarios || []
-    list = list.filter((f: any) => f.status === (activeTab === 'ativos' ? 'ativo' : 'inativo'))
+    list = list.filter((f: Funcionario) => f.status === (activeTab === 'ativos' ? 'ativo' : 'inativo'))
     if (search) {
-      list = list.filter((f: any) => 
+      list = list.filter((f: Funcionario) => 
         f.nome_completo.toLowerCase().includes(search.toLowerCase()) || 
         f.como_chamado?.toLowerCase().includes(search.toLowerCase())
       )
@@ -94,7 +94,7 @@ export function FuncionariosPageMobile() {
   }, [funcionarios, search, activeTab])
 
 // Normalizar e dedupar funções para display
-  const getFuncaoDisplay = (f: any): string => {
+  const getFuncaoDisplay = (f: Funcionario): string => {
     if (!f) return 'Sem função'
     const funcs = (Array.isArray(f.funcoes) && f.funcoes.length > 0) ? f.funcoes : (f.funcao ? [f.funcao] : ([] as string[]))
     if (funcs.length === 0) return 'Sem função'
@@ -211,7 +211,7 @@ export function FuncionariosPageMobile() {
             {/* Staff List */}
             <div className="space-y-3">
                 <AnimatePresence mode="popLayout">
-                    {filtered.map((f: any, idx: number) => (
+                    {filtered.map((f: Funcionario, idx: number) => (
                         <motion.div
                             key={f.id}
                             initial={{ opacity: 0, scale: 0.95 }}

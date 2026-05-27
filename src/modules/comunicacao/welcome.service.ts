@@ -33,8 +33,8 @@ export const welcomeService = {
 
     const aluno = matricula.aluno as any
     const responsaveisFinanceiros = aluno.responsaveis
-      ?.filter((r: any) => r.is_financeiro)
-      .map((r: any) => r.responsavel) || []
+      ?.filter((r: { is_financeiro?: boolean }) => r.is_financeiro)
+      .map((r: { responsavel: { id: string; nome: string } }) => r.responsavel) || []
 
     if (responsaveisFinanceiros.length === 0) {
       console.warn('Nenhum responsável financeiro encontrado para esta matrícula:', matriculaId)
@@ -57,7 +57,7 @@ export const welcomeService = {
     const periodoProRata = `de ${format(dataMatricula, 'dd/MM/yyyy')} até ${format(ultimoDiaMesDate, 'dd/MM/yyyy')}`
 
     // 3. Persistência para cada responsável financeiro
-    const notificacoes = responsaveisFinanceiros.map((resp: any) => ({
+    const notificacoes = responsaveisFinanceiros.map((resp: { id: string; nome: string }) => ({
       tenant_id: matricula.tenant_id,
       responsavel_id: resp.id,
       aluno_id: aluno.id,

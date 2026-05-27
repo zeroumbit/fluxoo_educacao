@@ -7,6 +7,7 @@ import { Calculator,CalendarCheck,Clock,Loader2,Pencil,TrendingUp,Users } from '
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAtribuicoes,useContarAlunosTurma,useGradeTurma,useTurmaBilling } from '../hooks'
+import type { TurmaProfessor } from '@/lib/database.types'
 import type { Turma } from '../types'
 import { MensalidadeLoteDialog } from './MensalidadeLoteDialog'
 
@@ -30,9 +31,9 @@ export function TabDadosGerais({ turma }: TabDadosGeraisProps) {
 
   // Calculate real counts from actual data
   // 1. Unique disciplines assigned to this turma
-  const disciplinasNaTurma = new Set(atribuicoes.map((at: any) => at.disciplina_id))
+  const disciplinasNaTurma = new Set(atribuicoes.map((at: TurmaProfessor) => at.disciplina_id))
   // 2. Unique professors assigned to this turma
-  const professoresNaTurma = new Set(atribuicoes.map((at: any) => at.professor_id))
+  const professoresNaTurma = new Set(atribuicoes.map((at: TurmaProfessor) => at.professor_id))
   // 3. Weekly classes from schedule
   const totalAulasSemana = gradeItems.length
 

@@ -1,3 +1,4 @@
+import type { AgendaAula, AlertaProfessor, SaudeTurma } from '@/modules/professor/types'
 import {
 useAgendaDiaria,
 useAlertasProfessor,
@@ -57,15 +58,15 @@ export function useDailyInsights() {
   const isLoading = isLoadingAgenda || isLoadingPendencias || isLoadingAlertas || isLoadingSaude
 
   const summary = useMemo<AssistantSummary>(() => {
-    const chamadasPendentes = agenda.filter((a: any) => !a.chamada_realizada).length
-    const diariosPendentes = agenda.filter((a: any) => !a.conteudo_registrado).length
-    const turmasAtencao = saudeTurmas.filter((turma: any) =>
+    const chamadasPendentes = agenda.filter((a: AgendaAula) => !a.chamada_realizada).length
+    const diariosPendentes = agenda.filter((a: AgendaAula) => !a.conteudo_registrado).length
+    const turmasAtencao = saudeTurmas.filter((turma: SaudeTurma) =>
       Number(turma.percentual_presenca || 100) < 75 || Number(turma.media_geral || 10) < 6
     ).length
 
     const proxima = [...agenda]
-      .sort((a: any, b: any) => String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
-      .find((a: any) => !a.chamada_realizada || !a.conteudo_registrado) || agenda[0]
+      .sort((a: AgendaAula, b: AgendaAula) => String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
+      .find((a: AgendaAula) => !a.chamada_realizada || !a.conteudo_registrado) || agenda[0]
 
     return {
       aulasHoje: agenda.length,
@@ -83,7 +84,7 @@ export function useDailyInsights() {
 
   const insights = useMemo(() => {
     const list: DailyInsight[] = []
-    const agendaPendente = agenda.filter((a: any) => !a.chamada_realizada || !a.conteudo_registrado)
+    const agendaPendente = agenda.filter((a: AgendaAula) => !a.chamada_realizada || !a.conteudo_registrado)
     const primeiraAulaPendente = agendaPendente[0]
 
     if (primeiraAulaPendente) {
@@ -132,7 +133,7 @@ export function useDailyInsights() {
     }
 
     if (alertas.length > 0) {
-      alertas.slice(0, 5).forEach((alerta: any) => {
+      alertas.slice(0, 5).forEach((alerta: AlertaProfessor) => {
         const insightType = getAlertType(alerta)
         list.push({
           id: `alerta-${alerta.id}`,
@@ -152,10 +153,10 @@ export function useDailyInsights() {
     }
 
     const turmasComAtencao = saudeTurmas
-      .filter((turma: any) => Number(turma.percentual_presenca || 100) < 75 || Number(turma.media_geral || 10) < 6)
+      .filter((turma: SaudeTurma) => Number(turma.percentual_presenca || 100) < 75 || Number(turma.media_geral || 10) < 6)
       .slice(0, 3)
 
-    turmasComAtencao.forEach((turma: any) => {
+    turmasComAtencao.forEach((turma: SaudeTurma) => {
       const frequencia = Number(turma.percentual_presenca || 0)
       const media = Number(turma.media_geral || 0)
       const baixaFrequencia = frequencia > 0 && frequencia < 75

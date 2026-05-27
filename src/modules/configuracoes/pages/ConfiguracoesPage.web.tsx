@@ -908,7 +908,7 @@ export function ConfiguracoesPage() {
                         {[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
                       </div>
                     ) : (
-                      vigencias.map((h: any) => (
+                      vigencias.map((h: { id: string; valor: number; data_inicio: string; data_fim: string }) => (
                         <div key={h.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                           <div className="flex justify-between items-start">
                             <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Configuração Arquivada</span>

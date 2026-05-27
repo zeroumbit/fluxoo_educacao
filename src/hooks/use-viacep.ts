@@ -73,10 +73,10 @@ export function useViaCEP() {
       const response = await fetch(`${API_URLS.IBGE_MUNICIPIOS}/${uf}/municipios`)
       const data = await response.json()
       
-      const formattedCities = data.map((city: any) => ({
+      const formattedCities = data.map((city: { nome: string }) => ({
         value: city.nome,
         label: city.nome,
-      })).sort((a: any, b: any) => a.label.localeCompare(b.label))
+      })).sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label))
 
       setCities(formattedCities)
     } catch (error) {

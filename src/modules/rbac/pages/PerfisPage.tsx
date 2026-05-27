@@ -2,6 +2,7 @@
  * Página de Perfis de Acesso (RBAC V2.2)
  * /configuracoes/perfis
  */
+import type { UserPermissionOverride } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { PermissionMatrix } from '@/modules/rbac/components/PermissionMatrix'
 import { useCriarPerfil,useDefinirPermissoesPerfil,useExcluirPerfil,useOverrides,usePerfilPermissions,usePerfis,usePermissions } from '@/modules/rbac/hooks'
@@ -274,7 +275,7 @@ export function PerfisPage() {
 
           {overrides && overrides.length > 0 ? (
             <div className="grid gap-2">
-              {overrides.map((ov: any) => (
+              {overrides.map((ov: UserPermissionOverride) => (
                 <div key={ov.id} className="bg-white border rounded-xl p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${

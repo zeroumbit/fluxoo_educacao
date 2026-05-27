@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover'
 import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import type { Aluno, Turma } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -108,7 +109,7 @@ export function MatriculaFormPageWeb() {
   const { data: matriculaExistente } = useMatriculaAtivaDoAluno(alunosSelecionados[0])
 
   // Filtragem inteligente de alunos
-  const alunosFiltrados = alunos?.filter((aluno: any) => {
+  const alunosFiltrados = alunos?.filter((aluno: Aluno) => {
     if (editId) return true
     
     const jaMatriculadoNoAno = matriculas?.some((m: any) => 
@@ -237,7 +238,7 @@ export function MatriculaFormPageWeb() {
                       <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
                       <CommandList>
                         <CommandGroup>
-                          {(alunosFiltrados || []).map((a: any) => (
+                          {(alunosFiltrados || []).map((a: Aluno) => (
                             <CommandItem
                               key={a.id}
                               value={a.nome_completo}
@@ -307,7 +308,7 @@ export function MatriculaFormPageWeb() {
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
-                    {(turmas || []).map((t: any) => {
+                    {(turmas || []).map((t: Turma) => {
                       const isFull = t.capacidade_maxima && (t.alunos_ids?.length || 0) >= t.capacidade_maxima;
                       return (
                         <SelectItem key={t.id} value={t.nome} className="font-medium">

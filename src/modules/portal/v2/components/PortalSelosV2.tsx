@@ -42,7 +42,7 @@ export function PortalSelosV2() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {selos.map((selo: any, idx: number) => (
+        {selos.map((selo, idx: number) => (
           <motion.div
             key={selo.id}
             initial={{ opacity: 0, y: 20 }}

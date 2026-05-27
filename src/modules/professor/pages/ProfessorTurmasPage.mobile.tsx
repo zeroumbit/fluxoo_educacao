@@ -1,3 +1,5 @@
+import type { Turma } from '@/lib/database.types'
+import type { SaudeTurma } from '@/modules/professor/types'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +54,7 @@ export function ProfessorTurmasPageMobile() {
     if (!saudeTurmas && !cached.length) return []
     const data = saudeTurmas || cached
     const map = new Map()
-    data.forEach((turma: any) => {
+    data.forEach((turma: SaudeTurma) => {
       if (!map.has(turma.turma_id)) {
         map.set(turma.turma_id, {
           turma_id: turma.turma_id,
@@ -69,8 +71,8 @@ export function ProfessorTurmasPageMobile() {
   const turmasComDetalhes = useMemo(() => {
     if (!turmasUnicas || !turmas) return turmasUnicas
 
-    return turmasUnicas.map((turma: any) => {
-      const turmaInfo = turmas.find((t: any) => t.id === turma.turma_id)
+    return turmasUnicas.map((turma: SaudeTurma) => {
+      const turmaInfo = turmas.find((t: Turma) => t.id === turma.turma_id)
       return {
         ...turma,
         turno: turmaInfo?.turno || '',
@@ -80,21 +82,21 @@ export function ProfessorTurmasPageMobile() {
   }, [turmasUnicas, turmas])
 
   const filteredTurmas = useMemo(() => {
-    return turmasComDetalhes.filter((turma: any) =>
+    return turmasComDetalhes.filter((turma: SaudeTurma) =>
       turma.turma_nome.toLowerCase().includes(search.toLowerCase())
     )
   }, [turmasComDetalhes, search])
 
-  const totalAlunos = turmasUnicas.reduce((sum: number, t: any) => sum + t.total_alunos, 0)
+  const totalAlunos = turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.total_alunos, 0)
   const mediaPresenca = turmasUnicas.length > 0
-    ? turmasUnicas.reduce((sum: number, t: any) => sum + t.percentual_presenca, 0) / turmasUnicas.length
+    ? turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.percentual_presenca, 0) / turmasUnicas.length
     : 0
   const mediaGeral = turmasUnicas.length > 0
-    ? turmasUnicas.reduce((sum: number, t: any) => sum + t.media_geral, 0) / turmasUnicas.length
+    ? turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.media_geral, 0) / turmasUnicas.length
     : 0
 
   const isLoading = isLoadingSaude || isLoadingTurmas
-  const temDadosReais = turmasUnicas.length > 0 && turmasUnicas.some((t: any) => t.total_alunos > 0)
+  const temDadosReais = turmasUnicas.length > 0 && turmasUnicas.some((t: SaudeTurma) => t.total_alunos > 0)
 
   const displayTurmas = isLoading ? [] : filteredTurmas
 
@@ -202,7 +204,7 @@ export function ProfessorTurmasPageMobile() {
         <PullToRefresh onRefresh={async () => { await refetch() }}>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {displayTurmas.map((turma: any, idx) => {
+              {displayTurmas.map((turma: SaudeTurma, idx) => {
                 const freq = turma.percentual_presenca
                 const media = turma.media_geral
                 const temFreq = freq > 0

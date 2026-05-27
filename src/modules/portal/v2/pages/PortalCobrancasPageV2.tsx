@@ -82,7 +82,7 @@ export function PortalCobrancasPageV2() {
   const [copiado, setCopiado] = useState(false)
 
   // Buscar cobranças para TODOS os alunos vinculados em paralelo
-  const queriesConfig = useMemo(() => (vinculos || []).map((v: any) => ({
+  const queriesConfig = useMemo(() => (vinculos || []).map((v) => ({
     queryKey: ['portal', 'cobrancas', v.aluno?.id, v.aluno?.tenant_id],
     queryFn: () => portalFinanceiroService.obterFaturasDoAluno(v.aluno.id, v.aluno.tenant_id),
     enabled: !!v.aluno?.id && !!v.aluno?.tenant_id,
@@ -96,7 +96,7 @@ export function PortalCobrancasPageV2() {
   
   const familyData = useMemo(() => {
     if (!vinculos || isLoadingCobrancas) return null
-    const alunosComFaturas = vinculos.map((v: any, index: number) => {
+    const alunosComFaturas = vinculos.map((v, index: number) => {
       const faturas = cobrancasQueries[index]?.data || []
       // Normalizar estrutura da turma (pode vir como array ou objeto)
       const turmaRaw = v.aluno?.turma
@@ -114,7 +114,7 @@ export function PortalCobrancasPageV2() {
     const hoje = new Date()
     hoje.setHours(12, 0, 0, 0)
 
-    const isAtrasada = (f: any) =>
+    const isAtrasada = (f: Cobranca) =>
       f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
     
     // Total Pago: Soma as notas pagas usando valor_pago se existir (pagamentos manuais) 
@@ -158,7 +158,7 @@ export function PortalCobrancasPageV2() {
     
     // Faturas para Checkout Unificado (Apenas próximo mês, conforme solicitado)
     // Refinamento extra de proteção para o status 'pago' via valor_pago
-    const isPaga = (f: any) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
+    const isPaga = (f: Cobranca) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
     
     // Filtro mais robusto
     const faturasAbertas = allFaturas.filter(f => !isPaga(f) && f.status !== 'cancelado')
@@ -190,7 +190,7 @@ export function PortalCobrancasPageV2() {
     
     // Encontra qual aluno tem essa fatura
     for (const aluno of familyData.alunos) {
-      const found = aluno.faturas?.find((f: any) => f.id === targetId)
+      const found = aluno.faturas?.find((f: Cobranca) => f.id === targetId)
       if (found) {
         lastProcessedId.current = targetId
         setSelectedAluno(aluno)
@@ -306,7 +306,7 @@ export function PortalCobrancasPageV2() {
           <DetailDrawer 
             aluno={selectedAluno} 
             onClose={() => setSelectedAluno(null)}
-            onPagar={(fat: any) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
+            onPagar={(fat: Cobranca) => { setCobrancaAtiva({ ...fat, alunoNome: selectedAluno.nome_completo, tenant_id: fat.tenant_id || selectedAluno.tenant_id }); setShowCheckout(true); }}
           />
         </SheetContent>
       </Sheet>
@@ -352,8 +352,8 @@ function ResumoCard({ label, value, icon: Icon, color, isCritical, isDate, subti
 
 function AlunoCard({ aluno, onClick }: any) {
   const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-  const pendentes = aluno.faturas.filter((f: any) => f.status !== 'pago' && f.status !== 'cancelado').length
-  const atrasadas = aluno.faturas.filter((f: any) =>
+  const pendentes = aluno.faturas.filter((f: Cobranca) => f.status !== 'pago' && f.status !== 'cancelado').length
+  const atrasadas = aluno.faturas.filter((f: Cobranca) =>
     f.status === 'atrasado' || (f.status === 'a_vencer' && new Date(f.data_vencimento + 'T12:00:00') < hoje)
   ).length
 
@@ -422,9 +422,9 @@ function DetailDrawer({ aluno, onClose, onPagar }: any) {
   if (!aluno) return null
 
   // Total Geral de todas as faturas em aberto (para transparência total)
-  const isPagaLocal = (f: any) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
-  const pendentesFaturas = aluno.faturas.filter((f: any) => !isPagaLocal(f) && f.status !== 'cancelado')
-  const totalGeral = pendentesFaturas.reduce((acc: number, f: any) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
+  const isPagaLocal = (f: Cobranca) => f.status === 'pago' || f.pago === true || Number(f.valor_pago || 0) > 0
+  const pendentesFaturas = aluno.faturas.filter((f: Cobranca) => !isPagaLocal(f) && f.status !== 'cancelado')
+  const totalGeral = pendentesFaturas.reduce((acc: number, f: Cobranca) => acc + Number(f.valor_total_projetado || f.valor_original || f.valor || 0), 0)
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -463,7 +463,7 @@ function DetailDrawer({ aluno, onClose, onPagar }: any) {
         </TabsContent>
 
         <TabsContent value="pagos" className="flex-1 overflow-y-auto px-10 pb-10 m-0 custom-scrollbar">
-           <DrawerFaturaList faturas={aluno.faturas.filter((f: any) => isPagaLocal(f))} isHistorico exibirTodas />
+           <DrawerFaturaList faturas={aluno.faturas.filter((f: Cobranca) => isPagaLocal(f))} isHistorico exibirTodas />
         </TabsContent>
       </Tabs>
     </div>
@@ -479,7 +479,7 @@ function DrawerFaturaList({ faturas, onAction, isHistorico, exibirTodas, onToggl
   const sorted = exibirTodas ? rawSorted : rawSorted.slice(0, 3)
   const temMais = !exibirTodas && rawSorted.length > 3
 
-  const getTipoBadge = (fatura: any) => {
+  const getTipoBadge = (fatura: Cobranca) => {
     if (fatura.subtipo_cobranca === 'matricula_rematricula') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[9px] font-black uppercase tracking-widest text-amber-600">

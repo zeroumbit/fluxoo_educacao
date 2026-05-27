@@ -693,7 +693,7 @@ export function ConfiguracoesPageMobile() {
        <BottomSheet isOpen={activeCategory === 'auditoria'} onClose={() => setActiveCategory(null)} title="Histórico de Logs">
           <div className="px-1 pb-20 space-y-4">
              {vigencias && vigencias.length > 0 ? (
-                vigencias.map((v: any) => (
+                vigencias.map((v: { id: string; valor: number; data_inicio: string; data_fim: string }) => (
                    <div key={v.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                       <div className="flex justify-between items-start mb-2">
                          <span className="text-[9px] font-black uppercase text-indigo-600 tracking-widest">Alteração Salva</span>

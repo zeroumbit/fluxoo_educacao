@@ -20,7 +20,7 @@ import { useFieldArray,useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import type { Filial } from '@/lib/database.types'
+import type { Filial, Turma } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -80,7 +80,7 @@ export function AtividadesPageMobile() {
   const [filiais, setFiliais] = useState<Filial[]>([])
 
   // Offline Cache
-  const [cached, setCached] = useState<object[]>([])
+  const [cached, setCached] = useState<any[]>([])
   useEffect(() => {
     get(CACHE_KEY_ATIVIDADES).then(v => { if (v) setCached(v) })
   }, [])
@@ -194,7 +194,7 @@ export function AtividadesPageMobile() {
   // Filter Logic
   const displayAtividades = atividades || cached || []
   const filteredAtividades = useMemo(() => {
-    return displayAtividades.filter(a => {
+    return displayAtividades.filter((a: any) => {
       if (selectedTurmaId === 'all') return true
       return a.atividades_turmas?.some((t: any) => t.turma_id === selectedTurmaId)
     })
@@ -451,9 +451,9 @@ export function AtividadesPageMobile() {
                               >
                                 <SelectTrigger className="h-12 rounded-xl bg-white dark:bg-slate-800"><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
                                 <SelectContent>
-                                  {turmas?.map((t: any) => (
-                                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                                  ))}
+{turmas?.map((t: Turma) => (
+                                     <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                                   ))}
                                 </SelectContent>
                               </Select>
                            </div>

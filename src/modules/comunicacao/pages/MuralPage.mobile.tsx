@@ -198,7 +198,7 @@ export function MuralPageMobile() {
           ) : (
             <AnimatePresence mode="popLayout">
               {(activeTab === 'ativos' ? avisosAtivos : avisosExpirados).length > 0 ? (
-                (activeTab === 'ativos' ? avisosAtivos : avisosExpirados).map((aviso: any, idx) => (
+                (activeTab === 'ativos' ? avisosAtivos : avisosExpirados).map((aviso: { id: string; titulo?: string; mensagem?: string; data_inicio?: string; data_fim?: string }, idx) => (
                   <motion.div
                     key={aviso.id}
                     initial={{ opacity: 0, y: 15 }}

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import type { PlanoAula } from '@/lib/database.types'
+import type { PlanoAula, Turma } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -214,9 +214,9 @@ export function PlanoAulaPage() {
                           >
                             <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
                             <SelectContent>
-                              {turmas?.map((t: any) => (
-                                <SelectItem key={t.id} value={t.id}>{t.nome} {t.sala ? `- Sala ${t.sala}` : ''}</SelectItem>
-                              ))}
+                              {turmas?.map((t: Turma) => (
+                                 <SelectItem key={t.id} value={t.id}>{t.nome} {t.sala ? `- Sala ${t.sala}` : ''}</SelectItem>
+                               ))}
                             </SelectContent>
                           </Select>
                         </div>

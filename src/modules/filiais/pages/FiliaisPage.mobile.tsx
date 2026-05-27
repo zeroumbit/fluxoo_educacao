@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useViaCEP } from '@/hooks/use-viacep'
+import type { Filial } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { mascaraCEP,mascaraCNPJ } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -135,7 +136,7 @@ export function FiliaisPageMobile() {
     }
   }
 
-  const filteredFiliais = (filiais || []).filter((f: any) => 
+  const filteredFiliais = (filiais || []).filter((f: Filial) => 
     f.nome_unidade.toLowerCase().includes(search.toLowerCase()) ||
     (f.cidade || '').toLowerCase().includes(search.toLowerCase())
   )
@@ -158,7 +159,7 @@ export function FiliaisPageMobile() {
             {/* List */}
             <div className="space-y-3 pb-32">
               <AnimatePresence mode="popLayout">
-                {filteredFiliais.map((f: any, idx) => (
+                {filteredFiliais.map((f: Filial, idx) => (
                   <motion.div key={f.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05 }}>
                     <NativeCard 
                       onClick={() => handleOpenEdit(f)}

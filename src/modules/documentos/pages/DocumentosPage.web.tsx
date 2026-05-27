@@ -14,7 +14,7 @@ import { usePdf } from '@/hooks/usePdf'
 import { logger } from '@/lib/logger'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
 import { cn } from '@/lib/utils'
-import type { DocumentoEmitido,DocumentoTemplate } from '@/lib/database.types'
+import type { Aluno, DocumentoEmitido, DocumentSolicitation, DocumentoTemplate } from '@/lib/database.types'
 import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { useBoletimV2PorAluno } from '@/modules/academico/hooks/hooks.v2'
 import { useAluno,useAlunos } from '@/modules/alunos/hooks'
@@ -128,7 +128,7 @@ export function DocumentosPage() {
   const dedupedEmitidos = useMemo(() => {
     if (!emitidos) return []
     const seen = new Set()
-    return emitidos.filter((doc: any) => {
+    return emitidos.filter((doc: DocumentoEmitido) => {
       const key = `${doc.titulo}-${doc.aluno_id}-${doc.conteudo_final}`
       if (seen.has(key)) return false
       seen.add(key)
@@ -140,7 +140,7 @@ export function DocumentosPage() {
   const dedupedTemplates = useMemo(() => {
     if (!templates) return []
     const seen = new Set()
-    return templates.filter((t: any) => {
+    return templates.filter((t: DocumentoTemplate) => {
       const key = `${t.titulo}-${t.tipo}-${t.corpo_html}`
       if (seen.has(key)) return false
       seen.add(key)
@@ -196,7 +196,7 @@ export function DocumentosPage() {
 
   const getPreviewData = (alunoId: string) => {
     // Escolhe o aluno correto: se for o selecionado no momento, usa o carregado com detalhes
-    const aluno = alunoId === selectedAluno ? alunoCompleto : alunos?.find((a: any) => a.id === alunoId)
+    const aluno = alunoId === selectedAluno ? alunoCompleto : alunos?.find((a: Aluno) => a.id === alunoId)
     if (!aluno) return null
 
     // Helper para formatar endereço
@@ -206,9 +206,9 @@ export function DocumentosPage() {
     }
 
     // Extrai nomes dos pais das relações se disponíveis
-    const maeRel = aluno.aluno_responsavel?.find((r: any) => r.grau_parentesco?.toLowerCase().includes('mãe'))?.responsaveis;
-    const paiRel = aluno.aluno_responsavel?.find((r: any) => r.grau_parentesco?.toLowerCase().includes('pai'))?.responsaveis;
-    const financeiroRel = aluno.aluno_responsavel?.find((r: any) => r.is_financeiro)?.responsaveis;
+    const maeRel = aluno.aluno_responsavel?.find((r: { grau_parentesco?: string; responsaveis?: { nome?: string; cpf?: string } }) => r.grau_parentesco?.toLowerCase().includes('mãe'))?.responsaveis;
+    const paiRel = aluno.aluno_responsavel?.find((r: { grau_parentesco?: string; responsaveis?: { nome?: string } }) => r.grau_parentesco?.toLowerCase().includes('pai'))?.responsaveis;
+    const financeiroRel = aluno.aluno_responsavel?.find((r: { is_financeiro?: boolean; responsaveis?: { nome?: string; cpf?: string } }) => r.is_financeiro)?.responsaveis;
 
     return {
       nome: aluno.nome_completo,
@@ -230,7 +230,7 @@ export function DocumentosPage() {
       hashValidacao: 'DOC-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
       parentesco: 'Responsável',
       responsavelFinanceiro: financeiroRel?.nome || 'Principal',
-      notas: boletimV2 ? boletimV2.map((b: any) => ({
+      notas: boletimV2 ? boletimV2.map((b: { nome_disciplina?: string; bimestre?: number; media_final?: number | string; total_faltas?: number; resultado?: string }) => ({
           disciplina: `${b.nome_disciplina} (${b.bimestre}º Bim)`,
           media: b.media_final ?? '-',
           faltas: b.total_faltas || 0,
@@ -238,7 +238,7 @@ export function DocumentosPage() {
                    (b.resultado?.includes('aprovado') ? 'Aprovado' : 'Em Recuperação')
       })) : [],
       sintesePedagogica: '',
-      parecerFinal: boletimV2?.some((b: any) => b.bimestre === 4 && b.resultado?.includes('aprovado')) ? 'Aprovado para a série seguinte' : 'Em curso'
+      parecerFinal: boletimV2?.some((b: { bimestre?: number; resultado?: string }) => b.bimestre === 4 && b.resultado?.includes('aprovado')) ? 'Aprovado para a série seguinte' : 'Em curso'
     }
   }
 
@@ -539,9 +539,9 @@ export function DocumentosPage() {
             </TabsTrigger>
             <TabsTrigger value="solicitacoes" className="rounded-xl px-6 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm relative transition-all">
               Solicitações
-              {solicitacoes && solicitacoes.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length > 0 && (
+              {solicitacoes && solicitacoes.filter((s: DocumentSolicitation) => s.status === 'pendente' || s.status === 'em_analise').length > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-teal-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
-                  {solicitacoes.filter((s: any) => s.status === 'pendente' || s.status === 'em_analise').length}
+                  {solicitacoes.filter((s: DocumentSolicitation) => s.status === 'pendente' || s.status === 'em_analise').length}
                 </span>
               )}
             </TabsTrigger>
@@ -608,7 +608,7 @@ export function DocumentosPage() {
                 <h2 className="text-lg font-semibold">Modelos Personalizados</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {dedupedTemplates.map((template: any) => {
+                {dedupedTemplates.map((template: DocumentoTemplate) => {
                   const IconComponent = DOCUMENT_TYPES.find(d => d.id === template.tipo)?.icon || FileText
                   return (
                     <button
@@ -666,7 +666,7 @@ export function DocumentosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {dedupedTemplates?.filter((t: any) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase())).map((t: any) => (
+                  {dedupedTemplates?.filter((t: DocumentoTemplate) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase())).map((t: DocumentoTemplate) => (
                     <TableRow key={t.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                       <TableCell className="font-bold text-slate-700 pl-8">{t.titulo}</TableCell>
                       <TableCell>
@@ -715,7 +715,7 @@ export function DocumentosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {dedupedEmitidos?.map((d: any) => (
+                  {dedupedEmitidos?.map((d: DocumentoEmitido) => (
                     <TableRow key={d.id} className="hover:bg-slate-50/50 border-slate-100 transition-colors">
                       <TableCell className="font-bold text-slate-700 pl-8">{d.titulo}</TableCell>
                       <TableCell className="text-slate-500 font-medium">{d.aluno?.nome_completo || '—'}</TableCell>
@@ -776,7 +776,7 @@ export function DocumentosPage() {
                           {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
                             <div className="rounded-xl bg-white/80 border border-teal-100 p-3">
                               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
-                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: any) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
+                              <p className="text-sm font-bold text-slate-800 truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: Aluno) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
                             </div>
                           )}
                           {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome) && (
@@ -798,7 +798,7 @@ export function DocumentosPage() {
                 )}
 
                 {solicitacoes && solicitacoes.length > 0 ? (
-                  solicitacoes.map((sol: any) => {
+                  solicitacoes.map((sol: DocumentSolicitation) => {
                     const statusColors: Record<string, string> = {
                       pendente: 'bg-amber-50 text-amber-700 border-amber-200',
                       em_analise: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -935,7 +935,7 @@ export function DocumentosPage() {
                       <SelectValue placeholder="Pesquisar por nome ou CPF..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {alunos?.map((a: any) => (
+                      {alunos?.map((a: Aluno) => (
                         <SelectItem key={a.id} value={a.id} className="font-bold">{a.nome_completo}</SelectItem>
                       ))}
                     </SelectContent>

@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
-import type { Aluno } from '@/lib/database.types'
+import type { Aluno, Turma } from '@/lib/database.types'
 import { useQuery } from '@tanstack/react-query'
 import {
 ArrowLeft,
@@ -325,7 +325,7 @@ function FilterSheet({ isOpen, onClose, turmas, disciplinas, turmaId, setTurmaId
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-3">
-          {tab === 'turma' && turmas?.map((t: any) => (
+          {tab === 'turma' && turmas?.map((t: Turma) => (
             <button key={t.id} onClick={() => { setTurmaId(t.id); setDisciplinaId(''); setTab('disciplina') }} className={cn("w-full p-5 rounded-2xl text-left font-black transition-all", turmaId === t.id ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-500 border-2 border-transparent")}>
               {t.nome}
             </button>
@@ -335,11 +335,11 @@ function FilterSheet({ isOpen, onClose, turmas, disciplinas, turmaId, setTurmaId
             <>
               {isLoadingDisc ? <div className="p-10 text-center text-slate-400">Carregando atribuições...</div> : 
                disciplinas?.length === 0 ? <div className="p-10 text-center font-bold text-amber-600 bg-amber-50 rounded-2xl border border-dashed border-amber-200">NÃO EXISTEM DISCIPLINAS VINCULADAS A ESTA TURMA</div> :
-               disciplinas?.map((d: any) => (
-                <button key={d.id} onClick={() => { setDisciplinaId(d.id); setTab('tempo') }} className={cn("w-full p-5 rounded-2xl text-left font-black transition-all", disciplinaId === d.id ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-500 border-2 border-transparent")}>
-                  {d.nome}
-                </button>
-              ))}
+               disciplinas?.map((d) => (
+                 <button key={d.id} onClick={() => { setDisciplinaId(d.id); setTab('tempo') }} className={cn("w-full p-5 rounded-2xl text-left font-black transition-all", disciplinaId === d.id ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" : "bg-slate-50 text-slate-500 border-2 border-transparent")}>
+                   {d.nome}
+                 </button>
+               ))}
             </>
           )}
 

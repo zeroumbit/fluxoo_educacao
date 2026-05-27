@@ -25,7 +25,7 @@ export function PortalAlunosListV2Web() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {vinculos.map((v: any) => (
+        {vinculos.map((v) => (
           <div
             key={v.aluno?.id}
             onClick={() => {

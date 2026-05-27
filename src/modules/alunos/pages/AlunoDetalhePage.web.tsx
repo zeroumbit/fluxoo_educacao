@@ -680,7 +680,7 @@ export function AlunoDetalhePageWeb() {
                        {(formData?.patologias || []).map((p: string, i: number) => (
                          <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
                            {p}
-                           <button onClick={() => setFormData({...formData, patologias: formData.patologias.filter((_: any, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                           <button onClick={() => setFormData({...formData, patologias: formData.patologias.filter((_: string, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
                              <X size={14} />
                            </button>
                          </Badge>
@@ -738,7 +738,7 @@ export function AlunoDetalhePageWeb() {
                        {(formData?.medicamentos || []).map((m: string, i: number) => (
                          <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
                            {m}
-                           <button onClick={() => setFormData({...formData, medicamentos: formData.medicamentos.filter((_: any, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                           <button onClick={() => setFormData({...formData, medicamentos: formData.medicamentos.filter((_: string, idx: number) => idx !== i)})} className="hover:bg-indigo-200/50 rounded-full p-0.5">
                              <X size={14} />
                            </button>
                          </Badge>
@@ -781,9 +781,9 @@ export function AlunoDetalhePageWeb() {
                  </CardTitle>
                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Cobrancas, pagamentos manuais e comprovantes enviados pela familia</p>
               </div>
-              {cobrancasAluno.some((c: any) => c.comprovante_url) && (
+              {cobrancasAluno.some((c: { comprovante_url?: string | null }) => c.comprovante_url) && (
                 <Badge className="bg-teal-100 text-teal-700 border-teal-200 font-black uppercase tracking-wider">
-                  {cobrancasAluno.filter((c: any) => c.comprovante_url).length} comprovante(s)
+                  {cobrancasAluno.filter((c: { comprovante_url?: string | null }) => c.comprovante_url).length} comprovante(s)
                 </Badge>
               )}
            </div>
@@ -800,7 +800,7 @@ export function AlunoDetalhePageWeb() {
             </div>
           ) : (
             <div className="space-y-3">
-              {cobrancasAluno.map((cobranca: any) => {
+              {cobrancasAluno.map((cobranca: { id: string; descricao?: string; valor?: number; valor_total_projetado?: number; valor_original?: number; status?: string; pago?: boolean; comprovante_url?: string | null; data_vencimento?: string; forma_pagamento?: string }) => {
                 const valor = Number(cobranca.valor_total_projetado || cobranca.valor_original || cobranca.valor || 0)
                 const status = cobranca.status || (cobranca.pago ? 'pago' : 'pendente')
                 const statusLabel = status === 'pago'

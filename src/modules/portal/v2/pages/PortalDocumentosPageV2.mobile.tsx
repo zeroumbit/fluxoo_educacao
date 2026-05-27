@@ -84,7 +84,7 @@ export function PortalDocumentosPageV2Mobile() {
 
   const allDocTypes = [
     ...standardDocTypes,
-    ...templates.filter((tpl: any) => !standardDocTypes.find((std: any) => std.tipo === tpl.tipo))
+    ...templates.filter((tpl) => !standardDocTypes.find((std) => std.tipo === tpl.tipo))
   ]
 
   const handleSolicitar = async () => {
@@ -167,7 +167,7 @@ export function PortalDocumentosPageV2Mobile() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {solicitacoes.map((sol: any, idx: number) => {
+              {solicitacoes.map((sol, idx: number) => {
                 const config = statusConfig[sol.status] || statusConfig.pendente
                 const DocIcon = DOCUMENT_TYPE_ICONS[sol.documento_tipo] || FileText
                 return (
@@ -184,7 +184,7 @@ export function PortalDocumentosPageV2Mobile() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <h4 className="text-[14px] font-bold text-slate-900 truncate">
-                          {templates.find((tpl: any) => tpl.id === sol.documento_tipo)?.titulo || sol.documento_tipo}
+                          {templates.find((tpl) => tpl.id === sol.documento_tipo)?.titulo || sol.documento_tipo}
                         </h4>
                         <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
                           {new Date(sol.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
@@ -242,7 +242,7 @@ export function PortalDocumentosPageV2Mobile() {
             <div className="space-y-4">
               <Label className="text-[13px] font-bold text-slate-700 uppercase tracking-wide">Qual documento deseja?</Label>
               <div className="grid grid-cols-2 gap-3">
-                {allDocTypes.map((doc: any) => {
+                {allDocTypes.map((doc) => {
                   const Icon = DOCUMENT_TYPE_ICONS[doc.tipo] || FileText
                   const isSelected = selectedDocType === doc.id
                   return (

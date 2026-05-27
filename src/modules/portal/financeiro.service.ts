@@ -1,3 +1,4 @@
+import type { Cobranca } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
@@ -108,7 +109,7 @@ export const portalFinanceiroService = {
     const hoje = new Date()
     hoje.setHours(23, 59, 59, 999)
 
-    return res.map((c: any) => {
+    return res.map((c: Cobranca) => {
       if (c.status === 'pago' || c.status === 'cancelado') return c
 
       const dataVenc = new Date(c.data_vencimento + 'T12:00:00')

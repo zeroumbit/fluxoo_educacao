@@ -9,7 +9,7 @@ import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
-import type { AlmoxarifadoItem } from '@/lib/database.types'
+import type { AlmoxarifadoItem, AlmoxarifadoMovimentacao } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle,ArrowDownUp,Edit2,Loader2,Package,Plus,Trash2,Wallet } from 'lucide-react'
@@ -135,8 +135,8 @@ export function AlmoxarifadoPageWeb() {
                       <SelectValue placeholder="Selecione um item" />
                     </SelectTrigger>
                     <SelectContent>
-                      {itens?.map((i: any) => (
-                        <SelectItem key={i.id} value={i.id}>{i.nome} (Estoque: {i.quantidade})</SelectItem>
+{itens?.map((i: AlmoxarifadoItem) => (
+        <SelectItem key={i.id} value={i.id}>{i.nome} (Estoque: {i.quantidade})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -274,7 +274,7 @@ export function AlmoxarifadoPageWeb() {
           <Card className="border-0 shadow-md"><CardContent className="p-0">
             <Table><TableHeader><TableRow><TableHead className="pl-8">Item</TableHead><TableHead>Categoria</TableHead><TableHead>Quantidade</TableHead><TableHead>Custo Unit.</TableHead><TableHead>Alerta</TableHead><TableHead className="w-[100px] pr-8 text-right">Ações</TableHead></TableRow></TableHeader>
               <TableBody>
-                {itens?.map((i: any) => (
+                {itens?.map((i: AlmoxarifadoItem) => (
                   <TableRow key={i.id}>
                     <TableCell className="font-bold pl-8">{i.nome}</TableCell>
                     <TableCell><Badge variant="outline">{i.categoria || '—'}</Badge></TableCell>
@@ -304,7 +304,7 @@ export function AlmoxarifadoPageWeb() {
           <Card className="border-0 shadow-md"><CardContent className="p-0">
             <Table><TableHeader><TableRow><TableHead className="pl-8">Item</TableHead><TableHead>Tipo</TableHead><TableHead>Qtd.</TableHead><TableHead>Justificativa</TableHead><TableHead className="pr-8 text-right">Data</TableHead></TableRow></TableHeader>
               <TableBody>
-                {movs?.map((m: any) => (
+                {movs?.map((m: AlmoxarifadoMovimentacao) => (
                   <TableRow key={m.id}><TableCell className="font-bold pl-8">{m.item?.nome || '—'}</TableCell>
                     <TableCell><Badge className={m.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}>{m.tipo === 'entrada' ? '+ Entrada' : '- Saída'}</Badge></TableCell>
                     <TableCell>{m.quantidade}</TableCell><TableCell>{m.justificativa || '—'}</TableCell><TableCell className="text-sm text-muted-foreground pr-8 text-right">{new Date(m.created_at).toLocaleDateString('pt-BR')}</TableCell>

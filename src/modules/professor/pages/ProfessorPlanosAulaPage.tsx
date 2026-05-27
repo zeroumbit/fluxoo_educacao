@@ -1,3 +1,4 @@
+import type { AgendaAula } from '@/modules/professor/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +29,7 @@ export function ProfessorPlanosAulaPage() {
 
   const aulasFiltradas = useMemo(() => {
     if (!agenda) return []
-    return agenda.filter((aula: any) =>
+    return agenda.filter((aula: AgendaAula) =>
       aula.turma_nome?.toLowerCase().includes(busca.toLowerCase()) ||
       aula.disciplina_nome?.toLowerCase().includes(busca.toLowerCase())
     )
@@ -80,7 +81,7 @@ export function ProfessorPlanosAulaPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              aulasFiltradas.map((aula: any) => (
+              aulasFiltradas.map((aula: AgendaAula) => (
                 <TableRow key={aula.grade_id} className="hover:bg-slate-50/50 transition-colors">
                   <TableCell className="pl-8 py-4">
                     <div className="flex items-center gap-2">

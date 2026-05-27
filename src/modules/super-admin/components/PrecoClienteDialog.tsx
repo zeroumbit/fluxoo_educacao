@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale'
 import { BadgeCheck, BadgeX, Loader2, Save, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import type { AssinaturaModulo } from '@/lib/database.types'
 
 interface Props {
   tenantId: string | null
@@ -116,7 +117,7 @@ export function PrecoClienteDialog({ tenantId, escolaNome, open, onOpenChange }:
     if (ativo) {
       setModulosAtivos({ ...modulosAtivos, [moduloId]: true })
     } else {
-      const am = assinaturaModulos?.find((a: any) => a.modulo_id === moduloId)
+      const am = assinaturaModulos?.find((a: AssinaturaModulo) => a.modulo_id === moduloId)
       if (am) {
         await desativarModulo.mutateAsync(am.id)
       }
@@ -216,10 +217,10 @@ export function PrecoClienteDialog({ tenantId, escolaNome, open, onOpenChange }:
               Módulos Add-On
             </Label>
 
-            {precosModulos?.map((pm: any) => {
+            {precosModulos?.map((pm) => {
               const ativo = modulosAtivos[pm.modulo_id] || false
               const form = moduloPrecos[pm.modulo_id] || { valor: 0, trial_dias: 90 }
-              const am = assinaturaModulos?.find((a: any) => a.modulo_id === pm.modulo_id)
+              const am = assinaturaModulos?.find((a: AssinaturaModulo) => a.modulo_id === pm.modulo_id)
 
               return (
                 <div key={pm.modulo_id} className="p-4 rounded-xl border border-slate-100 space-y-3">

@@ -562,7 +562,7 @@ export function TransferenciasPageMobile() {
                       <SelectValue placeholder="Buscar aluno interno..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {alunos?.map((a: any) => (
+                      {alunos?.map((a: Aluno) => (
                         <SelectItem key={a.id} value={a.id}>{a.nome_completo}</SelectItem>
                       ))}
                     </SelectContent>

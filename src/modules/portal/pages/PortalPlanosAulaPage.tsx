@@ -56,7 +56,7 @@ export function PortalPlanosAulaPage({ hideHeader = false }: { hideHeader?: bool
     )
   }
 
-  const planosFiltrados = planos?.filter((p: any) => 
+  const planosFiltrados = planos?.filter((p) => 
     p.plano?.disciplina?.toLowerCase().includes(busca.toLowerCase()) || 
     p.plano?.conteudo_previsto?.toLowerCase().includes(busca.toLowerCase())
   )
@@ -114,7 +114,7 @@ export function PortalPlanosAulaPage({ hideHeader = false }: { hideHeader?: bool
       ) : (
         <div className="space-y-4 px-1">
           <AnimatePresence mode="popLayout">
-            {planosFiltrados.map((item: any, idx: number) => (
+            {planosFiltrados.map((item, idx: number) => (
               <motion.div
                 key={item.plano?.id || idx}
                 initial={{ opacity: 0, y: 20 }}

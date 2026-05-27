@@ -294,7 +294,7 @@ export function AlunoCadastroPageMobile() {
         setValue('responsavel_telefone', resp.telefone || '', { shouldValidate: true })
         const { data: vinculos } = await supabase.from('aluno_responsavel').select('aluno_id, alunos(nome_completo)').eq('responsavel_id', resp.id).eq('is_financeiro', true)
         if (vinculos && vinculos.length > 0) {
-          const alunosList = vinculos.map((v: any) => v.alunos.nome_completo)
+          const alunosList = vinculos.map((v: { alunos: { nome_completo: string } }) => v.alunos.nome_completo)
           setIrmaosExistentes(alunosList)
           toast.warning('Irmãos detectados!', { description: `Responsável paga: ${alunosList.join(', ')}`, duration: 6000 })
         }

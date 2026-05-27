@@ -1,4 +1,4 @@
-import type { FrequenciaInsert } from '@/lib/database.types'
+import type { Frequencia, FrequenciaInsert } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 
@@ -145,9 +145,9 @@ export const frequenciaService = {
     }
 
     return (matriculas || [])
-      .map((m: any) => m.alunos)
+      .map((m: { alunos: { id: string; nome_completo?: string; nome_social?: string; foto_url?: string; data_nascimento?: string; patologias?: string; medicamentos?: string } }) => m.alunos)
       .filter(Boolean)
-      .sort((a: any, b: any) => (a.nome_social || a.nome_completo).localeCompare(b.nome_social || b.nome_completo))
+      .sort((a: { nome_social?: string; nome_completo?: string }, b: { nome_social?: string; nome_completo?: string }) => (a.nome_social || a.nome_completo || '').localeCompare(b.nome_social || b.nome_completo || ''))
   },
 
   async buscarFaltasTurmaPeriodo(turmaId: string, tenantId: string, dataInicio: string, dataFim: string) {
@@ -163,7 +163,7 @@ export const frequenciaService = {
     if (error) throw error
 
     const resumo: Record<string, number> = {}
-    ;(data || []).forEach((f: any) => {
+    ;(data || []).forEach((f: { aluno_id?: string }) => {
       if (f.aluno_id) {
         resumo[f.aluno_id] = (resumo[f.aluno_id] || 0) + 1
       }

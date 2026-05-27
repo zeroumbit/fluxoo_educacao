@@ -22,10 +22,10 @@ export function GradeCurricularV2() {
     if (!todosPlanos) return [];
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     
-    return todosPlanos.filter((item: any) => {
+    return todosPlanos.filter((item) => {
       const dataAula = item.plano?.data_aula;
       return dataAula === dateStr;
-    }).map((item: any) => ({
+    }).map((item) => ({
       id: item.plano.id,
       hora: item.horario || 'Horário não definido',
       disciplina: item.plano.disciplina || 'Geral',
@@ -60,7 +60,7 @@ export function GradeCurricularV2() {
             const diaDoMes = format(date, 'dd');
             
             // Verifica se tem aula neste dia para mostrar o dot
-            const hasClass = todosPlanos?.some((p: any) => p.plano?.data_aula === format(date, 'yyyy-MM-dd'));
+            const hasClass = todosPlanos?.some((p) => p.plano?.data_aula === format(date, 'yyyy-MM-dd'));
 
             return (
               <motion.button

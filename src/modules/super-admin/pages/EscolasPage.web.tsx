@@ -544,7 +544,7 @@ export function EscolasPageWeb() {
                     <h4 className="font-bold text-sm uppercase tracking-wide">Filiais ({detalhesEscola.filiais.length})</h4>
                   </div>
                   <div className="space-y-2">
-                    {detalhesEscola.filiais.map((filial: any) => (
+                    {detalhesEscola.filiais.map((filial) => (
                       <div key={filial.id} className="bg-zinc-50 p-3 rounded-lg flex items-center justify-between">
                         <div>
                           <p className="font-medium">{filial.nome_fantasia}</p>

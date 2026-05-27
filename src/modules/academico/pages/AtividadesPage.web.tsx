@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import type { Filial } from '@/lib/database.types'
+import type { Filial, Turma } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -220,7 +220,7 @@ export function AtividadesPage() {
                           <Select value={form.watch(`turmas.${index}.turma_id`)} onValueChange={(v) => form.setValue(`turmas.${index}.turma_id`, v, { shouldValidate: true })}>
                             <SelectTrigger className="bg-white"><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
                             <SelectContent>
-                              {turmas?.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
+                              {turmas?.map((t: Turma) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>

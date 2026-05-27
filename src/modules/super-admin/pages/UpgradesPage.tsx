@@ -82,7 +82,7 @@ export function UpgradesPage() {
                   <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhuma solicitação encontrada.</TableCell>
                 </TableRow>
               )}
-              {upgrades?.map((u: any) => (
+              {upgrades?.map((u) => (
                 <TableRow key={u.id} className="hover:bg-zinc-50/50 transition-colors">
                   <TableCell className="pl-8 font-bold text-zinc-900">{u.escola?.razao_social || '—'}</TableCell>
                   <TableCell className="text-sm">{u.limite_atual} alunos</TableCell>

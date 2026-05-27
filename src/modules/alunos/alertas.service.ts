@@ -141,7 +141,7 @@ export const alertasService = {
     }
 
     // Migra histórico
-    const histInserts: AlertasHistoricoInsert[] = historicoLocal.map((item: any) => ({
+    const histInserts: AlertasHistoricoInsert[] = historicoLocal.map((item: { alertaId: string; alunoNome: string; acao: string; usuario: string; data: string }) => ({
       tenant_id: tenantId,
       alerta_id: item.alertaId,
       aluno_nome: item.alunoNome,

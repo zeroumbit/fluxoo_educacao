@@ -116,7 +116,7 @@ export function AlertasProvider({ children, radarData = [] }: { children: React.
 
   // Converte histórico DB para formato da UI
   const historicoAcoes: AlertaHistorico[] = useMemo(() => {
-    return (historicoDB ?? []).map((item: any) => ({
+    return (historicoDB ?? []).map((item: { id: string; alerta_id: string; aluno_nome: string; status_novo: string; data_acao: string; usuario_nome?: string }) => ({
       id: item.id,
       alertaId: item.alerta_id,
       alertaTitulo: 'Alerta de Evasão',

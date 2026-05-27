@@ -174,7 +174,7 @@ export function SuperAdminDashboardPageMobile() {
               </div>
             ) : healthScores && healthScores.length > 0 ? (
               <div className="space-y-4">
-                {healthScores.slice(0, 5).map((score: any) => (
+                {healthScores.slice(0, 5).map((score) => (
                   <div key={score.tenant_id} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

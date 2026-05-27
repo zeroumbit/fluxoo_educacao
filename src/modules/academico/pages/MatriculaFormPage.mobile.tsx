@@ -9,6 +9,7 @@ import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import type { Aluno, Turma } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -109,7 +110,7 @@ export function MatriculaFormPageMobile() {
   const anoLetivoSelecionado = useWatch({ control: form.control, name: 'ano_letivo' })
 
   // Filtragem inteligente de alunos
-  const alunosFiltrados = alunos?.filter((aluno: any) => {
+  const alunosFiltrados = alunos?.filter((aluno: Aluno) => {
     if (editId) return true
 
     const jaMatriculadoNoAno = matriculas?.some((m: any) =>
@@ -285,7 +286,7 @@ export function MatriculaFormPageMobile() {
                     <CommandEmpty>Nenhum aluno encontrado.</CommandEmpty>
                     <CommandList className="max-h-[250px]">
                       <CommandGroup>
-                        {(alunosFiltrados || []).map((a: any) => (
+                        {(alunosFiltrados || []).map((a: Aluno) => (
                           <CommandItem
                             key={a.id}
                             value={a.nome_completo}
@@ -335,7 +336,7 @@ export function MatriculaFormPageMobile() {
                   <SelectValue placeholder="Série" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  {(turmas || []).map((t: any) => (
+                  {(turmas || []).map((t: Turma) => (
                     <SelectItem key={t.id} value={t.nome} className="font-bold py-3">{t.nome}</SelectItem>
                   ))}
                 </SelectContent>

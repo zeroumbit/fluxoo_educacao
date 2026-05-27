@@ -193,7 +193,7 @@ export function PortalLojaPage() {
     icon: IconMap[cat.icone as keyof typeof IconMap] || Package
   })) || []
 
-  const filteredProfissionais = profissionais?.filter((p: any) => {
+  const filteredProfissionais = profissionais?.filter((p) => {
     if (!searchTerm) return true;
     const searchStr = searchTerm.toLowerCase();
     const areas = p.areas_interesse?.join(' ').toLowerCase() || '';
@@ -299,7 +299,7 @@ export function PortalLojaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProfissionais
                 .slice(0, 12)
-                .map((prof: any, idx: number) => (
+                .map((prof, idx: number) => (
                   <motion.div
                     key={prof.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -364,7 +364,7 @@ export function PortalLojaPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {lojistas.slice(0, 6).map((loj: any, idx: number) => (
+              {lojistas.slice(0, 6).map((loj, idx: number) => (
                 <motion.div
                   key={loj.id}
                   initial={{ opacity: 0, y: 10 }}

@@ -34,6 +34,7 @@ import { useMemo,useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
+import type { Aluno, AutorizacaoModelo, DocumentoEmitido, DocumentSolicitation, DocumentoTemplate } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useNotificacaoDetail } from '@/hooks/useNotifications'
@@ -116,7 +117,7 @@ export function DocumentosPageMobile() {
   const dedupedEmitidos = useMemo(() => {
     if (!emitidos) return []
     const seen = new Set()
-    return emitidos.filter((doc: any) => {
+    return emitidos.filter((doc: DocumentoEmitido) => {
       const key = `${doc.titulo}-${doc.aluno_id}-${doc.conteudo_final}`
       if (seen.has(key)) return false
       seen.add(key)
@@ -127,7 +128,7 @@ export function DocumentosPageMobile() {
   const dedupedTemplates = useMemo(() => {
     if (!templates) return []
     const seen = new Set()
-    return templates.filter((t: any) => {
+    return templates.filter((t: DocumentoTemplate) => {
       const key = `${t.titulo}-${t.tipo}-${t.corpo_html}`
       if (seen.has(key)) return false
       seen.add(key)
@@ -136,7 +137,7 @@ export function DocumentosPageMobile() {
   }, [templates])
 
   const getPreviewData = (alunoId: string) => {
-    const aluno = alunos?.find((a: any) => a.id === alunoId)
+    const aluno = alunos?.find((a: Aluno) => a.id === alunoId)
     if (!aluno) return null
 
     const formatEndereco = (a: any) => {
@@ -144,8 +145,8 @@ export function DocumentosPageMobile() {
       return 'Endereço não informado';
     }
 
-    const maeRel = aluno.aluno_responsavel?.find((r: any) => r.grau_parentesco?.toLowerCase().includes('mãe'))?.responsaveis;
-    const financeiroRel = aluno.aluno_responsavel?.find((r: any) => r.is_financeiro)?.responsaveis;
+    const maeRel = aluno.aluno_responsavel?.find((r: { grau_parentesco?: string; responsaveis?: { nome?: string; cpf?: string } }) => r.grau_parentesco?.toLowerCase().includes('mãe'))?.responsaveis;
+    const financeiroRel = aluno.aluno_responsavel?.find((r: { is_financeiro?: boolean; responsaveis?: { nome?: string; cpf?: string } }) => r.is_financeiro)?.responsaveis;
 
     return {
       nome: aluno.nome_completo,
@@ -363,7 +364,7 @@ export function DocumentosPageMobile() {
                     <p className="text-slate-500 text-sm mt-2 max-w-[240px]">Os documentos gerados pelo painel aparecerão aqui.</p>
                  </div>
                ) : (
-                 dedupedEmitidos.map((doc: any, idx: number) => (
+                 dedupedEmitidos.map((doc: DocumentoEmitido, idx: number) => (
                     <motion.div key={doc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
                       <NativeCard className="p-4 flex flex-col gap-4">
                         <div className="flex justify-between items-start">
@@ -416,7 +417,7 @@ export function DocumentosPageMobile() {
                           {(notificacaoMetadata.aluno_nome || notificacaoMetadata.aluno_id) && (
                             <div className="rounded-xl bg-white/80 dark:bg-slate-900/70 p-3">
                               <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
-                              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: any) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
+                              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{notificacaoMetadata.aluno_nome || alunos?.find((a: Aluno) => a.id === notificacaoMetadata.aluno_id)?.nome_completo || notificacaoMetadata.aluno_id}</p>
                             </div>
                           )}
                          {(notificacaoMetadata.origem_nome || notificacaoMetadata.escola_origem_nome || notificacaoMetadata.destino_nome || notificacaoMetadata.escola_destino_nome) && (
@@ -444,7 +445,7 @@ export function DocumentosPageMobile() {
                     <p className="text-slate-500 text-sm mt-2">Novas solicitações de documentos aparecerão aqui.</p>
                  </div>
                ) : solicitacoes?.length ? (
-                 solicitacoes.map((sol: any, idx: number) => (
+                 solicitacoes.map((sol: DocumentSolicitation, idx: number) => (
                     <motion.div key={sol.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
                     <div className="relative group">
                       <div 
@@ -515,7 +516,7 @@ export function DocumentosPageMobile() {
                     <p className="text-slate-500 text-sm mt-2">Configure os termos de aceite dos pais.</p>
                  </div>
                ) : (
-                 modelosAutorizacao.map((m: any, idx: number) => (
+                 modelosAutorizacao.map((m: AutorizacaoModelo, idx: number) => (
                     <motion.div key={m.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.05 }}>
                       <NativeCard className={cn("p-4 flex flex-col gap-3 transition-opacity", !m.ativa && "opacity-60")}>
                         <div className="flex justify-between items-start">
@@ -570,7 +571,7 @@ export function DocumentosPageMobile() {
                     <p className="text-slate-500 text-sm mt-2 max-w-[240px]">Crie modelos de documentos personalizados para sua escola.</p>
                  </div>
                ) : (
-                 dedupedTemplates.map((t: any, idx: number) => (
+                 dedupedTemplates.map((t: DocumentoTemplate, idx: number) => (
                     <motion.div key={idx} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}>
                       <NativeCard className="p-4 flex items-center justify-between group">
                         <div className="flex items-center gap-4">
@@ -638,7 +639,7 @@ export function DocumentosPageMobile() {
                         <SelectValue placeholder="Toque para buscar aluno..." />
                      </SelectTrigger>
                      <SelectContent className="rounded-2xl">
-                        {alunos?.map((a: any) => (
+                        {alunos?.map((a: Aluno) => (
                            <SelectItem key={a.id} value={a.id} className="font-bold py-3">{a.nome_completo}</SelectItem>
                         ))}
                      </SelectContent>

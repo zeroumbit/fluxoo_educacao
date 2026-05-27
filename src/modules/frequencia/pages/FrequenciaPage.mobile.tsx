@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import type { FrequenciaStatus } from '@/lib/database.types'
+import type { Frequencia, FrequenciaStatus } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
@@ -56,7 +56,7 @@ export function FrequenciaPageMobile() {
     if (frequenciasExistentes) {
       const newStatusMap: Record<string, FrequenciaStatus> = {}
       const newJustificativaMap: Record<string, string> = {}
-      frequenciasExistentes.forEach((f: any) => {
+      frequenciasExistentes.forEach((f: Frequencia) => {
         newStatusMap[f.aluno_id] = f.status as FrequenciaStatus
         if (f.justificativa) newJustificativaMap[f.aluno_id] = f.justificativa
       })

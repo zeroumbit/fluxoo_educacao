@@ -66,6 +66,7 @@ XCircle
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import type { Lojista, MarketplaceCategoria } from '@/lib/database.types'
 import {
 useAtualizarCategoria,
 useCriarCategoria,
@@ -107,18 +108,18 @@ export function MarketplaceConfigPage() {
   })
   const [newSubcat, setNewSubcat] = useState('')
 
-  const filteredCategorias = categorias?.filter((c: any) =>
+  const filteredCategorias = categorias?.filter((c: MarketplaceCategoria) =>
     c.nome.toLowerCase().includes(search.toLowerCase())
   )
 
   const _categoriasCount = filteredCategorias?.length || 0
 
-  const filteredLojistas = lojistas?.filter((l: any) =>
+  const filteredLojistas = lojistas?.filter((l: Lojista) =>
     l.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
     l.cnpj.includes(searchTerm)
   )
 
-  const filteredProfissionais = profissionais?.filter((p: any) =>
+  const filteredProfissionais = profissionais?.filter((p) =>
     (p as { usuarios_sistema?: { email_login?: string } }).usuarios_sistema?.email_login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.cpf?.includes(searchTerm)
   )
@@ -398,7 +399,7 @@ export function MarketplaceConfigPage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredCategorias?.map((cat: any) => {
+                        filteredCategorias?.map((cat: MarketplaceCategoria) => {
                           const IconComp = ICON_OPTIONS.find(i => i.name === cat.icone)?.icon || Package
                           return (
                             <TableRow key={cat.id} className="group hover:bg-slate-50/50 transition-colors">
@@ -527,7 +528,7 @@ export function MarketplaceConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLojistas?.length ? filteredLojistas.map((lojista: any) => (
+                  {filteredLojistas?.length ? filteredLojistas.map((lojista: Lojista) => (
                     <TableRow key={lojista.id} className="group hover:bg-zinc-50/50 transition-colors">
                       <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-3">
@@ -631,7 +632,7 @@ export function MarketplaceConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProfissionais?.length ? filteredProfissionais.map((prof: any) => (
+                  {filteredProfissionais?.length ? filteredProfissionais.map((prof) => (
                     <TableRow key={prof.id} className="group hover:bg-zinc-50/50 transition-colors">
                       <TableCell className="pl-8 py-4">
                         <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
+import type { FilaVirtual } from '@/lib/database.types'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { AnimatePresence,motion } from 'framer-motion'
@@ -73,12 +74,12 @@ export function FilaVirtualAdminPageMobile() {
     }
   })
 
-  const aguardando = filaData?.filter((f: any) => f.status === 'aguardando') || []
-  const concluidos = filaData?.filter((f: any) => f.status === 'atendido') || []
+  const aguardando = filaData?.filter((f: FilaVirtual) => f.status === 'aguardando') || []
+  const concluidos = filaData?.filter((f: FilaVirtual) => f.status === 'atendido') || []
   
   const minMedio = useMemo(() => {
     if (!concluidos || concluidos.length === 0) return null
-    const tempos = concluidos.map((f: any) => {
+    const tempos = concluidos.map((f: FilaVirtual) => {
       const chegada = new Date(f.created_at).getTime()
       const saida = new Date(f.updated_at || f.created_at).getTime()
       return (saida - chegada) / 60000
@@ -161,7 +162,7 @@ export function FilaVirtualAdminPageMobile() {
                   <p className="text-xs font-black uppercase tracking-widest">Atualizando fila...</p>
                 </div>
               ) : aguardando.length > 0 ? (
-                aguardando.map((reg: any, idx) => (
+                aguardando.map((reg: FilaVirtual, idx) => (
                   <motion.div
                     key={reg.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -219,7 +220,7 @@ export function FilaVirtualAdminPageMobile() {
           ) : (
             <div className="space-y-3">
               {concluidos.length > 0 ? (
-                concluidos.map((reg: any) => {
+                concluidos.map((reg: FilaVirtual) => {
                   const chegada = new Date(reg.created_at).getTime()
                   const saida = new Date(reg.updated_at || reg.created_at).getTime()
                   const minsEspera = Math.max(0, Math.round((saida - chegada) / 60000))

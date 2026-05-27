@@ -7,6 +7,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
 import { usePortalContext } from '../../context';
+import type { MuralAviso } from '@/lib/database.types';
 import { useAvisosPortal,useConfigPix,useDashboardFamilia,useFilaVirtual,useTransferenciasPortal } from '../../hooks';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 
@@ -24,6 +25,13 @@ function getEscolaNome(value: unknown): string {
   return String(value)
 }
 
+interface AvisoRecente {
+  id: string
+  titulo: string
+  created_at: string
+  turma?: { nome: string } | null
+}
+
 export function PortalHomeV2Web() {
   const navigate = useNavigate();
   const { responsavel, vinculos, selecionarAluno, alunoSelecionado, tenantId } = usePortalContext();
@@ -33,7 +41,7 @@ export function PortalHomeV2Web() {
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   const { data: historicoFila } = useFilaVirtual();
   const { data: transferenciasPortal } = useTransferenciasPortal();
-  const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
+  const filaAtiva = historicoFila?.find((f) => f.status === 'aguardando');
   const transferenciaPendente = React.useMemo(
     () => (transferenciasPortal ?? []).find((t) => ['aguardando_responsavel', 'aguardando_aceite_destino'].includes(t.status)),
     [transferenciasPortal]
@@ -52,7 +60,7 @@ export function PortalHomeV2Web() {
   }, [responsavel]);
 
   const hojeStr = new Date().toISOString().split('T')[0];
-  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 3);
+  const activeAvisos = (avisos ?? []).filter((a) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 3);
 
   const informativeMessages = [
     "Um dia produtivo começa com uma boa parceria entre escola e família!",
@@ -120,7 +128,7 @@ export function PortalHomeV2Web() {
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">ACESSAR PERFIL:</span>
             <div className="flex items-center gap-2">
-              {vinculos.map((v: any, index: number) => (
+              {vinculos.map((v, index: number) => (
                 <div
                   key={v.aluno?.id || `vinculo-${index}`}
                   onClick={() => {
@@ -356,7 +364,7 @@ export function PortalHomeV2Web() {
                   })}
                 </>
               ) : (
-                activeAvisos.slice(0, 1).map((news: any) => (
+                activeAvisos.slice(0, 1).map((news) => (
                   <div key={news.id} className="bg-slate-50 border border-slate-100 p-5 rounded-2xl hover:border-teal-200 transition-colors cursor-pointer group">
                     <span className="inline-block px-3 py-1.5 bg-white text-slate-600 rounded-lg text-[11px] font-black uppercase tracking-widest mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                       {news.turma?.nome || 'Geral'}
@@ -389,7 +397,7 @@ export function PortalHomeV2Web() {
                   </p>
                 </div>
               ) : (
-                dashboard.avisosRecentes.map((item: any, idx: number) => (
+                (dashboard.avisosRecentes as AvisoRecente[]).map((item, idx: number) => (
                   <div key={idx} className="flex gap-6 relative group cursor-default">
                     <div className="flex flex-col items-center mt-1 z-10">
                       <div className={`w-5 h-5 rounded-full bg-teal-500 shadow-sm border-4 border-white group-hover:scale-125 transition-transform`} />

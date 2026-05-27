@@ -1,3 +1,5 @@
+import type { Frequencia, Turma } from '@/lib/database.types'
+import type { AgendaAula } from '@/modules/professor/types'
 import { Button } from '@/components/ui/button'
 import {
 Dialog,
@@ -47,7 +49,7 @@ export function ProfessorFrequenciaPage() {
     const map = new Map()
 
     if (minhasTurmas) {
-      minhasTurmas.forEach((turma: any) => {
+      minhasTurmas.forEach((turma: Turma) => {
         map.set(turma.id, {
           id: turma.id,
           nome: turma.nome,
@@ -56,7 +58,7 @@ export function ProfessorFrequenciaPage() {
     }
 
     if (agenda) {
-      agenda.forEach((aula: any) => {
+      agenda.forEach((aula: AgendaAula) => {
         if (!map.has(aula.turma_id)) {
           map.set(aula.turma_id, {
             id: aula.turma_id,
@@ -83,7 +85,7 @@ export function ProfessorFrequenciaPage() {
     }
 
     if (!turmaId && agenda?.length) {
-      const pendente = agenda.find((a: any) => !a.chamada_realizada) || agenda[0]
+      const pendente = agenda.find((a: AgendaAula) => !a.chamada_realizada) || agenda[0]
       if (pendente?.turma_id) setTurmaId(pendente.turma_id)
     }
   }, [agenda, dataAula, searchParams, turmaId])
@@ -96,15 +98,15 @@ export function ProfessorFrequenciaPage() {
   // Mapear frequências existentes para o formato do componente
   const initialFrequencias = useMemo(() => {
     const map: Record<string, 'presente' | 'falta' | 'justificada'> = {}
-    frequenciasExistentes.forEach((f: any) => {
-      map[f.aluno_id] = f.status as 'presente' | 'falta' | 'justificada'
+    frequenciasExistentes.forEach((f: Frequencia) => {
+      map[f.aluno_id as string] = f.status as 'presente' | 'falta' | 'justificada'
     })
     return map
   }, [frequenciasExistentes])
 
   const initialJustificativas = useMemo(() => {
     const map: Record<string, string> = {}
-    frequenciasExistentes.forEach((f: any) => {
+    frequenciasExistentes.forEach((f: Frequencia) => {
       if (f.justificativa) {
         map[f.aluno_id] = f.justificativa
       }
@@ -173,7 +175,7 @@ export function ProfessorFrequenciaPage() {
                   <SelectValue placeholder="Toque para escolher..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-zinc-100">
-                  {turmasUnicas.map((turma: any) => (
+                  {turmasUnicas.map((turma: { id: string; nome: string }) => (
                     <SelectItem key={turma.id} value={turma.id} className="py-3 rounded-xl focus:bg-zinc-50">
                       {turma.nome}
                     </SelectItem>
@@ -199,7 +201,7 @@ export function ProfessorFrequenciaPage() {
           {loadingAlunos ? (
             <div className="flex flex-col items-center justify-center h-48 py-12">
               <Loader2 className="w-8 h-8 animate-spin text-zinc-300 mb-2" />
-              <p className="text-zinc-500 font-medium text-sm">Buscando alunos da {turmasUnicas.find((t: any) => t.id === turmaId)?.nome}...</p>
+              <p className="text-zinc-500 font-medium text-sm">Buscando alunos da {turmasUnicas.find((t: { id: string; nome: string }) => t.id === turmaId)?.nome}...</p>
             </div>
           ) : alunosTurma.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-zinc-100 mx-4">

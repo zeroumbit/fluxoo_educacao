@@ -155,7 +155,7 @@ export function FinanceiroPageMobile() {
 
   const groupedList = useMemo(() => {
     const groups: Record<string, any[]> = {}
-    filteredList.forEach((c: any) => {
+    filteredList.forEach((c: Cobranca) => {
       const data = new Date(c.data_vencimento + 'T12:00:00')
       const key = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
       if (!groups[key]) groups[key] = []
@@ -597,7 +597,7 @@ export function FinanceiroPageMobile() {
     return (
       <div className="space-y-3">
         <AnimatePresence mode="popLayout">
-          {items.map((c: any, idx: number) => (
+          {items.map((c: Cobranca, idx: number) => (
             <motion.div
               key={c.id}
               layout

@@ -136,7 +136,7 @@ export function FaturasPage() {
           <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-amber-700">Aguardando Confirmação</CardTitle>
             <div className="text-2xl font-bold text-amber-900">
-              {faturas?.filter((f: any) => f.status === 'pendente_confirmacao').length || 0}
+              {faturas?.filter((f: Fatura) => f.status === 'pendente_confirmacao').length || 0}
             </div>
           </CardHeader>
         </Card>
@@ -144,7 +144,7 @@ export function FaturasPage() {
           <CardHeader className="pt-[30px] pb-2 gap-2">
             <CardTitle className="text-sm font-medium text-red-700">Atrasadas</CardTitle>
             <div className="text-2xl font-bold text-red-900">
-              {faturas?.filter((f: any) => f.status === 'atrasado').length || 0}
+              {faturas?.filter((f: Fatura) => f.status === 'atrasado').length || 0}
             </div>
           </CardHeader>
         </Card>
@@ -202,7 +202,7 @@ export function FaturasPage() {
                         <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhuma fatura encontrada.</TableCell>
                       </TableRow>
                     )}
-                    {filtered?.map((f: any) => (
+                    {filtered?.map((f: Fatura) => (
                       <TableRow key={f.id} className="hover:bg-zinc-50/50 transition-colors">
                         <TableCell className="pl-8 font-bold text-zinc-900">{f.escola?.razao_social || '—'}</TableCell>
                         <TableCell className="text-sm">

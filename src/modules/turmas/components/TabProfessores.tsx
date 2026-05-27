@@ -20,7 +20,8 @@ import { Input } from '@/components/ui/input'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { toast } from 'sonner'
-import type { DisciplinaDb, Funcionario, TurmaProfessor } from '@/lib/database.types'
+import type { TurmaProfessor } from '@/lib/database.types'
+import type { Disciplina, Professor } from '../types'
 import { useAtribuicoes,useAtribuirProfessor,useDisciplinas,useProfessoresTurma,useRemoverAtribuicao,useTurma } from '../hooks'
 
 interface TabProfessoresProps {
@@ -29,10 +30,10 @@ interface TabProfessoresProps {
 
 export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const { authUser } = useAuth()
-  const [selectedDisciplina, setSelectedDisciplina] = useState<DisciplinaDb | null>(null)
+  const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [busca, setBusca] = useState('')
-  const [professorDetails, setProfessorDetails] = useState<Funcionario | null>(null)
+  const [professorDetails, setProfessorDetails] = useState<Professor | null>(null)
   const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<TurmaProfessor | null>(null)
   const [_showAllDisciplinas, _setShowAllDisciplinas] = useState(false)
 
@@ -58,10 +59,10 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const idsAtivas = new Set(disciplinasAtivas.map(d => d.id))
 
   // Filtragem: EXCLUI atribuições cuja disciplina foi desativada
-  const filteredAtribuicoes = atribuicoes.filter((at: any) => {
+  const filteredAtribuicoes = atribuicoes.filter((at: TurmaProfessor) => {
     if (!idsAtivas.has(at.disciplina_id)) return false
-    const professor = professores.find((p: any) => p.id === at.professor_id)
-    const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
+    const professor = professores.find((p: Professor) => p.id === at.professor_id)
+    const disciplina = disciplinasAtivas.find((d: Disciplina) => d.id === at.disciplina_id)
     if (!professor || !disciplina) return false
     const searchTerm = busca.toLowerCase()
     return professor.nome.toLowerCase().includes(searchTerm) || 
@@ -70,7 +71,7 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
 
   // Disciplinas ativas que ainda não têm professor
   const disciplinasSemProfessor = disciplinasAtivas.filter(d => 
-    !atribuicoes.some((at: any) => at.disciplina_id === d.id) &&
+    !atribuicoes.some((at: TurmaProfessor) => at.disciplina_id === d.id) &&
     d.nome.toLowerCase().includes(busca.toLowerCase())
   )
 
@@ -223,9 +224,9 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
         ) : null}
 
         {/* Professores Vinculados */}
-        {filteredAtribuicoes.map((at: any) => {
-          const professor = professores.find((p: any) => p.id === at.professor_id)
-          const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
+            {filteredAtribuicoes.map((at: TurmaProfessor) => {
+              const professor = professores.find((p: Professor) => p.id === at.professor_id)
+              const disciplina = disciplinasAtivas.find((d: Disciplina) => d.id === at.disciplina_id)
           if (!professor || !disciplina) return null
 
           return (
@@ -291,7 +292,7 @@ export function TabProfessores({ turmaId }: TabProfessoresProps) {
               Disciplinas pendentes de professor
             </h4>
             <div className="grid gap-3">
-              {disciplinasSemProfessor.map((d: any) => (
+              {disciplinasSemProfessor.map((d: Disciplina) => (
                 <div key={d.id} className="p-6 bg-amber-50/50 border border-amber-100 rounded-[2rem] flex items-center justify-between group hover:bg-amber-50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-amber-500 shadow-sm border border-amber-200 group-hover:scale-110 transition-transform">

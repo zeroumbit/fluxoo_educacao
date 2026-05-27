@@ -373,7 +373,7 @@ export function AlunoCadastroPage() {
           .eq('is_financeiro', true)
 
         if (vinculos && vinculos.length > 0) {
-          const alunosList = vinculos.map((v: any) => v.alunos.nome_completo);
+          const alunosList = vinculos.map((v: { alunos: { nome_completo: string } }) => v.alunos.nome_completo);
           setIrmaosExistentes(alunosList);
           toast.warning('Atenção: Irmãos detectados!', {
             description: `Este responsável já paga a mensalidade de: ${alunosList.join(', ')}. Sugerimos aplicar um desconto.`,
@@ -1038,10 +1038,10 @@ export function AlunoCadastroPage() {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {(watch('patologias') || []).map((p: any, i: number) => (
+                    {(watch('patologias') || []).map((p: string, i: number) => (
                       <Badge key={i} className="bg-rose-50 text-rose-600 border-rose-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
                         {p}
-                        <button type="button" onClick={() => setValue('patologias', watch('patologias')?.filter((_: any, idx: number) => idx !== i))} className="hover:bg-rose-200/50 rounded-full p-0.5">
+                        <button type="button" onClick={() => setValue('patologias', watch('patologias')?.filter((_: string, idx: number) => idx !== i))} className="hover:bg-rose-200/50 rounded-full p-0.5">
                           <X size={14} />
                         </button>
                       </Badge>
@@ -1080,10 +1080,10 @@ export function AlunoCadastroPage() {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {(watch('medicamentos') || []).map((m: any, i: number) => (
+                    {(watch('medicamentos') || []).map((m: string, i: number) => (
                       <Badge key={i} className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-3 py-1 rounded-lg flex items-center gap-2 pr-1">
                         {m}
-                        <button type="button" onClick={() => setValue('medicamentos', watch('medicamentos')?.filter((_: any, idx: number) => idx !== i))} className="hover:bg-indigo-200/50 rounded-full p-0.5">
+                        <button type="button" onClick={() => setValue('medicamentos', watch('medicamentos')?.filter((_: string, idx: number) => idx !== i))} className="hover:bg-indigo-200/50 rounded-full p-0.5">
                           <X size={14} />
                         </button>
                       </Badge>

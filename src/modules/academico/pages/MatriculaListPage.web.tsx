@@ -16,7 +16,7 @@ import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { logger } from '@/lib/logger'
-import type { Matricula } from '@/lib/database.types'
+import type { Aluno, Matricula } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -157,7 +157,7 @@ export function MatriculaListPageWeb() {
   }, [])
 
   // Filtragem inteligente de alunos baseada no tipo de operação
-  const alunosFiltrados = alunos?.filter((aluno: any) => {
+  const alunosFiltrados = alunos?.filter((aluno: Aluno) => {
     if (isEditing) return true
 
     const jaMatriculadoNoAno = matriculas?.some((m: any) => 
@@ -373,7 +373,7 @@ export function MatriculaListPageWeb() {
                     <SelectValue placeholder="Selecione o aluno" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
-                    {alunosFiltrados?.map((a: any) => (
+                    {alunosFiltrados?.map((a: Aluno) => (
                       <SelectItem key={a.id} value={a.id} className="font-bold">
                         {a.nome_completo}
                       </SelectItem>

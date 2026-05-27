@@ -38,6 +38,7 @@ useReabrirBimestre,
 useSalvarNotasEmLote,
 useStatusFechamento,
 } from '../hooks/hooks.v2'
+import type { Turma } from '@/lib/database.types'
 import type { TipoAvaliacao } from '../service.v2'
 
 const TIPOS_AVALIACAO: { value: TipoAvaliacao; label: string }[] = [
@@ -573,7 +574,7 @@ export function NotasPageWeb() {
                   <SelectValue placeholder="Selecionar turma" />
                 </SelectTrigger>
                 <SelectContent>
-                  {turmas?.map((t: any) => (
+                  {turmas?.map((t: Turma) => (
                     <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                   ))}
                 </SelectContent>
@@ -601,7 +602,7 @@ export function NotasPageWeb() {
                       <p className="text-[10px] text-slate-400 mt-1">Vincule disciplinas em Configurações &gt; Turmas</p>
                     </div>
                   ) : (
-                    disciplinas?.map((d: any) => (
+                    disciplinas?.map((d) => (
                       <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                     ))
                   )}

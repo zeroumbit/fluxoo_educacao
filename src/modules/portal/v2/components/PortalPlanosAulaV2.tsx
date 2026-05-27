@@ -40,7 +40,7 @@ export function PortalPlanosAulaV2() {
       </div>
 
       <div className="space-y-6">
-        {planos.map((item: any, idx: number) => {
+        {planos.map((item, idx: number) => {
           const { plano } = item;
           if (!plano) return null;
           

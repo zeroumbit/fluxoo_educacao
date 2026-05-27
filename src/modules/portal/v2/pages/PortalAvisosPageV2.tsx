@@ -159,8 +159,8 @@ export function PortalAvisosPageV2() {
 
   if (loadingCtx || isLoading) return <AvisosSkeleton />
 
-  const avisosAtivos = (avisos ?? []).filter((a: any) => avisoEstaAtivo(a))
-  const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
+  const avisosAtivos = (avisos ?? []).filter((a) => avisoEstaAtivo(a))
+  const avisosExpirados = (avisos ?? []).filter((a) => !avisoEstaAtivo(a))
 
   return (
     <div className="flex flex-col gap-6 p-4 pt-6 pb-20 font-sans">
@@ -179,7 +179,7 @@ export function PortalAvisosPageV2() {
       {/* Cards de Alunos (Filtro) */}
       {isMultiAluno && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
-          {vinculos.map((v: any) => (
+          {vinculos.map((v) => (
             <div
               key={v.aluno?.id}
               onClick={() => {

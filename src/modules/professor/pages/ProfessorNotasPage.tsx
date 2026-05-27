@@ -1,3 +1,4 @@
+import type { SaudeTurma } from '@/modules/professor/types'
 import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import {
 Select,
@@ -34,7 +35,7 @@ export function ProfessorNotasPage() {
   const turmasUnicas = useMemo(() => {
     if (!saudeTurmas) return []
     const map = new Map()
-    saudeTurmas.forEach((turma: any) => {
+    saudeTurmas.forEach((turma: SaudeTurma) => {
       if (!map.has(turma.turma_id)) {
         map.set(turma.turma_id, {
           turma_id: turma.turma_id,
@@ -48,7 +49,7 @@ export function ProfessorNotasPage() {
   }, [saudeTurmas])
 
   const mediaGeral = turmasUnicas.length > 0
-    ? turmasUnicas.reduce((sum: number, t: any) => sum + t.media_geral, 0) / turmasUnicas.length
+    ? turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.media_geral, 0) / turmasUnicas.length
     : 0
 
   if (isLoading) {
@@ -96,7 +97,7 @@ export function ProfessorNotasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
-              {turmasUnicas.reduce((sum: number, t: any) => sum + t.total_alunos, 0)}
+              {turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.total_alunos, 0)}
             </div>
             <p className="text-xs text-slate-400 mt-1">{turmasUnicas.length} turmas</p>
           </CardContent>
@@ -111,7 +112,7 @@ export function ProfessorNotasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-emerald-600">
-              {turmasUnicas.filter((t: any) => t.media_geral >= 7).length}
+              {turmasUnicas.filter((t: SaudeTurma) => t.media_geral >= 7).length}
             </div>
             <p className="text-xs text-slate-400 mt-1">Média ≥ 7</p>
           </CardContent>
@@ -126,7 +127,7 @@ export function ProfessorNotasPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Todas as turmas</SelectItem>
-            {turmasUnicas.map((turma: any) => (
+            {turmasUnicas.map((turma: SaudeTurma) => (
               <SelectItem key={turma.turma_id} value={turma.turma_id}>
                 {turma.turma_nome}
               </SelectItem>

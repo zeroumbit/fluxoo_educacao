@@ -1,3 +1,4 @@
+import type { GatewayDisponivelView } from '@/lib/database.types'
 import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
@@ -344,7 +345,7 @@ export function GatewayTenantConfigPageMobile() {
               <Settings2 size={14} className="text-slate-300" />
             </div>
 
-            {gateways.map((gw: any, idx: number) => {
+            {gateways.map((gw: GatewayDisponivelView, idx: number) => {
               const isConfigured = gw.tenant_configurado
               const isAtivo = gw.tenant_ativo
               const statusLabel = isAtivo
@@ -479,7 +480,7 @@ export function GatewayTenantConfigPageMobile() {
                     <div className="space-y-6">
                       {gateways
                         ?.find((g: any) => g.gateway === selectedGateway)
-                        ?.campos_config?.map((campo: any) => renderFormField(campo))
+                        ?.campos_config?.map((campo) => renderFormField(campo))
                       }
                     </div>
 

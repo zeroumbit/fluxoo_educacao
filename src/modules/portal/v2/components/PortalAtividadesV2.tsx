@@ -54,7 +54,7 @@ export function PortalAtividadesV2() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {atividades.map((item: any, idx: number) => {
+        {atividades.map((item, idx: number) => {
           const { atividade } = item;
           if (!atividade) return null;
 

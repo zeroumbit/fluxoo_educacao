@@ -6,6 +6,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ModalContratoEscola } from '../../components/ModalContratoEscola';
 import { usePortalContext } from '../../context';
+import type { MuralAviso } from '@/lib/database.types';
 import { useAvisosPortal,useConfigPix,useDashboardFamilia,useFilaVirtual,useTransferenciasPortal } from '../../hooks';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { NativeHeader } from '../components/NativeHeader';
@@ -33,7 +34,7 @@ export function PortalHomeV2Mobile() {
   const { data: notifications } = usePortalNotifications(responsavel?.id);
   const { data: historicoFila } = useFilaVirtual();
   const { data: transferenciasPortal } = useTransferenciasPortal();
-  const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
+  const filaAtiva = historicoFila?.find((f) => f.status === 'aguardando');
   const transferenciaPendente = React.useMemo(
     () => (transferenciasPortal ?? []).find((t) => t.status === 'aguardando_responsavel'),
     [transferenciasPortal]
@@ -77,7 +78,7 @@ export function PortalHomeV2Mobile() {
 
   // Helper de vigência e mensagens
   const hojeStr = new Date().toISOString().split('T')[0];
-  const activeAvisos = (avisos ?? []).filter((a: any) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
+  const activeAvisos = (avisos ?? []).filter((a) => !a.data_fim || a.data_fim >= hojeStr).slice(0, 5);
 
   const getInformativeCard = (offset: number) => {
     const idx = (currentMessageIdx + offset) % informativeMessages.length;
@@ -306,7 +307,7 @@ export function PortalHomeV2Mobile() {
               </span>
             </div>
           ) : (
-            dashboard.avisosRecentes.map((item: any, idx: number) => (
+            (dashboard.avisosRecentes as { id: string; titulo: string; created_at: string; turma?: { nome: string } | null }[]).map((item, idx: number) => (
               <div key={idx} className="flex gap-3 relative">
                 <div className="flex flex-col items-center mt-1 z-10">
                   <div className="w-[10px] h-[10px] rounded-full bg-teal-500 shadow-sm border-2 border-white" />
@@ -406,7 +407,7 @@ export function PortalHomeV2Mobile() {
               })}
             </>
           ) : (
-            activeAvisos.map((news: any, idx: number) => (
+            activeAvisos.map((news, idx: number) => (
               <motion.div
                 key={news.id}
                 initial={{ opacity: 0, scale: 0.92 }}

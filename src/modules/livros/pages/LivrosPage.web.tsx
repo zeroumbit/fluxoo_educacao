@@ -399,7 +399,7 @@ export function LivrosPage() {
     if (livros) {
       livros.forEach(l => {
         if (l.turmas) {
-          l.turmas.forEach((t: any) => {
+          l.turmas.forEach((t: { id: string; nome: string }) => {
             const id = t.id || t.turma_id
             const current = map.get(id) || []
             map.set(id, [...current, { ...l, tipo: 'livro' }])
@@ -410,7 +410,7 @@ export function LivrosPage() {
     if (materiais) {
       materiais.forEach(m => {
         if (m.turmas) {
-          m.turmas.forEach((t: any) => {
+          m.turmas.forEach((t: { id: string; nome: string }) => {
             const id = t.id || t.turma_id
             const current = map.get(id) || []
             map.set(id, [...current, { ...m, tipo: 'material' }])
@@ -792,7 +792,7 @@ export function LivrosPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {items.map((item: any) => (
+                  {items.map((item: { tipo: string; id: string; capa_url?: string | null; imagem_url?: string | null; nome?: string; titulo?: string }) => (
                     <div 
                       key={`${item.tipo}-${item.id}`} 
                       className="group bg-white rounded-2xl border border-zinc-200 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-300 flex flex-col relative overflow-hidden"

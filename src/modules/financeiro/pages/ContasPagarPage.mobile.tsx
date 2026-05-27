@@ -234,7 +234,7 @@ export function ContasPagarPageMobile() {
           {/* Lista de Contas */}
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {filteredContas.map((c: any, idx) => (
+              {filteredContas.map((c: ContaPagar, idx) => (
                 <motion.div
                   key={c.id}
                   layout

@@ -52,7 +52,7 @@ export function AlunosImportarPage() {
         }
 
         // Agrupamos por CPF do Responsável conforme solicitado pelo motor de staging
-        const grouped = results.data.reduce((acc: any, row: any) => {
+        const grouped = results.data.reduce((acc: Record<string, { responsavel: { nome: string; cpf: string; email: string; telefone: string }; alunos: { nome_completo: string; data_nascimento: string; turma_nome: string; serie: string; valor_mensalidade: number }[] }>, row: Record<string, string>) => {
           const cpf = row['CPF Responsável']
           if (!cpf) return acc
 
@@ -215,7 +215,7 @@ export function AlunosImportarPage() {
                         <TableCell className="font-mono text-xs text-slate-600">{item.responsavel.cpf}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-2">
-                            {item.alunos.map((a: any, j: number) => (
+                            {item.alunos.map((a: { nome_completo: string; turma_nome: string }, j: number) => (
                               <div key={j} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[10px] font-bold border border-indigo-100">
                                 {a.nome_completo} • {a.turma_nome}
                               </div>

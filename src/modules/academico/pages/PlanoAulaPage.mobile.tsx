@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { PlanoAula } from '@/lib/database.types'
+import type { PlanoAula, Turma } from '@/lib/database.types'
 import { AnimatePresence,motion } from 'framer-motion'
 import { get,set } from 'idb-keyval'
 import {
@@ -443,9 +443,9 @@ export function PlanoAulaPageMobile() {
                               >
                                 <SelectTrigger className="h-12 rounded-xl bg-white dark:bg-slate-800"><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
                                 <SelectContent>
-                                  {turmas?.map((t: any) => (
-                                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                                  ))}
+                                  {turmas?.map((t: Turma) => (
+                                     <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                                   ))}
                                 </SelectContent>
                               </Select>
                            </div>

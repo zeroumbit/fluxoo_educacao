@@ -26,7 +26,8 @@ Users
 import React,{ useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { Funcionario, Turma, TurmaProfessor } from '@/lib/database.types'
+import type { Turma, TurmaProfessor } from '@/lib/database.types'
+import type { Disciplina, Professor, ProfessorTurma } from '../types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { toast } from 'sonner'
@@ -228,7 +229,7 @@ function TabAlunos({ turma }: { turma: Turma }) {
 
   const alunosDaTurma = useMemo(() => {
     if (!todosAlunos) return []
-    return todosAlunos.filter((a: any) => 
+    return todosAlunos.filter((a) => 
       (a.turma_id === turma.id || a.turma_atual?.id === turma.id) &&
       a.nome_completo.toLowerCase().includes(busca.toLowerCase())
     )
@@ -253,7 +254,7 @@ function TabAlunos({ turma }: { turma: Turma }) {
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nenhum aluno encontrado.</p>
           </div>
         ) : (
-          alunosDaTurma.map((aluno: any) => (
+          alunosDaTurma.map((aluno) => (
             <div key={aluno.id} className="p-4 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
@@ -313,7 +314,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
   const [selectedProfessorId, setSelectedProfessorId] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState(4)
 
-  const [professorDetails, setProfessorDetails] = useState<Funcionario | null>(null)
+  const [professorDetails, setProfessorDetails] = useState<{ professor: Professor; disciplina: Disciplina; atribuicao: TurmaProfessor } | null>(null)
   const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<TurmaProfessor | null>(null)
 
   const atribuicoes = atribuicoesDb || []
@@ -324,7 +325,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
 
   // Disciplinas ativas sem professor atribuído
   const disciplinasSemProfessor = disciplinasAtivas.filter(d => 
-    !atribuicoes.some((at: any) => at.disciplina_id === d.id)
+    !atribuicoes.some((at: TurmaProfessor) => at.disciplina_id === d.id)
   )
 
   const handleAtribuir = async () => {
@@ -378,9 +379,9 @@ function TabProfessores({ turma }: { turma: Turma }) {
           </div>
         ) : null}
 
-        {atribuicoes.filter((at: any) => idsAtivas.has(at.disciplina_id)).map((at: any) => {
-          const professor = professores.find((p: any) => p.id === at.professor_id)
-          const disciplina = disciplinasAtivas.find((d: any) => d.id === at.disciplina_id)
+        {atribuicoes.filter((at: TurmaProfessor) => idsAtivas.has(at.disciplina_id)).map((at: TurmaProfessor) => {
+          const professor = professores.find((p: Professor) => p.id === at.professor_id)
+          const disciplina = disciplinasAtivas.find((d: Disciplina) => d.id === at.disciplina_id)
           if (!professor || !disciplina) return null
 
           return (
@@ -438,7 +439,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
              <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-500 ml-1 flex items-center gap-2">
                 <AlertTriangle size={12} /> Disciplinas sem Professor
              </h4>
-             {disciplinasSemProfessor.map((d: any) => (
+              {disciplinasSemProfessor.map((d: Disciplina) => (
                 <div key={d.id} className="p-4 bg-amber-50/50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 rounded-[1.5rem] flex items-center justify-between">
                   <div>
                     <h5 className="font-black text-[12px] text-amber-900 dark:text-amber-100 uppercase tracking-tighter">{d.nome}</h5>
@@ -470,7 +471,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Disciplina</label>
              <div className="h-14 w-full rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 shadow-inner flex items-center px-4">
                <span className="text-[13px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight">
-                 {disciplinasAtivas.find((d: any) => d.id === selectedDisciplinaId)?.nome || ''}
+                   {disciplinasAtivas.find((d: Disciplina) => d.id === selectedDisciplinaId)?.nome || ''}
                </span>
              </div>
            </div>
@@ -482,7 +483,7 @@ function TabProfessores({ turma }: { turma: Turma }) {
                  <SelectValue placeholder="Selecione..." />
                </SelectTrigger>
                <SelectContent className="w-full rounded-2xl border-slate-100 shadow-xl">
-                 {professores.map((p: any) => (
+                   {professores.map((p: Professor) => (
                     <SelectItem key={p.id} value={p.id} className="font-bold py-3 text-[13px]">{p.nome}</SelectItem>
                  ))}
                </SelectContent>

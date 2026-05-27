@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { AlmoxarifadoItem, AlmoxarifadoMovimentacao } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { AnimatePresence,motion } from 'framer-motion'
@@ -113,7 +114,7 @@ export function AlmoxarifadoPageMobile() {
     setValorTotal('')
   }
 
-  const filteredItens = (itens || []).filter((i: any) => 
+  const filteredItens = (itens || []).filter((i: AlmoxarifadoItem) => 
     i.nome.toLowerCase().includes(search.toLowerCase()) || 
     (i.categoria || '').toLowerCase().includes(search.toLowerCase())
   )
@@ -167,7 +168,7 @@ export function AlmoxarifadoPageMobile() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="space-y-3"
                 >
-                  {filteredItens.map((item: any) => {
+                  {filteredItens.map((item: AlmoxarifadoItem) => {
                     const status = getStockStatus(item)
                     return (
                       <NativeCard 
@@ -217,7 +218,7 @@ export function AlmoxarifadoPageMobile() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="space-y-3"
                 >
-                  {(movs || []).map((m: any) => (
+                  {(movs || []).map((m: AlmoxarifadoMovimentacao) => (
                     <NativeCard key={m.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={cn(

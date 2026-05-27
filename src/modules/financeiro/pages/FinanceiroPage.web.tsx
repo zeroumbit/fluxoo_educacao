@@ -236,7 +236,7 @@ export function FinanceiroPageWeb() {
 
   const groupedCobrancas = useMemo(() => {
     const groups: Record<string, any[]> = {}
-    filteredCobrancas.forEach((c: any) => {
+    filteredCobrancas.forEach((c: Cobranca) => {
       const data = new Date(c.data_vencimento + 'T12:00:00')
       const key = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
       if (!groups[key]) groups[key] = []
@@ -819,8 +819,8 @@ export function FinanceiroPageWeb() {
 
   // Helpers de renderização para evitar repetição
   function renderGroupSummary(group: any) {
-    const groupTotal = group.items.reduce((acc: number, c: any) => acc + Number(c.valor_total_projetado || c.valor), 0)
-    const groupAtrasados = group.items.filter((c: any) => {
+    const groupTotal = group.items.reduce((acc: number, c: Cobranca) => acc + Number(c.valor_total_projetado || c.valor), 0)
+    const groupAtrasados = group.items.filter((c: Cobranca) => {
       const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
       return (c.status === 'a_vencer' || c.status === 'atrasado' || c.status === 'pendente') && 
              new Date(c.data_vencimento + 'T12:00:00') < hoje
@@ -855,7 +855,7 @@ export function FinanceiroPageWeb() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((c: any) => (
+            {items.map((c: Cobranca) => (
               <TableRow key={c.id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                 <TableCell className="pl-6 py-3">
                   <p className="font-bold text-slate-900">{c.alunos?.nome_completo}</p>

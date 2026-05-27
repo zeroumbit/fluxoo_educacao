@@ -14,7 +14,7 @@ import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/com
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { useGestorGuard } from '@/hooks/useGestorGuard'
-import type { FrequenciaStatus } from '@/lib/database.types'
+import type { Frequencia, FrequenciaStatus } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { useMatriculasAtivasPorTurma } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
@@ -97,7 +97,7 @@ export function FrequenciaPageWeb() {
       const newStatusMap: Record<string, FrequenciaStatus> = {}
       const newJustificativaMap: Record<string, string> = {}
 
-      frequenciasExistentes.forEach((f: any) => {
+      frequenciasExistentes.forEach((f: Frequencia) => {
         newStatusMap[f.aluno_id] = f.status as FrequenciaStatus
         if (f.justificativa) newJustificativaMap[f.aluno_id] = f.justificativa
       })

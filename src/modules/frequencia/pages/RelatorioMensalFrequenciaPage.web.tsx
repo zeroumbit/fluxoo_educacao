@@ -3,6 +3,7 @@ import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import type { Frequencia } from '@/lib/database.types'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { eachDayOfInterval,endOfMonth,format,startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -43,7 +44,7 @@ export function RelatorioMensalFrequenciaPage() {
     if (!historico) return {}
     const matriz: Record<string, Record<string, string>> = {}
     
-    historico.forEach((reg: any) => {
+    historico.forEach((reg: Frequencia) => {
       if (!matriz[reg.aluno_id]) matriz[reg.aluno_id] = {}
       matriz[reg.aluno_id][reg.data_aula] = reg.status
     })
@@ -55,9 +56,9 @@ export function RelatorioMensalFrequenciaPage() {
   const alunosUnicos = React.useMemo(() => {
     if (!historico) return []
     const map = new Map()
-    historico.forEach((reg: any) => {
+    historico.forEach((reg: Frequencia) => {
       if (reg.alunos) {
-        map.set(reg.aluno_id, reg.alunos.nome_completo)
+        map.set(reg.aluno_id, (reg.alunos as { nome_completo?: string }).nome_completo)
       }
     })
     return Array.from(map.entries())

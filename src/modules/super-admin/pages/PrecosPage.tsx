@@ -8,6 +8,7 @@ import { usePrecoGlobal, usePrecosModulos, useUpsertPrecoGlobal, useUpsertPrecoM
 import { DollarSign, Loader2, Puzzle, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import type { Modulo } from '@/lib/database.types'
 
 export function PrecosPage() {
   const { data: precoGlobal, isLoading: loadingPreco } = usePrecoGlobal()
@@ -147,7 +148,7 @@ export function PrecosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {modulosDisponiveis?.filter((m: any) => ['contas_pagar', 'fila_virtual'].includes(m.codigo)).map((modulo: any) => {
+              {modulosDisponiveis?.filter((m: Modulo) => ['contas_pagar', 'fila_virtual'].includes(m.codigo)).map((modulo: Modulo) => {
                 const form = moduloForms[modulo.id] || { valor: 0, trial_dias: 90 }
                 return (
                   <TableRow key={modulo.id} className="group hover:bg-slate-50/50">

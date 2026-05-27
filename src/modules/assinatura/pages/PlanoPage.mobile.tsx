@@ -5,6 +5,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { Plano, SolicitacaoUpgrade } from '@/lib/database.types'
 import { cn,formatCurrency } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
@@ -180,7 +181,7 @@ export function PlanoPageMobile() {
                 </div>
 
                 <div className="space-y-3">
-                   {solicitacoes?.map((sol: any, idx) => (
+                   {solicitacoes?.map((sol: SolicitacaoUpgrade, idx) => (
                       <NativeCard key={idx} className="p-5">
                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -239,7 +240,7 @@ export function PlanoPageMobile() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {planosBase?.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).map((p: any) => {
+                        {planosBase?.filter((p: Plano) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).map((p: Plano) => {
                             const isActive = activePlan?.id === p.id;
                             return (
                                 <NativeCard 
@@ -283,7 +284,7 @@ export function PlanoPageMobile() {
                                 </NativeCard>
                             )
                         })}
-                        {(!planosBase || planosBase.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).length === 0) && (
+                        {(!planosBase || planosBase.filter((p: Plano) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).length === 0) && (
                             <div className="text-center py-8 text-slate-400">
                                 Nenhum plano disponível no momento.
                             </div>

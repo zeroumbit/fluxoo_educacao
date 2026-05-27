@@ -55,7 +55,7 @@ export function PortalAlunoPerfilV2Mobile() {
   // Sincroniza o aluno selecionado se acessar via URL direta
   React.useEffect(() => {
     if (id && (!alunoSelecionado || alunoSelecionado.id !== id)) {
-      const vinculo = (context.vinculos || []).find((v: any) => (v.aluno_id || v.aluno?.id) === id);
+      const vinculo = (context.vinculos || []).find((v) => (v.aluno_id || v.aluno?.id) === id);
       if (vinculo) {
         context.selecionarAluno(vinculo);
       }
@@ -152,7 +152,7 @@ export function PortalAlunoPerfilV2Mobile() {
               </button>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar snap-x">
-              {selos.slice(0, 5).map((selo: any) => (
+              {selos.slice(0, 5).map((selo) => (
                 <motion.div
                   key={selo.id}
                   whileTap={{ scale: 0.95 }}

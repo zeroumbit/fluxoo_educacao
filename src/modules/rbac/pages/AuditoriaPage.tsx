@@ -4,6 +4,7 @@
  * 
  * Log inalterável para defesa jurídica e Procon.
  */
+import type { AuditLogV2 } from '@/lib/database.types'
 import { useAuditLogs } from '@/modules/rbac/hooks'
 import { Activity,ChevronLeft,ChevronRight,Clock,FileText,Filter,Search,User } from 'lucide-react'
 import { useState } from 'react'
@@ -92,7 +93,7 @@ export function AuditoriaPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {logs.map((log: any) => (
+          {logs.map((log: AuditLogV2) => (
             <div key={log.id} className="bg-white border rounded-xl p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">

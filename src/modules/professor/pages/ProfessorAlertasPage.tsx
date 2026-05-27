@@ -1,3 +1,4 @@
+import type { AlertaProfessor } from '@/modules/professor/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card,CardContent } from '@/components/ui/card'
@@ -39,7 +40,7 @@ export function ProfessorAlertasPage() {
 
   const alertasFiltrados = useMemo(() => {
     if (!alertas) return []
-    return alertas.filter((alerta: any) => {
+    return alertas.filter((alerta: AlertaProfessor) => {
       const matchesSearch = alerta.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
                            alerta.descricao?.toLowerCase().includes(busca.toLowerCase()) ||
                            alerta.aluno_nome?.toLowerCase().includes(busca.toLowerCase())
@@ -50,7 +51,7 @@ export function ProfessorAlertasPage() {
 
   const tiposUnicos = useMemo(() => {
     if (!alertas) return []
-    return Array.from(new Set(alertas.map((a: any) => a.tipo)))
+    return Array.from(new Set(alertas.map((a: AlertaProfessor) => a.tipo)))
   }, [alertas])
 
   const handleConcluirAlerta = () => {
@@ -143,7 +144,7 @@ export function ProfessorAlertasPage() {
             >
               Todos
             </button>
-            {tiposUnicos.map((tipo: any) => (
+            {tiposUnicos.map((tipo: string) => (
               <button 
                 key={tipo}
                 onClick={() => setSelectedTipo(tipo)}
@@ -174,7 +175,7 @@ export function ProfessorAlertasPage() {
                 <p className="text-zinc-500 text-sm font-medium">Nenhum alerta pendente no momento.</p>
               </motion.div>
             ) : (
-              alertasFiltrados.map((alerta: any, index: number) => (
+              alertasFiltrados.map((alerta: AlertaProfessor, index: number) => (
                 <motion.div
                   key={alerta.id}
                   layout

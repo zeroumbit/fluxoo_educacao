@@ -184,7 +184,7 @@ export function ContasPagarPage() {
         <Table>
           <TableHeader><TableRow><TableHead className="pl-8">Conta</TableHead><TableHead className="pl-4">Favorecido</TableHead><TableHead className="pl-4">Vencimento</TableHead><TableHead className="pl-4">Valor</TableHead><TableHead className="pl-4">Recorrente</TableHead><TableHead className="pl-4">Status</TableHead><TableHead className="w-[100px] text-right pr-8">Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {contas?.map((c: any) => (
+            {contas?.map((c: ContaPagar) => (
               <TableRow key={c.id}>
                 <TableCell className="pl-8 font-bold">{c.nome}</TableCell>
                 <TableCell className="pl-4">{c.favorecido || '—'}</TableCell>

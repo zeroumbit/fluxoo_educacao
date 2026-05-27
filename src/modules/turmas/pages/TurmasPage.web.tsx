@@ -7,6 +7,7 @@ DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import type { Turma } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -56,7 +57,7 @@ export function TurmasPageWeb() {
   const criarTurmaMutation = useCriarTurma()
 
   // Busca contagem dinâmica de alunos por turma
-  const turmaIds = useMemo(() => dbTurmas?.map((t: any) => t.id) || [], [dbTurmas])
+  const turmaIds = useMemo(() => dbTurmas?.map((t: Turma) => t.id) || [], [dbTurmas])
   const { data: alunosCountMap } = useAlunosCountByTurmas(turmaIds)
 
   const [busca, setBusca] = useState('')
@@ -122,7 +123,7 @@ export function TurmasPageWeb() {
 
   const selectedTurma = storeTurmas.find(t => t.id === selectedTurmaId)
 
-  const turmasFiltradas = storeTurmas.filter((turma: any) =>
+  const turmasFiltradas = storeTurmas.filter((turma: Turma) =>
     turma.nome.toLowerCase().includes(busca.toLowerCase())
   )
 
@@ -206,7 +207,7 @@ export function TurmasPageWeb() {
             <p className="text-slate-400 text-sm mt-1">Comece criando sua primeira turma acadêmica.</p>
           </div>
         ) : (
-          turmasFiltradas.map((turma: any) => (
+          turmasFiltradas.map((turma: Turma) => (
             <TurmaCard
               key={turma.id}
               turma={turma}

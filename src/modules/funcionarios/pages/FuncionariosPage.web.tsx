@@ -422,8 +422,8 @@ export function FuncionariosPage() {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
   }
 
-  const ativos = funcionarios?.filter((f: any) => f.status === 'ativo') || []
-  const inativos = funcionarios?.filter((f: any) => f.status === 'inativo') || []
+  const ativos = funcionarios?.filter((f: Funcionario) => f.status === 'ativo') || []
+  const inativos = funcionarios?.filter((f: Funcionario) => f.status === 'inativo') || []
 
   return (
     <div className="space-y-6">
@@ -683,7 +683,7 @@ export function FuncionariosPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(tab === 'ativos' ? ativos : inativos).map((f: any) => {
+                    {(tab === 'ativos' ? ativos : inativos).map((f: Funcionario) => {
                       // Suporte a legado: exibe funcoes[] se existir, senão exibe funcao
                       const funcoesListRaw: string[] = Array.isArray(f.funcoes) && f.funcoes.length > 0
                         ? f.funcoes

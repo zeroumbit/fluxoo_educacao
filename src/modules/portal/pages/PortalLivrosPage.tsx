@@ -64,7 +64,7 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
     )
   }
 
-  const itensFiltrados = itens?.filter((l: any) => 
+  const itensFiltrados = itens?.filter((l) => 
     l.titulo?.toLowerCase().includes(busca.toLowerCase()) || 
     l.disciplina?.toLowerCase().includes(busca.toLowerCase()) ||
     l.tipo?.toLowerCase().includes(busca.toLowerCase())
@@ -130,7 +130,7 @@ export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean 
       ) : (
          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-1">
             <AnimatePresence mode="popLayout">
-                {itensFiltrados.map((item: any, idx: number) => (
+                {itensFiltrados.map((item, idx: number) => (
                    <motion.div
                      layout
                      key={item.id || idx}

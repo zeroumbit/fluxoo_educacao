@@ -75,13 +75,13 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
     if (!selectedDate) return eventos
     
     // Se uma data específica for selecionada no calendário
-    return eventos.filter((ev: any) => isSameDay(parseISO(ev.data_inicio), selectedDate))
+    return eventos.filter((ev: Evento) => isSameDay(parseISO(ev.data_inicio), selectedDate))
   }, [eventos, selectedDate])
 
   // Dias que possuem eventos (para marcadores no calendário)
   const diasComEvento = useMemo(() => {
     if (!eventos) return []
-    return eventos.map((ev: any) => parseISO(ev.data_inicio))
+    return eventos.map((ev: Evento) => parseISO(ev.data_inicio))
   }, [eventos])
 
   const formatarDiaSemana = (dataStr: string) => {
@@ -265,7 +265,7 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
           <AnimatePresence mode="popLayout">
             {eventosFiltrados && eventosFiltrados.length > 0 ? (
               <div className="space-y-4">
-                {eventosFiltrados.map((evento: any, idx: number) => (
+                {eventosFiltrados.map((evento: Evento, idx: number) => (
                   <motion.div
                     key={evento.id}
                     layout

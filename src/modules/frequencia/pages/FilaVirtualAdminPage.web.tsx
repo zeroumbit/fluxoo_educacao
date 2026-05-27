@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
+import type { FilaVirtual } from '@/lib/database.types'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { AlertTriangle,CarFront,CheckCircle2,Clock,Loader2,UserCheck } from 'lucide-react'
@@ -60,12 +61,12 @@ export function FilaVirtualAdminPage() {
 
   // Cálculo de Tempo Médio Cliente-Side (Zero Cost)
   // Substitui a dependência da view vw_fila_tempo_medio que pode não existir no banco
-  const aguardando = filaData?.filter((f: any) => f.status === 'aguardando') || []
-  const concluidos = filaData?.filter((f: any) => f.status === 'atendido') || []
+  const aguardando = filaData?.filter((f: FilaVirtual) => f.status === 'aguardando') || []
+  const concluidos = filaData?.filter((f: FilaVirtual) => f.status === 'atendido') || []
   
   const minMedio = React.useMemo(() => {
     if (!concluidos || concluidos.length === 0) return null
-    const tempos = concluidos.map((f: any) => {
+    const tempos = concluidos.map((f: FilaVirtual) => {
       const chegada = new Date(f.created_at).getTime()
       const saida = new Date(f.updated_at || f.created_at).getTime()
       return (saida - chegada) / 60000
@@ -111,7 +112,7 @@ export function FilaVirtualAdminPage() {
             <CardContent className="p-0 bg-blue-50/10 min-h-[400px]">
               {aguardando.length > 0 ? (
                 <div className="divide-y divide-blue-50">
-                  {aguardando.map((registro: any) => (
+                  {aguardando.map((registro: FilaVirtual) => (
                     <div key={registro.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white hover:bg-zinc-50 transition-colors animate-in slide-in-from-left duration-300">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -164,7 +165,7 @@ export function FilaVirtualAdminPage() {
             <CardContent className="p-0 overflow-y-auto flex-1">
               {concluidos.length > 0 ? (
                 <div className="divide-y divide-zinc-100">
-                  {concluidos.map((registro: any) => {
+                  {concluidos.map((registro: FilaVirtual) => {
                     const chegada = new Date(registro.created_at).getTime()
                     const saida = new Date(registro.updated_at || registro.created_at).getTime()
                     const minsEspera = Math.round((saida - chegada) / 60000)

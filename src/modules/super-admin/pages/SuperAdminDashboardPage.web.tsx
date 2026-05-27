@@ -3,6 +3,7 @@ import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn,formatCurrency,formatDate } from '@/lib/utils'
 import { AlertCircle,Building2,CheckCircle2,CreditCard,Loader2,TrendingDown,TrendingUp,Users } from 'lucide-react'
+import type { Escola } from '@/lib/database.types'
 import { useSuperAdminDashboard,useTenantHealthScores } from '../hooks'
 
 export function SuperAdminDashboardPageWeb() {
@@ -148,7 +149,7 @@ export function SuperAdminDashboardPageWeb() {
           <CardContent>
             <div className="space-y-4">
               {escolasRecentes.length > 0 ? (
-                escolasRecentes.map((escola: any) => (
+                escolasRecentes.map((escola: Escola) => (
                   <div
                     key={escola.id}
                     className="flex items-center justify-between p-4 rounded-lg bg-zinc-50/80 hover:bg-zinc-100/80 transition-colors"
@@ -190,7 +191,7 @@ export function SuperAdminDashboardPageWeb() {
               {loadingHealth ? (
                 <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : healthScores && healthScores.length > 0 ? (
-                healthScores.map((score: any) => (
+                healthScores.map((score) => (
                   <div key={score.tenant_id} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

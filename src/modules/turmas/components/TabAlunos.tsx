@@ -13,7 +13,7 @@ TableHead,
 TableHeader,
 TableRow,
 } from '@/components/ui/table'
-import type { Aluno } from '@/lib/database.types'
+import type { Turma } from '@/lib/database.types'
 import { useAtualizarMatricula,useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import {
@@ -45,7 +45,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
   const [busca, setBusca] = useState('')
   
   // Estado para transferência de turma
-  const [selectedAlunoForTransfer, setSelectedAlunoForTransfer] = useState<Aluno | null>(null)
+  const [selectedAlunoForTransfer, setSelectedAlunoForTransfer] = useState<any | null>(null)
   const [newTurmaId, setNewTurmaId] = useState<string>('')
   
   const { data: turmas } = useTurmas()
@@ -56,7 +56,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
     if (dbAlunos) setAlunos(dbAlunos)
   }, [dbAlunos, setAlunos])
 
-  const alunosDaTurma = alunos.filter((a: any) => 
+  const alunosDaTurma = alunos.filter((a) => 
     (a.turma_atual?.id === turmaId || a.turma_id === turmaId) &&
     a.nome_completo.toLowerCase().includes(busca.toLowerCase())
   )
@@ -67,7 +67,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
       return
     }
 
-    const turmaDestino = turmas?.find((t: any) => t.id === newTurmaId)
+    const turmaDestino = turmas?.find((t: Turma) => t.id === newTurmaId)
     if (!turmaDestino) return
 
     try {
@@ -139,7 +139,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              alunosDaTurma.map((aluno: any) => (
+              alunosDaTurma.map((aluno) => (
                 <TableRow key={aluno.id} className="border-slate-100 hover:bg-slate-50/30 transition-colors group">
                   <TableCell className="pl-8 py-5">
                     <div className="flex items-center gap-4">
@@ -241,7 +241,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Turma Atual</p>
                   <p className="font-black text-slate-700 uppercase tracking-tighter">
-                    {turmas?.find((t: any) => t.id === turmaId)?.nome || 'Não definida'}
+                    {turmas?.find((t: Turma) => t.id === turmaId)?.nome || 'Não definida'}
                   </p>
                 </div>
               </div>
@@ -253,7 +253,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
                     <SelectValue placeholder="Selecione a nova turma..." />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-slate-100 shadow-2xl font-black p-2">
-                    {turmas?.filter((t: any) => t.id !== turmaId).map((t: any) => (
+                    {turmas?.filter((t: Turma) => t.id !== turmaId).map((t: Turma) => (
                       <SelectItem key={t.id} value={t.id} className="rounded-xl py-3 uppercase tracking-tighter cursor-pointer focus:bg-indigo-50 focus:text-indigo-600">
                         {t.nome} <span className="ml-2 font-bold opacity-40">({t.turno})</span>
                       </SelectItem>

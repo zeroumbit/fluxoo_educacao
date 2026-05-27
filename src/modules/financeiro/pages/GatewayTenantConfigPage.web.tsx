@@ -1,3 +1,4 @@
+import type { GatewayDisponivelView } from '@/lib/database.types'
 import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -302,7 +303,7 @@ export function GatewayTenantConfigPageWeb() {
 
       {/* Lista de Gateways */}
       <div className="grid gap-4">
-        {gateways.map((gw: any) => {
+        {gateways.map((gw: GatewayDisponivelView) => {
           const isExpanded = expandedGateway === gw.gateway
           const isConfigured = gw.tenant_configurado
           const isAtivo = gw.tenant_ativo
@@ -383,7 +384,7 @@ export function GatewayTenantConfigPageWeb() {
                     </div>
                   ) : (
                     <>
-                      {gw.campos_config?.map((campo: any) => renderFormField(gw.gateway, campo))}
+                      {gw.campos_config?.map((campo) => renderFormField(gw.gateway, campo))}
 
                       {/* URL do webhook */}
                       <div className="bg-muted rounded-md p-3 text-xs space-y-1">

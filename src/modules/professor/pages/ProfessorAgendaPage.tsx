@@ -1,3 +1,4 @@
+import type { AgendaAula } from '@/modules/professor/types'
 import { Badge } from '@/components/ui/badge'
 import { Card,CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -28,18 +29,18 @@ export function ProfessorAgendaPage() {
 
   const aulasFiltradas = useMemo(() => {
     if (!agenda) return []
-    return agenda.filter((aula: any) =>
+    return agenda.filter((aula: AgendaAula) =>
       aula.turma_nome?.toLowerCase().includes(busca.toLowerCase()) ||
       aula.disciplina_nome?.toLowerCase().includes(busca.toLowerCase())
     )
   }, [agenda, busca])
 
   const aulasHoje = agenda?.length || 0
-  const chamadasPendentes = agenda?.filter((a: any) => !a.chamada_realizada).length || 0
+  const chamadasPendentes = agenda?.filter((a: AgendaAula) => !a.chamada_realizada).length || 0
   const proximaAula = useMemo(() => {
     return [...(agenda || [])]
-      .sort((a: any, b: any) => String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
-      .find((a: any) => !a.chamada_realizada || !a.conteudo_registrado) || agenda?.[0]
+      .sort((a: AgendaAula, b: AgendaAula) => String(a.hora_inicio || '').localeCompare(String(b.hora_inicio || '')))
+      .find((a: AgendaAula) => !a.chamada_realizada || !a.conteudo_registrado) || agenda?.[0]
   }, [agenda])
 
   if (isLoading) {
@@ -115,7 +116,7 @@ export function ProfessorAgendaPage() {
                 <p className="text-zinc-500 text-sm font-medium">Nenhuma aula encontrada para hoje.</p>
               </motion.div>
             ) : (
-              aulasFiltradas.map((aula: any, index: number) => (
+              aulasFiltradas.map((aula: AgendaAula, index: number) => (
                 <motion.div
                   key={aula.grade_id}
                   layout

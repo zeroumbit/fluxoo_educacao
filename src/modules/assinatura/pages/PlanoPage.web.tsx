@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { Plano, SolicitacaoUpgrade } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
@@ -232,7 +233,7 @@ export function PlanoPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-zinc-100">
-            {solicitacoes?.map((sol: any) => (
+            {solicitacoes?.map((sol: SolicitacaoUpgrade) => (
               <div key={sol.id} className="p-4 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className={cn(
@@ -286,7 +287,7 @@ export function PlanoPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {planosBase?.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).map((p: any) => {
+              {planosBase?.filter((p: Plano) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).map((p: Plano) => {
                 const isActive = activePlan?.id === p.id;
                 return (
                   <div 
@@ -333,7 +334,7 @@ export function PlanoPage() {
                 )
               })}
               
-              {(!planosBase || planosBase.filter((p: any) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).length === 0) && (
+              {(!planosBase || planosBase.filter((p: Plano) => Number(p.valor_por_aluno) > 0 || p.id === activePlan?.id).length === 0) && (
                 <div className="col-span-full py-8 text-center text-zinc-500">
                   Nenhum plano cadastrado no momento.
                 </div>

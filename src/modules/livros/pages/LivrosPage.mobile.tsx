@@ -160,13 +160,13 @@ export function LivrosPageMobile() {
     }
     
     listLivros.forEach(l => {
-      l.livros_turmas?.forEach((lt: any) => {
+      l.livros_turmas?.forEach((lt: { turma_id: string }) => {
         if (mapa.has(lt.turma_id)) mapa.get(lt.turma_id)!.push({ ...l, tipo: 'livro' })
       })
     })
     
     listMateriais.forEach(m => {
-      m.materiais_turmas?.forEach((mt: any) => {
+      m.materiais_turmas?.forEach((mt: { turma_id: string }) => {
         if (mapa.has(mt.turma_id)) mapa.get(mt.turma_id)!.push({ ...m, tipo: 'material' })
       })
     })
@@ -214,7 +214,7 @@ export function LivrosPageMobile() {
     setIsFormOpen(true)
   }
 
-  const handleEditar = (item: any) => {
+  const handleEditar = (item: { tipo: string; turmas?: { id: string }[]; capa_url?: string | null; imagem_url?: string | null }) => {
     const isLivro = item.tipo === 'livro'
     setActiveTab(isLivro ? 'livro' : 'material')
     
@@ -223,7 +223,7 @@ export function LivrosPageMobile() {
       setMaterialParaEditar(null)
       livroForm.reset({
         ...item,
-        turmasIds: item.turmas?.map((t: any) => t.id) || []
+        turmasIds: item.turmas?.map((t: { id: string }) => t.id) || []
       })
       setLivroCapaPreview(item.capa_url || null)
       setLivroCapaFile(null) // Reset file when editing
@@ -232,7 +232,7 @@ export function LivrosPageMobile() {
       setLivroParaEditar(null)
       materialForm.reset({
         ...item,
-        turmasIds: item.turmas?.map((t: any) => t.id) || []
+        turmasIds: item.turmas?.map((t: { id: string }) => t.id) || []
       })
       setMaterialCapaPreview(item.imagem_url || null)
       setMaterialCapaFile(null) // Reset file when editing

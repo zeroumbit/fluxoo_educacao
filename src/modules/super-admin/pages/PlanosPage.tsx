@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Building2,CheckCircle2,Loader2,Pencil,Plus,Puzzle,Search,Store,Trash2,UserCircle,XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import type { Plano } from '@/lib/database.types'
+import type { Modulo, Plano, PlanoModulo } from '@/lib/database.types'
 import { useDeletePlano,useModulos,usePlanoModulos,usePlanos,useSetPlanoModulos,useUpsertPlano } from '../hooks'
 
 const TIPOS_EMPRESA = [
@@ -87,7 +87,7 @@ export function PlanosPage() {
     validade_meses: null as number | null
   })
 
-  const filteredPlanos = planos?.filter((p: any) =>
+  const filteredPlanos = planos?.filter((p: Plano) =>
     p.nome.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -176,7 +176,7 @@ export function PlanosPage() {
   }
 
   // Sincroniza checkbox ao abrir
-  const moduloIdsVinculados = planoModulos?.map((pm: any) => pm.modulo_id) || []
+  const moduloIdsVinculados = planoModulos?.map((pm: PlanoModulo) => pm.modulo_id) || []
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
@@ -394,7 +394,7 @@ export function PlanosPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[300px] overflow-y-auto py-4">
-            {modulos?.map((m: any) => {
+            {modulos?.map((m: Modulo) => {
               const isChecked = selectedModuloIds.includes(m.id)
               return (
                 <label key={m.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-all">
@@ -485,7 +485,7 @@ export function PlanosPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredPlanos?.map((plano: any) => {
+                    filteredPlanos?.map((plano: Plano) => {
                       const tipoEmpresaConfig = TIPOS_EMPRESA.find(t => t.value === plano.tipo_empresa) || TIPOS_EMPRESA[0]
                       const TipoIcon = tipoEmpresaConfig.icon
 

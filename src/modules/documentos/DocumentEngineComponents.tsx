@@ -179,7 +179,7 @@ export const HistoricoEscolarContent = ({ data }: { data: any }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {notas.map((nota: any, index: number) => (
+            {notas.map((nota: { disciplina: string; media: string | number; faltas: number; situacao: string }, index: number) => (
               <tr key={index} className="hover:bg-slate-50/50 transition-colors">
                 <td className="p-4 text-sm font-bold text-slate-700">{nota.disciplina}</td>
                 <td className="p-4 text-sm font-bold text-slate-700 text-center">{nota.media}</td>

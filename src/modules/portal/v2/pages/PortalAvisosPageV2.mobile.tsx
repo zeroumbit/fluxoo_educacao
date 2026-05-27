@@ -197,8 +197,8 @@ export function PortalAvisosPageV2Mobile() {
 
   if (loadingCtx || isLoading) return <AvisosSkeleton />
 
-  const avisosAtivos = (avisos ?? []).filter((a: any) => avisoEstaAtivo(a))
-  const avisosExpirados = (avisos ?? []).filter((a: any) => !avisoEstaAtivo(a))
+  const avisosAtivos = (avisos ?? []).filter((a) => avisoEstaAtivo(a))
+  const avisosExpirados = (avisos ?? []).filter((a) => !avisoEstaAtivo(a))
 
   return (
     <div className="flex flex-col gap-6 pb-24">

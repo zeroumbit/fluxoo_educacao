@@ -262,7 +262,7 @@ export function EventosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {eventos?.map((e: any) => (
+                {eventos?.map((e: Evento) => (
                   <TableRow key={e.id}>
                     <TableCell className="pl-8 font-bold">{e.nome}</TableCell>
                     <TableCell className="text-sm">

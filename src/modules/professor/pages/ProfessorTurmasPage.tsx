@@ -1,3 +1,5 @@
+import type { Turma } from '@/lib/database.types'
+import type { SaudeTurma } from '@/modules/professor/types'
 import { AdaptiveView } from '@/components/adaptive/AdaptiveView'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,7 +42,7 @@ export function ProfessorTurmasPage() {
 
     // Primeiro adiciona todas as turmas vinculadas independentemente de terem dados
     if (minhasTurmas) {
-      minhasTurmas.forEach((turma: any) => {
+      minhasTurmas.forEach((turma: Turma) => {
         map.set(turma.id, {
           turma_id: turma.id,
           turma_nome: turma.nome,
@@ -53,7 +55,7 @@ export function ProfessorTurmasPage() {
 
     // Depois, sobrepõe com os dados de saúde (frequência e notas) quando existirem
     if (saudeTurmas) {
-      saudeTurmas.forEach((turma: any) => {
+      saudeTurmas.forEach((turma: SaudeTurma) => {
         if (map.has(turma.turma_id)) {
           const t = map.get(turma.turma_id)
           t.total_alunos = turma.total_alunos || 0
@@ -75,15 +77,15 @@ export function ProfessorTurmasPage() {
   }, [minhasTurmas, saudeTurmas])
 
   const turmasFiltradas = useMemo(() => {
-    return turmasUnicas.filter((turma: any) =>
+    return turmasUnicas.filter((turma: SaudeTurma) =>
       turma.turma_nome.toLowerCase().includes(busca.toLowerCase())
     )
   }, [turmasUnicas, busca])
 
-  const totalAlunos = turmasUnicas.reduce((sum: number, t: any) => sum + t.total_alunos, 0)
-  const turmasComMetricas = turmasUnicas.filter((t: any) => t.total_alunos > 0)
+  const totalAlunos = turmasUnicas.reduce((sum: number, t: SaudeTurma) => sum + t.total_alunos, 0)
+  const turmasComMetricas = turmasUnicas.filter((t: SaudeTurma) => t.total_alunos > 0)
   const mediaPresenca = turmasComMetricas.length > 0
-    ? turmasComMetricas.reduce((sum: number, t: any) => sum + t.percentual_presenca, 0) / turmasComMetricas.length
+    ? turmasComMetricas.reduce((sum: number, t: SaudeTurma) => sum + t.percentual_presenca, 0) / turmasComMetricas.length
     : 0
 
   if (isLoadingSaude || isLoadingTurmas) {
@@ -192,7 +194,7 @@ export function ProfessorTurmasPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              turmasFiltradas.map((turma: any) => {
+              turmasFiltradas.map((turma: SaudeTurma) => {
                 const freq = turma.percentual_presenca
                 const temFreq = freq > 0
 

@@ -15,6 +15,8 @@ X
 } from 'lucide-react'
 import React,{ useState } from 'react'
 
+import type { TurmaGradeHoraria, TurmaProfessor } from '@/lib/database.types'
+import type { Disciplina, Professor } from '../types'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { toast } from 'sonner'
@@ -63,7 +65,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
 
   const salvarHorario = async (disciplinaId: string, dia: number, horario: any) => {
     // Achar professor vinculado a essa disciplina nesta turma nas atribuições REAIS
-    const vinculo = atribuicoes.find((at: any) => at.disciplina_id === disciplinaId)
+    const vinculo = atribuicoes.find((at: TurmaProfessor) => at.disciplina_id === disciplinaId)
     const professorId = vinculo?.professor_id || null
 
     try {
@@ -113,11 +115,11 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
   }
 
   const getCellContent = (dia: number, horario: any) => {
-    const item = gradeTurma.find((g: any) => g.dia_semana === dia && g.hora_inicio === horario.inicio)
+    const item = gradeTurma.find((g: TurmaGradeHoraria) => g.dia_semana === dia && g.hora_inicio === horario.inicio)
     if (!item) return null
 
-    const disciplina = disciplinas.find((d: any) => d.id === item.disciplina_id)
-    const professor = professores.find((p: any) => p.id === item.professor_id)
+    const disciplina = disciplinas.find((d: Disciplina) => d.id === item.disciplina_id)
+    const professor = professores.find((p: Professor) => p.id === item.professor_id)
 
     return { item, disciplina, professor }
   }
@@ -199,7 +201,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
               ) : (
                 disciplinas
                   .filter(d => atribuicoes.some(at => at.disciplina_id === d.id))
-                  .map((d: any) => (
+                  .map((d: Disciplina) => (
                   <button
                     key={d.id}
                     draggable
@@ -246,7 +248,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
               </tr>
             </thead>
             <tbody>
-              {HORARIOS.map((h: any, hIndex: number) => (
+              {HORARIOS.map((h: typeof HORARIOS[number], hIndex: number) => (
                 <tr key={hIndex} className={cn(h.isBreak ? "bg-slate-50/30" : "hover:bg-slate-50/20 transition-colors")}>
                   <td className="p-6 border-b border-r border-slate-100 sticky left-0 z-10 bg-white">
                     <div className="flex flex-col">
@@ -255,7 +257,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
                     </div>
                   </td>
                   
-                  {DIAS_SEMANA.map((dia: any) => {
+                  {DIAS_SEMANA.map((dia: typeof DIAS_SEMANA[number]) => {
                     const content = getCellContent(dia.id, h)
                     
                     if (h.isBreak) {
