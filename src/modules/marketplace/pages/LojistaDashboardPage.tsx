@@ -13,13 +13,14 @@ Star,
 TrendingUp,
 Wallet
 } from 'lucide-react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface MetricCardProps {
   label: string
   value: string | number
   sub: string
-  icon: any
+  icon: React.ComponentType<{ size?: number; className?: string }>
   color: string
 }
 

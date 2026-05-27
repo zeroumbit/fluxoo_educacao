@@ -299,7 +299,7 @@ export function MatriculaListPageWeb() {
   }
 
   // Agrupar matrículas por turma
-  const matriculasByTurma = matriculas?.reduce((acc: Record<string, any>[], m: any) => {
+  const matriculasByTurma = matriculas?.reduce((acc: { turmaNome: string; matriculas: any[] }[], m: any) => {
     const turmaNome = m.serie_ano || 'Sem turma'
     if (!acc.find(g => g.turmaNome === turmaNome)) {
       acc.push({ turmaNome, matriculas: [] })

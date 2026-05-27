@@ -36,7 +36,7 @@ useTemplatesDocumento
 } from '../../hooks'
 import { NativeHeader } from '../components/NativeHeader'
 
-const DOCUMENT_TYPE_ICONS: Record<string, any> = {
+const DOCUMENT_TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   ficha_matricula: FileText,
   ficha_individual: FileText,
   declaracao_matricula: FileText,

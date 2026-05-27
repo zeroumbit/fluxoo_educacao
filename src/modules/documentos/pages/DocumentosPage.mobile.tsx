@@ -99,7 +99,7 @@ export function DocumentosPageMobile() {
   const { data: alunos } = useAlunos()
   const atualizarSolicitacao = useAtualizarSolicitacao()
   const emitir = useEmitirDocumento()
-  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, any>
+  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, unknown>
 
   // Emission states
   const [isEmitModalOpen, setIsEmitModalOpen] = useState(false)

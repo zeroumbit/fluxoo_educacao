@@ -28,8 +28,8 @@ ShoppingBag,
 User,
 Users
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink,useLocation,useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Location, NavLink,useLocation,useNavigate } from 'react-router-dom';
 
 // Verifica se existem lojistas ou profissionais cadastrados no marketplace
 // NOTA: Tabelas 'lojistas' e 'curriculos' podem ter RLS restritivo para role 'responsavel'.
@@ -165,7 +165,7 @@ export const BottomNavV2 = () => {
   );
 };
 
-const NavItem = ({ item, location, onClick }: { item: any, location: any, onClick: () => void }) => {
+const NavItem = ({ item, location, onClick }: { item: { label: string; icon: React.ComponentType<{ size?: number; className?: string }>; path: string }; location: Location; onClick: () => void }) => {
   const isActive = location.pathname === item.path || (item.path !== '/portal' && location.pathname.startsWith(item.path));
   
   return (

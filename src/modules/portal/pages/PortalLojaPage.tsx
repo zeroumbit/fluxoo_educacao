@@ -45,7 +45,7 @@ const vibrate = (ms: number | number[] = 20) => {
   }
 }
 
-const IconMap: Record<string, any> = {
+const IconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Package, Users, Briefcase, ShoppingBag, Heart, Star, Truck, Store
 }
 

@@ -36,7 +36,7 @@ ShoppingBag,
 ShoppingCart,
 User
 } from 'lucide-react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { NavLink,Outlet,useLocation,useNavigate } from 'react-router-dom'
 
 // Helper de Vibração Tátil Subtil (Haptic Feedback)
@@ -48,7 +48,7 @@ const vibrate = (ms: number = 30) => {
 
 // --- COMPONENTES DE UI REUTILIZÁVEIS ---
 
-const NavLinkDesktop = ({ icon: Icon, label, to, end, hasDropdown }: { icon: any, label: string, to?: string, end?: boolean, hasDropdown?: boolean }) => {
+const NavLinkDesktop = ({ icon: Icon, label, to, end, hasDropdown }: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>, label: string, to?: string, end?: boolean, hasDropdown?: boolean }) => {
   const content = (
     <div className={cn(
       "flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
@@ -81,7 +81,7 @@ const NavLinkDesktop = ({ icon: Icon, label, to, end, hasDropdown }: { icon: any
   );
 }
 
-const MobileBottomNavItem = ({ icon: Icon, label, to, onClick, isActiveOverride }: { icon: any, label: string, to?: string, onClick?: () => void, isActiveOverride?: boolean }) => {
+const MobileBottomNavItem = ({ icon: Icon, label, to, onClick, isActiveOverride }: { icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>, label: string, to?: string, onClick?: () => void, isActiveOverride?: boolean }) => {
   const handleTap = () => {
     vibrate(30);
     if (onClick) onClick();

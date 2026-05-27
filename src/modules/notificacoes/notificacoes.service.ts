@@ -10,7 +10,7 @@ export interface NotificacaoInsert {
   href: string
   categoria: string
   prioridade?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export const notificacoesService = {

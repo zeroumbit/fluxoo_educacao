@@ -4,6 +4,7 @@ SheetContent,
 SheetTrigger
 } from '@/components/ui/sheet';
 import { useNotificacoesActions } from '@/hooks/useNotifications';
+import type { Notificacao } from '@/lib/database.types';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Bell,BellRing,ExternalLink,Trash2,X } from 'lucide-react';
@@ -15,7 +16,7 @@ export interface NotificationItem {
   label: string;
   href: string;
   category?: 'SUPER ADMIN' | 'ESCOLAS' | 'PORTAL' | string;
-  notifications?: any[]; // Notificações individuais do banco
+  notifications?: Notificacao[]; // Notificações individuais do banco
 }
 
 export interface NotificationBellProps {

@@ -43,7 +43,7 @@ const overrideSchema = z.object({
 type OverrideFormValues = z.infer<typeof overrideSchema>
 
 interface ModalDescontoAlunoProps {
-  aluno: any
+  aluno: { id: string; nome_completo: string; tenant_id: string }
   open: boolean
   onClose: () => void
 }

@@ -8,6 +8,7 @@ import { Sheet,SheetContent,SheetDescription,SheetTitle } from '@/components/ui/
 import { useEscolaNotifications } from '@/hooks/useNotifications'
 import { useIsSuperAdmin } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
+import type { DashboardData } from '@/modules/alunos/dashboard.service'
 import { useDashboard } from '@/modules/alunos/dashboard.hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
@@ -43,13 +44,13 @@ Users,
 Wallet,
 X
 } from 'lucide-react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { NavLink,Outlet,useLocation,useNavigate } from 'react-router-dom'
 
 interface NavItem {
   name: string
   href: string
-  icon: any
+  icon: React.ComponentType<{ size?: number; className?: string }>
   permission: string
 }
 
@@ -75,7 +76,7 @@ function SidebarContent({
   isLoadingDashboard 
 }: { 
   onNavigate?: () => void, 
-  dashboardData?: any, 
+  dashboardData?: DashboardData, 
   isLoadingDashboard?: boolean 
 }) {
   const { authUser, signOut } = useAuth()
@@ -147,7 +148,7 @@ function SidebarContent({
         { name: 'Almoxarifado', href: '/almoxarifado', icon: Package, permission: 'gestao.almoxarifado.view' },
         { name: 'Perfis de Acesso', href: '/configuracoes/perfis', icon: Shield, permission: 'configuracoes.perfis.view' },
         isSuperAdmin && { name: 'Auditoria', href: '/configuracoes/auditoria', icon: ClipboardList, permission: 'configuracoes.auditoria.view' },
-      ].filter(Boolean) as any,
+      ].filter((x): x is NonNullable<typeof x> => Boolean(x)),
     },
   ]
 
@@ -529,7 +530,7 @@ export function AdminLayout() {
                <Skeleton className="h-6 w-48" />
              ) : (
                <h1 className="text-base font-semibold text-zinc-900 tracking-tight">
-                 {authUser?.role === 'super_admin' ? 'Administração Fluxoo' : ((escola as any)?.nome_fantasia || escola?.razao_social || 'Minha Escola')}
+                  {authUser?.role === 'super_admin' ? 'Administração Fluxoo' : ((escola as any)?.nome_fantasia || escola?.razao_social || 'Minha Escola')}
                </h1>
              )}
           </div>

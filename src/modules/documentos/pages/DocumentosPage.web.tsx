@@ -122,7 +122,7 @@ export function DocumentosPage() {
   const form = useForm({ resolver: zodResolver(templateSchema) })
 
   const isLoading = loadingTemplates || loadingEmitidos || loadingAlunos || loadingSolicitacoes
-  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, any>
+  const notificacaoMetadata = (notificacaoDetalhe?.metadata || {}) as Record<string, unknown>
 
   // Desduplicação de Histórico (Mantém apenas o mais recente se forem idênticos)
   const dedupedEmitidos = useMemo(() => {
