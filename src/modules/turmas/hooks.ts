@@ -1,4 +1,4 @@
-import type { TurmaInsert,TurmaUpdate } from '@/lib/database.types'
+import type { Matricula, TurmaGradeHorariaInsert, TurmaInsert, TurmaProfessorInsert, TurmaUpdate } from '@/lib/database.types'
 import { QueryKeys } from '@/lib/query-keys'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -165,7 +165,7 @@ export function useAtribuicoes(turmaId?: string) {
 export function useAtribuirProfessor() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (atribuicao: any) => turmaService.atribuirProfessor(atribuicao),
+    mutationFn: (atribuicao: TurmaProfessorInsert) => turmaService.atribuirProfessor(atribuicao),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['atribuicoes'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'turma-detalhe'] })
@@ -196,7 +196,7 @@ export function useGradeTurma(turmaId: string) {
 export function useSalvarGradeItem() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (item: any) => turmaService.salvarGradeItem(item),
+    mutationFn: (item: TurmaGradeHorariaInsert) => turmaService.salvarGradeItem(item),
     onSuccess: (_, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['grade_horaria'] })
       queryClient.invalidateQueries({ queryKey: ['portal', 'grade-horaria'] })
@@ -310,7 +310,7 @@ export function useAlunosCountByTurmas(turmaIds: string[]) {
       const counts: Record<string, number> = {}
       turmaIds.forEach(id => { counts[id] = 0 })
       
-      data?.forEach((matricula: any) => {
+      data?.forEach((matricula: Pick<Matricula, 'turma_id' | 'id'>) => {
         if (matricula.turma_id) {
           counts[matricula.turma_id] = (counts[matricula.turma_id] || 0) + 1
         }

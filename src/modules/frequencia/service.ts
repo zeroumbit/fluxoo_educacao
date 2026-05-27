@@ -22,7 +22,7 @@ export const frequenciaService = {
     const { turma_id, data_aula } = frequencias[0]
     const alunoIds = frequencias.map((f) => f.aluno_id!)
 
-    const { data: matriculas, error: matError } = await (supabase.from('matriculas' as any) as any)
+    const { data: matriculas, error: matError } = await supabase.from('matriculas')
       .select('aluno_id')
       .in('aluno_id', alunoIds)
       .eq('tenant_id', tenantId)
@@ -118,7 +118,7 @@ export const frequenciaService = {
   },
 
   async listarAlunosDaTurma(turmaId: string, tenantId: string) {
-    const { data: matriculas, error: matError } = await (supabase.from('matriculas' as any) as any)
+    const { data: matriculas, error: matError } = await supabase.from('matriculas')
       .select(`
         aluno_id,
         alunos (

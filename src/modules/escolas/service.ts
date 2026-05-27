@@ -50,17 +50,17 @@ export const escolaService = {
   async criar(escola: EscolaInsert) {
     const { data, error } = await supabase
       .from('escolas')
-      .insert(escola as any)
+      .insert(escola)
       .select()
       .single()
     if (error) throw error
-    return data as any
+    return data
   },
 
   async atualizar(id: string, escola: EscolaUpdate) {
     const { data, error } = await supabase
       .from('escolas')
-      .update(escola as any)
+      .update(escola)
       .eq('id', id)
       .select()
       .single()
@@ -70,22 +70,22 @@ export const escolaService = {
 
   async listarPlanos() {
     const { data, error } = await supabase
-      .from('planos' as any)
+      .from('planos')
       .select('*, modulos:plano_modulo(modulo:modulos(id, nome, codigo))')
       .eq('status', true)
       .order('valor_por_aluno')
     if (error) throw error
-    return data as any[]
+    return data
   },
 
   async getConfiguracaoRecebimento() {
     const { data, error } = await supabase
-      .from('configuracao_recebimento' as any)
+      .from('configuracao_recebimento')
       .select('*')
       .limit(1)
       .single()
     if (error && error.code !== 'PGRST116') throw error
-    return data as any
+    return data
   },
 
   async criarAssinatura(assinatura: {
@@ -99,12 +99,12 @@ export const escolaService = {
     data_inicio: string
   }) {
     const { data, error } = await supabase
-      .from('assinaturas' as any)
+      .from('assinaturas')
       .insert(assinatura as any)
       .select()
       .single()
     if (error) throw error
-    return data as any
+    return data
   },
 
   async criarFaturaInicial(fatura: {
@@ -118,20 +118,20 @@ export const escolaService = {
     comprovante_url?: string
   }) {
     const { data, error } = await supabase
-      .from('faturas' as any)
+      .from('faturas')
       .insert(fatura as any)
       .select()
       .single()
     if (error) throw error
-    return data as any
+    return data
   },
 
   async getNotificationCounts(tenantId: string) {
     const [evasaoRes, documentosRes] = await Promise.all([
-      (supabase.from('vw_radar_evasao' as any) as any)
+      supabase.from('vw_radar_evasao')
         .select('aluno_id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId),
-      (supabase.from('document_solicitations' as any) as any)
+      supabase.from('document_solicitations')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
         .eq('status', 'pendente')

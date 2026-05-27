@@ -10,7 +10,7 @@ export const portalFinanceiroService = {
   async obterFaturasDoAluno(alunoId: string, tenantId: string, anoLetivo: number = new Date().getFullYear()) {
     try {
       // 1. Busca informações do aluno e sua matrícula ativa para o ano
-      const { data: aluno, error: alunoError } = await (supabase.from('alunos' as any) as any)
+      const { data: aluno, error: alunoError } = await supabase.from('alunos')
         .select(`
           id, 
           data_ingresso, 

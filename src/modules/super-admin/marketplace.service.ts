@@ -12,8 +12,8 @@ export interface MarketplaceCategory {
 
 export const marketplaceService = {
     async listarCategorias(): Promise<MarketplaceCategory[]> {
-        const { data, error } = await (supabase
-            .from('marketplace_categorias' as any) as any)
+        const { data, error } = await supabase
+            .from('marketplace_categorias')
             .select('*')
             .order('nome', { ascending: true })
         
@@ -22,8 +22,8 @@ export const marketplaceService = {
     },
 
     async cadastrarCategoria(nome: string, descricao: string, icone: string, subcategorias: string[] = [], ativo: boolean = true): Promise<MarketplaceCategory> {
-        const { data, error } = await (supabase
-            .from('marketplace_categorias' as any) as any)
+        const { data, error } = await supabase
+            .from('marketplace_categorias')
             .insert([{ nome, descricao, icone, subcategorias, ativo }])
             .select()
             .single()
@@ -33,8 +33,8 @@ export const marketplaceService = {
     },
 
     async atualizarCategoria(id: string, updates: Partial<MarketplaceCategory>): Promise<MarketplaceCategory> {
-        const { data, error } = await (supabase
-            .from('marketplace_categorias' as any) as any)
+        const { data, error } = await supabase
+            .from('marketplace_categorias')
             .update(updates)
             .eq('id', id)
             .select()
@@ -45,8 +45,8 @@ export const marketplaceService = {
     },
 
   async removerCategoria(id: string): Promise<void> {
-    const { error } = await (supabase
-      .from('marketplace_categorias' as any) as any)
+    const { error } = await supabase
+      .from('marketplace_categorias')
       .delete()
       .eq('id', id)
     
@@ -54,8 +54,8 @@ export const marketplaceService = {
   },
 
   async listarLojistas() {
-    const { data, error } = await (supabase
-      .from('lojistas' as any) as any)
+    const { data, error } = await supabase
+      .from('lojistas')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -65,8 +65,8 @@ export const marketplaceService = {
 
   async listarProfissionais() {
     try {
-      const { data, error } = await (supabase
-        .from('curriculos' as any) as any)
+      const { data, error } = await supabase
+        .from('curriculos')
         .select('*')
         .or('busca_vaga.eq.true,presta_servico.eq.true')
         .order('created_at', { ascending: false })

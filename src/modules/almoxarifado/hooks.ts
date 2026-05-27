@@ -1,6 +1,7 @@
+import type { AlmoxarifadoItemInsert, AlmoxarifadoItemUpdate } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
-import { almoxarifadoService } from './service'
+import { almoxarifadoService, type CriarMovimentacaoPayload } from './service'
 
 export function useItensAlmoxarifado() {
   const { authUser } = useAuth()
@@ -9,12 +10,12 @@ export function useItensAlmoxarifado() {
 
 export function useCriarItemAlmoxarifado() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => almoxarifadoService.criarItem(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }) })
+  return useMutation({ mutationFn: (d: AlmoxarifadoItemInsert) => almoxarifadoService.criarItem(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }) })
 }
 
 export function useAtualizarItemAlmoxarifado() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => almoxarifadoService.atualizarItem(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }) })
+  return useMutation({ mutationFn: ({ id, data }: { id: string; data: AlmoxarifadoItemUpdate }) => almoxarifadoService.atualizarItem(id, data), onSuccess: () => qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }) })
 }
 
 export function useDeletarItemAlmoxarifado() {
@@ -29,7 +30,7 @@ export function useMovimentacoes() {
 
 export function useCriarMovimentacao() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => almoxarifadoService.criarMovimentacao(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }); qc.invalidateQueries({ queryKey: ['almoxarifado_mov'] }) } })
+  return useMutation({ mutationFn: (d: CriarMovimentacaoPayload) => almoxarifadoService.criarMovimentacao(d), onSuccess: () => { qc.invalidateQueries({ queryKey: ['almoxarifado_itens'] }); qc.invalidateQueries({ queryKey: ['almoxarifado_mov'] }) } })
 }
 
 export function useDeletarMovimentacao() {

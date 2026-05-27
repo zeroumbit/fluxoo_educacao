@@ -47,7 +47,7 @@ export async function validarPermissao(
 ): Promise<void> {
   // 1. Buscar perfil do usuário para verificar se é Super Admin ou Gestor
   const { data: userData, error: userError } = await supabase
-    .from('usuarios_sistema' as any)
+    .from('usuarios_sistema')
     .select('*, perfil:perfis_acesso(nome), funcionario:funcionarios(status)')
     .eq('id', userId)
     .maybeSingle()

@@ -206,9 +206,9 @@ Os arquivos que usam `supabase as unknown as ...` (academico.service.v1, dashboa
 
 ---
 
-## Fase 2: Service Layer — Tipar Parâmetros e Retornos de Funções
+## ✅ Fase 2: Service Layer — Tipar Parâmetros e Retornos de Funções (CONCLUÍDA)
 
-**Risco: MÉDIO** · ~15 arquivos · ~30-40 ocorrências
+**Risco: MÉDIO** · ~15 arquivos · ~25 ocorrências removidas
 
 ### 2.1 Parâmetros de mutation (React Query hooks)
 

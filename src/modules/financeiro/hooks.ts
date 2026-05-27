@@ -1,4 +1,4 @@
-import type { CobrancaInsert } from '@/lib/database.types'
+import type { Cobranca, CobrancaComEncargos, CobrancaInsert } from '@/lib/database.types'
 import { QueryKeys } from "@/lib/query-keys"
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
@@ -54,14 +54,14 @@ export function useRegistrarPagamentoManual() {
       const previousDashboard = queryClient.getQueryData(QueryKeys.DASHBOARD)
 
       // Atualiza cache otimista (marca cobrança como paga)
-      queryClient.setQueryData(['cobrancas', authUser?.tenantId], (old: any) => {
+      queryClient.setQueryData(['cobrancas', authUser?.tenantId], (old: Cobranca[] | undefined) => {
         if (!old) return old
-        return old.map((c: any) => c.id === id ? { ...c, status: 'pago' } : c)
+        return old.map((c) => c.id === id ? { ...c, status: 'pago' as const } : c)
       })
 
-      queryClient.setQueryData(['cobrancas_com_encargos', authUser?.tenantId], (old: any) => {
+      queryClient.setQueryData(['cobrancas_com_encargos', authUser?.tenantId], (old: (CobrancaComEncargos & { cobranca_id: string })[] | undefined) => {
         if (!old) return old
-        return old.map((c: any) => c.cobranca_id === id ? { ...c, status: 'pago' } : c)
+        return old.map((c) => c.cobranca_id === id ? { ...c, status: 'pago' as const } : c)
       })
 
       return { previousCobrancas, previousCobrancasEncargos, previousDashboard }

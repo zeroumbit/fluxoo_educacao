@@ -15,7 +15,7 @@ export interface NotificacaoInsert {
 
 export const notificacoesService = {
   async buscarNotificacoes(tenantId: string, userId?: string, limit = 50) {
-    let query = (supabase.from('notificacoes') as any)
+    let query = supabase.from('notificacoes')
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('resolvida', false)
@@ -28,21 +28,21 @@ export const notificacoesService = {
 
     const { data, error } = await query
     if (error) throw error
-    return data as Notificacao[]
+    return data || []
   },
 
   async buscarNotificacaoPorId(notificacaoId: string) {
-    const { data, error } = await (supabase.from('notificacoes') as any)
+    const { data, error } = await supabase.from('notificacoes')
       .select('*')
       .eq('id', notificacaoId)
       .maybeSingle()
 
     if (error) throw error
-    return data as Notificacao | null
+    return data
   },
 
   async buscarContagemNaoLidas(tenantId: string, userId?: string) {
-    let query = (supabase.from('notificacoes') as any)
+    let query = supabase.from('notificacoes')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('lida', false)
@@ -94,11 +94,11 @@ export const notificacoesService = {
       .single()
 
     if (error) throw error
-    return data as Notificacao
+    return data
   },
 
   async criarNotificacaoRadarEvasao(tenantId: string, alunoId: string, alunoNome: string) {
-    const { data: existente } = await (supabase.from('notificacoes') as any)
+    const { data: existente } = await supabase.from('notificacoes')
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('tipo', 'RADAR_EVASAO')
@@ -127,7 +127,7 @@ export const notificacoesService = {
       .single()
 
     if (error) throw error
-    return data as Notificacao
+    return data
   },
 
   async limparNotificacoesResolvidas(tenantId: string, diasAntigos = 30) {

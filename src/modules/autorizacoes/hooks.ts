@@ -1,3 +1,4 @@
+import type { AutorizacaoModeloUpdate } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePortalContext } from '@/modules/portal/context'
 import { useResponsavel } from '@/modules/portal/hooks'
@@ -42,7 +43,7 @@ export function useCriarModeloAutorizacao() {
 export function useAtualizarModeloAutorizacao() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: AutorizacaoModeloUpdate }) =>
       autorizacoesService.atualizarModelo(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizacoes'] })

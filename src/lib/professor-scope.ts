@@ -32,13 +32,13 @@ export async function getProfessorScope(authUser: AuthUser | null): Promise<Prof
   }
 
   const { data, error } = await supabase
-    .from('vw_professor_escopo' as any)
+    .from('vw_professor_escopo')
     .select('turma_id, disciplina_id, ano_letivo')
 
   if (error || !data) {
     _scopeCache = []
   } else {
-    _scopeCache = (data as any[]).map((row) => ({
+    _scopeCache = data.map((row) => ({
       turmaId: row.turma_id,
       disciplinaId: row.disciplina_id,
       anoLetivo: row.ano_letivo,

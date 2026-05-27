@@ -1,6 +1,7 @@
+import type { ContaPagarInsert, ContaPagarUpdate } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
-import { financeiroAvancadoService } from './service-avancado'
+import { financeiroAvancadoService, type RegistroPagamentoManual } from './service-avancado'
 
 
 export function useContasPagar() {
@@ -9,13 +10,13 @@ export function useContasPagar() {
 }
 export function useCriarContaPagar() {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: (d: any) => financeiroAvancadoService.criarContaPagar(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
+  return useMutation({ mutationFn: (d: ContaPagarInsert) => financeiroAvancadoService.criarContaPagar(d), onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] }) })
 }
 export function useAtualizarContaPagar() {
   const qc = useQueryClient()
   const { authUser } = useAuth()
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: any }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: ContaPagarUpdate }) =>
       financeiroAvancadoService.atualizarContaPagar(id, authUser!.tenantId, updates),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['contas_pagar'] })
   })
@@ -33,7 +34,7 @@ export function useRegistrarPagamento() {
   const qc = useQueryClient()
   const { authUser } = useAuth()
   return useMutation({
-    mutationFn: ({ id, pagamento }: { id: string; pagamento: any }) =>
+    mutationFn: ({ id, pagamento }: { id: string; pagamento: RegistroPagamentoManual }) =>
       financeiroAvancadoService.registrarPagamento(id, authUser!.tenantId, pagamento),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cobrancas'] })
   })

@@ -1,4 +1,4 @@
-import type { DisciplinaDb, DisciplinaDbInsert, DisciplinaDbUpdate, Funcionario, TurmaInsert, TurmaUpdate } from '@/lib/database.types'
+import type { DisciplinaDb, DisciplinaDbInsert, DisciplinaDbUpdate, Funcionario, TurmaGradeHorariaInsert, TurmaInsert, TurmaProfessorInsert, TurmaUpdate } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import type { Disciplina,Professor } from './types'
@@ -21,7 +21,7 @@ export const turmaService = {
     }
 
     if (professorId) {
-      const { data: turmasVinc } = await (supabase.from('turma_professores' as any) as any)
+      const { data: turmasVinc } = await supabase.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
       
@@ -122,7 +122,7 @@ export const turmaService = {
     )
 
     const isGlobal = d.tenant_id === null
-    const ativa = (d.ativa !== false) && (isGlobal ? !idsOcultos.includes(d.id) : true)
+    const ativa = (d.is_active !== false) && (isGlobal ? !idsOcultos.includes(d.id) : true)
 
     return {
       id: d.id,
@@ -145,7 +145,7 @@ export const turmaService = {
    */
   async listarDisciplinas(tenantId: string, etapa?: string): Promise<Disciplina[]> {
     const { data: ocultas, error: errOcultas } = await supabase
-      .from('tenant_disciplinas_ocultas' as any)
+      .from('tenant_disciplinas_ocultas')
       .select('disciplina_id')
       .eq('tenant_id', tenantId)
 
@@ -159,7 +159,7 @@ export const turmaService = {
     const query = supabase
       .from('disciplinas')
       .select('*')
-      .eq('ativa', true)
+      .eq('is_active', true)
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
 
     const { data, error } = await query
@@ -188,7 +188,7 @@ export const turmaService = {
    */
   async listarCatalogoDisciplinas(tenantId: string): Promise<Disciplina[]> {
     const { data: ocultas } = await supabase
-      .from('tenant_disciplinas_ocultas' as any)
+      .from('tenant_disciplinas_ocultas')
       .select('disciplina_id')
       .eq('tenant_id', tenantId)
 
@@ -212,10 +212,10 @@ export const turmaService = {
         .insert({
           nome,
           tenant_id: tenantId,
-          etapa,
-          categoria,
+          etapa: etapa as any,
+          categoria: categoria as any,
           is_default: false,
-          ativa: true
+          is_active: true
         } satisfies DisciplinaDbInsert)
        .select()
        .single()
@@ -233,7 +233,7 @@ export const turmaService = {
      if (isGlobal) {
        // Disciplina BNCC global: usa tabela pivot de ocultação
        if (ocultar) {
-         const { error } = await (supabase.from('tenant_disciplinas_ocultas') as any)
+         const { error } = await supabase.from('tenant_disciplinas_ocultas')
            .upsert(
              { tenant_id: tenantId, disciplina_id: disciplinaId }, 
              { onConflict: 'tenant_id,disciplina_id' }
@@ -244,7 +244,7 @@ export const turmaService = {
          }
        } else {
          const { error } = await supabase
-           .from('tenant_disciplinas_ocultas' as any)
+           .from('tenant_disciplinas_ocultas')
            .delete()
            .eq('tenant_id', tenantId)
            .eq('disciplina_id', disciplinaId)
@@ -257,7 +257,7 @@ export const turmaService = {
        // Disciplina local da escola: atualiza diretamente
        const { error } = await supabase
          .from('disciplinas')
-         .update({ ativa: !ocultar } satisfies DisciplinaDbUpdate)
+         .update({ is_active: !ocultar } satisfies DisciplinaDbUpdate)
          .eq('id', disciplinaId)
          .eq('tenant_id', tenantId)
        if (error) {
@@ -304,7 +304,7 @@ export const turmaService = {
 
   async listarAtribuicoes(tenantId: string, turmaId?: string) {
     let query = supabase
-      .from('turma_professores' as any)
+      .from('turma_professores')
       .select('id, tenant_id, turma_id, professor_id, disciplina_id, carga_horaria_semanal, data_inicio, data_fim, status')
       .eq('tenant_id', tenantId)
 
@@ -315,9 +315,9 @@ export const turmaService = {
     return data || []
   },
 
-  async atribuirProfessor(atribuicao: any) {
+  async atribuirProfessor(atribuicao: TurmaProfessorInsert) {
     const { data, error } = await supabase
-      .from('turma_professores' as any)
+      .from('turma_professores')
       .upsert(atribuicao)
       .select()
       .single()
@@ -328,7 +328,7 @@ export const turmaService = {
 
   async removerAtribuicao(id: string) {
     const { error } = await supabase
-      .from('turma_professores' as any)
+      .from('turma_professores')
       .delete()
       .eq('id', id)
 
@@ -337,7 +337,7 @@ export const turmaService = {
 
   async listarGrade(tenantId: string, turmaId?: string) {
     let query = supabase
-      .from('turma_grade_horaria' as any)
+      .from('turma_grade_horaria')
       .select('id, tenant_id, turma_id, disciplina_id, professor_id, dia_semana, hora_inicio, hora_fim, sala, status')
       .eq('tenant_id', tenantId)
 
@@ -348,10 +348,10 @@ export const turmaService = {
     return data || []
   },
 
-  async salvarGradeItem(item: any) {
+  async salvarGradeItem(item: TurmaGradeHorariaInsert) {
     // Upsert baseado no constraint único (turma_id, dia_semana, hora_inicio)
     const { data, error } = await supabase
-      .from('turma_grade_horaria' as any)
+      .from('turma_grade_horaria')
       .upsert(item)
       .select()
       .single()
@@ -362,7 +362,7 @@ export const turmaService = {
 
   async removerGradeItem(id: string) {
     const { error } = await supabase
-      .from('turma_grade_horaria' as any)
+      .from('turma_grade_horaria')
       .delete()
       .eq('id', id)
 
@@ -370,7 +370,7 @@ export const turmaService = {
   },
 
   async contarAlunos(turmaId: string) {
-    const { count, error } = await (supabase.from('matriculas' as any) as any)
+    const { count, error } = await supabase.from('matriculas')
       .select('*', { count: 'exact', head: true })
       .eq('turma_id', turmaId)
       .eq('status', 'ativa')

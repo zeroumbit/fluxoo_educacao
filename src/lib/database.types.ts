@@ -592,6 +592,7 @@ export type AlmoxarifadoMovimentacao = {
 export type AlmoxarifadoMovimentacaoInsert = Omit<AlmoxarifadoMovimentacao, 'id' | 'created_at'> & {
   id?: string; created_at?: string
 }
+export type AlmoxarifadoMovimentacaoUpdate = Partial<AlmoxarifadoMovimentacaoInsert>
 
 // ========== ALUNO_RESPONSAVEL (N:N) ==========
 export type AlunoResponsavel = {
@@ -1297,7 +1298,7 @@ export type Notificacao = {
   prioridade: number
   lida: boolean
   resolvida: boolean
-  metadata: Record<string, any> | null
+  metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
   lida_em: string | null
@@ -1476,7 +1477,7 @@ export type PortalAuditLog = {
   id: string
   tipo: string
   responsavel_id: string
-  detalhes: Record<string, any> | null
+  detalhes: Record<string, unknown> | null
   ip: string | null
   created_at: string
 }
@@ -1507,8 +1508,8 @@ export type NotificacaoFamiliaUpdate = Partial<NotificacaoFamiliaInsert>
 export type ConfiguracaoEscola = {
   id: string
   tenant_id: string
-  config_financeira: Record<string, any> | null
-  config_academica: Record<string, any> | null
+  config_financeira: Record<string, unknown> | null
+  config_academica: Record<string, unknown> | null
   vigencia_inicio: string
   vigencia_fim: string | null
   updated_at: string
@@ -1541,8 +1542,8 @@ export type AuditLogV2 = {
   user_id: string
   acao: string
   recurso_id: string
-  valor_anterior: Record<string, any> | null
-  valor_novo: Record<string, any> | null
+  valor_anterior: Record<string, unknown> | null
+  valor_novo: Record<string, unknown> | null
   motivo_declarado: string
   ip_address: string | null
   user_agent: string | null
@@ -1566,6 +1567,224 @@ export type PortalLoginInfo = {
   user_id?: string | null
   tenant_id?: string | null
 }
+
+// ========== TURMA_PROFESSORES ==========
+export type TurmaProfessor = {
+  id: string
+  tenant_id: string
+  turma_id: string
+  professor_id: string
+  disciplina_id: string | null
+  carga_horaria_semanal: number | null
+  data_inicio: string | null
+  data_fim: string | null
+  status: string | null
+  created_at: string
+}
+export type TurmaProfessorInsert = Omit<TurmaProfessor, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type TurmaProfessorUpdate = Partial<TurmaProfessorInsert>
+
+// ========== TURMA_GRADE_HORARIA ==========
+export type TurmaGradeHoraria = {
+  id: string
+  tenant_id: string
+  turma_id: string
+  disciplina_id: string | null
+  professor_id: string | null
+  dia_semana: number
+  hora_inicio: string
+  hora_fim: string
+  sala: string | null
+  status: string | null
+  created_at: string
+}
+export type TurmaGradeHorariaInsert = Omit<TurmaGradeHoraria, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type TurmaGradeHorariaUpdate = Partial<TurmaGradeHorariaInsert>
+
+// ========== AVALIACOES_CONFIG ==========
+export type TipoAvaliacaoAcademica = 'prova' | 'trabalho' | 'simulado' | 'participacao' | 'recuperacao' | 'exame_final'
+export type StatusBimestreAcademico = 'aberto' | 'fechado' | 'conselho'
+
+export type AvaliacaoConfigDb = {
+  id: string
+  tenant_id: string
+  turma_id: string
+  disciplina_id: string
+  bimestre: number
+  tipo: TipoAvaliacaoAcademica
+  titulo: string
+  peso: number
+  data_aplicacao: string | null
+  deleted_at: string | null
+  deleted_by: string | null
+  created_at: string
+  updated_at: string | null
+}
+export type AvaliacaoConfigDbInsert = Omit<AvaliacaoConfigDb, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'deleted_by' | 'data_aplicacao'> & {
+  id?: string
+  data_aplicacao?: string | null
+  created_at?: string
+  updated_at?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
+}
+export type AvaliacaoConfigDbUpdate = Partial<AvaliacaoConfigDbInsert>
+
+// ========== AVALIACOES_NOTAS ==========
+export type AvaliacaoNotaDb = {
+  id: string
+  tenant_id: string
+  avaliacao_id: string
+  aluno_id: string
+  nota: number | null
+  ausente: boolean
+  deleted_at: string | null
+  updated_by: string | null
+  created_at: string
+  updated_at: string | null
+}
+export type AvaliacaoNotaDbInsert = Omit<AvaliacaoNotaDb, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+  deleted_at?: string | null
+}
+export type AvaliacaoNotaDbUpdate = Partial<AvaliacaoNotaDbInsert>
+
+// ========== RECUPERACOES ==========
+export type Recuperacao = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  disciplina_id: string
+  bimestre: number
+  nota_recuperacao: number
+  registrado_por: string
+  created_at: string
+  updated_at: string | null
+}
+export type RecuperacaoInsert = Omit<Recuperacao, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+}
+export type RecuperacaoUpdate = Partial<RecuperacaoInsert>
+
+// ========== FECHAMENTO_BIMESTRE ==========
+export type FechamentoBimestre = {
+  id: string
+  tenant_id: string
+  turma_id: string
+  bimestre: number
+  status: StatusBimestreAcademico
+  fechado_por: string | null
+  fechado_em: string | null
+  observacoes: string | null
+  created_at: string
+  updated_at: string | null
+}
+export type FechamentoBimestreInsert = Omit<FechamentoBimestre, 'id' | 'created_at' | 'updated_at' | 'fechado_em' | 'observacoes'> & {
+  id?: string
+  fechado_em?: string | null
+  observacoes?: string | null
+  created_at?: string
+  updated_at?: string | null
+}
+export type FechamentoBimestreUpdate = Partial<FechamentoBimestreInsert>
+
+// ========== CALENDARIO_LETIVO ==========
+export type CalendarioLetivo = {
+  id: string
+  tenant_id: string
+  data: string
+  titulo: string
+  descricao: string | null
+  tipo: string | null
+  letivo: boolean | null
+  created_at: string
+  updated_at: string | null
+}
+export type CalendarioLetivoInsert = Omit<CalendarioLetivo, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string | null
+}
+export type CalendarioLetivoUpdate = Partial<CalendarioLetivoInsert>
+
+// ========== OBSERVACOES_PEDAGOGICAS ==========
+export type ObservacaoPedagogica = {
+  id: string
+  tenant_id: string
+  aluno_id: string
+  turma_id: string
+  bimestre: number
+  comportamento: string | null
+  participacao: string | null
+  parecer_descritivo: string | null
+  registrado_por: string
+  deleted_at: string | null
+  created_at: string
+  updated_at: string | null
+}
+export type ObservacaoPedagogicaInsert = Omit<ObservacaoPedagogica, 'id' | 'created_at' | 'updated_at' | 'deleted_at' | 'comportamento' | 'participacao' | 'parecer_descritivo'> & {
+  id?: string
+  comportamento?: string | null
+  participacao?: string | null
+  parecer_descritivo?: string | null
+  created_at?: string
+  updated_at?: string | null
+  deleted_at?: string | null
+}
+export type ObservacaoPedagogicaUpdate = Partial<ObservacaoPedagogicaInsert>
+
+// ========== CONFIGURACOES_ESCOLA_HISTORICO ==========
+export type ConfiguracaoEscolaHistorico = {
+  id: string
+  tenant_id: string
+  config_financeira: Record<string, unknown> | null
+  config_academica: Record<string, unknown> | null
+  alterado_por: string | null
+  created_at: string
+}
+export type ConfiguracaoEscolaHistoricoInsert = Omit<ConfiguracaoEscolaHistorico, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type ConfiguracaoEscolaHistoricoUpdate = Partial<ConfiguracaoEscolaHistoricoInsert>
+
+// ========== CONFIGURACOES_HISTORICO (campo-a-campo) ==========
+export type ConfiguracaoHistorico = {
+  id: string
+  tenant_id: string
+  categoria: string
+  campo: string
+  valor_anterior: string | null
+  valor_novo: string
+  alterado_por: string | null
+  alterado_em: string
+}
+export type ConfiguracaoHistoricoInsert = Omit<ConfiguracaoHistorico, 'id' | 'alterado_em'> & {
+  id?: string; alterado_em?: string
+}
+export type ConfiguracaoHistoricoUpdate = Partial<ConfiguracaoHistoricoInsert>
+
+// ========== MARKETPLACE_CATEGORIAS ==========
+export type MarketplaceCategoria = {
+  id: string
+  nome: string
+  descricao: string | null
+  icone: string
+  ativo: boolean
+  subcategorias: string[] | null
+  created_at: string
+}
+export type MarketplaceCategoriaInsert = Omit<MarketplaceCategoria, 'id' | 'created_at'> & {
+  id?: string; created_at?: string
+}
+export type MarketplaceCategoriaUpdate = Partial<MarketplaceCategoriaInsert>
 
 export type Database = {
   public: {
@@ -1606,31 +1825,43 @@ export type Database = {
       document_solicitations: { Row: DocumentSolicitation; Insert: DocumentSolicitationInsert; Update: DocumentSolicitationUpdate; Relationships: any[] }
       autorizacoes_modelos: { Row: AutorizacaoModelo; Insert: AutorizacaoModeloInsert; Update: AutorizacaoModeloUpdate; Relationships: any[] }
       autorizacoes_respostas: { Row: AutorizacaoResposta; Insert: AutorizacaoRespostaInsert; Update: AutorizacaoRespostaUpdate; Relationships: any[] }
-      autorizacoes_auditoria: { Row: AutorizacaoAuditoria; Insert: AutorizacaoAuditoriaInsert; Update: any; Relationships: any[] }
-      selos: { Row: Selo; Insert: SeloInsert; Update: any; Relationships: any[] }
+      autorizacoes_auditoria: { Row: AutorizacaoAuditoria; Insert: AutorizacaoAuditoriaInsert; Update: Partial<AutorizacaoAuditoriaInsert>; Relationships: any[] }
+      selos: { Row: Selo; Insert: SeloInsert; Update: Partial<SeloInsert>; Relationships: any[] }
       fila_virtual: { Row: FilaVirtual; Insert: FilaVirtualInsert; Update: FilaVirtualUpdate; Relationships: any[] }
       almoxarifado_itens: { Row: AlmoxarifadoItem; Insert: AlmoxarifadoItemInsert; Update: AlmoxarifadoItemUpdate; Relationships: any[] }
-      almoxarifado_movimentacoes: { Row: AlmoxarifadoMovimentacao; Insert: AlmoxarifadoMovimentacaoInsert; Update: any; Relationships: any[] }
+      almoxarifado_movimentacoes: { Row: AlmoxarifadoMovimentacao; Insert: AlmoxarifadoMovimentacaoInsert; Update: AlmoxarifadoMovimentacaoUpdate; Relationships: any[] }
       overrides_financeiros: { Row: OverrideFinanceiro; Insert: OverrideFinanceiroInsert; Update: OverrideFinanceiroUpdate; Relationships: any[] }
-      alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: any; Relationships: any[] }
+      alertas_financeiros_ignorados: { Row: AlertaFinanceiroIgnorado; Insert: AlertaFinanceiroIgnoradoInsert; Update: Partial<AlertaFinanceiroIgnoradoInsert>; Relationships: any[] }
       curriculos: { Row: Curriculo; Insert: CurriculoInsert; Update: CurriculoUpdate; Relationships: any[] }
       lojistas: { Row: Lojista; Insert: LojistaInsert; Update: LojistaUpdate; Relationships: any[] }
       notificacoes: { Row: Notificacao; Insert: NotificacaoInsert; Update: NotificacaoUpdate; Relationships: any[] }
       disciplinas: { Row: DisciplinaDb; Insert: DisciplinaDbInsert; Update: DisciplinaDbUpdate; Relationships: any[] }
-      tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: any; Relationships: any[] }
+      tenant_disciplinas_ocultas: { Row: TenantDisciplinaOculta; Insert: TenantDisciplinaOcultaInsert; Update: Partial<TenantDisciplinaOcultaInsert>; Relationships: any[] }
       transferencias_escolares: { Row: TransferenciaEscolar; Insert: TransferenciaEscolarInsert; Update: TransferenciaEscolarUpdate; Relationships: any[] }
-      system_modules: { Row: SystemModule; Insert: SystemModuleInsert; Update: any; Relationships: any[] }
-      permissions: { Row: Permission; Insert: PermissionInsert; Update: any; Relationships: any[] }
+      system_modules: { Row: SystemModule; Insert: SystemModuleInsert; Update: Partial<SystemModuleInsert>; Relationships: any[] }
+      permissions: { Row: Permission; Insert: PermissionInsert; Update: Partial<PermissionInsert>; Relationships: any[] }
       perfis_acesso: { Row: PerfilAcesso; Insert: PerfilAcessoInsert; Update: PerfilAcessoUpdate; Relationships: any[] }
-      perfil_permissions: { Row: PerfilPermission; Insert: PerfilPermissionInsert; Update: any; Relationships: any[] }
-      cargos_v2: { Row: CargoV2; Insert: CargoV2Insert; Update: any; Relationships: any[] }
-      user_permission_overrides: { Row: UserPermissionOverride; Insert: UserPermissionOverrideInsert; Update: any; Relationships: any[] }
-      approval_workflows: { Row: ApprovalWorkflow; Insert: ApprovalWorkflowInsert; Update: any; Relationships: any[] }
+      perfil_permissions: { Row: PerfilPermission; Insert: PerfilPermissionInsert; Update: Partial<PerfilPermissionInsert>; Relationships: any[] }
+      cargos_v2: { Row: CargoV2; Insert: CargoV2Insert; Update: Partial<CargoV2Insert>; Relationships: any[] }
+      user_permission_overrides: { Row: UserPermissionOverride; Insert: UserPermissionOverrideInsert; Update: Partial<UserPermissionOverrideInsert>; Relationships: any[] }
+      approval_workflows: { Row: ApprovalWorkflow; Insert: ApprovalWorkflowInsert; Update: Partial<ApprovalWorkflowInsert>; Relationships: any[] }
       portal_audit_log: { Row: PortalAuditLog; Insert: PortalAuditLogInsert; Update: PortalAuditLogUpdate; Relationships: any[] }
       notificacoes_familia: { Row: NotificacaoFamilia; Insert: NotificacaoFamiliaInsert; Update: NotificacaoFamiliaUpdate; Relationships: any[] }
       configuracoes_escola: { Row: ConfiguracaoEscola; Insert: ConfiguracaoEscolaInsert; Update: ConfiguracaoEscolaUpdate; Relationships: any[] }
       usuarios_sistema: { Row: UsuarioSistema; Insert: UsuarioSistemaInsert; Update: UsuarioSistemaUpdate; Relationships: any[] }
       audit_logs_v2: { Row: AuditLogV2; Insert: AuditLogV2Insert; Update: AuditLogV2Update; Relationships: any[] }
+      turma_professores: { Row: TurmaProfessor; Insert: TurmaProfessorInsert; Update: TurmaProfessorUpdate; Relationships: any[] }
+      turma_grade_horaria: { Row: TurmaGradeHoraria; Insert: TurmaGradeHorariaInsert; Update: TurmaGradeHorariaUpdate; Relationships: any[] }
+      avaliacoes_config: { Row: AvaliacaoConfigDb; Insert: AvaliacaoConfigDbInsert; Update: AvaliacaoConfigDbUpdate; Relationships: any[] }
+      avaliacoes_notas: { Row: AvaliacaoNotaDb; Insert: AvaliacaoNotaDbInsert; Update: AvaliacaoNotaDbUpdate; Relationships: any[] }
+      recuperacoes: { Row: Recuperacao; Insert: RecuperacaoInsert; Update: RecuperacaoUpdate; Relationships: any[] }
+      fechamento_bimestre: { Row: FechamentoBimestre; Insert: FechamentoBimestreInsert; Update: FechamentoBimestreUpdate; Relationships: any[] }
+      calendario_letivo: { Row: CalendarioLetivo; Insert: CalendarioLetivoInsert; Update: CalendarioLetivoUpdate; Relationships: any[] }
+      observacoes_pedagogicas: { Row: ObservacaoPedagogica; Insert: ObservacaoPedagogicaInsert; Update: ObservacaoPedagogicaUpdate; Relationships: any[] }
+      funcoes_escola: { Row: FuncaoEscola; Insert: FuncaoEscolaInsert; Update: FuncaoEscolaUpdate; Relationships: any[] }
+      configuracoes_escola_historico: { Row: ConfiguracaoEscolaHistorico; Insert: ConfiguracaoEscolaHistoricoInsert; Update: ConfiguracaoEscolaHistoricoUpdate; Relationships: any[] }
+      configuracoes_historico: { Row: ConfiguracaoHistorico; Insert: ConfiguracaoHistoricoInsert; Update: ConfiguracaoHistoricoUpdate; Relationships: any[] }
+      marketplace_categorias: { Row: MarketplaceCategoria; Insert: MarketplaceCategoriaInsert; Update: MarketplaceCategoriaUpdate; Relationships: any[] }
       alertas_tratamento: {
         Row: {
           id: string
@@ -1668,7 +1899,7 @@ export type Database = {
           id: string
           tenant_id: string
           lote_id: string
-          dados_agrupados: any
+          dados_agrupados: Record<string, unknown>
           status: string
           created_at: string
         }
@@ -1676,7 +1907,7 @@ export type Database = {
           id?: string
           tenant_id: string
           lote_id: string
-          dados_agrupados: any
+          dados_agrupados: Record<string, unknown>
           status?: string
           created_at?: string
         }
@@ -1684,7 +1915,7 @@ export type Database = {
           id?: string
           tenant_id?: string
           lote_id?: string
-          dados_agrupados?: any
+          dados_agrupados?: Record<string, unknown>
           status?: string
           created_at?: string
         }
@@ -1767,7 +1998,7 @@ export type Database = {
           titulo: string
           descricao: string
           status: 'ativo' | 'concluido'
-          dados_origem: any
+          dados_origem: Record<string, unknown> | null
           created_at: string
           turma_nome?: string
         }
@@ -1785,10 +2016,53 @@ export type Database = {
         }
         Relationships: any[]
       }
+      vw_radar_evasao: {
+        Row: {
+          aluno_id: string
+          tenant_id: string
+          nome_completo: string
+          faltas_consecutivas: number
+          cobrancas_atrasadas: number
+          motivo_principal: string | null
+        }
+        Relationships: any[]
+      }
+      vw_professor_escopo: {
+        Row: {
+          turma_id: string
+          disciplina_id: string
+          ano_letivo: string
+        }
+        Relationships: any[]
+      }
+      vw_aprovacoes_pendentes: {
+        Row: {
+          id: string
+          created_at: string
+          tipo_acao: string
+          titulo: string
+          descricao: string
+          justificativa: string
+          solicitante_id: string
+          solicitante_role: string
+          status: 'pendente' | 'aprovada' | 'rejeitada' | 'cancelada' | 'expirada'
+          expires_at: string
+          tenant_id: string
+        }
+        Relationships: any[]
+      }
     }
     Functions: {
       funcionario_tem_acesso_area: { Args: { p_funcionario_id: string; p_area: string }; Returns: boolean };
       get_portal_login_info: { Args: { cpf_input: string }; Returns: PortalLoginInfo[] };
+      fn_decidir_aprovacao: {
+        Args: {
+          p_aprovacao_id: string
+          p_decisao: 'aprovada' | 'rejeitada'
+          p_motivo?: string | null
+        }
+        Returns: void
+      };
       fn_portal_aluno_enriquecimento: {
         Args: { p_aluno_id: string };
         Returns: {
@@ -1853,7 +2127,7 @@ export type Database = {
         Returns: {
           total_alunos_ativos: number;
           total_com_divergencia: number;
-          divergencias: any;
+          divergencias: Record<string, unknown> | null;
         };
       };
       processar_lote_importacao: {

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { ConfigRecados, ConfigRecadosInsert, ConfigRecadosUpdate, Evento, EventoInsert, EventoUpdate } from '@/lib/database.types'
 
-type EventoPayload = EventoInsert & { id?: string }
+export type EventoPayload = EventoInsert & { id?: string }
 
 export const agendaService = {
   async listarEventos(tenantId: string) {

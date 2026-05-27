@@ -1,4 +1,4 @@
-import type { FuncaoEscolaInsert } from '@/lib/database.types'
+import type { FuncaoEscolaInsert, FuncionarioInsert, FuncionarioUpdate } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
@@ -25,7 +25,7 @@ export const funcionariosService = {
     return data || []
   },
 
-  async criar(funcionario: any, userId?: string) {
+  async criar(funcionario: FuncionarioInsert, userId?: string) {
     // Validação RBAC: funcionarios.create
     if (userId && funcionario.tenant_id) {
       await validarPermissao(userId, funcionario.tenant_id, 'funcionarios.create')
@@ -67,7 +67,7 @@ export const funcionariosService = {
 
     const { data, error } = await supabase
       .from('funcionarios')
-      .insert(dadosFuncionario)
+      .insert(dadosFuncionario as any)
       .select()
       .single()
 
@@ -85,7 +85,7 @@ export const funcionariosService = {
     return data
   },
 
-  async atualizar(id: string, updates: any, userId?: string, tenantId?: string) {
+  async atualizar(id: string, updates: FuncionarioUpdate, userId?: string, tenantId?: string) {
     // Validação RBAC: funcionarios.update
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'funcionarios.update')
@@ -132,7 +132,7 @@ export const funcionariosService = {
 
     try {
       // 0. Buscar o tenant_id real do funcionário (Segurança extra e correção de bug de nulo)
-      const { data: func, error: funcErr } = await (supabase.from('funcionarios') as any).select('tenant_id, nome_completo').eq('id', funcionarioId).single() as any
+      const { data: func, error: funcErr } = await supabase.from('funcionarios').select('tenant_id, nome_completo').eq('id', funcionarioId).single()
       
       if (funcErr || !func) throw new Error('Funcionário não encontrado')
       const targetTenantId = func.tenant_id
@@ -187,7 +187,7 @@ export const funcionariosService = {
       }
 
       // 3. Criar registro no usuarios_sistema (Novo RBAC)
-      const { error: rbacError } = await (supabase.from('usuarios_sistema' as any) as any)
+      const { error: rbacError } = await supabase.from('usuarios_sistema')
         .insert({
           id: authUserId,
           tenant_id: targetTenantId,
@@ -241,7 +241,7 @@ export const funcionariosService = {
   /** Lista funções globais (is_padrao=true) + personalizadas do tenant */
   async listarFuncoes(tenantId: string) {
     const { data, error } = await supabase
-      .from('funcoes_escola' as any)
+      .from('funcoes_escola')
       .select('id, nome, categoria, is_padrao, ativo')
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
       .eq('ativo', true)
@@ -249,7 +249,7 @@ export const funcionariosService = {
       .order('nome', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   /** Cria uma nova função personalizada para o tenant */
@@ -260,8 +260,8 @@ export const funcionariosService = {
     }
 
     const { data, error } = await supabase
-      .from('funcoes_escola' as any)
-      .insert(payload as any)
+      .from('funcoes_escola')
+      .insert(payload)
       .select()
       .single()
 
@@ -310,7 +310,8 @@ export const funcionariosService = {
       // Aqui usaremos o nome da conta e favorecido como critério.
       const { data: existente } = await (supabase.from('contas_pagar' as any) as any)
         .select('id')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', func.tenant_id)
+        .eq('funcionario_id', func.id)
         .eq('nome', nomeConta)
         .eq('data_vencimento', dataVencimento)
         .maybeSingle()

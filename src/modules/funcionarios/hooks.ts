@@ -1,3 +1,4 @@
+import type { FuncaoEscolaInsert, FuncionarioInsert, FuncionarioUpdate } from '@/lib/database.types'
 import { QueryKeys } from "@/lib/query-keys"
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
@@ -16,7 +17,7 @@ export function useCriarFuncionario() {
   const qc = useQueryClient()
   const { authUser } = useAuth()
   return useMutation({
-    mutationFn: (data: any) => funcionariosService.criar(data, authUser?.user.id),
+    mutationFn: (data: FuncionarioInsert) => funcionariosService.criar(data, authUser?.user.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['funcionarios'] })
       qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
@@ -28,7 +29,7 @@ export function useCriarFuncionario() {
 export function useAtualizarFuncionario() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => funcionariosService.atualizar(id, data),
+    mutationFn: ({ id, data }: { id: string; data: FuncionarioUpdate }) => funcionariosService.atualizar(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['funcionarios'] })
       qc.invalidateQueries({ queryKey: ['portal', 'vinculos'] })
@@ -100,7 +101,7 @@ export function useFuncoes() {
 export function useCriarFuncaoCustom() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: any) => funcionariosService.criarFuncaoCustom(data),
+    mutationFn: (data: FuncaoEscolaInsert) => funcionariosService.criarFuncaoCustom(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['funcoes-escola'] }),
   })
 }

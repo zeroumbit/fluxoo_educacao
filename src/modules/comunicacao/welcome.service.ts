@@ -76,7 +76,7 @@ export const welcomeService = {
       lida: false
     }))
 
-    const { error: nError } = await (supabase.from('notificacoes_familia' as any) as any)
+    const { error: nError } = await supabase.from('notificacoes_familia')
       .insert(notificacoes)
 
     if (nError) {

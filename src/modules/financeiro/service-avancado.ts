@@ -11,7 +11,7 @@ import type {
   GatewayTenantConfigUpdate,
 } from '@/lib/database.types'
 
-type RegistroPagamentoManual = Pick<
+export type RegistroPagamentoManual = Pick<
   CobrancaUpdate,
   | 'data_pagamento'
   | 'valor_pago'

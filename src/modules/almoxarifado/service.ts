@@ -1,5 +1,13 @@
+import type { AlmoxarifadoItemInsert, AlmoxarifadoItemUpdate, AlmoxarifadoMovimentacaoInsert } from '@/lib/database.types'
 import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
+
+export type CriarMovimentacaoPayload = AlmoxarifadoMovimentacaoInsert & {
+  valor_total?: number
+  gerar_financeiro?: boolean
+  fornecedor?: string
+  vencimento_financeiro?: string
+}
 
 export const almoxarifadoService = {
   async listarItens(tenantId: string) {
@@ -15,7 +23,7 @@ export const almoxarifadoService = {
     return data || []
   },
 
-  async criarItem(item: any, userId?: string) {
+  async criarItem(item: AlmoxarifadoItemInsert, userId?: string) {
     // Validação RBAC: almoxarifado.itens.create
     if (userId && item.tenant_id) {
       await validarPermissao(userId, item.tenant_id, 'almoxarifado.itens.create')
@@ -37,7 +45,7 @@ export const almoxarifadoService = {
     return data
   },
 
-  async atualizarItem(id: string, updates: any, userId?: string, tenantId?: string) {
+  async atualizarItem(id: string, updates: AlmoxarifadoItemUpdate, userId?: string, tenantId?: string) {
     // Validação RBAC: almoxarifado.itens.update
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'almoxarifado.itens.update')
@@ -88,7 +96,7 @@ export const almoxarifadoService = {
     return data || []
   },
 
-  async criarMovimentacao(mov: any, userId?: string) {
+  async criarMovimentacao(mov: CriarMovimentacaoPayload, userId?: string) {
     // Validação RBAC: almoxarifado.movimentacoes.create
     if (userId && mov.tenant_id) {
       await validarPermissao(userId, mov.tenant_id, 'almoxarifado.movimentacoes.create')

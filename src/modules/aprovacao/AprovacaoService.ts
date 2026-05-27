@@ -23,21 +23,21 @@ export const AprovacaoService = {
   /** Lista todas as aprovações pendentes do tenant atual */
   listarPendentes: async (): Promise<AprovacaoPendente[]> => {
     const { data, error } = await supabase
-      .from('vw_aprovacoes_pendentes' as any)
+      .from('vw_aprovacoes_pendentes')
       .select('*')
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as AprovacaoPendente[]
+    return data
   },
 
   /** Aprovar ou Rejeitar uma solicitação (Apenas Gestor/Diretor do tenant) */
   decidir: async (aprovacaoId: string, decisao: 'aprovada' | 'rejeitada', motivo?: string): Promise<void> => {
-    const { error } = await supabase.rpc('fn_decidir_aprovacao' as any, {
+    const { error } = await supabase.rpc('fn_decidir_aprovacao', {
       p_aprovacao_id: aprovacaoId,
       p_decisao: decisao,
       p_motivo: motivo || null,
-    } as any)
+    })
 
     if (error) throw new Error(error.message)
   }

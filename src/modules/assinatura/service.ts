@@ -37,34 +37,34 @@ export const assinaturaService = {
 
   async buscarLimiteAlunos(tenantId: string) {
     const { data, error } = await supabase
-      .from('escolas' as any)
+      .from('escolas')
       .select('limite_alunos_contratado')
       .eq('id', tenantId)
       .single()
 
     if (error) throw error
-    return (data as any)?.limite_alunos_contratado || 0
+    return data?.limite_alunos_contratado || 0
   },
 
   async buscarSolicitacoes(tenantId: string) {
     const { data, error } = await supabase
-      .from('solicitacoes_upgrade' as any)
+      .from('solicitacoes_upgrade')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return data as any[]
+    return data || []
   },
 
   async criarSolicitacao(solicitacao: SolicitacaoUpgradeInsert) {
     const { data, error } = await supabase
-      .from('solicitacoes_upgrade' as any)
-      .insert(solicitacao as any)
+      .from('solicitacoes_upgrade')
+      .insert(solicitacao)
       .select()
       .single()
 
     if (error) throw error
-    return data as any
+    return data
   }
 }
