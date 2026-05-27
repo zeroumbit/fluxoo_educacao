@@ -4,6 +4,7 @@ import { Card,CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useViaCEP } from '@/hooks/use-viacep'
+import type { Escola } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { mascaraCEP,mascaraCPF,mascaraTelefone,validarCPF } from '@/lib/validacoes'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -67,7 +68,7 @@ export function PortalPerfilPageMobile() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [showContratoModal, setShowContratoModal] = useState(false)
-  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+  const [escolaInfo, setEscolaInfo] = useState<Escola | null>(null)
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
 
   // Carregar informações da escola para o contrato

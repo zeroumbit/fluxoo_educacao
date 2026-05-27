@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Building2,CheckCircle2,Loader2,Pencil,Plus,Puzzle,Search,Store,Trash2,UserCircle,XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import type { Plano } from '@/lib/database.types'
 import { useDeletePlano,useModulos,usePlanoModulos,usePlanos,useSetPlanoModulos,useUpsertPlano } from '../hooks'
 
 const TIPOS_EMPRESA = [
@@ -70,7 +71,7 @@ export function PlanosPage() {
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingPlano, setEditingPlano] = useState<any>(null)
+  const [editingPlano, setEditingPlano] = useState<Plano | null>(null)
   const [isModulosOpen, setIsModulosOpen] = useState(false)
   const [selectedPlanoId, setSelectedPlanoId] = useState('')
   const [selectedModuloIds, setSelectedModuloIds] = useState<string[]>([])

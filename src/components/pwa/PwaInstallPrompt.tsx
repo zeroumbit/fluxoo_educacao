@@ -17,7 +17,7 @@ interface PwaInstallPromptProps {
 }
 
 export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({ onDismiss }) => {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const [platform, setPlatform] = useState<'ios' | 'android' | 'other'>('other');
   const [isVisible, setIsVisible] = useState(false);
 

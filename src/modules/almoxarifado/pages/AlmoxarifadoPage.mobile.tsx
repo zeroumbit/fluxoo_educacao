@@ -44,7 +44,7 @@ export function AlmoxarifadoPageMobile() {
   const [isMovOpen, setIsMovOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isNewItemOpen, setIsNewItemOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const [selectedItem, setSelectedItem] = useState<AlmoxarifadoItem | null>(null)
   
   // Movimentação State
   const [movType, setMovType] = useState<'entrada' | 'saida'>('entrada')

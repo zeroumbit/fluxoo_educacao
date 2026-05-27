@@ -22,6 +22,7 @@ Plus,
 Search
 } from 'lucide-react'
 import { useEffect,useState } from 'react'
+import type { Filial } from '@/lib/database.types'
 import { toast } from 'sonner'
 import { useAtualizarFilial,useCriarFilial,useExcluirFilial,useFiliais } from '../hooks'
 
@@ -35,7 +36,7 @@ export function FiliaisPageMobile() {
   // UI States
   const [search, setSearch] = useState('')
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [selectedFilial, setSelectedFilial] = useState<any>(null)
+  const [selectedFilial, setSelectedFilial] = useState<Filial | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Form State

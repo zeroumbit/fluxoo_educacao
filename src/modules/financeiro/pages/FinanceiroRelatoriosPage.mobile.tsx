@@ -24,7 +24,10 @@ export function FinanceiroRelatoriosPageMobile() {
   const { hasPermission } = usePermissions()
   const canExport = hasPermission('financeiro.relatorios.export')
 
-  const [selectedMonth, setSelectedMonth] = useState<any | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<{
+    mes: string; saldo: number; total_receitas_previsto: number; total_receitas_recebido: number
+    total_receitas_aberto: number; total_despesas_previsto: number; total_despesas_pago: number; total_despesas_aberto: number
+  } | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   // Calcular totais consolidation

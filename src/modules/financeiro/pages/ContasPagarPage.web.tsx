@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import type { ContaPagar } from '@/lib/database.types'
 import { useAtualizarContaPagar,useContasPagar,useCriarContaPagar,useDeletarContaPagar } from '../hooks-avancado'
 
 const schema = z.object({
@@ -34,11 +35,11 @@ export function ContasPagarPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [payOpen, setPayOpen] = useState(false)
-  const [contaParaEditar, setContaParaEditar] = useState<any | null>(null)
-  const [contaParaDeletar, setContaParaDeletar] = useState<any | null>(null)
-  const [contaParaPagar, setContaParaPagar] = useState<any | null>(null)
+  const [contaParaEditar, setContaParaEditar] = useState<ContaPagar | null>(null)
+  const [contaParaDeletar, setContaParaDeletar] = useState<ContaPagar | null>(null)
+  const [contaParaPagar, setContaParaPagar] = useState<ContaPagar | null>(null)
   const [recorrente, setRecorrente] = useState(false)
-  const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) as any })
+  const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) })
 
   // Permissões
   const { hasPermission } = usePermissions()

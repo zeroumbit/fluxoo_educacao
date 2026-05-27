@@ -95,7 +95,7 @@ export function MarketplaceConfigPage() {
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingCat, setEditingCat] = useState<any>(null)
+  const [editingCat, setEditingCat] = useState<object | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
   const [formData, setFormData] = useState({

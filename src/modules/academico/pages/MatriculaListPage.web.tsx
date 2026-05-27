@@ -16,6 +16,7 @@ import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { logger } from '@/lib/logger'
+import type { Matricula } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -74,13 +75,13 @@ export function MatriculaListPageWeb() {
     return localStorage.getItem('matricula_dialog_open') === 'true'
   })
   const [isEditing, setIsEditing] = useState(false)
-  const [selectedMatricula, setSelectedMatricula] = useState<any>(null)
+  const [selectedMatricula, setSelectedMatricula] = useState<Matricula | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [expandedTurmas, setExpandedTurmas] = useState<Set<string>>(new Set())
 
   const form = useForm<MatriculaFormData>({
-    resolver: zodResolver(matriculaSchema) as any,
+    resolver: zodResolver(matriculaSchema),
     defaultValues: {
       tipo: 'nova',
       data_matricula: new Date().toISOString().split('T')[0],

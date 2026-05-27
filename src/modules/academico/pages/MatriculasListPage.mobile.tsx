@@ -28,6 +28,7 @@ X
 import { useEffect,useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { Matricula } from '@/lib/database.types'
 import { useExcluirMatricula,useMatriculas } from '../hooks'
 
 const CACHE_KEY = 'matriculas_list_cache'
@@ -38,9 +39,9 @@ export function MatriculasListPageMobile() {
   const deleteMatricula = useExcluirMatricula()
   const [searchTerm, setSearchTerm] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [cachedData, setCachedData] = useState<any[]>([])
+  const [cachedData, setCachedData] = useState<Matricula[]>([])
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [selectedMatricula, setSelectedMatricula] = useState<any | null>(null)
+  const [selectedMatricula, setSelectedMatricula] = useState<Matricula | null>(null)
   const [isActionsOpen, setIsActionsOpen] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
 

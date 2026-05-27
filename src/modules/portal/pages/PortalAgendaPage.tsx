@@ -6,6 +6,7 @@ import {
 Dialog,
 DialogContent
 } from '@/components/ui/dialog'
+import type { Evento } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { endOfMonth,format,isSameDay,parseISO,startOfDay,startOfMonth } from 'date-fns'
@@ -54,7 +55,7 @@ export function PortalAgendaPage({ hideHeader = false }: { hideHeader?: boolean 
   const turmaId = alunoSelecionado?.turma?.id || alunoSelecionado?.turma_id || null
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null)
 
   // Intervalo de busca (mês atual visualizado no calendário)
   const dateRange = useMemo(() => ({

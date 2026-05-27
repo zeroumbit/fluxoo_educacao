@@ -13,6 +13,7 @@ TableHead,
 TableHeader,
 TableRow,
 } from '@/components/ui/table'
+import type { Aluno } from '@/lib/database.types'
 import { useAtualizarMatricula,useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { useAlunos } from '@/modules/alunos/hooks'
 import {
@@ -44,7 +45,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
   const [busca, setBusca] = useState('')
   
   // Estado para transferência de turma
-  const [selectedAlunoForTransfer, setSelectedAlunoForTransfer] = useState<any>(null)
+  const [selectedAlunoForTransfer, setSelectedAlunoForTransfer] = useState<Aluno | null>(null)
   const [newTurmaId, setNewTurmaId] = useState<string>('')
   
   const { data: turmas } = useTurmas()

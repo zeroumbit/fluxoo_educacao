@@ -91,7 +91,7 @@ export function EscolaCadastroPage() {
   const { data: configPix } = useConfigRecebimento()
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(cadastroSchema) as any,
+    resolver: zodResolver(cadastroSchema),
     mode: 'onChange',
     defaultValues: {
       limite_alunos_contratado: 50 as any,

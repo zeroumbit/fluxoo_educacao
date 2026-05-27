@@ -58,7 +58,7 @@ export function MatriculaFormPageWeb() {
   const atualizar = useAtualizarMatricula()
 
   const form = useForm<MatriculaFormData>({
-    resolver: zodResolver(matriculaSchema) as any,
+    resolver: zodResolver(matriculaSchema),
     defaultValues: {
       tipo: 'nova',
       data_matricula: new Date().toISOString().split('T')[0],

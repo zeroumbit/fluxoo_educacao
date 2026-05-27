@@ -14,6 +14,7 @@ import { usePdf } from '@/hooks/usePdf'
 import { logger } from '@/lib/logger'
 import { FichaMatriculaPDF } from '@/lib/pdf-templates'
 import { cn } from '@/lib/utils'
+import type { DocumentoEmitido,DocumentoTemplate } from '@/lib/database.types'
 import { useMatriculaAtivaDoAluno } from '@/modules/academico/hooks'
 import { useBoletimV2PorAluno } from '@/modules/academico/hooks/hooks.v2'
 import { useAluno,useAlunos } from '@/modules/alunos/hooks'
@@ -112,8 +113,8 @@ export function DocumentosPage() {
   const [openTemplate, setOpenTemplate] = useState(false)
   const [openEmitir, setOpenEmitir] = useState(false)
   const [openVisualizar, setOpenVisualizar] = useState(false)
-  const [docParaVisualizar, setDocParaVisualizar] = useState<any>(null)
-  const [editando, setEditando] = useState<any | null>(null)
+  const [docParaVisualizar, setDocParaVisualizar] = useState<DocumentoEmitido | null>(null)
+  const [editando, setEditando] = useState<DocumentoTemplate | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [templateParaExcluir, setTemplateParaExcluir] = useState<{ id: string; titulo: string } | null>(null)

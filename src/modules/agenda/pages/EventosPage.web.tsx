@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import type { Evento } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { muralService } from '@/modules/comunicacao/service'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -47,13 +48,13 @@ export function EventosPage() {
   const { data: configRecados } = useConfigRecados()
   const upsertConfig = useUpsertConfigRecados()
   const [open, setOpen] = useState(false)
-  const [editando, setEditando] = useState<any | null>(null)
-  const [eventoDeletar, setEventoDeletar] = useState<any | null>(null)
-  const [eventoDetalhes, setEventoDetalhes] = useState<any | null>(null)
+  const [editando, setEditando] = useState<Evento | null>(null)
+  const [eventoDeletar, setEventoDeletar] = useState<Evento | null>(null)
+  const [eventoDetalhes, setEventoDetalhes] = useState<Evento | null>(null)
   const [horarioInicio, setHorarioInicio] = useState(configRecados?.horario_inicio || '08:00')
   const [horarioTermino, setHorarioTermino] = useState(configRecados?.horario_termino || '17:00')
   const [msgFora, setMsgFora] = useState(configRecados?.mensagem_fora_expediente || '')
-  const form = useForm<z.infer<typeof eventoSchema>>({ resolver: zodResolver(eventoSchema) as any })
+  const form = useForm<z.infer<typeof eventoSchema>>({ resolver: zodResolver(eventoSchema) })
 
   const abrirNovo = () => {
     setEditando(null)

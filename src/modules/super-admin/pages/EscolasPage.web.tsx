@@ -27,7 +27,7 @@ TableHeader,
 TableRow
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import type { Fatura } from '@/lib/database.types'
+import type { Escola, Fatura } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -82,7 +82,7 @@ export function EscolasPageWeb() {
   const { authUser } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [escolaSelecionada, setEscolaSelecionada] = useState<string | null>(null)
-  const [escolaDevedoraSelecionada, setEscolaDevedoraSelecionada] = useState<any>(null)
+  const [escolaDevedoraSelecionada, setEscolaDevedoraSelecionada] = useState<Escola | null>(null)
   const [dialogDetalhesAberto, setDialogDetalhesAberto] = useState(false)
   const [dialogSuspensaoAberto, setDialogSuspensaoAberto] = useState(false)
   const [dialogPagamentosAberto, setDialogPagamentosAberto] = useState(false)

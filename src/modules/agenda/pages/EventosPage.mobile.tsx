@@ -1,3 +1,4 @@
+import type { Evento } from '@/lib/database.types'
 import { muralService } from '@/modules/comunicacao/service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format,parseISO } from 'date-fns'
@@ -74,9 +75,9 @@ export function EventosPageMobile() {
 
   const [activeTab, setActiveTab] = useState<'agenda' | 'config'>('agenda')
   const [formOpen, setFormOpen] = useState(false)
-  const [editando, setEditando] = useState<any | null>(null)
+  const [editando, setEditando] = useState<Evento | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [eventoDetalhes, setEventoDetalhes] = useState<any | null>(null)
+  const [eventoDetalhes, setEventoDetalhes] = useState<Evento | null>(null)
 
   // Config Recados State
   const [horarioInicio, setHorarioInicio] = useState('08:00')

@@ -26,7 +26,7 @@ Users
 import React,{ useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { Turma } from '@/lib/database.types'
+import type { Funcionario, Turma, TurmaProfessor } from '@/lib/database.types'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { toast } from 'sonner'
@@ -316,8 +316,8 @@ function TabProfessores({ turma }: { turma: Turma }) {
   const [selectedProfessorId, setSelectedProfessorId] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState(4)
 
-  const [professorDetails, setProfessorDetails] = useState<any>(null)
-  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
+  const [professorDetails, setProfessorDetails] = useState<Funcionario | null>(null)
+  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<TurmaProfessor | null>(null)
 
   const atribuicoes = atribuicoesDb || []
   const professores = todosProfessores || []

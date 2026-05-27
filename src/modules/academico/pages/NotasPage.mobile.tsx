@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useFaltasTurmaPorPeriodo } from '@/modules/frequencia/hooks'
 import { useTurmas } from '@/modules/turmas/hooks'
+import type { Aluno } from '@/lib/database.types'
 import { useQuery } from '@tanstack/react-query'
 import {
 ArrowLeft,
@@ -54,7 +55,7 @@ export function NotasPageMobile() {
   // UI States
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [selectedAluno, setSelectedAluno] = useState<any>(null)
+  const [selectedAluno, setSelectedAluno] = useState<{ id: string } | null>(null)
   
   // Hooks V2
   const { data: turmas } = useTurmas()

@@ -2,6 +2,7 @@ import { BottomSheet } from '@/components/mobile/BottomSheet'
 import { MobilePageLayout } from '@/components/mobile/MobilePageLayout'
 import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
+import type { Aluno, Responsavel } from '@/lib/database.types'
 import { Alert,AlertDescription,AlertTitle } from "@/components/ui/alert"
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -74,8 +75,8 @@ export function TransferenciasPageMobile() {
   // Form states (Inbound via Code)
   const [codigoAluno, setCodigoAluno] = useState('')
   const [verificacaoResponsavel, setVerificacaoResponsavel] = useState('')
-  const [alunoEncontrado, setAlunoEncontrado] = useState<any>(null)
-  const [responsavelEncontrado, setResponsavelEncontrado] = useState<any>(null)
+  const [alunoEncontrado, setAlunoEncontrado] = useState<Aluno | null>(null)
+  const [responsavelEncontrado, setResponsavelEncontrado] = useState<Responsavel | null>(null)
   const [isSearchingCode, setIsSearchingCode] = useState(false)
   const [cpfErro, setCpfErro] = useState<string | null>(null)
 

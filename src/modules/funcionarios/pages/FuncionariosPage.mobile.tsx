@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MultiSelect } from '@/components/ui/multi-select'
+import type { Funcionario } from '@/lib/database.types'
 import { cn,formatCurrency } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -66,7 +67,7 @@ export function FuncionariosPageMobile() {
   // Estados UI
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'ativos' | 'inativos'>('ativos')
-  const [selectedFolder, setSelectedFolder] = useState<any>(null)
+  const [selectedFolder, setSelectedFolder] = useState<Funcionario | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [folhaOpen, setFolhaOpen] = useState(false)
   
@@ -75,7 +76,7 @@ export function FuncionariosPageMobile() {
   const [anoFolha, setAnoFolha] = useState(new Date().getFullYear())
 
   const funcForm = useForm<FuncFormData>({ 
-    resolver: zodResolver(funcSchema) as any,
+    resolver: zodResolver(funcSchema),
     defaultValues: { funcoes: [], dia_pagamento: 5 }
   })
 

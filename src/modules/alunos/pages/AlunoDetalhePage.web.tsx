@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
+import type { Aluno, Responsavel } from '@/lib/database.types'
 import { useAlunosEmTransferenciaOrigem } from '@/modules/academico/hooks/hooks.v1'
 import { useCobrancasComEncargosPorAluno } from '@/modules/financeiro/hooks'
 import { ArrowLeft,Building2,Calendar,CheckCircle2,Copy,CreditCard,Edit2,ExternalLink,FileText,Fingerprint,Heart,Info,Loader2,Lock,Mail,MapPin,Phone,PlusCircle,Save,Search,Trash2,UserCircle,Users,X } from 'lucide-react'
@@ -42,11 +43,14 @@ export function AlunoDetalhePageWeb() {
   const vincularResponsavel = useVincularResponsavel()
   const criarResponsavelAndVincular = useCriarResponsavelAndVincular()
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  type AlunoFormData = Partial<Aluno> & { patologias: string[]; medicamentos: string[]; valor_mensalidade_atual?: number; data_ingresso?: string }
+
   const [isEditing, setIsEditing] = useState(isEditingInitial)
-  const [formData, setFormData] = useState<any>(null)
+  const [formData, setFormData] = useState<AlunoFormData | null>(null)
 
   const [activatingResp, setActivatingResp] = useState<{ id: string, nome: string } | null>(null)
-  const [editingResp, setEditingResp] = useState<any | null>(null)
+  const [editingResp, setEditingResp] = useState<Responsavel | null>(null)
   const [newPassword, setNewPassword] = useState('')
 
   const [showAddGuardian, setShowAddGuardian] = useState(false)

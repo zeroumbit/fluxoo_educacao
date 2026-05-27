@@ -423,7 +423,7 @@ function RadarDeAtencaoSection({ onOpenDetails }: RadarDeAtencaoSectionProps) {
 export function DashboardPageMobile() {
   const navigate = useNavigate()
   const { data: dashboardData, isLoading, refetch } = useDashboard()
-  const [cachedData, setCachedData] = useState<any>(null)
+  const [cachedData, setCachedData] = useState<Record<string, unknown> | null>(null)
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAlunoComStatus | null>(null)
   const [isRadarSheetOpen, setIsRadarSheetOpen] = useState(false)
   const [showAlunosSemMatriculaNotification, setShowAlunosSemMatriculaNotification] = useState(true)

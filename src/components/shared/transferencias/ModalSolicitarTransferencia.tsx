@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import type { Aluno, Responsavel } from '@/lib/database.types'
 import { AlertCircle,CheckCircle2,Loader2,Search,UserCheck } from 'lucide-react'
 import React,{ useState } from "react"
 import { useForm } from "react-hook-form"
@@ -66,8 +67,8 @@ export function ModalSolicitarTransferencia({
     },
   })
 
-  const [alunoData, setAlunoData] = useState<any>(null)
-  const [responsavelEncontrado, setResponsavelEncontrado] = useState<any>(null)
+  const [alunoData, setAlunoData] = useState<Aluno | null>(null)
+  const [responsavelEncontrado, setResponsavelEncontrado] = useState<Responsavel | null>(null)
   const [cpfErro, setCpfErro] = useState<string | null>(null)
   const [_rpcStatus, setRpcStatus] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle')
   const [_rpcErrorDetail, setRpcErrorDetail] = useState<string | null>(null)

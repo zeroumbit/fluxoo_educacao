@@ -102,7 +102,7 @@ export function DocumentosPageMobile() {
 
   // Emission states
   const [isEmitModalOpen, setIsEmitModalOpen] = useState(false)
-  const [selectedDoc, setSelectedDoc] = useState<any>(null)
+  const [selectedDoc, setSelectedDoc] = useState<object | null>(null)
   const [selectedAlunoId, setSelectedAlunoId] = useState('')
 
   const filterDocs = useMemo(() => {

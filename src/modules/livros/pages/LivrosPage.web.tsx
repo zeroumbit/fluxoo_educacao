@@ -103,7 +103,7 @@ export function LivrosPage() {
   const [isUploading, setIsUploading] = useState(false)
 
   const livroForm = useForm<LivroFormValues>({
-    resolver: zodResolver(livroSchema) as any,
+    resolver: zodResolver(livroSchema),
     defaultValues: {
       ano_letivo: new Date().getFullYear(),
       turmasIds: [],
@@ -113,7 +113,7 @@ export function LivrosPage() {
   })
 
   const materialForm = useForm<MaterialFormValues>({
-    resolver: zodResolver(materialSchema) as any,
+    resolver: zodResolver(materialSchema),
     defaultValues: {
       turmasIds: [],
       incluir_na_lista_oficial: true,

@@ -1,3 +1,4 @@
+import type { PlanoAula } from '@/lib/database.types';
 import { sanitizeHtml } from '@/lib/sanitize-html';
 import { format,parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -8,7 +9,7 @@ import { usePlanosAulaPortal } from '../../hooks';
 
 export function PortalPlanosAulaV2() {
   const { data: planos, isLoading } = usePlanosAulaPortal();
-  const [selectedPlano, setSelectedPlano] = useState<any | null>(null);
+  const [selectedPlano, setSelectedPlano] = useState<PlanoAula | null>(null);
 
   if (isLoading) {
     return (

@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { toast } from 'sonner'
+import type { DisciplinaDb, Funcionario, TurmaProfessor } from '@/lib/database.types'
 import { useAtribuicoes,useAtribuirProfessor,useDisciplinas,useProfessoresTurma,useRemoverAtribuicao,useTurma } from '../hooks'
 
 interface TabProfessoresProps {
@@ -28,11 +29,11 @@ interface TabProfessoresProps {
 
 export function TabProfessores({ turmaId }: TabProfessoresProps) {
   const { authUser } = useAuth()
-  const [selectedDisciplina, setSelectedDisciplina] = useState<any>(null)
+  const [selectedDisciplina, setSelectedDisciplina] = useState<DisciplinaDb | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [busca, setBusca] = useState('')
-  const [professorDetails, setProfessorDetails] = useState<any>(null)
-  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<any>(null)
+  const [professorDetails, setProfessorDetails] = useState<Funcionario | null>(null)
+  const [atribuicaoParaRemover, setAtribuicaoParaRemover] = useState<TurmaProfessor | null>(null)
   const [_showAllDisciplinas, _setShowAllDisciplinas] = useState(false)
 
   const { data: turma } = useTurma(turmaId)

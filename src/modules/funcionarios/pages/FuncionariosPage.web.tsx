@@ -8,6 +8,7 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import type { Funcionario } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePerfis } from '@/modules/rbac/hooks'
@@ -192,8 +193,8 @@ export function FuncionariosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [userDialogOpen, setUserDialogOpen] = useState(false)
   const [folhaDialogOpen, setFolhaDialogOpen] = useState(false)
-  const [selectedFunc, setSelectedFunc] = useState<any>(null)
-  const [editFunc, setEditFunc] = useState<any>(null)
+  const [selectedFunc, setSelectedFunc] = useState<Funcionario | null>(null)
+  const [editFunc, setEditFunc] = useState<Funcionario | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [salarioInput, setSalarioInput] = useState('')
   
@@ -204,7 +205,7 @@ export function FuncionariosPage() {
   const [anoFolha, setAnoFolha] = useState(new Date().getFullYear())
   
   const funcForm = useForm<FuncFormData>({ 
-    resolver: zodResolver(funcSchema) as any, 
+    resolver: zodResolver(funcSchema), 
     defaultValues: { 
       nome_completo: '',
       como_chamado: '',
@@ -238,7 +239,7 @@ export function FuncionariosPage() {
     }
   }, [funcData, editFunc, dialogOpen])
 
-  const userForm = useForm<UserFormData>({ resolver: zodResolver(userSchema) as any })
+  const userForm = useForm<UserFormData>({ resolver: zodResolver(userSchema) })
 
   // Ordem personalizada das categorias (grupos) solicitada pelo usuário
   const CATEGORY_ORDER = [

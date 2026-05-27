@@ -55,6 +55,7 @@ X
 import React,{ useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { Aluno } from '@/lib/database.types'
 import type { RadarAlunoComStatus } from '../AlertasContext'
 import { AlertasProvider,useAlertas } from '../AlertasContext'
 import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
@@ -158,11 +159,11 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
   const [selectedRadarAluno, setSelectedRadarAluno] = useState<RadarAlunoComStatus | null>(null)
   const [isRadarModalOpen, setIsRadarModalOpen] = useState(false)
 
-  const [alunoParaExcluir, setAlunoParaExcluir] = useState<any | null>(null)
+  const [alunoParaExcluir, setAlunoParaExcluir] = useState<Aluno | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<any | null>(null)
-  const [alunoDesconto, setAlunoDesconto] = useState<any | null>(null)
-  const [alunoParaDesativar, setAlunoParaDesativar] = useState<any | null>(null)
+  const [alunoAutorizacoes, setAlunoAutorizacoes] = useState<Aluno | null>(null)
+  const [alunoDesconto, setAlunoDesconto] = useState<Aluno | null>(null)
+  const [alunoParaDesativar, setAlunoParaDesativar] = useState<Aluno | null>(null)
   const [showDesativarDialog, setShowDesativarDialog] = useState(false)
   const [confirmacaoDesativar, setConfirmacaoDesativar] = useState(false)
 

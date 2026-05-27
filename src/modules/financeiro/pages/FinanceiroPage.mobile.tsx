@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
+import type { Cobranca } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { useAlunos } from '@/modules/alunos/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -62,7 +63,7 @@ export function FinanceiroPageMobile() {
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [selectedCobranca, setSelectedCobranca] = useState<any>(null)
+  const [selectedCobranca, setSelectedCobranca] = useState<Cobranca | null>(null)
   const [filtroTab, setFiltroTab] = useState<'todos' | 'a_vencer' | 'pago' | 'atrasado'>('todos')
   const [busca, setBusca] = useState('')
 

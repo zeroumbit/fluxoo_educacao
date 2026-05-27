@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import type { PlanoAula } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -45,7 +46,7 @@ export function PlanoAulaPage() {
 
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [viewingPlano, setViewingPlano] = useState<any | null>(null)
+  const [viewingPlano, setViewingPlano] = useState<PlanoAula | null>(null)
   const [viewOpen, setViewOpen] = useState(false)
 
   const form = useForm<FormData>({

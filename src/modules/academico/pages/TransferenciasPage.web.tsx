@@ -26,6 +26,7 @@ TabsList,
 TabsTrigger,
 } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import type { TransferenciaEscolar } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { differenceInDays,format,formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -84,7 +85,7 @@ export function TransferenciasPageWeb() {
   const [justificativaRecusa, setJustificativaRecusa] = useState('')
   const [busca, setBusca] = useState('')
   const [historicoModalOpen, setHistoricoModalOpen] = useState(false)
-  const [historicoTransferencia, setHistoricoTransferencia] = useState<any>(null)
+  const [historicoTransferencia, setHistoricoTransferencia] = useState<TransferenciaEscolar | null>(null)
 
   const transferenciasList = useMemo(() => {
     if (!transferencias) return []

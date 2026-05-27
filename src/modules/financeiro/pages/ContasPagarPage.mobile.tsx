@@ -30,6 +30,7 @@ import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { usePermissions } from '@/providers/RBACProvider'
+import type { ContaPagar } from '@/lib/database.types'
 import { useAtualizarContaPagar,useContasPagar,useCriarContaPagar,useDeletarContaPagar } from '../hooks-avancado'
 
 const schema = z.object({
@@ -56,7 +57,7 @@ export function ContasPagarPageMobile() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [selectedConta, setSelectedConta] = useState<any | null>(null)
+  const [selectedConta, setSelectedConta] = useState<ContaPagar | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'pago'>('todos')

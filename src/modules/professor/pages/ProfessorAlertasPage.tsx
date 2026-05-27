@@ -33,7 +33,7 @@ export function ProfessorAlertasPage() {
   
   const [busca, setBusca] = useState('')
   const [selectedTipo, setSelectedTipo] = useState('todos')
-  const [selectedAlerta, setSelectedAlerta] = useState<any>(null)
+  const [selectedAlerta, setSelectedAlerta] = useState<object | null>(null)
   const [observacao, setObservacao] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
 

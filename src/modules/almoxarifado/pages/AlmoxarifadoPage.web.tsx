@@ -9,6 +9,7 @@ import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
+import type { AlmoxarifadoItem } from '@/lib/database.types'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle,ArrowDownUp,Edit2,Loader2,Package,Plus,Trash2,Wallet } from 'lucide-react'
@@ -43,12 +44,12 @@ export function AlmoxarifadoPageWeb() {
   const criarMov = useCriarMovimentacao()
   const [openItem, setOpenItem] = useState(false)
   const [openMov, setOpenMov] = useState(false)
-  const [itemParaEditar, setItemParaEditar] = useState<any | null>(null)
-  const [itemParaDeletar, setItemParaDeletar] = useState<any | null>(null)
+  const [itemParaEditar, setItemParaEditar] = useState<AlmoxarifadoItem | null>(null)
+  const [itemParaDeletar, setItemParaDeletar] = useState<AlmoxarifadoItem | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const itemForm = useForm<ItemFormData>({ resolver: zodResolver(itemSchema) as any })
+  const itemForm = useForm<ItemFormData>({ resolver: zodResolver(itemSchema) })
   const movForm = useForm<MovFormData>({ 
-    resolver: zodResolver(movSchema) as any, 
+    resolver: zodResolver(movSchema), 
     defaultValues: { 
       tipo: 'entrada',
       item_id: '',

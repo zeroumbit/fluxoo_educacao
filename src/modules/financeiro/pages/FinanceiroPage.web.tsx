@@ -7,6 +7,7 @@ import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger }
 import { Input } from '@/components/ui/input'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
+import type { Cobranca } from '@/lib/database.types'
 import { useGestorGuard } from '@/hooks/useGestorGuard'
 import { cn,formatCurrency,formatDate } from '@/lib/utils'
 import { useAlunos } from '@/modules/alunos/hooks'
@@ -70,7 +71,7 @@ export function FinanceiroPageWeb() {
   const estornarCobranca = useDesfazerPagamento()
 
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [cobrancaEditando, _setCobrancaEditando] = useState<any>(null)
+  const [cobrancaEditando, _setCobrancaEditando] = useState<Cobranca | null>(null)
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'a_vencer' | 'pago' | 'atrasado'>('todos')
   const [busca, setBusca] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -83,7 +84,7 @@ export function FinanceiroPageWeb() {
   const [cobrancaEstornando, setCobrancaEstornando] = useState<string | null>(null)
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
-  const [cobrancaVisualizando, setCobrancaVisualizando] = useState<any>(null)
+  const [cobrancaVisualizando, setCobrancaVisualizando] = useState<Cobranca | null>(null)
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CobrancaFormValues>({
     resolver: zodResolver(cobrancaSchema),

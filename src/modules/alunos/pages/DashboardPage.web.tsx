@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Greeting } from '@/components/ui/Greeting'
+import type { Notificacao } from '@/lib/database.types'
 import { useEscolaNotifications, useNotificacoesActions } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
 import { useTransferenciasEscola, useTransferenciasPendentesAceite } from '@/modules/academico/hooks/hooks.v1'
@@ -467,7 +468,7 @@ function PixManualBannerNotificationComponent() {
   const { data } = useEscolaNotifications(authUser?.tenantId)
   const { marcarComoLida, marcarComoResolvida } = useNotificacoesActions()
 
-  const [selectedNotification, setSelectedNotification] = useState<any>(null)
+  const [selectedNotification, setSelectedNotification] = useState<Notificacao | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const baixarCobranca = useRegistrarPagamentoManual()

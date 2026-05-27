@@ -35,7 +35,7 @@ const LivrosSkeleton = () => (
 export function PortalLivrosPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { alunoSelecionado, tenantId, isMultiAluno } = usePortalContext()
   const [busca, setBusca] = useState('')
-  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const [selectedItem, setSelectedItem] = useState<object | null>(null)
 
   const { data: itens, isLoading } = useQuery({
     queryKey: ['portal', 'itens-escolares', tenantId, alunoSelecionado?.id],

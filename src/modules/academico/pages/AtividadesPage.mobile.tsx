@@ -20,6 +20,7 @@ import { useFieldArray,useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import type { Filial } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
@@ -76,10 +77,10 @@ export function AtividadesPageMobile() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('all')
-  const [filiais, setFiliais] = useState<any[]>([])
+  const [filiais, setFiliais] = useState<Filial[]>([])
 
   // Offline Cache
-  const [cached, setCached] = useState<any[]>([])
+  const [cached, setCached] = useState<object[]>([])
   useEffect(() => {
     get(CACHE_KEY_ATIVIDADES).then(v => { if (v) setCached(v) })
   }, [])

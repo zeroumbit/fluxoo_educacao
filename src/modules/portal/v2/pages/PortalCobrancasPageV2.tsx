@@ -37,6 +37,7 @@ X
 } from 'lucide-react'
 import { useEffect,useMemo,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
+import type { Aluno, Cobranca } from '@/lib/database.types'
 import { toast } from 'sonner'
 import { BotaoVoltarWeb } from '../../components/BotaoVoltarWeb'
 import { usePortalContext } from '../../context'
@@ -75,8 +76,8 @@ export function PortalCobrancasPageV2() {
   const navigate = useNavigate()
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
 
-  const [selectedAluno, setSelectedAluno] = useState<any>(null)
-  const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
+  const [cobrancaAtiva, setCobrancaAtiva] = useState<Cobranca | null>(null)
   const [showCheckout, setShowCheckout] = useState(false)
   const [copiado, setCopiado] = useState(false)
 

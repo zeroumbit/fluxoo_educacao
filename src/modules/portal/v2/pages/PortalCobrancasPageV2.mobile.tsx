@@ -30,6 +30,7 @@ X
 import { useEffect,useMemo,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { Aluno, Cobranca } from '@/lib/database.types'
 import { usePortalContext } from '../../context'
 import { portalFinanceiroService } from '../../financeiro.service'
 import { useVinculosAtivos } from '../../hooks'
@@ -74,8 +75,8 @@ export function PortalCobrancasPageV2Mobile() {
   const { data: vinculos, isLoading: loadingVinculos } = useVinculosAtivos()
   const { isLoading: isLoadingCtx } = usePortalContext()
 
-  const [selectedAluno, setSelectedAluno] = useState<any>(null)
-  const [cobrancaAtiva, setCobrancaAtiva] = useState<any>(null)
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
+  const [cobrancaAtiva, setCobrancaAtiva] = useState<Cobranca | null>(null)
   const [showCheckout, setShowCheckout] = useState(false)
   const [copiado, setCopiado] = useState(false)
 

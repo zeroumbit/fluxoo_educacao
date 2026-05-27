@@ -31,6 +31,7 @@ import React,{ useEffect,useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ModalDescontoAluno } from '../components/ModalDescontoAluno'
+import type { Aluno } from '@/lib/database.types'
 import { useAlunos,useAtualizarAluno,useExcluirAluno } from '../hooks'
 
 const CACHE_KEY = 'alunos_list_cache'
@@ -45,10 +46,10 @@ export function AlunosListPageMobile({ hideBottomNav = false }: { hideBottomNav?
 
   const [searchTerm, setSearchTerm] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [cachedAlunos, setCachedAlunos] = useState<any[]>([])
+  const [cachedAlunos, setCachedAlunos] = useState<Aluno[]>([])
 
   // Estados para Ações
-  const [selectedAluno, setSelectedAluno] = useState<any | null>(null)
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
   const [isActionsOpen, setIsActionsOpen] = useState(false)
   const [isDescontoOpen, setIsDescontoOpen] = useState(false)
   const [isAutorizacoesOpen, setIsAutorizacoesOpen] = useState(false)

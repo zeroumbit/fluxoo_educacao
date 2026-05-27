@@ -8,13 +8,14 @@ DialogTitle
 import { format,parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AnimatePresence,motion } from 'framer-motion';
+import type { Atividade } from '@/lib/database.types';
 import { ChevronRight,Clock,ExternalLink,FileText,Info,LayoutList,X } from 'lucide-react';
 import React,{ useState } from 'react';
 import { useAtividadesPortal } from '../../hooks';
 
 export function PortalAtividadesV2() {
   const { data: atividades, isLoading } = useAtividadesPortal();
-  const [selectedAtv, setSelectedAtv] = useState<any | null>(null);
+  const [selectedAtv, setSelectedAtv] = useState<Atividade | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {

@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { PlanoAula } from '@/lib/database.types'
 import { AnimatePresence,motion } from 'framer-motion'
 import { get,set } from 'idb-keyval'
 import {
@@ -62,11 +63,11 @@ export function PlanoAulaPageMobile() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [viewingPlano, setViewingPlano] = useState<any | null>(null)
+  const [viewingPlano, setViewingPlano] = useState<PlanoAula | null>(null)
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('all')
 
   // Offline Cache
-  const [cached, setCached] = useState<any[]>([])
+  const [cached, setCached] = useState<object[]>([])
   useEffect(() => {
     get(CACHE_KEY_PLANOS).then(v => { if (v) setCached(v) })
   }, [])

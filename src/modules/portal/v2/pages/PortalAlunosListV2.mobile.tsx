@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle,ArrowRightLeft,ChevronRight,Copy } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { Aluno } from '@/lib/database.types';
 import { usePortalContext } from '../../context';
 import { ModalCopyConfirm } from '../components/ModalCopyConfirm';
 import { ModalSolicitarTransferenciaPortal } from '../components/ModalSolicitarTransferenciaPortal';
@@ -16,7 +17,7 @@ const getInitials = (name: string) => {
 export function PortalAlunosListV2Mobile() {
   const navigate = useNavigate();
   const { vinculos, selecionarAluno, isLoading } = usePortalContext();
-  const [transferAluno, setTransferaluno] = useState<any>(null);
+  const [transferAluno, setTransferaluno] = useState<Aluno | null>(null);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [copyId, setCopyId] = useState('');
 

@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog,DialogContent,DialogHeader,DialogTitle } from '@/components/ui/dialog'
 import { useEscolaNotifications,useNotificacoesActions } from '@/hooks/useNotifications'
+import type { Notificacao } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { CheckCircle2,ChevronLeft,ChevronRight,CreditCard,ExternalLink,MessageCircle,X } from 'lucide-react'
@@ -13,8 +14,8 @@ import { useNavigate } from 'react-router-dom'
  * Resolve o problema onde a criação da notificação no portal falha silenciosamente
  * e o metadata fica sem responsavel_nome, aluno_nome, valor_total etc.
  */
-function useEnrichedPixNotifications(rawNotifications: any[]) {
-  const [enriched, setEnriched] = useState<any[]>([])
+function useEnrichedPixNotifications(rawNotifications: Notificacao[]) {
+  const [enriched, setEnriched] = useState<Notificacao[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -151,7 +152,7 @@ export function PixManualBannerNotification() {
   const { data } = useEscolaNotifications(authUser?.tenantId)
   const { marcarComoLida, marcarComoResolvida } = useNotificacoesActions()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedNotification, setSelectedNotification] = useState<any>(null)
+  const [selectedNotification, setSelectedNotification] = useState<Notificacao | null>(null)
 
   const rawPixNotifications = useMemo(() => {
     if (!data?.notificacoes) return []
@@ -165,11 +166,11 @@ export function PixManualBannerNotification() {
   const cardsPerView = 4
   const showArrows = pixNotifications.length > cardsPerView
 
-  const handleValidate = (n: any) => {
+  const handleValidate = (n: Notificacao) => {
     navigate('/financeiro')
   }
 
-  const handleWhatsApp = (n: any) => {
+  const handleWhatsApp = (n: Notificacao) => {
     const phone = n.metadata?.responsavel_telefone || n.metadata?.telefone
     if (phone) {
       window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank')

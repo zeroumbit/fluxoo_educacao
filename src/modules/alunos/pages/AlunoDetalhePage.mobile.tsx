@@ -27,6 +27,7 @@ Users
 import { useEffect,useState } from 'react'
 import { useNavigate,useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { Aluno, Responsavel } from '@/lib/database.types'
 import { useAlternarFinanceiro,useAluno,useAtivarAcessoPortal,useAtualizarAluno,useAtualizarResponsavel,useDesvincularResponsavel } from '../hooks'
 
 export function AlunoDetalhePageMobile() {
@@ -41,15 +42,15 @@ export function AlunoDetalhePageMobile() {
 
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
   const [isActivationSheetOpen, setIsActivationSheetOpen] = useState(false)
-  const [activatingResp, setActivatingResp] = useState<any>(null)
+  const [activatingResp, setActivatingResp] = useState<{ id: string } | null>(null)
   const [newPassword, setNewPassword] = useState('')
-  const [formData, setFormData] = useState<any>(null)
+  const [formData, setFormData] = useState<Partial<Aluno> | null>(null)
   
   // Estados para ações no responsável
-  const [editingResp, setEditingResp] = useState<any | null>(null)
+  const [editingResp, setEditingResp] = useState<Responsavel | null>(null)
   const [deletingVinculo, setDeletingVinculo] = useState<{ id: string, nome: string } | null>(null)
   const [showParentescoSheet, setShowParentescoSheet] = useState(false)
-  const [selectedVinculo, setSelectedVinculo] = useState<any>(null)
+  const [selectedVinculo, setSelectedVinculo] = useState<{ id: string; is_financeiro?: boolean; responsaveis?: { id: string; nome: string; cpf: string; email: string; telefone: string } } | null>(null)
 
   useEffect(() => {
     if (aluno) {

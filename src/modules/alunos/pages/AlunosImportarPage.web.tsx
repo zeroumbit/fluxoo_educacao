@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 export function AlunosImportarPage() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<Record<string, string>[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [loteId] = useState(crypto.randomUUID())
 

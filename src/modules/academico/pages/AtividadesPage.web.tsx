@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import type { Filial } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/modules/auth/AuthContext'
@@ -49,7 +50,7 @@ export function AtividadesPage() {
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [excluirDialogOpen, setExcluirDialogOpen] = useState(false)
   const [atividadeParaExcluir, setAtividadeParaExcluir] = useState<string | null>(null)
-  const [filiais, setFiliais] = useState<any[]>([])
+  const [filiais, setFiliais] = useState<Filial[]>([])
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),

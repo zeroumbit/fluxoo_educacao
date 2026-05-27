@@ -25,8 +25,8 @@ export function FaturasPage() {
   const [search, setSearch] = useState('')
   const [isEarlyConfirmOpen, setIsEarlyConfirmOpen] = useState(false)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [faturaEarlyConfirm, setFaturaEarlyConfirm] = useState<any | null>(null)
-  const [selectedFatura, setSelectedFatura] = useState<any | null>(null)
+  const [faturaEarlyConfirm, setFaturaEarlyConfirm] = useState<Fatura | null>(null)
+  const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null)
   
   const [isNovaFaturaOpen, setIsNovaFaturaOpen] = useState(false)
   const [novaFatura, setNovaFatura] = useState({

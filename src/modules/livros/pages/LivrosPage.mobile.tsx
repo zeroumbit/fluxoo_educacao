@@ -108,8 +108,8 @@ export function LivrosPageMobile() {
   const isLoading = isLoadingLivros || isLoadingMateriais
 
   // Cache
-  const [cachedLivros, setCachedLivros] = useState<any[]>([])
-  const [cachedMateriais, setCachedMateriais] = useState<any[]>([])
+  const [cachedLivros, setCachedLivros] = useState<object[]>([])
+  const [cachedMateriais, setCachedMateriais] = useState<object[]>([])
   
   useEffect(() => {
     get(CACHE_KEY_LIVROS + '_livros').then(v => { if (v) setCachedLivros(v) })
@@ -122,7 +122,7 @@ export function LivrosPageMobile() {
   }, [livros, materiais])
 
   const livroForm = useForm<LivroFormValues>({
-    resolver: zodResolver(livroSchema) as any,
+    resolver: zodResolver(livroSchema),
     defaultValues: {
       ano_letivo: new Date().getFullYear(),
       turmasIds: [],
@@ -131,7 +131,7 @@ export function LivrosPageMobile() {
   })
 
   const materialForm = useForm<MaterialFormValues>({
-    resolver: zodResolver(materialSchema) as any,
+    resolver: zodResolver(materialSchema),
     defaultValues: {
       turmasIds: [],
       quantidade_sugerida: 1,

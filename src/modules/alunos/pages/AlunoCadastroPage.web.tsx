@@ -12,12 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import type { Aluno } from '@/lib/database.types'
 import { useViaCEP } from '@/hooks/use-viacep'
-import { logger } from '@/lib/logger'
-import { checkRateLimit,safeStorage } from '@/lib/security'
-import { supabase } from '@/lib/supabase'
-import { cn } from '@/lib/utils'
-import { formatDateISO,getProximoDiaUtil,mascaraCEP,mascaraCPF,mascaraTelefone,validarCPF,validarEmail } from '@/lib/validacoes'
+import { useFiliais } from '@/modules/filiais/hooks'
 import { useLimiteAlunos } from '@/modules/assinatura/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useFiliais } from '@/modules/filiais/hooks'
@@ -111,12 +108,12 @@ export function AlunoCadastroPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState(false)
   const [buscandoCpf, setBuscandoCpf] = useState(false)
-  const [irmaosExistentes, setIrmaosExistentes] = useState<any[]>([])
+  const [irmaosExistentes, setIrmaosExistentes] = useState<Aluno[]>([])
   const [showPostCadastroModal, setShowPostCadastroModal] = useState(false)
-  const [lastCreatedAluno, setLastCreatedAluno] = useState<any>(null)
+  const [lastCreatedAluno, setLastCreatedAluno] = useState<Aluno | null>(null)
   
   const [showDraftModal, setShowDraftModal] = useState(false)
-  const [draftStateData, setDraftStateData] = useState<any>(null)
+  const [draftStateData, setDraftStateData] = useState<AlunoFormValues | null>(null)
 
   // Estados para Gestão de Foto e Tags de Saúde no Cadastro
   const [uploadingFoto, setUploadingFoto] = useState(false)

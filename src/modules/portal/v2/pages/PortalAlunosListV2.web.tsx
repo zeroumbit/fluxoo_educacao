@@ -1,3 +1,4 @@
+import type { Aluno } from '@/lib/database.types';
 import { AlertCircle,ArrowRightLeft,ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +13,7 @@ const getInitials = (name: string) => {
 export function PortalAlunosListV2Web() {
   const navigate = useNavigate();
   const { vinculos, selecionarAluno } = usePortalContext();
-  const [transferAluno, setTransferaluno] = React.useState<any>(null);
+  const [transferAluno, setTransferaluno] = React.useState<Aluno | null>(null);
 
   return (
     <div className="flex flex-col gap-8 w-full">

@@ -65,7 +65,7 @@ export function PortalPerfilPage() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [showContratoModal, setShowContratoModal] = useState(false)
-  const [escolaInfo, setEscolaInfo] = useState<any>(null)
+  const [escolaInfo, setEscolaInfo] = useState<Escola | null>(null)
 
   // Carregar informações da escola para o contrato
   useEffect(() => {

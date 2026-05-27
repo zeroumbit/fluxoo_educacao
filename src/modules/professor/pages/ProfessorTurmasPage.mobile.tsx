@@ -28,7 +28,7 @@ export function ProfessorTurmasPageMobile() {
   const navigate = useNavigate()
   const { authUser } = useAuth()
   const [search, setSearch] = useState('')
-  const [cached, setCached] = useState<any[]>([])
+  const [cached, setCached] = useState<object[]>([])
 
   const { data: saudeTurmas, isLoading: isLoadingSaude, refetch } = useSaudeTurmas()
   const { data: turmas, isLoading: isLoadingTurmas } = useTurmas()
