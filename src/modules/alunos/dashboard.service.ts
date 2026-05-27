@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { ContaPagar,Cobranca,Escola,Funcionario,MuralAviso } from '@/lib/database.types'
 
 export interface RadarAluno {
   aluno_id: string
@@ -56,6 +57,42 @@ export interface DashboardData {
   alunosPendentesEnturmacao: number
 }
 
+type TurmaProfessorVinculo = { turma_id: string }
+type RadarRow = RadarAluno
+type AvisoRow = MuralAviso & { turmas: { nome: string } | null }
+type CobrancaDashboard = Pick<Cobranca, 'valor' | 'descricao' | 'data_vencimento' | 'status' | 'subtipo_cobranca'>
+type ContaPagarDashboard = Pick<ContaPagar, 'valor' | 'categoria' | 'data_vencimento'>
+type SalarioDashboard = Pick<Funcionario, 'salario_bruto'>
+type AlmoxarifadoDashboard = { quantidade: number | null; custo_unitario: number | null }
+type EscolaDashboard = Pick<Escola, 'limite_alunos_contratado' | 'status_assinatura' | 'metodo_pagamento' | 'created_at' | 'plano_id'>
+type CountResult = { count: number | null; data?: unknown; error?: unknown }
+type DataResult<T> = { data: T[] | null; error?: unknown; count?: number | null }
+type MaybeSingleResult<T> = { data: T | null; error?: unknown }
+
+type LegacyQuery<T> = {
+  select(columns?: string, options?: { count?: 'exact'; head?: boolean }): LegacyQuery<T>
+  eq(column: string, value: unknown): LegacyQuery<T>
+  neq(column: string, value: unknown): LegacyQuery<T>
+  in(column: string, values: unknown[]): LegacyQuery<T>
+  is(column: string, value: unknown): LegacyQuery<T>
+  not(column: string, operator: string, value: unknown): LegacyQuery<T>
+  or(filters: string): LegacyQuery<T>
+  gt(column: string, value: unknown): LegacyQuery<T>
+  limit(count: number): LegacyQuery<T>
+  order(column: string, options?: { ascending?: boolean }): LegacyQuery<T>
+  then<TResult1 = DataResult<T>, TResult2 = never>(
+    onfulfilled?: ((value: DataResult<T>) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): PromiseLike<TResult1 | TResult2>
+}
+
+type LegacyDashboardClient = {
+  from(table: 'turma_professores'): LegacyQuery<TurmaProfessorVinculo>
+  from(table: 'vw_radar_evasao'): LegacyQuery<RadarRow>
+}
+
+const legacyDashboardClient = supabase as unknown as LegacyDashboardClient
+
 export const dashboardService = {
   async buscarDados(tenantId: string, professorId?: string): Promise<DashboardData> {
     if (!tenantId) throw new Error('Tenant ID não fornecido.')
@@ -65,17 +102,17 @@ export const dashboardService = {
     let idsAlunosProfessor: string[] = []
 
     if (professorId) {
-      const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+      const { data: vincProp } = await legacyDashboardClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
-      idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+      idsTurmasProfessor = vincProp?.map((t) => t.turma_id) || []
 
       if (idsTurmasProfessor.length > 0) {
-        const { data: mats } = await (supabase.from('matriculas' as any) as any)
+        const { data: mats } = await supabase.from('matriculas')
           .select('aluno_id')
           .in('turma_id', idsTurmasProfessor)
           .eq('status', 'ativa')
-        idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+        idsAlunosProfessor = Array.from(new Set(mats?.map((m) => m.aluno_id) || []))
       }
     }
 
@@ -104,7 +141,7 @@ export const dashboardService = {
       })(),
       supabase.from('escolas').select('limite_alunos_contratado, status_assinatura, metodo_pagamento, created_at, plano_id').eq('id', tenantId).maybeSingle(),
       // Busca TODAS as cobranças pendentes/atrasadas com descrição e data de vencimento
-      (professorId ? Promise.resolve({ data: [] }) : supabase.from('cobrancas').select('valor, descricao, data_vencimento, status').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado'])) as any,
+      professorId ? Promise.resolve({ data: [] as CobrancaDashboard[] }) : supabase.from('cobrancas').select('valor, descricao, data_vencimento, status, subtipo_cobranca').eq('tenant_id', tenantId).in('status', ['a_vencer', 'atrasado']),
       (async () => {
          // Data atual para filtro de vigência (YYYY-MM-DD)
          const hoje = new Date()
@@ -115,21 +152,21 @@ export const dashboardService = {
          // Apenas avisos ATIVOS: dentro do período de vigência (data_inicio <= hoje <= data_fim)
          // Se professor não tem turmas, retorna apenas avisos globais
          if (professorId && idsTurmasProfessor.length === 0) {
-            const { data, error } = await supabase.from('mural_avisos' as any)
+            const { data, error } = await supabase.from('mural_avisos')
               .select('*, turmas(nome)')
               .eq('tenant_id', tenantId)
               .is('turma_id', null)
               // Vigência: data_inicio <= hoje (ou null) E (data_fim >= hoje OU data_fim é null)
               .or(`data_inicio.is.null,data_inicio.lte.${hojeStr}`)
               .or(`data_fim.is.null,data_fim.gte.${hojeStr}`)
-              .order('created_at' as any, { ascending: false } as any)
+              .order('created_at', { ascending: false })
               .limit(6)
-            return { data: data as any[], error }
+            return { data: data as AvisoRow[] | null, error }
          }
 
          // Faz duas queries separadas e combina os resultados (global + turmas do professor)
          const [globais, dasTurmas] = await Promise.all([
-           supabase.from('mural_avisos' as any)
+           supabase.from('mural_avisos')
              .select('*, turmas(nome)')
              .eq('tenant_id', tenantId)
              .is('turma_id', null)
@@ -138,7 +175,7 @@ export const dashboardService = {
              .or(`data_fim.is.null,data_fim.gte.${hojeStr}`)
              .limit(6),
            idsTurmasProfessor.length > 0
-             ? supabase.from('mural_avisos' as any)
+             ? supabase.from('mural_avisos')
                  .select('*, turmas(nome)')
                  .eq('tenant_id', tenantId)
                  .in('turma_id', idsTurmasProfessor)
@@ -150,10 +187,10 @@ export const dashboardService = {
          ])
 
          // Combina e ordena os resultados
-         const combined = [...(globais.data as any[] || []), ...(dasTurmas.data as any[] || [])]
-         combined.sort((a, b) => new Date((b as any).created_at).getTime() - new Date((a as any).created_at).getTime())
+         const combined = [...(globais.data as AvisoRow[] || []), ...(dasTurmas.data as AvisoRow[] || [])]
+         combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-         return { data: combined.slice(0, 6) as any[], error: (globais as any).error || (dasTurmas as any).error }
+         return { data: combined.slice(0, 6), error: globais.error || dasTurmas.error }
       })(),
       supabase.from('escolas').select('logradouro, cnpj').eq('id', tenantId).maybeSingle(),
       supabase.from('filiais').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
@@ -168,12 +205,12 @@ export const dashboardService = {
         try {
           // Se professor não tem alunos vinculados, retorna array vazio sem fazer query (evita erro 400)
           if (professorId && idsAlunosProfessor.length === 0) return { data: [] }
-          let q = (supabase.from('vw_radar_evasao' as any) as any).select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false })
+          let q = legacyDashboardClient.from('vw_radar_evasao').select('*').eq('tenant_id', tenantId).limit(10).order('cobrancas_atrasadas', { ascending: false })
           if (professorId) q = q.in('aluno_id', idsAlunosProfessor)
           return await q
         } catch { return { data: [] } }
       })(),
-      (professorId ? Promise.resolve({ data: [] }) : (supabase.from('contas_pagar' as any) as any).select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago')) as any,
+      professorId ? Promise.resolve({ data: [] as ContaPagarDashboard[] }) : supabase.from('contas_pagar').select('valor, categoria, data_vencimento').eq('tenant_id', tenantId).neq('status', 'pago'),
       (professorId ? Promise.resolve({ data: [] }) : supabase.from('funcionarios').select('salario_bruto').eq('tenant_id', tenantId).eq('status', 'ativo').gt('salario_bruto', 0)),
       (() => {
         // Se professor não tem alunos vinculados, retorna count 0 sem fazer query (evita erro 400)
@@ -183,7 +220,7 @@ export const dashboardService = {
         return supabase.from('matriculas').select('aluno_id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'ativa')
       })(),
       // Total de valor em estoque no almoxarifado (quantidade × custo_unitario)
-      (professorId ? Promise.resolve({ data: [] }) : supabase.from('almoxarifado_itens').select('quantidade, custo_unitario').eq('tenant_id', tenantId)) as any,
+      professorId ? Promise.resolve({ data: [] as AlmoxarifadoDashboard[] }) : supabase.from('almoxarifado_itens').select('quantidade, custo_unitario').eq('tenant_id', tenantId),
       supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('necessita_enturmacao', true),
       // Busca informações do plano atual da escola
       (async () => {
@@ -200,18 +237,17 @@ export const dashboardService = {
       throw new Error('Perfil da escola não encontrado.')
     }
 
-    const escola = (escolaRes as any).data
-    const planoInfo = (pendentesEnturmacaoRes as any).data // Oops, I added a new index in Promise.all
+    const escola = escolaRes.data as EscolaDashboard
 
     // ---- FINANCEIRO ----
-    const cobrancasList = (cobrancasRes.data as any[]) || []
+    const cobrancasList = (cobrancasRes.data || []) as CobrancaDashboard[]
     const hoje = new Date()
     const mesAtual = hoje.getMonth()
     const anoAtual = hoje.getFullYear()
 
     // Mensalidades do mês corrente: filtra por data_vencimento no mês atual,
     // exclui taxas de matrícula e materiais
-    const isMensalidade = (c: any) => {
+    const isMensalidade = (c: CobrancaDashboard) => {
       return c.subtipo_cobranca === 'mensalidade'
     }
 
@@ -240,7 +276,7 @@ export const dashboardService = {
     const totalReceber = cobrancasList?.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
 
     // Contas a pagar + folha
-    const contasPagarList = (contasPagarRes.data as any[]) || []
+    const contasPagarList = (contasPagarRes.data || []) as ContaPagarDashboard[]
     const totalContasPagar = contasPagarList.reduce((acc, c) => acc + (Number(c.valor) || 0), 0) || 0
 
     const prefixoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
@@ -249,7 +285,7 @@ export const dashboardService = {
       (c.data_vencimento as string)?.startsWith(prefixoMes)
     )
 
-    const somaSalarios = (salariosRes.data as any[])?.reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0) || 0
+    const somaSalarios = ((salariosRes.data || []) as SalarioDashboard[]).reduce((acc, f) => acc + (Number(f.salario_bruto) || 0), 0)
     const totalSalarios = professorId ? 0 : somaSalarios
 
     let totalPagar = professorId ? 0 : totalContasPagar
@@ -258,14 +294,14 @@ export const dashboardService = {
     }
 
     // Almoxarifado: soma de (quantidade × custo_unitario) de todos os itens
-    const almoxarifadoList = (almoxarifadoRes.data as any[]) || []
+    const almoxarifadoList = (almoxarifadoRes.data || []) as AlmoxarifadoDashboard[]
     const totalEstoque = almoxarifadoList.reduce((acc, item) => {
       const qtd = Number(item.quantidade) || 0
       const custo = Number(item.custo_unitario) || 0
       return acc + (qtd * custo)
     }, 0)
 
-    const radarData: RadarAluno[] = ((radarRes as any)?.data || []).sort(
+    const radarData: RadarAluno[] = ((radarRes.data || []) as RadarAluno[]).sort(
       (a: RadarAluno, b: RadarAluno) =>
         (b.cobrancas_atrasadas + b.faltas_consecutivas) -
         (a.cobrancas_atrasadas + a.faltas_consecutivas)
@@ -274,7 +310,7 @@ export const dashboardService = {
 // Buscar configurações de onboarding usando count para evitar falsos negativos com RLS
     // NOTA: config_financeira é um campo JSONB em 'configuracoes_escola', não uma tabela própria
     const [configFinanceiraRes, funcionariosRes, autorizacoesRes] = await Promise.all([
-      (supabase as any)
+      supabase
         .from('configuracoes_escola')
         .select('*', { count: 'exact', head: true })
         .eq('tenant_id', tenantId)
@@ -303,7 +339,7 @@ export const dashboardService = {
       totalEstoque,
       avisosRecentes: (avisosRes.data || []) as unknown as AvisoRecente[],
       onboarding: {
-        perfilCompleto: professorId ? true : !!(escolaInfoRes.data as any)?.logradouro,
+        perfilCompleto: professorId ? true : !!escolaInfoRes.data?.logradouro,
         possuiFilial: professorId ? true : (filiaisRes.count || 0) > 0,
         possuiTurma: professorId ? true : (turmasRes.count || 0) > 0,
         possuiAluno: professorId ? true : (alunosRes.count || 0) > 0,
@@ -344,24 +380,24 @@ possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
     let idsAlunosProfessor: string[] = []
 
     if (professorId) {
-      const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+      const { data: vincProp } = await legacyDashboardClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
-      const idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+      const idsTurmasProfessor = vincProp?.map((t) => t.turma_id) || []
 
       if (idsTurmasProfessor.length > 0) {
-        const { data: mats } = await (supabase.from('matriculas' as any) as any)
+        const { data: mats } = await supabase.from('matriculas')
           .select('aluno_id')
           .in('turma_id', idsTurmasProfessor)
           .eq('status', 'ativa')
-        idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+        idsAlunosProfessor = Array.from(new Set(mats?.map((m) => m.aluno_id) || []))
       }
 
       // Se professor não tem alunos vinculados, retorna array vazio
       if (idsAlunosProfessor.length === 0) return []
     }
 
-    let q = (supabase.from('vw_radar_evasao' as any) as any)
+    let q = legacyDashboardClient.from('vw_radar_evasao')
       .select('*')
       .eq('tenant_id', tenantId)
 
@@ -382,24 +418,24 @@ possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
     if (!tenantId || !professorId) return []
 
     // Busca turmas do professor
-    const { data: vincProp } = await (supabase.from('turma_professores' as any) as any)
+    const { data: vincProp } = await legacyDashboardClient.from('turma_professores')
       .select('turma_id')
       .eq('professor_id', professorId)
-    const idsTurmasProfessor = vincProp?.map((t: any) => t.turma_id) || []
+    const idsTurmasProfessor = vincProp?.map((t) => t.turma_id) || []
 
     if (idsTurmasProfessor.length === 0) return []
 
     // Busca alunos dessas turmas
-    const { data: mats } = await (supabase.from('matriculas' as any) as any)
+    const { data: mats } = await supabase.from('matriculas')
       .select('aluno_id')
       .in('turma_id', idsTurmasProfessor)
       .eq('status', 'ativa')
-    const idsAlunosProfessor = Array.from(new Set(mats?.map((m: any) => m.aluno_id) || []))
+    const idsAlunosProfessor = Array.from(new Set(mats?.map((m) => m.aluno_id) || []))
 
     if (idsAlunosProfessor.length === 0) return []
 
     // Busca apenas alunos com faltas (ignora cobranças para professores)
-    const { data } = await (supabase.from('vw_radar_evasao' as any) as any)
+    const { data } = await legacyDashboardClient.from('vw_radar_evasao')
       .select('aluno_id, nome_completo, faltas_consecutivas, motivo_principal')
       .eq('tenant_id', tenantId)
       .in('aluno_id', idsAlunosProfessor)
@@ -407,9 +443,12 @@ possuiFuncionario: professorId ? true : (funcionariosRes.count ?? 0) > 0,
       .order('faltas_consecutivas', { ascending: false })
 
     // Retorna com cobrancas_atrasadas = 0 (não expor dados financeiros)
-    return (data || []).map((aluno: any) => ({
+    return (data || []).map((aluno) => ({
       ...aluno,
       cobrancas_atrasadas: 0,
     }))
   },
 }
+
+
+

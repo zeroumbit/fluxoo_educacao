@@ -217,7 +217,7 @@ export function TurmasPageMobile() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-40">
 
       {/* ── STICKY HEADER (Rule 2) ─────────────────── */}
       <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800">
@@ -247,9 +247,9 @@ export function TurmasPageMobile() {
       </div>
 
       {/* ── LIST ──────────────────────────────────── */}
-      <div className="mx-auto w-full max-w-[640px] px-4 pt-5">
+      <div className="mx-auto w-full max-w-[640px] px-4 pt-5 pb-8">
         <PullToRefresh onRefresh={async () => { await refetch() }}>
-          <div className="space-y-3">
+          <div className="space-y-5">
             <AnimatePresence mode="popLayout">
               {filteredTurmas.map((turma, idx) => (
                 <motion.div key={turma.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }} layout>

@@ -9,6 +9,21 @@ import { portalService } from './service'
 // import alertaSom from '@/assets/alerta.mp3'
 const alertaSom = '/alerta_v3.mp3'
 
+type DashboardFamiliaConsolidado = {
+  frequencia: {
+    percentual: number
+    count: number
+    media?: number
+  }
+  financeiro: {
+    totalPendente: number
+    totalAtrasadas: number
+    proximoVencimento: { data_vencimento: string } | null
+    piorPendencia: { data_vencimento: string } | null
+  }
+  avisosRecentes: { created_at: string }[]
+}
+
 // ==========================================
 // RESPONSÁVEL
 // ==========================================
@@ -82,7 +97,7 @@ export function useDashboardFamilia() {
   const dataConsolidada = useMemo(() => {
     if (isLoading || !queries.length) return null
 
-    return queries.reduce((acc: any, q) => {
+    return queries.reduce<DashboardFamiliaConsolidado>((acc, q) => {
       const d = q.data
       if (!d) return acc
 
@@ -243,7 +258,7 @@ export function useTrocarSenha() {
 export function useUpdatePerfil() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ responsavelId, dados }: { responsavelId: string; dados: any }) =>
+    mutationFn: ({ responsavelId, dados }: { responsavelId: string; dados: Parameters<typeof portalService.atualizarPerfil>[1] }) =>
       portalService.atualizarPerfil(responsavelId, dados),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portal', 'responsavel'] })
@@ -376,7 +391,7 @@ export function useAlunoCompleto() {
 export function useUpdateAlunoPortal() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ alunoId, responsavelId, dados }: { alunoId: string; responsavelId: string; dados: any }) =>
+    mutationFn: ({ alunoId, responsavelId, dados }: { alunoId: string; responsavelId: string; dados: Parameters<typeof portalService.atualizarAluno>[2] }) =>
       portalService.atualizarAluno(alunoId, responsavelId, dados),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portal', 'aluno-completo', variables.alunoId] })

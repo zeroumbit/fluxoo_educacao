@@ -1,7 +1,13 @@
-import type { TurmaInsert,TurmaUpdate } from '@/lib/database.types'
+import type { DisciplinaDb, DisciplinaDbInsert, DisciplinaDbUpdate, Funcionario, TurmaInsert, TurmaUpdate } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import type { Disciplina,Professor } from './types'
+
+type TurmaProfessorVinculo = {
+  turma_id: string
+}
+
+type FuncionarioProfessorResumo = Pick<Funcionario, 'id' | 'nome_completo' | 'funcoes' | 'funcao' | 'status'>
 
 export const turmaService = {
   async listar(tenantId: string, professorId?: string) {
@@ -19,7 +25,7 @@ export const turmaService = {
         .select('turma_id')
         .eq('professor_id', professorId)
       
-      const idsT = turmasVinc?.map((t: any) => t.turma_id) || []
+      const idsT = (turmasVinc as TurmaProfessorVinculo[] | null)?.map((t) => t.turma_id) || []
       
       if (idsT.length === 0) return []
       query = query.in('id', idsT)
@@ -40,7 +46,7 @@ export const turmaService = {
       .single()
 
     if (error) throw error
-    return data as any
+    return data
   },
 
   async criar(turma: TurmaInsert) {
@@ -90,7 +96,7 @@ export const turmaService = {
   /**
    * Auxiliar para formatar o objeto Disciplina a partir do retorno do banco.
    */
-  formatarDisciplina(d: any, idsOcultos: string[] = []): Disciplina {
+  formatarDisciplina(d: DisciplinaDb, idsOcultos: string[] = []): Disciplina {
     const DISCIPLINE_COLORS: Record<string, string> = {
       'Matemática': '#4f46e5', 'Português': '#ec4899', 'Ciências': '#10b981',
       'História': '#f59e0b', 'Geografia': '#06b6d4', 'Física': '#8b5cf6',
@@ -147,7 +153,7 @@ export const turmaService = {
       console.error('[listarDisciplinas] Erro ao buscar ocultas:', errOcultas)
     }
 
-    const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
+    const idsOcultos = (ocultas || []).map((o) => o.disciplina_id)
     logger.debug('[listarDisciplinas] IDs ocultos', { total: idsOcultos.length, idsOcultos })
 
     const query = supabase
@@ -164,7 +170,7 @@ export const turmaService = {
 
     const total = (data || []).length
     const filtered = (data || [])
-      .filter((d: any) => {
+      .filter((d) => {
         if (d.tenant_id === null && idsOcultos.includes(d.id)) return false;
         if (etapa && etapa !== 'TODAS') {
            return d.etapa === etapa || d.etapa === 'TODAS';
@@ -174,7 +180,7 @@ export const turmaService = {
     
     logger.debug('[listarDisciplinas] Resultado do filtro', { total, filtradas: filtered.length, removidas: total - filtered.length })
     
-    return filtered.map((d: any) => this.formatarDisciplina(d, idsOcultos))
+    return filtered.map((d) => this.formatarDisciplina(d, idsOcultos))
   },
 
   /**
@@ -186,10 +192,10 @@ export const turmaService = {
       .select('disciplina_id')
       .eq('tenant_id', tenantId)
 
-    const idsOcultos = (ocultas || []).map((o: any) => o.disciplina_id)
+    const idsOcultos = (ocultas || []).map((o) => o.disciplina_id)
 
     const { data, error } = await supabase
-      .from('disciplinas' as any)
+      .from('disciplinas')
       .select('*')
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
       .order('is_default', { ascending: false }) // Prioriza BNCC
@@ -197,12 +203,12 @@ export const turmaService = {
 
     if (error) throw error
 
-    return (data || []).map((d: any) => this.formatarDisciplina(d, idsOcultos))
+    return (data || []).map((d) => this.formatarDisciplina(d, idsOcultos))
   },
 
   async criarDisciplinaCustomizada(nome: string, tenantId: string, etapa: string = 'TODAS', categoria: string = 'Outros') {
      const { data, error } = await supabase
-       .from('disciplinas' as any)
+       .from('disciplinas')
         .insert({
           nome,
           tenant_id: tenantId,
@@ -210,7 +216,7 @@ export const turmaService = {
           categoria,
           is_default: false,
           ativa: true
-        })
+        } satisfies DisciplinaDbInsert)
        .select()
        .single()
      
@@ -250,8 +256,8 @@ export const turmaService = {
      } else {
        // Disciplina local da escola: atualiza diretamente
        const { error } = await supabase
-         .from('disciplinas' as any)
-         .update({ ativa: !ocultar })
+         .from('disciplinas')
+         .update({ ativa: !ocultar } satisfies DisciplinaDbUpdate)
          .eq('id', disciplinaId)
          .eq('tenant_id', tenantId)
        if (error) {
@@ -275,7 +281,7 @@ export const turmaService = {
     if (error) throw error
 
     return (data || [])
-      .filter((f: any) => {
+      .filter((f: FuncionarioProfessorResumo) => {
         const funcs: string[] = Array.isArray(f.funcoes) && f.funcoes.length > 0
           ? f.funcoes
           : f.funcao ? [f.funcao] : []
@@ -283,10 +289,10 @@ export const turmaService = {
           fn.toLowerCase().includes('professor')
         )
       })
-      .map((f: any) => ({
+      .map((f: FuncionarioProfessorResumo) => ({
         id: f.id,
         nome: f.nome_completo,
-        especialidades: (Array.isArray(f.funcoes) ? f.funcoes : [f.funcao]).filter((fn: any) =>
+        especialidades: (Array.isArray(f.funcoes) ? f.funcoes : [f.funcao]).filter((fn): fn is string =>
           String(fn || '').toLowerCase().includes('professor')
         ),
         carga_horaria_maxima: 40,

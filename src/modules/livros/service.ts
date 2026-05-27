@@ -1,11 +1,61 @@
+import type { DisciplinaDb, DisciplinaDbInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
-import type { Livro,MaterialEscolar } from './types'
+import type { Livro, MaterialEscolar } from './types'
+
+type LivroInsert = Omit<Livro, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>
+type MaterialEscolarInsert = Omit<MaterialEscolar, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>
+
+type LivroRow = LivroInsert & {
+  id: string
+  created_at?: string
+  updated_at?: string
+}
+
+type MaterialEscolarRow = MaterialEscolarInsert & {
+  id: string
+  created_at?: string
+  updated_at?: string
+}
+
+type TurmaVinculo = { turma_id: string; tenant_id?: string | null }
+type LivroComRelacionamentos = LivroRow & {
+  disciplina: { nome: string } | null
+  livros_turmas: TurmaVinculo[] | null
+}
+type MaterialComRelacionamentos = MaterialEscolarRow & {
+  disciplina: { nome: string } | null
+  materiais_turmas: TurmaVinculo[] | null
+}
+type LivroTurmaInsert = { livro_id: string; turma_id: string; tenant_id: string }
+type MaterialTurmaInsert = { material_id: string; turma_id: string; tenant_id: string }
+
+type QueryResult<T> = { data: T | null; error: unknown }
+type QueryBuilder<T> = PromiseLike<QueryResult<T[]>> & {
+  select(columns?: string): QueryBuilder<T>
+  eq(column: string, value: unknown): QueryBuilder<T>
+  order(column: string, options?: { ascending?: boolean }): QueryBuilder<T>
+  insert(values: Partial<T> | Partial<T>[]): QueryBuilder<T>
+  update(values: Partial<T>): QueryBuilder<T>
+  delete(): QueryBuilder<T>
+  single(): Promise<QueryResult<T>>
+}
+
+type LivrosLegacyClient = {
+  from(table: 'livros'): QueryBuilder<LivroComRelacionamentos>
+  from(table: 'livros_turmas'): QueryBuilder<LivroTurmaInsert>
+  from(table: 'materiais_escolares'): QueryBuilder<MaterialComRelacionamentos>
+  from(table: 'materiais_turmas'): QueryBuilder<MaterialTurmaInsert>
+}
+
+const livrosLegacyClient = supabase as unknown as LivrosLegacyClient
+
+const mapTurmas = (vinculos: TurmaVinculo[] | null | undefined) =>
+  (vinculos || []).map((vinculo) => ({ id: vinculo.turma_id, nome: '' }))
 
 export const livrosService = {
-  // LER DISCIPLINAS
-  async listarDisciplinas(tenantId: string) {
+  async listarDisciplinas(tenantId: string): Promise<DisciplinaDb[]> {
     const { data, error } = await supabase
-      .from('disciplinas' as any)
+      .from('disciplinas')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('nome')
@@ -14,11 +64,11 @@ export const livrosService = {
     return data || []
   },
 
-  // CRIAR DISCIPLINA
   async criarDisciplina(tenantId: string, nome: string) {
-    const { data, error } = await supabase
-      .from('disciplinas' as any)
-      .insert({ tenant_id: tenantId, nome })
+    const insertPayload: DisciplinaDbInsert = { tenant_id: tenantId, nome }
+    const { error } = await supabase
+      .from('disciplinas')
+      .insert(insertPayload)
       .select()
       .single()
 
@@ -44,11 +94,9 @@ export const livrosService = {
     return data.publicUrl
   },
 
-  // LER LIVROS
-  async listarLivros(tenantId: string): Promise<any[]> {
-    // Busca livros e suas relacionadas, como as tabelas não estão tipadas no types, fazemos workaround
-    const { data, error } = await supabase
-      .from('livros' as any)
+  async listarLivros(tenantId: string): Promise<Livro[]> {
+    const { data, error } = await livrosLegacyClient
+      .from('livros')
       .select(`
         *,
         disciplina:disciplinas(nome),
@@ -59,35 +107,33 @@ export const livrosService = {
 
     if (error) throw error
 
-    // Formata o resultado para a interface local Livro
-    return (data || []).map((l: any) => ({
-      ...l,
-      turmas: (l.livros_turmas || []).map((lt: any) => ({ id: lt.turma_id }))
+    return (data || []).map((livro) => ({
+      ...livro,
+      disciplina: livro.disciplina || undefined,
+      turmas: mapTurmas(livro.livros_turmas)
     }))
   },
 
-  // CRIAR LIVRO
-  async criarLivro(livro: Omit<Livro, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>, turmasIds: string[]) {
-    // Insere livro
-    const result = await supabase
-      .from('livros' as any)
-      .insert(livro as any)
+  async criarLivro(livro: LivroInsert, turmasIds: string[]) {
+    const result = await livrosLegacyClient
+      .from('livros')
+      .insert(livro)
       .select()
       .single()
     const errLivro = result.error
-    const novoLivro = result.data as any
+    const novoLivro = result.data
 
     if (errLivro) throw errLivro
+    if (!novoLivro) throw new Error('Livro nao foi criado.')
 
-    // Insere ligações turmas
-    if (turmasIds && turmasIds.length > 0) {
-      const insertsTurmas = turmasIds.map((id) => ({
+    if (turmasIds.length > 0) {
+      const insertsTurmas: LivroTurmaInsert[] = turmasIds.map((id) => ({
         livro_id: novoLivro.id,
         turma_id: id,
         tenant_id: livro.tenant_id
       }))
-      const { error: errTurmas } = await supabase
-        .from('livros_turmas' as any)
+      const { error: errTurmas } = await livrosLegacyClient
+        .from('livros_turmas')
         .insert(insertsTurmas)
 
       if (errTurmas) throw errTurmas
@@ -96,10 +142,9 @@ export const livrosService = {
     return novoLivro
   },
 
-  // EDITAR LIVRO
   async editarLivro(livroId: string, livro: Partial<Livro>, turmasIds: string[]) {
-    const { error: errLivro } = await supabase
-      .from('livros' as any)
+    const { error: errLivro } = await livrosLegacyClient
+      .from('livros')
       .update({
         titulo: livro.titulo,
         autor: livro.autor,
@@ -116,38 +161,34 @@ export const livrosService = {
 
     if (errLivro) throw errLivro
 
-    // Atualiza turmas - Remove antigas, insere novas
-    await supabase.from('livros_turmas' as any).delete().eq('livro_id', livroId)
+    await livrosLegacyClient.from('livros_turmas').delete().eq('livro_id', livroId)
 
-    if (turmasIds && turmasIds.length > 0) {
-      const insertsTurmas = turmasIds.map((id) => ({
+    if (turmasIds.length > 0 && livro.tenant_id) {
+      const insertsTurmas: LivroTurmaInsert[] = turmasIds.map((id) => ({
         livro_id: livroId,
         turma_id: id,
         tenant_id: livro.tenant_id
       }))
-      const { error: errTurmas } = await supabase
-        .from('livros_turmas' as any)
+      const { error: errTurmas } = await livrosLegacyClient
+        .from('livros_turmas')
         .insert(insertsTurmas)
 
       if (errTurmas) throw errTurmas
     }
   },
 
-  // EXCLUIR LIVRO
   async excluirLivro(livroId: string) {
-    const { error } = await supabase
-      .from('livros' as any)
+    const { error } = await livrosLegacyClient
+      .from('livros')
       .delete()
       .eq('id', livroId)
 
     if (error) throw error
   },
 
-  // --- MATERIAIS ESCOLARES ---
-
   async listarMateriais(tenantId: string): Promise<MaterialEscolar[]> {
-    const { data, error } = await supabase
-      .from('materiais_escolares' as any)
+    const { data, error } = await livrosLegacyClient
+      .from('materiais_escolares')
       .select(`
         *,
         disciplina:disciplinas(nome),
@@ -158,30 +199,32 @@ export const livrosService = {
 
     if (error) throw error
 
-    return (data || []).map((m: any) => ({
-      ...m,
-      turmas: (m.materiais_turmas || []).map((mt: any) => ({ id: mt.turma_id }))
+    return (data || []).map((material) => ({
+      ...material,
+      disciplina: material.disciplina || undefined,
+      turmas: mapTurmas(material.materiais_turmas)
     }))
   },
 
-  async criarMaterial(material: Omit<MaterialEscolar, 'id' | 'created_at' | 'updated_at' | 'disciplina' | 'turmas'>, turmasIds: string[]) {
-    const result = await supabase
-      .from('materiais_escolares' as any)
-      .insert(material as any)
+  async criarMaterial(material: MaterialEscolarInsert, turmasIds: string[]) {
+    const result = await livrosLegacyClient
+      .from('materiais_escolares')
+      .insert(material)
       .select()
       .single()
-    
-    if (result.error) throw result.error
-    const novoMaterial = result.data as any
 
-    if (turmasIds && turmasIds.length > 0) {
-      const insertsTurmas = turmasIds.map((id) => ({
+    if (result.error) throw result.error
+    const novoMaterial = result.data
+    if (!novoMaterial) throw new Error('Material nao foi criado.')
+
+    if (turmasIds.length > 0) {
+      const insertsTurmas: MaterialTurmaInsert[] = turmasIds.map((id) => ({
         material_id: novoMaterial.id,
         turma_id: id,
         tenant_id: material.tenant_id
       }))
-      const { error: errTurmas } = await supabase
-        .from('materiais_turmas' as any)
+      const { error: errTurmas } = await livrosLegacyClient
+        .from('materiais_turmas')
         .insert(insertsTurmas)
 
       if (errTurmas) throw errTurmas
@@ -191,23 +234,23 @@ export const livrosService = {
   },
 
   async editarMaterial(materialId: string, material: Partial<MaterialEscolar>, turmasIds: string[]) {
-    const { error: errMaterial } = await supabase
-      .from('materiais_escolares' as any)
+    const { error: errMaterial } = await livrosLegacyClient
+      .from('materiais_escolares')
       .update(material)
       .eq('id', materialId)
 
     if (errMaterial) throw errMaterial
 
-    await supabase.from('materiais_turmas' as any).delete().eq('material_id', materialId)
+    await livrosLegacyClient.from('materiais_turmas').delete().eq('material_id', materialId)
 
-    if (turmasIds && turmasIds.length > 0) {
-      const insertsTurmas = turmasIds.map((id) => ({
+    if (turmasIds.length > 0 && material.tenant_id) {
+      const insertsTurmas: MaterialTurmaInsert[] = turmasIds.map((id) => ({
         material_id: materialId,
         turma_id: id,
         tenant_id: material.tenant_id
       }))
-      const { error: errTurmas } = await supabase
-        .from('materiais_turmas' as any)
+      const { error: errTurmas } = await livrosLegacyClient
+        .from('materiais_turmas')
         .insert(insertsTurmas)
 
       if (errTurmas) throw errTurmas
@@ -215,8 +258,8 @@ export const livrosService = {
   },
 
   async excluirMaterial(materialId: string) {
-    const { error } = await supabase
-      .from('materiais_escolares' as any)
+    const { error } = await livrosLegacyClient
+      .from('materiais_escolares')
       .delete()
       .eq('id', materialId)
 
@@ -229,7 +272,7 @@ export const livrosService = {
     const filePath = `materiais/${fileName}`
 
     const { error: uploadError } = await supabase.storage
-      .from('livros') // Reutilizando bucket de livros ou usar um novo se existir
+      .from('livros')
       .upload(filePath, file)
 
     if (uploadError) throw uploadError

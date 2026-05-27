@@ -4,9 +4,33 @@ import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
 
 type AlunoInsert = Database['public']['Tables']['alunos']['Insert']
+type AlunoRow = Database['public']['Tables']['alunos']['Row']
 type AlunoUpdate = Database['public']['Tables']['alunos']['Update']
+type MatriculaRow = Database['public']['Tables']['matriculas']['Row']
 type ResponsavelInsert = Database['public']['Tables']['responsaveis']['Insert']
 type AlunoResponsavelInsert = Database['public']['Tables']['aluno_responsavel']['Insert']
+
+type TurmaProfessorVinculo = { turma_id: string }
+type MatriculaAlunoVinculo = Pick<MatriculaRow, 'aluno_id'>
+type TurmaAtualResumo = { id: string; nome: string; valor_mensalidade: number | null }
+type MatriculaAtivaResumo = Pick<MatriculaRow, 'aluno_id' | 'status' | 'data_matricula'> & {
+  turmas: TurmaAtualResumo | null
+}
+type AlunoListagem = AlunoRow & {
+  valor_mensalidade_atual?: number | null
+  turma_atual?: TurmaAtualResumo | null
+  data_ingresso?: string | null
+}
+type MatriculaDetalhe = Pick<MatriculaRow, 'id' | 'status' | 'ano_letivo' | 'serie_ano' | 'turno' | 'data_matricula' | 'turma_id'>
+type AlunoDetalhe = AlunoRow & {
+  valor_mensalidade_atual?: number | null
+  turma_atual?: TurmaAtualResumo | null
+  data_ingresso?: string | null
+  serie_ano?: string | null
+  turma_nome?: string | null
+  ano_letivo?: number | null
+}
+type ResponsavelComSenhaTemporaria = ResponsavelInsert & { senha?: string }
 
 export const alunoService = {
   async listar(tenantId: string, professorId?: string) {
@@ -19,21 +43,24 @@ export const alunoService = {
     // Se for professor, filtrar alunos que estão em turmas onde ele leciona
     if (professorId) {
        // Buscar turmas deste professor
-       const { data: turmasIds } = await (supabase.from('turma_professores' as any) as any)
+       const { data: turmasIds } = await (supabase.from('turma_professores' as never) as unknown as {
+         select(columns: string): { eq(column: string, value: string): Promise<{ data: TurmaProfessorVinculo[] | null; error: unknown }> }
+       })
          .select('turma_id')
          .eq('professor_id', professorId)
        
-       const idsT = turmasIds?.map((t: any) => t.turma_id) || []
+       const idsT = turmasIds?.map((t) => t.turma_id) || []
        
        if (idsT.length === 0) return []
 
        // Buscar alunos vinculados a essas turmas via matriculas ativas
-       const { data: matriculasAlunos } = await (supabase.from('matriculas' as any) as any)
+       const { data: matriculasAlunos } = await supabase
+         .from('matriculas')
          .select('aluno_id')
          .in('turma_id', idsT)
          .eq('status', 'ativa')
        
-       const idsA = matriculasAlunos?.map((m: any) => m.aluno_id) || []
+       const idsA = (matriculasAlunos as MatriculaAlunoVinculo[] | null)?.map((m) => m.aluno_id) || []
        
        if (idsA.length === 0) return []
        
@@ -45,10 +72,12 @@ export const alunoService = {
     if (error) throw error
 
     // Buscar matrículas ativas e turmas para cada aluno
-    const ids = (data as any[])?.map(a => a.id) || []
-    if (ids.length === 0) return (data as any[]) || []
+    const alunos = (data as AlunoListagem[] | null) || []
+    const ids = alunos.map(a => a.id)
+    if (ids.length === 0) return alunos
 
-    const { data: matriculas } = await (supabase.from('matriculas' as any) as any)
+    const { data: matriculas } = await supabase
+      .from('matriculas')
       .select(`
         aluno_id,
         status,
@@ -59,8 +88,8 @@ export const alunoService = {
       .eq('status', 'ativa')
 
     // Extrair valor da mensalidade e data de ingresso da turma atual para cada aluno
-    return (data as any[])?.map(aluno => {
-      const matriculaAtiva = matriculas?.find((m: any) => m.aluno_id === aluno.id && m.status === 'ativa')
+    return alunos.map(aluno => {
+      const matriculaAtiva = (matriculas as MatriculaAtivaResumo[] | null)?.find((m) => m.aluno_id === aluno.id && m.status === 'ativa')
       if (matriculaAtiva && matriculaAtiva.turmas) {
         // REGRA DE NEGÓCIO: Professores NÃO podem ver valor de mensalidade
         if (!professorId) {
@@ -90,7 +119,8 @@ export const alunoService = {
 
     // Buscar matrícula ativa do aluno
     if (aluno) {
-      const { data: matricula, error: _matError } = await (supabase.from('matriculas' as any) as any)
+      const { data: matricula, error: _matError } = await supabase
+        .from('matriculas')
         .select(`
           id,
           status,
@@ -105,24 +135,27 @@ export const alunoService = {
         .maybeSingle()
 
       // Buscar turma separadamente
-      if (matricula && matricula.turma_id) {
+      const matriculaAtiva = matricula as MatriculaDetalhe | null
+      const alunoDetalhe = aluno as AlunoDetalhe
+
+      if (matriculaAtiva && matriculaAtiva.turma_id) {
         const { data: turma, error: turmaError } = await supabase
           .from('turmas')
           .select('id, nome, valor_mensalidade')
-          .eq('id', matricula.turma_id)
+          .eq('id', matriculaAtiva.turma_id)
           .maybeSingle()
 
         if (turma && !turmaError) {
-          const turmaData = turma as any
+          const turmaData = turma as TurmaAtualResumo
           // REGRA DE NEGÓCIO: Professores NÃO podem ver valor de mensalidade
           if (!isProfessor) {
-            ;(aluno as any).valor_mensalidade_atual = turmaData.valor_mensalidade
+            alunoDetalhe.valor_mensalidade_atual = turmaData.valor_mensalidade
           }
-          ;(aluno as any).turma_atual = turmaData
-          ;(aluno as any).data_ingresso = matricula.data_matricula
-          ;(aluno as any).serie_ano = matricula.serie_ano
-          ;(aluno as any).turma_nome = turmaData.nome
-          ;(aluno as any).ano_letivo = matricula.ano_letivo
+          alunoDetalhe.turma_atual = turmaData
+          alunoDetalhe.data_ingresso = matriculaAtiva.data_matricula
+          alunoDetalhe.serie_ano = matriculaAtiva.serie_ano
+          alunoDetalhe.turma_nome = turmaData.nome
+          alunoDetalhe.ano_letivo = matriculaAtiva.ano_letivo
         }
       }
     }
@@ -139,20 +172,23 @@ export const alunoService = {
       .is('deleted_at', null)
 
     if (professorId) {
-       const { data: turmasIds } = await (supabase.from('turma_professores' as any) as any)
+       const { data: turmasIds } = await (supabase.from('turma_professores' as never) as unknown as {
+         select(columns: string): { eq(column: string, value: string): Promise<{ data: TurmaProfessorVinculo[] | null; error: unknown }> }
+       })
          .select('turma_id')
          .eq('professor_id', professorId)
        
-       const idsT = turmasIds?.map((t: any) => t.turma_id) || []
+       const idsT = turmasIds?.map((t) => t.turma_id) || []
        
        if (idsT.length === 0) return 0
 
-       const { data: matriculasAlunos } = await (supabase.from('matriculas' as any) as any)
+       const { data: matriculasAlunos } = await supabase
+         .from('matriculas')
          .select('aluno_id')
          .in('turma_id', idsT)
          .eq('status', 'ativa')
        
-       const idsA = matriculasAlunos?.map((m: any) => m.aluno_id) || []
+       const idsA = (matriculasAlunos as MatriculaAlunoVinculo[] | null)?.map((m) => m.aluno_id) || []
        
        if (idsA.length === 0) return 0
        
@@ -222,7 +258,7 @@ export const alunoService = {
     let authUserId = respExistente?.user_id || null
 
     // 2. Criar ou Vincular usuário no Auth (se tiver email e senha e não tiver user_id)
-    if (!authUserId && responsavel.email && (responsavel as any).senha_hash) {
+    if (!authUserId && responsavel.email && responsavel.senha_hash) {
       try {
         const { createClient } = await import('@supabase/supabase-js')
         const authClient = createClient(
@@ -233,7 +269,7 @@ export const alunoService = {
 
         const { data: authData, error: authError } = await authClient.auth.signUp({
           email: responsavel.email,
-          password: (responsavel as any).senha_hash,
+          password: responsavel.senha_hash,
           options: {
             data: {
               role: 'responsavel',
@@ -310,8 +346,8 @@ export const alunoService = {
       }
 
       // Remove senha_hash do payload se veio como campo virtual (não é coluna real no insert direto)
-      const cleanPayload = { ...insertPayload }
-      delete (cleanPayload as any).senha // Remove campo virtual se existir
+      const cleanPayload: ResponsavelComSenhaTemporaria = { ...insertPayload }
+      delete cleanPayload.senha // Remove campo virtual se existir
 
       const { data: novaResp, error: respError } = await supabase.from('responsaveis')
         .insert(cleanPayload)
@@ -324,11 +360,11 @@ export const alunoService = {
           logger.error('❌ Erro RLS ao inserir responsável. Payload: ', { 
             ...cleanPayload, 
             senha_hash: '[REDACTED]',
-            errorCode: (respError as any).code,
+            errorCode: respError.code,
             errorMessage: respError.message 
           })
 
-          if ((respError as any).code === '42501') {
+          if (respError.code === '42501') {
             throw new Error(
               'Nao foi possivel cadastrar o responsavel por uma restricao de permissao. ' +
               'Tente novamente ou acione o suporte.'
@@ -351,7 +387,7 @@ export const alunoService = {
     if (alunoError) throw alunoError
 
     // 4. Vincular via aluno_responsavel (N:N)
-    const vinculo: any = {
+    const vinculo: AlunoResponsavelInsert = {
       aluno_id: alunoData.id,
       responsavel_id: respData!.id,
       tenant_id: alunoDados.tenant_id,
@@ -593,7 +629,7 @@ export const alunoService = {
       .insert({
         ...responsavel,
         cpf: responsavel.cpf?.replace(/\D/g, '')
-      } as any)
+      } satisfies ResponsavelInsert)
       .select()
       .single()
 

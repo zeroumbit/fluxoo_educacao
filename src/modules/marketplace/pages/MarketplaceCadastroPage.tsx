@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { logger } from '@/lib/logger'
 import { getPasswordStrengthTips,strongPasswordSchema } from '@/lib/password-validation'
+import type { CurriculoInsert,LojistaInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { mascaraCEP,mascaraCNPJ,mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
@@ -40,6 +41,7 @@ Trash2,
 User
 } from 'lucide-react'
 import { useEffect,useState } from 'react'
+import type { FieldErrors,FieldPath } from 'react-hook-form'
 import { useFieldArray,useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -137,16 +139,30 @@ const registrationSchema = z.discriminatedUnion('tipo', [
   baseSchema.extend({
     tipo: z.literal('profissional'),
     profissional: profissionalSchema,
-    lojista: z.any().optional()
+    lojista: z.unknown().optional()
   }),
   baseSchema.extend({
     tipo: z.literal('lojista'),
     lojista: lojistaSchema,
-    profissional: z.any().optional()
+    profissional: z.unknown().optional()
   })
 ])
 
 type RegistrationForm = z.infer<typeof registrationSchema>
+type MarketplaceTipo = RegistrationForm['tipo']
+type CidadeOption = { value: string; label: string }
+
+function isMarketplaceTipo(value: string): value is MarketplaceTipo {
+  return value === 'profissional' || value === 'lojista'
+}
+
+function getErrorMessage(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message
+    return typeof message === 'string' ? message : undefined
+  }
+  return undefined
+}
 
 const stepsProfissional = [
   { title: 'Acesso', icon: Lock },
@@ -234,7 +250,7 @@ export function MarketplaceCadastroPage() {
         const savedStep = localStorage.getItem('fluxoo_marketplace_cadastro_step')
         const savedTipo = localStorage.getItem('fluxoo_marketplace_cadastro_tipo')
         if (savedStep) setCurrentStep(Number(savedStep))
-        if (savedTipo) setTipoAtivo(savedTipo as any)
+        if (savedTipo && isMarketplaceTipo(savedTipo)) setTipoAtivo(savedTipo)
         
         logger.info('Cadastro do Marketplace recuperado do LocalStorage')
       } catch (e) {
@@ -296,7 +312,7 @@ export function MarketplaceCadastroPage() {
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const field = tipoAtivo === 'profissional' ? 'profissional.telefone' : 'lojista.telefone_contato'
-    form.setValue(field as any, mascaraTelefone(e.target.value), { shouldValidate: true })
+    form.setValue(field as FieldPath<RegistrationForm>, mascaraTelefone(e.target.value), { shouldValidate: true })
   }
 
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,7 +356,7 @@ export function MarketplaceCadastroPage() {
 
   const nextStep = async () => {
     const fieldsToValidate = fieldsPerStep[currentStep]
-    const isValid = await form.trigger(fieldsToValidate as any)
+    const isValid = await form.trigger(fieldsToValidate as FieldPath<RegistrationForm>[])
 
     // Se for o último step, não avança, apenas submete
     if (currentStep === stepsSet.length - 1) {
@@ -409,7 +425,7 @@ export function MarketplaceCadastroPage() {
           funcionario_id: null,
           disponibilidade_emprego: false,
           observacoes: null
-        } as any)
+        } satisfies CurriculoInsert)
         if (profError) throw profError
       } else if (data.tipo === 'lojista') {
         const { error: lojError } = await supabase.from('lojistas').insert({
@@ -424,7 +440,7 @@ export function MarketplaceCadastroPage() {
           status: 'ativo',
           plano_id: 'free',
           metodo_pagamento: 'gratuito'
-        } as any)
+        } satisfies LojistaInsert)
         if (lojError) throw lojError
       }
 
@@ -439,10 +455,10 @@ export function MarketplaceCadastroPage() {
       setTimeout(() => {
         window.location.href = '/login'
       }, 1500)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro no cadastro:', err)
       
-      let message = err.message || 'Erro ao processar cadastro'
+      let message = err instanceof Error ? err.message : 'Erro ao processar cadastro'
       
       if (message.includes('User already registered') || message.includes('already registered')) {
         message = 'Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.'
@@ -457,7 +473,7 @@ export function MarketplaceCadastroPage() {
   }
 
   // Handler para quando o form não é válido
-  const handleInvalidSubmit = (errors: any) => {
+  const handleInvalidSubmit = (errors: FieldErrors<RegistrationForm>) => {
     console.error('=== ERROS DE VALIDAÇÃO ===')
     console.error('Errors completos:', JSON.stringify(errors, null, 2))
     
@@ -571,7 +587,7 @@ export function MarketplaceCadastroPage() {
                   {/* Tabs para escolha do tipo */}
                   <Tabs
                     value={tipoAtivo}
-                    onValueChange={(v: any) => {
+                    onValueChange={(v: string) => {
                       setTipoAtivo(v)
                       form.setValue('tipo', v)
                     }}
@@ -715,10 +731,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="Seu nome"
                             {...form.register('profissional.nome')}
-                            className={(form.formState.errors.profissional as any)?.nome ? 'border-red-500' : ''}
+                            className={form.formState.errors.profissional?.nome ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.profissional as any)?.nome && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).nome.message}</p>
+                          {form.formState.errors.profissional?.nome && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.nome.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -727,10 +743,10 @@ export function MarketplaceCadastroPage() {
                             placeholder="000.000.000-00"
                             {...form.register('profissional.cpf')}
                             onChange={handleCpfChange}
-                            className={(form.formState.errors.profissional as any)?.cpf ? 'border-red-500' : ''}
+                            className={form.formState.errors.profissional?.cpf ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.profissional as any)?.cpf && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).cpf.message}</p>
+                          {form.formState.errors.profissional?.cpf && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.cpf.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -739,10 +755,10 @@ export function MarketplaceCadastroPage() {
                             placeholder="(11) 99999-9999"
                             {...form.register('profissional.telefone')}
                             onChange={handleTelefoneChange}
-                            className={(form.formState.errors.profissional as any)?.telefone ? 'border-red-500' : ''}
+                            className={form.formState.errors.profissional?.telefone ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.profissional as any)?.telefone && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).telefone.message}</p>
+                          {form.formState.errors.profissional?.telefone && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.telefone.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -750,10 +766,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="email@contato.com"
                             {...form.register('profissional.contato_email')}
-                            className={(form.formState.errors.profissional as any)?.contato_email ? 'border-red-500' : ''}
+                            className={form.formState.errors.profissional?.contato_email ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.profissional as any)?.contato_email && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.profissional as any).contato_email.message}</p>
+                          {form.formState.errors.profissional?.contato_email && (
+                            <p className="text-xs text-red-500">{form.formState.errors.profissional.contato_email.message}</p>
                           )}
                         </div>
                       </div>
@@ -1007,10 +1023,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="Nome da Empresa"
                             {...form.register('lojista.razao_social')}
-                            className={(form.formState.errors.lojista as any)?.razao_social ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.razao_social ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.razao_social && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).razao_social.message}</p>
+                          {form.formState.errors.lojista?.razao_social && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.razao_social.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1019,10 +1035,10 @@ export function MarketplaceCadastroPage() {
                             placeholder="00.000.000/0001-00"
                             {...form.register('lojista.cnpj')}
                             onChange={handleCnpjChange}
-                            className={(form.formState.errors.lojista as any)?.cnpj ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.cnpj ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.cnpj && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cnpj.message}</p>
+                          {form.formState.errors.lojista?.cnpj && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cnpj.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1038,7 +1054,7 @@ export function MarketplaceCadastroPage() {
                             onValueChange={(v) => form.setValue('lojista.categoria', v)}
                             value={selectedCategoria}
                           >
-                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.categoria ? 'border-red-500' : '')}>
+                            <SelectTrigger className={cn("w-full", form.formState.errors.lojista?.categoria ? 'border-red-500' : '')}>
                               <SelectValue placeholder="Selecione uma categoria" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1049,8 +1065,8 @@ export function MarketplaceCadastroPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {(form.formState.errors.lojista as any)?.categoria && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).categoria.message}</p>
+                          {form.formState.errors.lojista?.categoria && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.categoria.message}</p>
                           )}
                         </div>
                       </div>
@@ -1076,15 +1092,15 @@ export function MarketplaceCadastroPage() {
                             {...form.register('lojista.cep')}
                             onChange={handleCepChange}
                             disabled={buscandoCep}
-                            className={(form.formState.errors.lojista as any)?.cep ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.cep ? 'border-red-500' : ''}
                           />
                           {buscandoCep && (
                             <p className="text-xs text-zinc-500 flex items-center gap-1">
                               <Loader2 size={12} className="animate-spin" /> Buscando endereço...
                             </p>
                           )}
-                          {(form.formState.errors.lojista as any)?.cep && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cep.message}</p>
+                          {form.formState.errors.lojista?.cep && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cep.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1093,7 +1109,7 @@ export function MarketplaceCadastroPage() {
                             onValueChange={(v) => form.setValue('lojista.estado', v)}
                             value={form.watch('lojista.estado')}
                           >
-                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.estado ? 'border-red-500' : '')}>
+                            <SelectTrigger className={cn("w-full", form.formState.errors.lojista?.estado ? 'border-red-500' : '')}>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1104,8 +1120,8 @@ export function MarketplaceCadastroPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {(form.formState.errors.lojista as any)?.estado && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).estado.message}</p>
+                          {form.formState.errors.lojista?.estado && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.estado.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1117,19 +1133,19 @@ export function MarketplaceCadastroPage() {
                             value={form.watch('lojista.cidade')}
                             disabled={loadingCities || !form.watch('lojista.estado')}
                           >
-                            <SelectTrigger className={cn("w-full", (form.formState.errors.lojista as any)?.cidade ? 'border-red-500' : '')}>
+                            <SelectTrigger className={cn("w-full", form.formState.errors.lojista?.cidade ? 'border-red-500' : '')}>
                               <SelectValue placeholder={loadingCities ? "Carregando cidades..." : "Selecione a cidade"} />
                             </SelectTrigger>
                             <SelectContent>
-                              {cities.map((cid: any) => (
+                              {(cities as CidadeOption[]).map((cid) => (
                                 <SelectItem key={cid.value} value={cid.value}>
                                   {cid.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {(form.formState.errors.lojista as any)?.cidade && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).cidade.message}</p>
+                          {form.formState.errors.lojista?.cidade && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.cidade.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1137,10 +1153,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="Bairro"
                             {...form.register('lojista.bairro')}
-                            className={(form.formState.errors.lojista as any)?.bairro ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.bairro ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.bairro && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).bairro.message}</p>
+                          {form.formState.errors.lojista?.bairro && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.bairro.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1148,10 +1164,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="Rua, Avenida, etc."
                             {...form.register('lojista.logradouro')}
-                            className={(form.formState.errors.lojista as any)?.logradouro ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.logradouro ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.logradouro && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).logradouro.message}</p>
+                          {form.formState.errors.lojista?.logradouro && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.logradouro.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1159,10 +1175,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="123"
                             {...form.register('lojista.numero')}
-                            className={(form.formState.errors.lojista as any)?.numero ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.numero ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.numero && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).numero.message}</p>
+                          {form.formState.errors.lojista?.numero && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.numero.message}</p>
                           )}
                         </div>
                         <div className="space-y-2 md:col-span-2">
@@ -1193,10 +1209,10 @@ export function MarketplaceCadastroPage() {
                           <Input
                             placeholder="vendas@empresa.com"
                             {...form.register('lojista.email_contato')}
-                            className={(form.formState.errors.lojista as any)?.email_contato ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.email_contato ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.email_contato && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).email_contato.message}</p>
+                          {form.formState.errors.lojista?.email_contato && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.email_contato.message}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -1205,10 +1221,10 @@ export function MarketplaceCadastroPage() {
                             placeholder="(11) 99999-9999"
                             {...form.register('lojista.telefone_contato')}
                             onChange={handleTelefoneChange}
-                            className={(form.formState.errors.lojista as any)?.telefone_contato ? 'border-red-500' : ''}
+                            className={form.formState.errors.lojista?.telefone_contato ? 'border-red-500' : ''}
                           />
-                          {(form.formState.errors.lojista as any)?.telefone_contato && (
-                            <p className="text-xs text-red-500">{(form.formState.errors.lojista as any).telefone_contato.message}</p>
+                          {form.formState.errors.lojista?.telefone_contato && (
+                            <p className="text-xs text-red-500">{form.formState.errors.lojista.telefone_contato.message}</p>
                           )}
                         </div>
                       </div>
@@ -1338,3 +1354,6 @@ export function MarketplaceCadastroPage() {
     </div>
   )
 }
+
+
+

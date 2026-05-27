@@ -1,5 +1,17 @@
 import { precheckLogin } from '@/lib/auth-rate-limit'
-import type { PortalConfigPix } from '@/lib/database.types'
+import type {
+  Aluno,
+  AlunoResponsavel,
+  AlunoUpdate,
+  Cobranca,
+  CobrancaComEncargos,
+  Frequencia,
+  MuralAviso,
+  NotificacaoInsert,
+  PortalAuditLogInsert,
+  PortalConfigPix,
+  ResponsavelUpdate,
+} from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
@@ -48,6 +60,77 @@ type PortalAlunoVinculo = {
     [key: string]: unknown
   } | null
 }
+
+type JsonRecord = Record<string, unknown>
+type PortalAuditoriaDetalhes = PortalAuditLogInsert['detalhes']
+type PortalVinculoAtivo = Pick<
+  AlunoResponsavel,
+  'id' | 'responsavel_id' | 'aluno_id' | 'is_financeiro' | 'is_academico' | 'status' | 'grau_parentesco'
+> & {
+  aluno: (Pick<
+    Aluno,
+    'id' | 'nome_completo' | 'nome_social' | 'data_nascimento' | 'status' | 'tenant_id' | 'foto_url' | 'codigo_transferencia'
+  > & {
+    turma?: { id: string; nome: string; turno: string | null; valor_mensalidade: number | null } | null
+    valor_matricula?: number | null
+    valor_mensalidade?: number | null
+  }) | null
+}
+type PortalCobrancaResumo = Pick<
+  Cobranca,
+  'id' | 'aluno_id' | 'tenant_id' | 'valor' | 'status' | 'data_vencimento' | 'descricao' | 'subtipo_cobranca' | 'origem_cobranca'
+>
+type PortalAvisoResumo = Pick<
+  MuralAviso,
+  'id' | 'titulo' | 'conteudo' | 'created_at' | 'turma_id' | 'publico_alvo' | 'data_fim' | 'data_inicio'
+> & {
+  turma?: { nome: string } | null
+}
+type PortalCobrancaComEncargos = Cobranca | CobrancaComEncargos
+type NotificationItem = {
+  id: string
+  label: string
+  href: string
+  category: string
+}
+type BoletimDisciplinaPortal = {
+  disciplina: string
+  disciplina_id: string
+  nota: number
+  media_final: number | null
+  media_parcial: number | null
+  nota_recuperacao: number | null
+  faltas: number
+  total_aulas: number
+  resultado: string | null
+  observacoes: null
+}
+type BoletimPortal = {
+  id: string
+  aluno_id: string
+  tenant_id: string
+  bimestre: number
+  ano_letivo: number
+  disciplinas: BoletimDisciplinaPortal[]
+  _v2?: boolean
+}
+
+type ViewQuery<T> = {
+  select(columns?: string): ViewQuery<T>
+  eq(column: string, value: unknown): ViewQuery<T>
+  order(column: string, options?: { ascending?: boolean }): ViewQuery<T>
+  then<TResult1 = { data: T[] | null; error: { message: string } | null }, TResult2 = never>(
+    onfulfilled?: ((value: { data: T[] | null; error: { message: string } | null }) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): PromiseLike<TResult1 | TResult2>
+}
+
+type PortalViewClient = {
+  from(table: 'vw_itens_escolares_aluno'): ViewQuery<JsonRecord>
+  from(table: 'vw_cobrancas_com_encargos'): ViewQuery<CobrancaComEncargos>
+}
+
+const portalViewClient = supabase as unknown as PortalViewClient
 
 export const portalService = {
   // ==========================================
@@ -234,9 +317,9 @@ export const portalService = {
       throw error
     }
 
-    const vinculos = (data as any[]) || []
+    const vinculos = (data || []) as PortalVinculoAtivo[]
 
-    await Promise.all(vinculos.map(async (vinculo: any) => {
+    await Promise.all(vinculos.map(async (vinculo) => {
       vinculo.aluno = await this.enriquecerVinculoAluno(vinculo)
     }))
 
@@ -250,10 +333,11 @@ export const portalService = {
       .eq('responsavel_id', responsavelId)
       .eq('status', 'ativo')
       .limit(1)
-      .maybeSingle() as any
+      .maybeSingle()
 
     if (error) throw error
-    return data?.aluno?.tenant_id || null
+    const aluno = Array.isArray(data?.aluno) ? data?.aluno[0] : data?.aluno
+    return aluno?.tenant_id || null
   },
 
   async buscarEscolasVinculadas(tenantIds: string[]) {
@@ -261,7 +345,7 @@ export const portalService = {
   },
 
   async buscarItensEscolaresAluno(alunoId: string, tenantId: string) {
-    const { data, error } = await (supabase.from('vw_itens_escolares_aluno' as any) as any)
+    const { data, error } = await portalViewClient.from('vw_itens_escolares_aluno')
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('aluno_id', alunoId)
@@ -273,10 +357,10 @@ export const portalService = {
 
   async buscarMarketplaceStatusPortal() {
     const [lojistasRes, curriculosRes] = await Promise.all([
-      (supabase.from('lojistas' as any) as any)
+      supabase.from('lojistas')
         .select('id', { count: 'exact', head: true })
         .limit(1),
-      (supabase.from('curriculos' as any) as any)
+      supabase.from('curriculos')
         .select('id', { count: 'exact', head: true })
         .or('busca_vaga.eq.true,presta_servico.eq.true')
         .limit(1),
@@ -305,11 +389,11 @@ export const portalService = {
   // ==========================================
   async buscarDashboardAluno(alunoId: string, tenantId: string, turmaId?: string | null) {
     if (!alunoId || !tenantId) return null
-    const { data: matricula } = await (supabase.from('matriculas' as any) as any)
+    const { data: matricula } = await supabase.from('matriculas')
       .select('data_matricula')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
-      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
+      .in('status', ['ativa', 'pendente', 'pre_matricula'])
       .order('data_matricula', { ascending: true })
       .limit(1)
       .maybeSingle()
@@ -322,21 +406,21 @@ export const portalService = {
 
     const [frequenciaRes, cobrancasRes, avisosRes] = await Promise.all([
       // Frequência recente (últimos 30 dias)
-      (supabase.from('frequencias' as any) as any)
+      supabase.from('frequencias')
         .select('status')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
         .gte('data_aula', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
       ,
       // Cobranças pendentes (todas)
-      (supabase.from('cobrancas' as any) as any)
+      supabase.from('cobrancas')
         .select('id, valor, status, data_vencimento, descricao, subtipo_cobranca, origem_cobranca')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
         .in('status', ['a_vencer', 'atrasado', 'pago'])
       ,
       // Avisos recentes — APENAS DENTRO DA VIGÊNCIA
-      (supabase.from('mural_avisos' as any) as any)
+      supabase.from('mural_avisos')
         .select(`
           id,
           titulo,
@@ -355,20 +439,20 @@ export const portalService = {
         .limit(20),
     ])
 
-    const frequencias = (frequenciaRes.data as any[]) || []
-    const totalPresencas = frequencias.filter((f: any) => f.status === 'presente').length
-    const totalFaltas = frequencias.filter((f: any) => f.status === 'falta').length
-    const totalJustificadas = frequencias.filter((f: any) => f.status === 'justificada').length
+    const frequencias = (frequenciaRes.data || []) as Pick<Frequencia, 'status'>[]
+    const totalPresencas = frequencias.filter((f) => f.status === 'presente').length
+    const totalFaltas = frequencias.filter((f) => f.status === 'falta').length
+    const totalJustificadas = frequencias.filter((f) => f.status === 'justificada').length
 
     // Percentual: Presenças + Justificadas contam para o índice de frequência legal
     const percentualFrequencia = frequencias.length > 0
       ? Math.round(((totalPresencas + totalJustificadas) / frequencias.length) * 100) : 100
 
-    let cobrancas = (cobrancasRes.data as any[]) || []
+    let cobrancas = (cobrancasRes.data || []) as PortalCobrancaResumo[]
 
     // APLICAR REGRA DE OURO: Filtrar cobranças por data de matrícula
     if (dataMatricula) {
-      cobrancas = cobrancas.filter((c: any) => {
+      cobrancas = cobrancas.filter((c) => {
         const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
         dataVenc.setDate(1)
         dataVenc.setHours(0, 0, 0, 0)
@@ -377,32 +461,32 @@ export const portalService = {
     }
 
     // Separa cobrancas pela classificacao oficial do banco.
-    const cobrancasMatricula = cobrancas.filter((c: any) =>
+    const cobrancasMatricula = cobrancas.filter((c) =>
       c.subtipo_cobranca === 'matricula_rematricula'
     )
-    const cobrancasMensalidade = cobrancas.filter((c: any) =>
+    const cobrancasMensalidade = cobrancas.filter((c) =>
       c.subtipo_cobranca === 'mensalidade'
     )
 
     // Total pendente considera mensalidades E matrícula (se estiver pendente)
     const totalPendenteMensalidades = cobrancasMensalidade
-      .filter((c: any) => ['a_vencer', 'atrasado'].includes(c.status))
-      .reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
+      .filter((c) => ['a_vencer', 'atrasado'].includes(c.status))
+      .reduce((acc, c) => acc + Number(c.valor || 0), 0)
     
     const totalPendenteMatricula = cobrancasMatricula
-      .filter((c: any) => ['a_vencer', 'atrasado'].includes(c.status))
-      .reduce((acc: number, c: any) => acc + Number(c.valor || 0), 0)
+      .filter((c) => ['a_vencer', 'atrasado'].includes(c.status))
+      .reduce((acc, c) => acc + Number(c.valor || 0), 0)
 
     const totalPendente = totalPendenteMensalidades + totalPendenteMatricula
-    const totalAtrasadas = cobrancasMensalidade.filter((c: any) => c.status === 'atrasado').length +
-                           cobrancasMatricula.filter((c: any) => c.status === 'atrasado').length
+    const totalAtrasadas = cobrancasMensalidade.filter((c) => c.status === 'atrasado').length +
+                           cobrancasMatricula.filter((c) => c.status === 'atrasado').length
 
     // Filtrar avisos: apenas do aluno/turma e COM DATA VÁLIDA
-    let todosAvisos = (avisosRes.data as any[]) || []
+    let todosAvisos = (avisosRes.data || []) as PortalAvisoResumo[]
     
     const hoje = new Date().toISOString().split('T')[0]
     
-    todosAvisos = todosAvisos.filter((a: any) => {
+    todosAvisos = todosAvisos.filter((a) => {
       // 1. Filtro por turma/público
       if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') {
         // Aviso global, verifica se está dentro do período válido
@@ -432,10 +516,10 @@ export const portalService = {
         totalAtrasadas,
         totalCobrancas: cobrancas.length,
         proximoVencimento: cobrancas
-          .filter((c: any) => c.status === 'a_vencer')
+          .filter((c) => c.status === 'a_vencer')
           .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
         piorPendencia: cobrancas
-          .filter((c: any) => c.status === 'atrasado')
+          .filter((c) => c.status === 'atrasado')
           .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime())[0] || null,
         cobrancasMatricula,
       },
@@ -447,7 +531,7 @@ export const portalService = {
   // FREQUÊNCIA
   // ==========================================
   async buscarFrequenciaPorAluno(alunoId: string, tenantId: string, mes?: string) {
-    let query = (supabase.from('frequencias' as any) as any)
+    let query = supabase.from('frequencias')
       .select('*, turma:turmas(nome)')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
@@ -459,7 +543,7 @@ export const portalService = {
 
     const { data, error } = await query.limit(90)
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   // ==========================================
@@ -467,7 +551,7 @@ export const portalService = {
   // ==========================================
   async buscarAvisosPorTurma(tenantId: string, turmaId?: string | null) {
     // Retorna TODOS (ativos + expirados) — a página de listagem separa visualmente
-    const { data, error } = await (supabase.from('mural_avisos' as any) as any)
+    const { data, error } = await supabase.from('mural_avisos')
       .select('*, turma:turmas(nome)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
@@ -475,7 +559,7 @@ export const portalService = {
 
     if (error) throw error
 
-    const avisos = (data as any[]) || []
+    const avisos = (data || []) as (MuralAviso & { turma?: { nome: string } | null })[]
     return avisos.filter(a => {
       if (!a.turma_id || a.turma_id === '' || String(a.publico_alvo).toLowerCase() === 'todos') return true
       if (turmaId && a.turma_id === turmaId) return true
@@ -494,7 +578,11 @@ export const portalService = {
     // 2. Decide qual view/tabela usar
     const target = usarViewEncargos ? 'vw_cobrancas_com_encargos' : 'cobrancas';
 
-    const { data, error } = await (supabase.from(target as any) as any)
+    const query = usarViewEncargos
+      ? portalViewClient.from('vw_cobrancas_com_encargos')
+      : supabase.from('cobrancas')
+
+    const { data, error } = await query
       .select('*')
       .eq('aluno_id', alunoId)
       .eq('tenant_id', tenantId)
@@ -502,14 +590,14 @@ export const portalService = {
 
     if (error) throw error
     
-    let res = (data as any[]) || []
+    let res = (data || []) as PortalCobrancaComEncargos[]
     // Se o job diário não rodou, cobranças ficam como 'a_vencer' mesmo vencidas.
     // Esta normalização garante consistência independente do job agendado.
     const diasCarencia = config?.dias_carencia || 0
     const agora = new Date()
     agora.setHours(23, 59, 59, 999) // Final do dia de hoje
 
-    res = res.map((c: any) => {
+    res = res.map((c) => {
       if (c.status === 'pago' || c.status === 'cancelado') return c
 
       const dataVenc = new Date(c.data_vencimento + 'T12:00:00')
@@ -585,7 +673,7 @@ export const portalService = {
 
     // O bucket correto é 'publico' conforme padrão do sistema
     const { data, error } = await supabase.storage
-      .from('publico' as any)
+      .from('publico')
       .upload(filePath, file, { 
         upsert: false,
         cacheControl: '3600'
@@ -594,18 +682,18 @@ export const portalService = {
     if (error) {
       // Fallback para bucket de comprovantes se existir
       const { data: dataAlt, error: errorAlt } = await supabase.storage
-        .from('comprovantes' as any)
+        .from('comprovantes')
         .upload(filePath, file, {
           upsert: false,
           cacheControl: '3600'
         })
       
       if (errorAlt) throw errorAlt
-      const { data: urlData } = supabase.storage.from('comprovantes' as any).getPublicUrl(filePath)
+      const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(filePath)
       return urlData.publicUrl
     }
 
-    const { data: urlData } = supabase.storage.from('publico' as any).getPublicUrl(filePath)
+    const { data: urlData } = supabase.storage.from('publico').getPublicUrl(filePath)
     return urlData.publicUrl
   },
 
@@ -653,10 +741,15 @@ export const portalService = {
         const tenantId = cobData[0].tenant_id
         const totalValor = cobData.reduce((acc, c) => acc + Number(c.valor || 0), 0)
         
+        type CobrancaAlunoNotificacao = {
+          nome_completo?: string | null
+          matriculas?: { status: string | null; turma?: { nome?: string | null } | null }[]
+        }
+
         // Coleta dados dos alunos e turmas
         const alunosTurmasInfo = cobData.map(c => {
-          const aluno = c.alunos as any
-          const matriculaAtiva = aluno?.matriculas?.find((m: any) => m.status === 'ativa')
+          const aluno = c.alunos as CobrancaAlunoNotificacao | null
+          const matriculaAtiva = aluno?.matriculas?.find((m) => m.status === 'ativa')
           return {
             nome: aluno?.nome_completo,
             turma: matriculaAtiva?.turma?.nome || 'Sem Turma'
@@ -680,7 +773,7 @@ export const portalService = {
         const responsavelNome = respData?.nome || 'Um responsável'
 
         // Cria a notificação para a gestão escolar/financeira
-        await supabase.from('notificacoes').insert({
+        const notificacao: NotificacaoInsert = {
           tenant_id: tenantId ?? 'sistema',
           user_id: null,
           tipo: 'PAGAMENTO_PIX_MANUAL',
@@ -703,7 +796,8 @@ export const portalService = {
           },
           lida: false,
           resolvida: false
-        } as any)
+        }
+        await supabase.from('notificacoes').insert(notificacao)
       }
     } catch (notifyError) {
       console.warn('Falha silenciosa ao gerar notificação para a escola:', notifyError)
@@ -762,7 +856,7 @@ export const portalService = {
       .limit(10)
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
    async cancelarFila(filaId: string) {
@@ -776,7 +870,7 @@ export const portalService = {
   // ==========================================
   // AUDITORIA
   // ==========================================
-  async registrarAuditoria(log: { tipo: string; responsavel_id: string; detalhes?: any }) {
+  async registrarAuditoria(log: { tipo: string; responsavel_id: string; detalhes?: PortalAuditoriaDetalhes }) {
     try {
       await supabase.from('portal_audit_log').insert({
         tipo: log.tipo,
@@ -804,8 +898,8 @@ export const portalService = {
 
       if (!v2Error && v2Data && v2Data.length > 0) {
         // Agrupa por ano/bimestre para manter compatibilidade com a UI do portal
-        const porBimestre: Record<string, any> = {}
-        ;(v2Data as any[]).forEach((row: any) => {
+        const porBimestre: Record<string, BoletimPortal> = {}
+        v2Data.forEach((row) => {
           const bim = row.bimestre
           const anoLetivo = Number(row.ano_letivo) || new Date().getFullYear()
           const key = `${anoLetivo}-${bim}`
@@ -833,7 +927,7 @@ export const portalService = {
             observacoes: null,
           })
         })
-        return Object.values(porBimestre).sort((a: any, b: any) =>
+        return Object.values(porBimestre).sort((a, b) =>
           b.ano_letivo - a.ano_letivo || a.bimestre - b.bimestre
         )
       }
@@ -851,14 +945,14 @@ export const portalService = {
       .order('bimestre', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   // ==========================================
   // EVENTOS / AGENDA
   // ==========================================
   async buscarEventos(tenantId: string, inicio?: string, fim?: string, turmaId?: string | null) {
-    let query = (supabase.from('eventos' as any) as any)
+    let query = supabase.from('eventos')
       .select('*')
       .eq('tenant_id', tenantId)
 
@@ -875,7 +969,7 @@ export const portalService = {
     const { data, error } = await query.order('data_inicio', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   // ==========================================
@@ -919,20 +1013,20 @@ export const portalService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   async buscarTemplatesDocumento(tenantId: string) {
-    const { data, error } = await (supabase.from('documento_templates' as any) as any)
+    const { data, error } = await supabase.from('documento_templates')
       .select('id, titulo, tipo')
       .eq('tenant_id', tenantId)
       .order('titulo', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
-  async atualizarPerfil(responsavelId: string, dados: any) {
+  async atualizarPerfil(responsavelId: string, dados: ResponsavelUpdate) {
     const { error } = await supabase.from('responsaveis')
       .update(dados)
       .eq('id', responsavelId)
@@ -964,7 +1058,7 @@ export const portalService = {
     return data
   },
 
-  async atualizarAluno(alunoId: string, responsavelId: string, dados: any) {
+  async atualizarAluno(alunoId: string, responsavelId: string, dados: AlunoUpdate) {
     const { error } = await supabase.from('alunos')
       .update(dados)
       .eq('id', alunoId)
@@ -1036,7 +1130,7 @@ export const portalService = {
   // ==========================================
   async buscarNotificacoesFamilia(responsavelId: string, alunoId?: string) {
     let query = supabase
-      .from('notificacoes_familia' as any)
+      .from('notificacoes_familia')
       .select('*')
       .eq('responsavel_id', responsavelId)
       .order('created_at', { ascending: false })
@@ -1047,16 +1141,16 @@ export const portalService = {
 
     const { data, error } = await query
     if (error) throw error
-    return (data as any[]) || []
+    return data || []
   },
 
   async marcarNotificacaoFamiliaLida(notificacaoId: string) {
     const { error } = await supabase
-      .from('notificacoes_familia' as any)
+      .from('notificacoes_familia')
       .update({ 
         lida: true, 
         lida_em: new Date().toISOString() 
-      } as any)
+      })
       .eq('id', notificacaoId)
     
     if (error) throw error
@@ -1078,7 +1172,7 @@ export const portalService = {
 
     // 2. Busca atividades vinculadas à turma
     // 2. Busca atividades vinculadas à turma do aluno
-    const { data, error } = await (supabase.from('atividades' as any) as any)
+    const { data, error } = await supabase.from('atividades')
       .select(`
         id,
         titulo,
@@ -1102,7 +1196,7 @@ export const portalService = {
       throw error
     }
     
-    return (data as any[] || []).map(item => ({
+    return (data || []).map(item => ({
       horario: item.atividades_turmas?.[0]?.horario,
       turno: item.atividades_turmas?.[0]?.turno,
       atividade: {
@@ -1131,12 +1225,12 @@ export const portalService = {
     const { data: matriculas } = await supabase.from('matriculas')
       .select('aluno_id, turma_id, data_matricula')
       .in('aluno_id', alunoIds)
-      .in('status', ['ativa' as any, 'pendente' as any, 'pre_matricula' as any])
+      .in('status', ['ativa', 'pendente', 'pre_matricula'])
 
     const turmaIds = [...new Set((matriculas || []).map(m => m.turma_id).filter(Boolean))]
     
     // Mapeia data de matrícula por aluno para filtro preciso
-    const matriculasMap = (matriculas || []).reduce((acc: any, m: any) => {
+    const matriculasMap = (matriculas || []).reduce<Record<string, number>>((acc, m) => {
       if (m.data_matricula) {
         const d = new Date(m.data_matricula + 'T12:00:00')
         d.setDate(1)
@@ -1148,43 +1242,43 @@ export const portalService = {
 
     // 3. Busca contagens em paralelo
     const [cobrancasFin, avisosRes, atividadesRes, boletinsRes, faltasRes, transferenciasRes] = await Promise.all([
-      (supabase.from('cobrancas' as any) as any)
+      supabase.from('cobrancas')
         .select('status, data_vencimento')
         .in('aluno_id', alunoIds)
         .in('status', ['a_vencer', 'atrasado']),
-      (supabase.from('mural_avisos' as any) as any)
+      supabase.from('mural_avisos')
         .select('id', { count: 'exact', head: true })
         .in('tenant_id', tenantIds)
         .or(`data_inicio.is.null,data_inicio.lte.${new Date().toISOString().split('T')[0]}`)
         .or(`data_fim.is.null,data_fim.gte.${new Date().toISOString().split('T')[0]}`)
         .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()),
-      turmaIds.length > 0 ? (supabase.from('atividades' as any) as any)
+      turmaIds.length > 0 ? supabase.from('atividades')
         .select('id, atividades_turmas!inner(turma_id)', { count: 'exact', head: true })
         .in('atividades_turmas.turma_id', turmaIds)
         .gte('created_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString())
         : { count: 0 },
-      (supabase.from('boletins' as any) as any)
+      supabase.from('boletins')
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
         .gte('updated_at', new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()),
-      (supabase.from('frequencias' as any) as any)
+      supabase.from('frequencias')
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
         .eq('status', 'falta')
         .gte('data_aula', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]),
-      (supabase.from('transferencias_escolares' as any) as any)
+      supabase.from('transferencias_escolares')
         .select('id', { count: 'exact', head: true })
         .in('aluno_id', alunoIds)
         .eq('responsavel_id', responsavelId)
         .eq('status', 'aguardando_responsavel')
     ])
 
-    const notifications: any[] = []
+    const notifications: NotificationItem[] = []
     
     // Processamento do Financeiro (Com Regras de Matrícula PER-ALUNO e Limite de Exibição)
-    let cobrancasFiltradas = (cobrancasFin.data as any[]) || []
+    let cobrancasFiltradas = (cobrancasFin.data || []) as Pick<Cobranca, 'aluno_id' | 'status' | 'data_vencimento'>[]
     
-    cobrancasFiltradas = cobrancasFiltradas.filter((c: any) => {
+    cobrancasFiltradas = cobrancasFiltradas.filter((c) => {
       const dataMatriculaLimiar = matriculasMap[c.aluno_id]
       if (!dataMatriculaLimiar) return true // Se não tem data de matrícula, mantém (regra de segurança)
       
@@ -1194,8 +1288,8 @@ export const portalService = {
       return dV.getTime() >= dataMatriculaLimiar
     })
 
-    const atrasadasCount = cobrancasFiltradas.filter((c: any) => c.status === 'atrasado').length
-    const futurasCount = cobrancasFiltradas.filter((c: any) => c.status === 'a_vencer').length
+    const atrasadasCount = cobrancasFiltradas.filter((c) => c.status === 'atrasado').length
+    const futurasCount = cobrancasFiltradas.filter((c) => c.status === 'a_vencer').length
     
     const financeiroDisplayCount = atrasadasCount > 0 ? atrasadasCount : (futurasCount > 0 ? 1 : 0)
 
@@ -1263,3 +1357,4 @@ export const portalService = {
     }
   },
 }
+

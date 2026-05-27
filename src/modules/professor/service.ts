@@ -1,12 +1,94 @@
+import type { Aluno, DisciplinaDb, Matricula, Turma } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
-import type { AgendaAula,AlertaProfessor,Pendencia,SaudeTurma } from './types'
+import type { AgendaAula, AlertaProfessor, Pendencia, SaudeTurma } from './types'
+
+type TurmaProfessorVinculo = {
+  turma_id: string
+  turmas?: Turma | null
+  disciplinas?: DisciplinaDb | null
+}
+
+type MatriculaComAlunoTurma = Pick<Matricula, 'id' | 'turma_id' | 'aluno_id'> & {
+  alunos: Pick<Aluno, 'id' | 'nome_completo'> | null
+  turmas: Pick<Turma, 'id' | 'nome'> | null
+}
+
+type AlunoProfessorResumo = {
+  id: string | undefined
+  nome: string | undefined
+  turma_id: string | null
+  turma_nome: string | undefined
+  matricula_id: string
+  frequencia: number
+  media: number
+  alertas: number
+}
+
+type AlunoTurmaResumo = Pick<Aluno, 'id' | 'nome_completo' | 'foto_url'>
+type MatriculaTurmaResumo = Pick<Matricula, 'id' | 'aluno_id' | 'status'>
+type TurmaDetalhesProfessor = Turma & {
+  disciplina?: DisciplinaDb | null
+  alunos: {
+    id: string
+    nome: string | undefined
+    foto_url: string | null | undefined
+    matricula_id: string
+    status: Matricula['status']
+  }[]
+  total_alunos: number
+  percentual_presenca: number
+  media_geral: number
+}
+
+type TurmaProfessorDisciplina = {
+  turma_id: string
+  turmas: Pick<Turma, 'id' | 'nome'> | null
+  disciplinas: Pick<DisciplinaDb, 'id' | 'nome'> | null
+}
+
+type TurmaDisciplinaVinculo = {
+  turma_id: string
+  disciplinas: Pick<DisciplinaDb, 'id' | 'nome'> | null
+}
+
+type TurmaAlunoResumo = Pick<Turma, 'id' | 'nome' | 'turno'>
+type MatriculaAlunoDetalhe = Pick<Matricula, 'id' | 'status' | 'data_matricula' | 'turma_id'>
+type AlunoDetalheProfessor = Aluno & {
+  turmas: {
+    matricula_id: string
+    turma_id: string | null
+    turma_nome: string | undefined
+    disciplina_nome: string | undefined
+    turno: string | null | undefined
+    status: Matricula['status']
+  }[]
+  tem_vinculo: boolean
+  percentual_presenca?: number
+  media_geral?: number
+  total_faltas?: number
+  total_aulas?: number
+}
+
+type LegacyProfessorClient = {
+  from(table: 'turma_professores'): {
+    select(columns: string): {
+      eq(column: string, value: string): LegacyProfessorQuery
+      in(column: string, values: string[]): LegacyProfessorQuery
+      single(): Promise<{ data: TurmaProfessorVinculo | null; error: unknown }>
+    }
+  }
+}
+
+type LegacyProfessorQuery = PromiseLike<{ data: unknown[] | null; error: unknown }> & {
+  eq(column: string, value: string): LegacyProfessorQuery
+  in(column: string, values: string[]): LegacyProfessorQuery
+  single(): Promise<{ data: TurmaProfessorVinculo | null; error: unknown }>
+}
+
+const legacyProfessorClient = supabase as unknown as LegacyProfessorClient
 
 export const professorService = {
-  /**
-   * Retorna a agenda de aulas do professor para hoje.
-   * Fonte: vw_professor_agenda_hoje
-   */
   async buscarAgendaHoje(professorId: string, tenantId: string): Promise<AgendaAula[]> {
     const { data, error } = await supabase
       .from('vw_professor_agenda_hoje')
@@ -22,17 +104,13 @@ export const professorService = {
     return (data as AgendaAula[]) || []
   },
 
-  /**
-   * Retorna pendências críticas (conteúdos e notas) dos últimos 15 dias.
-   * Fonte: vw_professor_pendencias
-   */
   async buscarPendencias(professorId: string, tenantId: string): Promise<Pendencia[]> {
     const { data, error } = await supabase
       .from('vw_professor_pendencias')
       .select('*')
       .eq('professor_id', professorId)
       .eq('tenant_id', tenantId)
-      .order('data_referencia', { ascending: true }) // mais atrasado primeiro
+      .order('data_referencia', { ascending: true })
 
     if (error) {
       logger.error('[professorService] Erro ao buscar pendencias', error)
@@ -41,10 +119,6 @@ export const professorService = {
     return (data as Pendencia[]) || []
   },
 
-  /**
-   * Retorna métricas de frequência e notas das turmas do professor.
-   * Fonte: vw_professor_saude_turmas
-   */
   async buscarSaudeTurmas(professorId: string, tenantId: string): Promise<SaudeTurma[]> {
     const { data, error } = await supabase
       .from('vw_professor_saude_turmas')
@@ -60,16 +134,11 @@ export const professorService = {
     return (data as SaudeTurma[]) || []
   },
 
-  /**
-   * Retorna os alertas específicos para o cockpit do professor.
-   * Filtra por alunos do professor + alertas operacionais dele mesmo.
-   */
-  async buscarAlertas(professorId: string, tenantId: string): Promise<AlertaProfessor[]> {
+  async buscarAlertas(_professorId: string, tenantId: string): Promise<AlertaProfessor[]> {
     const { data, error } = await supabase
       .from('vw_alertas_professor')
       .select('*')
       .eq('tenant_id', tenantId)
-      // O RLS já filtra por professor_id = auth.uid(), mas reforçamos se necessário
       .eq('status', 'ativo')
       .order('created_at', { ascending: false })
 
@@ -80,9 +149,6 @@ export const professorService = {
     return (data as AlertaProfessor[]) || []
   },
 
-  /**
-   * Conclui um alerta específico chamando a RPC que registra auditoria.
-   */
   async concluirAlerta(alertaId: string, observacao?: string): Promise<boolean> {
     const { error } = await supabase.rpc('concluir_alerta_professor', {
       p_alerta_id: alertaId,
@@ -96,21 +162,16 @@ export const professorService = {
     return true
   },
 
-  /**
-   * Busca todos os alunos correspondentes às turmas vinculadas ao professor.
-   */
-  async buscarAlunosDoProfessor(professorId: string, tenantId: string): Promise<any[]> {
-    // 1. Busca turmas vinculadas
-    const { data: turmasVinc } = await (supabase as any)
+  async buscarAlunosDoProfessor(professorId: string, tenantId: string): Promise<AlunoProfessorResumo[]> {
+    const { data: turmasVinc } = await legacyProfessorClient
       .from('turma_professores')
       .select('turma_id')
-      .eq('professor_id', professorId);
+      .eq('professor_id', professorId)
 
-    const idsTurmas = turmasVinc?.map((t: any) => t.turma_id) || [];
-    if (idsTurmas.length === 0) return [];
+    const idsTurmas = (turmasVinc as TurmaProfessorVinculo[] | null)?.map((t) => t.turma_id) || []
+    if (idsTurmas.length === 0) return []
 
-    // 2. Busca matriculas com alunos e turmas
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('matriculas')
       .select(`
         id,
@@ -122,35 +183,27 @@ export const professorService = {
       .in('turma_id', idsTurmas)
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
 
     if (error) {
-      logger.error('[professorService] Erro ao buscar alunos', error);
-      return [];
+      logger.error('[professorService] Erro ao buscar alunos', error)
+      return []
     }
 
-    // 3. Mapear para um formato achatado (flatten)
-    return (data || []).map((m: any) => ({
+    return ((data as MatriculaComAlunoTurma[] | null) || []).map((m) => ({
       id: m.alunos?.id,
       nome: m.alunos?.nome_completo,
       turma_id: m.turma_id,
       turma_nome: m.turmas?.nome,
       matricula_id: m.id,
-      // Como não temos views específicas de média/frequência por aluno para o professor aqui facilmente, 
-      // deixamos zerado para evitar N+1 queries ou usamos um valor padrão. 
-      // Se houver necessidade, deveria ser consumida uma view do banco.
-      frequencia: 0, 
+      frequencia: 0,
       media: 0,
       alertas: 0
-    })).sort((a: any, b: any) => a.nome?.localeCompare(b.nome));
+    })).sort((a, b) => a.nome?.localeCompare(b.nome || '') || 0)
   },
 
-  /**
-   * Busca detalhes de uma turma específica do professor.
-   */
-  async buscarDetalhesTurma(turmaId: string, professorId: string, tenantId: string): Promise<any | null> {
-    // 1. Verificar se o professor leciona nesta turma
-    const { data: vinculo } = await (supabase as any)
+  async buscarDetalhesTurma(turmaId: string, professorId: string, tenantId: string): Promise<TurmaDetalhesProfessor | null> {
+    const { data: vinculo } = await legacyProfessorClient
       .from('turma_professores')
       .select('*, turmas!inner(*), disciplinas!inner(*)')
       .eq('turma_id', turmaId)
@@ -159,8 +212,7 @@ export const professorService = {
 
     if (!vinculo) return null
 
-    // 2. Buscar dados da turma
-    const { data: turmaData } = await (supabase as any)
+    const { data: turmaData } = await supabase
       .from('turmas')
       .select('*')
       .eq('id', turmaId)
@@ -168,28 +220,28 @@ export const professorService = {
 
     if (!turmaData) return null
 
-    // 3. Buscar alunos matriculados na turma
-    const { data: matriculas } = await (supabase as any)
+    const { data: matriculas } = await supabase
       .from('matriculas')
       .select('id, aluno_id, status')
       .eq('turma_id', turmaId)
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
 
-    const alunoIds = matriculas?.map((m: any) => m.aluno_id) || []
-    
-    let alunosData: any[] = []
+    const matriculasResumo = (matriculas as MatriculaTurmaResumo[] | null) || []
+    const alunoIds = matriculasResumo.map((m) => m.aluno_id)
+
+    let alunosData: AlunoTurmaResumo[] = []
     if (alunoIds.length > 0) {
-      const { data: alunos } = await (supabase as any)
+      const { data: alunos } = await supabase
         .from('alunos')
         .select('id, nome_completo, foto_url')
         .in('id', alunoIds)
-      
-      alunosData = alunos || []
+
+      alunosData = (alunos as AlunoTurmaResumo[] | null) || []
     }
 
-    const alunosFormatados = (matriculas || []).map((m: any) => {
-      const aluno = alunosData.find((a: any) => a.id === m.aluno_id)
+    const alunosFormatados = matriculasResumo.map((m) => {
+      const aluno = alunosData.find((a) => a.id === m.aluno_id)
       return {
         id: m.aluno_id,
         nome: aluno?.nome_completo,
@@ -197,7 +249,7 @@ export const professorService = {
         matricula_id: m.id,
         status: m.status,
       }
-    }).sort((a: any, b: any) => a.nome?.localeCompare(b.nome))
+    }).sort((a, b) => a.nome?.localeCompare(b.nome || '') || 0)
 
     return {
       ...turmaData,
@@ -209,13 +261,8 @@ export const professorService = {
     }
   },
 
-  /**
-   * Busca detalhes de um aluno para o professor.
-   * Retorna dados básicos do aluno + turmas que o professor leciona onde o aluno está.
-   */
-  async buscarDetalhesAluno(alunoId: string, professorId: string, tenantId: string): Promise<any | null> {
-    // 1. Buscar dados do aluno
-    const { data: alunoData, error: alunoError } = await (supabase as any)
+  async buscarDetalhesAluno(alunoId: string, professorId: string, tenantId: string): Promise<AlunoDetalheProfessor | null> {
+    const { data: alunoData, error: alunoError } = await supabase
       .from('alunos')
       .select('*')
       .eq('id', alunoId)
@@ -223,13 +270,13 @@ export const professorService = {
 
     if (alunoError || !alunoData) return null
 
-    // 2. Buscar turmas onde o professor ensina
-    const { data: turmasProfessor } = await (supabase as any)
+    const { data: turmasProfessor } = await legacyProfessorClient
       .from('turma_professores')
       .select('turma_id, turmas!inner(id, nome), disciplinas!inner(id, nome)')
       .eq('professor_id', professorId)
 
-    const idsTurmasProfessor = turmasProfessor?.map((t: any) => t.turma_id) || []
+    const turmasProfessorResumo = (turmasProfessor as TurmaProfessorDisciplina[] | null) || []
+    const idsTurmasProfessor = turmasProfessorResumo.map((t) => t.turma_id)
 
     if (idsTurmasProfessor.length === 0) {
       return {
@@ -239,25 +286,23 @@ export const professorService = {
       }
     }
 
-    // 3. Buscar turmas e disciplinas
-    const { data: turmasData } = await (supabase as any)
+    const { data: turmasData } = await supabase
       .from('turmas')
       .select('id, nome, turno')
       .in('id', idsTurmasProfessor)
 
-    const { data: turmasDisciplinas } = await (supabase as any)
+    const { data: turmasDisciplinas } = await legacyProfessorClient
       .from('turma_professores')
       .select('turma_id, disciplinas(id, nome)')
       .in('turma_id', idsTurmasProfessor)
       .eq('professor_id', professorId)
 
-    const discMap = new Map()
-    turmasDisciplinas?.forEach((td: any) => {
+    const discMap = new Map<string, string | undefined>()
+    ;((turmasDisciplinas as TurmaDisciplinaVinculo[] | null) || []).forEach((td) => {
       discMap.set(td.turma_id, td.disciplinas?.nome)
     })
 
-    // 4. Buscar matriculas do aluno
-    const { data: matriculas } = await (supabase as any)
+    const { data: matriculas } = await supabase
       .from('matriculas')
       .select('id, status, data_matricula, turma_id')
       .eq('aluno_id', alunoId)
@@ -265,13 +310,13 @@ export const professorService = {
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
 
-    const turmasFormatadas = (matriculas || []).map((m: any) => {
-      const turma = turmasData?.find((t: any) => t.id === m.turma_id)
+    const turmasFormatadas = ((matriculas as MatriculaAlunoDetalhe[] | null) || []).map((m) => {
+      const turma = ((turmasData as TurmaAlunoResumo[] | null) || []).find((t) => t.id === m.turma_id)
       return {
         matricula_id: m.id,
         turma_id: m.turma_id,
         turma_nome: turma?.nome,
-        disciplina_nome: discMap.get(m.turma_id),
+        disciplina_nome: m.turma_id ? discMap.get(m.turma_id) : undefined,
         turno: turma?.turno,
         status: m.status,
       }
@@ -288,20 +333,3 @@ export const professorService = {
     }
   }
 }
-
-/* 
-  💡 SIMULAÇÃO DE LÓGICA DE GERAÇÃO DE ALERTAS (WORKER/CRON)
-  Abaixo, exemplificação de como o backend geraria estes alertas:
-
-  1. Diário Pendente (Operacional):
-     - Roda todo dia às 18h.
-     - Busca na vw_professor_agenda_hoje onde chamada_realizada IS FALSE.
-     - INSERT INTO alertas_alunos (tenant_id, usuario_id, tipo, titulo, descricao, gravidade)
-       VALUES (t.id, p.id, 'operacional_prof', 'Diário Pendente', 'Você não realizou a chamada para a turma X', 'alta');
-
-  2. Queda de Rendimento (Pedagógico):
-     - Roda após fechamento de bimestre/bimestre ou lançamento de notas.
-     - Se média_atual < (media_anterior * 0.8):
-     - INSERT INTO alertas_alunos (tenant_id, aluno_id, tipo, titulo, descricao, gravidade)
-       VALUES (t.id, a.id, 'pedagogico', 'Queda de Rendimento', 'O aluno X reduziu a média em mais de 20%', 'critica');
-*/

@@ -153,7 +153,7 @@ export function TurmasPageWeb() {
   }
 
   return (
-    <div className="space-y-6 px-6">
+    <div className="space-y-6 px-6 pb-12">
       {/* Título da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">

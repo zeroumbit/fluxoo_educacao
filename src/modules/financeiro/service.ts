@@ -1,9 +1,72 @@
-import type { CobrancaInsert } from '@/lib/database.types'
+import type {
+  AlunoResponsavel,
+  BaixaBoletoResponse,
+  Cobranca,
+  CobrancaComEncargos,
+  CobrancaInsert,
+  ContaPagarInsert,
+  ContaPagarUpdate,
+  Matricula,
+  PagamentoManualResponse,
+  Turma,
+} from '@/lib/database.types'
 import { cacheEvents } from '@/lib/cache-events'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
+
+type MatriculaFinanceira = Matricula & {
+  valor_mensalidade?: number | null
+  valor_matricula?: number | null
+}
+
+type CobrancaProjetada = Cobranca & {
+  valor_total_projetado: number
+  valor_multa_projetado: number
+  valor_juros_projetado: number
+  valor_original: number
+}
+
+type ErroBaixaBoleto = Error & {
+  concorrencia?: boolean
+  jaPago?: boolean
+}
+
+type MensalidadesTenantResponse = {
+  success: boolean
+  mensalidades_criadas: number
+  tenant_id: string
+}
+
+type MensalidadesAlunoResponse = {
+  success: boolean
+  mensalidades_criadas: number
+}
+
+type FinanceiroRpcClient = {
+  rpc(fn: 'registrar_pagamento_cobranca', args: {
+    p_cobranca_id: string
+    p_forma_pagamento: string | null
+    p_comprovante_url: string | null
+    p_usuario_id: string | null
+  }): Promise<{ data: PagamentoManualResponse | null; error: unknown }>
+  rpc(fn: 'baixar_boleto_concorrencia', args: {
+    p_cobranca_id: string
+    p_forma_pagamento: string
+    p_comprovante_url: string | null
+    p_usuario_id: string | null
+    p_codigo_transacao: string
+  }): Promise<{ data: BaixaBoletoResponse | null; error: unknown }>
+  rpc(fn: 'fn_gerar_mensalidades_tenant_atual'): Promise<{ data: MensalidadesTenantResponse | null; error: unknown }>
+  rpc(fn: 'fn_gerar_mensalidades_aluno', args: {
+    p_aluno_id: string
+    p_tenant_id: string
+    p_ano: number
+  }): Promise<{ data: MensalidadesAlunoResponse | null; error: unknown }>
+}
+
+const financeiroRpcClient = supabase as unknown as FinanceiroRpcClient
 
 export const financeiroService = {
   /**
@@ -326,14 +389,14 @@ export const financeiroService = {
       const descontoIrmaosPerc = configFinanceira?.desconto_irmaos_perc || 0
       if (descontoIrmaosPerc > 0) {
         // Busca responsáveis deste aluno
-        const { data: meusResponsaveis } = await (supabase.from('aluno_responsavel' as any) as any)
+        const { data: meusResponsaveis } = await supabase.from('aluno_responsavel')
           .select('responsavel_id')
           .eq('aluno_id', aluno_id)
         
         if (meusResponsaveis && meusResponsaveis.length > 0) {
-          const respIds = meusResponsaveis.map((r: any) => r.responsavel_id)
+          const respIds = (meusResponsaveis as Pick<AlunoResponsavel, 'responsavel_id'>[]).map((r) => r.responsavel_id)
           // Verifica se algum desses responsáveis tem outro aluno vinculado (irmão)
-          const { data: irmaos } = await (supabase.from('aluno_responsavel' as any) as any)
+          const { data: irmaos } = await supabase.from('aluno_responsavel')
             .select('aluno_id')
             .in('responsavel_id', respIds)
             .neq('aluno_id', aluno_id)
@@ -410,9 +473,9 @@ export const financeiroService = {
     }
   },
 
-  async gerarCobrancasIniciaisMatricula(matricula: any) {
+  async gerarCobrancasIniciaisMatricula(matricula: MatriculaFinanceira) {
     // Tenta pegar o valor da mensalidade da turma
-    const { data: turma } = await (supabase.from('turmas' as any) as any)
+    const { data: turma } = await supabase.from('turmas')
       .select('valor_mensalidade')
       .eq('tenant_id', matricula.tenant_id)
       .eq('id', matricula.turma_id)
@@ -439,7 +502,7 @@ export const financeiroService = {
     })
   },
 
-  async sincronizarCobrancasMatricula(matricula: any) {
+  async sincronizarCobrancasMatricula(matricula: MatriculaFinanceira) {
     // Busca cobranças pendentes do aluno que sejam de mensalidade/matrícula
     const { data: cobrancas, error } = await supabase
       .from('cobrancas')
@@ -467,7 +530,7 @@ export const financeiroService = {
       // Se a turma tiver valor de mensalidade, usamos ela como base
       if (isMensalidade) {
          // Buscamos o valor da turma se necessário ou usamos o valor da matrícula como referência
-          const { data: turma } = await (supabase.from('turmas' as any) as any)
+          const { data: turma } = await supabase.from('turmas')
             .select('valor_mensalidade')
             .eq('tenant_id', matricula.tenant_id)
             .eq('id', matricula.turma_id)
@@ -496,7 +559,7 @@ export const financeiroService = {
     return data
   },
 
-  async criarContaPagar(conta: any, userId?: string) {
+  async criarContaPagar(conta: ContaPagarInsert, userId?: string) {
     // Validação RBAC: financeiro.contas_pagar.create
     if (userId && conta.tenant_id) {
       await validarPermissao(userId, conta.tenant_id, 'financeiro.contas_pagar.create')
@@ -516,7 +579,7 @@ export const financeiroService = {
     return data
   },
 
-  async atualizarContaPagar(id: string, updates: any, userId?: string, tenantId?: string) {
+  async atualizarContaPagar(id: string, updates: ContaPagarUpdate, userId?: string, tenantId?: string) {
     // Validação RBAC: financeiro.contas_pagar.update
     if (userId && tenantId) {
       await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.update')
@@ -593,7 +656,7 @@ export const financeiroService = {
     if (error) throw error
     
     // Mapeia para manter compatibilidade com a UI que espera campos da view
-    return (data as any[]).map(c => ({
+    return ((data as Cobranca[] | null) || []).map((c): CobrancaProjetada => ({
       ...c,
       valor_total_projetado: c.valor,
       valor_multa_projetado: 0,
@@ -615,7 +678,7 @@ export const financeiroService = {
 
     if (error) throw error
     
-    return ((data as any[]) || []).map(c => ({
+    return ((data as Cobranca[] | null) || []).map((c): CobrancaProjetada => ({
       ...c,
       valor_total_projetado: c.valor,
       valor_multa_projetado: 0,
@@ -632,12 +695,12 @@ export const financeiroService = {
        await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
      }
 
-     const { data, error } = await (supabase.rpc('registrar_pagamento_cobranca', {
+     const { data, error } = await financeiroRpcClient.rpc('registrar_pagamento_cobranca', {
         p_cobranca_id: cobrancaId,
         p_forma_pagamento: formaPagamento || null,
         p_comprovante_url: comprovanteUrl || null,
         p_usuario_id: userId || null
-     }) as any)
+     })
 
      if (error) {
        logger.error('Erro na RPC registrar_pagamento_cobranca:', error)
@@ -666,13 +729,13 @@ export const financeiroService = {
       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
     }
 
-    const { data, error } = await (supabase.rpc('baixar_boleto_concorrencia', {
+    const { data, error } = await financeiroRpcClient.rpc('baixar_boleto_concorrencia', {
       p_cobranca_id: cobrancaId,
       p_forma_pagamento: formaPagamento,
       p_comprovante_url: comprovanteUrl || null,
       p_usuario_id: userId || null,
       p_codigo_transacao: `manual_${Date.now()}`
-    }) as any)
+    })
 
     if (error) {
       logger.error('Erro na RPC baixar_boleto_concorrencia:', error)
@@ -736,14 +799,14 @@ export const financeiroService = {
    * Idempotente: não duplica cobranças já existentes.
    */
   async gerarMensalidadesFaltantes() {
-    const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_tenant_atual' as any) as any)
+    const { data, error } = await financeiroRpcClient.rpc('fn_gerar_mensalidades_tenant_atual')
 
     if (error) {
       logger.error('Erro ao gerar mensalidades faltantes:', error)
       throw error
     }
 
-    return data as { success: boolean; mensalidades_criadas: number; tenant_id: string }
+    return data
   },
 
   /**
@@ -751,17 +814,17 @@ export const financeiroService = {
    * Útil para o Portal garantir que o responsável veja o ano todo do aluno selecionado.
    */
    async repararMensalidadesAluno(alunoId: string, tenantId: string, ano?: number) {
-     const { data, error } = await (supabase.rpc('fn_gerar_mensalidades_aluno' as any, {
+     const { data, error } = await financeiroRpcClient.rpc('fn_gerar_mensalidades_aluno', {
        p_aluno_id: alunoId,
        p_tenant_id: tenantId,
        p_ano: ano || new Date().getFullYear()
-     }) as any)
+     })
 
     if (error) {
       logger.error('Erro ao reparar mensalidades do aluno:', error)
       throw error
     }
 
-    return data as { success: boolean; mensalidades_criadas: number }
+    return data
   },
 }

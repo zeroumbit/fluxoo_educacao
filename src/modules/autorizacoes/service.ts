@@ -1,4 +1,14 @@
 import { supabase } from '@/lib/supabase'
+import type {
+  AutorizacaoAuditoriaInsert,
+  AutorizacaoModelo,
+  AutorizacaoModeloInsert,
+  AutorizacaoModeloUpdate,
+  AutorizacaoResposta,
+  AutorizacaoRespostaInsert,
+  AutorizacaoRespostaUpdate,
+} from '@/lib/database.types'
+import type { PostgrestError } from '@supabase/supabase-js'
 import { MODELOS_SISTEMA_PADRAO } from './constants'
 
 export type CategoriaAutorizacao = 
@@ -34,13 +44,33 @@ export const CATEGORIA_CORES: Record<string, { bg: string; text: string; border:
   eventos: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
 }
 
+type ModeloSistemaPadrao = (typeof MODELOS_SISTEMA_PADRAO)[number]
+
+type AutorizacaoModeloVirtual = ModeloSistemaPadrao & {
+  id: string
+  tenant_id: null
+  ativa: true
+  isDefault: true
+}
+
+export type AutorizacaoModeloComDefault = AutorizacaoModelo | AutorizacaoModeloVirtual
+
+type RespostaComRelacionamentos = AutorizacaoResposta & {
+  modelo: Pick<AutorizacaoModelo, 'id' | 'titulo' | 'categoria' | 'descricao_curta' | 'obrigatoria'> | null
+  responsavel: { nome: string; cpf: string } | null
+}
+
+type RespostaResumo = Pick<AutorizacaoResposta, 'modelo_id' | 'aceita' | 'data_resposta'> & {
+  responsavel: { nome: string } | null
+}
+
 export const autorizacoesService = {
   // ==========================================
   // MODELOS (Admin)
   // ==========================================
   async buscarModelos(tenantId: string) {
     // Busca modelos da escola no banco
-    const { data, error } = await (supabase.from('autorizacoes_modelos' as any) as any)
+    const { data, error } = await supabase.from('autorizacoes_modelos')
       .select('*')
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
       .eq('ativa', true)
@@ -48,7 +78,7 @@ export const autorizacoesService = {
       .order('ordem')
 
     if (error) throw error
-    const dbModelos = (data as any[]) || []
+    const dbModelos = data || []
     
     // Mescla com padrões do sistema (Code-First)
     return this.mesclarComPadroesSistema(dbModelos)
@@ -57,7 +87,7 @@ export const autorizacoesService = {
   /**
    * Helper para mesclar modelos do banco com padrões definidos no código (constants.ts)
    */
-  mesclarComPadroesSistema(dbModelos: any[], incluirInativos = false) {
+  mesclarComPadroesSistema(dbModelos: AutorizacaoModelo[], incluirInativos = false): AutorizacaoModeloComDefault[] {
     // Filtra modelos do sistema que já existem no banco (pelo título e categoria)
     const virtuais = MODELOS_SISTEMA_PADRAO.filter(padrao => {
       return !dbModelos.some(db => db.categoria === padrao.categoria && db.titulo === padrao.titulo)
@@ -89,7 +119,7 @@ export const autorizacoesService = {
   // RESPOSTAS (Admin — visualização)
   // ==========================================
   async buscarRespostasPorAluno(alunoId: string) {
-    const { data, error } = await (supabase.from('autorizacoes_respostas' as any) as any)
+    const { data, error } = await supabase.from('autorizacoes_respostas')
       .select(`
         *,
         modelo:autorizacoes_modelos(id, titulo, categoria, descricao_curta, obrigatoria),
@@ -99,30 +129,30 @@ export const autorizacoesService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as RespostaComRelacionamentos[] | null) || []
   },
 
   async buscarResumoAutorizacoesPorAluno(alunoId: string, tenantId: string) {
     const [modelosRes, respostasRes] = await Promise.all([
-      (supabase.from('autorizacoes_modelos' as any) as any)
+      supabase.from('autorizacoes_modelos')
         .select('id, titulo, categoria, descricao_curta, obrigatoria, ordem, ativa, tenant_id')
         .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
         .order('categoria').order('ordem'),
-      (supabase.from('autorizacoes_respostas' as any) as any)
+      supabase.from('autorizacoes_respostas')
         .select('modelo_id, aceita, data_resposta, responsavel:responsaveis(nome)')
         .eq('aluno_id', alunoId)
     ])
 
     if (modelosRes.error) throw modelosRes.error
 
-    const dbModelos = (modelosRes.data as any[]) || []
+    const dbModelos = (modelosRes.data as AutorizacaoModelo[] | null) || []
     const modelos = this.mesclarComPadroesSistema(dbModelos, true) // Inclui inativos para o admin ver o que falta
     
-    const respostas = (respostasRes.data as any[]) || []
+    const respostas = (respostasRes.data as RespostaResumo[] | null) || []
 
     // Agrupa models com suas respostas
-    return modelos.map((modelo: any) => {
-      const resposta = respostas.find((r: any) => r.modelo_id === modelo.id)
+    return modelos.map((modelo) => {
+      const resposta = respostas.find((r) => r.modelo_id === modelo.id)
       return {
         ...modelo,
         aceita: resposta?.aceita ?? null, // null = ainda não respondido
@@ -137,17 +167,17 @@ export const autorizacoesService = {
   // ==========================================
   async buscarRespostasResponsavel(responsavelId: string, alunoId: string, tenantId: string) {
     const [modelosEscolaRes, modelosGlobaisRes, respostasRes] = await Promise.all([
-      (supabase.from('autorizacoes_modelos' as any) as any)
+      supabase.from('autorizacoes_modelos')
         .select('*')
         .eq('tenant_id', tenantId)
         .eq('ativa', true)
         .order('ordem'),
-      (supabase.from('autorizacoes_modelos' as any) as any)
+      supabase.from('autorizacoes_modelos')
         .select('*')
         .is('tenant_id', null)
         .eq('ativa', true)
         .order('ordem'),
-      (supabase.from('autorizacoes_respostas' as any) as any)
+      supabase.from('autorizacoes_respostas')
         .select('*')
         .eq('responsavel_id', responsavelId)
         .eq('aluno_id', alunoId)
@@ -155,8 +185,8 @@ export const autorizacoesService = {
 
     // Trata erros de forma grace: loga e continua com array vazio
     // para sempre exibir ao menos os modelos virtuais do sistema
-    const dbModelosEscola = !modelosEscolaRes.error ? (modelosEscolaRes.data as any[]) || [] : []
-    const dbModelosGlobais = !modelosGlobaisRes.error ? (modelosGlobaisRes.data as any[]) || [] : []
+    const dbModelosEscola = !modelosEscolaRes.error ? modelosEscolaRes.data || [] : []
+    const dbModelosGlobais = !modelosGlobaisRes.error ? modelosGlobaisRes.data || [] : []
 
     if (modelosEscolaRes.error) {
       console.warn('[Autorizações] Erro ao buscar modelos da escola:', modelosEscolaRes.error)
@@ -169,14 +199,14 @@ export const autorizacoesService = {
     const modelos = this.mesclarComPadroesSistema(dbModelos)
 
     // Respostas podem falhar, tratamos como opcionais
-    const respostas = !respostasRes.error ? (respostasRes.data as any[]) || [] : []
+    const respostas = !respostasRes.error ? respostasRes.data || [] : []
 
     if (respostasRes.error) {
       console.warn('[Autorizações] Erro ao buscar respostas:', respostasRes.error)
     }
 
-    return modelos.map((modelo: any) => {
-      const resposta = respostas.find((r: any) => r.modelo_id === modelo.id)
+    return modelos.map((modelo) => {
+      const resposta = respostas.find((r) => r.modelo_id === modelo.id)
       return {
         ...modelo,
         resposta_id: resposta?.id ?? null,
@@ -218,34 +248,37 @@ export const autorizacoesService = {
     }
 
     // Verifica se já existe
-    const { data: existente } = await (supabase.from('autorizacoes_respostas' as any) as any)
+    const { data: existente } = await supabase.from('autorizacoes_respostas')
       .select('id')
       .eq('modelo_id', modeloIdReal)
       .eq('aluno_id', dados.aluno_id)
       .eq('responsavel_id', dados.responsavel_id)
       .maybeSingle()
 
-    let error: any
+    let error: PostgrestError | null
 
     if (existente) {
       // Atualiza
-      const res = await (supabase.from('autorizacoes_respostas' as any) as any)
-        .update({
-          aceita: dados.aceita,
-          texto_lido: dados.texto_lido,
-          data_resposta: new Date().toISOString(),
-          data_revogacao: !dados.aceita ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        } as any)
+      const updatePayload: AutorizacaoRespostaUpdate = {
+        aceita: dados.aceita,
+        texto_lido: dados.texto_lido,
+        data_resposta: new Date().toISOString(),
+        data_revogacao: !dados.aceita ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      }
+      const res = await supabase.from('autorizacoes_respostas')
+        .update(updatePayload)
         .eq('id', existente.id)
       error = res.error
     } else {
       // Insere
-      const res = await (supabase.from('autorizacoes_respostas' as any) as any)
-        .insert({
-          ...dados,
-          data_resposta: new Date().toISOString(),
-        } as any)
+      const insertPayload: AutorizacaoRespostaInsert = {
+        ...dados,
+        modelo_id: modeloIdReal,
+        data_resposta: new Date().toISOString(),
+      }
+      const res = await supabase.from('autorizacoes_respostas')
+        .insert(insertPayload)
       error = res.error
     }
 
@@ -271,7 +304,8 @@ export const autorizacoesService = {
     acao: 'autorizou' | 'revogou' | 'releu'
   }) {
     try {
-      await (supabase.from('autorizacoes_auditoria' as any) as any).insert(dados as any)
+      const insertPayload: AutorizacaoAuditoriaInsert = dados
+      await supabase.from('autorizacoes_auditoria').insert(insertPayload)
     } catch {
       console.warn('Falha ao registrar auditoria de autorização')
     }
@@ -282,30 +316,23 @@ export const autorizacoesService = {
   // ==========================================
   async buscarModelosAdmin(tenantId: string) {
     // Retorna globais + da escola, incluindo inativos
-    const { data, error } = await (supabase.from('autorizacoes_modelos' as any) as any)
+    const { data, error } = await supabase.from('autorizacoes_modelos')
       .select('*')
       .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`)
       .order('categoria')
       .order('ordem')
 
     if (error) throw error
-    const dbModelos = (data as any[]) || []
+    const dbModelos = data || []
     
     // Mescla com padrões do sistema para o admin poder ativar
     return this.mesclarComPadroesSistema(dbModelos, true)
   },
 
-  async criarModeloEscola(dados: {
-    tenant_id: string
-    categoria: string
-    titulo: string
-    descricao_curta: string
-    texto_completo: string
-    obrigatoria?: boolean
-    ordem?: number
-  }) {
-    const { data, error } = await (supabase.from('autorizacoes_modelos' as any) as any)
-      .insert({ ...dados, ativa: true } as any)
+  async criarModeloEscola(dados: Omit<AutorizacaoModeloInsert, 'ativa' | 'id' | 'created_at' | 'updated_at'>) {
+    const insertPayload: AutorizacaoModeloInsert = { ...dados, ativa: true }
+    const { data, error } = await supabase.from('autorizacoes_modelos')
+      .insert(insertPayload)
       .select()
       .single()
 
@@ -322,8 +349,9 @@ export const autorizacoesService = {
     obrigatoria?: boolean
     ordem?: number
   }) {
-    const { data, error } = await (supabase.from('autorizacoes_modelos' as any) as any)
-      .update({ ...updates, updated_at: new Date().toISOString() } as any)
+    const updatePayload: AutorizacaoModeloUpdate = { ...updates, updated_at: new Date().toISOString() }
+    const { data, error } = await supabase.from('autorizacoes_modelos')
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single()
@@ -333,8 +361,9 @@ export const autorizacoesService = {
   },
 
   async toggleAtivo(id: string, ativa: boolean) {
-    const { error } = await (supabase.from('autorizacoes_modelos' as any) as any)
-      .update({ ativa, updated_at: new Date().toISOString() } as any)
+    const updatePayload: AutorizacaoModeloUpdate = { ativa, updated_at: new Date().toISOString() }
+    const { error } = await supabase.from('autorizacoes_modelos')
+      .update(updatePayload)
       .eq('id', id)
 
     if (error) throw error

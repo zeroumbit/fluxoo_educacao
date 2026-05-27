@@ -20,7 +20,7 @@ export function usePlanos() {
 export function useUpsertPlano() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (plano: any) => superAdminService.upsertPlano(plano),
+    mutationFn: (plano: Parameters<typeof superAdminService.upsertPlano>[0]) => superAdminService.upsertPlano(plano),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'planos'] }),
   })
 }
@@ -44,7 +44,7 @@ export function useModulos() {
 export function useUpsertModulo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (modulo: any) => superAdminService.upsertModulo(modulo),
+    mutationFn: (modulo: Parameters<typeof superAdminService.upsertModulo>[0]) => superAdminService.upsertModulo(modulo),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'modulos'] }),
   })
 }
@@ -173,7 +173,7 @@ export function useAssinaturas() {
 export function useCreateAssinatura() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (assinatura: any) => superAdminService.createAssinatura(assinatura),
+    mutationFn: (assinatura: Parameters<typeof superAdminService.createAssinatura>[0]) => superAdminService.createAssinatura(assinatura),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'assinaturas'] }),
   })
 }
@@ -201,7 +201,7 @@ export function useConfirmarFatura() {
 export function useCreateFatura() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (fatura: any) => superAdminService.createFatura(fatura),
+    mutationFn: (fatura: Parameters<typeof superAdminService.createFatura>[0]) => superAdminService.createFatura(fatura),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'faturas'] })
       qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
@@ -302,7 +302,7 @@ export function useConfiguracaoRecebimento() {
 export function useUpdateConfiguracaoRecebimento() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (config: any) => superAdminService.updateConfiguracaoRecebimento(config),
+    mutationFn: (config: Parameters<typeof superAdminService.updateConfiguracaoRecebimento>[0]) => superAdminService.updateConfiguracaoRecebimento(config),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'config-recebimento'] })
       qc.invalidateQueries({ queryKey: ['portal', 'config-pix'] })
@@ -349,7 +349,7 @@ export function useToggleGatewayGlobal() {
 export function useUpdateGatewayCamposConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ gateway, campos }: { gateway: string; campos: any[] }) =>
+    mutationFn: ({ gateway, campos }: { gateway: string; campos: Parameters<typeof superAdminService.updateGatewayCamposConfig>[1] }) =>
       superAdminService.updateGatewayCamposConfig(gateway, campos),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'gateway-config'] }),
   })

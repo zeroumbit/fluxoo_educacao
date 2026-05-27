@@ -24,6 +24,21 @@ UsuarioSistemaInsert,
 UsuarioSistemaUpdate
 } from './types'
 
+type PerfilPermissionComPermission = {
+  scope_type: ScopeType
+  permission?: Pick<Permission, 'key'> | null
+}
+
+type PermissionOverrideComPermission = UserPermissionOverride & {
+  permission?: Pick<Permission, 'key'> | null
+}
+
+type ResolvedPermissionRpcRow = {
+  permission_key: string
+  scope: ScopeType
+  source: ResolvedPermission['source']
+}
+
 export const rbacService = {
   // ==========================================
   // MÓDULOS DO SISTEMA (Global)
@@ -35,7 +50,7 @@ export const rbacService = {
       .order('ordem', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as SystemModule[] | null) || []
   },
 
   // ==========================================
@@ -50,7 +65,7 @@ export const rbacService = {
       .order('recurso', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as Permission[] | null) || []
   },
 
   async listarPermissoesPorModulo(moduloKey: string): Promise<Permission[]> {
@@ -61,7 +76,7 @@ export const rbacService = {
       .order('recurso', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as Permission[] | null) || []
   },
 
   // ==========================================
@@ -81,7 +96,7 @@ export const rbacService = {
 
     const { data, error } = await query
     if (error) throw error
-    return (data as any[]) || []
+    return (data as PerfilAcesso[] | null) || []
   },
 
   async buscarPerfil(id: string) {
@@ -138,7 +153,7 @@ export const rbacService = {
       .eq('perfil_id', perfilId)
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as PerfilPermissionComPermission[] | null) || []
   },
 
   async definirPermissoesDoPerfil(perfilId: string, permissoes: { permissionId: string; scope: ScopeType }[]) {
@@ -196,7 +211,7 @@ export const rbacService = {
       .order('nome', { ascending: true })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as CargoV2[] | null) || []
   },
 
   async criarCargo(cargo: CargoV2Insert): Promise<CargoV2> {
@@ -222,7 +237,7 @@ export const rbacService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as UsuarioSistema[] | null) || []
   },
 
   async buscarUsuarioPorAuthId(authUserId: string): Promise<UsuarioSistema | null> {
@@ -271,7 +286,7 @@ export const rbacService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as UserPermissionOverride[] | null) || []
   },
 
   async criarOverride(override: UserPermissionOverrideInsert) {
@@ -308,8 +323,8 @@ export const rbacService = {
       return this.resolverPermissoesClientSide(userId)
     }
 
-    const results = Array.isArray(data) ? data : []
-    return (results as any[]).map((d: any) => ({
+    const results = Array.isArray(data) ? data as ResolvedPermissionRpcRow[] : []
+    return results.map((d) => ({
       permission_key: d.permission_key,
       scope: d.scope,
       source: d.source,
@@ -331,7 +346,7 @@ export const rbacService = {
       const perfilPerms = await this.listarPermissoesDoPerfil(currentPerfilId)
       for (const pp of perfilPerms) {
         permissoes.push({
-          permission_key: (pp as any).permission?.key,
+          permission_key: pp.permission?.key,
           scope: pp.scope_type,
           source: 'perfil',
         })
@@ -339,7 +354,7 @@ export const rbacService = {
 
       // Subir na herança
       const perfil = await this.buscarPerfil(currentPerfilId)
-      currentPerfilId = (perfil as any)?.parent_perfil_id || null
+      currentPerfilId = perfil?.parent_perfil_id || null
       depth++
     }
 
@@ -350,7 +365,7 @@ export const rbacService = {
       .eq('user_id', userId)
 
     if (overrides) {
-      for (const ov of overrides as any[]) {
+      for (const ov of overrides as PermissionOverrideComPermission[]) {
         permissoes.push({
           permission_key: ov.permission?.key,
           scope: 'toda_escola',
@@ -373,7 +388,7 @@ export const rbacService = {
       .eq('tenant_id', tenantId)
 
     if (error) throw error
-    return (data as any[]) || []
+    return (data as ApprovalWorkflow[] | null) || []
   },
 
   async criarWorkflow(workflow: ApprovalWorkflowInsert): Promise<ApprovalWorkflow> {
@@ -413,7 +428,7 @@ export const rbacService = {
     const { data, error, count } = await query
 
     if (error) throw error
-    return { data: (data as any[]) || [], count: count || 0 }
+    return { data: (data as unknown[]) || [], count: count || 0 }
   },
 
   async criarAuditLog(log: AuditLogV2Insert) {

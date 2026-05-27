@@ -1,23 +1,45 @@
-import type {
+﻿import type {
+AtividadeTurmaInsert,
 MatriculaInsert,
 MatriculaUpdate,
-SeloInsert
+PlanoAulaTurmaInsert,
+SeloInsert,
+Turma
 } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { validarPermissao } from '@/lib/rbac-validation'
 import { supabase } from '@/lib/supabase'
 import type { AtividadeComTurmas,PlanoAulaComTurmas } from '../types'
 
+type TurmaProfessorVinculo = { turma_id: string }
+type TurmaCapacidade = Pick<Turma, 'nome' | 'capacidade_maxima' | 'alunos_ids'>
+type MatriculaCreatePayload = Pick<
+  MatriculaInsert,
+  'tenant_id' | 'aluno_id' | 'ano_letivo' | 'serie_ano' | 'turma_id' | 'turno' | 'valor_matricula' | 'status' | 'data_matricula'
+>
+type LegacyTableQuery<T> = {
+  select(columns?: string): LegacyTableQuery<T>
+  eq(column: string, value: unknown): LegacyTableQuery<T>
+  in(column: string, values: unknown[]): LegacyTableQuery<T>
+  then<TResult1 = { data: T[] | null; error: { message: string } | null }, TResult2 = never>(
+    onfulfilled?: ((value: { data: T[] | null; error: { message: string } | null }) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): PromiseLike<TResult1 | TResult2>
+}
+type LegacyAcademicoClient = {
+  from(table: 'turma_professores'): LegacyTableQuery<TurmaProfessorVinculo>
+}
+const legacyAcademicoClient = supabase as unknown as LegacyAcademicoClient
+
 export const academicoService = {
-  // MATRÍCULAS
+  // MATRÃCULAS
   async listarMatriculas(tenantId: string, professorId?: string) {
-    let query = supabase.from('matriculas' as any)
+    let query = supabase.from('matriculas')
       .select('*, aluno:alunos(nome_completo, cpf)')
       .eq('tenant_id', tenantId)
 
     if (professorId) {
-      const { data: vincs } = await supabase
-        .from('turma_professores' as any)
+      const { data: vincs } = await legacyAcademicoClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
       const idsT = vincs?.map((v: { turma_id: string }) => v.turma_id) || []
@@ -30,112 +52,113 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarMatricula(matricula: Partial<MatriculaInsert> & Record<string, unknown>, userId?: string) {
-    // Validação RBAC: academico.matriculas.create
+    // ValidaÃ§Ã£o RBAC: academico.matriculas.create
     if (userId && matricula.tenant_id) {
       await validarPermissao(userId, matricula.tenant_id, 'academico.matriculas.create')
     }
 
     // Limpeza rigorosa: Enviar apenas o que o banco espera (baseado em database.types.ts)
-    const payload = {
-      tenant_id: matricula.tenant_id,
-      aluno_id: matricula.aluno_id,
+    const payload: MatriculaCreatePayload = {
+      tenant_id: String(matricula.tenant_id || ''),
+      aluno_id: String(matricula.aluno_id || ''),
       ano_letivo: Number(matricula.ano_letivo),
-      serie_ano: matricula.serie_ano,
-      turma_id: matricula.turma_id || null,
-      turno: matricula.turno,
+      serie_ano: String(matricula.serie_ano || ''),
+      turma_id: typeof matricula.turma_id === 'string' ? matricula.turma_id : null,
+      turno: String(matricula.turno || ''),
       valor_matricula: Number(matricula.valor_matricula),
       status: matricula.status || 'ativa',
-      data_matricula: matricula.data_matricula || new Date().toISOString().split('T')[0]
+      data_matricula: String(matricula.data_matricula || new Date().toISOString().split('T')[0])
     }
 
     if (!payload.tenant_id || !payload.aluno_id) {
-      const errorMsg = 'Dados obrigatórios ausentes: tenant_id ou aluno_id.';
-      logger.error('❌ [academicoService.criarMatricula]', errorMsg, payload);
+      const errorMsg = 'Dados obrigatÃ³rios ausentes: tenant_id ou aluno_id.';
+      logger.error('âŒ [academicoService.criarMatricula]', errorMsg, payload);
       throw new Error(errorMsg);
     }
 
-// --- NOVA VALIDAÇÃO DE CAPACIDADE ---
+// --- NOVA VALIDAÃ‡ÃƒO DE CAPACIDADE ---
     if (payload.turma_id) {
-      const { data: turma, error: tErr } = await supabase.from('turmas' as any)
+      const { data: turma, error: tErr } = await supabase.from('turmas')
         .select('nome, capacidade_maxima, alunos_ids')
         .eq('id', payload.turma_id)
-        .single() as any
+        .single()
       
       if (turma) {
-        const matriculados = ((turma as any)?.alunos_ids || []).length
-        if ((turma as any)?.capacidade_maxima && matriculados >= (turma as any)?.capacidade_maxima) {
-          throw new Error(`Turma cheia! A turma "${(turma as any)?.nome}" possui capacidade para ${(turma as any)?.capacidade_maxima} alunos e já tem ${matriculados} matriculados.`)
-        }
+        const turmaCapacidade = turma as TurmaCapacidade
+        const matriculados = (turmaCapacidade.alunos_ids || []).length
+        if (turmaCapacidade.capacidade_maxima && matriculados >= turmaCapacidade.capacidade_maxima) {
+          throw new Error(`Turma cheia! A turma "${turmaCapacidade.nome}" possui capacidade para ${turmaCapacidade.capacidade_maxima} alunos e já tem ${matriculados} matriculados.`)
       }
+        }
     }
     // ------------------------------------
 
-    // Tenta primeiro com plural (padrão do sistema)
-    const { data: insertedData, error } = await supabase.from('matriculas' as any)
-      .insert(payload as any)
+    // Tenta primeiro com plural (padrÃ£o do sistema)
+    const { data: insertedData, error } = await supabase.from('matriculas')
+      .insert(payload)
       .select()
-      .single() as any
+      .single()
 
     if (error) {
       if (error.code === '42P01') {
-         throw new Error(`Erro de Banco de Dados: Uma regra de automação (Trigger) está tentando acessar uma tabela inexistente (${error.message}). Por favor, execute a migration 058 no SQL Editor.`);
+         throw new Error(`Erro de Banco de Dados: Uma regra de automaÃ§Ã£o (Trigger) estÃ¡ tentando acessar uma tabela inexistente (${error.message}). Por favor, execute a migration 058 no SQL Editor.`);
       }
       throw error
     }
     
     if (!insertedData) {
-      throw new Error('Matrícula inserida, mas nenhum dado retornado pelo banco.')
+      throw new Error('MatrÃ­cula inserida, mas nenhum dado retornado pelo banco.')
     }
 
     const data = insertedData
 
-    logger.info('✅ [academicoService.criarMatricula] Matrícula criada:', data.id)
-    // A geração financeira automática fica no banco via trigger
-    // trg_gerar_financeiro_pos_matricula, evitando dupla geração no service.
+    logger.info('âœ… [academicoService.criarMatricula] MatrÃ­cula criada:', data.id)
+    // A geraÃ§Ã£o financeira automÃ¡tica fica no banco via trigger
+    // trg_gerar_financeiro_pos_matricula, evitando dupla geraÃ§Ã£o no service.
 
-    // Tenta sincronizar o valor da mensalidade no cadastro do aluno para reflexão no portal/listagem
+    // Tenta sincronizar o valor da mensalidade no cadastro do aluno para reflexÃ£o no portal/listagem
     try {
-      const { data: turma } = await (supabase.from('turmas' as any) as any)
+      const { data: turma } = await supabase.from('turmas')
         .select('valor_mensalidade')
         .eq('id', data.turma_id)
         .maybeSingle()
 
-      await (supabase.from('alunos' as any) as any)
+      await supabase.from('alunos')
         .update({ 
           valor_mensalidade_atual: turma?.valor_mensalidade || data.valor_matricula,
           status: 'ativo'
         })
         .eq('id', data.aluno_id)
     } catch (syncError) {
-      logger.error('⚠️ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
+      logger.error('âš ï¸ [academicoService.criarMatricula] Erro ao sincronizar valor no aluno:', syncError)
     }
 
-    // Tenta disparar o informativo de boas-vindas e transparência financeira
+    // Tenta disparar o informativo de boas-vindas e transparÃªncia financeira
     try {
       const { welcomeService } = await import('@/modules/comunicacao/welcome.service')
       await welcomeService.sendWelcomeRelease(data.id)
     } catch (welcomeError) {
-      logger.error('⚠️ [academicoService.criarMatricula] Erro ao disparar Welcome Release:', welcomeError)
+      logger.error('âš ï¸ [academicoService.criarMatricula] Erro ao disparar Welcome Release:', welcomeError)
     }
 
     return data
   },
   async atualizarMatricula(id: string, tenantId: string, matricula: Partial<MatriculaUpdate> & Record<string, unknown>, userId?: string) {
-    // Validação RBAC: academico.matriculas.update
+    // ValidaÃ§Ã£o RBAC: academico.matriculas.update
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.matriculas.update')
     }
 
-    // --- NOVA VALIDAÇÃO DE CAPACIDADE NO UPDATE ---
+    // --- NOVA VALIDAÃ‡ÃƒO DE CAPACIDADE NO UPDATE ---
     if (matricula.turma_id) {
-      const { data: currentMatricula } = await (supabase.from('matriculas' as any) as any)
+      const { data: currentMatricula } = await supabase.from('matriculas')
         .select('turma_id, aluno_id')
         .eq('id', id)
         .single();
       
-      // Se estiver mudando de turma, ou se a turma_id está sendo atribuída agora (anteriormente null)
+      // Se estiver mudando de turma, ou se a turma_id estÃ¡ sendo atribuÃ­da agora (anteriormente null)
       if (matricula.turma_id !== currentMatricula?.turma_id) {
-         const { data: turma, error: tErr } = await (supabase.from('turmas' as any) as any)
+         const { data: turma, error: tErr } = await supabase.from('turmas')
           .select('nome, capacidade_maxima, alunos_ids')
           .eq('id', matricula.turma_id)
           .single()
@@ -145,28 +168,28 @@ export const academicoService = {
           const AlunoJaNaTurma = (turma.alunos_ids || []).includes(currentMatricula?.aluno_id);
 
           if (!AlunoJaNaTurma && turma.capacidade_maxima && matriculados >= turma.capacidade_maxima) {
-            throw new Error(`Turma cheia! A turma "${turma.nome}" possui capacidade para ${turma.capacidade_maxima} alunos e já tem ${matriculados} matriculados.`);
+            throw new Error(`Turma cheia! A turma "${turma.nome}" possui capacidade para ${turma.capacidade_maxima} alunos e jÃ¡ tem ${matriculados} matriculados.`);
           }
         }
       }
     }
     // ----------------------------------------------
 
-    // 1. Atualizar a matrícula
-    const { data: updatedList, error } = await (supabase.from('matriculas' as any) as any)
+    // 1. Atualizar a matrÃ­cula
+    const { data: updatedList, error } = await supabase.from('matriculas')
       .update(matricula)
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .select()
     
     if (error) throw error
-    if (!updatedList || updatedList.length === 0) throw new Error('Matrícula não encontrada.')
+    if (!updatedList || updatedList.length === 0) throw new Error('MatrÃ­cula nÃ£o encontrada.')
     
     const updatedMatricula = updatedList[0]
 
-    // 2. Sincronizar com Aluno (Reflexão no cadastro e portal)
+    // 2. Sincronizar com Aluno (ReflexÃ£o no cadastro e portal)
     try {
-      await (supabase.from('alunos' as any) as any)
+      await supabase.from('alunos')
         .update({ 
           valor_mensalidade_atual: updatedMatricula.valor_matricula,
           status: updatedMatricula.status === 'ativa' ? 'ativo' : 'inativo'
@@ -174,26 +197,26 @@ export const academicoService = {
         .eq('id', updatedMatricula.aluno_id)
         .eq('tenant_id', tenantId)
     } catch (alunoError) {
-      console.error('⚠️ Erro ao sincronizar dados do aluno:', alunoError)
+      console.error('âš ï¸ Erro ao sincronizar dados do aluno:', alunoError)
     }
 
-    // 3. Sincronizar Financeiro (Reflexão nas cobranças)
+    // 3. Sincronizar Financeiro (ReflexÃ£o nas cobranÃ§as)
     try {
       const { financeiroService } = await import('@/modules/financeiro/service')
       await financeiroService.sincronizarCobrancasMatricula(updatedMatricula)
     } catch (finError) {
-      console.error('⚠️ Erro ao sincronizar cobranças financeiras:', finError)
+      console.error('âš ï¸ Erro ao sincronizar cobranÃ§as financeiras:', finError)
     }
 
     return updatedMatricula
   },
   async excluirMatricula(id: string, tenantId: string, userId?: string) {
-    // Validação RBAC: academico.matriculas.delete
+    // ValidaÃ§Ã£o RBAC: academico.matriculas.delete
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.matriculas.delete')
     }
 
-    const { error } = await (supabase.from('matriculas' as any) as any)
+    const { error } = await supabase.from('matriculas')
       .delete()
       .eq('id', id)
       .eq('tenant_id', tenantId)
@@ -202,7 +225,7 @@ export const academicoService = {
   async verificarMatriculaAtiva(alunoId: string, tenantId: string) {
     if (!tenantId || !alunoId) return false
     try {
-      const { data } = await (supabase.from('matriculas' as any) as any)
+      const { data } = await supabase.from('matriculas')
         .select('id')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
@@ -216,7 +239,7 @@ export const academicoService = {
   async buscarMatriculaAtiva(alunoId: string, tenantId: string) {
     if (!tenantId || !alunoId) return null
     try {
-      const { data, error } = await (supabase.from('matriculas' as any) as any)
+      const { data, error } = await supabase.from('matriculas')
         .select('id, ano_letivo, serie_ano, turno, valor_matricula, status, data_matricula')
         .eq('aluno_id', alunoId)
         .eq('tenant_id', tenantId)
@@ -225,18 +248,18 @@ export const academicoService = {
       if (error) throw error
       return data
     } catch (e) {
-      console.error('❌ Erro em buscarMatriculaAtiva:', e)
+      console.error('âŒ Erro em buscarMatriculaAtiva:', e)
       return null
     }
   },
   async listarMatriculasAtivasPorAluno(tenantId: string, professorId?: string) {
-    let query = supabase.from('matriculas' as any)
+    let query = supabase.from('matriculas')
       .select('aluno_id, id, status, ano_letivo, serie_ano, turno')
       .eq('tenant_id', tenantId)
       .eq('status', 'ativa')
 
     if (professorId) {
-      const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+      const { data: vincs } = await legacyAcademicoClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
       const idsT = vincs?.map((v: { turma_id: string }) => v.turma_id) || []
@@ -250,7 +273,7 @@ export const academicoService = {
   },
 
   async listarMatriculasAtivasPorTurma(tenantId: string, turmaId: string) {
-    const { data, error } = await supabase.from('matriculas' as any)
+    const { data, error } = await supabase.from('matriculas')
       .select('aluno_id, id, status, ano_letivo, serie_ano, turno, turma_id')
       .eq('tenant_id', tenantId)
       .eq('turma_id', turmaId)
@@ -262,21 +285,21 @@ export const academicoService = {
 
   // PLANOS DE AULA
   async listarPlanosAula(tenantId: string, professorId?: string) {
-    // Select explícito para garantir que professor_id seja retornado
-    let query = supabase.from('planos_aula' as any)
+    // Select explÃ­cito para garantir que professor_id seja retornado
+    let query = supabase.from('planos_aula')
       .select('id, tenant_id, filial_id, disciplina, data_aula, conteudo_previsto, conteudo_realizado, observacoes, professor_id, created_at, updated_at, planos_aula_turmas(*, turma:turmas(nome))')
       .eq('tenant_id', tenantId)
 
     if (professorId) {
        // Filtra planos via tabela de relacionamento com turmas autorizadas
-       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+       const { data: vincs } = await legacyAcademicoClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
        const idsT = vincs?.map((v: { turma_id: string }) => v.turma_id) || []
 
        if (idsT.length === 0) return []
 
-       const { data: planosIds } = await (supabase.from('planos_aula_turmas' as any) as any)
+       const { data: planosIds } = await supabase.from('planos_aula_turmas')
          .select('plano_aula_id')
          .in('turma_id', idsT)
 
@@ -291,7 +314,7 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarPlanoAula(planoComTurmas: PlanoAulaComTurmas, userId?: string, professorId?: string) {
-    // Validação RBAC: academico.planos_aula.create
+    // ValidaÃ§Ã£o RBAC: academico.planos_aula.create
     if (userId && planoComTurmas.tenant_id) {
       await validarPermissao(userId, planoComTurmas.tenant_id, 'academico.planos_aula.create')
     }
@@ -304,13 +327,13 @@ export const academicoService = {
     }
 
     // 1. Criar o plano de aula
-    const { data: plano, error: planoError } = await (supabase.from('planos_aula' as any) as any)
+    const { data: plano, error: planoError } = await supabase.from('planos_aula')
       .insert(planoData)
       .select()
       .single()
     if (planoError) throw planoError
 
-    // 2. Criar os vínculos com turmas se houver
+    // 2. Criar os vÃ­nculos com turmas se houver
     if (turmasToBatch && turmasToBatch.length > 0) {
       const records = turmasToBatch.map((t: { turma_id: string; turno: string; horario?: string }) => ({
         plano_aula_id: plano.id,
@@ -319,11 +342,11 @@ export const academicoService = {
         horario: t.horario || null,
         tenant_id: planoData.tenant_id
       }))
-      const { error: batchError } = await (supabase.from('planos_aula_turmas' as any) as any)
+      const { error: batchError } = await supabase.from('planos_aula_turmas')
         .insert(records)
 
       if (batchError) {
-        console.error('❌ [academicoService] Erro ao vincular turmas:', batchError)
+        console.error('âŒ [academicoService] Erro ao vincular turmas:', batchError)
         throw batchError
       }
     }
@@ -331,18 +354,18 @@ export const academicoService = {
     return plano
   },
   async atualizarPlanoAula(id: string, tenantId: string, planoComTurmas: PlanoAulaComTurmas, userId?: string, _professorId?: string) {
-    // Validação RBAC: academico.planos_aula.update
+    // ValidaÃ§Ã£o RBAC: academico.planos_aula.update
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.update')
     }
 
-    // Nota: A validação de propriedade (professor só edita seus próprios planos)
-    // é feita via RLS no banco de dados e na UI
+    // Nota: A validaÃ§Ã£o de propriedade (professor sÃ³ edita seus prÃ³prios planos)
+    // Ã© feita via RLS no banco de dados e na UI
 
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
     // 1. Atualizar o plano de aula
-    const { data: plano, error: planoError } = await (supabase.from('planos_aula' as any) as any)
+    const { data: plano, error: planoError } = await supabase.from('planos_aula')
       .update(planoData)
       .eq('id', id)
       .eq('tenant_id', tenantId)
@@ -350,8 +373,8 @@ export const academicoService = {
       .single()
     if (planoError) throw planoError
 
-    // 2. Atualizar os vínculos com turmas (limpar antigos e inserir novos)
-    const { error: deleteError } = await (supabase.from('planos_aula_turmas' as any) as any)
+    // 2. Atualizar os vÃ­nculos com turmas (limpar antigos e inserir novos)
+    const { error: deleteError } = await supabase.from('planos_aula_turmas')
       .delete()
       .eq('plano_aula_id', id)
     if (deleteError) throw deleteError
@@ -364,7 +387,7 @@ export const academicoService = {
         horario: t.horario || null,
         tenant_id: tenantId
       }))
-      const { error: batchError } = await (supabase.from('planos_aula_turmas' as any) as any)
+      const { error: batchError } = await supabase.from('planos_aula_turmas')
         .insert(records)
       if (batchError) throw batchError
     }
@@ -372,15 +395,15 @@ export const academicoService = {
     return plano
   },
   async excluirPlanoAula(id: string, tenantId: string, userId?: string, _professorId?: string) {
-    // Validação RBAC: academico.planos_aula.delete
+    // ValidaÃ§Ã£o RBAC: academico.planos_aula.delete
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.planos_aula.delete')
     }
 
-    // Nota: A validação de propriedade (professor só exclui seus próprios planos) 
-    // é feita via RLS no banco de dados e na UI
+    // Nota: A validaÃ§Ã£o de propriedade (professor sÃ³ exclui seus prÃ³prios planos) 
+    // Ã© feita via RLS no banco de dados e na UI
     
-    const { error } = await (supabase.from('planos_aula' as any) as any)
+    const { error } = await supabase.from('planos_aula')
       .delete()
       .eq('id', id)
       .eq('tenant_id', tenantId)
@@ -389,19 +412,19 @@ export const academicoService = {
 
   // ATIVIDADES
   async listarAtividades(tenantId: string, professorId?: string) {
-    let query = supabase.from('atividades' as any)
+    let query = supabase.from('atividades')
       .select('*, atividades_turmas(*, turma:turmas(nome))')
       .eq('tenant_id', tenantId)
 
     if (professorId) {
-       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+       const { data: vincs } = await legacyAcademicoClient.from('turma_professores')
         .select('turma_id')
         .eq('professor_id', professorId)
        const idsT = vincs?.map((v: { turma_id: string }) => v.turma_id) || []
        
        if (idsT.length === 0) return []
        
-       const { data: ativIds } = await (supabase.from('atividades_turmas' as any) as any)
+       const { data: ativIds } = await supabase.from('atividades_turmas')
          .select('atividade_id')
          .in('turma_id', idsT)
        
@@ -415,7 +438,7 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarAtividade(atividadeComTurmas: AtividadeComTurmas, userId?: string) {
-    // Validação RBAC: academico.atividades.create
+    // ValidaÃ§Ã£o RBAC: academico.atividades.create
     if (userId && atividadeComTurmas.tenant_id) {
       await validarPermissao(userId, atividadeComTurmas.tenant_id, 'academico.atividades.create')
     }
@@ -423,13 +446,13 @@ export const academicoService = {
     const { turmas: turmasToBatch, materiais, ...atividadeData } = atividadeComTurmas
 
     // 1. Criar a atividade
-    const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
+    const { data: atividade, error: atividadeError } = await supabase.from('atividades')
       .insert(atividadeData)
       .select()
       .single()
     if (atividadeError) throw atividadeError
 
-    // 2. Criar os vínculos com turmas se houver
+    // 2. Criar os vÃ­nculos com turmas se houver
     if (turmasToBatch && turmasToBatch.length > 0) {
       const records = turmasToBatch.map((t: { turma_id: string; turno?: string; horario?: string }) => ({
         atividade_id: atividade.id,
@@ -438,11 +461,11 @@ export const academicoService = {
         horario: t.horario || null,
         tenant_id: atividadeData.tenant_id
       }))
-      const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
+      const { error: batchError } = await supabase.from('atividades_turmas')
         .insert(records)
 
       if (batchError) {
-        console.error('❌ [academicoService] Erro ao vincular turmas na atividade:', batchError)
+        console.error('âŒ [academicoService] Erro ao vincular turmas na atividade:', batchError)
         throw batchError
       }
     }
@@ -450,7 +473,7 @@ export const academicoService = {
     return atividade
   },
   async atualizarAtividade(id: string, tenantId: string, atividadeComTurmas: AtividadeComTurmas, userId?: string) {
-    // Validação RBAC: academico.atividades.update
+    // ValidaÃ§Ã£o RBAC: academico.atividades.update
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.atividades.update')
     }
@@ -458,7 +481,7 @@ export const academicoService = {
     const { turmas: turmasToBatch, materiais, ...atividadeData } = atividadeComTurmas
 
     // 1. Atualizar a atividade
-    const { data: atividade, error: atividadeError } = await (supabase.from('atividades' as any) as any)
+    const { data: atividade, error: atividadeError } = await supabase.from('atividades')
       .update(atividadeData)
       .eq('id', id)
       .eq('tenant_id', tenantId)
@@ -466,8 +489,8 @@ export const academicoService = {
       .single()
     if (atividadeError) throw atividadeError
 
-    // 2. Atualizar os vínculos com turmas (limpar antigos e inserir novos)
-    const { error: deleteError } = await (supabase.from('atividades_turmas' as any) as any)
+    // 2. Atualizar os vÃ­nculos com turmas (limpar antigos e inserir novos)
+    const { error: deleteError } = await supabase.from('atividades_turmas')
       .delete()
       .eq('atividade_id', id)
     if (deleteError) throw deleteError
@@ -480,7 +503,7 @@ export const academicoService = {
         horario: t.horario || null,
         tenant_id: tenantId
       }))
-      const { error: batchError } = await (supabase.from('atividades_turmas' as any) as any)
+      const { error: batchError } = await supabase.from('atividades_turmas')
         .insert(records)
       if (batchError) throw batchError
     }
@@ -488,12 +511,12 @@ export const academicoService = {
     return atividade
   },
   async excluirAtividade(id: string, tenantId: string, userId?: string) {
-    // Validação RBAC: academico.atividades.delete
+    // ValidaÃ§Ã£o RBAC: academico.atividades.delete
     if (userId) {
       await validarPermissao(userId, tenantId, 'academico.atividades.delete')
     }
 
-    const { error } = await (supabase.from('atividades' as any) as any)
+    const { error } = await supabase.from('atividades')
       .delete()
       .eq('id', id)
       .eq('tenant_id', tenantId)
@@ -501,18 +524,18 @@ export const academicoService = {
   },
   // SELOS
   async listarSelos(tenantId: string, professorId?: string) {
-    let query = supabase.from('selos' as any)
+    let query = supabase.from('selos')
       .select('*, aluno:alunos(nome_completo)')
       .eq('tenant_id', tenantId)
 
     if (professorId) {
-       const { data: vincs } = await (supabase.from('turma_professores' as any) as any)
+       const { data: vincs } = await legacyAcademicoClient.from('turma_professores')
          .select('turma_id')
          .eq('professor_id', professorId)
        const idsT = vincs?.map((v: { turma_id: string }) => v.turma_id) || []
        if (idsT.length === 0) return []
 
-       const { data: matrs } = await (supabase.from('matriculas' as any) as any)
+       const { data: matrs } = await supabase.from('matriculas')
          .select('aluno_id')
          .in('turma_id', idsT)
          .eq('status', 'ativa')
@@ -526,9 +549,11 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async atribuirSelo(selo: SeloInsert) {
-    if (!selo.tenant_id) throw new Error('ID do tenant é obrigatório.')
-    const { data, error } = await (supabase.from('selos' as any) as any).insert(selo).select().single()
+    if (!selo.tenant_id) throw new Error('ID do tenant Ã© obrigatÃ³rio.')
+    const { data, error } = await supabase.from('selos').insert(selo).select().single()
     if (error) throw error
     return data
   },
 }
+
+
