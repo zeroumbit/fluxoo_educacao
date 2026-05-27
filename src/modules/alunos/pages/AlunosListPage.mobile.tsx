@@ -67,7 +67,7 @@ export function AlunosListPageMobile({ hideBottomNav = false }: { hideBottomNav?
     if (alunos) set(CACHE_KEY, alunos)
   }, [alunos])
 
-  const displayAlunos = (alunos || cachedAlunos) as any[]
+  const displayAlunos = alunos || cachedAlunos
 
   const alunosComMatriculaIds = useMemo(() => {
     return new Set(matriculasAtivas?.map(m => m.aluno_id) || [])

@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (escolaData) {
-        const escola = escolaData as any
+        const escola = escolaData as { id: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; cep?: string; razao_social?: string; gestor_user_id?: string | null }
         logger.debug('Escola encontrada para o usuario', { escolaId: escola.id })
         
         const endereco = escola?.logradouro ? {
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 3. FUNCIONÁRIO / RESPONSÁVEL
       try {
         // Step 1: Busca o funcionário sem joins aninhados para evitar erro 400 por RLS
-        const { data: funcionarioData } = await (supabase.from('funcionarios') as any)
+        const { data: funcionarioData } = await supabase.from('funcionarios')
           .select('id, nome_completo, tenant_id, email, user_id')
           .eq('user_id', user.id)
           .maybeSingle()
@@ -197,13 +197,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           let perfilId: string | undefined
           let areasAcesso: string[] | undefined
           try {
-            const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
+            const { data: rbacData } = await supabase.from('usuarios_sistema')
               .select('perfil_id')
               .eq('id', user.id)
               .maybeSingle()
             perfilId = rbacData?.perfil_id
             if (perfilId) {
-              const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
+                    const { data: pData } = await supabase.from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
               perfilNome = pData?.nome?.toLowerCase() || ''
             }
             // Áreas de acesso removidas (tabela não existe no banco)
@@ -246,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Step 1.2: Se não é funcionário direto, tenta usuários_sistema (RBAC V2)
         // Isso captura Contadores, Administradores e outros perfis que podem não estar na tabela de funcionários
         if (!funcionarioData) {
-          const { data: systemUserData } = await (supabase.from('usuarios_sistema' as any) as any)
+          const { data: systemUserData } = await supabase.from('usuarios_sistema')
             .select('id, tenant_id, perfil_id')
             .eq('id', user.id)
             .maybeSingle()
@@ -256,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             let perfilNome = ''
             try {
               if (systemUserData.perfil_id) {
-                const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', systemUserData.perfil_id).maybeSingle()
+                const { data: pData } = await supabase.from('perfis_acesso').select('nome').eq('id', systemUserData.perfil_id).maybeSingle()
                 perfilNome = pData?.nome?.toLowerCase() || ''
               }
             } catch { /* não crítico */ }
@@ -289,10 +289,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (responsavelData) {
           setAuthUser({
             user, session,
-            tenantId: (responsavelData as any).tenant_id || 'PENDING_TENANT',
+            tenantId: (responsavelData as { tenant_id?: string }).tenant_id || 'PENDING_TENANT',
             role: 'responsavel',
             responsavelId: responsavelData.id,
-            nome: (responsavelData as any).nome || user.user_metadata?.full_name || 'Responsável',
+            nome: (responsavelData as { nome?: string }).nome || user.user_metadata?.full_name || 'Responsável',
             email: user.email || '',
             isProfessor: false,
             isGestor: false,
@@ -303,7 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (user.email) {
             // Fallback por email — também sem join aninhado
-            const { data: funcByEmail } = await (supabase.from('funcionarios') as any)
+            const { data: funcByEmail } = await supabase.from('funcionarios')
               .select('id, nome_completo, tenant_id, email')
               .ilike('email', user.email)
               .maybeSingle()
@@ -313,13 +313,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 let perfilId: string | undefined
                 let areasAcesso: string[] | undefined
                 try {
-                  const { data: rbacData } = await (supabase.from('usuarios_sistema' as any) as any)
+                  const { data: rbacData } = await supabase.from('usuarios_sistema')
                     .select('perfil_id')
                     .eq('id', user.id)
                     .maybeSingle()
                   perfilId = rbacData?.perfil_id
                   if (perfilId) {
-                    const { data: pData } = await (supabase as any).from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
+              const { data: pData } = await supabase.from('perfis_acesso').select('nome').eq('id', perfilId).maybeSingle()
                     perfilNome = pData?.nome?.toLowerCase() || ''
                   }
                   areasAcesso = []
@@ -362,7 +362,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthUser({
         user, session,
         tenantId: user.user_metadata?.tenant_id || 'PENDING_TENANT',
-        role: (user.user_metadata?.role as any) || 'funcionario',
+        role: (user.user_metadata?.role as string) || 'funcionario',
         nome: user.user_metadata?.full_name || 'Usuário',
         email: user.email || '',
         isProfessor: false,

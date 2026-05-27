@@ -46,7 +46,7 @@ export function FinanceiroRelatoriosPageMobile() {
   const handleExport = () => {
     if (!fechamento || fechamento.length === 0) return
     const headers = ['Mês', 'Receitas Previsto', 'Receitas Recebido', 'Despesas Previsto', 'Despesas Pago', 'Saldo Atual']
-    const rows = (fechamento as any[]).map(item => [
+    const rows = (fechamento ?? []).map(item => [
       new Date(item.mes).toLocaleString('pt-BR', { month: 'short', year: '2-digit' }),
       item.total_receitas_previsto,
       item.total_receitas_recebido,
@@ -145,7 +145,7 @@ export function FinanceiroRelatoriosPageMobile() {
 
                 <div className="space-y-3">
                     <AnimatePresence mode="popLayout">
-                        {(fechamento as any[])?.map((month, idx) => (
+                        {(fechamento ?? []).map((month, idx) => (
                            <motion.div
                              key={idx}
                              layout

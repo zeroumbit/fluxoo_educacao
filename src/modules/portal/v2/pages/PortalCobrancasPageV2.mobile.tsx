@@ -476,7 +476,7 @@ function DetailDrawerMobile({ aluno, onClose, onPagar }: any) {
 
       {/* Tabs - Pendentes / Histórico */}
       <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex flex-col h-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pendentes' | 'historico')} className="w-full flex flex-col h-full">
           <div className="px-4 py-3 border-b border-slate-50 shrink-0">
             <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-[16px] h-12">
               <TabsTrigger

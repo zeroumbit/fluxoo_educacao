@@ -42,11 +42,12 @@ export function FilaVirtualAdminPage() {
   // Marcar como atendido/entregue
   const liberarMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('fila_virtual' as any) as any)
+      const { error } = await supabase
+        .from('fila_virtual')
         .update({ 
           status: 'atendido', 
           updated_at: new Date().toISOString() 
-        } as any)
+        } as never)
         .eq('id', id)
       if (error) throw error
     },
@@ -59,8 +60,8 @@ export function FilaVirtualAdminPage() {
 
   // Cálculo de Tempo Médio Cliente-Side (Zero Cost)
   // Substitui a dependência da view vw_fila_tempo_medio que pode não existir no banco
-  const aguardando = (filaData as any[])?.filter((f: any) => f.status === 'aguardando') || []
-  const concluidos = (filaData as any[])?.filter((f: any) => f.status === 'atendido') || []
+  const aguardando = filaData?.filter((f: any) => f.status === 'aguardando') || []
+  const concluidos = filaData?.filter((f: any) => f.status === 'atendido') || []
   
   const minMedio = React.useMemo(() => {
     if (!concluidos || concluidos.length === 0) return null
@@ -115,12 +116,12 @@ export function FilaVirtualAdminPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-3xl font-black text-zinc-900 tracking-tight">
-                            {(registro.alunos as any)?.nome_completo || 'Aluno'}
+                            {(registro.alunos as { nome_completo?: string })?.nome_completo || 'Aluno'}
                           </span>
                         </div>
                         <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
                           <span className="flex items-center gap-1.5 bg-zinc-100 px-2.5 py-1 rounded-md">
-                            <UserCheck className="h-4 w-4" /> Resp: {(registro.responsaveis as any)?.nome || 'N/A'}
+                            <UserCheck className="h-4 w-4" /> Resp: {(registro.responsaveis as { nome?: string })?.nome || 'N/A'}
                           </span>
                           <span className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">
                             <Clock className="h-4 w-4" /> Chegou às {format(new Date(registro.created_at), "HH:mm")}
@@ -172,7 +173,7 @@ export function FilaVirtualAdminPage() {
                       <div key={registro.id} className="p-4 text-sm flex items-center justify-between">
                         <div>
                           <p className="font-bold text-zinc-800 line-clamp-1">
-                            {(registro.alunos as any)?.nome_completo || 'Aluno'}
+                            {(registro.alunos as { nome_completo?: string })?.nome_completo || 'Aluno'}
                           </p>
                           <p className="text-xs text-muted-foreground flex gap-2 mt-0.5">
                             <span>Saiu {format(new Date(registro.updated_at || registro.created_at), 'HH:mm')}</span>

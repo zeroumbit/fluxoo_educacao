@@ -131,7 +131,7 @@ export function ContasPagarPageMobile() {
 
   const filteredContas = useMemo(() => {
     if (!contas) return []
-    return (contas as any[]).filter(c => {
+    return (contas ?? []).filter(c => {
       const matchStatus = filtro === 'todos' || c.status === filtro
       const matchBusca = c.nome.toLowerCase().includes(busca.toLowerCase()) || 
                          (c.favorecido || '').toLowerCase().includes(busca.toLowerCase())
@@ -141,7 +141,7 @@ export function ContasPagarPageMobile() {
 
   const volumes = useMemo(() => {
     if (!contas) return { total: 0, pendente: 0, pago: 0 }
-    const list = contas as any[]
+    const list = contas ?? []
     return {
       total: list.reduce((acc, c) => acc + Number(c.valor), 0),
       pendente: list.filter(c => c.status !== 'pago').reduce((acc, c) => acc + Number(c.valor), 0),
@@ -217,7 +217,7 @@ export function ContasPagarPageMobile() {
               ].map((chip) => (
                 <button
                   key={chip.id}
-                  onClick={() => setFiltro(chip.id as any)}
+                  onClick={() => setFiltro(chip.id)}
                   className={cn(
                     "whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
                     filtro === chip.id 

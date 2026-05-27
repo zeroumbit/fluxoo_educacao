@@ -17,16 +17,16 @@ export function ModalAutorizacoesAluno({ alunoId, alunoNome, open, onClose }: Pr
   const { data: autorizacoes = [], isLoading } = useResumoAutorizacoesPorAluno(alunoId)
 
   // Agrupa por categoria
-  const agrupadas = (autorizacoes as any[]).reduce((acc: Record<string, any[]>, item: any) => {
+  const agrupadas = autorizacoes.reduce((acc: Record<string, any[]>, item) => {
     if (!acc[item.categoria]) acc[item.categoria] = []
     acc[item.categoria].push(item)
     return acc
   }, {})
 
   const total = autorizacoes.length
-  const autorizadas = (autorizacoes as any[]).filter((a: any) => a.aceita === true).length
-  const pendentes = (autorizacoes as any[]).filter((a: any) => a.aceita === null).length
-  const recusadas = (autorizacoes as any[]).filter((a: any) => a.aceita === false).length
+  const autorizadas = autorizacoes.filter(a => a.aceita === true).length
+  const pendentes = autorizacoes.filter(a => a.aceita === null).length
+  const recusadas = autorizacoes.filter(a => a.aceita === false).length
 
   const footerActions = (
     <Button variant="outline" onClick={onClose} className="w-full rounded-xl">
@@ -86,7 +86,7 @@ export function ModalAutorizacoesAluno({ alunoId, alunoNome, open, onClose }: Pr
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    {(itens as any[]).map((item: any) => {
+                    {(itens as { aceita?: boolean | null; categoria?: string }[]).map((item) => {
                       const isAutorizado = item.aceita === true
                       const isRecusado = item.aceita === false
 

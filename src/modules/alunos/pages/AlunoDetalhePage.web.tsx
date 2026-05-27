@@ -80,8 +80,8 @@ export function AlunoDetalhePageWeb() {
         data_nascimento: aluno.data_nascimento,
         cpf: aluno.cpf || '',
         rg: aluno.rg || '',
-        genero: (aluno as any).genero || (aluno as any).sexo || '',
-        foto_url: (aluno as any).foto_url || '',
+        genero: aluno.genero || '',
+        foto_url: aluno.foto_url || '',
         cep: aluno.cep || '',
         logradouro: aluno.logradouro || '',
         numero: aluno.numero || '',
@@ -92,8 +92,8 @@ export function AlunoDetalhePageWeb() {
         patologias: Array.isArray(aluno.patologias) ? aluno.patologias : [],
         medicamentos: Array.isArray(aluno.medicamentos) ? aluno.medicamentos : [],
         observacoes_saude: aluno.observacoes_saude || '',
-        valor_mensalidade_atual: (aluno as any).valor_mensalidade_atual || 0,
-        data_ingresso: (aluno as any).data_ingresso || '',
+        valor_mensalidade_atual: aluno.valor_mensalidade_atual || 0,
+        data_ingresso: aluno.data_ingresso || '',
         status: aluno.status || 'ativo'
       })
     }
@@ -126,7 +126,7 @@ export function AlunoDetalhePageWeb() {
 
       logger.info('🚀 Enviando Payload WhiteList:', payload)
       
-      await atualizarAluno.mutateAsync({ id, aluno: payload as any })
+      await atualizarAluno.mutateAsync({ id, aluno: payload })
       toast.success('Dados atualizados com sucesso!')
       setIsEditing(false)
     } catch (err: any) {
@@ -325,8 +325,8 @@ export function AlunoDetalhePageWeb() {
     )
   }
 
-  const vinculos = (aluno as any).aluno_responsavel as any[]
-  const filial = (aluno as any).filiais as { nome_unidade: string } | null
+  const vinculos = (aluno as Aluno & { aluno_responsavel?: unknown[] }).aluno_responsavel ?? []
+  const filial = (aluno as Aluno & { filiais?: { nome_unidade: string } | null }).filiais ?? null
   const emTransferencia = !!id && alunosEmTransferenciaOrigem.has(id)
 
   return (
@@ -449,12 +449,12 @@ export function AlunoDetalhePageWeb() {
                 )}>
                   {emTransferencia ? 'em transferência' : aluno.status}
                 </Badge>
-                {(aluno as any).serie_ano && (
+                {(aluno as Aluno & { serie_ano?: string }).serie_ano && (
                   <Badge className="px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest bg-indigo-100 text-indigo-700 border-0 shadow-sm shadow-indigo-50">
                     <Users size={12} className="mr-1.5" />
-                    {(aluno as any).turma_nome && (aluno as any).turma_nome.includes((aluno as any).serie_ano) 
-                      ? (aluno as any).turma_nome 
-                      : `${(aluno as any).serie_ano}${(aluno as any).turma_nome ? ` • ${(aluno as any).turma_nome}` : ''}`}
+                    {(aluno as Aluno & { turma_nome?: string; serie_ano?: string }).turma_nome && (aluno as Aluno & { turma_nome?: string; serie_ano?: string }).turma_nome.includes((aluno as Aluno & { turma_nome?: string; serie_ano?: string }).serie_ano) 
+                      ? (aluno as Aluno & { turma_nome?: string; serie_ano?: string }).turma_nome 
+                      : `${(aluno as Aluno & { serie_ano?: string }).serie_ano}${(aluno as Aluno & { turma_nome?: string; serie_ano?: string }).turma_nome ? ` • ${(aluno as Aluno & { turma_nome?: string; serie_ano?: string }).turma_nome}` : ''}`}
                   </Badge>
                 )}
                 {filial && (
@@ -689,8 +689,8 @@ export function AlunoDetalhePageWeb() {
                    </div>
                  ) : (
                    <div className="flex flex-wrap gap-2">
-                     {aluno.patologias && (aluno.patologias as any).length > 0 ? (
-                       (aluno.patologias as any).map((p: any, i: number) => (
+                      {aluno.patologias && aluno.patologias.length > 0 ? (
+                        aluno.patologias.map((p, i) => (
                          <Badge key={i} className="bg-rose-50 text-rose-600 border-rose-100 font-bold px-3 py-1 rounded-lg">
                            {p}
                          </Badge>
@@ -747,8 +747,8 @@ export function AlunoDetalhePageWeb() {
                    </div>
                  ) : (
                    <div className="grid grid-cols-1 gap-2">
-                     {aluno.medicamentos && (aluno.medicamentos as any).length > 0 ? (
-                        (aluno.medicamentos as any).map((m: any, i: number) => (
+                      {aluno.medicamentos && aluno.medicamentos.length > 0 ? (
+                         aluno.medicamentos.map((m, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                              <div className="h-2 w-2 rounded-full bg-rose-400" /> {m}
                           </div>

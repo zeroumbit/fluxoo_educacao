@@ -262,7 +262,7 @@ export function FuncionariosPage() {
 
   // Transforma o catálogo em opções para o MultiSelect com ordenação customizada e limpeza de redundâncias
   const funcaoOptions = useMemo(() => {
-    const rawOptions = (funcoesCatalogo as any[]).map(f => {
+    const rawOptions = (funcoesCatalogo ?? []).map(f => {
       const isCorpoDocente = f.categoria === '3. Corpo Docente'
       const nomeNormalizado = isCorpoDocente ? normalizarCargo(f.nome) : f.nome
 
@@ -298,7 +298,7 @@ export function FuncionariosPage() {
 
   // Categorias únicas com a mesma ordenação customizada (para o modal de nova função)
   const categorias = useMemo(() => {
-    const uniqueCats = Array.from(new Set((funcoesCatalogo as any[]).map(f => f.categoria)))
+    const uniqueCats = Array.from(new Set((funcoesCatalogo ?? []).map(f => f.categoria)))
     
     return uniqueCats.sort((a, b) => {
       const idxA = CATEGORY_ORDER.indexOf(a)

@@ -78,7 +78,7 @@ export function TurmaCard({ turma, alunosCount, onViewAlunos, onViewProfessores,
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {turma.horario_inicio && turma.horario_fim 
                   ? `${turma.horario_inicio} - ${turma.horario_fim}` 
-                  : ((turma as any).horario || turma.sala || '—')}
+                  : ((turma as Turma & { horario?: string }).horario || turma.sala || '—')}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100/50">

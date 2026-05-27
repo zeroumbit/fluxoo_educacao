@@ -58,11 +58,12 @@ export function FilaVirtualAdminPageMobile() {
   // Marcar como atendido/entregue
   const liberarMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('fila_virtual' as any) as any)
+      const { error } = await supabase
+        .from('fila_virtual')
         .update({ 
           status: 'atendido', 
           updated_at: new Date().toISOString() 
-        } as any)
+        } as never)
         .eq('id', id)
       if (error) throw error
     },
@@ -72,8 +73,8 @@ export function FilaVirtualAdminPageMobile() {
     }
   })
 
-  const aguardando = (filaData as any[])?.filter((f: any) => f.status === 'aguardando') || []
-  const concluidos = (filaData as any[])?.filter((f: any) => f.status === 'atendido') || []
+  const aguardando = filaData?.filter((f: any) => f.status === 'aguardando') || []
+  const concluidos = filaData?.filter((f: any) => f.status === 'atendido') || []
   
   const minMedio = useMemo(() => {
     if (!concluidos || concluidos.length === 0) return null
@@ -178,10 +179,10 @@ export function FilaVirtualAdminPageMobile() {
                              </span>
                           </div>
                           <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight mb-1 truncate">
-                            {(reg.alunos as any)?.nome_completo}
+                            {(reg.alunos as { nome_completo?: string })?.nome_completo}
                           </h3>
                           <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                            <UserCheck className="h-3.5 w-3.5" /> {(reg.responsaveis as any)?.nome}
+                            <UserCheck className="h-3.5 w-3.5" /> {(reg.responsaveis as { nome?: string })?.nome}
                           </div>
                         </div>
                       </div>
@@ -227,7 +228,7 @@ export function FilaVirtualAdminPageMobile() {
                     <NativeCard key={reg.id} className="p-4 flex items-center justify-between border-slate-50 dark:border-slate-800/50">
                       <div className="flex-1 min-w-0 pr-4">
                         <p className="font-bold text-slate-800 dark:text-white truncate">
-                          {(reg.alunos as any)?.nome_completo}
+                          {(reg.alunos as { nome_completo?: string })?.nome_completo}
                         </p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
                           Saiu às {format(new Date(reg.updated_at || reg.created_at), 'HH:mm')}

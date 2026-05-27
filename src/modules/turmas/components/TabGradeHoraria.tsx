@@ -56,8 +56,8 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
   const mutationRemover = useRemoverGradeItem()
 
   // Helper values
-  const gradeTurma = (gradeTurmaDb || []) as any[]
-  const atribuicoes = (atribuicoesDb || []) as any[]
+  const gradeTurma = gradeTurmaDb ?? []
+  const atribuicoes = atribuicoesDb ?? []
   const disciplinas = (dbDisciplinas || []).filter(d => d.ativa !== false)
   const professores = dbProfessores || []
 
@@ -72,7 +72,7 @@ export function TabGradeHoraria({ turmaId }: TabGradeHorariaProps) {
         turma_id: turmaId,
         disciplina_id: disciplinaId,
         professor_id: professorId,
-        dia_semana: dia as any,
+        dia_semana: dia as 0 | 1 | 2 | 3 | 4 | 5 | 6,
         hora_inicio: horario.inicio,
         hora_fim: horario.fim,
         sala: '',

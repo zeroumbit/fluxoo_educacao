@@ -86,9 +86,9 @@ export function MeuPerfilPageWeb() {
     if (data && !('error' in data)) {
       setForm(prev => ({
         ...prev,
-        logradouro: (data as any).logradouro || '',
-        bairro: (data as any).bairro || '',
-        estado: (data as any).estado || '',
+        logradouro: (data as { logradouro?: string }).logradouro || '',
+        bairro: (data as { bairro?: string }).bairro || '',
+        estado: (data as { estado?: string }).estado || '',
       }))
       toast.success('Endereço encontrado!')
     }

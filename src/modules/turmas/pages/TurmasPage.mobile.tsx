@@ -109,7 +109,7 @@ export function TurmasPageMobile() {
   // ── EDITAR ─────────────────────────────────────────
   const abrirEdicao = (turma: Turma) => {
     setEditando(turma)
-    const [inicio, fim] = ((turma as any).horario || '').split(' - ')
+    const [inicio, fim] = ((turma as Turma & { horario?: string }).horario || '').split(' - ')
     const turnoValido = ['manhã', 'tarde', 'noite', 'integral (manhã e tarde)'].includes(turma.turno || '')
       ? turma.turno as 'manhã' | 'tarde' | 'noite' | 'integral (manhã e tarde)'
       : 'manhã'

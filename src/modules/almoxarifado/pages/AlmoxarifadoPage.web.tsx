@@ -143,7 +143,7 @@ export function AlmoxarifadoPageWeb() {
                 </div>
                 <div className="space-y-2">
                   <Label>Tipo de Movimentação</Label>
-                  <RadioGroup defaultValue="entrada" onValueChange={(v) => movForm.setValue('tipo', v as any)} className="flex gap-4">
+                  <RadioGroup defaultValue="entrada" onValueChange={(v) => movForm.setValue('tipo', v as 'entrada' | 'saida')} className="flex gap-4">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="entrada" id="ent" />
                       <Label htmlFor="ent" className="text-emerald-700 font-medium">Entrada</Label>

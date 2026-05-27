@@ -244,7 +244,7 @@ export function ConfiguracoesPage() {
     if (!authUser?.tenantId) return
     setIsLoadingHist(true)
     try {
-      const { data, error } = await (supabase.from('configuracoes_historico' as any) as any)
+      const { data, error } = await supabase.from('configuracoes_historico')
         .select('*')
         .eq('tenant_id', authUser.tenantId)
         .order('alterado_em', { ascending: false })
@@ -325,11 +325,11 @@ export function ConfiguracoesPage() {
       local: Record<string, unknown>
       original: Record<string, unknown>
     }> = [
-      { key: 'academica', categoria: 'academica', local: academica as any, original: config.config_academica as any },
-      { key: 'financeira', categoria: 'financeira', local: financeira as any, original: config.config_financeira as any },
-      { key: 'operacional', categoria: 'operacional', local: operacional as any, original: config.config_operacional as any },
-      { key: 'conduta', categoria: 'conduta', local: conduta as any, original: config.config_conduta as any },
-      { key: 'calendario', categoria: 'calendario', local: calendario as any, original: config.config_calendario as any },
+      { key: 'academica', categoria: 'academica', local: academica as Record<string, unknown>, original: config.config_academica as Record<string, unknown> },
+      { key: 'financeira', categoria: 'financeira', local: financeira as Record<string, unknown>, original: config.config_financeira as Record<string, unknown> },
+      { key: 'operacional', categoria: 'operacional', local: operacional as Record<string, unknown>, original: config.config_operacional as Record<string, unknown> },
+      { key: 'conduta', categoria: 'conduta', local: conduta as Record<string, unknown>, original: config.config_conduta as Record<string, unknown> },
+      { key: 'calendario', categoria: 'calendario', local: calendario as Record<string, unknown>, original: config.config_calendario as Record<string, unknown> },
     ]
 
     const registros: Omit<HistoricoItem, 'id' | 'alterado_em'>[] = []
@@ -345,14 +345,14 @@ export function ConfiguracoesPage() {
             valor_anterior: vAnterior,
             valor_novo: vNovo,
             alterado_por: authUser?.user?.id,
-          } as any)
+          } as Record<string, unknown>)
         }
       }
     }
 
     if (registros.length > 0 && authUser?.tenantId) {
       try {
-        await (supabase.from('configuracoes_historico' as any) as any).insert(registros)
+        await supabase.from('configuracoes_historico').insert(registros)
       } catch (err) {
         // Silenciamos o erro de histórico para não bloquear o salvamento principal
         // Isso resolve o erro 403 Forbidden quando a RLS do histórico está desalinhada
@@ -463,7 +463,7 @@ export function ConfiguracoesPage() {
                   <SelectField
                     label="Divisão do Ano Letivo"
                     value={academica.divisao_etapas}
-                    onChange={(v) => setAcademica({ ...academica, divisao_etapas: v as any })}
+                    onChange={(v) => setAcademica({ ...academica, divisao_etapas: v as '4_bimestres' | '3_trimestres' | '2_semestres' })}
                     options={[
                       { value: '4_bimestres', label: '4 Bimestres' },
                       { value: '3_trimestres', label: '3 Trimestres' },

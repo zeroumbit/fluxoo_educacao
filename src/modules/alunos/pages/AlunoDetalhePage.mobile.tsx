@@ -141,8 +141,8 @@ export function AlunoDetalhePageMobile() {
 
   if (!aluno) return null
 
-  const vinculos = (aluno as any).aluno_responsavel as any[]
-  const filial = (aluno as any).filiais as any
+  const vinculos = (aluno as Aluno & { aluno_responsavel?: unknown[] }).aluno_responsavel ?? []
+  const filial = (aluno as Aluno & { filiais?: { nome_unidade: string } | null }).filiais ?? null
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-32">
@@ -179,8 +179,8 @@ export function AlunoDetalhePageMobile() {
         <section>
           <NativeCard className="bg-white dark:bg-slate-900 p-6 flex flex-col items-center gap-4 text-center">
             <div className="h-24 w-24 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center shadow-inner overflow-hidden">
-               {(aluno as any).foto_url ? (
-                 <img src={(aluno as any).foto_url} alt="" className="w-full h-full object-cover" />
+               {aluno.foto_url ? (
+                 <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
                ) : (
                  <UserCircle className="h-14 w-14 text-indigo-200" />
                )}

@@ -84,7 +84,7 @@ export function MatriculaFormPageWeb() {
 
   useEffect(() => {
     if (editId && matriculas) {
-      const m = (matriculas as any[]).find(x => x.id === editId)
+      const m = matriculas?.find(x => x.id === editId)
       if (m) {
         form.reset({
           tipo: m.tipo,
@@ -182,7 +182,7 @@ export function MatriculaFormPageWeb() {
             <div className="space-y-2">
               <Label className="text-sm font-medium text-slate-700">Tipo de Operação *</Label>
               <RadioGroup
-                onValueChange={(v) => form.setValue('tipo', v as any)}
+                onValueChange={(v) => form.setValue('tipo', v as 'nova' | 'rematricula')}
                 className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 w-fit"
                 value={form.getValues('tipo')}
                 disabled={!!editId}
@@ -274,11 +274,11 @@ export function MatriculaFormPageWeb() {
                 <Label htmlFor="serie_ano">Turma/Ano *</Label>
                 <Select value={form.watch('serie_ano') || undefined} onValueChange={(v) => {
                   form.setValue('serie_ano', v)
-                  const t = (turmas as any[])?.find(x => x.nome === v)
+                  const t = turmas?.find(x => x.nome === v)
                   if (t) {
                     form.setValue('turma_id', t.id)
                     if (t.turno) {
-                      form.setValue('turno', t.turno.toLowerCase() as any)
+                      form.setValue('turno', t.turno.toLowerCase() as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')
                     }
 
                     // Valor da matrícula vem automaticamente da mensalidade da turma
@@ -330,7 +330,7 @@ export function MatriculaFormPageWeb() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="turno">Turno *</Label>
-                <Select value={form.watch('turno') || undefined} onValueChange={(v) => form.setValue('turno', v as any)}>
+                <Select value={form.watch('turno') || undefined} onValueChange={(v) => form.setValue('turno', v as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')}>
                   <SelectTrigger id="turno">
                     <SelectValue placeholder="Turno" />
                   </SelectTrigger>

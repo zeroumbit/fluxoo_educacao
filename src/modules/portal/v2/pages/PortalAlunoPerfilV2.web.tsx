@@ -95,16 +95,16 @@ export function PortalAlunoPerfilV2Web() {
                 {student?.nome_completo || 'Aluno'}
               </h1>
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-500 uppercase tracking-widest">
-                <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{(student as any)?.turma?.nome || 'Sem Turma'}</span>
-                {(student as any)?.codigo_transferencia && (
+                <span className="text-teal-600 bg-teal-50 px-3 py-1 rounded-lg">{student?.turma?.nome || 'Sem Turma'}</span>
+                {(student as { codigo_transferencia?: string })?.codigo_transferencia && (
                   <button
                     onClick={() => {
-                      setCopyId((student as any).codigo_transferencia);
+                      setCopyId((student as { codigo_transferencia?: string }).codigo_transferencia!);
                       setShowCopyModal(true);
                     }}
                     className="flex items-center gap-1.5 font-mono font-bold text-[10px] uppercase tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100 hover:bg-amber-100 transition-colors group/copy"
                   >
-                    ID: {(student as any).codigo_transferencia}
+                    ID: {(student as { codigo_transferencia?: string }).codigo_transferencia}
                     <Copy size={10} className="text-amber-400 group-hover/copy:text-amber-600 transition-colors" />
                   </button>
                 )}

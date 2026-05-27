@@ -142,7 +142,7 @@ interface AvisoCardProps {
 }
 
 function AvisoCard({ aviso, expirado = false, onEditar, onExcluir }: AvisoCardProps) {
-  const turmaNome = (aviso as any).turmas?.nome ?? null
+  const turmaNome = aviso.turmas?.nome ?? null
 
   return (
     <Card className={cn(
@@ -316,8 +316,7 @@ export function MuralPage() {
             </DialogHeader>
             <AvisoForm
               modo="criar"
-              turmas={turmas as any}
-              onSubmit={handleCriar}
+              turmas={turmas as unknown as Turma[]}
               onCancel={() => setDialogOpen(false)}
             />
           </DialogContent>
@@ -335,8 +334,7 @@ export function MuralPage() {
             <AvisoForm
               modo="editar"
               aviso={avisoParaEditar}
-              turmas={turmas as any}
-              onSubmit={handleEditar}
+              turmas={turmas as unknown as Turma[]}
               onCancel={() => { setEditDialogOpen(false); setAvisoParaEditar(null) }}
             />
           )}
@@ -384,8 +382,7 @@ export function MuralPage() {
             {avisosAtivos.map((aviso) => (
               <AvisoCard
                 key={aviso.id}
-                aviso={aviso as any}
-                onEditar={abrirEditar}
+                aviso={aviso as MuralAviso & { turmas?: { nome: string } | null }}
                 onExcluir={handleExcluir}
               />
             ))}
@@ -406,8 +403,7 @@ export function MuralPage() {
             {avisosExpirados.map((aviso) => (
               <AvisoCard
                 key={aviso.id}
-                aviso={aviso as any}
-                expirado
+                aviso={aviso as MuralAviso & { turmas?: { nome: string } | null }}
                 onEditar={abrirEditar}
                 onExcluir={handleExcluir}
               />

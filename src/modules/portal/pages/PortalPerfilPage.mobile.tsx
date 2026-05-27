@@ -116,10 +116,10 @@ export function PortalPerfilPageMobile() {
     if (val.length === 9) {
       const dados = await fetchAddressByCEP(val)
       if (dados && !('error' in dados)) {
-        setValue('logradouro', (dados as any).logradouro || '')
-        setValue('bairro', (dados as any).bairro || '')
-        setValue('cidade', (dados as any).cidade || '')
-        setValue('estado', (dados as any).estado || '')
+        setValue('logradouro', (dados as { logradouro?: string }).logradouro || '')
+        setValue('bairro', (dados as { bairro?: string }).bairro || '')
+        setValue('cidade', (dados as { cidade?: string }).cidade || '')
+        setValue('estado', (dados as { estado?: string }).estado || '')
       }
     }
   }

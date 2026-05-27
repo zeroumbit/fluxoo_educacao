@@ -70,7 +70,7 @@ export function MatriculaFormPageMobile() {
     }
   }, [state, form])
 
-  const m = mData as any
+  const m = mData
 
   const form = useForm<MatriculaFormData>({
     resolver: zodResolver(matriculaSchema),
@@ -132,14 +132,14 @@ export function MatriculaFormPageMobile() {
   useEffect(() => {
     const serieAtual = form.getValues('serie_ano')
     if (tipoSelecionado === 'nova' && serieAtual && turmas && !editId) {
-      const turma = (turmas as any[])?.find(t => t.nome === serieAtual)
+      const turma = turmas?.find(t => t.nome === serieAtual)
       if (turma) {
         const turnoMap: Record<string, string> = {
           'manhã': 'manhã', 'tarde': 'tarde', 'noite': 'noite', 'integral (manhã e tarde)': 'integral (manhã e tarde)'
         }
         form.setValue('turma_id', turma.id)
         if (turma.turno) {
-          form.setValue('turno', (turnoMap[turma.turno.toLowerCase()] || turma.turno.toLowerCase()) as any)
+          form.setValue('turno', (turnoMap[turma.turno.toLowerCase()] || turma.turno.toLowerCase()) as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')
         }
         if (turma.valor_mensalidade) {
           form.setValue('valor_matricula', turma.valor_mensalidade)
@@ -223,7 +223,7 @@ export function MatriculaFormPageMobile() {
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tipo de Operação</Label>
             <RadioGroup
-              onValueChange={(v) => form.setValue('tipo', v as any)}
+              onValueChange={(v) => form.setValue('tipo', v as 'nova' | 'rematricula')}
               className="grid grid-cols-2 gap-3"
               value={form.getValues('tipo')}
               disabled={!!editId}
@@ -349,7 +349,7 @@ export function MatriculaFormPageMobile() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
               <Select 
                 value={form.watch('turno')} 
-                onValueChange={(v) => form.setValue('turno', v as any)}
+                onValueChange={(v) => form.setValue('turno', v as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')}
               >
                 <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
                   <SelectValue placeholder="Turno" />

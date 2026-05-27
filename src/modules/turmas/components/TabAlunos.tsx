@@ -53,7 +53,7 @@ export function TabAlunos({ turmaId }: TabAlunosProps) {
   const atualizarMatricula = useAtualizarMatricula()
 
   useEffect(() => {
-    if (dbAlunos) setAlunos(dbAlunos as any)
+    if (dbAlunos) setAlunos(dbAlunos)
   }, [dbAlunos, setAlunos])
 
   const alunosDaTurma = alunos.filter((a: any) => 

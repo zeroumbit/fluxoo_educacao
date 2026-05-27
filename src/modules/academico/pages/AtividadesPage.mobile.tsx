@@ -192,7 +192,7 @@ export function AtividadesPageMobile() {
   }
 
   // Filter Logic
-  const displayAtividades = (atividades || cached || []) as any[]
+  const displayAtividades = atividades || cached || []
   const filteredAtividades = useMemo(() => {
     return displayAtividades.filter(a => {
       if (selectedTurmaId === 'all') return true

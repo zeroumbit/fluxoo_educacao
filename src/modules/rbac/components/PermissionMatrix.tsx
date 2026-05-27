@@ -108,7 +108,7 @@ function PerfilPermissionDetail({
     const map = new Map<string, ScopeType>()
     if (perfilPerms) {
       for (const pp of perfilPerms) {
-        const key = (pp as any).permission?.key || pp.permission_id
+        const key = (pp as { permission?: { key?: string } }).permission?.key || pp.permission_id
         map.set(key, pp.scope_type)
       }
     }

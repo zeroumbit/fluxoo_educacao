@@ -24,8 +24,7 @@ export function PerfilEscolaPageWeb() {
   useEffect(() => {
     if (!authUser?.tenantId) return
     const load = async () => {
-      const { data } = await (supabase.from('escolas' as any) as any)
-        .select('*').eq('id', authUser.tenantId).maybeSingle()
+      const { data } = await supabase.from('escolas').select('*').eq('id', authUser.tenantId).maybeSingle()
       if (data) {
         setForm({
           razao_social: data.razao_social || '', cnpj: data.cnpj || '',
@@ -76,7 +75,7 @@ export function PerfilEscolaPageWeb() {
     }
     setSaving(true)
     try {
-      const { error } = await (supabase.from('escolas' as any) as any)
+      const { error } = await supabase.from('escolas')
         .update({ ...form, updated_at: new Date().toISOString() }).eq('id', authUser.tenantId)
       if (error) throw error
 

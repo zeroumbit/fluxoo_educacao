@@ -245,7 +245,7 @@ export function PortalTransferenciasV2Mobile() {
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Aluno</p>
                     <p className="font-bold text-slate-700 text-sm">
-                      {selectedTransf.aluno_nome || (selectedTransf as any).aluno?.nome_completo || alunoSelecionado?.nome_completo || 'Aluno'}
+                      {selectedTransf.aluno_nome || (selectedTransf as { aluno?: { nome_completo?: string } }).aluno?.nome_completo || alunoSelecionado?.nome_completo || 'Aluno'}
                     </p>
                   </div>
                 </div>

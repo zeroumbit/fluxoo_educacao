@@ -39,11 +39,11 @@ export function PlanoPageMobile() {
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [novoLimite, setNovoLimite] = useState<number>(0)
 
-  const activePlan = (assinatura as any)?.plano || (escola as any)?.plano
-  const currentLimit = Number((assinatura as any)?.limite_alunos_contratado || (escola as any)?.limite_alunos_contratado || 0)
-  const valorUnitario = Number((assinatura as any)?.valor_por_aluno_contratado || (activePlan ? activePlan.valor_por_aluno : 0))
-  const totalMensal = Number((assinatura as any)?.valor_total_contratado || (currentLimit * valorUnitario))
-  const dataReferencia = (assinatura as any)?.data_inicio || (escola as any)?.data_inicio || (escola as any)?.created_at
+  const activePlan = (assinatura as { plano?: { nome?: string; valor_por_aluno?: number } })?.plano || (escola as { plano?: { nome?: string; valor_por_aluno?: number } })?.plano
+  const currentLimit = Number((assinatura as { limite_alunos_contratado?: number })?.limite_alunos_contratado || (escola as { limite_alunos_contratado?: number })?.limite_alunos_contratado || 0)
+  const valorUnitario = Number((assinatura as { valor_por_aluno_contratado?: number })?.valor_por_aluno_contratado || (activePlan ? activePlan.valor_por_aluno : 0))
+  const totalMensal = Number((assinatura as { valor_total_contratado?: number })?.valor_total_contratado || (currentLimit * valorUnitario))
+  const dataReferencia = (assinatura as { data_inicio?: string })?.data_inicio || (escola as { data_inicio?: string })?.data_inicio || (escola as { created_at?: string })?.created_at
 
   const handleRequestUpgrade = async () => {
     if (novoLimite <= currentLimit) {
@@ -95,7 +95,7 @@ export function PlanoPageMobile() {
                     <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 w-fit">
                         <Trophy size={14} className="text-amber-400" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100">
-                            {(escola as any)?.status_assinatura || 'Assinatura Ativa'}
+                            {(escola as { status_assinatura?: string })?.status_assinatura || 'Assinatura Ativa'}
                         </span>
                     </div>
                     
@@ -163,7 +163,7 @@ export function PlanoPageMobile() {
                             <div>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Forma de Pagamento</p>
                                 <p className="text-sm font-black text-slate-900 dark:text-white mt-1.5 capitalize">
-                                    {(escola as any)?.metodo_pagamento?.replace('_', ' ') || 'Processamento Manual'}
+                                    {(escola as { metodo_pagamento?: string })?.metodo_pagamento?.replace('_', ' ') || 'Processamento Manual'}
                                 </p>
                             </div>
                         </div>

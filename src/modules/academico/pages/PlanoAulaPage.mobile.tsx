@@ -159,7 +159,7 @@ export function PlanoAulaPageMobile() {
   }
 
   // Filter Logic
-  const displayPlanos = (planos || cached || []) as any[]
+  const displayPlanos = planos || cached || []
   const filteredPlanos = useMemo(() => {
     return displayPlanos.filter(p => {
       if (selectedTurmaId === 'all') return true

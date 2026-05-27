@@ -365,7 +365,7 @@ export function NotasPageWeb() {
   const { requireConfirmation, GestorGuardModal } = useGestorGuard()
   const { data: turmas } = useTurmas()
   const location = useLocation()
-  const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
+  const [turmaId, setTurmaId] = useState(() => (location.state as { turmaId?: string })?.turmaId || '')
   const { data: disciplinas, isLoading: isLoadingDisc } = useDisciplinasPorTurma(turmaId)
   const [disciplinaId, setDisciplinaId] = useState('')
   const [bimestre, setBimestre] = useState('1')
@@ -390,7 +390,7 @@ export function NotasPageWeb() {
         if (!turmaInfo) return []
 
         const { data: matriculas } = await supabase
-          .from('matriculas' as any)
+          .from('matriculas')
           .select('aluno_id, serie_ano, turma_id')
           .eq('tenant_id', turmaInfo.tenant_id!)
           
@@ -421,7 +421,7 @@ export function NotasPageWeb() {
   const { mutateAsync: reabrirBimestre, isPending: isReopening } = useReabrirBimestre()
 
   const totalNotas = (todosAlunos?.length ?? 0) * (avaliacoes?.length ?? 0)
-  const bimFechado = (fechamento as any)?.status === 'fechado' || (fechamento as any)?.status === 'conselho'
+  const bimFechado = (fechamento as { status?: string })?.status === 'fechado' || (fechamento as { status?: string })?.status === 'conselho'
 
   const handleFecharBimestre = async () => {
     if (!confirm(`Fechar o ${bimestre}º bimestre para a turma selecionada? Esta ação impedirá alterações nas notas.`)) return

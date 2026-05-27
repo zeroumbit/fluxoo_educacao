@@ -75,7 +75,7 @@ export function NotasPageMobile() {
 
   // Estado Local de Notas
   const [notasLocais, setNotasLocais] = useState<Record<string, { nota: string; ausente: boolean }>>({})
-  const isBimestreFechado = (fechamento as any)?.status === 'fechado' || (fechamento as any)?.status === 'conselho'
+  const isBimestreFechado = (fechamento as { status?: string })?.status === 'fechado' || (fechamento as { status?: string })?.status === 'conselho'
 
   useEffect(() => {
     if (notasExistentes) {
@@ -251,9 +251,9 @@ export function NotasPageMobile() {
                         <Badge variant="outline" className="h-5 text-[9px] border-slate-100 text-slate-300">Pendente</Badge>
                       )}
 
-                      {faltasAgrupadas && (faltasAgrupadas as any)[aluno.id] > 0 && (
+                      {faltasAgrupadas && (faltasAgrupadas as Record<string, number>)[aluno.id] > 0 && (
                         <Badge variant="secondary" className="h-5 text-[9px] bg-red-50 text-red-600 border-red-100 font-black">
-                          {(faltasAgrupadas as any)[aluno.id]} {(faltasAgrupadas as any)[aluno.id] === 1 ? 'Falta' : 'Faltas'}
+                          {(faltasAgrupadas as Record<string, number>)[aluno.id]} {(faltasAgrupadas as Record<string, number>)[aluno.id] === 1 ? 'Falta' : 'Faltas'}
                         </Badge>
                       )}
                     </div>

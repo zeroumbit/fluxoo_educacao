@@ -147,9 +147,9 @@ export function LivrosPage() {
     }
   }
 
-  const onInvalid = (errors: any) => {
+  const onInvalid = (errors: Record<string, { message?: string }>) => {
     console.error('Validation Errors:', errors)
-    const firstError = Object.values(errors)[0] as any
+    const firstError = Object.values(errors)[0]
     if (firstError?.message) {
       toast.error(`Erro no formulário: ${firstError.message}`)
     } else {
@@ -169,7 +169,7 @@ export function LivrosPage() {
       disciplina_id: livro.disciplina_id,
       ano_letivo: livro.ano_letivo || new Date().getFullYear(),
       isbn: livro.isbn || '',
-      estado: (livro.estado as any) || 'Novo',
+      estado: livro.estado ?? 'Novo',
       descricao: livro.descricao || '',
       link_referencia: livro.link_referencia || '',
       turmasIds: livro.turmas?.map(t => t.id) || []
@@ -188,7 +188,7 @@ export function LivrosPage() {
     materialForm.reset({
       ...material,
       turmasIds: material.turmas?.map(t => t.id) || []
-    } as any)
+    } as Record<string, unknown>)
     
     setMaterialCapaPreview(material.imagem_url || null)
     setMaterialCapaFile(null)
@@ -282,13 +282,13 @@ export function LivrosPage() {
       if (livroParaEditar) {
         await editarLivro.mutateAsync({
           id: livroParaEditar.id,
-          livro: cleanLivroData as any,
+          livro: cleanLivroData as Record<string, unknown>,
           turmasIds: data.turmasIds
         })
         toast.success('Livro atualizado com sucesso!')
       } else {
         await criarLivro.mutateAsync({
-          livro: cleanLivroData as any,
+          livro: cleanLivroData as Record<string, unknown>,
           turmasIds: data.turmasIds
         })
         toast.success('Livro cadastrado com sucesso!')
@@ -331,13 +331,13 @@ export function LivrosPage() {
       if (materialParaEditar) {
         await editarMaterial.mutateAsync({
           id: materialParaEditar.id,
-          material: cleanMaterialData as any,
+          material: cleanMaterialData as Record<string, unknown>,
           turmasIds: data.turmasIds
         })
         toast.success('Material atualizado com sucesso!')
       } else {
         await criarMaterial.mutateAsync({
-          material: cleanMaterialData as any,
+          material: cleanMaterialData as Record<string, unknown>,
           turmasIds: data.turmasIds
         })
         toast.success('Material cadastrado com sucesso!')
@@ -503,7 +503,7 @@ export function LivrosPage() {
                             <SelectValue placeholder="Selecione a matéria" />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
-                            {(disciplinas as any[])?.map(d => (
+                            {(disciplinas ?? []).map(d => (
                               <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                             ))}
                           </SelectContent>
@@ -816,7 +816,7 @@ export function LivrosPage() {
                       <div className="p-4 flex-1 flex flex-col justify-between">
                          <div className="space-y-2">
                             <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest truncate block">
-                               {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
+                               {item.tipo === 'livro' ? ((disciplinas ?? []).find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
                             </span>
                             <h3 className="text-sm font-bold text-zinc-900 tracking-tight group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
                                {item.tipo === 'livro' ? item.titulo : item.nome}

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { Aluno } from '@/lib/database.types'
+import type { Aluno, AlunoInsert } from '@/lib/database.types'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { useFiliais } from '@/modules/filiais/hooks'
 import { useLimiteAlunos } from '@/modules/assinatura/hooks'
@@ -176,7 +176,7 @@ export function AlunoCadastroPage() {
         // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
         const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
           if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
-          return val !== '' && val !== null && val !== undefined && (val as any)?.length !== 0;
+          return val !== '' && val !== null && val !== undefined && (val as { length?: number })?.length !== 0;
         });
 
         if (isMounted && isActuallyFilled) {
@@ -198,7 +198,7 @@ export function AlunoCadastroPage() {
   const handleContinuarRascunho = () => {
     if (draftStateData) {
       Object.entries(draftStateData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) setValue(key as any, value)
+        if (value !== undefined && value !== null) setValue(key as keyof AlunoFormValues, value)
       })
     }
     
@@ -277,9 +277,9 @@ export function AlunoCadastroPage() {
       const currentFilialId = watch('filial_id')
       if (!currentFilialId) {
         if (filiais.length === 1) {
-          setValue('filial_id', (filiais[0] as any).id)
+          setValue('filial_id', filiais[0].id)
         } else {
-          const matriz = (filiais as any[]).find(f => f.is_matriz)
+          const matriz = filiais.find(f => f.is_matriz)
           if (matriz) {
             setValue('filial_id', matriz.id)
           }
@@ -515,7 +515,7 @@ export function AlunoCadastroPage() {
 
       const result = await criarAlunoComResponsavel.mutateAsync({
         responsavel: payloadResponsavel,
-        aluno: payloadAluno as any, // Cast temporário se necessário para AlunoInsert
+        aluno: payloadAluno as AlunoInsert,
         grauParentesco: data.responsavel_parentesco || null,
         isFinanceiro: data.responsavel_financeiro === 'sim'
       })
@@ -751,7 +751,7 @@ export function AlunoCadastroPage() {
           console.error('❌ Erros de validação do formulário:', validationErrors)
           const errorFields = Object.keys(validationErrors)
           const firstError = Object.values(validationErrors)[0]
-          const errorMsg = (firstError as any)?.message || 'Campo obrigatório não preenchido'
+          const errorMsg = firstError?.message || 'Campo obrigatório não preenchido'
           
           toast.error(`Campos com erro: ${errorFields.join(', ')}`, {
             description: errorMsg,
@@ -1256,7 +1256,7 @@ export function AlunoCadastroPage() {
                         <SelectValue placeholder="Selecione a unidade" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(filiais as any[])?.map((f: any) => (
+                        {(filiais ?? []).map(f => (
                           <SelectItem key={f.id} value={f.id}>
                             {f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}
                           </SelectItem>

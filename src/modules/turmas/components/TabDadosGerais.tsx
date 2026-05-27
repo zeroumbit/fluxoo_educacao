@@ -25,8 +25,8 @@ export function TabDadosGerais({ turma }: TabDadosGeraisProps) {
   const { data: realTotalAlunos = 0 } = useContarAlunosTurma(turma.id)
   const { isUpdating } = useTurmaBilling()
 
-  const atribuicoes = (dbAtribuicoes || []) as any[]
-  const gradeItems = (dbGrade || []) as any[]
+  const atribuicoes = dbAtribuicoes ?? []
+  const gradeItems = dbGrade ?? []
 
   // Calculate real counts from actual data
   // 1. Unique disciplines assigned to this turma

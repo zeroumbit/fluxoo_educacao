@@ -144,7 +144,7 @@ export function AlmoxarifadoPageMobile() {
               {['estoque', 'historico'].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  onClick={() => setActiveTab(tab as 'estoque' | 'historico')}
                   className={cn(
                     "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
                     activeTab === tab ? "bg-white dark:bg-slate-700 text-indigo-600 shadow-sm" : "text-slate-400"

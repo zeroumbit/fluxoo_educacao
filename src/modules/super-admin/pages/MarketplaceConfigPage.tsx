@@ -119,7 +119,7 @@ export function MarketplaceConfigPage() {
   )
 
   const filteredProfissionais = profissionais?.filter((p: any) =>
-    (p as any).usuarios_sistema?.email_login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p as { usuarios_sistema?: { email_login?: string } }).usuarios_sistema?.email_login?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.cpf?.includes(searchTerm)
   )
 
@@ -639,7 +639,7 @@ export function MarketplaceConfigPage() {
                             <User className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <p className="font-bold text-zinc-900 leading-tight mb-0.5">{(prof as any).usuarios_sistema?.email_login}</p>
+                            <p className="font-bold text-zinc-900 leading-tight mb-0.5">{(prof as { usuarios_sistema?: { email_login?: string } }).usuarios_sistema?.email_login}</p>
                             <p className="text-[10px] text-muted-foreground font-mono">{prof.cpf}</p>
                           </div>
                         </div>

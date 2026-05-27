@@ -97,7 +97,7 @@ export function ProfessorFrequenciaPage() {
   const initialFrequencias = useMemo(() => {
     const map: Record<string, 'presente' | 'falta' | 'justificada'> = {}
     frequenciasExistentes.forEach((f: any) => {
-      map[f.aluno_id] = f.status as any
+      map[f.aluno_id] = f.status as 'presente' | 'falta' | 'justificada'
     })
     return map
   }, [frequenciasExistentes])

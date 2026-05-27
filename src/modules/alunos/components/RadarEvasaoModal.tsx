@@ -51,8 +51,8 @@ function RadarEvasaoDetailsContent({ aluno, onClose, isProfessor = false }: { al
         .limit(1)
         .maybeSingle();
       
-      if (data && (data as any).responsaveis) {
-        setResponsavel((data as any).responsaveis);
+      if (data && (data as { responsaveis?: unknown }).responsaveis) {
+        setResponsavel((data as { responsaveis?: unknown }).responsaveis);
       }
     }
     

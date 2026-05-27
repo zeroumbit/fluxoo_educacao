@@ -258,7 +258,7 @@ export function PortalBoletimPage({ hideHeader = false }: { hideHeader?: boolean
           </motion.div>
         ) : (
           <div className="space-y-5">
-            {(boletimExibido as any[]).map((boletim, bIndex) => (
+            {(boletimExibido ?? []).map((boletim, bIndex) => (
               <motion.div
                 key={boletim.id}
                 initial={{ opacity: 0, y: 15 }}

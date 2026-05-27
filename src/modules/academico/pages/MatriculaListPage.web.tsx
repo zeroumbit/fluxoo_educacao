@@ -147,7 +147,7 @@ export function MatriculaListPageWeb() {
         const parsed = JSON.parse(draft)
         Object.entries(parsed).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-             form.setValue(key as any, value)
+             form.setValue(key as keyof MatriculaFormValues, value as never)
           }
         })
       } catch (e) {
@@ -190,7 +190,7 @@ export function MatriculaListPageWeb() {
 
   useEffect(() => {
     if (tipoSelecionado === 'nova' && serieSelecionada && turmas && !isEditing) {
-      const turma = (turmas as any[])?.find(t => t.nome === serieSelecionada)
+      const turma = turmas?.find(t => t.nome === serieSelecionada)
       if (turma) {
         const turnoMap: Record<string, string> = {
           matutino: 'manha',
@@ -199,7 +199,7 @@ export function MatriculaListPageWeb() {
           noturno: 'noturno'
         }
         
-        form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as any)
+        form.setValue('turno', (turnoMap[turma.turno] || turma.turno) as 'manha' | 'tarde' | 'integral' | 'noturno')
         form.setValue('turma_id', turma.id)
         if (turma.valor_mensalidade) {
           form.setValue('valor_matricula', turma.valor_mensalidade)
@@ -260,7 +260,7 @@ export function MatriculaListPageWeb() {
       aluno_id: '',
       serie_ano: '',
       turma_id: '',
-      turno: 'integral' as any,
+      turno: 'integral' as const,
       valor_matricula: undefined,
       status: 'ativa'
     })
@@ -351,7 +351,7 @@ export function MatriculaListPageWeb() {
                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tipo de Operação</Label>
                     <RadioGroup
                       disabled={isEditing}
-                      onValueChange={(v) => form.setValue('tipo', v as any)}
+                      onValueChange={(v) => form.setValue('tipo', v as 'nova' | 'rematricula')}
                       className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100"
                       value={tipoSelecionado}
                     >
@@ -396,7 +396,7 @@ export function MatriculaListPageWeb() {
                       value={serieSelecionada || undefined} 
                       onValueChange={(v) => {
                         form.setValue('serie_ano', v)
-                        const t = (turmas as any[])?.find(x => x.nome === v)
+                        const t = turmas?.find(x => x.nome === v)
                         if (t) {
                           form.setValue('turma_id', t.id)
                           if (t.valor_mensalidade) {
@@ -409,8 +409,8 @@ export function MatriculaListPageWeb() {
                        <SelectValue placeholder={!turmas ? "Carregando turmas..." : (turmas.length > 0 ? "Selecione a turma" : "Nenhuma turma disponível")} />
                      </SelectTrigger>
                      <SelectContent className="z-[150]">
-                       {turmas && (turmas as any[]).length > 0 ? (
-                         (turmas as any[]).map((t: any) => (
+                        {turmas && turmas.length > 0 ? (
+                          turmas.map(t => (
                            <SelectItem key={t.id} value={t.nome} className="font-bold">
                              {t.nome} {t.valor_mensalidade ? `- R$ ${t.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
                            </SelectItem>
@@ -428,7 +428,7 @@ export function MatriculaListPageWeb() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="turno">Turno *</Label>
-                  <Select value={turnoSelecionado || undefined} onValueChange={(v) => form.setValue('turno', v as any)}>
+                  <Select value={turnoSelecionado || undefined} onValueChange={(v) => form.setValue('turno', v as 'manha' | 'tarde' | 'integral' | 'noturno')}>
                     <SelectTrigger id="turno" className="w-full">
                       <SelectValue placeholder="Selecione o turno" />
                     </SelectTrigger>

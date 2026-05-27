@@ -53,7 +53,7 @@ export function MatriculasListPageMobile() {
     if (matriculas) set(CACHE_KEY, matriculas)
   }, [matriculas])
 
-  const displayData = (matriculas || cachedData) as any[]
+  const displayData = matriculas || cachedData || []
   const isActuallyLoading = isLoading && !cachedData.length
 
   const filteredData = useMemo(() => {

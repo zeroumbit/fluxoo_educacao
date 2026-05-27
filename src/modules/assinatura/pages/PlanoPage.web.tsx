@@ -33,13 +33,11 @@ export function PlanoPage() {
 
   // Sincronização de dados reais do Super Admin / Banco de Dados
   // Prioriza a assinatura ativa, depois os dados da escola
-  const activePlan = (assinatura as any)?.plano || (escola as any)?.plano
-  const currentLimit = Number((assinatura as any)?.limite_alunos_contratado || (escola as any)?.limite_alunos_contratado || 0)
-  const valorUnitario = Number((assinatura as any)?.valor_por_aluno_contratado || (activePlan ? activePlan.valor_por_aluno : 0))
-  const totalMensal = Number((assinatura as any)?.valor_total_contratado || (currentLimit * valorUnitario))
-
-  // Data de referência do contrato
-  const dataReferencia = (assinatura as any)?.data_inicio || (escola as any)?.data_inicio || (escola as any)?.created_at
+  const activePlan = (assinatura as { plano?: { nome?: string; valor_por_aluno?: number } })?.plano || (escola as { plano?: { nome?: string; valor_por_aluno?: number } })?.plano
+  const currentLimit = Number((assinatura as { limite_alunos_contratado?: number })?.limite_alunos_contratado || (escola as { limite_alunos_contratado?: number })?.limite_alunos_contratado || 0)
+  const valorUnitario = Number((assinatura as { valor_por_aluno_contratado?: number })?.valor_por_aluno_contratado || (activePlan ? activePlan.valor_por_aluno : 0))
+  const totalMensal = Number((assinatura as { valor_total_contratado?: number })?.valor_total_contratado || (currentLimit * valorUnitario))
+  const dataReferencia = (assinatura as { data_inicio?: string })?.data_inicio || (escola as { data_inicio?: string })?.data_inicio || (escola as { created_at?: string })?.created_at
 
   const handleRequestUpgrade = async () => {
     if (novoLimite <= currentLimit) {
@@ -117,7 +115,7 @@ export function PlanoPage() {
                 </CardDescription>
               </div>
               <Badge className="bg-white/20 text-white border-0 backdrop-blur-md uppercase tracking-wider text-[10px] font-bold">
-                {(escola as any)?.status_assinatura || 'Ativa'}
+                {(escola as { status_assinatura?: string })?.status_assinatura || 'Ativa'}
               </Badge>
             </div>
           </CardHeader>
@@ -153,7 +151,7 @@ export function PlanoPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-zinc-900">Método de Pagamento</p>
-                  <p className="text-xs text-muted-foreground capitalize">{(escola as any)?.metodo_pagamento?.replace('_', ' ') || 'Manual (PIX/Boleto)'}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{(escola as { metodo_pagamento?: string })?.metodo_pagamento?.replace('_', ' ') || 'Manual (PIX/Boleto)'}</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" className="text-zinc-600 font-bold border-zinc-200">

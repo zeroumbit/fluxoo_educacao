@@ -36,8 +36,7 @@ export function PerfilEscolaPageMobile() {
 
   const loadData = async () => {
     if (!authUser?.tenantId) return
-    const { data } = await (supabase.from('escolas' as any) as any)
-      .select('*').eq('id', authUser.tenantId).maybeSingle()
+    const { data } = await supabase.from('escolas').select('*').eq('id', authUser.tenantId).maybeSingle()
     if (data) {
       setForm({
         razao_social: data.razao_social || '', cnpj: data.cnpj || '',
@@ -88,7 +87,7 @@ export function PerfilEscolaPageMobile() {
     }
     setSaving(true)
     try {
-      const { error } = await (supabase.from('escolas' as any) as any)
+      const { error } = await supabase.from('escolas')
         .update({ ...form, updated_at: new Date().toISOString() }).eq('id', authUser.tenantId)
       if (error) throw error
       toast.success('Informações salvas com sucesso!')

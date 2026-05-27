@@ -38,7 +38,7 @@ export function FaturasPage() {
   })
 
   const filtered = faturas?.filter((f: Fatura) =>
-    (f as any).escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
+    (f as Fatura & { escola?: { razao_social?: string } }).escola?.razao_social?.toLowerCase().includes(search.toLowerCase())
   )
 
   const handleConfirmarClick = (fatura: Fatura) => {

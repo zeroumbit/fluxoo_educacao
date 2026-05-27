@@ -136,7 +136,7 @@ export function DocumentosPageMobile() {
   }, [templates])
 
   const getPreviewData = (alunoId: string) => {
-    const aluno = alunos?.find((a: any) => a.id === alunoId) as any
+    const aluno = alunos?.find((a: any) => a.id === alunoId)
     if (!aluno) return null
 
     const formatEndereco = (a: any) => {

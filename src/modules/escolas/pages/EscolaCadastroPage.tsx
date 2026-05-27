@@ -94,7 +94,7 @@ export function EscolaCadastroPage() {
     resolver: zodResolver(cadastroSchema),
     mode: 'onChange',
     defaultValues: {
-      limite_alunos_contratado: 50 as any,
+      limite_alunos_contratado: 50,
       metodo_pagamento: 'mercado_pago',
       estado: '',
       cidade: '',
@@ -136,7 +136,7 @@ export function EscolaCadastroPage() {
   const { fetchAddressByCEP, fetchCitiesByUF, cities, loadingCities, loading: buscandoCep, estados } = useViaCEP()
   const selectedEstado = watch('estado')
 
-  const selectedPlan = (planos as any[])?.find((p: any) => p.id === watch('plano_id'))
+  const selectedPlan = (planos ?? []).find(p => p.id === watch('plano_id'))
   const qtdAlunos = Number(watch('limite_alunos_contratado')) || 0
   const valorPorAluno = Number(precoGlobal?.valor_matriz) || Number(selectedPlan?.valor_por_aluno) || 5
   const totalMensal = valorPorAluno * qtdAlunos
@@ -331,7 +331,7 @@ export function EscolaCadastroPage() {
         const faturaId = faturaCalc?.tenant_id
         if (faturaId) {
           await supabase
-            .from('faturas' as any)
+            .from('faturas')
             .update({
               forma_pagamento: data.metodo_pagamento,
               comprovante_url: comprovanteUrl,
@@ -402,7 +402,7 @@ export function EscolaCadastroPage() {
             <p className="text-sm text-muted-foreground">Preencha as informações necessárias</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit as any, onInvalid as any)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             <div className="min-h-[350px] flex flex-col justify-center animate-in fade-in slide-in-from-right-4 duration-500">
               
               {/* STEP 1 - ACESSO */}
@@ -544,7 +544,7 @@ export function EscolaCadastroPage() {
                       </div>
                     ) : (
                       <div className="grid gap-3">
-                        {(planos as any[])?.map((p: any) => (
+                        {(planos ?? []).map(p => (
                           <div key={p.id} onClick={() => setValue('plano_id', p.id, { shouldValidate: true })}
                             className={cn("relative p-4 rounded-xl border-2 transition-all cursor-pointer hover:border-indigo-200", watch('plano_id') === p.id ? "border-indigo-600 bg-indigo-50/50" : "border-zinc-100 bg-zinc-50/30")}>
                             <div className="flex justify-between items-center mb-1">
@@ -633,7 +633,7 @@ export function EscolaCadastroPage() {
                     <Label className="text-xs uppercase tracking-widest font-black text-muted-foreground">Forma de Pagamento</Label>
                     <RadioGroup 
                       value={watch('metodo_pagamento')} 
-                      onValueChange={(val: string) => setValue('metodo_pagamento', val as any, { shouldValidate: true })} 
+                      onValueChange={(val: string) => setValue('metodo_pagamento', val, { shouldValidate: true })} 
                       className="grid gap-2"
                     >
                       {(!configPix || configPix.mercado_pago_ativo !== false) && (

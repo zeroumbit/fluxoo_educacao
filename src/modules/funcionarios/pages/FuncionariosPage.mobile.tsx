@@ -197,7 +197,7 @@ export function FuncionariosPageMobile() {
                 {['ativos', 'inativos'].map((tab) => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab as any)}
+                        onClick={() => setActiveTab(tab as 'ativos' | 'inativos')}
                         className={cn(
                             "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
                             activeTab === tab ? "bg-white dark:bg-slate-700 text-indigo-600 shadow-sm" : "text-slate-400"
@@ -295,7 +295,7 @@ export function FuncionariosPageMobile() {
                                 name="funcoes"
                                 render={({ field }) => (
                                     <MultiSelect
-                                        options={(funcoesCatalogo as any[]).map(f => ({ value: f.nome, label: f.nome }))}
+                                        options={(funcoesCatalogo ?? []).map(f => ({ value: f.nome, label: f.nome }))}
                                         selected={field.value || []}
                                         onChange={field.onChange}
                                         placeholder="Selecione as funções..."

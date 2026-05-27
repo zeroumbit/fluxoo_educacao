@@ -126,7 +126,7 @@ export function TransferenciasPageMobile() {
       const buscar = async () => {
         setIsSearchingCode(true)
         try {
-          const { data, error } = await (supabase as any)
+          const { data, error } = await supabase
             .rpc('buscar_aluno_transferencia', { p_codigo: codigoNormalizado })
           
           if (error) throw error

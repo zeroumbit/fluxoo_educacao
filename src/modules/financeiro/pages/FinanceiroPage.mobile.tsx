@@ -142,14 +142,14 @@ export function FinanceiroPageMobile() {
     const isAtrasada = (c: any) =>
       c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
 
-    return (cobrancas as any[]).filter(c => {
-      let matchTab = filtroTab === 'todos'
-      if (filtroTab === 'atrasado') matchTab = isAtrasada(c)
-      else if (filtroTab === 'a_vencer') matchTab = c.status === 'a_vencer' && !isAtrasada(c)
-      else if (filtroTab === 'pago')    matchTab = c.status === 'pago'
-      const matchSearch = (c.descricao || '').toLowerCase().includes(busca.toLowerCase()) ||
-                          (c.alunos?.nome_completo || '').toLowerCase().includes(busca.toLowerCase())
-      return matchTab && matchSearch
+    return (cobrancas ?? []).filter(c => {
+      let matchStatus = filtroStatus === 'todos'
+      if (filtroStatus === 'atrasado') matchStatus = isAtrasada(c)
+      else if (filtroStatus === 'a_vencer') matchStatus = c.status === 'a_vencer' && !isAtrasada(c)
+      else if (filtroStatus === 'pago')    matchStatus = c.status === 'pago'
+      const matchBusca = c.alunos?.nome_completo?.toLowerCase().includes(busca.toLowerCase()) ||
+                         c.descricao.toLowerCase().includes(busca.toLowerCase())
+      return matchStatus && matchBusca
     })
   }, [cobrancas, filtroTab, busca])
 
@@ -184,7 +184,7 @@ export function FinanceiroPageMobile() {
 
   const totals = useMemo(() => {
     if (!cobrancas) return { pagos: 0, pendentes: 0, atrasados: 0 }
-    const list = cobrancas as any[]
+    const list = cobrancas ?? []
     const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
     const isAtrasada = (c: any) =>
       c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
@@ -280,7 +280,7 @@ export function FinanceiroPageMobile() {
               ].map((chip) => (
                 <button
                   key={chip.id}
-                  onClick={() => setFiltroTab(chip.id as any)}
+                  onClick={() => setFiltroTab(chip.id)}
                   className={cn(
                     "whitespace-nowrap px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all",
                     filtroTab === chip.id 
@@ -395,7 +395,7 @@ export function FinanceiroPageMobile() {
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Vincular a</Label>
               <SearchableAlunoSelect
-                alunos={alunos as any[]}
+                alunos={alunos ?? []}
                 value={formAlunoId || ''}
                 onValueChange={(v) => setValue('aluno_id', v)}
                 extraOptions={[{ value: 'avulso', label: 'Cobrança Avulsa (Sem Aluno)' }]}

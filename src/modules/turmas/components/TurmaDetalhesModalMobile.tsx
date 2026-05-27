@@ -103,7 +103,7 @@ export function TurmaDetalhesModalMobile({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'alunos' | 'professores' | 'grade' | 'dados')}
                 className={cn(
                   "flex items-center gap-2 h-10 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
                   isActive
@@ -155,12 +155,9 @@ function TabDados({ turma, onEdit, onDelete }: { turma: Turma, onEdit: () => voi
              <p className="text-[14px] font-bold text-slate-900 dark:text-white truncate max-w-full uppercase">{turma.sala}</p>
           </div>
         )}
-        {(turma as any).horario && (
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 flex flex-col items-center justify-center text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Horário</span>
-            <p className="text-[14px] font-bold text-slate-900 dark:text-white truncate max-w-full">{(turma as any).horario}</p>
-          </div>
-        )}
+        {(turma as Turma & { horario?: string }).horario && (
+            <p className="text-[14px] font-bold text-slate-900 dark:text-white truncate max-w-full">{(turma as Turma & { horario?: string }).horario}</p>
+          )}
       </div>
 
       <div className="space-y-2">
@@ -305,7 +302,7 @@ function TabAlunos({ turma }: { turma: Turma }) {
 function TabProfessores({ turma }: { turma: Turma }) {
   const { authUser } = useAuth()
   const { data: todosProfessores, isLoading: loadingProfessores } = useProfessoresTurma()
-  const { data: todasDisciplinas } = useDisciplinas(authUser?.tenantId || '', (turma as any).etapa)
+  const { data: todasDisciplinas } = useDisciplinas(authUser?.tenantId || '', (turma as Turma & { etapa?: string }).etapa)
   const { data: atribuicoesDb } = useAtribuicoes(turma.id)
   
   const mutationAtribuir = useAtribuirProfessor()

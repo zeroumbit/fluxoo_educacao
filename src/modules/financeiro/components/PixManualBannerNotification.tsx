@@ -70,8 +70,8 @@ function useEnrichedPixNotifications(rawNotifications: Notificacao[]) {
             const totalValor = cobData.reduce((acc, c) => acc + Number(c.valor || 0), 0)
 
             const alunosTurmasInfo = cobData.map(c => {
-              const aluno = c.alunos as any
-              const matriculaAtiva = aluno?.matriculas?.find((m: any) => m.status === 'ativa')
+              const aluno = c.alunos as { nome_completo?: string; matriculas?: { status?: string; turma?: { nome?: string } }[] } | undefined
+              const matriculaAtiva = (aluno?.matriculas ?? []).find(m => m.status === 'ativa')
               return {
                 nome: aluno?.nome_completo || '',
                 turma: matriculaAtiva?.turma?.nome || 'Sem Turma'
@@ -99,13 +99,13 @@ function useEnrichedPixNotifications(rawNotifications: Notificacao[]) {
               // Fallback: buscar via aluno_responsavel
               const alunoId = cobData[0]?.aluno_id
               if (alunoId) {
-                const { data: arData } = await (supabase
-                  .from('aluno_responsavel') as any)
+                const { data: arData } = await supabase
+                  .from('aluno_responsavel')
                   .select('responsaveis(nome)')
                   .eq('aluno_id', alunoId)
                   .limit(1)
                   .maybeSingle()
-                responsavelNome = (arData as any)?.responsaveis?.nome || 'Responsável'
+                responsavelNome = (arData as { responsaveis?: { nome?: string } } | null)?.responsaveis?.nome || 'Responsável'
               }
             }
 

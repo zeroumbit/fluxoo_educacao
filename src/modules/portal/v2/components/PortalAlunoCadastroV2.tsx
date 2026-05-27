@@ -187,7 +187,7 @@ export function PortalAlunoCadastroV2() {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id as 'dados' | 'documentos' | 'contato' | 'endereco' | 'saude')}
             className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all ${activeTab === tab.id ? 'text-teal-600 bg-white border-b-2 border-teal-600' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <tab.icon className="w-4 h-4" />

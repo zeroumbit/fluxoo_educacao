@@ -70,7 +70,7 @@ export function FrequenciaPageWeb() {
   const navigate = useNavigate()
   const location = useLocation()
   
-  const [turmaId, setTurmaId] = useState(() => (location.state as any)?.turmaId || '')
+  const [turmaId, setTurmaId] = useState(() => (location.state as { turmaId?: string })?.turmaId || '')
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
 
   const { data: turmas } = useTurmas()

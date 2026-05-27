@@ -206,7 +206,7 @@ export function FinanceiroPageWeb() {
     const isAtrasada = (c: any) =>
       c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
 
-    return (cobrancas as any[]).filter(c => {
+    return (cobrancas ?? []).filter(c => {
       let matchStatus = filtroStatus === 'todos'
       if (filtroStatus === 'atrasado') matchStatus = isAtrasada(c)
       else if (filtroStatus === 'a_vencer') matchStatus = c.status === 'a_vencer' && !isAtrasada(c)
@@ -219,7 +219,7 @@ export function FinanceiroPageWeb() {
 
   const stats = useMemo(() => {
     if (!cobrancas) return { total: 0, pagos: 0, a_vencer: 0, atrasados: 0 }
-    const list = cobrancas as any[]
+    const list = cobrancas ?? []
     const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
 
     // Normaliza status: cobrança é atrasada se status='atrasado' OU data venceu (banco pode estar desatualizado)
@@ -370,7 +370,7 @@ export function FinanceiroPageWeb() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Aluno</label>
                     <SearchableAlunoSelect
-                      alunos={alunos as any[]}
+                      alunos={alunos ?? []}
                       value={alunoIdSelecionado || ''}
                       onValueChange={(val) => setValue('aluno_id', val)}
                       disabled={!!cobrancaEditando}

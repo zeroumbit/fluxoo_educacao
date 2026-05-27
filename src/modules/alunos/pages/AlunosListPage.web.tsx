@@ -185,10 +185,10 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
   }, [matriculasAtivas])
 
   const alunosFiltrados = useMemo(() => {
-    const list = (alunos as any[])?.filter((a) =>
+    const list = (alunos ?? []).filter((a) =>
       a.nome_completo.toLowerCase().includes(busca.toLowerCase())
     ).map((aluno) => {
-      const respFinanceiro = aluno.aluno_responsavel?.find((v: any) => v.is_financeiro);
+      const respFinanceiro = aluno.aluno_responsavel?.find(v => v.is_financeiro);
       const matriculaInfo = alunosComMatriculaMap.get(aluno.id)
       return {
         ...aluno,
@@ -417,7 +417,7 @@ function AlunosListPageContent({ isProfessor = false }: { isProfessor?: boolean 
                   variant="ghost" 
                   size="sm" 
                   className="text-rose-600 hover:bg-rose-50 font-bold text-xs"
-                  onClick={() => (deletarLote.mutate as any)()}
+                  onClick={() => deletarLote.mutate()}
                   disabled={deletarLote.isPending}
                 >
                   <Trash className="w-4 h-4 mr-1" /> Deletar Lote

@@ -241,7 +241,7 @@ export function PortalAutorizacoesPage({ hideHeader = false }: { hideHeader?: bo
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
         <Shield className="h-16 w-16 text-red-200" />
         <p className="font-bold text-red-600">Erro ao carregar autorizações.</p>
-        <p className="text-sm text-slate-500 max-w-md">{(error as any)?.message || 'Tente novamente mais tarde.'}</p>
+        <p className="text-sm text-slate-500 max-w-md">{(error as { message?: string })?.message || 'Tente novamente mais tarde.'}</p>
       </div>
     )
   }

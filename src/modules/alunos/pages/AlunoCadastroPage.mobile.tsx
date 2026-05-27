@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { Aluno } from '@/lib/database.types'
+import type { Aluno, AlunoInsert } from '@/lib/database.types'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { checkRateLimit,safeStorage } from '@/lib/security'
 import { supabase } from '@/lib/supabase'
@@ -149,9 +149,9 @@ export function AlunoCadastroPageMobile() {
       const currentFilialId = watch('filial_id')
       if (!currentFilialId) {
         if (filiais.length === 1) {
-          setValue('filial_id', (filiais[0] as any).id)
+          setValue('filial_id', filiais[0].id)
         } else {
-          const matriz = (filiais as any[]).find(f => f.is_matriz)
+          const matriz = filiais.find(f => f.is_matriz)
           if (matriz) {
             setValue('filial_id', matriz.id)
           }
@@ -172,7 +172,7 @@ export function AlunoCadastroPageMobile() {
         const parsedDraft = await safeStorage.decrypt(savedDraft)
         const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
           if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
-          return val !== '' && val !== null && val !== undefined && (val as any)?.length !== 0;
+          return val !== '' && val !== null && val !== undefined && (val as { length?: number })?.length !== 0;
         });
 
         if (isMounted && isActuallyFilled) {
@@ -194,7 +194,7 @@ export function AlunoCadastroPageMobile() {
   const handleContinuarRascunho = () => {
     if (draftStateData) {
       Object.entries(draftStateData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) setValue(key as any, value)
+        if (value !== undefined && value !== null) setValue(key as keyof typeof draftStateData, value)
       })
     }
     const savedStep = localStorage.getItem('aluno_cadastro_step_mobile')
@@ -216,7 +216,7 @@ export function AlunoCadastroPageMobile() {
 
     async function saveDraft() {
       const draftContent = { ...watchAllFields }
-      delete (draftContent as any).responsavel_senha
+      delete (draftContent as Record<string, unknown>).responsavel_senha
 
       const encryptedDraft = await safeStorage.encrypt(draftContent)
       if (!isCancelled && encryptedDraft) {
@@ -372,7 +372,7 @@ export function AlunoCadastroPageMobile() {
           cep: data.cep || null, logradouro: data.logradouro || null, numero: data.numero || null,
           complemento: data.complemento || null, bairro: data.bairro || null, cidade: data.cidade || null, estado: data.estado || null,
           data_ingresso: data.data_ingresso || formatDateISO(getProximoDiaUtil(new Date())),
-        } as any,
+        } as AlunoInsert,
         grauParentesco: data.responsavel_parentesco || null,
         isFinanceiro: data.responsavel_financeiro === 'sim',
       })
@@ -541,7 +541,7 @@ export function AlunoCadastroPageMobile() {
           <div className="grid gap-3 py-4">
             <Button 
               className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 rounded-2xl text-sm font-bold"
-              onClick={() => navigate('/matriculas', { state: { aluno_id: (lastCreatedAluno as any)?.id, autoOpen: true } })}
+              onClick={() => navigate('/matriculas', { state: { aluno_id: lastCreatedAluno?.id, autoOpen: true } })}
             >
               Matricular este aluno agora
             </Button>
@@ -685,7 +685,7 @@ export function AlunoCadastroPageMobile() {
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(filiais as any[]).map((f: any) => (
+                          {(filiais ?? []).map(f => (
                             <SelectItem key={f.id} value={f.id}>{f.nome_unidade} {f.is_matriz ? '(Matriz)' : ''}</SelectItem>
                           ))}
                         </SelectContent>

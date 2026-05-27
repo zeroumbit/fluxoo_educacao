@@ -35,7 +35,7 @@ export function PortalHomeV2Web() {
   const { data: transferenciasPortal } = useTransferenciasPortal();
   const filaAtiva = historicoFila?.find((f: any) => f.status === 'aguardando');
   const transferenciaPendente = React.useMemo(
-    () => (transferenciasPortal as any[] | undefined)?.find((t) => ['aguardando_responsavel', 'aguardando_aceite_destino'].includes(t.status)),
+    () => (transferenciasPortal ?? []).find((t) => ['aguardando_responsavel', 'aguardando_aceite_destino'].includes(t.status)),
     [transferenciasPortal]
   );
   

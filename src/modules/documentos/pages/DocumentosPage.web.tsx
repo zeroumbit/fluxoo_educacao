@@ -196,7 +196,7 @@ export function DocumentosPage() {
 
   const getPreviewData = (alunoId: string) => {
     // Escolhe o aluno correto: se for o selecionado no momento, usa o carregado com detalhes
-    const aluno = (alunoId === selectedAluno ? alunoCompleto : alunos?.find((a: any) => a.id === alunoId)) as any
+    const aluno = alunoId === selectedAluno ? alunoCompleto : alunos?.find((a: any) => a.id === alunoId)
     if (!aluno) return null
 
     // Helper para formatar endereço

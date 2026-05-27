@@ -67,11 +67,11 @@ export function TurmasPageWeb() {
 
   // Sync real data with Zustand store
   useEffect(() => {
-    if (dbTurmas) setTurmas(dbTurmas as any)
+    if (dbTurmas) setTurmas(dbTurmas)
   }, [dbTurmas, setTurmas])
 
   useEffect(() => {
-    if (dbAlunos) setAlunos(dbAlunos as any)
+    if (dbAlunos) setAlunos(dbAlunos)
   }, [dbAlunos, setAlunos])
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export function TurmasPageWeb() {
         valor_mensalidade: data.valor_mensalidade,
         status: 'ativa',
         tenant_id: authUser?.tenantId
-      } as any)
+      } as Record<string, unknown>)
 
       toast.success('Turma criada com sucesso!')
       setIsNewModalOpen(false)

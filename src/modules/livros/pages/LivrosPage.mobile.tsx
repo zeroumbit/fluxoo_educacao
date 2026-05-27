@@ -151,9 +151,9 @@ export function LivrosPageMobile() {
 
   // Count items per turma
   const itensPorTurma = useMemo(() => {
-    const listLivros = (livros || cachedLivros || []) as any[]
-    const listMateriais = (materiais || cachedMateriais || []) as any[]
-    const mapa = new Map<string, any[]>()
+    const listLivros = (livros || cachedLivros || []) as object[]
+    const listMateriais = (materiais || cachedMateriais || []) as object[]
+    const mapa = new Map<string, object[]>()
     
     if (turmas) {
       turmas.forEach(t => mapa.set(t.id, []))
@@ -176,7 +176,7 @@ export function LivrosPageMobile() {
 
   const handleSelectTurmaInForm = (id: string) => {
     const isLivro = activeTab === 'livro'
-    const form = isLivro ? (livroForm as any) : (materialForm as any)
+    const form = isLivro ? livroForm : materialForm
     const current = (form.getValues('turmasIds') || []) as string[]
     
     if (current.includes(id)) {
@@ -320,9 +320,9 @@ export function LivrosPageMobile() {
         )
 
         if (livroParaEditar) {
-          await editarLivro.mutateAsync({ id: livroParaEditar.id, livro: cleanData as any, turmasIds: (data as any).turmasIds })
+          await editarLivro.mutateAsync({ id: livroParaEditar.id, livro: cleanData as Record<string, unknown>, turmasIds: data.turmasIds })
         } else {
-          await criarLivro.mutateAsync({ livro: cleanData as any, turmasIds: (data as any).turmasIds })
+          await criarLivro.mutateAsync({ livro: cleanData as Record<string, unknown>, turmasIds: data.turmasIds })
         }
       } else {
         const payload = {
@@ -337,9 +337,9 @@ export function LivrosPageMobile() {
         )
 
         if (materialParaEditar) {
-          await editarMaterial.mutateAsync({ id: materialParaEditar.id, material: cleanData as any, turmasIds: (data as any).turmasIds })
+          await editarMaterial.mutateAsync({ id: materialParaEditar.id, material: cleanData as Record<string, unknown>, turmasIds: data.turmasIds })
         } else {
-          await criarMaterial.mutateAsync({ material: cleanData as any, turmasIds: (data as any).turmasIds })
+          await criarMaterial.mutateAsync({ material: cleanData as Record<string, unknown>, turmasIds: data.turmasIds })
         }
       }
 
@@ -435,7 +435,7 @@ export function LivrosPageMobile() {
                                   {item.tipo === 'livro' ? 'LIVRO' : 'MATERIAL'}
                                 </Badge>
                                  <span className="text-[10px] font-bold text-slate-400 uppercase truncate">
-                                  {item.tipo === 'livro' ? ((disciplinas as any[])?.find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
+                                  {item.tipo === 'livro' ? ((disciplinas ?? []).find(d => d.id === item.disciplina_id)?.nome || 'Paradidático') : item.categoria}
                                 </span>
                              </div>
                              <h4 className="font-bold text-slate-900 dark:text-white leading-tight text-base line-clamp-2">
@@ -546,7 +546,7 @@ export function LivrosPageMobile() {
                        <Select onValueChange={(v) => livroForm.setValue('disciplina_id', v)} value={livroForm.watch('disciplina_id')}>
                           <SelectTrigger className="h-11 rounded-2xl"><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
-                          {(disciplinas as any[])?.map((d: any) => (
+                          {(disciplinas ?? []).map(d => (
                              <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                           ))}
                         </SelectContent>

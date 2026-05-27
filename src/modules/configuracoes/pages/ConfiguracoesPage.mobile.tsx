@@ -272,7 +272,7 @@ export function ConfiguracoesPageMobile() {
                 <MobileSelect
                   title="Ciclo de Avaliação"
                   value={academica.divisao_etapas}
-                  onValueChange={(v) => setAcademica({ ...academica, divisao_etapas: v as any })}
+                  onValueChange={(v) => setAcademica({ ...academica, divisao_etapas: v as '4_bimestres' | '3_trimestres' | '2_semestres' })}
                   options={[
                     { value: '4_bimestres', label: '4 Bimestres' },
                     { value: '3_trimestres', label: '3 Trimestres' },
