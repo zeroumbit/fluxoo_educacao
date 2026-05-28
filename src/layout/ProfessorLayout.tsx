@@ -232,7 +232,7 @@ function SidebarContent({
       <Separator />
 
       {/* User */}
-      <div className="p-4 pb-24 lg:pb-4 space-y-2">
+      <div className="p-4 pb-6 lg:pb-4 space-y-2">
         <div className="flex items-center gap-3 py-2.5 px-3">
           <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white text-xs">

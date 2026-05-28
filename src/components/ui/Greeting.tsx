@@ -16,12 +16,14 @@ export function Greeting() {
        <h1 className="text-2xl lg:text-3xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
          {greeting} <span className="text-indigo-600 dark:text-indigo-400">{name}</span>,
        </h1>
-       <p className="text-sm lg:text-base font-medium text-zinc-600 dark:text-zinc-400">
-         Bem-vindo de volta.
-       </p>
-       <p className="text-[10px] lg:text-xs font-bold text-zinc-400 dark:text-zinc-500 tracking-widest mt-1">
-         Agora são {format(now, 'HH:mm')}
-       </p>
+       <div className="flex items-center gap-2">
+         <p className="text-sm lg:text-base font-medium text-zinc-600 dark:text-zinc-400">
+           Bem-vindo de volta.
+         </p>
+         <p className="text-[10px] lg:text-xs font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
+           Agora são {format(now, 'HH:mm')}
+         </p>
+       </div>
     </div>
   )
 }

@@ -4,6 +4,8 @@ import { NativeCard } from '@/components/mobile/NativeCard'
 import { PullToRefresh } from '@/components/mobile/PullToRefresh'
 import { Button } from '@/components/ui/button'
 import { cn,formatCurrency } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { auditReportExport, buildCsvContent, downloadTextFile } from '@/modules/relatorios/export-utils'
 import { usePermissions } from '@/providers/RBACProvider'
 import { AnimatePresence,motion } from 'framer-motion'
 import {
@@ -17,17 +19,28 @@ Sparkles,
 TrendingUp
 } from 'lucide-react'
 import { useMemo,useState } from 'react'
+import { toast } from 'sonner'
 import { useFechamentoMensal } from '../hooks-avancado'
+
+type FechamentoMensalMobile = {
+  mes: string
+  saldo: number
+  saldo_previsto: number
+  total_receitas_previsto: number
+  total_receitas_recebido: number
+  total_receitas_aberto: number
+  total_despesas_previsto: number
+  total_despesas_pago: number
+  total_despesas_aberto: number
+}
 
 export function FinanceiroRelatoriosPageMobile() {
   const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()
+  const { authUser } = useAuth()
   const { hasPermission } = usePermissions()
   const canExport = hasPermission('financeiro.relatorios.export')
 
-  const [selectedMonth, setSelectedMonth] = useState<{
-    mes: string; saldo: number; total_receitas_previsto: number; total_receitas_recebido: number
-    total_receitas_aberto: number; total_despesas_previsto: number; total_despesas_pago: number; total_despesas_aberto: number
-  } | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState<FechamentoMensalMobile | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   // Calcular totais consolidation
@@ -35,7 +48,7 @@ export function FinanceiroRelatoriosPageMobile() {
     if (!fechamento || fechamento.length === 0) {
       return { receitasRecebido: 0, despesasPago: 0, saldo: 0, saldoPrevisto: 0 }
     }
-    return fechamento.reduce((acc, item: any) => ({
+    return (fechamento as FechamentoMensalMobile[]).reduce((acc, item) => ({
       receitasRecebido: acc.receitasRecebido + (item.total_receitas_recebido || 0),
       despesasPago: acc.despesasPago + (item.total_despesas_pago || 0),
       saldo: acc.saldo + (item.saldo || 0),
@@ -43,10 +56,15 @@ export function FinanceiroRelatoriosPageMobile() {
     }), { receitasRecebido: 0, despesasPago: 0, saldo: 0, saldoPrevisto: 0 })
   }, [fechamento])
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (!canExport) {
+      toast.error('Voce nao tem permissao para exportar este relatorio.')
+      return
+    }
+
     if (!fechamento || fechamento.length === 0) return
     const headers = ['Mês', 'Receitas Previsto', 'Receitas Recebido', 'Despesas Previsto', 'Despesas Pago', 'Saldo Atual']
-    const rows = (fechamento ?? []).map(item => [
+    const rows = (fechamento as FechamentoMensalMobile[]).map(item => [
       new Date(item.mes).toLocaleString('pt-BR', { month: 'short', year: '2-digit' }),
       item.total_receitas_previsto,
       item.total_receitas_recebido,
@@ -54,13 +72,19 @@ export function FinanceiroRelatoriosPageMobile() {
       item.total_despesas_pago,
       item.saldo
     ])
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `financeiro_mobile_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
+    await auditReportExport({
+      authUser,
+      reportKey: 'financeiro.fechamento_mensal',
+      format: 'csv',
+      rowCount: fechamento.length,
+    })
+
+    const csvContent = buildCsvContent(headers, rows)
+    downloadTextFile(
+      csvContent,
+      `financeiro_mobile_${new Date().toISOString().split('T')[0]}.csv`,
+      'text/csv;charset=utf-8;'
+    )
   }
 
   if (isLoading) {

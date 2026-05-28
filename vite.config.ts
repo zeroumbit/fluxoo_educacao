@@ -4,6 +4,19 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const normalizeModuleId = (id: string) => id.split(path.win32.sep).join('/')
+
+const getNodeModulePackage = (id: string) => {
+  const normalizedId = normalizeModuleId(id)
+  if (!normalizedId.includes('/node_modules/')) return null
+
+  const [, packagePath] = normalizedId.split('/node_modules/')
+  if (!packagePath) return null
+
+  const parts = packagePath.split('/')
+  return parts[0]?.startsWith('@') ? `${parts[0]}/${parts[1]}` : parts[0]
+}
+
 export default defineConfig({
   optimizeDeps: {
     include: ['idb-keyval', 'dompurify', 'framer-motion', 'lucide-react']
@@ -64,18 +77,31 @@ export default defineConfig({
     },
   },
   build: {
+    // PDF generation is isolated into async chunks; pdfkit is expected to be
+    // larger than Vite's generic 500 kB warning threshold.
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       input: path.resolve(__dirname, 'index.html'),
       output: {
         manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('@react-pdf/renderer')) return 'pdf-renderer'
-            if (id.includes('date-fns')) return 'date-utils'
-            if (id.includes('framer-motion')) return 'animation-vendor'
-            if (id.includes('@tanstack/react-query')) return 'query-vendor'
-            if (id.includes('lucide-react')) return 'icons-vendor'
-            return 'vendor'
-          }
+          const packageName = getNodeModulePackage(id)
+          if (!packageName) return undefined
+
+          if (['react', 'react-dom', 'scheduler'].includes(packageName)) return 'react-vendor'
+          if (packageName.startsWith('@radix-ui/')) return 'radix-vendor'
+          if (packageName.startsWith('@react-pdf/')) return `pdf-${packageName.split('/')[1]}`
+          if (packageName.startsWith('@supabase/')) return 'supabase-vendor'
+          if (packageName.startsWith('@sentry/') || packageName.startsWith('@sentry-internal/')) return 'sentry-vendor'
+          if (packageName.startsWith('@tanstack/')) return 'query-vendor'
+          if (['react-hook-form', '@hookform/resolvers', 'zod'].includes(packageName)) return 'forms-vendor'
+          if (packageName === 'date-fns') return 'date-utils'
+          if (packageName === 'framer-motion') return 'animation-vendor'
+          if (packageName === 'lucide-react') return 'icons-vendor'
+          if (packageName === 'dompurify') return 'sanitize-vendor'
+          if (packageName === 'recharts') return 'charts-vendor'
+          if (['idb-keyval', 'vite-plugin-pwa'].includes(packageName) || packageName.startsWith('workbox-')) return 'pwa-vendor'
+
+          return undefined
         }
       }
     }

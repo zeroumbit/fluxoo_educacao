@@ -31,6 +31,32 @@ export interface GestorActionContext {
   dadosPayload?: Record<string, unknown>
 }
 
+type GestorGuardRpcError = {
+  message: string
+}
+
+type SetConfigArgs = {
+  setting: string
+  value: string
+  is_local: boolean
+}
+
+type SolicitarAprovacaoArgs = {
+  p_tipo_acao: GestorExceptionalAction
+  p_titulo: string
+  p_descricao: string
+  p_justificativa: string
+  p_registro_id: string | null
+  p_dados_payload?: Record<string, unknown> | null
+}
+
+type GestorGuardRpcClient = {
+  rpc(fn: 'set_config', args: SetConfigArgs): Promise<{ data: unknown; error: GestorGuardRpcError | null }>
+  rpc(fn: 'fn_solicitar_aprovacao', args: SolicitarAprovacaoArgs): Promise<{ data: string | null; error: GestorGuardRpcError | null }>
+}
+
+const gestorGuardRpcClient = supabase as unknown as GestorGuardRpcClient
+
 /**
  * Verifica se o usuário é Gestor com privilégios de ação excepcional.
  * (Não é Super Admin, pois Super Admin não pode agir operacionalmente)
@@ -46,11 +72,11 @@ export function isGestorOperational(authUser: AuthUser | null): boolean {
  * Deve ser chamado ANTES de qualquer INSERT/UPDATE na mesma transação.
  */
 export async function setJustificativaForAudit(justificativa: string): Promise<void> {
-  await supabase.rpc('set_config' as any, {
+  await gestorGuardRpcClient.rpc('set_config', {
     setting: 'app.audit_justificativa',
     value: justificativa,
     is_local: true,
-  } as any)
+  })
 }
 
 /**
@@ -90,14 +116,14 @@ export async function executeGestorExceptionalAction<T>(
   const result = await fn()
 
   // Criar aprovação no workflow (para rastreabilidade)
-  await supabase.rpc('fn_solicitar_aprovacao' as any, {
+  await gestorGuardRpcClient.rpc('fn_solicitar_aprovacao', {
     p_tipo_acao:     context.action,
     p_titulo:        `Ação excepcional do Gestor: ${context.action}`,
     p_descricao:     `Gestor realizou ação excepcional que normalmente requer aprovação.`,
     p_justificativa: context.justificativa,
     p_registro_id:   context.registroId ?? null,
     p_dados_payload: context.dadosPayload ?? null,
-  } as any).catch(() => {
+  }).catch(() => {
     // Não bloquear a ação se o workflow falhar — o audit_log já registrou
   })
 
@@ -114,14 +140,14 @@ export async function solicitarAprovacaoGestor(
   justificativa: string,
   registroId?: string
 ): Promise<string | null> {
-  const { data, error } = await supabase.rpc('fn_solicitar_aprovacao' as any, {
+  const { data, error } = await gestorGuardRpcClient.rpc('fn_solicitar_aprovacao', {
     p_tipo_acao:     tipo,
     p_titulo:        titulo,
     p_descricao:     descricao,
     p_justificativa: justificativa,
     p_registro_id:   registroId ?? null,
-  } as any)
+  })
 
   if (error) throw new Error(error.message)
-  return data as string
+  return data
 }

@@ -40,7 +40,9 @@ Zap
 import { useEffect,useMemo,useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertasProvider,useAlertas,type RadarAlunoComStatus } from '../AlertasContext'
+import { AnalyticsSection } from '../components/AnalyticsSection'
 import { OnboardingGuide } from '../components/OnboardingGuide'
+import { ExportButton } from '@/modules/relatorios/components/ExportButton'
 import { useDashboard } from '../dashboard.hooks'
 import type { AvisoRecente } from '../dashboard.service'
 
@@ -550,10 +552,18 @@ export function DashboardPageMobile() {
             {/* ── Saudação ── */}
             <section className="flex items-start justify-between px-5">
               <Greeting />
-              <NotificationBell
-                total={notifications?.total || 0}
-                items={notifications?.items || []}
-              />
+              <div className="flex items-center gap-2">
+                <ExportButton
+                  reportKey="dashboard.analytics-completo"
+                  variant="ghost"
+                  size="icon"
+                  formats={['csv', 'xlsx']}
+                />
+                <NotificationBell
+                  total={notifications?.total || 0}
+                  items={notifications?.items || []}
+                />
+              </div>
             </section>
 
             {/* Notificação de Alunos Sem Matrícula */}
@@ -752,6 +762,11 @@ export function DashboardPageMobile() {
                 </motion.div>
               </div>
             </section>
+
+            {/* ── Analytics (mobile simplificado) ── */}
+            <div className="px-5">
+              <AnalyticsSection />
+            </div>
 
             {/* ── Radar de Atenção ── */}
             <RadarDeAtencaoSection 

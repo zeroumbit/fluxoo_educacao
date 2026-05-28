@@ -744,13 +744,17 @@ export const financeiroService = {
 
     if (!data?.success) {
       if (data.concorrencia) {
-        const err = new Error('CONCORRENCIA: Cobrança está sendo processada por outra sessão.')
-        ;(err as any).concorrencia = true
+        const err: ErroBaixaBoleto = Object.assign(
+          new Error('CONCORRENCIA: Cobrança está sendo processada por outra sessão.'),
+          { concorrencia: true }
+        )
         throw err
       }
       if (data.ja_pago) {
-        const err = new Error('JA_PAGO: Esta cobrança já foi baixada.')
-        ;(err as any).jaPago = true
+        const err: ErroBaixaBoleto = Object.assign(
+          new Error('JA_PAGO: Esta cobrança já foi baixada.'),
+          { jaPago: true }
+        )
         throw err
       }
       throw new Error(data?.error || 'Erro desconhecido ao baixar boleto')

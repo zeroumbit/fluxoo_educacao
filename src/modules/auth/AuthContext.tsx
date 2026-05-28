@@ -2,6 +2,7 @@ import { precheckLogin,recordLoginAttempt } from '@/lib/auth-rate-limit'
 import { logger } from '@/lib/logger'
 import { clearSensitiveClientState } from '@/lib/session-cleanup'
 import { supabase } from '@/lib/supabase'
+import { portalService } from '@/modules/portal/service'
 import { usePortalStore } from '@/modules/portal/store'
 import { rbacService } from '@/modules/rbac/service'
 import type { ResolvedPermission } from '@/modules/rbac/types'
@@ -456,7 +457,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInPortal = async (cpf: string, password: string) => {
     setLoading(true)
     try {
-      const { portalService } = await import('@/modules/portal/service')
       await portalService.loginPorCpf(cpf, password)
       return { error: null }
     } catch (error: unknown) {

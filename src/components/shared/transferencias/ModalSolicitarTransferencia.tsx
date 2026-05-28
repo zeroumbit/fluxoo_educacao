@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { Aluno, Responsavel } from '@/lib/database.types'
+import type { Aluno, Responsavel, TransferenciaEscolarInsert } from '@/lib/database.types'
 import { AlertCircle,CheckCircle2,Loader2,Search,UserCheck } from 'lucide-react'
 import React,{ useState } from "react"
 import { useForm } from "react-hook-form"
@@ -45,6 +45,24 @@ const limparCPF = (cpf: string) => cpf.replace(/\D/g, '')
 
 type SolicitacaoFormValues = z.infer<typeof solicitacaoSchema>
 
+type ResponsavelTransferencia = Pick<Responsavel, 'id' | 'cpf' | 'nome' | 'email' | 'telefone'>
+
+type VinculoResponsavelTransferencia = {
+  responsaveis?: ResponsavelTransferencia
+}
+
+type AlunoTransferencia = Aluno & {
+  responsaveis?: ResponsavelTransferencia[]
+  aluno_responsavel?: VinculoResponsavelTransferencia[]
+}
+
+type TransferenciaRpcClient = {
+  rpc(
+    fn: 'buscar_aluno_transferencia',
+    args: { p_codigo: string }
+  ): Promise<{ data: AlunoTransferencia | AlunoTransferencia[] | string | null; error: { message?: string } | null }>
+}
+
 interface ModalSolicitarTransferenciaProps {
   isOpen: boolean
   onClose: () => void
@@ -67,7 +85,7 @@ export function ModalSolicitarTransferencia({
     },
   })
 
-  const [alunoData, setAlunoData] = useState<Aluno | null>(null)
+  const [alunoData, setAlunoData] = useState<AlunoTransferencia | null>(null)
   const [responsavelEncontrado, setResponsavelEncontrado] = useState<Responsavel | null>(null)
   const [cpfErro, setCpfErro] = useState<string | null>(null)
   const [_rpcStatus, setRpcStatus] = useState<'idle' | 'loading' | 'success' | 'not_found' | 'error'>('idle')
@@ -93,7 +111,8 @@ export function ModalSolicitarTransferencia({
         setRpcErrorDetail(null)
         try {
           logger.debug('[TRANSFERENCIA] Buscando codigo')
-          const { data, error } = await (supabase as any)
+          const transferenciaRpcClient = supabase as unknown as TransferenciaRpcClient
+          const { data, error } = await transferenciaRpcClient
             .rpc('buscar_aluno_transferencia', { p_codigo: codigoNormalizado })
 
           if (error) {
@@ -111,14 +130,14 @@ export function ModalSolicitarTransferencia({
             const aluno = Array.isArray(data) ? data[0] : data
             
             // Se o retorno for string JSON (caso do Supabase RPC com JSONB), fazemos parse
-            const parsedAluno = typeof aluno === 'string' ? JSON.parse(aluno) : aluno
+            const parsedAluno = (typeof aluno === 'string' ? JSON.parse(aluno) : aluno) as AlunoTransferencia
 
             logger.debug('[TRANSFERENCIA] Aluno parseado', { alunoId: parsedAluno?.id })
 
             // Remapeamos para manter compatibilidade com o resto do código
             setAlunoData({
               ...parsedAluno,
-              aluno_responsavel: parsedAluno.responsaveis?.map((r: { cpf?: string; nome?: string; email?: string; telefone?: string }) => ({ responsaveis: r })) || []
+              aluno_responsavel: parsedAluno.responsaveis?.map((r) => ({ responsaveis: r })) || []
             })
             setRpcStatus('success')
           } else {
@@ -156,7 +175,7 @@ export function ModalSolicitarTransferencia({
     
     // Se parece um CPF (11 dígitos) ou CNPJ (14 dígitos)
     if (docLimpo.length >= 11) {
-      const respVinculado = (alunoData as any).aluno_responsavel?.find((v: { responsaveis?: { cpf?: string } }) => 
+      const respVinculado = alunoData.aluno_responsavel?.find((v) => 
         limparCPF(v.responsaveis?.cpf || '') === docLimpo
       )
 
@@ -194,7 +213,7 @@ export function ModalSolicitarTransferencia({
       }
 
       // 2. Inserir solicitação (v2 com Destino Híbrido)
-      const responsavelAlvoId = responsavelEncontrado?.id || (alunoData as any).aluno_responsavel?.[0]?.responsaveis?.id;
+      const responsavelAlvoId = responsavelEncontrado?.id || alunoData.aluno_responsavel?.[0]?.responsaveis?.id;
       const escolaOrigemId = alunoData.tenant_id;
 
       if (!responsavelAlvoId) {
@@ -205,9 +224,7 @@ export function ModalSolicitarTransferencia({
         return
       }
       
-      const { error: insertError } = await supabase
-        .from('transferencias_escolares')
-        .insert({
+      const transferencia: TransferenciaEscolarInsert = {
           aluno_id: alunoData.id,
           escola_origem_id: escolaOrigemId,
           escola_destino_id: authUser?.role !== 'responsavel' && authUser?.tenantId !== 'super_admin' ? authUser?.tenantId : null,
@@ -215,7 +232,11 @@ export function ModalSolicitarTransferencia({
           iniciado_por: authUser?.role === 'responsavel' ? 'responsavel' : 'destino',
           motivo_solicitacao: data.motivo,
           status: 'aguardando_responsavel'
-        } as any)
+        }
+
+      const { error: insertError } = await supabase
+        .from('transferencias_escolares')
+        .insert(transferencia)
 
       if (insertError) throw insertError
 

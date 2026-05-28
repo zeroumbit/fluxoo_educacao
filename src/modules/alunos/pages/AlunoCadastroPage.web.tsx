@@ -568,7 +568,8 @@ export function AlunoCadastroPage() {
 
       let errorMessage = 'Erro ao cadastrar aluno. '
       if (errMsg) errorMessage += errMsg
-      if ((err as any)?.details) errorMessage += ` (${(err as any).details})`
+      const details = err && typeof err === 'object' && 'details' in err ? String(err.details) : ''
+      if (details) errorMessage += ` (${details})`
 
       toast.error(errorMessage, { duration: 8000 })
     }

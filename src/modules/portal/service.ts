@@ -1,4 +1,4 @@
-import { precheckLogin } from '@/lib/auth-rate-limit'
+import { precheckLogin, recordLoginAttempt } from '@/lib/auth-rate-limit'
 import type {
   Aluno,
   AlunoResponsavel,
@@ -50,6 +50,7 @@ type PortalLoginInfo = {
   id: string
   email: string | null
   status: string | null
+  tenant_id?: string | null
   [key: string]: unknown
 }
 
@@ -153,12 +154,22 @@ export const portalService = {
 
     if (rpcError || !profiles || profiles.length === 0) {
       logger.error('Erro ao buscar responsavel no login do portal', rpcError)
+      await recordLoginAttempt({
+        identifier: cpfLimpo,
+        success: false,
+        reason: rpcError?.message || 'portal_cpf_sem_acesso',
+      })
       throw new Error('CPF não cadastrado ou sem acesso ao portal.')
     }
 
     // Tenta encontrar um perfil ativo
     const activeProfiles = (profiles as PortalLoginInfo[]).filter(p => p.status === 'ativo')
     if (activeProfiles.length === 0) {
+      await recordLoginAttempt({
+        identifier: cpfLimpo,
+        success: false,
+        reason: 'portal_cadastro_inativo',
+      })
       throw new Error('Este cadastro está inativo. Entre em contato com a escola.')
     }
 
@@ -166,6 +177,11 @@ export const portalService = {
       (profile, index, list) => !!profile.email && list.findIndex(p => p.email === profile.email) === index
     )
     if (profilesComEmail.length === 0) {
+      await recordLoginAttempt({
+        identifier: cpfLimpo,
+        success: false,
+        reason: 'portal_sem_email_acesso',
+      })
       throw new Error('Este cadastro nÃ£o possui email de acesso. Entre em contato com a escola.')
     }
 
@@ -191,6 +207,12 @@ export const portalService = {
     }
 
     if (authError || !authData) {
+      await recordLoginAttempt({
+        identifier: cpfLimpo,
+        success: false,
+        reason: authError?.message || 'portal_auth_falha',
+        tenantId: profile.tenant_id,
+      })
       await portalService.registrarAuditoria({
         tipo: 'login_falha',
         responsavel_id: profile.id,
@@ -202,6 +224,12 @@ export const portalService = {
       }
       throw new Error(`Erro na autenticação: ${authError?.message || 'Falha desconhecida'}`)
     }
+
+    await recordLoginAttempt({
+      identifier: cpfLimpo,
+      success: true,
+      tenantId: profile.tenant_id,
+    })
 
     await portalService.registrarAuditoria({
       tipo: 'login_sucesso',

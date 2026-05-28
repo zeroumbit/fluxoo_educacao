@@ -9,6 +9,28 @@ export type CriarMovimentacaoPayload = AlmoxarifadoMovimentacaoInsert & {
   vencimento_financeiro?: string
 }
 
+type ContaPagarAlmoxarifadoPayload = {
+  tenant_id: string
+  nome: string
+  favorecido: string
+  valor: number
+  data_vencimento: string
+  status: 'ativo'
+  categoria: string
+}
+
+type FinanceiroContasPagarService = {
+  criarContaPagar(conta: ContaPagarAlmoxarifadoPayload): Promise<{ id: string } | null>
+}
+
+type AlmoxarifadoFinanceiroClient = {
+  from(table: 'almoxarifado_movimentacoes'): {
+    update(values: { financeiro_id: string }): {
+      eq(column: 'id', value: string): Promise<{ error: unknown }>
+    }
+  }
+}
+
 export const almoxarifadoService = {
   async listarItens(tenantId: string) {
     const { data, error } = await supabase
@@ -146,7 +168,8 @@ export const almoxarifadoService = {
           .eq('id', mov.item_id)
           .single()
 
-        const conta = await (financeiroService as any).criarContaPagar({
+        const financeiroContasPagarService = financeiroService as unknown as FinanceiroContasPagarService
+        const conta = await financeiroContasPagarService.criarContaPagar({
           tenant_id: mov.tenant_id,
           nome: `Compra de Material: ${itemInfo?.nome || 'Item do Almoxarifado'}`,
           favorecido: mov.fornecedor || 'Fornecedor não informado',
@@ -158,9 +181,9 @@ export const almoxarifadoService = {
 
         // Vincula o ID do financeiro na movimentação
         if (conta?.id) {
-          await supabase
+          await (supabase as unknown as AlmoxarifadoFinanceiroClient)
             .from('almoxarifado_movimentacoes')
-            .update({ financeiro_id: (conta as any).id })
+            .update({ financeiro_id: conta.id })
             .eq('id', data.id)
         }
       } catch (finError) {

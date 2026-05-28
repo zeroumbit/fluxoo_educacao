@@ -155,7 +155,7 @@ export const funcionariosService = {
 
       if (authError) {
         // Se o usuário já existir no Auth, tentamos recuperar o ID dele para completar o vínculo
-        if (authError.message.includes('User already registered') || (authError as any).status === 422) {
+        if (authError.message.includes('User already registered') || authError.status === 422) {
           logger.info('Usuario ja registrado no Auth, tentando completar vinculo por e-mail')
           
           // No Fluxoo, se o email já existe, vamos tentar forçar o vínculo na tabela funcionarios

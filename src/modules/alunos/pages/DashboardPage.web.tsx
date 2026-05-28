@@ -44,6 +44,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { RadarAlunoComStatus } from '../AlertasContext'
 import { AlertasProvider, useAlertas } from '../AlertasContext'
+import { AnalyticsSection } from '../components/AnalyticsSection'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
 import { useDashboard } from '../dashboard.hooks'
@@ -956,6 +957,9 @@ function DashboardContent() {
           <MetricCard key={`sec-${i}`} {...m} onClick={() => navigate(m.path)} />
         ))}
       </div>
+
+      {/* Analytics / Gráficos de Tendência — abaixo dos KPIs, antes do Radar */}
+      <AnalyticsSection />
 
       {/* Radar de Evasão - Fora do grid de comunicados, ocupando largura total horizontal */}
       {radarEvasao.length > 0 && (

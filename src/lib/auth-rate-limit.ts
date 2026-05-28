@@ -16,6 +16,35 @@ interface LoginAttemptInput {
 
 const RPC_TIMEOUT_MS = 2500
 
+type RpcError = { message?: string } | null
+
+type LoginPrecheckRpcResult = {
+  data: PrecheckResponse[] | PrecheckResponse | null
+  error: RpcError
+}
+
+type LoginRateLimitRpcClient = {
+  rpc(
+    fn: 'fn_login_precheck',
+    args: {
+      p_identifier: string
+      p_user_agent: string | null
+    }
+  ): Promise<LoginPrecheckRpcResult>
+  rpc(
+    fn: 'fn_login_record_attempt',
+    args: {
+      p_identifier: string
+      p_success: boolean
+      p_reason: string | null
+      p_tenant_id: string | null
+      p_user_agent: string | null
+    }
+  ): Promise<unknown>
+}
+
+const loginRateLimitClient = supabase as unknown as LoginRateLimitRpcClient
+
 function withTimeout<T>(promise: Promise<T>, ms = RPC_TIMEOUT_MS): Promise<T | null> {
   return Promise.race([
     promise,
@@ -43,10 +72,10 @@ export async function precheckLogin(identifier: string): Promise<{
 
   try {
     const result = await withTimeout(
-      supabase.rpc('fn_login_precheck' as any, {
+      loginRateLimitClient.rpc('fn_login_precheck', {
         p_identifier: normalized,
         p_user_agent: getUserAgent(),
-      } as any) as Promise<{ data: PrecheckResponse[] | PrecheckResponse | null; error: any }>
+      })
     )
 
     if (!result || result.error || !result.data) {
@@ -70,13 +99,13 @@ export async function recordLoginAttempt(input: LoginAttemptInput): Promise<void
 
   try {
     await withTimeout(
-      supabase.rpc('fn_login_record_attempt' as any, {
+      loginRateLimitClient.rpc('fn_login_record_attempt', {
         p_identifier: identifier,
         p_success: input.success,
         p_reason: input.reason || null,
         p_tenant_id: input.tenantId || null,
         p_user_agent: getUserAgent(),
-      } as any) as Promise<unknown>
+      })
     )
   } catch {
     // Auth must keep working if the optional rate-limit RPC is not deployed yet.

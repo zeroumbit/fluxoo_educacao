@@ -10,9 +10,12 @@ TableHeader,
 TableRow,
 } from '@/components/ui/table'
 import { cn,formatCurrency } from '@/lib/utils'
+import { useAuth } from '@/modules/auth/AuthContext'
+import { auditReportExport, buildCsvContent, downloadTextFile } from '@/modules/relatorios/export-utils'
 import { usePermissions } from '@/providers/RBACProvider'
 import { AlertCircle,CreditCard,DollarSign,Loader2,PiggyBank,RotateCw,TrendingUp,Wallet } from 'lucide-react'
 import { useMemo } from 'react'
+import { toast } from 'sonner'
 import { useFechamentoMensal } from '../hooks-avancado'
 
 interface FechamentoMensal {
@@ -37,11 +40,17 @@ interface FechamentoMensal {
 
 export function FinanceiroRelatoriosPage() {
   const { data: fechamento, isLoading, refetch, isRefetching } = useFechamentoMensal()
+  const { authUser } = useAuth()
   const { hasPermission } = usePermissions()
   const canExport = hasPermission('financeiro.relatorios.export')
 
   // Função para exportar CSV
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (!canExport) {
+      toast.error('Voce nao tem permissao para exportar este relatorio.')
+      return
+    }
+
     if (!fechamento || fechamento.length === 0) return
 
     const headers = ['Mês', 'Receitas Previsto', 'Receitas Recebido', 'Receitas Aberto', 'Despesas Previsto', 'Despesas Pago', 'Despesas Aberto', 'Saldo Atual', 'Saldo Previsto']
@@ -57,20 +66,19 @@ export function FinanceiroRelatoriosPage() {
       item.saldo_previsto
     ])
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n')
+    await auditReportExport({
+      authUser,
+      reportKey: 'financeiro.fechamento_mensal',
+      format: 'csv',
+      rowCount: fechamento.length,
+    })
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const csvContent = buildCsvContent(headers, rows)
+    downloadTextFile(
+      csvContent,
+      `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`,
+      'text/csv;charset=utf-8;'
+    )
   }
 
   // Calcular totais consolidados (últimos 12 meses)

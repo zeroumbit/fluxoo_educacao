@@ -66,6 +66,7 @@ const PerfilEscolaPage = lazy(() => import('@/modules/escola-perfil/pages/Perfil
 const MeuPerfilPage = lazy(() => import('@/modules/meu-perfil/pages/MeuPerfilPage').then(m => ({ default: m.MeuPerfilPage })))
 const PlanoPage = lazy(() => import('@/modules/assinatura/pages/PlanoPage').then(m => ({ default: m.PlanoPage })))
 const PerfisPage = lazy(() => import('@/modules/rbac/pages/PerfisPage').then(m => ({ default: m.PerfisPage })))
+const AuditoriaPage = lazy(() => import('@/modules/rbac/pages/AuditoriaPage').then(m => ({ default: m.AuditoriaPage })))
 const AprovacaoPage = lazy(() => import('@/modules/aprovacao/AprovacaoPage').then(m => ({ default: m.default })))
 
 // Currículos - MÓDULO EM IMPLEMENTAÇÃO (imports mantidos para reativação futura)
@@ -311,6 +312,7 @@ function App() {
 
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
+              <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
               
               {/* Fluxo de Aprovações */}
               <Route path="/aprovacoes" element={<AprovacaoPage />} />
