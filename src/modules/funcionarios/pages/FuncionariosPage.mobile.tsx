@@ -9,11 +9,13 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import type { Funcionario } from '@/lib/database.types'
 import { cn,formatCurrency } from '@/lib/utils'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { PermissionGate } from '@/modules/rbac/components/PermissionGate'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AnimatePresence,motion } from 'framer-motion'
 import {
 KeyRound,
 Loader2,
+Lock,
 MoreVertical,
 Plus,
 Search,
@@ -168,6 +170,20 @@ export function FuncionariosPageMobile() {
   }
 
   return (
+    <PermissionGate
+      permission="gestao.funcionarios.view"
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-4 px-8">
+          <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center">
+            <Lock className="h-8 w-8 text-zinc-400" />
+          </div>
+          <h2 className="text-xl font-bold text-zinc-900">Acesso Restrito</h2>
+          <p className="text-zinc-500 max-w-md mx-auto text-sm">
+            Você não tem permissão para gerenciar funcionários.
+          </p>
+        </div>
+      }
+    >
     <PullToRefresh onRefresh={async () => { await refetch() }}>
       <MobilePageLayout
         title="Equipe"
@@ -393,5 +409,6 @@ export function FuncionariosPageMobile() {
         </BottomSheet>
       </MobilePageLayout>
     </PullToRefresh>
+    </PermissionGate>
   )
 }

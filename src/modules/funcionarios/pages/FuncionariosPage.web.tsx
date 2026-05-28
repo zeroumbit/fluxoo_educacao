@@ -11,9 +11,11 @@ import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs'
 import type { Funcionario } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/modules/auth/AuthContext'
+import { PermissionGate } from '@/modules/rbac/components/PermissionGate'
 import { usePerfis } from '@/modules/rbac/hooks'
+import type { PerfilAcesso } from '@/modules/rbac/types'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Calendar,Eye,EyeOff,KeyRound,Loader2,Plus,PlusCircle,Shield,UserPlus,Wallet } from 'lucide-react'
+import { Calendar,Eye,EyeOff,KeyRound,Loader2,Lock,Plus,PlusCircle,Shield,UserPlus,Wallet } from 'lucide-react'
 import { useEffect,useMemo,useState } from 'react'
 import { Controller,useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -49,6 +51,61 @@ const userSchema = z.object({
 
 type FuncFormData = z.infer<typeof funcSchema>
 type UserFormData = z.infer<typeof userSchema>
+
+// ---------------------------------------------------------------------------
+// Auto-sugestão de perfil RBAC baseado na função do funcionário
+// ---------------------------------------------------------------------------
+const SUGESTAO_PERFIL_POR_FUNCAO: Record<string, string> = {
+  diretor: 'Diretor',
+  'vice-diretor': 'Diretor',
+  porteiro: 'Porteiro',
+  vigia: 'Porteiro',
+  merendeira: 'Merendeira',
+  merendeiro: 'Merendeira',
+  cozinheira: 'Merendeira',
+  cozinheiro: 'Merendeira',
+  psicologo: 'Psicólogo Escolar',
+  psicóloga: 'Psicólogo Escolar',
+  psicólogo: 'Psicólogo Escolar',
+  nutricionista: 'Nutricionista',
+  secretario: 'Secretária',
+  secretária: 'Secretária',
+  secretario_escolar: 'Secretária',
+  professor: 'Professor',
+  professora: 'Professor',
+  coordenador: 'Coordenador Pedagógico',
+  coordenadora: 'Coordenador Pedagógico',
+  'auxiliar de serviços gerais': 'Auxiliar de Serviços Gerais',
+  'auxiliar de servicos gerais': 'Auxiliar de Serviços Gerais',
+  'auxiliar geral': 'Auxiliar de Serviços Gerais',
+  zelador: 'Auxiliar de Serviços Gerais',
+  zeladora: 'Auxiliar de Serviços Gerais',
+  administrador: 'Administrador',
+  'auxiliar administrativo': 'Secretária',
+}
+
+function sugerirPerfil(funcoes: string[], perfis: PerfilAcesso[]): string | null {
+  if (!funcoes?.length || !perfis?.length) return null
+
+  for (const fn of funcoes) {
+    const chave = fn.toLowerCase().trim()
+    // Tenta match exato primeiro
+    if (SUGESTAO_PERFIL_POR_FUNCAO[chave]) {
+      const perfilNome = SUGESTAO_PERFIL_POR_FUNCAO[chave]
+      const match = perfis.find(p => p.nome.toLowerCase() === perfilNome.toLowerCase())
+      if (match) return match.id
+    }
+    // Tenta match parcial (ex: "Professor de Matemática" → "Professor")
+    for (const [palavra, nomePerfil] of Object.entries(SUGESTAO_PERFIL_POR_FUNCAO)) {
+      if (chave.includes(palavra)) {
+        const match = perfis.find(p => p.nome.toLowerCase() === nomePerfil.toLowerCase())
+        if (match) return match.id
+      }
+    }
+  }
+
+  return null
+}
 
 const novaFuncaoSchema = z.object({
   nome: z.string().min(2, 'Nome obrigatório'),
@@ -430,6 +487,20 @@ export function FuncionariosPage() {
   const inativos = funcionarios?.filter((f: Funcionario) => f.status === 'inativo') || []
 
   return (
+    <PermissionGate
+      permission="gestao.funcionarios.view"
+      fallback={
+        <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+          <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center">
+            <Lock className="h-8 w-8 text-zinc-400" />
+          </div>
+          <h2 className="text-xl font-bold text-zinc-900">Acesso Restrito</h2>
+          <p className="text-zinc-500 max-w-md mx-auto">
+            Você não tem permissão para gerenciar funcionários. Entre em contato com o gestor da escola.
+          </p>
+        </div>
+      }
+    >
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -650,7 +721,19 @@ export function FuncionariosPage() {
                   </Select>
                 )}
               />
-              <p className="text-xs text-muted-foreground">O perfil define quais telas e ações o funcionário poderá acessar.</p>
+              <p className="text-xs text-muted-foreground">
+                O perfil define quais telas e ações o funcionário poderá acessar.
+                {selectedFunc && sugerirPerfil(
+                  (Array.isArray(selectedFunc.funcoes) && selectedFunc.funcoes.length > 0
+                    ? selectedFunc.funcoes
+                    : selectedFunc.funcao ? [selectedFunc.funcao] : []),
+                  perfis
+                ) && (
+                  <span className="block mt-1 text-indigo-600 font-medium">
+                    Sugestão automática para "{selectedFunc.funcoes?.[0] || selectedFunc.funcao}"
+                  </span>
+                )}
+              </p>
               {userForm.formState.errors.perfil_id && (
                 <p className="text-sm text-destructive font-medium">{userForm.formState.errors.perfil_id.message}</p>
               )}
@@ -736,7 +819,16 @@ export function FuncionariosPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => { setSelectedFunc(f); setUserDialogOpen(true) }}
+                                  onClick={() => {
+                                    setSelectedFunc(f)
+                                    // Auto-sugerir perfil baseado na função do funcionário
+                                    const funcoesParaSugestao = Array.isArray(f.funcoes) && f.funcoes.length > 0
+                                      ? f.funcoes
+                                      : f.funcao ? [f.funcao] : []
+                                    const sugestion = sugerirPerfil(funcoesParaSugestao, perfis)
+                                    userForm.setValue('perfil_id', sugestion || '')
+                                    setUserDialogOpen(true)
+                                  }}
                                 >
                                   <UserPlus className="h-3.5 w-3.5 mr-1" /> Criar Acesso
                                 </Button>
@@ -770,5 +862,6 @@ export function FuncionariosPage() {
         ))}
       </Tabs>
     </div>
+    </PermissionGate>
   )
 }

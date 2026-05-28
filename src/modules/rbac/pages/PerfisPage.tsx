@@ -8,6 +8,8 @@ import { PermissionMatrix } from '@/modules/rbac/components/PermissionMatrix'
 import { useCriarPerfil,useDefinirPermissoesPerfil,useExcluirPerfil,useOverrides,usePerfilPermissions,usePerfis,usePermissions } from '@/modules/rbac/hooks'
 import type { ScopeType } from '@/modules/rbac/types'
 import { SCOPE_LABELS } from '@/modules/rbac/types'
+import { Button } from '@/components/ui/button'
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog'
 import {
 AlertTriangle,
 ChevronRight,
@@ -32,6 +34,7 @@ export function PerfisPage() {
   const [activeTab, setActiveTab] = useState<'perfis' | 'matriz' | 'overrides'>('perfis')
   const [showCreate, setShowCreate] = useState(false)
   const [editingPerfilId, setEditingPerfilId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; nome: string; step: 'confirm' | 'final' } | null>(null)
 
   // Form state
   const [newNome, setNewNome] = useState('')
@@ -62,15 +65,26 @@ export function PerfisPage() {
     }
   }
 
-  const handleDelete = async (id: string, nome: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o perfil "${nome}"? Usuários vinculados perderão as permissões.`)) return
+  const handleDeleteRequest = (id: string, nome: string) => {
+    setDeleteConfirm({ id, nome, step: 'confirm' })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return
+
+    if (deleteConfirm.step === 'confirm') {
+      setDeleteConfirm({ ...deleteConfirm, step: 'final' })
+      return
+    }
 
     try {
-      await excluirPerfil.mutateAsync(id)
-      toast.success('Perfil excluído')
+      await excluirPerfil.mutateAsync(deleteConfirm.id)
+      toast.success(`Perfil "${deleteConfirm.nome}" excluído`)
+      setDeleteConfirm(null)
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : 'Erro desconhecido'
       toast.error(errMsg || 'Erro ao excluir perfil')
+      setDeleteConfirm(null)
     }
   }
 
@@ -229,7 +243,7 @@ export function PerfisPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => setEditingPerfilId(editingPerfilId === perfil.id ? null : perfil.id)}
                       className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
@@ -239,7 +253,7 @@ export function PerfisPage() {
                     </button>
                     {perfil.tenant_id && (
                       <button
-                        onClick={() => handleDelete(perfil.id, perfil.nome)}
+                        onClick={() => handleDeleteRequest(perfil.id, perfil.nome)}
                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         title="Excluir perfil"
                       >
@@ -311,6 +325,37 @@ export function PerfisPage() {
           )}
         </div>
       )}
+
+      {/* Diálogo de dupla confirmação para exclusão */}
+      <Dialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open) setDeleteConfirm(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              {deleteConfirm?.step === 'confirm' ? 'Excluir Perfil' : 'Confirmação Final'}
+            </DialogTitle>
+            <DialogDescription>
+              {deleteConfirm?.step === 'confirm' ? (
+                <>Você está prestes a excluir o perfil <strong>"{deleteConfirm?.nome}"</strong>.</>
+              ) : (
+                <>Esta ação é <strong>irreversível</strong>. Usuários vinculados a este perfil perderão todas as permissões associadas.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant={deleteConfirm?.step === 'final' ? 'destructive' : 'default'}
+              onClick={handleDeleteConfirm}
+              className={deleteConfirm?.step === 'final' ? 'bg-red-600 hover:bg-red-700' : ''}
+            >
+              {deleteConfirm?.step === 'confirm' ? 'Sim, quero excluir' : 'Confirmar Exclusão'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -159,6 +159,13 @@ function SidebarContent({
       if (isProfessor && (group.label === 'Financeiro' || group.label === 'Capital Humano' || group.label === 'Configurações')) {
         return { ...group, items: [] }
       }
+
+      // Demais funcionários (não-gestor, não-super-admin): NUNCA veem Financeiro
+      // Previne que um porteiro, merendeira, ASG ou qualquer funcionário com perfil incorreto
+      // ou override acidental acesse dados financeiros
+      if (!isGestor && !isSuperAdmin && !isProfessor && group.label === 'Financeiro') {
+        return { ...group, items: [] }
+      }
       // Contador não vê o guia de Configurações — área administrativa já está configurada
       if (authUser?.perfilNome?.toLowerCase().includes('contador') && group.label === 'Configurações') {
         return { ...group, items: [] }
