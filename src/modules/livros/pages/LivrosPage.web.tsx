@@ -18,6 +18,7 @@ import { CATEGORIAS_MATERIAIS,SUBCATEGORIAS_POR_CATEGORIA,UNIDADES_MEDIDA } from
 import { useCriarDisciplina,useCriarLivro,useCriarMaterial,useDisciplinas,useEditarLivro,useEditarMaterial,useExcluirLivro,useExcluirMaterial,useLivros,useMateriais } from '../hooks'
 import { livrosService } from '../service'
 import type { Livro,MaterialEscolar } from '../types'
+import { validateFileExtension } from '@/lib/validate-file'
 
 const livroSchema = z.object({
   titulo: z.string().min(2, 'Título é obrigatório'),
@@ -231,6 +232,9 @@ export function LivrosPage() {
         toast.error('Arquivo muito grande. Máximo 5MB.')
         return
       }
+
+      const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+      if (!extResult.valid) { toast.error(extResult.error); return }
       
       const reader = new FileReader()
       reader.onloadend = () => {

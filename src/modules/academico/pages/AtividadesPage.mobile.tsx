@@ -22,6 +22,7 @@ import { z } from 'zod'
 
 import type { Filial, Turma } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { useAtividades,useAtualizarAtividade,useCriarAtividade,useExcluirAtividade } from '../hooks'
@@ -514,6 +515,17 @@ function FileUploadFieldMobile({ form, authUser }: { form: any; authUser: any })
 
   const handleUpload = useCallback(async (file: File) => {
     if (!authUser?.tenantId) return
+    const tipoMaterial = form.getValues('tipo_material')
+    let allowedExts: string[]
+    if (tipoMaterial === 'imagem') {
+      allowedExts = ['.jpg', '.jpeg', '.png', '.webp']
+    } else if (tipoMaterial === 'pdf') {
+      allowedExts = ['.pdf']
+    } else {
+      allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.doc', '.docx']
+    }
+    const extResult = validateFileExtension(file, allowedExts)
+    if (!extResult.valid) { toast.error(extResult.error); return }
     setUploading(true)
     try {
       const ext = file.name.split('.').pop()

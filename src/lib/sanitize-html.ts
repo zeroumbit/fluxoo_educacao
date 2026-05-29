@@ -44,6 +44,7 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_TAGS: HTML_ALLOWED_TAGS,
     ALLOWED_ATTR: HTML_ALLOWED_ATTR,
     ALLOW_DATA_ATTR: false,
-    ADD_ATTR: ['target'],
+    ADD_ATTR: ['target', 'rel'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|ftp|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
   })
 }

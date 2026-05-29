@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { precificacaoService } from '@/modules/precificacao/service'
 import { useConfigRecebimento,useCriarAssinatura,useCriarEscola,useCriarFaturaInicial,usePlanos,usePrecoGlobal } from '../hooks'
+import { validateFileExtension } from '@/lib/validate-file'
 
 const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
 const COMPROVANTE_MIME_TYPES = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
@@ -31,6 +32,9 @@ function validarComprovanteCadastro(file: File) {
   if (!COMPROVANTE_MIME_TYPES.has(file.type)) {
     throw new Error('Formato invalido. Envie PDF, PNG, JPG ou WebP.')
   }
+
+  const extResult = validateFileExtension(file, ['.pdf', '.png', '.jpg', '.jpeg', '.webp'])
+  if (!extResult.valid) throw new Error(extResult.error)
 }
 
 function extensaoComprovante(file: File): string {

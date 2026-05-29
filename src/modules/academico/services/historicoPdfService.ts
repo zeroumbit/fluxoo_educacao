@@ -1,5 +1,15 @@
 import type { ExitTranscriptPayload } from './historicoDigitalService';
 
+function escapeHtml(str: unknown): string {
+  const s = String(str ?? '')
+  return s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#x27;')
+}
+
 export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): string {
   return `
     <!DOCTYPE html>
@@ -119,20 +129,20 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
     </head>
     <body>
       <div class="header">
-        <h1>${payload.escola_origem.nome_escola}</h1>
+        <h1>${escapeHtml(payload.escola_origem.nome_escola)}</h1>
         <h2>Histórico Escolar Oficial - Guia de Transferência</h2>
-        <p style="font-size: 12px; color: #64748b;">CNPJ: ${payload.escola_origem.cnpj || 'Não informado'}</p>
+        <p style="font-size: 12px; color: #64748b;">CNPJ: ${escapeHtml(payload.escola_origem.cnpj || 'Não informado')}</p>
       </div>
 
       <div class="section-title">Dados do Aluno</div>
       <div class="info-grid">
         <div class="info-item">
           <div class="info-label">Nome Completo</div>
-          <div class="info-value">${payload.aluno.nome_completo}</div>
+          <div class="info-value">${escapeHtml(payload.aluno.nome_completo)}</div>
         </div>
         <div class="info-item">
           <div class="info-label">ID Escolar (Código Transferência)</div>
-          <div class="info-value"><span style="font-family: monospace; font-weight: bold;">${payload.aluno.codigo_transferencia || 'N/A'}</span></div>
+          <div class="info-value"><span style="font-family: monospace; font-weight: bold;">${escapeHtml(payload.aluno.codigo_transferencia || 'N/A')}</span></div>
         </div>
       </div>
 
@@ -148,7 +158,7 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
         <tbody>
           ${(payload.academico.disciplinas || []).map(disc => `
             <tr>
-              <td>${disc.disciplina || 'Disciplina'}</td>
+              <td>${escapeHtml(disc.disciplina || 'Disciplina')}</td>
               <td style="text-align: center; font-weight: bold;">${Number(disc.media_final || 0).toFixed(1)}</td>
               <td style="text-align: center;">${getSituacaoLabel(disc.resultado)}</td>
             </tr>
@@ -163,21 +173,21 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
 
       <div style="margin-top: 20px;">
         <span class="info-label">Frequência Global Registrada:</span> 
-        <span style="font-weight: bold; font-size: 16px;">${payload.academico.frequencia?.percentual || 0}%</span>
+          <span style="font-weight: bold; font-size: 16px;">${escapeHtml(payload.academico.frequencia?.percentual || 0)}%</span>
         <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
-          Presenças: ${payload.academico.frequencia?.presencas || 0} | 
-          Faltas: ${payload.academico.frequencia?.faltas || 0} | 
-          Justificadas: ${payload.academico.frequencia?.justificadas || 0} | 
-          Total Aulas: ${payload.academico.frequencia?.total_aulas || 0}
+          Presenças: ${escapeHtml(payload.academico.frequencia?.presencas || 0)} | 
+          Faltas: ${escapeHtml(payload.academico.frequencia?.faltas || 0)} | 
+          Justificadas: ${escapeHtml(payload.academico.frequencia?.justificadas || 0)} | 
+          Total Aulas: ${escapeHtml(payload.academico.frequencia?.total_aulas || 0)}
         </div>
       </div>
 
       ${payload.dados_saude ? `
       <div class="section-title" style="color: #b91c1c; border-color: #fca5a5;">Observações de Saúde e NEE</div>
       <div style="margin-top: 15px; padding: 15px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 4px;">
-        <div style="margin-bottom: 10px;"><strong>Alergias:</strong> ${payload.dados_saude.alergias?.length > 0 ? payload.dados_saude.alergias.join(', ') : 'Nenhuma relatada'}</div>
-        <div style="margin-bottom: 10px;"><strong>Necessidades Especiais:</strong> ${payload.dados_saude.necessidades_especiais?.length > 0 ? payload.dados_saude.necessidades_especiais.join(', ') : 'Nenhuma relatada'}</div>
-        <div><strong>Cuidados Específicos:</strong> ${payload.dados_saude.cuidados_especificos || 'Nenhum cuidado específico aplicável'}</div>
+        <div style="margin-bottom: 10px;"><strong>Alergias:</strong> ${escapeHtml(payload.dados_saude.alergias?.length > 0 ? payload.dados_saude.alergias.join(', ') : 'Nenhuma relatada')}</div>
+        <div style="margin-bottom: 10px;"><strong>Necessidades Especiais:</strong> ${escapeHtml(payload.dados_saude.necessidades_especiais?.length > 0 ? payload.dados_saude.necessidades_especiais.join(', ') : 'Nenhuma relatada')}</div>
+        <div><strong>Cuidados Específicos:</strong> ${escapeHtml(payload.dados_saude.cuidados_especificos || 'Nenhum cuidado específico aplicável')}</div>
       </div>
       ` : ''}
 
@@ -190,11 +200,11 @@ export function getExitTranscriptHtmlTemplate(payload: ExitTranscriptPayload): s
       <div class="footer">
         <div>Para verificar a autenticidade e imutabilidade deste documento, copie o código abaixo e verifique em:</div>
         <div style="margin: 10px 0;">
-          <a href="https://app.fluxoo.edu.br/v/${payload.emissao.validation_hash}" style="color: #2563eb; text-decoration: none;">
-            https://app.fluxoo.edu.br/v/<span class="hash-code">${payload.emissao.validation_hash.substring(0, 12)}...</span>
+          <a href="https://app.fluxoo.edu.br/v/${escapeHtml(payload.emissao.validation_hash)}" style="color: #2563eb; text-decoration: none;">
+            https://app.fluxoo.edu.br/v/<span class="hash-code">${escapeHtml(payload.emissao.validation_hash.substring(0, 12))}...</span>
           </a>
         </div>
-        <div style="margin-top: 15px;">Emitido em: ${new Date(payload.emissao.emitido_em).toLocaleString('pt-BR')}</div>
+        <div style="margin-top: 15px;">Emitido em: ${escapeHtml(new Date(payload.emissao.emitido_em).toLocaleString('pt-BR'))}</div>
       </div>
 
       <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">

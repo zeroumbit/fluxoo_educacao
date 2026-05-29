@@ -8,6 +8,7 @@ DialogHeader,
 DialogTitle,
 } from '@/components/ui/dialog';
 import { logger } from '@/lib/logger';
+import { validateFileExtension } from '@/lib/validate-file';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
@@ -115,6 +116,9 @@ export function PortalAlunoCadastroV2() {
       toast.error('Selecione uma imagem válida.');
       return;
     }
+
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
     
     setIsUploading(true);
     try {

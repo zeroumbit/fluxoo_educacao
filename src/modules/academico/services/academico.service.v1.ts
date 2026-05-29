@@ -52,10 +52,10 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarMatricula(matricula: Partial<MatriculaInsert> & Record<string, unknown>, userId?: string) {
-    // ValidaÃ§Ã£o RBAC: academico.matriculas.create
-    if (userId && matricula.tenant_id) {
-      await validarPermissao(userId, matricula.tenant_id, 'academico.matriculas.create')
+    if (!userId || !matricula.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, matricula.tenant_id, 'academico.matriculas.create')
 
     // Limpeza rigorosa: Enviar apenas o que o banco espera (baseado em database.types.ts)
     const payload: MatriculaCreatePayload = {
@@ -314,10 +314,10 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarPlanoAula(planoComTurmas: PlanoAulaComTurmas, userId?: string, professorId?: string) {
-    // ValidaÃ§Ã£o RBAC: academico.planos_aula.create
-    if (userId && planoComTurmas.tenant_id) {
-      await validarPermissao(userId, planoComTurmas.tenant_id, 'academico.planos_aula.create')
+    if (!userId || !planoComTurmas.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, planoComTurmas.tenant_id, 'academico.planos_aula.create')
 
     const { turmas: turmasToBatch, ...planoData } = planoComTurmas
 
@@ -438,10 +438,10 @@ export const academicoService = {
     return (data as Record<string, unknown>[]) || []
   },
   async criarAtividade(atividadeComTurmas: AtividadeComTurmas, userId?: string) {
-    // ValidaÃ§Ã£o RBAC: academico.atividades.create
-    if (userId && atividadeComTurmas.tenant_id) {
-      await validarPermissao(userId, atividadeComTurmas.tenant_id, 'academico.atividades.create')
+    if (!userId || !atividadeComTurmas.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, atividadeComTurmas.tenant_id, 'academico.atividades.create')
 
     const { turmas: turmasToBatch, materiais, ...atividadeData } = atividadeComTurmas
 

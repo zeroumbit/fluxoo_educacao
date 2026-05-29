@@ -14,6 +14,7 @@ import type {
 } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
+import { validateFileExtension } from '@/lib/validate-file'
 import { getConfiguracoesFinanceiras } from '@/modules/configuracoes/service'
 import { escolaService } from '@/modules/escolas/service'
 
@@ -33,6 +34,9 @@ function validateComprovanteFile(file: File) {
   if (!COMPROVANTE_MIME_TYPES.has(file.type)) {
     throw new Error('Formato invalido. Envie PDF, PNG, JPG ou WebP.')
   }
+
+  const extResult = validateFileExtension(file, ['.pdf', '.png', '.jpg', '.jpeg', '.webp'])
+  if (!extResult.valid) throw new Error(extResult.error)
 }
 
 function safeFileExtension(file: File): string {
@@ -43,7 +47,28 @@ function safeFileExtension(file: File): string {
     'image/webp': 'webp',
   }
 
-  return byMime[file.type] || 'bin'
+  return byMime[file.type] || file.name.split('.').pop() || 'bin'
+}
+
+async function verifyResponsavelOwnership(responsavelId: string): Promise<void> {
+  const { data, error } = await supabase.from('responsaveis')
+    .select('id')
+    .eq('id', responsavelId)
+    .maybeSingle()
+  if (error || !data) {
+    throw new Error('Acesso negado: responsável não encontrado')
+  }
+}
+
+async function verifyAlunoOwnership(alunoId: string, responsavelId: string): Promise<void> {
+  const { data, error } = await supabase.from('aluno_responsavel')
+    .select('id')
+    .eq('aluno_id', alunoId)
+    .eq('responsavel_id', responsavelId)
+    .maybeSingle()
+  if (error || !data) {
+    throw new Error('Acesso negado: você não tem permissão para acessar este aluno')
+  }
 }
 
 type PortalLoginInfo = {
@@ -249,6 +274,7 @@ export const portalService = {
   // ACEITE LGPD / PRIMEIRO ACESSO
   // ==========================================
   async aceitarTermos(responsavelId: string) {
+    await verifyResponsavelOwnership(responsavelId)
     const { error } = await supabase.from('responsaveis')
       .update({
         termos_aceitos: true,
@@ -401,6 +427,8 @@ export const portalService = {
   },
 
   async uploadFotoAlunoPortal(alunoId: string, file: File) {
+    const { valid, error: validationError } = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+    if (!valid) throw new Error(validationError)
     const fileExt = file.name.split('.').pop() || 'jpg'
     const fileName = `${alunoId}_${Date.now()}.${fileExt}`
     const filePath = `alunos/${fileName}`
@@ -726,8 +754,20 @@ export const portalService = {
   },
 
   async registrarPagamentoComComprovante(cobrancaIds: string | string[], comprovanteUrl: string, responsavelId: string) {
+    await verifyResponsavelOwnership(responsavelId)
     const isArray = Array.isArray(cobrancaIds)
-    
+    const ids = isArray ? cobrancaIds : [cobrancaIds]
+
+    const { data: cobrancas } = await supabase.from('cobrancas')
+      .select('id, aluno_id')
+      .in('id', ids)
+    if (!cobrancas || cobrancas.length !== ids.length) {
+      throw new Error('Acesso negado: cobrança não encontrada')
+    }
+    for (const c of cobrancas) {
+      await verifyAlunoOwnership(c.aluno_id, responsavelId)
+    }
+
     let query = supabase.from('cobrancas').update({
       comprovante_url: comprovanteUrl,
       updated_at: new Date().toISOString()
@@ -888,6 +928,11 @@ export const portalService = {
   },
 
    async cancelarFila(filaId: string) {
+    const { data: fila } = await supabase.from('fila_virtual')
+      .select('id')
+      .eq('id', filaId)
+      .maybeSingle()
+    if (!fila) throw new Error('Acesso negado: agendamento não encontrado')
     const { error } = await supabase.from('fila_virtual')
       .update({ status: 'cancelado', updated_at: new Date().toISOString() })
       .eq('id', filaId)
@@ -1055,6 +1100,7 @@ export const portalService = {
   },
 
   async atualizarPerfil(responsavelId: string, dados: ResponsavelUpdate) {
+    await verifyResponsavelOwnership(responsavelId)
     const { error } = await supabase.from('responsaveis')
       .update(dados)
       .eq('id', responsavelId)
@@ -1069,6 +1115,11 @@ export const portalService = {
   },
 
   async atualizarParentesco(vinculoId: string, grauParentesco: string) {
+    const { data: vinculo } = await supabase.from('aluno_responsavel')
+      .select('id')
+      .eq('id', vinculoId)
+      .maybeSingle()
+    if (!vinculo) throw new Error('Acesso negado: vínculo não encontrado')
     const { error } = await supabase.from('aluno_responsavel')
       .update({ grau_parentesco: grauParentesco })
       .eq('id', vinculoId)
@@ -1087,6 +1138,7 @@ export const portalService = {
   },
 
   async atualizarAluno(alunoId: string, responsavelId: string, dados: AlunoUpdate) {
+    await verifyAlunoOwnership(alunoId, responsavelId)
     const { error } = await supabase.from('alunos')
       .update(dados)
       .eq('id', alunoId)
@@ -1173,6 +1225,12 @@ export const portalService = {
   },
 
   async marcarNotificacaoFamiliaLida(notificacaoId: string) {
+    const { data: notificacao } = await supabase
+      .from('notificacoes_familia')
+      .select('id')
+      .eq('id', notificacaoId)
+      .maybeSingle()
+    if (!notificacao) throw new Error('Acesso negado: notificação não encontrada')
     const { error } = await supabase
       .from('notificacoes_familia')
       .update({ 

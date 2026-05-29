@@ -46,10 +46,10 @@ export const almoxarifadoService = {
   },
 
   async criarItem(item: AlmoxarifadoItemInsert, userId?: string) {
-    // Validação RBAC: almoxarifado.itens.create
-    if (userId && item.tenant_id) {
-      await validarPermissao(userId, item.tenant_id, 'almoxarifado.itens.create')
+    if (!userId || !item.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, item.tenant_id, 'almoxarifado.itens.create')
 
     const { data, error } = await supabase
       .from('almoxarifado_itens')
@@ -68,10 +68,10 @@ export const almoxarifadoService = {
   },
 
   async atualizarItem(id: string, updates: AlmoxarifadoItemUpdate, userId?: string, tenantId?: string) {
-    // Validação RBAC: almoxarifado.itens.update
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'almoxarifado.itens.update')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'almoxarifado.itens.update')
 
     const { data, error } = await supabase
       .from('almoxarifado_itens')
@@ -90,10 +90,10 @@ export const almoxarifadoService = {
   },
 
   async deletarItem(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: almoxarifado.itens.delete
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'almoxarifado.itens.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'almoxarifado.itens.delete')
 
     const { error } = await supabase
       .from('almoxarifado_itens')
@@ -119,10 +119,10 @@ export const almoxarifadoService = {
   },
 
   async criarMovimentacao(mov: CriarMovimentacaoPayload, userId?: string) {
-    // Validação RBAC: almoxarifado.movimentacoes.create
-    if (userId && mov.tenant_id) {
-      await validarPermissao(userId, mov.tenant_id, 'almoxarifado.movimentacoes.create')
+    if (!userId || !mov.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, mov.tenant_id, 'almoxarifado.movimentacoes.create')
 
     // 1. Registra movimentação
     const { data, error } = await supabase
@@ -195,10 +195,10 @@ export const almoxarifadoService = {
   },
 
   async deletarMovimentacao(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: almoxarifado.movimentacoes.delete
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'almoxarifado.movimentacoes.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'almoxarifado.movimentacoes.delete')
 
     // Nota: Isso não reverte o estoque automaticamente
     // Para uma implementação completa, seria necessário registrar uma movimentação inversa

@@ -24,6 +24,7 @@ import { CATEGORIAS_MATERIAIS,UNIDADES_MEDIDA } from '../constants'
 import { useCriarDisciplina,useCriarLivro,useCriarMaterial,useDisciplinas,useEditarLivro,useEditarMaterial,useExcluirLivro,useExcluirMaterial,useLivros,useMateriais } from '../hooks'
 import { livrosService } from '../service'
 import type { Livro,MaterialEscolar } from '../types'
+import { validateFileExtension } from '@/lib/validate-file'
 
 // Components Mobile
 import { BottomSheet } from '@/components/mobile/BottomSheet'
@@ -263,6 +264,9 @@ export function LivrosPageMobile() {
         toast.error('Arquivo muito grande. Máximo 5MB.')
         return
       }
+
+      const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+      if (!extResult.valid) { toast.error(extResult.error); return }
       
       const reader = new FileReader()
       reader.onloadend = () => {

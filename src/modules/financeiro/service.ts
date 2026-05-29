@@ -31,6 +31,7 @@ type CobrancaProjetada = Cobranca & {
 type ErroBaixaBoleto = Error & {
   concorrencia?: boolean
   jaPago?: boolean
+  retry?: boolean
 }
 
 type MensalidadesTenantResponse = {
@@ -121,10 +122,10 @@ export const financeiroService = {
   },
 
   async criar(cobranca: CobrancaInsert, userId?: string) {
-    // Validação RBAC: financeiro.cobrancas.create
-    if (userId && cobranca.tenant_id) {
-      await validarPermissao(userId, cobranca.tenant_id, 'financeiro.cobrancas.create')
+    if (!userId || !cobranca.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, cobranca.tenant_id, 'financeiro.cobrancas.create')
 
     const { data, error } = await supabase
       .from('cobrancas')
@@ -144,12 +145,10 @@ export const financeiroService = {
   },
 
   async atualizar(id: string, cobranca: Partial<CobrancaInsert>, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.cobrancas.update
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.update')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
-
-    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.update')
 
     const { data, error } = await supabase
       .from('cobrancas')
@@ -171,11 +170,10 @@ export const financeiroService = {
   },
 
   async marcarComoPago(id: string, userId?: string, tenantId?: string) {
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
-
-    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
 
     const { data, error } = await supabase
       .from('cobrancas')
@@ -223,12 +221,10 @@ export const financeiroService = {
   },
 
   async excluir(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.cobrancas.delete
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
-
-    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.delete')
 
     const { error } = await supabase
       .from('cobrancas')
@@ -240,12 +236,10 @@ export const financeiroService = {
   },
 
   async desfazerPagamento(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.cobrancas.pay (reverter pagamento)
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
-
-    if (!tenantId) throw new Error('ID do tenant é obrigatório.')
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
 
     const { data, error } = await supabase
       .from('cobrancas')
@@ -372,15 +366,19 @@ export const financeiroService = {
         .single()
 
       if (aluno?.desconto_valor) {
-        const hoje = new Date().toISOString().split('T')[0]
-        const inicioValido = !aluno.desconto_inicio || aluno.desconto_inicio <= hoje
-        const fimValido = !aluno.desconto_fim || aluno.desconto_fim >= hoje
+        if (aluno.desconto_valor < 0) {
+          logger.warn(`[SEGURANÇA] Desconto negativo ignorado para aluno ${aluno_id}: ${aluno.desconto_valor}`)
+        } else {
+          const hoje = new Date().toISOString().split('T')[0]
+          const inicioValido = !aluno.desconto_inicio || aluno.desconto_inicio <= hoje
+          const fimValido = !aluno.desconto_fim || aluno.desconto_fim >= hoje
 
-        if (inicioValido && fimValido) {
-          if (aluno.desconto_tipo === 'porcentagem') {
-            valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (aluno.desconto_valor / 100))
-          } else {
-            valorMensalidadeComDesconto = Math.max(0, valorMensalidadeComDesconto - aluno.desconto_valor)
+          if (inicioValido && fimValido) {
+            if (aluno.desconto_tipo === 'porcentagem') {
+              valorMensalidadeComDesconto = valorMensalidadeComDesconto * (1 - (aluno.desconto_valor / 100))
+            } else {
+              valorMensalidadeComDesconto = Math.max(0, valorMensalidadeComDesconto - aluno.desconto_valor)
+            }
           }
         }
       }
@@ -400,6 +398,7 @@ export const financeiroService = {
             .select('aluno_id')
             .in('responsavel_id', respIds)
             .neq('aluno_id', aluno_id)
+            .eq('status', 'ativo')
             .limit(1)
 
           if (irmaos && irmaos.length > 0) {
@@ -560,10 +559,13 @@ export const financeiroService = {
   },
 
   async criarContaPagar(conta: ContaPagarInsert, userId?: string) {
-    // Validação RBAC: financeiro.contas_pagar.create
-    if (userId && conta.tenant_id) {
-      await validarPermissao(userId, conta.tenant_id, 'financeiro.contas_pagar.create')
+    if (!userId || !conta.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    if (!conta.valor || Number(conta.valor) <= 0) {
+      throw new Error('Valor da conta deve ser maior que zero')
+    }
+    await validarPermissao(userId, conta.tenant_id, 'financeiro.contas_pagar.create')
 
     const { data, error } = await supabase
       .from('contas_pagar')
@@ -580,10 +582,13 @@ export const financeiroService = {
   },
 
   async atualizarContaPagar(id: string, updates: ContaPagarUpdate, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.contas_pagar.update
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.update')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    if (updates.valor !== undefined && Number(updates.valor) <= 0) {
+      throw new Error('Valor da conta deve ser maior que zero')
+    }
+    await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.update')
 
     const { data, error } = await supabase
       .from('contas_pagar')
@@ -600,10 +605,10 @@ export const financeiroService = {
   },
 
   async excluirContaPagar(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.contas_pagar.delete
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.delete')
 
     const { error } = await supabase
       .from('contas_pagar')
@@ -614,10 +619,10 @@ export const financeiroService = {
   },
 
   async marcarContaComoPaga(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: financeiro.contas_pagar.pay
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.pay')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'financeiro.contas_pagar.pay')
 
     const { error } = await supabase
       .from('contas_pagar')
@@ -691,9 +696,10 @@ export const financeiroService = {
    * Registra um pagamento (manual) usando a nova RPC com cálculo de juros/multa automático
    */
   async registrarPagamentoManual(cobrancaId: string, formaPagamento?: string, comprovanteUrl?: string, userId?: string, tenantId?: string) {
-     if (userId && tenantId) {
-       await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
-     }
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
+    }
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
 
      const { data, error } = await financeiroRpcClient.rpc('registrar_pagamento_cobranca', {
         p_cobranca_id: cobrancaId,
@@ -725,9 +731,10 @@ export const financeiroService = {
     userId?: string,
     tenantId?: string
   ) {
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'financeiro.cobrancas.pay')
 
     const { data, error } = await financeiroRpcClient.rpc('baixar_boleto_concorrencia', {
       p_cobranca_id: cobrancaId,
@@ -754,6 +761,13 @@ export const financeiroService = {
         const err: ErroBaixaBoleto = Object.assign(
           new Error('JA_PAGO: Esta cobrança já foi baixada.'),
           { jaPago: true }
+        )
+        throw err
+      }
+      if (data.retry) {
+        const err: ErroBaixaBoleto = Object.assign(
+          new Error('Tente novamente: ocorreu uma concorrência de processamento.'),
+          { retry: true }
         )
         throw err
       }

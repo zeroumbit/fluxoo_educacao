@@ -207,10 +207,10 @@ export const alunoService = {
       throw new Error('Professores não têm permissão para adicionar alunos.')
     }
 
-    // Validação RBAC: alunos.create
-    if (userId && aluno.tenant_id) {
-      await validarPermissao(userId, aluno.tenant_id, 'alunos.create')
+    if (!userId || !aluno.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, aluno.tenant_id, 'alunos.create')
 
     const { data, error } = await supabase
       .from('alunos')
@@ -235,10 +235,10 @@ export const alunoService = {
       throw new Error('Professores não têm permissão para adicionar alunos.')
     }
 
-    // Validação RBAC: alunos.create
-    if (userId && alunoDados.tenant_id) {
-      await validarPermissao(userId, alunoDados.tenant_id, 'alunos.create')
+    if (!userId || !alunoDados.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, alunoDados.tenant_id, 'alunos.create')
 
     // 0. Preparar dados (limpar CPF)
     const cpfLimpo = responsavel.cpf.replace(/\D/g, '')
@@ -415,10 +415,10 @@ export const alunoService = {
       throw new Error('Professores não têm permissão para editar alunos.')
     }
 
-    // Validação RBAC: alunos.update
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.update')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.update')
 
     const { data, error } = await supabase
       .from('alunos')
@@ -436,9 +436,10 @@ export const alunoService = {
       throw new Error('Professores não têm permissão para excluir alunos.')
     }
     
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.delete')
 
     // 1. O financeiro é crítico: Evita a exclusão do aluno caso existam dívidas / faturas pendentes
     const { data: pendencias, error: pendenciaError } = await supabase
@@ -502,10 +503,10 @@ export const alunoService = {
   },
 
   async ativarAcessoPortal(responsavelId: string, senha: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     // 1. Buscar dados do responsável
     const { data: resp, error: respError } = await supabase
@@ -556,10 +557,10 @@ export const alunoService = {
   },
 
   async alternarResponsavelFinanceiro(vinculoId: string, isFinanceiro: boolean, alunoId?: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     if (isFinanceiro && alunoId) {
       // REGRA: Somente UM pode ser o pagador. Remove flag de todos os outros deste aluno.
@@ -578,10 +579,10 @@ export const alunoService = {
   },
 
   async atualizarResponsavel(id: string, responsavel: Partial<ResponsavelInsert>, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     // Se tiver CPF, garante que está limpo
     const payload = { ...responsavel }
@@ -599,10 +600,10 @@ export const alunoService = {
   },
 
   async vincularExistente(alunoId: string, responsavelId: string, grauParentesco: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     const { error } = await supabase
       .from('aluno_responsavel')
@@ -618,10 +619,10 @@ export const alunoService = {
   },
 
   async criarResponsavelAndVincular(alunoId: string, responsavel: Partial<ResponsavelInsert>, grauParentesco: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     // 1. Criar responsável
     const { data: novoResp, error: respError } = await supabase
@@ -642,10 +643,10 @@ export const alunoService = {
   },
 
   async desvincularResponsavel(vinculoId: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: alunos.manage_responsaveis
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'alunos.manage_responsaveis')
 
     const { error } = await supabase
       .from('aluno_responsavel')

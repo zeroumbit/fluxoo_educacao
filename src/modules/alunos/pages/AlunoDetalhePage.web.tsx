@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { mascaraCPF,mascaraTelefone } from '@/lib/validacoes'
+import { validateFileExtension } from '@/lib/validate-file'
 import type { Aluno, Responsavel } from '@/lib/database.types'
 import { useAlunosEmTransferenciaOrigem } from '@/modules/academico/hooks/hooks.v1'
 import { useCobrancasComEncargosPorAluno } from '@/modules/financeiro/hooks'
@@ -43,7 +44,7 @@ export function AlunoDetalhePageWeb() {
   const vincularResponsavel = useVincularResponsavel()
   const criarResponsavelAndVincular = useCriarResponsavelAndVincular()
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   type AlunoFormData = Partial<Aluno> & { patologias: string[]; medicamentos: string[]; valor_mensalidade_atual?: number; data_ingresso?: string }
 
   const [isEditing, setIsEditing] = useState(isEditingInitial)
@@ -139,6 +140,9 @@ export function AlunoDetalhePageWeb() {
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !id) return
+
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
 
     setUploadingFoto(true)
     const toastId = toast.loading('Enviando foto...')

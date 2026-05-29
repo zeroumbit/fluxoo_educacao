@@ -41,6 +41,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAlunosAtivos,useCriarAlunoComResponsavel } from '../hooks'
 
 const alunoSchema = z.object({
@@ -578,6 +579,9 @@ export function AlunoCadastroPage() {
   const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
 
     setUploadingFoto(true)
     const toastId = toast.loading('Processando foto...')

@@ -252,20 +252,17 @@ function App() {
               <Route path="perfil" element={<MeuPerfilPage />} />
             </Route>
 
-            {/* Admin Routes (School) */}
+            {/* Admin Routes (School Management) — apenas gestor/funcionario */}
             <Route
               element={
-                <ProtectedRoute allowedRoles={['gestor', 'funcionario', 'lojista', 'profissional']}>
+                <ProtectedRoute allowedRoles={['gestor', 'funcionario']}>
                   <AdminGuard>
                     <AdminLayout />
                   </AdminGuard>
                 </ProtectedRoute>
               }
             >
-              {/* Redirecionar professores que tentam acessar /dashboard */}
-              <Route path="/dashboard" element={
-                <DashboardRouter />
-              } />
+              <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/alunos" element={<AlunosListPage hideBottomNav />} />
               <Route path="/alunos/novo" element={<AlunoCadastroPage />} />
               <Route path="/alunos/importar" element={<AlunosImportarPage />} />
@@ -277,7 +274,6 @@ function App() {
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
               <Route path="/livros" element={<LivrosPage />} />
-              {/* Novos Módulos */}
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/matriculas/nova" element={<MatriculaFormPage />} />
@@ -300,22 +296,32 @@ function App() {
               {/* Currículos - MÓDULO EM IMPLEMENTAÇÃO */}
               <Route path="/curriculos" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Módulo em Desenvolvimento</h2><p className="text-zinc-500">A seção de Currículos estará disponível em breve.</p></div>} />
               <Route path="/curriculos/:id" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Módulo em Desenvolvimento</h2><p className="text-zinc-500">A seção de Currículos estará disponível em breve.</p></div>} />
-
-              {/* Marketplace Partners - Dashboards e Páginas Específicas */}
-              <Route path="/loja/dashboard" element={<LojistaDashboardPage />} />
-              <Route path="/loja/produtos" element={<div className="p-8 text-center py-20"><Package className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meus Produtos</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
-              <Route path="/loja/vendas" element={<div className="p-8 text-center py-20"><Wallet className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Minhas Vendas</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
-              
-              <Route path="/profissional/dashboard" element={<ProfissionalDashboardPage />} />
-              <Route path="/profissional/curriculo" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meu Currículo</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
-              <Route path="/profissional/vagas" element={<div className="p-8 text-center py-20"><Search className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Vagas Disponíveis</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
-
               {/* RBAC V2.2 - Configurações */}
               <Route path="/configuracoes/perfis" element={<PerfisPage />} />
               <Route path="/configuracoes/auditoria" element={<AuditoriaPage />} />
-              
               {/* Fluxo de Aprovações */}
               <Route path="/aprovacoes" element={<AprovacaoPage />} />
+            </Route>
+
+            {/* Marketplace Routes — lojista/profissional */}
+            <Route
+              element={
+                <ProtectedRoute allowedRoles={['lojista', 'profissional']}>
+                  <AdminGuard>
+                    <AdminLayout />
+                  </AdminGuard>
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/dashboard" element={<DashboardRouter />} />
+              <Route path="/loja/dashboard" element={<LojistaDashboardPage />} />
+              <Route path="/loja/produtos" element={<div className="p-8 text-center py-20"><Package className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meus Produtos</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/loja/vendas" element={<div className="p-8 text-center py-20"><Wallet className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Minhas Vendas</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/profissional/dashboard" element={<ProfissionalDashboardPage />} />
+              <Route path="/profissional/curriculo" element={<div className="p-8 text-center py-20"><FileUser className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Meu Currículo</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/profissional/vagas" element={<div className="p-8 text-center py-20"><Search className="h-16 w-16 mx-auto mb-4 text-zinc-300"/><h2 className="text-2xl font-black">Vagas Disponíveis</h2><p className="text-zinc-500">Módulo em desenvolvimento.</p></div>} />
+              <Route path="/meu-perfil" element={<MeuPerfilPage />} />
+              <Route path="/plano" element={<PlanoPage />} />
             </Route>
 
             {/* Portal do Responsável V2 */}

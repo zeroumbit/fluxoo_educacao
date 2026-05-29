@@ -902,14 +902,18 @@ async function validarJwtAsaas(jwt: string, secret: string): Promise<boolean> {
       return false
     }
 
-    // Validar claim 'exp' (expiracao)
+    // Rejeitar algoritmos diferentes de HS256 (proteção contra alg:none e confusion)
+    if (header.alg !== 'HS256') {
+      console.warn("[asaas] JWT com algoritmo inesperado:", header.alg)
+      return false
+    }
+
+    // Validar claim 'exp' (expiracao) — obrigatório
     const payload = JSON.parse(atob(payloadB64))
-    if (payload.exp) {
-      const now = Math.floor(Date.now() / 1000)
-      if (payload.exp < now) {
-        console.warn("[asaas] JWT expirado:", payload.exp)
-        return false
-      }
+    const now = Math.floor(Date.now() / 1000)
+    if (!payload.exp || payload.exp < now) {
+      console.warn("[asaas] JWT sem exp ou expirado:", payload.exp)
+      return false
     }
 
     // Validar assinatura (HS256)

@@ -8,6 +8,7 @@ import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/com
 import { useViaCEP } from '@/hooks/use-viacep'
 import { supabase } from '@/lib/supabase'
 import { mascaraCNPJ,mascaraCPF } from '@/lib/validacoes'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { motion } from 'framer-motion'
 import {
@@ -98,6 +99,9 @@ export function PerfilEscolaPageMobile() {
   const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !authUser) return
+
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp', '.svg'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
 
     try {
       toast.loading('Processando imagem...')

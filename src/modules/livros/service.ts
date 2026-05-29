@@ -1,3 +1,4 @@
+import { validateFileExtension } from '@/lib/validate-file'
 import type { DisciplinaDb, DisciplinaDbInsert } from '@/lib/database.types'
 import { supabase } from '@/lib/supabase'
 import type { Livro, MaterialEscolar } from './types'
@@ -77,6 +78,8 @@ export const livrosService = {
   },
 
   async uploadCapa(file: File) {
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp'])
+    if (!extResult.valid) throw new Error(extResult.error)
     const fileExt = file.name.split('.').pop()
     const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
     const filePath = `capas/${fileName}`

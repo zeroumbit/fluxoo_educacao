@@ -83,6 +83,22 @@ export const financeiroAvancadoService = {
 
   // BAIXA MANUAL (registrar pagamento em cobrança existente)
   async registrarPagamento(cobrancaId: string, tenantId: string, pagamento: RegistroPagamentoManual) {
+    if (!pagamento.valor_pago || pagamento.valor_pago <= 0) {
+      throw new Error('Valor pago deve ser maior que zero')
+    }
+
+    const { data: cobranca } = await supabase
+      .from('cobrancas')
+      .select('valor, status')
+      .eq('id', cobrancaId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle()
+    if (!cobranca) throw new Error('Cobrança não encontrada')
+    if (cobranca.status === 'pago') throw new Error('Cobrança já está paga')
+    if (pagamento.valor_pago > Number(cobranca.valor)) {
+      throw new Error('Valor pago não pode exceder o valor da cobrança')
+    }
+
     const updatePayload: CobrancaUpdate = {
       status: 'pago',
       data_pagamento: pagamento.data_pagamento,

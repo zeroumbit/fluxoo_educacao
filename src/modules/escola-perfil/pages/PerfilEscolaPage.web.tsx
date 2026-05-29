@@ -6,6 +6,7 @@ import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/com
 import { useViaCEP } from '@/hooks/use-viacep'
 import { supabase } from '@/lib/supabase'
 import { mascaraCNPJ,mascaraCPF } from '@/lib/validacoes'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { Building2,Image as ImageIcon,Loader2,MapPin,Save,Upload,X } from 'lucide-react'
 import { useEffect,useState } from 'react'
@@ -87,6 +88,9 @@ export function PerfilEscolaPageWeb() {
   const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !authUser) return
+
+    const extResult = validateFileExtension(file, ['.jpg', '.jpeg', '.png', '.webp', '.svg'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
 
     try {
       const fileExt = file.name.split('.').pop()

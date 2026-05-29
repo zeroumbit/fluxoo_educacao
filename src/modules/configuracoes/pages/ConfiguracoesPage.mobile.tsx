@@ -7,6 +7,7 @@ import { MobileSelect } from '@/components/ui/mobile-select'
 import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAuth } from '@/modules/auth/AuthContext'
 import {
 useTenantSettings,
@@ -105,6 +106,9 @@ export function ConfiguracoesPageMobile() {
       toast.error('Formato inválido. Use PNG, WebP ou PDF.')
       return
     }
+
+    const extResult = validateFileExtension(file, ['.png', '.webp', '.pdf', '.jpg', '.jpeg'])
+    if (!extResult.valid) { toast.error(extResult.error); return }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Arquivo muito grande. Máximo 5MB.')

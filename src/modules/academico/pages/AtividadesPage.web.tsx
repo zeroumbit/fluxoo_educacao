@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Filial, Turma } from '@/lib/database.types'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
+import { validateFileExtension } from '@/lib/validate-file'
 import { useAuth } from '@/modules/auth/AuthContext'
 import { useTurmas } from '@/modules/turmas/hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -386,6 +387,17 @@ function FileUploadField({ form: _form }: { form: any }) {
 
   const handleUpload = useCallback(async (file: File) => {
     if (!authUser?.tenantId) return
+    const tipoMaterial = _form.getValues('tipo_material')
+    let allowedExts: string[]
+    if (tipoMaterial === 'imagem') {
+      allowedExts = ['.jpg', '.jpeg', '.png', '.webp']
+    } else if (tipoMaterial === 'pdf') {
+      allowedExts = ['.pdf']
+    } else {
+      allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.doc', '.docx']
+    }
+    const extResult = validateFileExtension(file, allowedExts)
+    if (!extResult.valid) { toast.error(extResult.error); return }
     setUploading(true)
     try {
       const ext = file.name.split('.').pop()

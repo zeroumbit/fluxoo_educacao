@@ -26,15 +26,10 @@ export const funcionariosService = {
   },
 
   async criar(funcionario: FuncionarioInsert, userId?: string) {
-    // Validação RBAC: funcionarios.create
-    if (userId && funcionario.tenant_id) {
-      await validarPermissao(userId, funcionario.tenant_id, 'funcionarios.create')
+    if (!userId || !funcionario.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
-
-    // Garantir que tenant_id está sendo enviado
-    if (!funcionario.tenant_id) {
-      throw new Error('tenant_id é obrigatório')
-    }
+    await validarPermissao(userId, funcionario.tenant_id, 'funcionarios.create')
 
     // Preparação dos dados para o Supabase (evitando enviar campos que não existem na tabela)
     const dadosFuncionario = {
@@ -86,10 +81,10 @@ export const funcionariosService = {
   },
 
   async atualizar(id: string, updates: FuncionarioUpdate, userId?: string, tenantId?: string) {
-    // Validação RBAC: funcionarios.update
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'funcionarios.update')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'funcionarios.update')
 
     const { data, error } = await supabase
       .from('funcionarios')
@@ -105,10 +100,10 @@ export const funcionariosService = {
   },
 
   async excluir(id: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: funcionarios.delete
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'funcionarios.delete')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'funcionarios.delete')
 
     // Exclusão lógica - apenas muda o status
     const { error } = await supabase
@@ -125,10 +120,10 @@ export const funcionariosService = {
   },
 
   async criarUsuarioEscola(funcionarioId: string, email: string, senha: string, perfilId: string, userId?: string, tenantId?: string) {
-    // Validação RBAC: funcionarios.manage_users
-    if (userId && tenantId) {
-      await validarPermissao(userId, tenantId, 'funcionarios.manage_users')
+    if (!userId || !tenantId) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, tenantId, 'funcionarios.manage_users')
 
     try {
       // 0. Buscar o tenant_id real do funcionário (Segurança extra e correção de bug de nulo)
@@ -254,10 +249,10 @@ export const funcionariosService = {
 
   /** Cria uma nova função personalizada para o tenant */
   async criarFuncaoCustom(payload: FuncaoEscolaInsert, userId?: string) {
-    // Validação RBAC: funcionarios.funcoes.create
-    if (userId && payload.tenant_id) {
-      await validarPermissao(userId, payload.tenant_id, 'funcionarios.funcoes.create')
+    if (!userId || !payload.tenant_id) {
+      throw new Error('Permissão negada: usuário ou tenant não informado.')
     }
+    await validarPermissao(userId, payload.tenant_id, 'funcionarios.funcoes.create')
 
     const { data, error } = await supabase
       .from('funcoes_escola')
