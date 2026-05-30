@@ -281,7 +281,7 @@ export function FuncionariosPageMobile() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => { setSelectedFolder(null); funcForm.reset({ funcoes: [], dia_pagamento: 5 }); setEditOpen(true); }}
-          className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+          className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
         >
           <Plus className="h-7 w-7" />
         </motion.button>

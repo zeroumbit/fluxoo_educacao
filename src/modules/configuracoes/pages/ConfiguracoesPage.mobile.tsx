@@ -20,6 +20,7 @@ type ConfigOperacional,
 } from '@/modules/escolas/hooks/useTenantSettings'
 import { AnimatePresence,motion } from 'framer-motion'
 import {
+ArrowLeft,
 BookOpen,
 Building,
 CalendarDays,
@@ -39,9 +40,11 @@ Wallet,
 X
 } from 'lucide-react'
 import { useEffect,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export function ConfiguracoesPageMobile() {
+  const navigate = useNavigate()
   const { authUser } = useAuth()
   const { config, isLoading, updateConfig, isSaving } = useTenantSettings()
   const { data: vigencias } = useTenantSettingsHistory()
@@ -158,7 +161,7 @@ export function ConfiguracoesPageMobile() {
   ]
 
   return (
-    <MobilePageLayout title="Configurações">
+    <MobilePageLayout title="Configurações" leftAction={<button onClick={() => navigate(-1)} className="h-9 w-9 flex items-center justify-center -ml-1"><ArrowLeft className="h-5 w-5 text-slate-700" /></button>}>
       <div className="space-y-6 pb-32 pt-2">
         {/* Profile Card Summary */}
         <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">

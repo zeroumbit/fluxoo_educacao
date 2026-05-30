@@ -363,7 +363,7 @@ export function LivrosPageMobile() {
 
   return (
     <MobilePageLayout
-      title="Livros e Materiais"
+      title="Materiais Didáticos"
       leftAction={
         <button onClick={() => window.history.back()} className="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
           <ArrowLeft className="h-5 w-5 text-slate-500" />
@@ -472,7 +472,7 @@ export function LivrosPageMobile() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleOpenNew}
-        className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 text-white shadow-xl flex items-center justify-center z-40"
+        className="fixed bottom-4 right-6 h-14 w-14 rounded-2xl bg-indigo-600 text-white shadow-xl flex items-center justify-center z-40"
       >
         <Plus className="h-7 w-7" />
       </motion.button>

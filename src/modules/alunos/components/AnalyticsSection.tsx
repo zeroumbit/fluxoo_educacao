@@ -367,16 +367,14 @@ export function AnalyticsSection() {
             <BarChart3 className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-black text-zinc-900 tracking-tight">Tendências e Análises</h2>
+            <h2 className="text-lg font-black text-zinc-900 tracking-tight whitespace-nowrap">Tendências e Análises</h2>
             <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mt-0.5">
               Evolução mensal de indicadores
             </p>
           </div>
           <ExportButton
             reportKey="dashboard.analytics-completo"
-            label="Exportar"
-            variant="outline"
-            size="sm"
+            size="icon"
             formats={['csv', 'pdf']}
           />
         </div>

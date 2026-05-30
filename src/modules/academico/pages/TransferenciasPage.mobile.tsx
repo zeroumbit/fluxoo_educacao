@@ -294,11 +294,6 @@ export function TransferenciasPageMobile() {
           <ArrowLeft className="h-5 w-5 text-slate-500" />
         </button>
       }
-      rightActions={
-        <button onClick={() => setIsFormOpen(true)} className="h-10 w-10 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-          <Plus className="h-5 w-5 text-white" />
-        </button>
-      }
     >
       {/* KPI Cards - Horizontal Scroll */}
       <div className="flex gap-4 overflow-x-auto no-scrollbar pt-4 pb-4 -mx-4 px-4">
@@ -306,7 +301,7 @@ export function TransferenciasPageMobile() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="min-w-[160px] bg-white dark:bg-slate-800 rounded-[28px] p-5 shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden"
+          className="min-w-[140px] bg-white dark:bg-slate-800 rounded-[28px] p-5 shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 p-3 opacity-10">
             <Clock className="h-12 w-12 text-amber-500" />
@@ -323,7 +318,7 @@ export function TransferenciasPageMobile() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.05 }}
-          className="min-w-[160px] bg-indigo-600 rounded-[28px] p-5 shadow-lg shadow-indigo-100 dark:shadow-none"
+          className="min-w-[140px] bg-indigo-600 rounded-[28px] p-5 shadow-lg shadow-indigo-100 dark:shadow-none"
         >
           <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-1">Total</p>
           <p className="text-3xl font-black text-white">{transferenciasList.length}</p>
@@ -334,7 +329,7 @@ export function TransferenciasPageMobile() {
            initial={{ opacity: 0, scale: 0.9 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.1 }}
-          className="min-w-[160px] bg-white dark:bg-slate-800 rounded-[28px] p-5 shadow-sm border border-slate-100 dark:border-slate-700"
+          className="min-w-[140px] bg-white dark:bg-slate-800 rounded-[28px] p-5 shadow-sm border border-slate-100 dark:border-slate-700"
         >
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 text-emerald-500">Concluídas</p>
           <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
@@ -732,6 +727,15 @@ export function TransferenciasPageMobile() {
             </Button>
          </div>
       </BottomSheet>
+
+      {/* FAB */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsFormOpen(true)}
+        className="fixed bottom-4 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+      >
+        <Plus className="h-6 w-6" />
+      </motion.button>
     </MobilePageLayout>
   )
 }

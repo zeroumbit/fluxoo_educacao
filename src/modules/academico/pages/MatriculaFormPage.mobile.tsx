@@ -18,6 +18,7 @@ import { motion } from 'framer-motion'
 import {
 ArrowLeft,
 Check,
+ChevronDown,
 Loader2,
 X
 } from 'lucide-react'
@@ -61,16 +62,6 @@ export function MatriculaFormPageMobile() {
   const criar = useCriarMatricula()
   const atualizar = useAtualizarMatricula()
 
-  // 1. Preenchimento via Estado da Rota (Vindo do cadastro de aluno)
-  useEffect(() => {
-    if (state?.aluno_id) {
-      form.setValue('alunos_ids', [state.aluno_id])
-    }
-    if (state?.data_ingresso) {
-      form.setValue('data_matricula', state.data_ingresso)
-    }
-  }, [state, form])
-
   const m = mData
 
   const form = useForm<MatriculaFormData>({
@@ -87,6 +78,16 @@ export function MatriculaFormPageMobile() {
       status: 'ativa'
     }
   })
+
+  // 1. Preenchimento via Estado da Rota (Vindo do cadastro de aluno)
+  useEffect(() => {
+    if (state?.aluno_id) {
+      form.setValue('alunos_ids', [state.aluno_id])
+    }
+    if (state?.data_ingresso) {
+      form.setValue('data_matricula', state.data_ingresso)
+    }
+  }, [state, form])
 
   // Preencher formulário quando for edição
   useEffect(() => {
@@ -257,27 +258,30 @@ export function MatriculaFormPageMobile() {
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button type="button" variant="outline" className="w-full justify-between font-normal min-h-[56px] h-auto text-left flex-wrap gap-1 py-3 rounded-2xl bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
-                    {alunosSelecionados.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {alunosSelecionados.map(id => {
-                          const aluno = alunosFiltrados?.find(a => a.id === id)
-                          return (
-                            <Badge key={id} variant="secondary" className="mr-1 py-1">
-                              {aluno?.nome_completo}
-                              <X 
-                                className="ml-1 h-3 w-3 cursor-pointer" 
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  form.setValue('alunos_ids', alunosSelecionados.filter(v => v !== id))
-                                }} 
-                              />
-                            </Badge>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-base">Selecione um ou mais alunos</span>
-                    )}
+                    <span className="flex-1">
+                      {alunosSelecionados.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {alunosSelecionados.map(id => {
+                            const aluno = alunosFiltrados?.find(a => a.id === id)
+                            return (
+                              <Badge key={id} variant="secondary" className="mr-1 py-1">
+                                {aluno?.nome_completo}
+                                <X 
+                                  className="ml-1 h-3 w-3 cursor-pointer" 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    form.setValue('alunos_ids', alunosSelecionados.filter(v => v !== id))
+                                  }} 
+                                />
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-base">Selecione um ou mais alunos</span>
+                      )}
+                    </span>
+                    <ChevronDown className="h-5 w-5 text-slate-400 shrink-0" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[calc(100vw-32px)] p-0 z-[150] rounded-2xl" align="center" style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}>
@@ -315,95 +319,96 @@ export function MatriculaFormPageMobile() {
             )}
           </div>
 
-          {/* Ano Letivo e Turma/Ano */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Ano Letivo */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ano Letivo *</Label>
+            <Input 
+              type="number" 
+              {...form.register('ano_letivo')} 
+              inputMode="numeric" 
+              placeholder="2025"
+              className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+            />
+          </div>
+
+          {/* Turma/Ano */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma/Ano *</Label>
+            <Select 
+              value={form.watch('serie_ano')} 
+              onValueChange={(v) => form.setValue('serie_ano', v)}
+            >
+              <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
+                <SelectValue placeholder="Selecione a turma" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl">
+                {(turmas || []).map((t: Turma) => (
+                  <SelectItem key={t.id} value={t.nome} className="font-bold py-3">{t.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Turno */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
+            <Select 
+              value={form.watch('turno')} 
+              onValueChange={(v) => form.setValue('turno', v as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')}
+            >
+              <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
+                <SelectValue placeholder="Selecione o turno" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl">
+                <SelectItem value="manhã" className="py-3">Manhã</SelectItem>
+                <SelectItem value="tarde" className="py-3">Tarde</SelectItem>
+                <SelectItem value="noite" className="py-3">Noite</SelectItem>
+                <SelectItem value="integral (manhã e tarde)" className="py-3">Integral (Manhã e Tarde)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Data Matrícula */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Data Matrícula</Label>
+            <Input 
+              type="date" 
+              {...form.register('data_matricula')} 
+              className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+            />
+          </div>
+
+          {/* Valor (R$) */}
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</Label>
+            <Input 
+              type="number" 
+              step="0.01" 
+              {...form.register('valor_matricula')} 
+              inputMode="decimal" 
+              placeholder="0,00"
+              className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
+            />
+          </div>
+
+          {editId && (
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Ano Letivo *</Label>
-              <Input 
-                type="number" 
-                {...form.register('ano_letivo')} 
-                inputMode="numeric" 
-                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turma/Ano *</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</Label>
               <Select 
-                value={form.watch('serie_ano')} 
-                onValueChange={(v) => form.setValue('serie_ano', v)}
+                value={form.watch('status')} 
+                onValueChange={(v) => form.setValue('status', v)}
               >
                 <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
-                  <SelectValue placeholder="Série" />
+                  <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  {(turmas || []).map((t: Turma) => (
-                    <SelectItem key={t.id} value={t.nome} className="font-bold py-3">{t.nome}</SelectItem>
-                  ))}
+                  <SelectItem value="ativa" className="py-3">Ativa</SelectItem>
+                  <SelectItem value="concluida" className="py-3">Concluída</SelectItem>
+                  <SelectItem value="cancelada" className="py-3">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Turno e Data Matrícula */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Turno *</Label>
-              <Select 
-                value={form.watch('turno')} 
-                onValueChange={(v) => form.setValue('turno', v as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')}
-              >
-                <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
-                  <SelectValue placeholder="Turno" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl">
-                  <SelectItem value="manhã" className="py-3">Manhã</SelectItem>
-                  <SelectItem value="tarde" className="py-3">Tarde</SelectItem>
-                  <SelectItem value="noite" className="py-3">Noite</SelectItem>
-                  <SelectItem value="integral (manhã e tarde)" className="py-3">Integral (Manhã e Tarde)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Data Matrícula</Label>
-              <Input 
-                type="date" 
-                {...form.register('data_matricula')} 
-                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
-              />
-            </div>
-          </div>
-
-          {/* Valor Matrícula e Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Valor (R$)</Label>
-              <Input 
-                type="number" 
-                step="0.01" 
-                {...form.register('valor_matricula')} 
-                inputMode="decimal" 
-                className="h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20" 
-              />
-            </div>
-            {editId && (
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</Label>
-                <Select 
-                  value={form.watch('status')} 
-                  onValueChange={(v) => form.setValue('status', v)}
-                >
-                  <SelectTrigger className="w-full h-14 rounded-2xl text-base font-bold bg-white border-slate-200 focus:ring-2 focus:ring-indigo-500/20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    <SelectItem value="ativa" className="py-3">Ativa</SelectItem>
-                    <SelectItem value="concluida" className="py-3">Concluída</SelectItem>
-                    <SelectItem value="cancelada" className="py-3">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 pb-safe">
             <div className="mx-auto w-full max-w-[640px] px-4 py-4 flex gap-3">

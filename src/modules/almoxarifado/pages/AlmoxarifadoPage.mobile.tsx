@@ -258,7 +258,7 @@ export function AlmoxarifadoPageMobile() {
           animate={{ scale: 1, rotate: 0 }}
           whileTap={{ scale: 0.8 }}
           onClick={() => setIsNewItemOpen(true)}
-          className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+          className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
         >
           <Plus className="h-8 w-8" strokeWidth={3} />
         </motion.button>

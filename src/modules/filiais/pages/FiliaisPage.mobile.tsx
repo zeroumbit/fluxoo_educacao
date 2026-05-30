@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useViaCEP } from '@/hooks/use-viacep'
+import { useEffect,useState } from 'react'
+import { toast } from 'sonner'
+import { useAtualizarFilial,useCriarFilial,useExcluirFilial,useFiliais } from '../hooks'
 import type { Filial } from '@/lib/database.types'
 import { cn } from '@/lib/utils'
 import { mascaraCEP,mascaraCNPJ } from '@/lib/validacoes'
@@ -22,10 +25,6 @@ MapPin,
 Plus,
 Search
 } from 'lucide-react'
-import { useEffect,useState } from 'react'
-import type { Filial } from '@/lib/database.types'
-import { toast } from 'sonner'
-import { useAtualizarFilial,useCriarFilial,useExcluirFilial,useFiliais } from '../hooks'
 
 export function FiliaisPageMobile() {
   const { authUser } = useAuth()
@@ -203,7 +202,7 @@ export function FiliaisPageMobile() {
             animate={{ scale: 1, rotate: 0 }}
             whileTap={{ scale: 0.8 }}
             onClick={() => handleOpenEdit()}
-            className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-indigo-600 shadow-2xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+            className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
           >
             <Plus className="h-8 w-8" strokeWidth={3} />
           </motion.button>

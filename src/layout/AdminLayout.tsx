@@ -110,7 +110,7 @@ function SidebarContent({
         { name: 'Frequência', href: '/frequencia', icon: CalendarCheck, permission: 'academico.frequencia.view' },
         { name: 'Boletim', href: '/notas', icon: GraduationCap, permission: 'academico.notas.view' },
         { name: 'Disciplinas', href: '/disciplinas', icon: BookType, permission: 'academico.disciplinas.view' },
-        { name: 'Livros e Materiais', href: '/livros', icon: BookOpen, permission: 'academico.livros.view' },
+        { name: 'Materiais Didáticos', href: '/materiais_didaticos', icon: BookOpen, permission: 'academico.livros.view' },
         { name: 'Planos de Aula', href: '/planos-aula', icon: ClipboardList, permission: 'academico.planos_aula.view' },
         { name: 'Atividades', href: '/atividades', icon: Pencil, permission: 'academico.atividades.view' },
         { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'academico.documentos.view' },
@@ -398,7 +398,7 @@ export function AdminLayout() {
   const { data: escola, isLoading: isLoadingEscola } = useEscola(authUser?.tenantId && authUser.tenantId !== 'super_admin' && authUser.tenantId !== 'PENDING_TENANT' ? authUser.tenantId : '')
   const navigate = useNavigate()
   const location = useLocation()
-  const hideBottomNav = ['/meu-perfil', '/alunos/novo', '/financeiro', '/alunos'].some(p => location.pathname === p || location.pathname === p + '/')
+  const hideBottomNav = ['/meu-perfil', '/alunos/novo', '/financeiro', '/alunos', '/transferencias', '/frequencia', '/disciplinas', '/materiais_didaticos', '/planos-aula', '/atividades', '/portaria-expresso', '/mural', '/agenda', '/contas-pagar', '/financeiro-relatorios', '/funcionarios', '/filiais', '/plano', '/almoxarifado'].some(p => location.pathname === p || location.pathname.startsWith(p + '/'))
 
   const isGestor = authUser?.isGestor || isSuperAdmin
   const isGestorOrFinanceiro = isGestor || hasPermission('financeiro.config.view') || hasPermission('financeiro.cobrancas.view')

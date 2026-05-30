@@ -21,7 +21,7 @@ type ConfigOperacional,
 } from '@/modules/escolas/hooks/useTenantSettings'
 import {
 AlertCircle,
-AlertTriangle,BadgeAlert,
+AlertTriangle,ArrowLeft,BadgeAlert,
 Banknote,
 BookOpen,
 CalendarDays,
@@ -44,6 +44,7 @@ Wallet,
 X
 } from 'lucide-react'
 import { useCallback,useEffect,useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
@@ -215,6 +216,7 @@ type TabId = typeof TABS[number]['id']
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export function ConfiguracoesPage() {
+  const navigate = useNavigate()
   const { authUser } = useAuth()
   const { config, isLoading, updateConfig, isSaving } = useTenantSettings()
   const { data: vigencias, isLoading: isLoadingHistory } = useTenantSettingsHistory()
@@ -400,7 +402,10 @@ export function ConfiguracoesPage() {
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
+            <ArrowLeft className="h-5 w-5 text-slate-700" />
+          </button>
           <h1 className="text-2xl font-black tracking-tight text-slate-900">Configurações Institucionais</h1>
           <p className="text-sm text-slate-500 mt-1">
             Regras acadêmicas, financeiras e operacionais com conformidade legal automática.

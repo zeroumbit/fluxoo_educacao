@@ -266,7 +266,7 @@ export function MatriculaFormPageWeb() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ano_letivo">Ano Letivo *</Label>
                 <Input id="ano_letivo" type="number" {...form.register('ano_letivo')} />
@@ -304,7 +304,7 @@ export function MatriculaFormPageWeb() {
                     }
                   }
                 }}>
-                  <SelectTrigger id="serie_ano">
+                  <SelectTrigger id="serie_ano" className="w-full">
                     <SelectValue placeholder="Selecione a turma" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
@@ -326,13 +326,10 @@ export function MatriculaFormPageWeb() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="turno">Turno *</Label>
                 <Select value={form.watch('turno') || undefined} onValueChange={(v) => form.setValue('turno', v as 'manhã' | 'tarde' | 'integral (manhã e tarde)' | 'noite')}>
-                  <SelectTrigger id="turno">
+                  <SelectTrigger id="turno" className="w-full">
                     <SelectValue placeholder="Turno" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
@@ -343,33 +340,34 @@ export function MatriculaFormPageWeb() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="data_matricula">Data da Matrícula</Label>
                 <Input id="data_matricula" type="date" {...form.register('data_matricula')} />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="valor_matricula">Valor da Matrícula (R$)</Label>
                 <Input id="valor_matricula" type="number" step="0.01" {...form.register('valor_matricula')} className="font-bold" />
               </div>
-              {editId && (
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={form.watch('status') || undefined} onValueChange={(v) => form.setValue('status', v)}>
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[150]">
-                      <SelectItem value="ativa">Ativa</SelectItem>
-                      <SelectItem value="concluida">Concluída</SelectItem>
-                      <SelectItem value="cancelada">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
+
+            {editId && (
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={form.watch('status') || undefined} onValueChange={(v) => form.setValue('status', v)}>
+                  <SelectTrigger id="status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[150]">
+                    <SelectItem value="ativa">Ativa</SelectItem>
+                    <SelectItem value="concluida">Concluída</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => navigate('/matriculas')} className="h-12 px-8 rounded-xl font-bold">Cancelar</Button>

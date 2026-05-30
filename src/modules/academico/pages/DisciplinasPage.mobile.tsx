@@ -228,7 +228,7 @@ export function DisciplinasPageMobile() {
         animate={{ scale: 1 }} 
         whileTap={{ scale: 0.9 }}
         onClick={() => setFormOpen(true)}
-        className="fixed bottom-24 right-5 h-16 w-16 rounded-[24px] bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+        className="fixed bottom-4 right-5 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
       >
         <Plus className="h-8 w-8" strokeWidth={3} />
       </motion.button>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { logger } from "@/lib/logger";
-import { AlertTriangle,Home,RefreshCcw } from "lucide-react";
+import { AlertTriangle,Home,MessageCircle,RefreshCcw } from "lucide-react";
 import { Component,type ErrorInfo,type ReactNode } from "react";
 
 let _captureException: ((error: unknown, context?: Record<string, unknown>) => void) | null = null
@@ -139,6 +139,16 @@ export class ErrorBoundary extends Component<Props, State> {
               <Home size={18} /> Início
             </Button>
           </div>
+
+          <a
+            href="https://wa.me/5585997277128?text=tem%20um%20problema%20no%20Fluxoo%20Educa%C3%A7%C3%A3o%20preciso%20de%20suporte%20urgente%21"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-sm transition-all hover:scale-105 active:scale-95"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Contate o suporte imediatamente pelo whatsapp: (85) 9 9727-7128
+          </a>
 
           {!import.meta.env.PROD && (
             <div className="mt-12 p-4 bg-slate-50 rounded-xl border border-slate-100 max-w-lg w-full">

@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import {
 ChevronRight,
 CarFront,
+ClipboardList,
 CreditCard,
 Home,
 LogOut,

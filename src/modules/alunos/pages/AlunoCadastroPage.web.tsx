@@ -13,11 +13,12 @@ import { Label } from '@/components/ui/label'
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Aluno, AlunoInsert } from '@/lib/database.types'
+import { cn } from '@/lib/utils'
+import { formatDateISO,getProximoDiaUtil } from '@/lib/validacoes'
 import { useViaCEP } from '@/hooks/use-viacep'
 import { useFiliais } from '@/modules/filiais/hooks'
 import { useLimiteAlunos } from '@/modules/assinatura/hooks'
 import { useAuth } from '@/modules/auth/AuthContext'
-import { useFiliais } from '@/modules/filiais/hooks'
 import { rbacService } from '@/modules/rbac/service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -173,7 +174,7 @@ export function AlunoCadastroPage() {
       if (!savedDraft) return
 
       try {
-        const parsedDraft = await safeStorage.decrypt(savedDraft)
+        const parsedDraft = await (typeof safeStorage !== 'undefined' ? safeStorage.decrypt(savedDraft) : JSON.parse(savedDraft))
         // Se houver rascunho com dados (para evitar exibir um modal de um form vazio vazio que só cacheou as chaves default)
         const isActuallyFilled = parsedDraft && Object.entries(parsedDraft).some(([key, val]) => {
           if (key === 'responsavel_financeiro' || key === 'data_ingresso' || key === 'filial_id') return false;
@@ -226,7 +227,7 @@ export function AlunoCadastroPage() {
       const draftContent = { ...watchAllFields }
       delete draftContent.responsavel_senha
 
-      const encryptedDraft = await safeStorage.encrypt(draftContent)
+      const encryptedDraft = await (typeof safeStorage !== 'undefined' ? safeStorage.encrypt(draftContent) : JSON.stringify(draftContent))
       if (!isCancelled && encryptedDraft) {
         localStorage.setItem('aluno_cadastro_draft', encryptedDraft)
       }

@@ -103,7 +103,7 @@ export function PerfisPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-indigo-600" />
-            Controle de Acesso (RBAC)
+            Controle de acesso
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Gerencie perfis de acesso, permissões e exceções do sistema

@@ -3,6 +3,7 @@ import { useAuditLogs } from '@/modules/rbac/hooks'
 import {
   Activity,
   AlertTriangle,
+  ArrowLeft,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -14,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const PAGE_SIZE = 25
 
@@ -199,6 +201,7 @@ const FILTER_OPTIONS = [
 ]
 
 export function AuditoriaPage() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(0)
   const [filtroAcao, setFiltroAcao] = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -247,22 +250,25 @@ export function AuditoriaPage() {
 
   return (
     <div className="p-4 lg:p-0 space-y-6">
-      <div>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-zinc-100 transition-colors -ml-1">
+          <ArrowLeft className="h-5 w-5 text-zinc-700" />
+        </button>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <FileText className="h-6 w-6 text-indigo-600" />
           Auditoria do Sistema
         </h1>
+      </div>
         <p className="text-sm text-zinc-500 mt-1">
           Histórico de alterações feitas na sua escola. Use para acompanhar quem fez o quê e quando.
         </p>
-      </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 overflow-x-auto flex-nowrap lg:flex-wrap pb-1">
         {FILTER_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             onClick={() => { setFiltroAcao(opt.value); setSearchInput(''); setPage(0) }}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+            className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               filtroAcao === opt.value
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-white border text-zinc-600 hover:bg-zinc-50'

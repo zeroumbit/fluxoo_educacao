@@ -442,7 +442,7 @@ export function LivrosPage() {
               Gestão Acadêmica
            </div>
            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
-              Livros e Materiais
+               Materiais Didáticos
            </h1>
            <p className="text-muted-foreground">Controle de bibliotecas e kits escolares por turma.</p>
         </div>

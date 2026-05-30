@@ -198,13 +198,16 @@ export function TransferenciasPageWeb() {
             Gerencie transferências de alunos entre escolas
           </p>
         </div>
-        <Button
-          onClick={() => setDialogOpen(true)}
-          className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700"
-        >
-          <Plus className="mr-2 h-4 w-4" /> Solicitar Transferência
-        </Button>
       </div>
+
+      {/* FAB */}
+      <button
+        onClick={() => setDialogOpen(true)}
+        className="fixed bottom-8 right-8 h-14 w-14 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-xl shadow-indigo-200/50 flex items-center justify-center text-white z-50 transition-all hover:scale-105 active:scale-95"
+        title="Solicitar Transferência"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       {/* KPI Strip */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

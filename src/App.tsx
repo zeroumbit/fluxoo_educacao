@@ -15,6 +15,9 @@ import { FileUser,Package,Search,Wallet } from 'lucide-react'
 import { Suspense,lazy,useEffect } from "react"
 import { BrowserRouter,Navigate,Route,Routes } from 'react-router-dom'
 
+// Pages - Public
+const LandingPage = lazy(() => import('@/modules/landing/LandingPage').then(m => ({ default: m.LandingPage })))
+
 // Pages - Professor
 const ProfessorAlunosPage = lazy(() => import('@/modules/professor/pages/ProfessorAlunosPage').then(m => ({ default: m.ProfessorAlunosPage })))
 const ProfessorTurmasPage = lazy(() => import('@/modules/professor/pages/ProfessorTurmasPage').then(m => ({ default: m.ProfessorTurmasPageAdapter })))
@@ -88,6 +91,10 @@ const PrecosPage = lazy(() => import('@/modules/super-admin/pages/PrecosPage').t
 const PortalLoginPage = lazy(() => import('@/modules/portal/pages/PortalLoginPage').then(m => ({ default: m.PortalLoginPage })))
 const PortalLojaPage = lazy(() => import('@/modules/portal/pages/PortalLojaPage').then(m => ({ default: m.PortalLojaPage })))
 const PortalPerfilPage = lazy(() => import('@/modules/portal/pages/PortalPerfilPage').then(m => ({ default: m.PortalPerfilPage })))
+const SobrePage = lazy(() => import('@/modules/portal/pages/SobrePage').then(m => ({ default: m.SobrePage })))
+const DesenvolvimentoPage = lazy(() => import('@/modules/portal/pages/DesenvolvimentoPage').then(m => ({ default: m.DesenvolvimentoPage })))
+const ConsultoriaPage = lazy(() => import('@/modules/portal/pages/ConsultoriaPage').then(m => ({ default: m.ConsultoriaPage })))
+const TransformacaoDigitalPage = lazy(() => import('@/modules/portal/pages/TransformacaoDigitalPage').then(m => ({ default: m.TransformacaoDigitalPage })))
 const TermosUsoPage = lazy(() => import('@/modules/portal/pages/TermosUsoPage').then(m => ({ default: m.TermosUsoPage })))
 const PrivacidadePage = lazy(() => import('@/modules/portal/pages/PrivacidadePage').then(m => ({ default: m.PrivacidadePage })))
 const CookiesPage = lazy(() => import('@/modules/portal/pages/CookiesPage').then(m => ({ default: m.CookiesPage })))
@@ -189,8 +196,9 @@ function App() {
               </div>
             }>
             <Routes>
-            {/* Root redirect */}
-            <Route path="/" element={<RootRedirect />} />
+            {/* Landing publica */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/app" element={<RootRedirect />} />
 
             {/* Login */}
             <Route path="/login" element={<LoginPage />} />
@@ -205,6 +213,10 @@ function App() {
             <Route path="/marketplace/cadastro" element={<MarketplaceCadastroPage />} />
 
             {/* Termos de Uso - Público */}
+            <Route path="/sobre" element={<SobrePage />} />
+            <Route path="/desenvolvimento" element={<DesenvolvimentoPage />} />
+            <Route path="/consultoria" element={<ConsultoriaPage />} />
+            <Route path="/transformacao-digital" element={<TransformacaoDigitalPage />} />
             <Route path="/termos-de-uso" element={<TermosUsoPage />} />
             <Route path="/politica-privacidade" element={<PrivacidadePage />} />
             <Route path="/politica-cookies" element={<CookiesPage />} />
@@ -273,7 +285,7 @@ function App() {
               <Route path="/mural" element={<MuralPage />} />
               <Route path="/financeiro" element={<FinanceiroPage />} />
               <Route path="/filiais" element={<FiliaisPage />} />
-              <Route path="/livros" element={<LivrosPage />} />
+              <Route path="/materiais_didaticos" element={<LivrosPage />} />
               <Route path="/funcionarios" element={<FuncionariosPage />} />
               <Route path="/matriculas" element={<MatriculaPage />} />
               <Route path="/matriculas/nova" element={<MatriculaFormPage />} />

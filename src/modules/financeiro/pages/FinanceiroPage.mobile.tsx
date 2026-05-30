@@ -144,10 +144,10 @@ export function FinanceiroPageMobile() {
       c.status === 'atrasado' || (c.status === 'a_vencer' && new Date(c.data_vencimento + 'T12:00:00') < hoje)
 
     return (cobrancas ?? []).filter(c => {
-      let matchStatus = filtroStatus === 'todos'
-      if (filtroStatus === 'atrasado') matchStatus = isAtrasada(c)
-      else if (filtroStatus === 'a_vencer') matchStatus = c.status === 'a_vencer' && !isAtrasada(c)
-      else if (filtroStatus === 'pago')    matchStatus = c.status === 'pago'
+      let matchStatus = filtroTab === 'todos'
+      if (filtroTab === 'atrasado') matchStatus = isAtrasada(c)
+      else if (filtroTab === 'a_vencer') matchStatus = c.status === 'a_vencer' && !isAtrasada(c)
+      else if (filtroTab === 'pago')    matchStatus = c.status === 'pago'
       const matchBusca = c.alunos?.nome_completo?.toLowerCase().includes(busca.toLowerCase()) ||
                          c.descricao.toLowerCase().includes(busca.toLowerCase())
       return matchStatus && matchBusca
@@ -385,7 +385,7 @@ export function FinanceiroPageMobile() {
           animate={{ scale: 1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setSheetOpen(true)}
-          className="fixed bottom-[17px] right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
+          className="fixed bottom-4 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200/60 flex items-center justify-center text-white z-40 ring-4 ring-white dark:ring-slate-950"
         >
           <Plus className="h-6 w-6" />
         </motion.button>

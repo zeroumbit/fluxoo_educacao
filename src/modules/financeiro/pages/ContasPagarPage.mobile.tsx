@@ -307,9 +307,10 @@ export function ContasPagarPageMobile() {
             animate={{ scale: 1, rotate: 0 }}
             whileTap={{ scale: 0.8 }}
             onClick={abrirNovo}
-            className="fixed bottom-28 right-6 h-18 w-18 rounded-[24px] bg-slate-900 shadow-2xl text-white z-40 flex items-center justify-center border-4 border-white dark:border-slate-950"
+            className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-200 text-white z-40 flex items-center justify-center"
+            onClick={() => setOpen(true)}
           >
-            <Plus className="h-8 w-8 text-indigo-400" strokeWidth={3} />
+            <Plus className="h-8 w-8" strokeWidth={3} />
           </motion.button>
         )}
 

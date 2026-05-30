@@ -12,18 +12,18 @@ export function Greeting() {
   else if (hour >= 12 && hour < 18) greeting = 'Boa tarde'
 
   return (
-    <div className="flex flex-col gap-0.5">
-       <h1 className="text-2xl lg:text-3xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
-         {greeting} <span className="text-indigo-600 dark:text-indigo-400">{name}</span>,
-       </h1>
-       <div className="flex items-center gap-2">
-         <p className="text-sm lg:text-base font-medium text-zinc-600 dark:text-zinc-400">
-           Bem-vindo de volta.
-         </p>
-         <p className="text-[10px] lg:text-xs font-bold text-zinc-400 dark:text-zinc-500 tracking-widest">
-           Agora são {format(now, 'HH:mm')}
-         </p>
-       </div>
-    </div>
+     <div className="flex flex-col gap-0.5 w-full">
+        <h1 className="text-2xl lg:text-3xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
+          {greeting} <span className="text-indigo-600 dark:text-indigo-400">{name}</span>,
+        </h1>
+        <div className="flex items-center w-full lg:gap-1">
+          <p className="text-sm lg:text-base font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            Bem-vindo de volta.
+          </p>
+          <p className="text-[10px] lg:text-xs font-bold text-zinc-400 dark:text-zinc-500 tracking-widest whitespace-nowrap ml-auto lg:ml-0">
+            Agora são {format(now, 'HH:mm')}
+          </p>
+        </div>
+     </div>
   )
 }

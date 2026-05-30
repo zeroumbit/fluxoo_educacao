@@ -287,7 +287,7 @@ export function MuralPageMobile() {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleOpenCreate}
-        className="fixed bottom-24 right-6 h-16 w-16 rounded-3xl bg-indigo-600 text-white shadow-2xl shadow-indigo-100 dark:shadow-none flex items-center justify-center z-50 transition-all active:bg-indigo-700"
+        className="fixed bottom-24 right-6 h-14 w-14 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-100 dark:shadow-none flex items-center justify-center z-50 transition-all active:bg-indigo-700"
       >
         <Plus className="h-8 w-8" />
       </motion.button>
