@@ -42,6 +42,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertasProvider,useAlertas,type RadarAlunoComStatus } from '../AlertasContext'
 import { AnalyticsSection } from '../components/AnalyticsSection'
 import { OnboardingGuide } from '../components/OnboardingGuide'
+import { DashboardBanners } from '../components/DashboardBanners'
 import { ExportButton } from '@/modules/relatorios/components/ExportButton'
 import { useDashboard } from '../dashboard.hooks'
 import type { AvisoRecente } from '../dashboard.service'
@@ -565,6 +566,11 @@ export function DashboardPageMobile() {
                 />
               </div>
             </section>
+
+            {/* Banners */}
+            <div className="px-5">
+              <DashboardBanners />
+            </div>
 
             {/* Notificação de Alunos Sem Matrícula */}
             {(displayData?.alunosSemMatricula ?? 0) > 0 && showAlunosSemMatriculaNotification && (

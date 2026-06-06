@@ -86,6 +86,7 @@ const GatewayConfigPage = lazy(() => import('@/modules/super-admin/pages/Gateway
 const ConfigRecebimentoPage = lazy(() => import('@/modules/super-admin/pages/ConfigRecebimentoPage').then(m => ({ default: m.ConfigRecebimentoPage })))
 const MarketplaceConfigPage = lazy(() => import('@/modules/super-admin/pages/MarketplaceConfigPage').then(m => ({ default: m.MarketplaceConfigPage })))
 const PrecosPage = lazy(() => import('@/modules/super-admin/pages/PrecosPage').then(m => ({ default: m.PrecosPage })))
+const BannersPage = lazy(() => import('@/modules/super-admin/pages/BannersPage').then(m => ({ default: m.BannersPage })))
 
 // Pages - Portal
 const PortalLoginPage = lazy(() => import('@/modules/portal/pages/PortalLoginPage').then(m => ({ default: m.PortalLoginPage })))
@@ -238,6 +239,7 @@ function App() {
               <Route path="/admin/precos" element={<PrecosPage />} />
               <Route path="/admin/gateways" element={<GatewayConfigPage />} />
               <Route path="/admin/config-recebimento" element={<ConfigRecebimentoPage />} />
+              <Route path="/admin/banners" element={<BannersPage />} />
               <Route path="/admin/logs" element={<div className="p-8"><h1 className="text-2xl font-bold">Logs do Sistema</h1><p>Em breve: Auditoria global.</p></div>} />
             </Route>
 

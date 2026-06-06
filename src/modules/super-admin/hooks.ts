@@ -354,3 +354,42 @@ export function useUpdateGatewayCamposConfig() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'gateway-config'] }),
   })
 }
+
+// ========== BANNERS ==========
+export function useBanners() {
+  return useQuery({
+    queryKey: ['admin', 'banners'],
+    queryFn: () => superAdminService.getBanners(),
+  })
+}
+
+export function useUpsertBanner() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (banner: Parameters<typeof superAdminService.upsertBanner>[0]) =>
+      superAdminService.upsertBanner(banner),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'banners'] })
+      qc.invalidateQueries({ queryKey: ['school', 'banners'] })
+    },
+  })
+}
+
+export function useDeleteBanners() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => superAdminService.deleteBanners(ids),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'banners'] })
+      qc.invalidateQueries({ queryKey: ['school', 'banners'] })
+    },
+  })
+}
+
+export function useCidadesComEscolas() {
+  return useQuery({
+    queryKey: ['admin', 'cidades-com-escolas'],
+    queryFn: () => superAdminService.getCidadesComEscolas(),
+  })
+}
+

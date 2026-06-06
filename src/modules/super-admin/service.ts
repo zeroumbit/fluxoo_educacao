@@ -1,5 +1,7 @@
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
+import type { Banner } from '@/types/shared'
+import { validateFileExtension } from '@/lib/validate-file'
 import type {
   Assinatura,
   AssinaturaInsert,
@@ -763,6 +765,74 @@ async updateEscolaStatus(id: string, status: string) {
       user_agent: null,
       created_at: new Date().toISOString()
     })
+  },
+
+  // ==========================================
+  // BANNERS
+  // ==========================================
+  async getBanners(): Promise<Banner[]> {
+    const { data, error } = await supabase
+      .from('banners')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+
+  async upsertBanner(banner: Partial<Banner>): Promise<Banner> {
+    const { data, error } = await supabase
+      .from('banners')
+      .upsert({
+        ...banner,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+
+  async deleteBanners(ids: string[]): Promise<void> {
+    if (ids.length === 0) return
+    const { error } = await supabase
+      .from('banners')
+      .delete()
+      .in('id', ids)
+    if (error) throw error
+  },
+
+  async uploadBannerImage(file: File): Promise<string> {
+    const extResult = validateFileExtension(file, ['.png', '.jpg', '.jpeg', '.svg', '.webp'])
+    if (!extResult.valid) throw new Error(extResult.error)
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+    const filePath = `banners/${fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('banners')
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('banners')
+      .getPublicUrl(filePath)
+
+    return data.publicUrl
+  },
+
+  async getCidadesComEscolas(): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('escolas')
+      .select('cidade')
+      .not('cidade', 'is', null)
+      .neq('cidade', '')
+    
+    if (error) throw error
+    
+    // Obter apenas cidades únicas
+    const cidadesUnicas = Array.from(new Set(data.map(e => e.cidade)))
+    return cidadesUnicas.sort()
   },
 }
 

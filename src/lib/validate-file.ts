@@ -22,7 +22,12 @@ export function validateFileExtension(
   file: File,
   allowedExtensions: string[],
 ): { valid: true } | { valid: false; error: string } {
-  const ext = '.' + getExtension(file.name)
+  let ext = getExtension(file.name)
+  if (!ext.startsWith('.')) {
+    ext = '.' + ext
+  }
+  // Se por acaso vier com múltiplos pontos iniciais (ex: ..png), removemos o excesso
+  ext = '.' + ext.replace(/^\.+/, '')
 
   if (!allowedExtensions.includes(ext)) {
     return {
@@ -32,7 +37,12 @@ export function validateFileExtension(
   }
 
   const expectedMimes = MIME_MAP[ext]
-  if (expectedMimes && !expectedMimes.includes(file.type)) {
+  // Se o tipo MIME estiver vazio, for genérico ou for uma variação conhecida (ex: image/x-png para png),
+  // ou se o tipo MIME for válido, permitimos o arquivo.
+  const isGenericMime = !file.type || file.type === 'application/octet-stream'
+  const isPngVariation = ext === '.png' && file.type === 'image/x-png'
+  
+  if (expectedMimes && !isGenericMime && !isPngVariation && !expectedMimes.includes(file.type)) {
     return {
       valid: false,
       error: `Arquivo corrompido ou extensão incorreta. Esperado: ${expectedMimes.join(' ou ')}`,

@@ -83,3 +83,17 @@ export interface ResponsavelBase {
   email: string | null
   telefone: string | null
 }
+
+export interface Banner {
+  id: string
+  nome: string
+  link_redirecionamento: string
+  cidade: string
+  url_imagem: string
+  data_inicio: string
+  data_fim: string
+  status: 'ativo' | 'inativo'
+  created_at?: string
+  updated_at?: string
+}
+

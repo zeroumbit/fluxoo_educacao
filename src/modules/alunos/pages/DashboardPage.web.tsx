@@ -47,6 +47,7 @@ import { AlertasProvider, useAlertas } from '../AlertasContext'
 import { AnalyticsSection } from '../components/AnalyticsSection'
 import { OnboardingGuide } from '../components/OnboardingGuide'
 import { RadarEvasaoModal } from '../components/RadarEvasaoModal'
+import { DashboardBanners } from '../components/DashboardBanners'
 import { useDashboard } from '../dashboard.hooks'
 import { useRegistrarPagamentoManual } from '@/modules/financeiro/hooks'
 import type { RadarAluno } from '../dashboard.service'
@@ -887,6 +888,10 @@ function DashboardContent() {
       {/* Header com Greeting */}
       <div className="px-2">
         <Greeting />
+      </div>
+
+      <div className="px-2">
+        <DashboardBanners />
       </div>
 
       {/* Alerta de Aprovação */}
