@@ -393,12 +393,12 @@ export function EscolaCadastroPage() {
 
         {/* Form */}
         <div className="flex-1 p-8 md:p-10">
-          <div className="md:hidden flex justify-between items-center mb-8">
-            <div className="flex items-center gap-2">
+          <div className="md:hidden flex flex-col items-center mb-8">
+            <div className="flex items-center gap-2 whitespace-nowrap">
               <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center"><GraduationCap className="h-5 w-5 text-white" /></div>
               <h1 className="font-bold text-lg">Fluxoo Educação</h1>
             </div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase">Passo {currentStep + 1} de {steps.length}</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase mt-1">Passo {currentStep + 1} de {steps.length}</span>
           </div>
 
           <div className="mb-8">
@@ -420,7 +420,7 @@ export function EscolaCadastroPage() {
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha *</Label>
                     <div className="relative">
-                      <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres e 1 maiúscula" {...register('password')} />
+                      <Input id="password" type={showPassword ? "text" : "password"} placeholder="mínimo de 8 caracteres" {...register('password')} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -445,7 +445,7 @@ export function EscolaCadastroPage() {
                           className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
                         />
                         <span className="text-xs text-zinc-600 leading-relaxed">
-                          Li e concordo com os{' '}
+                          Li os{' '}
                           <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
                             Termos de Uso
                           </a>
@@ -458,7 +458,7 @@ export function EscolaCadastroPage() {
                           className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
                         />
                         <span className="text-xs text-zinc-600 leading-relaxed">
-                          Li e concordo com as{' '}
+                          li as{' '}
                           <a href="/politica-privacidade" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-2">
                             Políticas de Privacidade
                           </a>
