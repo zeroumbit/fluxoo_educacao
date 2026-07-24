@@ -46,6 +46,7 @@
       ]
     }
   ],
+  "nodeVersion": "24.x",
   "buildCommand": "npm run predeploy",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
