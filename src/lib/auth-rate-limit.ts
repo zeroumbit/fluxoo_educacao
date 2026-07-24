@@ -15,6 +15,7 @@ interface LoginAttemptInput {
 }
 
 const RPC_TIMEOUT_MS = 2500
+const RATE_LIMIT_UNAVAILABLE_MESSAGE = 'Nao foi possivel validar a seguranca do login. Tente novamente em instantes.'
 
 type RpcError = { message?: string } | null
 
@@ -60,6 +61,14 @@ function getUserAgent(): string | null {
   return typeof navigator === 'undefined' ? null : navigator.userAgent
 }
 
+function unavailableRateLimitResult() {
+  // Em producao, permitir o login sem o precheck transformaria uma falha de
+  // infraestrutura em uma janela para ataque de forca bruta.
+  return import.meta.env.PROD
+    ? { allowed: false, delayMs: 0, reason: RATE_LIMIT_UNAVAILABLE_MESSAGE }
+    : { allowed: true, delayMs: 0, reason: null }
+}
+
 export async function precheckLogin(identifier: string): Promise<{
   allowed: boolean
   delayMs: number
@@ -79,7 +88,7 @@ export async function precheckLogin(identifier: string): Promise<{
     )
 
     if (!result || result.error || !result.data) {
-      return { allowed: true, delayMs: 0, reason: null }
+      return unavailableRateLimitResult()
     }
 
     const row = Array.isArray(result.data) ? result.data[0] : result.data
@@ -89,7 +98,7 @@ export async function precheckLogin(identifier: string): Promise<{
       reason: row?.reason || null,
     }
   } catch {
-    return { allowed: true, delayMs: 0, reason: null }
+    return unavailableRateLimitResult()
   }
 }
 

@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       escolaData = escolaById
 
       // Tentativa 2: Por e-mail (Fallback para cadastros legados ou em transição)
-      if (!escolaData && user.email) {
+      if (import.meta.env.DEV && !escolaData && user.email) {
         const { data: escolaByEmail } = await supabase
           .from('escolas')
           .select('id, razao_social, email_gestor, gestor_user_id, logradouro, numero, complemento, bairro, cidade, estado, cep')
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } : undefined
 
         // Sincronização de Segurança: Garante que o gestor_user_id esteja preenchido para RLS legados
-        if (!escola.gestor_user_id) {
+        if (import.meta.env.DEV && !escola.gestor_user_id) {
           logger.debug('Sincronizando gestor_user_id na tabela escolas')
           const { error: syncError } = await supabase
             .from('escolas')
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentTenantId = user.user_metadata?.tenant_id
         const currentRole = user.user_metadata?.role || user.app_metadata?.role || 'gestor'
         
-        if (currentTenantId !== escola.id) {
+        if (import.meta.env.DEV && currentTenantId !== escola.id) {
           logger.debug('Atualizando tenant_id nos metadados', { from: currentTenantId, to: escola.id })
           const { error: updateMetaError } = await supabase.auth.updateUser({
             data: { 
@@ -213,8 +213,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // RBAC não crítico — não bloqueia o login
           }
 
-          const isGestor = user.user_metadata?.role === 'gestor' // Apenas o fundador/dono recebe bypass global
-          const isSuperAdmin = hasSuperAdminAppClaim(user)
           const isProfessor = perfilNome.includes('professor') || perfilNome.includes('professora')
 
           const resolvedPermissions = await rbacService.resolverPermissoes(user.id)
@@ -230,12 +228,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             nome: funcionarioData.nome_completo || user.user_metadata?.full_name || 'Funcionário',
             email: user.email || '',
             isProfessor,
-            isGestor,
-            isSuperAdmin,
+            isGestor: false,
+            isSuperAdmin: false,
             resolvedPermissions
           })
 
-          if (user.user_metadata?.tenant_id !== finalTenantId) {
+          if (import.meta.env.DEV && user.user_metadata?.tenant_id !== finalTenantId) {
             await supabase.auth.updateUser({
               data: { tenant_id: finalTenantId }
             })
@@ -278,7 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               resolvedPermissions
             })
 
-            if (user.user_metadata?.tenant_id !== finalTenantId) {
+            if (import.meta.env.DEV && user.user_metadata?.tenant_id !== finalTenantId) {
               await supabase.auth.updateUser({ data: { tenant_id: finalTenantId } })
               await supabase.auth.refreshSession()
             }
@@ -302,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        if (user.email) {
+        if (import.meta.env.DEV && user.email) {
             // Fallback por email — também sem join aninhado
             const { data: funcByEmail } = await supabase.from('funcionarios')
               .select('id, nome_completo, tenant_id, email')
@@ -346,7 +344,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isSuperAdmin: false
           })
 
-          if (user.user_metadata?.tenant_id !== funcByEmail.tenant_id) {
+          if (import.meta.env.DEV && user.user_metadata?.tenant_id !== funcByEmail.tenant_id) {
             await supabase.auth.updateUser({
               data: { tenant_id: funcByEmail.tenant_id }
             })
@@ -359,17 +357,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (import.meta.env.DEV) console.error('Erro no fallback do AuthContext:', err)
       }
 
-      // 4. Caso padrão
-      setAuthUser({
-        user, session,
-        tenantId: user.user_metadata?.tenant_id || 'PENDING_TENANT',
-        role: (user.user_metadata?.role as string) || 'funcionario',
-        nome: user.user_metadata?.full_name || 'Usuário',
-        email: user.email || '',
-        isProfessor: false,
-        isGestor: false,
-        isSuperAdmin: false
-      })
+      // A autenticacao sem vinculo persistido nao constitui autorizacao.
+      setAuthUser(null)
     } catch (err) {
       if (import.meta.env.DEV) console.error('Erro no carregamento de perfil:', err)
       setAuthUser(null)

@@ -59,12 +59,7 @@ const ASAAS_PROCESSED_STATUSES = ["CONFIRMED", "RECEIVED", "CREDIT_CARD_CAPTURE_
 const GATEWAY_TIMEOUT_MS = 25000
 const RATE_LIMIT_WINDOW_MS = 60000 // 1 minuto
 const RATE_LIMIT_MAX_REQUESTS = 30 // max 30 requests por minuto por IP
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": Deno.env.get("WEBHOOK_ALLOWED_ORIGIN") || "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, accessToken, x-request-id, x-signature, x-abacate-signature, user-agent",
-  "Access-Control-Max-Age": "86400",
-}
+const MAX_WEBHOOK_BODY_BYTES = 256 * 1024
 
 // =====================================================
 // RATE LIMITING (in-memory)
@@ -162,12 +157,13 @@ function sanitizeLogContext(value: unknown): unknown {
 // =====================================================
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS })
-  }
-
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Metodo nao permitido" })
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || 0)
+  if (contentLength > MAX_WEBHOOK_BODY_BYTES) {
+    return jsonResponse(413, { error: "Payload excede o limite permitido" })
   }
 
   const timeoutId = setTimeout(() => {
@@ -189,7 +185,6 @@ serve(async (req: Request) => {
       "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
       "X-RateLimit-Remaining": String(rateLimit.remaining),
       "X-RateLimit-Reset": new Date(rateLimit.resetAt).toISOString(),
-      ...CORS_HEADERS,
     })
 
     if (!rateLimit.allowed) {
@@ -223,6 +218,10 @@ serve(async (req: Request) => {
     } catch {
       logWarn("webhook-gateway", "Falha ao ler corpo da requisicao")
       return jsonResponse(400, { error: "Falha ao ler corpo da requisicao" })
+    }
+
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_WEBHOOK_BODY_BYTES) {
+      return jsonResponse(413, { error: "Payload excede o limite permitido" })
     }
 
     let payload: any
@@ -1124,13 +1123,12 @@ function getClientIp(req: Request): string {
   return "unknown"
 }
 
-function jsonResponse(status: number, body: Record<string, any>): Response {
+function jsonResponse(status: number, body: Record<string, unknown>): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json",
       "X-Webhook-Processed-At": new Date().toISOString(),
-      ...CORS_HEADERS,
     }
   })
 }
